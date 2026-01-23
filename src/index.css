@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+/* Fix for sidebar overlapping */
+.min-h-screen {
+  min-height: 100vh;
+}
+
+/* Ensure content is not hidden */
+.z-10 {
+  z-index: 10;
+}
+
+/* Fix for sidebar layout */
+@media (min-width: 768px) {
+  .md\:pl-64 {
+    padding-left: 16rem;
+  }
+}
+
+/* Smooth transitions */
+.transition-all {
+  transition: all 0.3s ease;
+}
+
+.transition-colors {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Better shadows */
+.shadow-xl {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Gradient backgrounds */
+.bg-gradient-to-br {
+  background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
+}
