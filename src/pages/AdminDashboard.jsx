@@ -34,7 +34,7 @@ import {
     FaPhone
 } from 'react-icons/fa';
 
-const API_URL = 'http://localhost:3000/api';
+const API_URL = import.meta.env.VITE_API_URL;
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
@@ -55,6 +55,7 @@ const AdminDashboard = () => {
     const [pendingUsers, setPendingUsers] = useState([]);
     const [selectedTab, setSelectedTab] = useState('overview');
     const [error, setError] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
     const [refreshing, setRefreshing] = useState(false);
     const [apiErrors, setApiErrors] = useState({});
     const [forceRefresh, setForceRefresh] = useState(0);
@@ -134,7 +135,7 @@ const AdminDashboard = () => {
     const [editingPatient, setEditingPatient] = useState(null);
     const [patientViewMode, setPatientViewMode] = useState('table');
 
-    // Sample medication data
+    // Sample medication data for fallback
     const sampleMedications = [
         {
             id: 1,
@@ -154,93 +155,6 @@ const AdminDashboard = () => {
             storage: 'Room temperature',
             notes: 'Take with food to reduce GI upset',
             created_at: '2024-01-15'
-        },
-        {
-            id: 2,
-            name: 'Metformin',
-            generic_name: 'Metformin hydrochloride',
-            brand_names: 'Glucophage, Fortamet, Glumetza',
-            class: 'Antidiabetic (Biguanide)',
-            dosage_forms: 'Tablet, Extended-release tablet',
-            strength: '500mg, 850mg, 1000mg',
-            route: 'Oral',
-            indications: 'Type 2 diabetes',
-            contraindications: 'Renal impairment, Metabolic acidosis',
-            side_effects: 'GI upset, Lactic acidosis (rare)',
-            interactions: 'Contrast media, Alcohol',
-            pregnancy_category: 'B',
-            schedule: 'Prescription',
-            storage: 'Room temperature',
-            notes: 'Take with meals',
-            created_at: '2024-01-20'
-        },
-        {
-            id: 3,
-            name: 'Atorvastatin',
-            generic_name: 'Atorvastatin calcium',
-            brand_names: 'Lipitor',
-            class: 'Antihyperlipidemic (Statin)',
-            dosage_forms: 'Tablet',
-            strength: '10mg, 20mg, 40mg, 80mg',
-            route: 'Oral',
-            indications: 'Hypercholesterolemia',
-            contraindications: 'Active liver disease, Pregnancy',
-            side_effects: 'Myalgia, Elevated liver enzymes',
-            interactions: 'Grapefruit juice, Cyclosporine',
-            pregnancy_category: 'X',
-            schedule: 'Prescription',
-            storage: 'Room temperature',
-            notes: 'Take in evening',
-            created_at: '2024-01-25'
-        }
-    ];
-
-    // Sample patients data
-    const samplePatients = [
-        {
-            id: 1,
-            patient_code: 'PAT-12345',
-            full_name: 'John Doe',
-            age: 45,
-            gender: 'male',
-            contact_number: '+251911234567',
-            address: 'Addis Ababa',
-            diagnosis: 'Hypertension',
-            is_active: true,
-            user_id: 'user-1',
-            user_email: 'doctor1@hospital.com',
-            created_at: '2024-01-15T10:30:00Z',
-            updated_at: '2024-01-15T10:30:00Z'
-        },
-        {
-            id: 2,
-            patient_code: 'PAT-12346',
-            full_name: 'Jane Smith',
-            age: 32,
-            gender: 'female',
-            contact_number: '+251922345678',
-            address: 'Bahir Dar',
-            diagnosis: 'Diabetes Type 2',
-            is_active: true,
-            user_id: 'user-2',
-            user_email: 'doctor2@clinic.com',
-            created_at: '2024-01-16T14:20:00Z',
-            updated_at: '2024-01-16T14:20:00Z'
-        },
-        {
-            id: 3,
-            patient_code: 'PAT-12347',
-            full_name: 'Michael Johnson',
-            age: 28,
-            gender: 'male',
-            contact_number: '+251933456789',
-            address: 'Hawassa',
-            diagnosis: 'Asthma',
-            is_active: false,
-            user_id: 'user-1',
-            user_email: 'doctor1@hospital.com',
-            created_at: '2024-01-17T09:15:00Z',
-            updated_at: '2024-01-17T09:15:00Z'
         }
     ];
 
@@ -306,7 +220,7 @@ const AdminDashboard = () => {
             setCurrentUser(user);
 
             // Verify with backend
-            const response = await fetch(`${API_URL}/auth/me`, {
+            const response = await fetch(`${API_URL}/api/auth/me`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -327,12 +241,11 @@ const AdminDashboard = () => {
                     navigate('/login');
                 }, 3000);
             } else {
-                setError('Backend connection issue. Some features may be limited.');
+                console.warn('Backend connection issue. Some features may be limited.');
             }
         } catch (error) {
             console.error('Auth check error:', error);
             setError('Network error. Please check backend connection.');
-            navigate('/login');
         }
     };
 
@@ -342,7 +255,12 @@ const AdminDashboard = () => {
             setLoadingMedications(true);
             const token = localStorage.getItem('token');
             
-            const response = await fetch(`${API_URL}/admin/medications`, {
+            if (!token) {
+                setError('Authentication required');
+                return;
+            }
+
+            const response = await fetch(`${API_URL}/api/admin/medications`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -353,7 +271,10 @@ const AdminDashboard = () => {
                 const data = await response.json();
                 setMedications(data.medications || data || []);
                 calculateMedicationStats(data.medications || data || []);
+            } else if (response.status === 403) {
+                setError('Access denied. Admin access required.');
             } else {
+                console.warn('Could not load medications, using sample data');
                 setMedications(sampleMedications);
                 calculateMedicationStats(sampleMedications);
             }
@@ -371,7 +292,12 @@ const AdminDashboard = () => {
             setLoadingPatients(true);
             const token = localStorage.getItem('token');
             
-            const response = await fetch(`${API_URL}/admin/all-patients`, {
+            if (!token) {
+                setError('Authentication required');
+                return;
+            }
+
+            const response = await fetch(`${API_URL}/api/admin/all-patients`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -383,8 +309,7 @@ const AdminDashboard = () => {
                 setPatients(data.patients || []);
                 calculatePatientStats(data.patients || []);
             } else if (response.status === 403) {
-                alert('Access denied. You must be an admin to view this page.');
-                navigate('/dashboard');
+                setError('Access denied. You must be an admin to view this page.');
             } else {
                 setPatients([]);
             }
@@ -495,7 +420,12 @@ const AdminDashboard = () => {
         try {
             const token = localStorage.getItem('token');
             
-            const response = await fetch(`${API_URL}/admin/medications`, {
+            if (!token) {
+                setError('Authentication required');
+                return;
+            }
+
+            const response = await fetch(`${API_URL}/api/admin/medications`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -535,38 +465,15 @@ const AdminDashboard = () => {
                 };
                 setRecentActivities(prev => [newActivity, ...prev]);
                 
-                alert('Medication added successfully!');
+                setSuccessMessage('Medication added successfully!');
+                setTimeout(() => setSuccessMessage(''), 3000);
             } else {
-                throw new Error('Failed to add medication');
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to add medication');
             }
         } catch (error) {
             console.error('Error adding medication:', error);
-            alert('Failed to add medication. Using local storage.');
-            
-            const newMed = {
-                id: Date.now(),
-                ...newMedication,
-                created_at: new Date().toISOString()
-            };
-            setMedications([newMed, ...medications]);
-            setShowAddMedication(false);
-            setNewMedication({
-                name: '',
-                generic_name: '',
-                brand_names: '',
-                dosage_forms: '',
-                strength: '',
-                route: '',
-                class: '',
-                indications: '',
-                contraindications: '',
-                side_effects: '',
-                interactions: '',
-                storage: '',
-                pregnancy_category: '',
-                schedule: '',
-                notes: ''
-            });
+            setError(`Failed to add medication: ${error.message}`);
         }
     };
 
@@ -575,13 +482,18 @@ const AdminDashboard = () => {
         try {
             const token = localStorage.getItem('token');
             
+            if (!token) {
+                setError('Authentication required');
+                return;
+            }
+
             const patientData = {
                 ...newPatient,
                 patient_code: `PAT-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
                 user_id: currentUser?.id || 'admin'
             };
 
-            const response = await fetch(`${API_URL}/patients`, {
+            const response = await fetch(`${API_URL}/api/patients`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -613,34 +525,15 @@ const AdminDashboard = () => {
                 };
                 setRecentActivities(prev => [newActivity, ...prev]);
                 
-                alert('Patient added successfully!');
+                setSuccessMessage('Patient added successfully!');
+                setTimeout(() => setSuccessMessage(''), 3000);
             } else {
-                throw new Error('Failed to add patient');
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to add patient');
             }
         } catch (error) {
             console.error('Error adding patient:', error);
-            alert('Failed to add patient. Using local storage.');
-            
-            const newPat = {
-                id: Date.now(),
-                ...newPatient,
-                patient_code: `PAT-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
-                user_id: currentUser?.id || 'admin',
-                user_email: currentUser?.email || 'admin@pharmacare.com',
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-            };
-            setPatients([newPat, ...patients]);
-            setShowPatientForm(false);
-            setNewPatient({
-                full_name: '',
-                age: '',
-                gender: '',
-                contact_number: '',
-                address: '',
-                diagnosis: '',
-                is_active: true
-            });
+            setError(`Failed to add patient: ${error.message}`);
         }
     };
 
@@ -649,7 +542,12 @@ const AdminDashboard = () => {
         try {
             const token = localStorage.getItem('token');
             
-            const response = await fetch(`${API_URL}/admin/medications/${editingMedication.id}`, {
+            if (!token) {
+                setError('Authentication required');
+                return;
+            }
+
+            const response = await fetch(`${API_URL}/api/admin/medications/${editingMedication.id}`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -674,18 +572,15 @@ const AdminDashboard = () => {
                 };
                 setRecentActivities(prev => [newActivity, ...prev]);
                 
-                alert('Medication updated successfully!');
+                setSuccessMessage('Medication updated successfully!');
+                setTimeout(() => setSuccessMessage(''), 3000);
             } else {
-                throw new Error('Failed to update medication');
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to update medication');
             }
         } catch (error) {
             console.error('Error updating medication:', error);
-            alert('Failed to update medication. Using local update.');
-            
-            setMedications(medications.map(med => 
-                med.id === editingMedication.id ? editingMedication : med
-            ));
-            setEditingMedication(null);
+            setError(`Failed to update medication: ${error.message}`);
         }
     };
 
@@ -694,7 +589,12 @@ const AdminDashboard = () => {
         try {
             const token = localStorage.getItem('token');
             
-            const response = await fetch(`${API_URL}/patients/${editingPatient.id}`, {
+            if (!token) {
+                setError('Authentication required');
+                return;
+            }
+
+            const response = await fetch(`${API_URL}/api/patients/${editingPatient.id}`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -719,18 +619,15 @@ const AdminDashboard = () => {
                 };
                 setRecentActivities(prev => [newActivity, ...prev]);
                 
-                alert('Patient updated successfully!');
+                setSuccessMessage('Patient updated successfully!');
+                setTimeout(() => setSuccessMessage(''), 3000);
             } else {
-                throw new Error('Failed to update patient');
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to update patient');
             }
         } catch (error) {
             console.error('Error updating patient:', error);
-            alert('Failed to update patient. Using local update.');
-            
-            setPatients(patients.map(patient => 
-                patient.id === editingPatient.id ? editingPatient : patient
-            ));
-            setEditingPatient(null);
+            setError(`Failed to update patient: ${error.message}`);
         }
     };
 
@@ -743,7 +640,12 @@ const AdminDashboard = () => {
         try {
             const token = localStorage.getItem('token');
             
-            const response = await fetch(`${API_URL}/admin/medications/${id}`, {
+            if (!token) {
+                setError('Authentication required');
+                return;
+            }
+
+            const response = await fetch(`${API_URL}/api/admin/medications/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -763,15 +665,15 @@ const AdminDashboard = () => {
                 };
                 setRecentActivities(prev => [newActivity, ...prev]);
                 
-                alert('Medication deleted successfully!');
+                setSuccessMessage('Medication deleted successfully!');
+                setTimeout(() => setSuccessMessage(''), 3000);
             } else {
-                throw new Error('Failed to delete medication');
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to delete medication');
             }
         } catch (error) {
             console.error('Error deleting medication:', error);
-            alert('Failed to delete medication. Using local deletion.');
-            
-            setMedications(medications.filter(med => med.id !== id));
+            setError(`Failed to delete medication: ${error.message}`);
         }
     };
 
@@ -784,7 +686,12 @@ const AdminDashboard = () => {
         try {
             const token = localStorage.getItem('token');
             
-            const response = await fetch(`${API_URL}/patients/${id}`, {
+            if (!token) {
+                setError('Authentication required');
+                return;
+            }
+
+            const response = await fetch(`${API_URL}/api/patients/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -804,29 +711,34 @@ const AdminDashboard = () => {
                 };
                 setRecentActivities(prev => [newActivity, ...prev]);
                 
-                alert('Patient deleted successfully!');
+                setSuccessMessage('Patient deleted successfully!');
+                setTimeout(() => setSuccessMessage(''), 3000);
             } else {
-                throw new Error('Failed to delete patient');
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to delete patient');
             }
         } catch (error) {
             console.error('Error deleting patient:', error);
-            alert('Failed to delete patient. Using local deletion.');
-            
-            setPatients(patients.filter(patient => patient.id !== id));
+            setError(`Failed to delete patient: ${error.message}`);
         }
     };
 
     // Check drug interactions
     const checkInteractions = async () => {
         if (!interactionCheck.medication1 || !interactionCheck.medication2) {
-            alert('Please select both medications');
+            setError('Please select both medications');
             return;
         }
 
         try {
             const token = localStorage.getItem('token');
             
-            const response = await fetch(`${API_URL}/admin/check-interaction`, {
+            if (!token) {
+                setError('Authentication required');
+                return;
+            }
+
+            const response = await fetch(`${API_URL}/api/admin/check-interaction`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -842,23 +754,12 @@ const AdminDashboard = () => {
                 const data = await response.json();
                 setInteractionCheck(prev => ({ ...prev, result: data }));
             } else {
-                const simulatedResult = {
-                    interaction: Math.random() > 0.5 ? 'Moderate' : 'Minor',
-                    severity: Math.random() > 0.7 ? 'High' : Math.random() > 0.4 ? 'Moderate' : 'Low',
-                    description: 'Potential interaction detected. Monitor patient closely.',
-                    recommendations: 'Consider alternative therapy or adjust dosage.'
-                };
-                setInteractionCheck(prev => ({ ...prev, result: simulatedResult }));
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to check interactions');
             }
         } catch (error) {
             console.error('Error checking interactions:', error);
-            const simulatedResult = {
-                interaction: 'Minor',
-                severity: 'Low',
-                description: 'Limited data available. Use with caution.',
-                recommendations: 'Monitor patient for adverse effects.'
-            };
-            setInteractionCheck(prev => ({ ...prev, result: simulatedResult }));
+            setError(`Failed to check interactions: ${error.message}`);
         }
     };
 
@@ -866,6 +767,7 @@ const AdminDashboard = () => {
     const loadDashboardData = async () => {
         try {
             setLoading(true);
+            setError('');
             const token = localStorage.getItem('token');
             
             if (!token) {
@@ -874,64 +776,118 @@ const AdminDashboard = () => {
                 return;
             }
 
-            // Load pending approvals
-            const pendingResponse = await fetch(`${API_URL}/admin/pending-approvals`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                    'Cache-Control': 'no-cache'
-                }
-            });
+            console.log('🔄 Loading dashboard data...');
 
-            if (pendingResponse.ok) {
-                const pendingData = await pendingResponse.json();
-                const usersList = pendingData.users || [];
-                
-                setPendingUsers(usersList);
-                setRealPendingUsers(usersList);
-                
-                setStats(prev => ({
-                    ...prev,
-                    pending_approvals: usersList.length
-                }));
+            // First, test the connection using /api/health endpoint
+            try {
+                const testResponse = await fetch(`${API_URL}/api/health`);
+                if (!testResponse.ok) {
+                    throw new Error(`Backend connection failed: ${testResponse.status}`);
+                }
+                console.log('✅ Backend connection successful');
+            } catch (testError) {
+                console.error('❌ Backend connection error:', testError);
+                setError(`Cannot connect to backend server. Make sure it's running at ${API_URL}`);
+                return;
+            }
+
+            // Load pending approvals
+            try {
+                const pendingResponse = await fetch(`${API_URL}/api/admin/pending-approvals`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (pendingResponse.ok) {
+                    const pendingData = await pendingResponse.json();
+                    const usersList = pendingData.users || [];
+                    
+                    console.log(`📋 Found ${usersList.length} pending approvals`);
+                    
+                    setPendingUsers(usersList);
+                    setRealPendingUsers(usersList);
+                    
+                    setStats(prev => ({
+                        ...prev,
+                        pending_approvals: usersList.length
+                    }));
+                } else {
+                    console.warn('Pending approvals fetch failed:', pendingResponse.status);
+                }
+            } catch (pendingError) {
+                console.error('Error loading pending approvals:', pendingError);
             }
 
             // Load stats
-            const statsResponse = await fetch(`${API_URL}/admin/stats`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+            try {
+                const statsResponse = await fetch(`${API_URL}/api/admin/stats`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (statsResponse.ok) {
+                    const statsData = await statsResponse.json();
+                    if (statsData.stats) {
+                        console.log('📊 Stats loaded:', statsData.stats);
+                        setStats(prev => ({
+                            ...prev,
+                            ...statsData.stats
+                        }));
+                    }
                 }
-            });
-            
-            if (statsResponse.ok) {
-                const statsData = await statsResponse.json();
-                if (statsData.stats) {
-                    setStats(prev => ({
-                        ...prev,
-                        ...statsData.stats
-                    }));
-                }
+            } catch (statsError) {
+                console.error('Error loading stats:', statsError);
             }
 
             // Load all users
-            const usersResponse = await fetch(`${API_URL}/admin/users`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+            try {
+                const usersResponse = await fetch(`${API_URL}/api/admin/users`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (usersResponse.ok) {
+                    const usersData = await usersResponse.json();
+                    if (usersData.users) {
+                        console.log(`👥 Loaded ${usersData.users.length} users`);
+                        setUserManagement(usersData.users);
+                    }
                 }
-            });
-            
-            if (usersResponse.ok) {
-                const usersData = await usersResponse.json();
-                if (usersData.users) {
-                    setUserManagement(usersData.users);
-                }
+            } catch (usersError) {
+                console.error('Error loading users:', usersError);
             }
+
+            // Add a sample activity
+            const sampleActivity = {
+                id: Date.now(),
+                user_name: currentUser?.full_name || 'Admin',
+                action_type: 'view_dashboard',
+                description: 'Viewed admin dashboard',
+                created_at: new Date().toISOString()
+            };
+            setRecentActivities(prev => [sampleActivity, ...prev.slice(0, 9)]);
 
         } catch (error) {
             console.error('Dashboard load error:', error);
-            setError('Failed to load dashboard data.');
+            setError(`Failed to load dashboard data: ${error.message}`);
+            
+            // Show helpful error message
+            const errorDiv = document.createElement('div');
+            errorDiv.innerHTML = `
+                <div style="position: fixed; top: 20px; right: 20px; background: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px; z-index: 1000; border: 1px solid #f5c6cb;">
+                <strong>Connection Error</strong><br>
+                ${error.message}<br>
+                <small>API URL: ${API_URL}</small>
+                </div>
+            `;
+            document.body.appendChild(errorDiv);
+            setTimeout(() => errorDiv.remove(), 5000);
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -943,12 +899,17 @@ const AdminDashboard = () => {
         try {
             const token = localStorage.getItem('token');
             
+            if (!token) {
+                setError('Authentication required');
+                return;
+            }
+
             setProcessingApproval(prev => ({ ...prev, [userId]: true }));
             
             const userToApprove = realPendingUsers.find(u => u.id === userId || u.email === userEmail);
             
             if (!userToApprove) {
-                alert('User not found in pending list');
+                setError('User not found in pending list');
                 setProcessingApproval(prev => ({ ...prev, [userId]: false }));
                 return;
             }
@@ -964,7 +925,7 @@ const AdminDashboard = () => {
                 return;
             }
 
-            const approveResponse = await fetch(`${API_URL}/admin/users/${userToApprove.id}/approve`, {
+            const approveResponse = await fetch(`${API_URL}/api/admin/users/${userToApprove.id}/approve`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -976,7 +937,6 @@ const AdminDashboard = () => {
             try {
                 responseData = await approveResponse.json();
             } catch (parseError) {
-                const textResponse = await approveResponse.text();
                 responseData = { error: 'Invalid response from server' };
             }
             
@@ -990,7 +950,8 @@ const AdminDashboard = () => {
                 };
                 setRecentActivities(prev => [newActivity, ...prev]);
                 
-                alert(`USER APPROVED SUCCESSFULLY!\n\n${userToApprove.full_name}\n${userToApprove.email}\n\nThey can now login to the system.`);
+                setSuccessMessage(`User approved successfully! ${userToApprove.email} can now login.`);
+                setTimeout(() => setSuccessMessage(''), 5000);
                 
                 setPendingUsers(prev => prev.filter(user => user.id !== userToApprove.id));
                 setRealPendingUsers(prev => prev.filter(user => user.id !== userToApprove.id));
@@ -1011,11 +972,11 @@ const AdminDashboard = () => {
                 }, 1000);
                 
             } else {
-                alert(`APPROVAL FAILED\n\nError: ${responseData.error || 'Unknown error'}\n\nPlease try again.`);
+                setError(`Approval failed: ${responseData.error || 'Unknown error'}`);
                 setApprovalIssueDetected(true);
             }
         } catch (error) {
-            alert(`Network error: ${error.message}\n\nPlease check backend connection.`);
+            setError(`Network error: ${error.message}`);
             setApprovalIssueDetected(true);
         } finally {
             setProcessingApproval(prev => ({ ...prev, [userId]: false }));
@@ -1027,10 +988,15 @@ const AdminDashboard = () => {
         try {
             const token = localStorage.getItem('token');
             
+            if (!token) {
+                setError('Authentication required');
+                return;
+            }
+
             const userToReject = realPendingUsers.find(u => u.id === userId || u.email === userEmail);
             
             if (!userToReject) {
-                alert('User not found in pending list');
+                setError('User not found in pending list');
                 return;
             }
 
@@ -1044,7 +1010,7 @@ const AdminDashboard = () => {
                 return;
             }
 
-            const response = await fetch(`${API_URL}/admin/users/${userToReject.id}/reject`, {
+            const response = await fetch(`${API_URL}/api/admin/users/${userToReject.id}/reject`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -1062,16 +1028,17 @@ const AdminDashboard = () => {
                 };
                 setRecentActivities(prev => [newActivity, ...prev]);
                 
-                alert(`User rejected and deleted!\n\n${userToReject.full_name} (${userToReject.email})`);
+                setSuccessMessage(`User rejected and deleted!`);
+                setTimeout(() => setSuccessMessage(''), 5000);
                 
                 setForceRefresh(prev => prev + 1);
             } else {
                 const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-                alert(`Error: ${errorData.error || 'Failed to reject user'}`);
+                setError(`Error: ${errorData.error || 'Failed to reject user'}`);
             }
         } catch (error) {
             console.error('Error rejecting user:', error);
-            alert('Failed to reject user.');
+            setError('Failed to reject user.');
         }
     };
 
@@ -1105,7 +1072,8 @@ const AdminDashboard = () => {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         
-        alert('Report downloaded successfully!');
+        setSuccessMessage('Report downloaded successfully!');
+        setTimeout(() => setSuccessMessage(''), 3000);
     };
 
     // ==================== HELPER FUNCTIONS ====================
@@ -1191,8 +1159,7 @@ const AdminDashboard = () => {
         switch(gender) {
             case 'male': return <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">Male</span>;
             case 'female': return <span className="px-2 py-1 text-xs bg-pink-100 text-pink-800 rounded">Female</span>;
-            case 'other': return <span className="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded">Other</span>;
-            default: return <span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded">Unknown</span>;
+          
         }
     };
 
@@ -1269,6 +1236,20 @@ const AdminDashboard = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+            {/* Success Message */}
+            {successMessage && (
+                <div className="bg-green-50 border-l-4 border-green-400 p-4 m-4 rounded-lg shadow">
+                    <div className="flex">
+                        <div className="flex-shrink-0">
+                            <FaCheckCircle className="h-5 w-5 text-green-400" />
+                        </div>
+                        <div className="ml-3">
+                            <p className="text-sm text-green-700">{successMessage}</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Error Message */}
             {error && (
                 <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 m-4 rounded-lg shadow">

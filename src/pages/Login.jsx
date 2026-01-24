@@ -5,7 +5,9 @@ import {
     FaSpinner, FaUserCheck, FaBuilding 
 } from 'react-icons/fa';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+// IMPORTANT: Update this URL to your actual backend URL
+// If using Vercel, it might be: https://pharmacare-backend.vercel.app
+const API_URL = import.meta.env.VITE_API_URL;
 
 const Login = () => {
     const navigate = useNavigate();
@@ -25,20 +27,37 @@ const Login = () => {
         
         // Check if user is already logged in
         const token = localStorage.getItem('token');
+        const userRole = localStorage.getItem('userRole');
+        
         if (token) {
-            navigate('/dashboard');
+            // Redirect based on role
+            if (userRole === 'admin') {
+                navigate('/admin/dashboard');
+            } else {
+                navigate('/dashboard');
+            }
         }
     }, [navigate]);
 
     const checkBackendStatus = async () => {
         try {
-            const response = await fetch(`${API_URL}/health`);
+            console.log('🔍 Checking backend connection...');
+            const response = await fetch(`${API_URL}/health`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            
             if (response.ok) {
                 setBackendStatus('online');
+                console.log('✅ Backend is online');
             } else {
                 setBackendStatus('offline');
+                console.log('❌ Backend health check failed');
             }
         } catch (error) {
+            console.error('❌ Error checking backend:', error);
             setBackendStatus('offline');
         }
     };
@@ -55,6 +74,8 @@ const Login = () => {
         }
 
         try {
+            console.log('🔐 Attempting login for:', formData.email);
+            
             const response = await fetch(`${API_URL}/auth/login`, {
                 method: 'POST',
                 headers: {
@@ -69,6 +90,10 @@ const Login = () => {
             const data = await response.json();
             
             if (!response.ok) {
+                // Handle specific error cases
+                if (data.error?.includes('pending approval')) {
+                    throw new Error('Your account is pending admin approval. Please wait for approval.');
+                }
                 throw new Error(data.error || data.message || 'Login failed');
             }
 
@@ -76,28 +101,65 @@ const Login = () => {
                 throw new Error(data.error || 'Login failed');
             }
 
+            console.log('✅ Login successful:', data);
+
             // Store authentication data
             localStorage.setItem('token', data.token);
             if (data.user) {
                 localStorage.setItem('user', JSON.stringify(data.user));
                 localStorage.setItem('userRole', data.user.role || '');
                 localStorage.setItem('userId', data.user.id || '');
+                localStorage.setItem('userType', data.user_type || data.user.account_type || 'individual');
+            }
+
+            // Verify the token works
+            try {
+                const verifyResponse = await fetch(`${API_URL}/auth/me`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${data.token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (verifyResponse.ok) {
+                    console.log('✅ Token verified successfully');
+                }
+            } catch (verifyError) {
+                console.warn('⚠️ Token verification failed:', verifyError);
             }
 
             // Redirect based on role
             const role = data.user?.role;
+            const accountType = data.user?.account_type;
+            
+            console.log('🔄 Redirecting user:', { role, accountType });
+            
             if (role === 'admin') {
-                window.location.href = '/admin/dashboard';
+                navigate('/admin/dashboard');
+            } else if (accountType === 'company_user') {
+                navigate('/company/dashboard');
             } else {
-                window.location.href = '/dashboard';
+                navigate('/dashboard');
             }
 
         } catch (err) {
-            setError(err.message || 'Login failed. Please try again.');
-            console.error('Login error:', err);
+            console.error('❌ Login error:', err);
+            setError(err.message || 'Login failed. Please check your credentials and try again.');
         } finally {
             setLoading(false);
         }
+    };
+
+    // Debug function to test login
+    const testLogin = async (email, password) => {
+        setFormData({ email, password });
+        console.log(`🧪 Testing login with: ${email}`);
+        
+        // Auto-submit after 1 second
+        setTimeout(() => {
+            handleSubmit(new Event('submit'));
+        }, 1000);
     };
 
     return (
@@ -222,6 +284,27 @@ const Login = () => {
                         </button>
                     </form>
 
+                    {/* Quick Test Logins (For Development Only) */}
+                    {process.env.NODE_ENV === 'development' && (
+                        <div className="mt-6 p-4 bg-gray-50 rounded-xl">
+                            <p className="text-sm text-gray-600 mb-2">Quick Test (Dev Only):</p>
+                            <div className="flex flex-wrap gap-2">
+                                <button
+                                    onClick={() => testLogin('admin@pharmacare.com', 'Admin@123')}
+                                    className="px-3 py-1 text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 rounded"
+                                >
+                                    Admin
+                                </button>
+                                <button
+                                    onClick={() => testLogin('test@example.com', 'password123')}
+                                    className="px-3 py-1 text-xs bg-green-100 hover:bg-green-200 text-green-700 rounded"
+                                >
+                                    Test User
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Registration Links */}
                     <div className="mt-8 pt-6 border-t border-gray-200">
                         <p className="text-center text-gray-600 text-sm mb-4">
@@ -250,11 +333,17 @@ const Login = () => {
                         <p className="text-xs text-gray-500">
                             Having trouble?{' '}
                             <button
-                                onClick={checkBackendStatus}
+                                onClick={() => {
+                                    checkBackendStatus();
+                                    console.log('Current API URL:', API_URL);
+                                }}
                                 className="text-blue-600 hover:text-blue-800 underline"
                             >
                                 Check connection
                             </button>
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1">
+                            API Endpoint: {API_URL}/auth/login
                         </p>
                     </div>
                 </div>

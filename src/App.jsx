@@ -34,7 +34,7 @@ import KnowledgeBaseLayout from "./components/KnowledgeBase/KnowledgeBaseLayout"
 import ClinicalRulesAdmin from "./components/CDSS/ClinicalRulesAdmin";
 
 // Use import.meta.env for Vite
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_URL = import.meta.env.VITE_API_URL;
 
 // Helper function to clear invalid auth
 const clearInvalidAuth = () => {

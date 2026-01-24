@@ -13,7 +13,7 @@ import {
     FaExternalLinkAlt, FaSpinner
 } from 'react-icons/fa';
 
-const API_URL = 'http://localhost:3000/api';
+const API_URL = import.meta.env.VITE_API_URL;
 
 // Define subscription plans with updated pricing
 const SUBSCRIPTION_PLANS = [
