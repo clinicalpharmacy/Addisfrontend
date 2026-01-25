@@ -32,7 +32,9 @@ import {
     FaRulerVertical,
     FaCapsules,
     FaProcedures,
-    FaPrescriptionBottleAlt
+    FaPrescriptionBottleAlt,
+    FaWifi,
+    FaSync
 } from 'react-icons/fa';
 
 // Import components
@@ -41,6 +43,10 @@ import DRNAssessment from '../components/Patient/DRNAssessment';
 import PhAssistPlan from '../components/Patient/PhAssistPlan';
 import PatientOutcome from '../components/Patient/PatientOutcome';
 import CostSection from '../components/Patient/CostSection';
+
+// API Base URL - Updated to use Vercel backend
+const API_BASE_URL = 'https://addis-backend-henna.vercel.app/api';
+console.log('Using API URL:', API_BASE_URL);
 
 // Create memoized LabInputField component
 const LabInputField = React.memo(({ 
@@ -114,6 +120,9 @@ const PatientDetails = () => {
     const [showPediatricLabs, setShowPediatricLabs] = useState(false);
     const [currentPatientCode, setCurrentPatientCode] = useState('');
     const [error, setError] = useState(null);
+    const [isOnline, setIsOnline] = useState(navigator.onLine);
+    const [backendStatus, setBackendStatus] = useState('checking');
+    const [retryCount, setRetryCount] = useState(0);
     
     // Form state with all complete fields
     const [formData, setFormData] = useState({
@@ -301,9 +310,62 @@ const PatientDetails = () => {
         console.log(`🔍 [PatientDetails] ${message}`, data ? data : '');
     }, []);
 
+    // Network and backend status monitoring
+    useEffect(() => {
+        const handleOnline = () => {
+            setIsOnline(true);
+            console.log('Device is online');
+        };
+        
+        const handleOffline = () => {
+            setIsOnline(false);
+            console.log('Device is offline');
+        };
+        
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+        
+        // Check backend status periodically
+        const checkBackendStatus = async () => {
+            try {
+                console.log('Checking backend status at:', `${API_BASE_URL}/health`);
+                const response = await fetch(`${API_BASE_URL}/health`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    setBackendStatus('online');
+                    console.log('Backend is online');
+                } else {
+                    setBackendStatus('offline');
+                    console.log('Backend returned error status:', response.status);
+                }
+            } catch (error) {
+                setBackendStatus('offline');
+                console.log('Backend is offline:', error.message);
+            }
+        };
+        
+        // Initial check
+        checkBackendStatus();
+        
+        // Check every 30 seconds
+        const intervalId = setInterval(checkBackendStatus, 30000);
+        
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+            clearInterval(intervalId);
+        };
+    }, []);
+
     // Initialize component
     useEffect(() => {
         debugLog('Component mounted with patientCode:', patientCode);
+        debugLog('API Base URL:', API_BASE_URL);
         
         // Check URL for edit mode
         const searchParams = new URLSearchParams(location.search);
@@ -323,6 +385,42 @@ const PatientDetails = () => {
             sessionStorage.removeItem('editPatientCode');
         };
     }, [patientCode, location.search, debugLog]);
+
+    // Enhanced fetch with retry logic
+    const fetchWithRetry = useCallback(async (url, options, maxRetries = 3) => {
+        let lastError;
+        
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                debugLog(`Attempt ${attempt}/${maxRetries} to fetch ${url}`);
+                
+                const response = await fetch(url, options);
+                
+                if (response.ok) {
+                    return response;
+                }
+                
+                // Don't retry on 404 or 401 errors
+                if (response.status === 404 || response.status === 401) {
+                    return response;
+                }
+                
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            } catch (error) {
+                lastError = error;
+                debugLog(`Attempt ${attempt} failed:`, error.message);
+                
+                if (attempt < maxRetries) {
+                    // Wait before retrying (exponential backoff)
+                    const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000);
+                    debugLog(`Waiting ${delay}ms before retry...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
+        }
+        
+        throw lastError;
+    }, [debugLog]);
 
     const generatePatientCode = useCallback(() => {
         const timestamp = Date.now().toString().slice(-6);
@@ -462,6 +560,7 @@ const PatientDetails = () => {
             setError(null);
             
             debugLog('Starting patient fetch for:', patientCode);
+            debugLog('API URL will be:', `${API_BASE_URL}/patients/code/${patientCode}`);
             
             const token = localStorage.getItem('token');
             if (!token) {
@@ -497,7 +596,10 @@ const PatientDetails = () => {
             // CASE 2: Fetching existing patient
             debugLog('Fetching existing patient from API...');
             
-            const response = await fetch(`http://localhost:3000/api/patients/code/${patientCode}`, {
+            const url = `${API_BASE_URL}/patients/code/${patientCode}`;
+            debugLog('Fetch URL:', url);
+            
+            const response = await fetchWithRetry(url, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -521,6 +623,10 @@ const PatientDetails = () => {
                     if (isEditMode) {
                         setIsEditing(true);
                     }
+                } else if (result.data) {
+                    // Handle case where patient is returned directly in data
+                    debugLog('✅ Patient found in data:', result.data.patient_code);
+                    loadPatientData(result.data);
                 } else {
                     throw new Error('Patient data not found in response');
                 }
@@ -539,13 +645,21 @@ const PatientDetails = () => {
             }
         } catch (error) {
             debugLog('❌ Error fetching patient:', error);
-            setError(`Failed to load patient: ${error.message}`);
+            
+            // Check if it's a network error
+            if (error.message.includes('Network') || error.message.includes('fetch') || error.message.includes('Failed')) {
+                setError('Cannot connect to server. Please check your internet connection and try again.');
+                setRetryCount(prev => prev + 1);
+            } else {
+                setError(`Failed to load patient: ${error.message}`);
+            }
+            
             setIsNewPatient(true);
             setIsEditing(true);
         } finally {
             setLoading(false);
         }
-    }, [patientCode, navigate, debugLog, generatePatientCode, location.search]);
+    }, [patientCode, navigate, debugLog, generatePatientCode, location.search, fetchWithRetry]);
 
     // FIXED: loadPatientData with proper date validation
     const loadPatientData = useCallback((patientData) => {
@@ -1012,6 +1126,34 @@ const PatientDetails = () => {
         return '';
     }, []);
 
+    // Test backend connection
+    const testBackendConnection = useCallback(async () => {
+        try {
+            console.log('Testing backend connection to:', API_BASE_URL);
+            const response = await fetch(`${API_BASE_URL}/health`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('✅ Backend is healthy:', data);
+                setBackendStatus('online');
+                return true;
+            } else {
+                console.log('❌ Backend returned error:', response.status);
+                setBackendStatus('offline');
+                return false;
+            }
+        } catch (error) {
+            console.log('❌ Backend connection failed:', error.message);
+            setBackendStatus('offline');
+            return false;
+        }
+    }, []);
+
     // ✅ FIXED: handleSave with proper error handling and data cleaning
     const handleSave = useCallback(async (section = 'all') => {
         try {
@@ -1021,6 +1163,13 @@ const PatientDetails = () => {
             if (!token) {
                 alert('Please login again');
                 navigate('/login');
+                return;
+            }
+
+            // Check backend connection first
+            const isBackendOnline = await testBackendConnection();
+            if (!isBackendOnline) {
+                alert('Cannot connect to server. Please check your internet connection and try again.');
                 return;
             }
 
@@ -1271,17 +1420,17 @@ const PatientDetails = () => {
             let endpoint, method;
             
             if (isNewPatient) {
-                endpoint = 'http://localhost:3000/api/patients';
+                endpoint = `${API_BASE_URL}/patients`;
                 method = 'POST';
             } else {
-                endpoint = `http://localhost:3000/api/patients/code/${savePatientCode}`;
+                endpoint = `${API_BASE_URL}/patients/code/${savePatientCode}`;
                 method = 'PUT';
                 delete cleanedPatientData.patient_code;
             }
 
             console.log(`${method} ${endpoint}`);
 
-            const response = await fetch(endpoint, {
+            const response = await fetchWithRetry(endpoint, {
                 method: method,
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -1313,7 +1462,7 @@ const PatientDetails = () => {
                         setIsNewPatient(false);
                         delete cleanedPatientData.patient_code;
                         
-                        const updateResponse = await fetch(`http://localhost:3000/api/patients/code/${savePatientCode}`, {
+                        const updateResponse = await fetchWithRetry(`${API_BASE_URL}/patients/code/${savePatientCode}`, {
                             method: 'PUT',
                             headers: {
                                 'Authorization': `Bearer ${token}`,
@@ -1418,7 +1567,7 @@ const PatientDetails = () => {
             
             alert('Error saving patient: ' + errorMessage);
         }
-    }, [isNewPatient, formData, getCurrentPatientCode, generatePatientCode, navigate, patientCode, isValidDate, calculateAgeInDays, calculateAge, determinePatientType]);
+    }, [isNewPatient, formData, getCurrentPatientCode, generatePatientCode, navigate, patientCode, isValidDate, calculateAgeInDays, calculateAge, determinePatientType, testBackendConnection, fetchWithRetry]);
 
     // Helper functions
     const handleSaveAll = useCallback(() => handleSave('all'), [handleSave]);
@@ -1445,7 +1594,10 @@ const PatientDetails = () => {
                 return;
             }
             
-            const response = await fetch(`http://localhost:3000/api/patients/code/${deletePatientCode}`, {
+            const url = `${API_BASE_URL}/patients/code/${deletePatientCode}`;
+            console.log('Delete URL:', url);
+            
+            const response = await fetchWithRetry(url, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -1465,7 +1617,13 @@ const PatientDetails = () => {
             debugLog('Error deleting patient:', error);
             alert('Error deleting patient: ' + error.message);
         }
-    }, [getCurrentPatientCode, navigate, debugLog]);
+    }, [getCurrentPatientCode, navigate, debugLog, fetchWithRetry]);
+
+    // Retry fetching data
+    const handleRetry = useCallback(() => {
+        setRetryCount(0);
+        fetchPatientData();
+    }, [fetchPatientData]);
 
     // Memoize the render functions to prevent infinite re-renders
     const renderVitalsSection = useCallback(() => {
@@ -3825,16 +3983,63 @@ const PatientDetails = () => {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                <span className="ml-3 text-gray-600">Loading patient data...</span>
+            <div className="flex flex-col items-center justify-center h-screen">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+                <span className="text-gray-600 mb-2">Loading patient data...</span>
+                {!isOnline && (
+                    <div className="text-yellow-600 text-sm flex items-center gap-1">
+                        <FaExclamationTriangle /> You are currently offline
+                    </div>
+                )}
             </div>
         );
     }
 
     return (
         <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+            {/* Connection Status Banner */}
+            {(!isOnline || backendStatus === 'offline') && (
+                <div className="mb-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-lg shadow">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                            <FaWifi className="mr-2" />
+                            <p className="font-medium">
+                                {!isOnline ? 'You are offline. ' : ''}
+                                {backendStatus === 'offline' ? 'Cannot connect to server. ' : ''}
+                                Some features may be unavailable.
+                            </p>
+                        </div>
+                        {backendStatus === 'offline' && retryCount < 3 && (
+                            <button
+                                onClick={handleRetry}
+                                className="ml-4 text-sm bg-yellow-600 text-white px-3 py-1 rounded flex items-center gap-1"
+                            >
+                                <FaSync /> Retry
+                            </button>
+                        )}
+                    </div>
+                </div>
+            )}
+
             <div className="max-w-7xl mx-auto">
+                {/* Error Display */}
+                {error && (
+                    <div className="mb-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                                <FaExclamationTriangle className="mr-2" />
+                                <p>{error}</p>
+                            </div>
+                            <button
+                                onClick={handleRetry}
+                                className="ml-4 text-sm bg-red-600 text-white px-3 py-1 rounded flex items-center gap-1"
+                            >
+                                <FaSync /> Retry
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
@@ -3857,7 +4062,16 @@ const PatientDetails = () => {
                                 )}
                             </div>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
+                            <button
+                                onClick={() => {
+                                    console.log('Testing backend connection...');
+                                    testBackendConnection();
+                                }}
+                                className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg flex items-center gap-2"
+                            >
+                                <FaWifi /> Test Connection
+                            </button>
                             <button
                                 onClick={() => window.print()}
                                 className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg flex items-center gap-2"
@@ -3912,10 +4126,10 @@ const PatientDetails = () => {
                 </div>
 
                 {isEditing && (
-                    <div className="fixed bottom-6 right-6">
+                    <div className="fixed bottom-6 right-6 z-10">
                         <button
                             onClick={handleSaveAll}
-                            className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2"
+                            className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 transition-all duration-200 hover:scale-105"
                         >
                             <FaSave /> {isNewPatient ? 'Create Patient' : 'Save All Changes'}
                         </button>

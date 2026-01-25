@@ -34,7 +34,54 @@ import {
     FaPhone
 } from 'react-icons/fa';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+// Helper function for API calls
+const makeApiCall = async (endpoint, options = {}) => {
+    const token = localStorage.getItem('token');
+    
+    const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers,
+    };
+    
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    const url = `${API_URL}${endpoint}`;
+    console.log(`🌐 API Call: ${url}`);
+    
+    try {
+        const response = await fetch(url, {
+            ...options,
+            headers,
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`❌ API Error (${response.status}):`, errorText);
+            
+            if (response.status === 401) {
+                localStorage.clear();
+                window.location.href = '/login';
+                throw new Error('Session expired. Please login again.');
+            }
+            
+            throw new Error(`API Error ${response.status}: ${errorText || 'Unknown error'}`);
+        }
+        
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return await response.json();
+        }
+        
+        return await response.text();
+    } catch (error) {
+        console.error('🚨 Fetch Error:', error.message);
+        throw error;
+    }
+};
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
@@ -57,18 +104,13 @@ const AdminDashboard = () => {
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
     const [refreshing, setRefreshing] = useState(false);
-    const [apiErrors, setApiErrors] = useState({});
     const [forceRefresh, setForceRefresh] = useState(0);
     const [processingApproval, setProcessingApproval] = useState({});
     const [realPendingUsers, setRealPendingUsers] = useState([]);
-    const [approvalLogs, setApprovalLogs] = useState([]);
-    const [auditLogs, setAuditLogs] = useState([]);
     const [showUserDetails, setShowUserDetails] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterRole, setFilterRole] = useState('all');
     const [filterStatus, setFilterStatus] = useState('all');
-    const [approvalIssueDetected, setApprovalIssueDetected] = useState(false);
-    const [selectedPatient, setSelectedPatient] = useState(null);
 
     // Medication Knowledge Base States
     const [medications, setMedications] = useState([]);
@@ -208,7 +250,6 @@ const AdminDashboard = () => {
             const user = JSON.parse(userData);
 
             if (user.role !== 'admin') {
-                // Redirect non-admin users to their dashboard
                 if (user.role === 'company_admin') {
                     navigate('/company/dashboard');
                 } else {
@@ -219,33 +260,99 @@ const AdminDashboard = () => {
 
             setCurrentUser(user);
 
-            // Verify with backend
-            const response = await fetch(`${API_URL}/api/auth/me`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (response.ok) {
-                const data = await response.json();
+            // Verify with backend using makeApiCall
+            try {
+                const data = await makeApiCall('/auth/me');
                 if (data.user) {
                     localStorage.setItem('user', JSON.stringify(data.user));
                     setCurrentUser(data.user);
                 }
-            } else if (response.status === 403 || response.status === 401) {
-                setError('Authentication failed. Please login again.');
-                setTimeout(() => {
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('user');
-                    navigate('/login');
-                }, 3000);
-            } else {
-                console.warn('Backend connection issue. Some features may be limited.');
+            } catch (authError) {
+                console.warn('Backend auth check failed:', authError);
             }
         } catch (error) {
             console.error('Auth check error:', error);
-            setError('Network error. Please check backend connection.');
+            setError('Authentication error');
+        }
+    };
+
+    // Load dashboard data
+    const loadDashboardData = async () => {
+        try {
+            setLoading(true);
+            setError('');
+            
+            // Test connection first
+            try {
+                const testResponse = await fetch(API_URL.replace('/api', '') + '/health');
+                if (!testResponse.ok) {
+                    throw new Error(`Backend connection failed: ${testResponse.status}`);
+                }
+                console.log('✅ Backend connection successful');
+            } catch (testError) {
+                console.error('❌ Backend connection error:', testError);
+                setError(`Cannot connect to backend server. Make sure it's running at ${API_URL.replace('/api', '')}`);
+                setLoading(false);
+                return;
+            }
+
+            const token = localStorage.getItem('token');
+            if (!token) {
+                navigate('/login');
+                return;
+            }
+
+            // Load pending approvals
+            try {
+                const pendingData = await makeApiCall('/admin/pending-approvals');
+                const usersList = pendingData.users || [];
+                setPendingUsers(usersList);
+                setRealPendingUsers(usersList);
+                setStats(prev => ({ ...prev, pending_approvals: usersList.length }));
+            } catch (pendingError) {
+                console.warn('Could not load pending approvals:', pendingError);
+                setPendingUsers([]);
+                setRealPendingUsers([]);
+            }
+
+            // Load stats
+            try {
+                const statsData = await makeApiCall('/admin/stats');
+                if (statsData.stats) {
+                    setStats(prev => ({ ...prev, ...statsData.stats }));
+                }
+            } catch (statsError) {
+                console.warn('Could not load stats:', statsError);
+            }
+
+            // Load all users
+            try {
+                const usersData = await makeApiCall('/admin/users');
+                if (usersData.users) {
+                    setUserManagement(usersData.users);
+                    setStats(prev => ({ ...prev, total_users: usersData.users.length }));
+                }
+            } catch (usersError) {
+                console.warn('Could not load users:', usersError);
+                setUserManagement([]);
+            }
+
+            // Add sample activity
+            const sampleActivity = {
+                id: Date.now(),
+                user_name: currentUser?.full_name || 'Admin',
+                action_type: 'view_dashboard',
+                description: 'Viewed admin dashboard',
+                created_at: new Date().toISOString()
+            };
+            setRecentActivities(prev => [sampleActivity, ...prev.slice(0, 9)]);
+
+        } catch (error) {
+            console.error('Dashboard load error:', error);
+            setError(`Failed to load dashboard: ${error.message}`);
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
         }
     };
 
@@ -253,69 +360,45 @@ const AdminDashboard = () => {
     const loadMedications = async () => {
         try {
             setLoadingMedications(true);
-            const token = localStorage.getItem('token');
+            setError('');
             
-            if (!token) {
-                setError('Authentication required');
-                return;
-            }
-
-            const response = await fetch(`${API_URL}/api/admin/medications`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                setMedications(data.medications || data || []);
-                calculateMedicationStats(data.medications || data || []);
-            } else if (response.status === 403) {
-                setError('Access denied. Admin access required.');
-            } else {
-                console.warn('Could not load medications, using sample data');
+            try {
+                const data = await makeApiCall('/admin/medications');
+                const meds = data.medications || data || [];
+                setMedications(meds);
+                calculateMedicationStats(meds);
+            } catch (error) {
+                console.warn('Using sample medications:', error.message);
                 setMedications(sampleMedications);
                 calculateMedicationStats(sampleMedications);
             }
         } catch (error) {
             console.error('Error loading medications:', error);
-            setMedications(sampleMedications);
-            calculateMedicationStats(sampleMedications);
+            setError(`Failed to load medications: ${error.message}`);
         } finally {
             setLoadingMedications(false);
         }
     };
 
+    // Load patients
     const loadPatients = async () => {
         try {
             setLoadingPatients(true);
-            const token = localStorage.getItem('token');
+            setError('');
             
-            if (!token) {
-                setError('Authentication required');
-                return;
-            }
-
-            const response = await fetch(`${API_URL}/api/admin/all-patients`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                setPatients(data.patients || []);
-                calculatePatientStats(data.patients || []);
-            } else if (response.status === 403) {
-                setError('Access denied. You must be an admin to view this page.');
-            } else {
+            try {
+                const data = await makeApiCall('/admin/all-patients');
+                const patientsList = data.patients || [];
+                setPatients(patientsList);
+                calculatePatientStats(patientsList);
+            } catch (error) {
+                console.warn('No patients loaded:', error.message);
                 setPatients([]);
+                calculatePatientStats([]);
             }
         } catch (error) {
             console.error('Error loading patients:', error);
-            setPatients([]);
+            setError(`Failed to load patients: ${error.message}`);
         } finally {
             setLoadingPatients(false);
         }
@@ -380,8 +463,8 @@ const AdminDashboard = () => {
         const searchTermLower = patientFilter.toLowerCase();
         return (
             patient.full_name.toLowerCase().includes(searchTermLower) ||
-            patient.patient_code.toLowerCase().includes(searchTermLower) ||
-            patient.diagnosis.toLowerCase().includes(searchTermLower) ||
+            (patient.patient_code && patient.patient_code.toLowerCase().includes(searchTermLower)) ||
+            (patient.diagnosis && patient.diagnosis.toLowerCase().includes(searchTermLower)) ||
             (patient.contact_number && patient.contact_number.toLowerCase().includes(searchTermLower))
         );
     }).sort((a, b) => {
@@ -418,59 +501,50 @@ const AdminDashboard = () => {
     // Add new medication
     const handleAddMedication = async () => {
         try {
-            const token = localStorage.getItem('token');
+            setError('');
             
-            if (!token) {
-                setError('Authentication required');
+            if (!newMedication.name || !newMedication.generic_name) {
+                setError('Medication name and generic name are required');
                 return;
             }
 
-            const response = await fetch(`${API_URL}/api/admin/medications`, {
+            const data = await makeApiCall('/admin/medications', {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
                 body: JSON.stringify(newMedication)
             });
 
-            if (response.ok) {
-                const data = await response.json();
-                setMedications([data.medication, ...medications]);
-                setShowAddMedication(false);
-                setNewMedication({
-                    name: '',
-                    generic_name: '',
-                    brand_names: '',
-                    dosage_forms: '',
-                    strength: '',
-                    route: '',
-                    class: '',
-                    indications: '',
-                    contraindications: '',
-                    side_effects: '',
-                    interactions: '',
-                    storage: '',
-                    pregnancy_category: '',
-                    schedule: '',
-                    notes: ''
-                });
-                
-                const newActivity = {
-                    id: Date.now(),
-                    user_name: currentUser?.full_name || 'Admin',
-                    action_type: 'create',
-                    description: `Added medication: ${newMedication.name}`,
-                    created_at: new Date().toISOString()
-                };
-                setRecentActivities(prev => [newActivity, ...prev]);
-                
-                setSuccessMessage('Medication added successfully!');
-                setTimeout(() => setSuccessMessage(''), 3000);
-            } else {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to add medication');
-            }
+            setMedications([data.medication || data, ...medications]);
+            setShowAddMedication(false);
+            setNewMedication({
+                name: '',
+                generic_name: '',
+                brand_names: '',
+                dosage_forms: '',
+                strength: '',
+                route: '',
+                class: '',
+                indications: '',
+                contraindications: '',
+                side_effects: '',
+                interactions: '',
+                storage: '',
+                pregnancy_category: '',
+                schedule: '',
+                notes: ''
+            });
+            
+            const newActivity = {
+                id: Date.now(),
+                user_name: currentUser?.full_name || 'Admin',
+                action_type: 'create',
+                description: `Added medication: ${newMedication.name}`,
+                created_at: new Date().toISOString()
+            };
+            setRecentActivities(prev => [newActivity, ...prev]);
+            
+            setSuccessMessage('Medication added successfully!');
+            setTimeout(() => setSuccessMessage(''), 3000);
+
         } catch (error) {
             console.error('Error adding medication:', error);
             setError(`Failed to add medication: ${error.message}`);
@@ -480,10 +554,10 @@ const AdminDashboard = () => {
     // Add new patient (admin can add for any user)
     const handleAddPatient = async () => {
         try {
-            const token = localStorage.getItem('token');
+            setError('');
             
-            if (!token) {
-                setError('Authentication required');
+            if (!newPatient.full_name) {
+                setError('Patient name is required');
                 return;
             }
 
@@ -493,44 +567,35 @@ const AdminDashboard = () => {
                 user_id: currentUser?.id || 'admin'
             };
 
-            const response = await fetch(`${API_URL}/api/patients`, {
+            const data = await makeApiCall('/patients', {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
                 body: JSON.stringify(patientData)
             });
 
-            if (response.ok) {
-                const data = await response.json();
-                setPatients([data.patient, ...patients]);
-                setShowPatientForm(false);
-                setNewPatient({
-                    full_name: '',
-                    age: '',
-                    gender: '',
-                    contact_number: '',
-                    address: '',
-                    diagnosis: '',
-                    is_active: true
-                });
-                
-                const newActivity = {
-                    id: Date.now(),
-                    user_name: currentUser?.full_name || 'Admin',
-                    action_type: 'create',
-                    description: `Added patient: ${data.patient.full_name}`,
-                    created_at: new Date().toISOString()
-                };
-                setRecentActivities(prev => [newActivity, ...prev]);
-                
-                setSuccessMessage('Patient added successfully!');
-                setTimeout(() => setSuccessMessage(''), 3000);
-            } else {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to add patient');
-            }
+            setPatients([data.patient || data, ...patients]);
+            setShowPatientForm(false);
+            setNewPatient({
+                full_name: '',
+                age: '',
+                gender: '',
+                contact_number: '',
+                address: '',
+                diagnosis: '',
+                is_active: true
+            });
+            
+            const newActivity = {
+                id: Date.now(),
+                user_name: currentUser?.full_name || 'Admin',
+                action_type: 'create',
+                description: `Added patient: ${data.patient?.full_name || newPatient.full_name}`,
+                created_at: new Date().toISOString()
+            };
+            setRecentActivities(prev => [newActivity, ...prev]);
+            
+            setSuccessMessage('Patient added successfully!');
+            setTimeout(() => setSuccessMessage(''), 3000);
+
         } catch (error) {
             console.error('Error adding patient:', error);
             setError(`Failed to add patient: ${error.message}`);
@@ -540,44 +605,30 @@ const AdminDashboard = () => {
     // Update medication
     const handleUpdateMedication = async () => {
         try {
-            const token = localStorage.getItem('token');
+            setError('');
             
-            if (!token) {
-                setError('Authentication required');
-                return;
-            }
-
-            const response = await fetch(`${API_URL}/api/admin/medications/${editingMedication.id}`, {
+            const data = await makeApiCall(`/admin/medications/${editingMedication.id}`, {
                 method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
                 body: JSON.stringify(editingMedication)
             });
 
-            if (response.ok) {
-                const data = await response.json();
-                setMedications(medications.map(med => 
-                    med.id === editingMedication.id ? data.medication : med
-                ));
-                setEditingMedication(null);
-                
-                const newActivity = {
-                    id: Date.now(),
-                    user_name: currentUser?.full_name || 'Admin',
-                    action_type: 'update',
-                    description: `Updated medication: ${editingMedication.name}`,
-                    created_at: new Date().toISOString()
-                };
-                setRecentActivities(prev => [newActivity, ...prev]);
-                
-                setSuccessMessage('Medication updated successfully!');
-                setTimeout(() => setSuccessMessage(''), 3000);
-            } else {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to update medication');
-            }
+            setMedications(medications.map(med => 
+                med.id === editingMedication.id ? (data.medication || data) : med
+            ));
+            setEditingMedication(null);
+            
+            const newActivity = {
+                id: Date.now(),
+                user_name: currentUser?.full_name || 'Admin',
+                action_type: 'update',
+                description: `Updated medication: ${editingMedication.name}`,
+                created_at: new Date().toISOString()
+            };
+            setRecentActivities(prev => [newActivity, ...prev]);
+            
+            setSuccessMessage('Medication updated successfully!');
+            setTimeout(() => setSuccessMessage(''), 3000);
+
         } catch (error) {
             console.error('Error updating medication:', error);
             setError(`Failed to update medication: ${error.message}`);
@@ -587,44 +638,30 @@ const AdminDashboard = () => {
     // Update patient
     const handleUpdatePatient = async () => {
         try {
-            const token = localStorage.getItem('token');
+            setError('');
             
-            if (!token) {
-                setError('Authentication required');
-                return;
-            }
-
-            const response = await fetch(`${API_URL}/api/patients/${editingPatient.id}`, {
+            const data = await makeApiCall(`/patients/${editingPatient.id}`, {
                 method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
                 body: JSON.stringify(editingPatient)
             });
 
-            if (response.ok) {
-                const data = await response.json();
-                setPatients(patients.map(patient => 
-                    patient.id === editingPatient.id ? data.patient : patient
-                ));
-                setEditingPatient(null);
-                
-                const newActivity = {
-                    id: Date.now(),
-                    user_name: currentUser?.full_name || 'Admin',
-                    action_type: 'update',
-                    description: `Updated patient: ${editingPatient.full_name}`,
-                    created_at: new Date().toISOString()
-                };
-                setRecentActivities(prev => [newActivity, ...prev]);
-                
-                setSuccessMessage('Patient updated successfully!');
-                setTimeout(() => setSuccessMessage(''), 3000);
-            } else {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to update patient');
-            }
+            setPatients(patients.map(patient => 
+                patient.id === editingPatient.id ? (data.patient || data) : patient
+            ));
+            setEditingPatient(null);
+            
+            const newActivity = {
+                id: Date.now(),
+                user_name: currentUser?.full_name || 'Admin',
+                action_type: 'update',
+                description: `Updated patient: ${editingPatient.full_name}`,
+                created_at: new Date().toISOString()
+            };
+            setRecentActivities(prev => [newActivity, ...prev]);
+            
+            setSuccessMessage('Patient updated successfully!');
+            setTimeout(() => setSuccessMessage(''), 3000);
+
         } catch (error) {
             console.error('Error updating patient:', error);
             setError(`Failed to update patient: ${error.message}`);
@@ -638,39 +675,24 @@ const AdminDashboard = () => {
         }
 
         try {
-            const token = localStorage.getItem('token');
-            
-            if (!token) {
-                setError('Authentication required');
-                return;
-            }
-
-            const response = await fetch(`${API_URL}/api/admin/medications/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+            await makeApiCall(`/admin/medications/${id}`, {
+                method: 'DELETE'
             });
 
-            if (response.ok) {
-                setMedications(medications.filter(med => med.id !== id));
-                
-                const newActivity = {
-                    id: Date.now(),
-                    user_name: currentUser?.full_name || 'Admin',
-                    action_type: 'delete',
-                    description: `Deleted medication: ${name}`,
-                    created_at: new Date().toISOString()
-                };
-                setRecentActivities(prev => [newActivity, ...prev]);
-                
-                setSuccessMessage('Medication deleted successfully!');
-                setTimeout(() => setSuccessMessage(''), 3000);
-            } else {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to delete medication');
-            }
+            setMedications(medications.filter(med => med.id !== id));
+            
+            const newActivity = {
+                id: Date.now(),
+                user_name: currentUser?.full_name || 'Admin',
+                action_type: 'delete',
+                description: `Deleted medication: ${name}`,
+                created_at: new Date().toISOString()
+            };
+            setRecentActivities(prev => [newActivity, ...prev]);
+            
+            setSuccessMessage('Medication deleted successfully!');
+            setTimeout(() => setSuccessMessage(''), 3000);
+
         } catch (error) {
             console.error('Error deleting medication:', error);
             setError(`Failed to delete medication: ${error.message}`);
@@ -684,39 +706,24 @@ const AdminDashboard = () => {
         }
 
         try {
-            const token = localStorage.getItem('token');
-            
-            if (!token) {
-                setError('Authentication required');
-                return;
-            }
-
-            const response = await fetch(`${API_URL}/api/patients/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+            await makeApiCall(`/patients/${id}`, {
+                method: 'DELETE'
             });
 
-            if (response.ok) {
-                setPatients(patients.filter(patient => patient.id !== id));
-                
-                const newActivity = {
-                    id: Date.now(),
-                    user_name: currentUser?.full_name || 'Admin',
-                    action_type: 'delete',
-                    description: `Deleted patient: ${name}`,
-                    created_at: new Date().toISOString()
-                };
-                setRecentActivities(prev => [newActivity, ...prev]);
-                
-                setSuccessMessage('Patient deleted successfully!');
-                setTimeout(() => setSuccessMessage(''), 3000);
-            } else {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to delete patient');
-            }
+            setPatients(patients.filter(patient => patient.id !== id));
+            
+            const newActivity = {
+                id: Date.now(),
+                user_name: currentUser?.full_name || 'Admin',
+                action_type: 'delete',
+                description: `Deleted patient: ${name}`,
+                created_at: new Date().toISOString()
+            };
+            setRecentActivities(prev => [newActivity, ...prev]);
+            
+            setSuccessMessage('Patient deleted successfully!');
+            setTimeout(() => setSuccessMessage(''), 3000);
+
         } catch (error) {
             console.error('Error deleting patient:', error);
             setError(`Failed to delete patient: ${error.message}`);
@@ -731,179 +738,24 @@ const AdminDashboard = () => {
         }
 
         try {
-            const token = localStorage.getItem('token');
-            
-            if (!token) {
-                setError('Authentication required');
-                return;
-            }
-
-            const response = await fetch(`${API_URL}/api/admin/check-interaction`, {
+            const data = await makeApiCall('/admin/check-interaction', {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
                 body: JSON.stringify({
                     med1: interactionCheck.medication1,
                     med2: interactionCheck.medication2
                 })
             });
 
-            if (response.ok) {
-                const data = await response.json();
-                setInteractionCheck(prev => ({ ...prev, result: data }));
-            } else {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to check interactions');
-            }
+            setInteractionCheck(prev => ({ ...prev, result: data }));
         } catch (error) {
             console.error('Error checking interactions:', error);
             setError(`Failed to check interactions: ${error.message}`);
         }
     };
 
-    // Load dashboard data
-    const loadDashboardData = async () => {
-        try {
-            setLoading(true);
-            setError('');
-            const token = localStorage.getItem('token');
-            
-            if (!token) {
-                setError('Not authenticated. Please login again.');
-                navigate('/login');
-                return;
-            }
-
-            console.log('🔄 Loading dashboard data...');
-
-            // First, test the connection using /api/health endpoint
-            try {
-                const testResponse = await fetch(`${API_URL}/api/health`);
-                if (!testResponse.ok) {
-                    throw new Error(`Backend connection failed: ${testResponse.status}`);
-                }
-                console.log('✅ Backend connection successful');
-            } catch (testError) {
-                console.error('❌ Backend connection error:', testError);
-                setError(`Cannot connect to backend server. Make sure it's running at ${API_URL}`);
-                return;
-            }
-
-            // Load pending approvals
-            try {
-                const pendingResponse = await fetch(`${API_URL}/api/admin/pending-approvals`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (pendingResponse.ok) {
-                    const pendingData = await pendingResponse.json();
-                    const usersList = pendingData.users || [];
-                    
-                    console.log(`📋 Found ${usersList.length} pending approvals`);
-                    
-                    setPendingUsers(usersList);
-                    setRealPendingUsers(usersList);
-                    
-                    setStats(prev => ({
-                        ...prev,
-                        pending_approvals: usersList.length
-                    }));
-                } else {
-                    console.warn('Pending approvals fetch failed:', pendingResponse.status);
-                }
-            } catch (pendingError) {
-                console.error('Error loading pending approvals:', pendingError);
-            }
-
-            // Load stats
-            try {
-                const statsResponse = await fetch(`${API_URL}/api/admin/stats`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                if (statsResponse.ok) {
-                    const statsData = await statsResponse.json();
-                    if (statsData.stats) {
-                        console.log('📊 Stats loaded:', statsData.stats);
-                        setStats(prev => ({
-                            ...prev,
-                            ...statsData.stats
-                        }));
-                    }
-                }
-            } catch (statsError) {
-                console.error('Error loading stats:', statsError);
-            }
-
-            // Load all users
-            try {
-                const usersResponse = await fetch(`${API_URL}/api/admin/users`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                if (usersResponse.ok) {
-                    const usersData = await usersResponse.json();
-                    if (usersData.users) {
-                        console.log(`👥 Loaded ${usersData.users.length} users`);
-                        setUserManagement(usersData.users);
-                    }
-                }
-            } catch (usersError) {
-                console.error('Error loading users:', usersError);
-            }
-
-            // Add a sample activity
-            const sampleActivity = {
-                id: Date.now(),
-                user_name: currentUser?.full_name || 'Admin',
-                action_type: 'view_dashboard',
-                description: 'Viewed admin dashboard',
-                created_at: new Date().toISOString()
-            };
-            setRecentActivities(prev => [sampleActivity, ...prev.slice(0, 9)]);
-
-        } catch (error) {
-            console.error('Dashboard load error:', error);
-            setError(`Failed to load dashboard data: ${error.message}`);
-            
-            // Show helpful error message
-            const errorDiv = document.createElement('div');
-            errorDiv.innerHTML = `
-                <div style="position: fixed; top: 20px; right: 20px; background: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px; z-index: 1000; border: 1px solid #f5c6cb;">
-                <strong>Connection Error</strong><br>
-                ${error.message}<br>
-                <small>API URL: ${API_URL}</small>
-                </div>
-            `;
-            document.body.appendChild(errorDiv);
-            setTimeout(() => errorDiv.remove(), 5000);
-        } finally {
-            setLoading(false);
-            setRefreshing(false);
-        }
-    };
-    
     // Handle user approval
     const handleApproveUser = async (userId, userEmail) => {
         try {
-            const token = localStorage.getItem('token');
-            
-            if (!token) {
-                setError('Authentication required');
-                return;
-            }
-
             setProcessingApproval(prev => ({ ...prev, [userId]: true }));
             
             const userToApprove = realPendingUsers.find(u => u.id === userId || u.email === userEmail);
@@ -925,22 +777,11 @@ const AdminDashboard = () => {
                 return;
             }
 
-            const approveResponse = await fetch(`${API_URL}/api/admin/users/${userToApprove.id}/approve`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+            const responseData = await makeApiCall(`/admin/users/${userToApprove.id}/approve`, {
+                method: 'POST'
             });
-
-            let responseData;
-            try {
-                responseData = await approveResponse.json();
-            } catch (parseError) {
-                responseData = { error: 'Invalid response from server' };
-            }
             
-            if (approveResponse.ok && responseData.success) {
+            if (responseData.success) {
                 const newActivity = {
                     id: Date.now(),
                     user_name: currentUser?.full_name || 'Admin',
@@ -965,19 +806,14 @@ const AdminDashboard = () => {
                     pending_approvals: prev.pending_approvals - 1
                 }));
                 
-                setApprovalIssueDetected(false);
-                
                 setTimeout(() => {
                     setForceRefresh(prev => prev + 1);
                 }, 1000);
-                
             } else {
                 setError(`Approval failed: ${responseData.error || 'Unknown error'}`);
-                setApprovalIssueDetected(true);
             }
         } catch (error) {
             setError(`Network error: ${error.message}`);
-            setApprovalIssueDetected(true);
         } finally {
             setProcessingApproval(prev => ({ ...prev, [userId]: false }));
         }
@@ -986,13 +822,6 @@ const AdminDashboard = () => {
     // Handle user rejection
     const handleRejectUser = async (userId, userEmail) => {
         try {
-            const token = localStorage.getItem('token');
-            
-            if (!token) {
-                setError('Authentication required');
-                return;
-            }
-
             const userToReject = realPendingUsers.find(u => u.id === userId || u.email === userEmail);
             
             if (!userToReject) {
@@ -1010,32 +839,24 @@ const AdminDashboard = () => {
                 return;
             }
 
-            const response = await fetch(`${API_URL}/api/admin/users/${userToReject.id}/reject`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+            await makeApiCall(`/admin/users/${userToReject.id}/reject`, {
+                method: 'DELETE'
             });
 
-            if (response.ok) {
-                const newActivity = {
-                    id: Date.now(),
-                    user_name: currentUser?.full_name || 'Admin',
-                    action_type: 'delete',
-                    description: `Rejected user: ${userToReject.full_name} (${userToReject.email})`,
-                    created_at: new Date().toISOString()
-                };
-                setRecentActivities(prev => [newActivity, ...prev]);
-                
-                setSuccessMessage(`User rejected and deleted!`);
-                setTimeout(() => setSuccessMessage(''), 5000);
-                
-                setForceRefresh(prev => prev + 1);
-            } else {
-                const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-                setError(`Error: ${errorData.error || 'Failed to reject user'}`);
-            }
+            const newActivity = {
+                id: Date.now(),
+                user_name: currentUser?.full_name || 'Admin',
+                action_type: 'delete',
+                description: `Rejected user: ${userToReject.full_name} (${userToReject.email})`,
+                created_at: new Date().toISOString()
+            };
+            setRecentActivities(prev => [newActivity, ...prev]);
+            
+            setSuccessMessage(`User rejected and deleted!`);
+            setTimeout(() => setSuccessMessage(''), 5000);
+            
+            setForceRefresh(prev => prev + 1);
+
         } catch (error) {
             console.error('Error rejecting user:', error);
             setError('Failed to reject user.');
@@ -1055,9 +876,7 @@ const AdminDashboard = () => {
             medication_stats: medicationStats,
             patients: patients,
             patient_stats: patientStats,
-            audit_logs: auditLogs,
             activities: recentActivities,
-            approval_logs: approvalLogs,
             note: 'This is an administrative report. Handle with confidentiality.'
         };
 
@@ -1159,7 +978,8 @@ const AdminDashboard = () => {
         switch(gender) {
             case 'male': return <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">Male</span>;
             case 'female': return <span className="px-2 py-1 text-xs bg-pink-100 text-pink-800 rounded">Female</span>;
-          
+            case 'other': return <span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded">Other</span>;
+            default: return <span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded">Unknown</span>;
         }
     };
 
@@ -2027,31 +1847,18 @@ const AdminDashboard = () => {
                                         <FaBookMedical className="text-6xl text-gray-300 mx-auto mb-4" />
                                         <h3 className="text-xl font-medium text-gray-800 mb-2">No Medications Found</h3>
                                         <p className="text-gray-600 max-w-md mx-auto">
-                                            {medicationFilter ? 'No medications match your search. Try a different search term.' : 'No medications in the database. Click "Add Medication" to get started.'}
+                                            {medicationFilter ? 'No medications match your search.' : 'Add your first medication to get started.'}
                                         </p>
+                                        {!medicationFilter && (
+                                            <button
+                                                onClick={() => setShowAddMedication(true)}
+                                                className="mt-4 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition"
+                                            >
+                                                <FaPlus /> Add First Medication
+                                            </button>
+                                        )}
                                     </div>
                                 )}
-                            </div>
-                        </div>
-
-                        {/* Drug Classes Summary */}
-                        <div className="bg-white rounded-xl shadow p-6">
-                            <h3 className="font-semibold text-gray-800 mb-4">Drug Classes Summary</h3>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                {Object.entries(medicationStats.by_class).map(([className, count]) => (
-                                    <div key={className} className="p-3 border rounded-lg">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-sm font-medium text-gray-700">{className}</span>
-                                            <span className="text-lg font-bold text-blue-600">{count}</span>
-                                        </div>
-                                        <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
-                                            <div 
-                                                className="bg-blue-500 h-2 rounded-full" 
-                                                style={{ width: `${(count / medicationStats.total) * 100}%` }}
-                                            ></div>
-                                        </div>
-                                    </div>
-                                ))}
                             </div>
                         </div>
                     </div>
@@ -2067,7 +1874,7 @@ const AdminDashboard = () => {
                                     <div>
                                         <p className="text-sm text-gray-600">Total Patients</p>
                                         <p className="text-3xl font-bold text-gray-800">{patientStats.total}</p>
-                                        <p className="text-xs text-gray-500 mt-1">All system patients</p>
+                                        <p className="text-xs text-gray-500 mt-1">All patients</p>
                                     </div>
                                     <div className="p-3 bg-blue-100 rounded-full">
                                         <FaUserInjured className="text-blue-600 text-xl" />
@@ -2091,17 +1898,14 @@ const AdminDashboard = () => {
                             <div className="bg-white rounded-xl shadow p-6">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-sm text-gray-600">Gender Distribution</p>
-                                        <div className="flex items-baseline gap-2">
-                                            <p className="text-xl font-bold text-blue-600">{patientStats.male}</p>
-                                            <span className="text-sm text-gray-500">Male</span>
-                                            <span className="text-sm text-gray-300">/</span>
-                                            <p className="text-xl font-bold text-pink-600">{patientStats.female}</p>
-                                            <span className="text-sm text-gray-500">Female</span>
-                                        </div>
+                                        <p className="text-sm text-gray-600">Male/Female</p>
+                                        <p className="text-3xl font-bold text-gray-800">
+                                            {patientStats.male}/{patientStats.female}
+                                        </p>
+                                        <p className="text-xs text-gray-500 mt-1">Gender distribution</p>
                                     </div>
-                                    <div className="p-3 bg-purple-100 rounded-full">
-                                        <FaUserCircle className="text-purple-600 text-xl" />
+                                    <div className="p-3 bg-pink-100 rounded-full">
+                                        <FaUsers className="text-pink-600 text-xl" />
                                     </div>
                                 </div>
                             </div>
@@ -2109,17 +1913,14 @@ const AdminDashboard = () => {
                             <div className="bg-white rounded-xl shadow p-6">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-sm text-gray-600">Age Groups</p>
-                                        <div className="flex items-baseline gap-2">
-                                            <p className="text-xl font-bold text-yellow-600">{patientStats.pediatric}</p>
-                                            <span className="text-sm text-gray-500">Pediatric</span>
-                                            <span className="text-sm text-gray-300">/</span>
-                                            <p className="text-xl font-bold text-blue-600">{patientStats.adult}</p>
-                                            <span className="text-sm text-gray-500">Adult</span>
-                                        </div>
+                                        <p className="text-sm text-gray-600">Adult/Pediatric</p>
+                                        <p className="text-3xl font-bold text-gray-800">
+                                            {patientStats.adult}/{patientStats.pediatric}
+                                        </p>
+                                        <p className="text-xs text-gray-500 mt-1">Age distribution</p>
                                     </div>
-                                    <div className="p-3 bg-yellow-100 rounded-full">
-                                        <FaUsers className="text-yellow-600 text-xl" />
+                                    <div className="p-3 bg-orange-100 rounded-full">
+                                        <FaBed className="text-orange-600 text-xl" />
                                     </div>
                                 </div>
                             </div>
@@ -2144,39 +1945,33 @@ const AdminDashboard = () => {
                                                 onChange={(e) => setPatientFilter(e.target.value)}
                                             />
                                         </div>
-                                        <button
-                                            onClick={() => setShowPatientForm(true)}
-                                            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition"
-                                        >
-                                            <FaPlus /> Add Patient
-                                        </button>
-                                        <button
-                                            onClick={loadPatients}
-                                            disabled={loadingPatients}
-                                            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition"
-                                        >
-                                            {loadingPatients ? <FaSpinner className="animate-spin" /> : <FaSync />}
-                                            Refresh
-                                        </button>
-                                        <div className="flex border rounded-lg overflow-hidden">
+                                        <div className="flex gap-2">
                                             <button
-                                                onClick={() => setPatientViewMode('table')}
-                                                className={`px-3 py-2 ${patientViewMode === 'table' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+                                                onClick={() => setPatientViewMode(patientViewMode === 'table' ? 'card' : 'table')}
+                                                className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg flex items-center gap-2 transition"
                                             >
-                                                <FaTable />
+                                                {patientViewMode === 'table' ? <FaThLarge /> : <FaTable />}
+                                                {patientViewMode === 'table' ? 'Card View' : 'Table View'}
                                             </button>
                                             <button
-                                                onClick={() => setPatientViewMode('card')}
-                                                className={`px-3 py-2 ${patientViewMode === 'card' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+                                                onClick={() => setShowPatientForm(true)}
+                                                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition"
                                             >
-                                                <FaThLarge />
+                                                <FaPlus /> Add Patient
+                                            </button>
+                                            <button
+                                                onClick={loadPatients}
+                                                disabled={loadingPatients}
+                                                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition"
+                                            >
+                                                {loadingPatients ? <FaSpinner className="animate-spin" /> : <FaSync />}
+                                                Refresh
                                             </button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Patients Table/Cards View */}
                             <div className="p-6">
                                 {loadingPatients ? (
                                     <div className="text-center py-12">
@@ -2200,11 +1995,21 @@ const AdminDashboard = () => {
                                                                 )}
                                                             </div>
                                                         </th>
-                                                        <th className="border p-3 text-left">Patient Code</th>
-                                                        <th className="border p-3 text-left">Age/Gender</th>
+                                                        <th 
+                                                            className="border p-3 text-left cursor-pointer"
+                                                            onClick={() => handlePatientSort('age')}
+                                                        >
+                                                            <div className="flex items-center gap-2">
+                                                                Age
+                                                                {patientSortField === 'age' && (
+                                                                    patientSortDirection === 'asc' ? <FaSortUp /> : <FaSortDown />
+                                                                )}
+                                                            </div>
+                                                        </th>
+                                                        <th className="border p-3 text-left">Gender</th>
+                                                        <th className="border p-3 text-left">Contact</th>
                                                         <th className="border p-3 text-left">Diagnosis</th>
                                                         <th className="border p-3 text-left">Status</th>
-                                                        <th className="border p-3 text-left">Created By</th>
                                                         <th className="border p-3 text-left">Actions</th>
                                                     </tr>
                                                 </thead>
@@ -2214,34 +2019,31 @@ const AdminDashboard = () => {
                                                             <td className="border p-3">
                                                                 <div>
                                                                     <p className="font-medium text-gray-800">{patient.full_name}</p>
-                                                                    <p className="text-sm text-gray-600">{patient.contact_number}</p>
+                                                                    <p className="text-xs text-gray-500">{patient.patient_code}</p>
                                                                 </div>
                                                             </td>
                                                             <td className="border p-3">
-                                                                <code className="text-sm bg-gray-100 px-2 py-1 rounded">{patient.patient_code}</code>
+                                                                <span className="font-medium">{patient.age || 'N/A'}</span>
                                                             </td>
                                                             <td className="border p-3">
-                                                                <div className="flex items-center gap-2">
-                                                                    {patient.age && <span className="text-sm">{patient.age} years</span>}
-                                                                    {getGenderBadge(patient.gender)}
+                                                                {getGenderBadge(patient.gender)}
+                                                            </td>
+                                                            <td className="border p-3">
+                                                                <div className="flex items-center gap-1">
+                                                                    <FaPhone className="text-gray-400 text-sm" />
+                                                                    <span className="text-sm">{patient.contact_number || 'N/A'}</span>
                                                                 </div>
                                                             </td>
                                                             <td className="border p-3">
-                                                                <p className="text-sm line-clamp-2">{patient.diagnosis || 'No diagnosis'}</p>
+                                                                <p className="text-sm line-clamp-1">{patient.diagnosis || 'No diagnosis'}</p>
                                                             </td>
                                                             <td className="border p-3">
                                                                 {getPatientStatusBadge(patient.is_active)}
                                                             </td>
                                                             <td className="border p-3">
-                                                                <div className="text-sm">
-                                                                    <p className="text-gray-600">{patient.user_email}</p>
-                                                                    <p className="text-xs text-gray-500">{formatDate(patient.created_at)}</p>
-                                                                </div>
-                                                            </td>
-                                                            <td className="border p-3">
                                                                 <div className="flex gap-2">
                                                                     <button
-                                                                        onClick={() => setSelectedPatient(patient)}
+                                                                        onClick={() => setEditingPatient(patient)}
                                                                         className="text-blue-500 hover:text-blue-700 text-sm flex items-center gap-1"
                                                                     >
                                                                         <FaEye /> View
@@ -2266,58 +2068,46 @@ const AdminDashboard = () => {
                                             </table>
                                         </div>
                                     ) : (
-                                        // Card View
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                             {filteredPatients.map((patient) => (
-                                                <div key={patient.id} className="border rounded-xl p-4 hover:shadow-lg transition-shadow bg-white">
+                                                <div key={patient.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                                                     <div className="flex justify-between items-start mb-3">
                                                         <div>
-                                                            <h4 className="font-semibold text-gray-800">{patient.full_name}</h4>
-                                                            <p className="text-sm text-gray-600">{patient.patient_code}</p>
+                                                            <h4 className="font-medium text-gray-800">{patient.full_name}</h4>
+                                                            <p className="text-xs text-gray-500">{patient.patient_code}</p>
                                                         </div>
-                                                        <div className="flex gap-1">
-                                                            {getGenderBadge(patient.gender)}
-                                                            {getPatientStatusBadge(patient.is_active)}
-                                                        </div>
+                                                        {getPatientStatusBadge(patient.is_active)}
                                                     </div>
-                                                    
                                                     <div className="space-y-2 mb-4">
-                                                        <div className="flex items-center gap-2">
-                                                            <FaCalendarAlt className="text-gray-400" />
-                                                            <span className="text-sm">{patient.age ? `${patient.age} years` : 'Age not specified'}</span>
+                                                        <div className="flex justify-between">
+                                                            <span className="text-sm text-gray-600">Age:</span>
+                                                            <span className="font-medium">{patient.age || 'N/A'}</span>
                                                         </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <FaPhone className="text-gray-400" />
-                                                            <span className="text-sm">{patient.contact_number || 'No contact'}</span>
+                                                        <div className="flex justify-between">
+                                                            <span className="text-sm text-gray-600">Gender:</span>
+                                                            {getGenderBadge(patient.gender)}
                                                         </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <FaStethoscope className="text-gray-400" />
-                                                            <span className="text-sm truncate">{patient.diagnosis || 'No diagnosis'}</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <FaUserCircle className="text-gray-400" />
-                                                            <span className="text-sm truncate">{patient.user_email}</span>
+                                                        <div className="flex justify-between">
+                                                            <span className="text-sm text-gray-600">Contact:</span>
+                                                            <span className="text-sm">{patient.contact_number || 'N/A'}</span>
                                                         </div>
                                                     </div>
-                                                    
-                                                    <div className="flex gap-2 pt-3 border-t">
+                                                    <div className="mb-4">
+                                                        <p className="text-sm text-gray-600 mb-1">Diagnosis:</p>
+                                                        <p className="text-sm line-clamp-2">{patient.diagnosis || 'No diagnosis'}</p>
+                                                    </div>
+                                                    <div className="flex gap-2">
                                                         <button
-                                                            onClick={() => setSelectedPatient(patient)}
-                                                            className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg text-sm flex items-center justify-center gap-1"
+                                                            onClick={() => setEditingPatient(patient)}
+                                                            className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded text-sm flex items-center justify-center gap-1"
                                                         >
-                                                            <FaEye /> View
+                                                            <FaEye /> View Details
                                                         </button>
                                                         <button
                                                             onClick={() => setEditingPatient(patient)}
-                                                            className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded-lg text-sm flex items-center justify-center gap-1"
+                                                            className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded text-sm flex items-center justify-center gap-1"
                                                         >
                                                             <FaEdit /> Edit
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDeletePatient(patient.id, patient.full_name)}
-                                                            className="flex-1 bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm flex items-center justify-center gap-1"
-                                                        >
-                                                            <FaTrash /> Delete
                                                         </button>
                                                     </div>
                                                 </div>
@@ -2329,808 +2119,744 @@ const AdminDashboard = () => {
                                         <FaUserInjured className="text-6xl text-gray-300 mx-auto mb-4" />
                                         <h3 className="text-xl font-medium text-gray-800 mb-2">No Patients Found</h3>
                                         <p className="text-gray-600 max-w-md mx-auto">
-                                            {patientFilter ? 'No patients match your search. Try a different search term.' : 'No patients in the database. Click "Add Patient" to get started.'}
+                                            {patientFilter ? 'No patients match your search.' : 'Add your first patient to get started.'}
                                         </p>
+                                        {!patientFilter && (
+                                            <button
+                                                onClick={() => setShowPatientForm(true)}
+                                                className="mt-4 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition"
+                                            >
+                                                <FaPlus /> Add First Patient
+                                            </button>
+                                        )}
                                     </div>
                                 )}
                             </div>
                         </div>
                     </div>
                 )}
+            </main>
 
-                {/* Add Medication Modal */}
-                {showAddMedication && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                        <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                            <div className="p-6 border-b sticky top-0 bg-white">
-                                <div className="flex justify-between items-center">
-                                    <h3 className="text-lg font-semibold text-gray-800">Add New Medication</h3>
-                                    <button
-                                        onClick={() => setShowAddMedication(false)}
-                                        className="text-gray-400 hover:text-gray-600"
+            {/* Add Medication Modal */}
+            {showAddMedication && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-xl shadow-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="p-6 border-b">
+                            <div className="flex justify-between items-center">
+                                <h3 className="text-lg font-semibold text-gray-800">Add New Medication</h3>
+                                <button
+                                    onClick={() => setShowAddMedication(false)}
+                                    className="text-gray-400 hover:text-gray-600"
+                                >
+                                    <FaTimes />
+                                </button>
+                            </div>
+                        </div>
+                        <div className="p-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Medication Name *</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        value={newMedication.name}
+                                        onChange={(e) => setNewMedication(prev => ({ ...prev, name: e.target.value }))}
+                                        placeholder="e.g., Amoxicillin"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Generic Name *</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        value={newMedication.generic_name}
+                                        onChange={(e) => setNewMedication(prev => ({ ...prev, generic_name: e.target.value }))}
+                                        placeholder="e.g., Amoxicillin"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Brand Names</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        value={newMedication.brand_names}
+                                        onChange={(e) => setNewMedication(prev => ({ ...prev, brand_names: e.target.value }))}
+                                        placeholder="e.g., Amoxil, Trimox"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Drug Class</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        value={newMedication.class}
+                                        onChange={(e) => setNewMedication(prev => ({ ...prev, class: e.target.value }))}
+                                        placeholder="e.g., Antibiotic (Penicillin)"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Dosage Forms</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        value={newMedication.dosage_forms}
+                                        onChange={(e) => setNewMedication(prev => ({ ...prev, dosage_forms: e.target.value }))}
+                                        placeholder="e.g., Capsule, Tablet, Suspension"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Strength</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        value={newMedication.strength}
+                                        onChange={(e) => setNewMedication(prev => ({ ...prev, strength: e.target.value }))}
+                                        placeholder="e.g., 250mg, 500mg"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Route of Administration</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        value={newMedication.route}
+                                        onChange={(e) => setNewMedication(prev => ({ ...prev, route: e.target.value }))}
+                                        placeholder="e.g., Oral, IV, Topical"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Pregnancy Category</label>
+                                    <select
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        value={newMedication.pregnancy_category}
+                                        onChange={(e) => setNewMedication(prev => ({ ...prev, pregnancy_category: e.target.value }))}
                                     >
-                                        <FaTimes />
-                                    </button>
+                                        <option value="">Select Category</option>
+                                        <option value="A">A - Safe</option>
+                                        <option value="B">B - Probably Safe</option>
+                                        <option value="C">C - Caution</option>
+                                        <option value="D">D - Risk</option>
+                                        <option value="X">X - Contraindicated</option>
+                                    </select>
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Indications</label>
+                                    <textarea
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        rows="2"
+                                        value={newMedication.indications}
+                                        onChange={(e) => setNewMedication(prev => ({ ...prev, indications: e.target.value }))}
+                                        placeholder="Medical conditions treated..."
+                                    />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Side Effects</label>
+                                    <textarea
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        rows="2"
+                                        value={newMedication.side_effects}
+                                        onChange={(e) => setNewMedication(prev => ({ ...prev, side_effects: e.target.value }))}
+                                        placeholder="Common and serious side effects..."
+                                    />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Drug Interactions</label>
+                                    <textarea
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        rows="2"
+                                        value={newMedication.interactions}
+                                        onChange={(e) => setNewMedication(prev => ({ ...prev, interactions: e.target.value }))}
+                                        placeholder="Known drug interactions..."
+                                    />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Contraindications</label>
+                                    <textarea
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        rows="2"
+                                        value={newMedication.contraindications}
+                                        onChange={(e) => setNewMedication(prev => ({ ...prev, contraindications: e.target.value }))}
+                                        placeholder="When not to use this medication..."
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Storage Instructions</label>
+                                    <textarea
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        rows="2"
+                                        value={newMedication.storage}
+                                        onChange={(e) => setNewMedication(prev => ({ ...prev, storage: e.target.value }))}
+                                        placeholder="How to store this medication..."
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Schedule</label>
+                                    <select
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        value={newMedication.schedule}
+                                        onChange={(e) => setNewMedication(prev => ({ ...prev, schedule: e.target.value }))}
+                                    >
+                                        <option value="">Select Schedule</option>
+                                        <option value="Prescription">Prescription Required</option>
+                                        <option value="OTC">Over-the-Counter</option>
+                                        <option value="Controlled">Controlled Substance</option>
+                                    </select>
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Additional Notes</label>
+                                    <textarea
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        rows="3"
+                                        value={newMedication.notes}
+                                        onChange={(e) => setNewMedication(prev => ({ ...prev, notes: e.target.value }))}
+                                        placeholder="Any additional information..."
+                                    />
                                 </div>
                             </div>
-                            <div className="p-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Medication Name *</label>
-                                        <input
-                                            type="text"
-                                            className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            value={newMedication.name}
-                                            onChange={(e) => setNewMedication(prev => ({ ...prev, name: e.target.value }))}
-                                            placeholder="e.g., Amoxicillin"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Generic Name *</label>
-                                        <input
-                                            type="text"
-                                            className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            value={newMedication.generic_name}
-                                            onChange={(e) => setNewMedication(prev => ({ ...prev, generic_name: e.target.value }))}
-                                            placeholder="e.g., Amoxicillin trihydrate"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Brand Names</label>
-                                        <input
-                                            type="text"
-                                            className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            value={newMedication.brand_names}
-                                            onChange={(e) => setNewMedication(prev => ({ ...prev, brand_names: e.target.value }))}
-                                            placeholder="e.g., Amoxil, Trimox"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Drug Class *</label>
-                                        <input
-                                            type="text"
-                                            className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            value={newMedication.class}
-                                            onChange={(e) => setNewMedication(prev => ({ ...prev, class: e.target.value }))}
-                                            placeholder="e.g., Antibiotic (Penicillin)"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Dosage Forms</label>
-                                        <input
-                                            type="text"
-                                            className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            value={newMedication.dosage_forms}
-                                            onChange={(e) => setNewMedication(prev => ({ ...prev, dosage_forms: e.target.value }))}
-                                            placeholder="e.g., Tablet, Capsule, Suspension"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Strength</label>
-                                        <input
-                                            type="text"
-                                            className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            value={newMedication.strength}
-                                            onChange={(e) => setNewMedication(prev => ({ ...prev, strength: e.target.value }))}
-                                            placeholder="e.g., 500mg, 250mg/5mL"
-                                        />
-                                    </div>
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Indications *</label>
-                                        <textarea
-                                            className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            value={newMedication.indications}
-                                            onChange={(e) => setNewMedication(prev => ({ ...prev, indications: e.target.value }))}
-                                            placeholder="What conditions does this medication treat?"
-                                            rows="2"
-                                        />
-                                    </div>
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Contraindications</label>
-                                        <textarea
-                                            className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            value={newMedication.contraindications}
-                                            onChange={(e) => setNewMedication(prev => ({ ...prev, contraindications: e.target.value }))}
-                                            placeholder="When should this medication NOT be used?"
-                                            rows="2"
-                                        />
-                                    </div>
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Side Effects</label>
-                                        <textarea
-                                            className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            value={newMedication.side_effects}
-                                            onChange={(e) => setNewMedication(prev => ({ ...prev, side_effects: e.target.value }))}
-                                            placeholder="Common and serious side effects"
-                                            rows="2"
-                                        />
-                                    </div>
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Interactions</label>
-                                        <textarea
-                                            className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            value={newMedication.interactions}
-                                            onChange={(e) => setNewMedication(prev => ({ ...prev, interactions: e.target.value }))}
-                                            placeholder="Drug-drug, drug-food interactions"
-                                            rows="2"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Pregnancy Category</label>
-                                        <select
-                                            className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            value={newMedication.pregnancy_category}
-                                            onChange={(e) => setNewMedication(prev => ({ ...prev, pregnancy_category: e.target.value }))}
-                                        >
-                                            <option value="">Select category</option>
-                                            <option value="A">A - Safe</option>
-                                            <option value="B">B - Probably safe</option>
-                                            <option value="C">C - Use with caution</option>
-                                            <option value="D">D - Evidence of risk</option>
-                                            <option value="X">X - Contraindicated</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Schedule</label>
-                                        <select
-                                            className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            value={newMedication.schedule}
-                                            onChange={(e) => setNewMedication(prev => ({ ...prev, schedule: e.target.value }))}
-                                        >
-                                            <option value="">Select schedule</option>
-                                            <option value="OTC">Over-the-counter</option>
-                                            <option value="Prescription">Prescription</option>
-                                            <option value="Controlled">Controlled substance</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div className="mt-6 flex gap-2">
-                                    <button
-                                        onClick={() => setShowAddMedication(false)}
-                                        className="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={handleAddMedication}
-                                        className="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition flex items-center justify-center gap-2"
-                                        disabled={!newMedication.name || !newMedication.generic_name}
-                                    >
-                                        <FaSave /> Add Medication
-                                    </button>
-                                </div>
+                            <div className="flex justify-end gap-3 mt-6">
+                                <button
+                                    onClick={() => setShowAddMedication(false)}
+                                    className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-50"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleAddMedication}
+                                    className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center gap-2"
+                                >
+                                    <FaSave /> Add Medication
+                                </button>
                             </div>
                         </div>
                     </div>
-                )}
+                </div>
+            )}
 
-                {/* Add Patient Modal */}
-                {showPatientForm && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                        <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                            <div className="p-6 border-b sticky top-0 bg-white">
-                                <div className="flex justify-between items-center">
-                                    <h3 className="text-lg font-semibold text-gray-800">Add New Patient</h3>
-                                    <button
-                                        onClick={() => setShowPatientForm(false)}
-                                        className="text-gray-400 hover:text-gray-600"
-                                    >
-                                        <FaTimes />
-                                    </button>
+            {/* Edit Medication Modal */}
+            {editingMedication && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-xl shadow-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="p-6 border-b">
+                            <div className="flex justify-between items-center">
+                                <h3 className="text-lg font-semibold text-gray-800">Edit Medication: {editingMedication.name}</h3>
+                                <button
+                                    onClick={() => setEditingMedication(null)}
+                                    className="text-gray-400 hover:text-gray-600"
+                                >
+                                    <FaTimes />
+                                </button>
+                            </div>
+                        </div>
+                        <div className="p-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Medication Name *</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        value={editingMedication.name}
+                                        onChange={(e) => setEditingMedication(prev => ({ ...prev, name: e.target.value }))}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Generic Name *</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        value={editingMedication.generic_name}
+                                        onChange={(e) => setEditingMedication(prev => ({ ...prev, generic_name: e.target.value }))}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Brand Names</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        value={editingMedication.brand_names}
+                                        onChange={(e) => setEditingMedication(prev => ({ ...prev, brand_names: e.target.value }))}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Drug Class</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        value={editingMedication.class}
+                                        onChange={(e) => setEditingMedication(prev => ({ ...prev, class: e.target.value }))}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Dosage Forms</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        value={editingMedication.dosage_forms}
+                                        onChange={(e) => setEditingMedication(prev => ({ ...prev, dosage_forms: e.target.value }))}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Strength</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        value={editingMedication.strength}
+                                        onChange={(e) => setEditingMedication(prev => ({ ...prev, strength: e.target.value }))}
+                                    />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Indications</label>
+                                    <textarea
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        rows="2"
+                                        value={editingMedication.indications}
+                                        onChange={(e) => setEditingMedication(prev => ({ ...prev, indications: e.target.value }))}
+                                    />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Side Effects</label>
+                                    <textarea
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        rows="2"
+                                        value={editingMedication.side_effects}
+                                        onChange={(e) => setEditingMedication(prev => ({ ...prev, side_effects: e.target.value }))}
+                                    />
                                 </div>
                             </div>
-                            <div className="p-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
-                                        <input
-                                            type="text"
-                                            className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            value={newPatient.full_name}
-                                            onChange={(e) => setNewPatient(prev => ({ ...prev, full_name: e.target.value }))}
-                                            placeholder="e.g., John Doe"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Age</label>
-                                        <input
-                                            type="number"
-                                            className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            value={newPatient.age}
-                                            onChange={(e) => setNewPatient(prev => ({ ...prev, age: e.target.value }))}
-                                            placeholder="e.g., 45"
-                                            min="0"
-                                            max="120"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-                                        <select
-                                            className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            value={newPatient.gender}
-                                            onChange={(e) => setNewPatient(prev => ({ ...prev, gender: e.target.value }))}
-                                        >
-                                            <option value="">Select gender</option>
-                                            <option value="male">Male</option>
-                                            <option value="female">Female</option>
-                                            <option value="other">Other</option>
-                                        </select>
-                                    </div>
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
-                                        <input
-                                            type="text"
-                                            className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            value={newPatient.contact_number}
-                                            onChange={(e) => setNewPatient(prev => ({ ...prev, contact_number: e.target.value }))}
-                                            placeholder="e.g., +251911234567"
-                                        />
-                                    </div>
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                                        <textarea
-                                            className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            value={newPatient.address}
-                                            onChange={(e) => setNewPatient(prev => ({ ...prev, address: e.target.value }))}
-                                            placeholder="e.g., Addis Ababa, Ethiopia"
-                                            rows="2"
-                                        />
-                                    </div>
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Diagnosis/Condition</label>
-                                        <textarea
-                                            className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            value={newPatient.diagnosis}
-                                            onChange={(e) => setNewPatient(prev => ({ ...prev, diagnosis: e.target.value }))}
-                                            placeholder="e.g., Hypertension, Diabetes Type 2"
-                                            rows="2"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                                        <div className="flex gap-4 mt-2">
-                                            <label className="flex items-center">
-                                                <input
-                                                    type="radio"
-                                                    className="mr-2"
-                                                    checked={newPatient.is_active}
-                                                    onChange={() => setNewPatient(prev => ({ ...prev, is_active: true }))}
-                                                />
-                                                <span className="text-sm">Active</span>
-                                            </label>
-                                            <label className="flex items-center">
-                                                <input
-                                                    type="radio"
-                                                    className="mr-2"
-                                                    checked={!newPatient.is_active}
-                                                    onChange={() => setNewPatient(prev => ({ ...prev, is_active: false }))}
-                                                />
-                                                <span className="text-sm">Inactive</span>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="mt-6 flex gap-2">
-                                    <button
-                                        onClick={() => setShowPatientForm(false)}
-                                        className="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={handleAddPatient}
-                                        className="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition flex items-center justify-center gap-2"
-                                        disabled={!newPatient.full_name}
-                                    >
-                                        <FaSave /> Add Patient
-                                    </button>
-                                </div>
+                            <div className="flex justify-end gap-3 mt-6">
+                                <button
+                                    onClick={() => setEditingMedication(null)}
+                                    className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-50"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleUpdateMedication}
+                                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center gap-2"
+                                >
+                                    <FaSave /> Update Medication
+                                </button>
                             </div>
                         </div>
                     </div>
-                )}
+                </div>
+            )}
 
-                {/* View Medication Details Modal */}
-                {selectedMedication && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                        <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                            <div className="p-6 border-b sticky top-0 bg-white">
-                                <div className="flex justify-between items-center">
-                                    <h3 className="text-lg font-semibold text-gray-800">{selectedMedication.name}</h3>
-                                    <button
-                                        onClick={() => setSelectedMedication(null)}
-                                        className="text-gray-400 hover:text-gray-600"
+            {/* Add Patient Modal */}
+            {showPatientForm && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="p-6 border-b">
+                            <div className="flex justify-between items-center">
+                                <h3 className="text-lg font-semibold text-gray-800">Add New Patient</h3>
+                                <button
+                                    onClick={() => setShowPatientForm(false)}
+                                    className="text-gray-400 hover:text-gray-600"
+                                >
+                                    <FaTimes />
+                                </button>
+                            </div>
+                        </div>
+                        <div className="p-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        value={newPatient.full_name}
+                                        onChange={(e) => setNewPatient(prev => ({ ...prev, full_name: e.target.value }))}
+                                        placeholder="Enter patient's full name"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Age</label>
+                                    <input
+                                        type="number"
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        value={newPatient.age}
+                                        onChange={(e) => setNewPatient(prev => ({ ...prev, age: e.target.value }))}
+                                        placeholder="Patient's age"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                                    <select
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        value={newPatient.gender}
+                                        onChange={(e) => setNewPatient(prev => ({ ...prev, gender: e.target.value }))}
                                     >
-                                        <FaTimes />
-                                    </button>
+                                        <option value="">Select Gender</option>
+                                        <option value="male">Male</option>
+                                        <option value="female">Female</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        value={newPatient.contact_number}
+                                        onChange={(e) => setNewPatient(prev => ({ ...prev, contact_number: e.target.value }))}
+                                        placeholder="Phone number"
+                                    />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                                    <textarea
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        rows="2"
+                                        value={newPatient.address}
+                                        onChange={(e) => setNewPatient(prev => ({ ...prev, address: e.target.value }))}
+                                        placeholder="Patient's address"
+                                    />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Diagnosis</label>
+                                    <textarea
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        rows="3"
+                                        value={newPatient.diagnosis}
+                                        onChange={(e) => setNewPatient(prev => ({ ...prev, diagnosis: e.target.value }))}
+                                        placeholder="Medical diagnosis"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="flex items-center">
+                                        <input
+                                            type="checkbox"
+                                            className="rounded text-blue-500 focus:ring-blue-500"
+                                            checked={newPatient.is_active}
+                                            onChange={(e) => setNewPatient(prev => ({ ...prev, is_active: e.target.checked }))}
+                                        />
+                                        <span className="ml-2 text-sm text-gray-700">Active Patient</span>
+                                    </label>
                                 </div>
                             </div>
-                            <div className="p-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                                            <FaInfoCircle className="text-blue-500" /> Basic Information
-                                        </h4>
-                                        <div className="space-y-3">
-                                            <div>
-                                                <p className="text-sm text-gray-600">Generic Name</p>
-                                                <p className="font-medium">{selectedMedication.generic_name}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm text-gray-600">Brand Names</p>
-                                                <p className="font-medium">{selectedMedication.brand_names}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm text-gray-600">Drug Class</p>
-                                                <span className={`text-xs px-2 py-1 rounded ${getMedicationClassColor(selectedMedication.class)}`}>
-                                                    {selectedMedication.class}
-                                                </span>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm text-gray-600">Dosage Forms</p>
-                                                <p className="font-medium">{selectedMedication.dosage_forms}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm text-gray-600">Strength</p>
-                                                <p className="font-medium">{selectedMedication.strength}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div>
-                                        <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                                            <FaExclamationTriangle className="text-yellow-500" /> Safety Information
-                                        </h4>
-                                        <div className="space-y-3">
-                                            <div>
-                                                <p className="text-sm text-gray-600">Pregnancy Category</p>
-                                                <span className={`text-xs px-2 py-1 rounded ${getPregnancyCategoryColor(selectedMedication.pregnancy_category)}`}>
-                                                    Category {selectedMedication.pregnancy_category}
-                                                </span>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm text-gray-600">Schedule</p>
-                                                <p className="font-medium">{selectedMedication.schedule}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm text-gray-600">Storage</p>
-                                                <p className="font-medium">{selectedMedication.storage || 'Room temperature'}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="md:col-span-2">
-                                        <h4 className="font-semibold text-gray-700 mb-2">Indications</h4>
-                                        <p className="text-gray-700">{selectedMedication.indications}</p>
-                                    </div>
-                                    
-                                    <div>
-                                        <h4 className="font-semibold text-gray-700 mb-2">Contraindications</h4>
-                                        <p className="text-gray-700">{selectedMedication.contraindications || 'No specific contraindications listed.'}</p>
-                                    </div>
-                                    
-                                    <div>
-                                        <h4 className="font-semibold text-gray-700 mb-2">Side Effects</h4>
-                                        <p className="text-gray-700">{selectedMedication.side_effects || 'No specific side effects listed.'}</p>
-                                    </div>
-                                    
-                                    <div className="md:col-span-2">
-                                        <h4 className="font-semibold text-gray-700 mb-2">Interactions</h4>
-                                        <p className="text-gray-700">{selectedMedication.interactions || 'No significant drug interactions reported.'}</p>
-                                    </div>
-                                    
-                                    {selectedMedication.notes && (
-                                        <div className="md:col-span-2">
-                                            <h4 className="font-semibold text-gray-700 mb-2">Additional Notes</h4>
-                                            <p className="text-gray-700">{selectedMedication.notes}</p>
-                                        </div>
-                                    )}
-                                </div>
-                                
-                                <div className="mt-6 flex gap-2">
-                                    <button
-                                        onClick={() => {
-                                            setEditingMedication(selectedMedication);
-                                            setSelectedMedication(null);
-                                        }}
-                                        className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition flex items-center justify-center gap-2"
-                                    >
-                                        <FaEdit /> Edit Medication
-                                    </button>
-                                    <button
-                                        onClick={() => setSelectedMedication(null)}
-                                        className="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition"
-                                    >
-                                        Close
-                                    </button>
-                                </div>
+                            <div className="flex justify-end gap-3 mt-6">
+                                <button
+                                    onClick={() => setShowPatientForm(false)}
+                                    className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-50"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleAddPatient}
+                                    className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center gap-2"
+                                >
+                                    <FaSave /> Add Patient
+                                </button>
                             </div>
                         </div>
                     </div>
-                )}
+                </div>
+            )}
 
-                {/* View Patient Details Modal */}
-                {selectedPatient && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                        <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                            <div className="p-6 border-b sticky top-0 bg-white">
-                                <div className="flex justify-between items-center">
-                                    <h3 className="text-lg font-semibold text-gray-800">{selectedPatient.full_name}</h3>
-                                    <button
-                                        onClick={() => setSelectedPatient(null)}
-                                        className="text-gray-400 hover:text-gray-600"
+            {/* Edit Patient Modal */}
+            {editingPatient && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="p-6 border-b">
+                            <div className="flex justify-between items-center">
+                                <h3 className="text-lg font-semibold text-gray-800">Edit Patient: {editingPatient.full_name}</h3>
+                                <button
+                                    onClick={() => setEditingPatient(null)}
+                                    className="text-gray-400 hover:text-gray-600"
+                                >
+                                    <FaTimes />
+                                </button>
+                            </div>
+                        </div>
+                        <div className="p-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        value={editingPatient.full_name}
+                                        onChange={(e) => setEditingPatient(prev => ({ ...prev, full_name: e.target.value }))}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Age</label>
+                                    <input
+                                        type="number"
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        value={editingPatient.age}
+                                        onChange={(e) => setEditingPatient(prev => ({ ...prev, age: e.target.value }))}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                                    <select
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        value={editingPatient.gender}
+                                        onChange={(e) => setEditingPatient(prev => ({ ...prev, gender: e.target.value }))}
                                     >
-                                        <FaTimes />
-                                    </button>
+                                        <option value="">Select Gender</option>
+                                        <option value="male">Male</option>
+                                        <option value="female">Female</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        value={editingPatient.contact_number}
+                                        onChange={(e) => setEditingPatient(prev => ({ ...prev, contact_number: e.target.value }))}
+                                    />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                                    <textarea
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        rows="2"
+                                        value={editingPatient.address}
+                                        onChange={(e) => setEditingPatient(prev => ({ ...prev, address: e.target.value }))}
+                                    />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Diagnosis</label>
+                                    <textarea
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        rows="3"
+                                        value={editingPatient.diagnosis}
+                                        onChange={(e) => setEditingPatient(prev => ({ ...prev, diagnosis: e.target.value }))}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="flex items-center">
+                                        <input
+                                            type="checkbox"
+                                            className="rounded text-blue-500 focus:ring-blue-500"
+                                            checked={editingPatient.is_active}
+                                            onChange={(e) => setEditingPatient(prev => ({ ...prev, is_active: e.target.checked }))}
+                                        />
+                                        <span className="ml-2 text-sm text-gray-700">Active Patient</span>
+                                    </label>
                                 </div>
                             </div>
-                            <div className="p-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                                            <FaUserCircle className="text-blue-500" /> Patient Information
-                                        </h4>
-                                        <div className="space-y-3">
-                                            <div>
-                                                <p className="text-sm text-gray-600">Patient Code</p>
-                                                <p className="font-medium font-mono">{selectedPatient.patient_code}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm text-gray-600">Age</p>
-                                                <p className="font-medium">{selectedPatient.age ? `${selectedPatient.age} years` : 'Not specified'}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm text-gray-600">Gender</p>
-                                                <div className="mt-1">{getGenderBadge(selectedPatient.gender)}</div>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm text-gray-600">Status</p>
-                                                <div className="mt-1">{getPatientStatusBadge(selectedPatient.is_active)}</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div>
-                                        <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                                            <FaPhone className="text-green-500" /> Contact Information
-                                        </h4>
-                                        <div className="space-y-3">
-                                            <div>
-                                                <p className="text-sm text-gray-600">Contact Number</p>
-                                                <p className="font-medium">{selectedPatient.contact_number || 'Not specified'}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm text-gray-600">Address</p>
-                                                <p className="font-medium">{selectedPatient.address || 'Not specified'}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="md:col-span-2">
-                                        <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                                            <FaStethoscope className="text-red-500" /> Medical Information
-                                        </h4>
-                                        <div>
-                                            <p className="text-sm text-gray-600">Diagnosis/Condition</p>
-                                            <p className="font-medium mt-1">{selectedPatient.diagnosis || 'No diagnosis recorded'}</p>
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="md:col-span-2">
-                                        <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                                            <FaUserMd className="text-purple-500" /> Created By
-                                        </h4>
-                                        <div className="space-y-2">
-                                            <div>
-                                                <p className="text-sm text-gray-600">Healthcare Provider</p>
-                                                <p className="font-medium">{selectedPatient.user_email}</p>
-                                            </div>
-                                            <div className="flex gap-4">
-                                                <div>
-                                                    <p className="text-sm text-gray-600">Created</p>
-                                                    <p className="font-medium text-sm">{formatDate(selectedPatient.created_at)}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm text-gray-600">Last Updated</p>
-                                                    <p className="font-medium text-sm">{formatDate(selectedPatient.updated_at)}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div className="mt-6 flex gap-2">
-                                    <button
-                                        onClick={() => {
-                                            setEditingPatient(selectedPatient);
-                                            setSelectedPatient(null);
-                                        }}
-                                        className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition flex items-center justify-center gap-2"
-                                    >
-                                        <FaEdit /> Edit Patient
-                                    </button>
-                                    <button
-                                        onClick={() => setSelectedPatient(null)}
-                                        className="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition"
-                                    >
-                                        Close
-                                    </button>
-                                </div>
+                            <div className="flex justify-end gap-3 mt-6">
+                                <button
+                                    onClick={() => setEditingPatient(null)}
+                                    className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-50"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleUpdatePatient}
+                                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center gap-2"
+                                >
+                                    <FaSave /> Update Patient
+                                </button>
                             </div>
                         </div>
                     </div>
-                )}
+                </div>
+            )}
 
-                {/* Edit Medication Modal */}
-                {editingMedication && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                        <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                            <div className="p-6 border-b sticky top-0 bg-white">
-                                <div className="flex justify-between items-center">
-                                    <h3 className="text-lg font-semibold text-gray-800">Edit Medication: {editingMedication.name}</h3>
-                                    <button
-                                        onClick={() => setEditingMedication(null)}
-                                        className="text-gray-400 hover:text-gray-600"
-                                    >
-                                        <FaTimes />
-                                    </button>
-                                </div>
-                            </div>
-                            <div className="p-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Medication Name *</label>
-                                        <input
-                                            type="text"
-                                            className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            value={editingMedication.name}
-                                            onChange={(e) => setEditingMedication(prev => ({ ...prev, name: e.target.value }))}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Generic Name *</label>
-                                        <input
-                                            type="text"
-                                            className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            value={editingMedication.generic_name}
-                                            onChange={(e) => setEditingMedication(prev => ({ ...prev, generic_name: e.target.value }))}
-                                        />
-                                    </div>
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Indications *</label>
-                                        <textarea
-                                            className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            value={editingMedication.indications}
-                                            onChange={(e) => setEditingMedication(prev => ({ ...prev, indications: e.target.value }))}
-                                            rows="3"
-                                        />
-                                    </div>
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Side Effects</label>
-                                        <textarea
-                                            className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            value={editingMedication.side_effects}
-                                            onChange={(e) => setEditingMedication(prev => ({ ...prev, side_effects: e.target.value }))}
-                                            rows="3"
-                                        />
-                                    </div>
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Interactions</label>
-                                        <textarea
-                                            className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            value={editingMedication.interactions}
-                                            onChange={(e) => setEditingMedication(prev => ({ ...prev, interactions: e.target.value }))}
-                                            rows="3"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="mt-6 flex gap-2">
-                                    <button
-                                        onClick={() => setEditingMedication(null)}
-                                        className="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={handleUpdateMedication}
-                                        className="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition flex items-center justify-center gap-2"
-                                    >
-                                        <FaSave /> Update Medication
-                                    </button>
-                                </div>
+            {/* User Details Modal */}
+            {showUserDetails && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-xl shadow-lg max-w-md w-full">
+                        <div className="p-6 border-b">
+                            <div className="flex justify-between items-center">
+                                <h3 className="text-lg font-semibold text-gray-800">User Details</h3>
+                                <button
+                                    onClick={() => setShowUserDetails(null)}
+                                    className="text-gray-400 hover:text-gray-600"
+                                >
+                                    <FaTimes />
+                                </button>
                             </div>
                         </div>
-                    </div>
-                )}
-
-                {/* Edit Patient Modal */}
-                {editingPatient && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                        <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                            <div className="p-6 border-b sticky top-0 bg-white">
-                                <div className="flex justify-between items-center">
-                                    <h3 className="text-lg font-semibold text-gray-800">Edit Patient: {editingPatient.full_name}</h3>
-                                    <button
-                                        onClick={() => setEditingPatient(null)}
-                                        className="text-gray-400 hover:text-gray-600"
-                                    >
-                                        <FaTimes />
-                                    </button>
-                                </div>
-                            </div>
-                            <div className="p-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
-                                        <input
-                                            type="text"
-                                            className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            value={editingPatient.full_name}
-                                            onChange={(e) => setEditingPatient(prev => ({ ...prev, full_name: e.target.value }))}
-                                        />
+                        <div className="p-6">
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                        <FaUserCircle className="text-blue-600 text-xl" />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Age</label>
-                                        <input
-                                            type="number"
-                                            className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            value={editingPatient.age}
-                                            onChange={(e) => setEditingPatient(prev => ({ ...prev, age: e.target.value }))}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-                                        <select
-                                            className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            value={editingPatient.gender}
-                                            onChange={(e) => setEditingPatient(prev => ({ ...prev, gender: e.target.value }))}
-                                        >
-                                            <option value="">Select gender</option>
-                                            <option value="male">Male</option>
-                                            <option value="female">Female</option>
-                                            <option value="other">Other</option>
-                                        </select>
-                                    </div>
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
-                                        <input
-                                            type="text"
-                                            className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            value={editingPatient.contact_number}
-                                            onChange={(e) => setEditingPatient(prev => ({ ...prev, contact_number: e.target.value }))}
-                                        />
-                                    </div>
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                                        <textarea
-                                            className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            value={editingPatient.address}
-                                            onChange={(e) => setEditingPatient(prev => ({ ...prev, address: e.target.value }))}
-                                            rows="2"
-                                        />
-                                    </div>
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Diagnosis/Condition</label>
-                                        <textarea
-                                            className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            value={editingPatient.diagnosis}
-                                            onChange={(e) => setEditingPatient(prev => ({ ...prev, diagnosis: e.target.value }))}
-                                            rows="2"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                                        <div className="flex gap-4 mt-2">
-                                            <label className="flex items-center">
-                                                <input
-                                                    type="radio"
-                                                    className="mr-2"
-                                                    checked={editingPatient.is_active}
-                                                    onChange={() => setEditingPatient(prev => ({ ...prev, is_active: true }))}
-                                                />
-                                                <span className="text-sm">Active</span>
-                                            </label>
-                                            <label className="flex items-center">
-                                                <input
-                                                    type="radio"
-                                                    className="mr-2"
-                                                    checked={!editingPatient.is_active}
-                                                    onChange={() => setEditingPatient(prev => ({ ...prev, is_active: false }))}
-                                                />
-                                                <span className="text-sm">Inactive</span>
-                                            </label>
-                                        </div>
+                                        <h4 className="font-medium text-gray-800">{showUserDetails.full_name}</h4>
+                                        <p className="text-sm text-gray-600">{showUserDetails.email}</p>
                                     </div>
                                 </div>
-                                <div className="mt-6 flex gap-2">
-                                    <button
-                                        onClick={() => setEditingPatient(null)}
-                                        className="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={handleUpdatePatient}
-                                        className="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition flex items-center justify-center gap-2"
-                                    >
-                                        <FaSave /> Update Patient
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* User Details Modal */}
-                {showUserDetails && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                        <div className="bg-white rounded-xl shadow-lg max-w-md w-full">
-                            <div className="p-6 border-b">
-                                <div className="flex justify-between items-center">
-                                    <h3 className="text-lg font-semibold text-gray-800">User Details</h3>
-                                    <button
-                                        onClick={() => setShowUserDetails(null)}
-                                        className="text-gray-400 hover:text-gray-600"
-                                    >
-                                        ✕
-                                    </button>
-                                </div>
-                            </div>
-                            <div className="p-6">
-                                <div className="space-y-4">
-                                    <div>
-                                        <p className="text-sm text-gray-600">Full Name</p>
-                                        <p className="font-medium">{showUserDetails.full_name}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-600">Email</p>
-                                        <p className="font-medium">{showUserDetails.email}</p>
-                                    </div>
+                                <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <p className="text-sm text-gray-600">Role</p>
-                                        <div className="mt-1">{getRoleBadge(showUserDetails.role)}</div>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-600">Account Type</p>
-                                        <p className="font-medium capitalize">{showUserDetails.account_type}</p>
+                                        <p className="font-medium">{getRoleBadge(showUserDetails.role)}</p>
                                     </div>
                                     <div>
                                         <p className="text-sm text-gray-600">Status</p>
-                                        <div className="mt-1">{getStatusBadge(showUserDetails.approved, showUserDetails.role)}</div>
+                                        <p>{getStatusBadge(showUserDetails.approved, showUserDetails.role)}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-600">Account Type</p>
+                                        <p className="font-medium">{showUserDetails.account_type === 'company' ? 'Company' : 'Individual'}</p>
                                     </div>
                                     <div>
                                         <p className="text-sm text-gray-600">Institution</p>
-                                        <p className="font-medium">{showUserDetails.institution}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-600">Registered</p>
-                                        <p className="font-medium">{formatDate(showUserDetails.created_at)}</p>
+                                        <p className="font-medium">{showUserDetails.institution || 'N/A'}</p>
                                     </div>
                                 </div>
-                                <div className="mt-6 flex gap-2">
-                                    <button
-                                        onClick={() => setShowUserDetails(null)}
-                                        className="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition"
-                                    >
-                                        Close
-                                    </button>
-                                    {!showUserDetails.approved && (
-                                        <button
-                                            onClick={() => {
-                                                handleApproveUser(showUserDetails.id, showUserDetails.email);
-                                                setShowUserDetails(null);
-                                            }}
-                                            className="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition"
-                                        >
-                                            Approve User
-                                        </button>
-                                    )}
+                                <div>
+                                    <p className="text-sm text-gray-600">Registered</p>
+                                    <p className="font-medium">{formatDate(showUserDetails.created_at)}</p>
                                 </div>
+                            </div>
+                            <div className="flex justify-end mt-6">
+                                <button
+                                    onClick={() => setShowUserDetails(null)}
+                                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                                >
+                                    Close
+                                </button>
                             </div>
                         </div>
                     </div>
-                )}
-            </main>
+                </div>
+            )}
+
+            {/* Medication Details Modal */}
+            {selectedMedication && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-xl shadow-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="p-6 border-b">
+                            <div className="flex justify-between items-center">
+                                <h3 className="text-lg font-semibold text-gray-800">{selectedMedication.name}</h3>
+                                <button
+                                    onClick={() => setSelectedMedication(null)}
+                                    className="text-gray-400 hover:text-gray-600"
+                                >
+                                    <FaTimes />
+                                </button>
+                            </div>
+                        </div>
+                        <div className="p-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-4">
+                                    <div>
+                                        <h4 className="text-sm font-medium text-gray-700 mb-2">Basic Information</h4>
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">Generic Name:</span>
+                                                <span className="font-medium">{selectedMedication.generic_name}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">Brand Names:</span>
+                                                <span className="font-medium text-right">{selectedMedication.brand_names || 'N/A'}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">Drug Class:</span>
+                                                <span className={`px-2 py-1 text-xs rounded ${getMedicationClassColor(selectedMedication.class)}`}>
+                                                    {selectedMedication.class}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">Schedule:</span>
+                                                <span className="font-medium">{selectedMedication.schedule || 'N/A'}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h4 className="text-sm font-medium text-gray-700 mb-2">Dosage & Administration</h4>
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">Dosage Forms:</span>
+                                                <span className="font-medium">{selectedMedication.dosage_forms || 'N/A'}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">Strength:</span>
+                                                <span className="font-medium">{selectedMedication.strength || 'N/A'}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">Route:</span>
+                                                <span className="font-medium">{selectedMedication.route || 'N/A'}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h4 className="text-sm font-medium text-gray-700 mb-2">Safety Information</h4>
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">Pregnancy Category:</span>
+                                                <span className={`px-2 py-1 text-xs rounded ${getPregnancyCategoryColor(selectedMedication.pregnancy_category)}`}>
+                                                    Category {selectedMedication.pregnancy_category || 'N/A'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="space-y-4">
+                                    <div>
+                                        <h4 className="text-sm font-medium text-gray-700 mb-2">Indications</h4>
+                                        <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">
+                                            {selectedMedication.indications || 'No indications specified'}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <h4 className="text-sm font-medium text-gray-700 mb-2">Contraindications</h4>
+                                        <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">
+                                            {selectedMedication.contraindications || 'No contraindications specified'}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <h4 className="text-sm font-medium text-gray-700 mb-2">Side Effects</h4>
+                                        <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">
+                                            {selectedMedication.side_effects || 'No side effects specified'}
+                                        </p>
+                                    </div>
+                                    {selectedMedication.interactions && (
+                                        <div>
+                                            <h4 className="text-sm font-medium text-gray-700 mb-2">Drug Interactions</h4>
+                                            <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">
+                                                {selectedMedication.interactions}
+                                            </p>
+                                        </div>
+                                    )}
+                                    {selectedMedication.storage && (
+                                        <div>
+                                            <h4 className="text-sm font-medium text-gray-700 mb-2">Storage Instructions</h4>
+                                            <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">
+                                                {selectedMedication.storage}
+                                            </p>
+                                        </div>
+                                    )}
+                                    {selectedMedication.notes && (
+                                        <div>
+                                            <h4 className="text-sm font-medium text-gray-700 mb-2">Additional Notes</h4>
+                                            <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">
+                                                {selectedMedication.notes}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="flex justify-end gap-3 mt-6">
+                                <button
+                                    onClick={() => setSelectedMedication(null)}
+                                    className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-50"
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Footer */}
+            <footer className="bg-white border-t mt-8">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                    <div className="text-center text-gray-600 text-sm">
+                        <p>PharmaCare Admin Dashboard • {new Date().getFullYear()} • Secure Administrative Interface</p>
+                        <p className="mt-1 text-xs text-gray-500">Last updated: {stats.last_updated ? formatDate(stats.last_updated) : 'Never'}</p>
+                    </div>
+                </div>
+            </footer>
         </div>
     );
 };
