@@ -881,7 +881,7 @@ const MedicationInfo = () => {
                                         <div className="flex-1">
                                             <h3 className="text-xl font-bold text-gray-900 mb-1">{med.name}</h3>
                                             {med.amharic_name && (
-                                                <p className="text-sm text-gray-600 mb-1">አማርኛ: {med.amharic_name}</p>
+                                                <p className="text-sm text-gray-600 mb-1">በአማርኛ: {med.amharic_name}</p>
                                             )}
                                         </div>
                                         {/* Only show delete button for admins */}
@@ -935,55 +935,55 @@ const MedicationInfo = () => {
                                         {expandedMedication === med.id && (
                                             <div className="mt-4 space-y-4">
                                                 <div>
-                                                    <h4 className="font-semibold text-gray-700 mb-2 text-sm">Usage / Indications:</h4>
+                                                    <h4 className="font-semibold text-gray-700 mb-2 text-sm">ይህ መድሃኒት ለምን ጥቅም ላይ ይውላል?:</h4>
                                                     <p className="text-sm text-gray-600">{med.usage}</p>
                                                 </div>
                                                 
                                                 {med.before_taking && (
                                                     <div>
-                                                        <h4 className="font-semibold text-gray-700 mb-2 text-sm">Before Taking:</h4>
+                                                        <h4 className="font-semibold text-gray-700 mb-2 text-sm">ይህንን መድሃኒት ከመውሰዴ በፊት ለዶክተሬ ምን መንገር አለብኝ?:</h4>
                                                         <p className="text-sm text-gray-600">{med.before_taking}</p>
                                                     </div>
                                                 )}
 
                                                 {med.while_taking && (
                                                     <div>
-                                                        <h4 className="font-semibold text-gray-700 mb-2 text-sm">While Taking:</h4>
+                                                        <h4 className="font-semibold text-gray-700 mb-2 text-sm">ይህን መድሃኒት በምወስድበት ጊዜ ማወቅ ወይም ማድረግ ያለብኝ አንዳንድ ነገሮች ምንድን ናቸው?:</h4>
                                                         <p className="text-sm text-gray-600">{med.while_taking}</p>
                                                     </div>
                                                 )}
 
                                                 {med.side_effects && (
                                                     <div>
-                                                        <h4 className="font-semibold text-orange-700 mb-2 text-sm">Common Side Effects:</h4>
+                                                        <h4 className="font-semibold text-orange-700 mb-2 text-sm">የዚህ መድሃኒት አንዳንድ የጎንዮሽ ጉዳቶች ምንድናቸው?:</h4>
                                                         <p className="text-sm text-gray-600">{med.side_effects}</p>
                                                     </div>
                                                 )}
 
                                                 {med.serious_side_effects && (
                                                     <div>
-                                                        <h4 className="font-semibold text-red-700 mb-2 text-sm">Serious Side Effects:</h4>
+                                                        <h4 className="font-semibold text-red-700 mb-2 text-sm">ወዲያውኑ ለሐኪሜ ማሳወቅ ያለብኝ አንዳንድ የጎንዮሽ ጉዳቶች ምንድን ናቸው?:</h4>
                                                         <p className="text-sm text-gray-600">{med.serious_side_effects}</p>
                                                     </div>
                                                 )}
 
                                                 {med.how_to_take && (
                                                     <div>
-                                                        <h4 className="font-semibold text-blue-700 mb-2 text-sm">How to Take:</h4>
+                                                        <h4 className="font-semibold text-blue-700 mb-2 text-sm">ይህ መድሃኒት እንዴት ይወሰዳል?:</h4>
                                                         <p className="text-sm text-gray-600">{med.how_to_take}</p>
                                                     </div>
                                                 )}
 
                                                 {med.missed_dose && (
                                                     <div>
-                                                        <h4 className="font-semibold text-purple-700 mb-2 text-sm">Missed Dose:</h4>
+                                                        <h4 className="font-semibold text-purple-700 mb-2 text-sm">መድሃኒቱን ሳልወሰድ ሰዓቱ ካለፈ ምን ማድረግ አለብኝ?:</h4>
                                                         <p className="text-sm text-gray-600">{med.missed_dose}</p>
                                                     </div>
                                                 )}
 
                                                 {med.storage && (
                                                     <div>
-                                                        <h4 className="font-semibold text-green-700 mb-2 text-sm">Storage:</h4>
+                                                        <h4 className="font-semibold text-green-700 mb-2 text-sm">ይህንን መድሃኒት እንዴት ማስቀመጥ እችላለሁ?:</h4>
                                                         <p className="text-sm text-gray-600">{med.storage}</p>
                                                     </div>
                                                 )}
