@@ -44,9 +44,66 @@ import PhAssistPlan from '../components/Patient/PhAssistPlan';
 import PatientOutcome from '../components/Patient/PatientOutcome';
 import CostSection from '../components/Patient/CostSection';
 
-// API Base URL - Updated to use Vercel backend
-const API_BASE_URL = 'https://addis-backend-ten.vercel.app/api';
-console.log('Using API URL:', API_BASE_URL);
+// ====== FIX: API Base URL Configuration ======
+// Check environment and set proper API URL
+const getApiBaseUrl = () => {
+    // Check if we're in development mode (localhost)
+    const isDevelopment = window.location.hostname === 'localhost' || 
+                         window.location.hostname === '127.0.0.1' ||
+                         window.location.hostname.includes('vercel.app');
+    
+    // Production backend URL - Your Vercel backend
+    const PRODUCTION_URL = 'https://addis-backend-ten.vercel.app/api';
+    
+    // Development backend URL - Use Vercel for now, but you can change this if you have a local backend
+    const DEVELOPMENT_URL = 'https://addis-backend-ten.vercel.app/api';
+    
+    return isDevelopment ? DEVELOPMENT_URL : PRODUCTION_URL;
+};
+
+// Set the API base URL
+const API_BASE_URL = getApiBaseUrl();
+console.log('🌐 API Configuration:', {
+    hostname: window.location.hostname,
+    apiBaseUrl: API_BASE_URL,
+    isDevelopment: window.location.hostname.includes('localhost') || 
+                   window.location.hostname.includes('vercel.app')
+});
+
+// Patch fetch to redirect localhost calls to Vercel
+if (typeof window !== 'undefined') {
+    const originalFetch = window.fetch;
+    window.fetch = function(url, options) {
+        // Log all API calls for debugging
+        if (typeof url === 'string') {
+            console.log('🌐 Fetch intercepted:', {
+                url,
+                isLocalhost: url.includes('localhost'),
+                isRelative: url.startsWith('/api/')
+            });
+            
+            // Fix relative API calls
+            if (url.startsWith('/api/')) {
+                url = API_BASE_URL + url.substring(4);
+                console.log('🔄 Fixed relative URL to:', url);
+            }
+            
+            // Fix localhost API calls
+            else if (url.includes('localhost:3000/api/')) {
+                url = url.replace('http://localhost:3000/api/', API_BASE_URL);
+                console.log('🔄 Fixed localhost URL to:', url);
+            }
+            
+            // Fix localhost:3000 without /api
+            else if (url.includes('localhost:3000')) {
+                url = url.replace('http://localhost:3000', 'https://addis-backend-ten.vercel.app');
+                console.log('🔄 Fixed localhost URL to:', url);
+            }
+        }
+        
+        return originalFetch.call(this, url, options);
+    };
+}
 
 // Create memoized LabInputField component
 const LabInputField = React.memo(({ 
@@ -328,24 +385,26 @@ const PatientDetails = () => {
         // Check backend status periodically
         const checkBackendStatus = async () => {
             try {
-                console.log('Checking backend status at:', `${API_BASE_URL}/health`);
+                console.log('🌐 Checking backend status at:', `${API_BASE_URL}/health`);
                 const response = await fetch(`${API_BASE_URL}/health`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    signal: AbortSignal.timeout(5000) // 5 second timeout
                 });
                 
                 if (response.ok) {
+                    const data = await response.json();
+                    console.log('✅ Backend is online:', data);
                     setBackendStatus('online');
-                    console.log('Backend is online');
                 } else {
+                    console.log('❌ Backend returned error status:', response.status);
                     setBackendStatus('offline');
-                    console.log('Backend returned error status:', response.status);
                 }
             } catch (error) {
+                console.log('❌ Backend is offline:', error.message);
                 setBackendStatus('offline');
-                console.log('Backend is offline:', error.message);
             }
         };
         
@@ -394,7 +453,16 @@ const PatientDetails = () => {
             try {
                 debugLog(`Attempt ${attempt}/${maxRetries} to fetch ${url}`);
                 
-                const response = await fetch(url, options);
+                // Add timeout to fetch
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                
+                const response = await fetch(url, {
+                    ...options,
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
                 
                 if (response.ok) {
                     return response;
@@ -560,7 +628,6 @@ const PatientDetails = () => {
             setError(null);
             
             debugLog('Starting patient fetch for:', patientCode);
-            debugLog('API URL will be:', `${API_BASE_URL}/patients/code/${patientCode}`);
             
             const token = localStorage.getItem('token');
             if (!token) {
@@ -647,15 +714,24 @@ const PatientDetails = () => {
             debugLog('❌ Error fetching patient:', error);
             
             // Check if it's a network error
-            if (error.message.includes('Network') || error.message.includes('fetch') || error.message.includes('Failed')) {
+            if (error.message.includes('Network') || 
+                error.message.includes('fetch') || 
+                error.message.includes('Failed') ||
+                error.message.includes('timeout') ||
+                error.message.includes('abort')) {
                 setError('Cannot connect to server. Please check your internet connection and try again.');
                 setRetryCount(prev => prev + 1);
             } else {
                 setError(`Failed to load patient: ${error.message}`);
             }
             
-            setIsNewPatient(true);
-            setIsEditing(true);
+            // Don't auto-set to new patient on network errors
+            if (error.message.includes('Network') || error.message.includes('Failed to fetch')) {
+                // Keep loading state for network errors
+            } else {
+                setIsNewPatient(true);
+                setIsEditing(true);
+            }
         } finally {
             setLoading(false);
         }
@@ -1130,12 +1206,18 @@ const PatientDetails = () => {
     const testBackendConnection = useCallback(async () => {
         try {
             console.log('Testing backend connection to:', API_BASE_URL);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            
             const response = await fetch(`${API_BASE_URL}/health`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
-                }
+                },
+                signal: controller.signal
             });
+            
+            clearTimeout(timeoutId);
             
             if (response.ok) {
                 const data = await response.json();
@@ -1489,8 +1571,8 @@ const PatientDetails = () => {
                 throw new Error(responseData.error || 'Save failed');
             }
 
-            const result = responseData.patient;
-            console.log('✅ Saved:', result.patient_code);
+            const result = responseData.patient || responseData.data;
+            console.log('✅ Saved:', result?.patient_code);
 
             // CRITICAL FIX: Update form state to show in inputs immediately
             if (result) {
@@ -1558,8 +1640,11 @@ const PatientDetails = () => {
             console.error('❌ Save error:', error);
             
             let errorMessage = error.message;
-            if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
-                errorMessage = 'Network error. Please check your connection.';
+            if (error.message.includes('NetworkError') || 
+                error.message.includes('Failed to fetch') ||
+                error.message.includes('timeout') ||
+                error.message.includes('abort')) {
+                errorMessage = 'Network error. Please check your internet connection.';
             } else if (error.message.includes('401') || error.message.includes('403')) {
                 errorMessage = 'Session expired. Please login again.';
                 navigate('/login');
