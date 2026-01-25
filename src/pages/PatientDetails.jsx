@@ -45,7 +45,7 @@ import PatientOutcome from '../components/Patient/PatientOutcome';
 import CostSection from '../components/Patient/CostSection';
 
 // API Base URL - Updated to use Vercel backend
-const API_BASE_URL = 'https://addis-backend-henna.vercel.app/api';
+const API_BASE_URL = 'https://addis-backend-ten.vercel.app/api';
 console.log('Using API URL:', API_BASE_URL);
 
 // Create memoized LabInputField component
