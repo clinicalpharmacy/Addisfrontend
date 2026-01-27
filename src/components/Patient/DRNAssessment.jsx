@@ -40,55 +40,55 @@ const DRNAssessment = ({ patientCode }) => {
         Indication: {
             icon: FaClipboardCheck,
             color: 'blue',
-            dTPTypes: ['unnecessary_drug_therapy', 'needs_additional_drug_therapy'],
+            dTPType: ['unnecessary_drug_therapy', 'needs_additional_drug_therapy'],
             description: 'Appropriateness of indication'
         },
         Dosage: {
             icon: FaPills,
             color: 'teal',
-            dTPTypes: ['low_dose', 'high_dose'],
+            dTPType: ['low_dose', 'high_dose'],
             description: 'Incorrect dose'
         },
         "Rule out Ineffective Drug Therapy": {
             icon: FaStethoscope,
             color: 'yellow',
-            dTPTypes: ['ineffective_drug_therapy'],
+            dTPType: ['ineffective_drug_therapy'],
             description: 'Ineffective drug therapy'
         },
         "Contraindication or Caution or ADE or SE or Allergy": {
             icon: FaExclamationTriangle,
             color: 'red',
-            dTPTypes: ['adverse_drug_event'],
+            dTPType: ['adverse_drug_event'],
             description: 'Medication safety'
         },
         "Drug Interaction": {
             icon: FaDatabase,
             color: 'orange',
-            dTPTypes: ['low_dose', 'high_dose', 'adverse_drug_event'],
+            dTPType: ['low_dose', 'high_dose', 'adverse_drug_event'],
             description: 'Drug interactions'
         },
         Administration: {
             icon: FaUserMd,
             color: 'purple',
-            dTPTypes: ['low_dose', 'high_dose', 'adverse_drug_event', 'non_adherence'],
+            dTPType: ['low_dose', 'high_dose', 'adverse_drug_event', 'non_adherence'],
             description: 'Administration related problems'
         },
         Monitoring: {
             icon: FaHeartbeat,
             color: 'pink',
-            dTPTypes: ['Need for monitoring'],
+            dTPType: ['need_for_monitoring'],
             description: 'Need for monitoring'
         },
         Adherence: {
             icon: FaUserCheck,
             color: 'indigo',
-            dTPTypes: ['non_adherence'],
+            dTPType: ['non_adherence'],
             description: 'Adherence to medication'
         },
         "Product Quality": {
             icon: FaCapsules,
             color: 'green',
-            dTPTypes: ['product_quality_defect'],
+            dTPType: ['product_quality_defect'],
             description: 'Product quality defect'
         }
     };
