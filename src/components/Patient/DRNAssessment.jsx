@@ -149,66 +149,9 @@ const DRNAssessment = ({ patientCode }) => {
         ],
         "Product Quality": [
             { name: 'Product Quality Defect', ruleType: 'product_quality_defect', severity: 'high', "DTP Type": 'Product Quality Defect', drn: 'Product Quality' },
-        ]
+        ],
     };
-        
-        
-        Indication: [
-        { name: 'Duplicate Therapy', "DTP Type": 'Unnecessary Drug Therapy', drn: 'Indication' },
-        { name: 'No medical indication', "DTP Type": 'Unnecessary Drug Therapy', drn: 'Indication' },
-        { name: 'Nondrug therapy appropriate', "DTP Type": 'Unnecessary Drug Therapy', drn: 'Indication' },
-        { name: 'Addiction or recreational medicine use', "DTP Type": 'Unnecessary Drug Therapy', drn: 'Indication' },
-        { name: 'Treating avoidable ADE', "DTP Type": 'Unnecessary Drug Therapy', drn: 'Indication' },
-        { name: 'Prophylaxis needed', "DTP Type": 'Needs Additional Drug Therapy', drn: 'Indication' },
-        { name: 'Untreated condition', "DTP Type": 'Needs Additional Drug Therapy', drn: 'Indication' },
-        { name: 'Synergistic therapy needed', "DTP Type": 'Needs Additional Drug Therapy', drn: 'Indication' },
-      ],
-      Dosage: [
-        { name: 'Low Dose', "DTP Type": 'Low Dose', drn: 'Effectiveness' },
-        { name: 'Less Frequent', "DTP Type": 'Low Dose', drn: 'Effectiveness' },
-        { name: 'Short Duration', "DTP Type": 'Low Dose', drn: 'Effectiveness' },
-        { name: 'Improper Storage', "DTP Type": 'Low Dose', drn: 'Effectiveness' },
-        { name: 'High Dose', "DTP Type": 'High Dose', drn: 'Safety' },
-        { name: 'More Frequent', "DTP Type": 'High Dose', drn: 'Safety' },
-        { name: 'Longer Duration', "DTP Type": 'High Dose', drn: 'Safety' },
-        { name: 'Dose Titration Slow or Fast', "DTP Type": 'ADE', drn: 'Safety' },
-      ],
-      "Rule out Ineffective Drug Therapy": [
-        { name: 'More effective drug available', "DTP Type": 'Ineffective Drug Therapy', drn: 'Effectiveness' },
-        { name: 'Condition refractory to drug', "DTP Type": 'Ineffective Drug Therapy', drn: 'Effectiveness' },
-        { name: 'Dosage form inappropriate', "DTP Type": 'Ineffective Drug Therapy', drn: 'Effectiveness' },
-      ],
-      "Contraindication or Caution or ADE or SE or Allergy": [
-        { name: 'Undesirable Effect (ADE or SE)', "DTP Type": 'ADE', drn: 'Safety' },
-        { name: 'Unsafe Drug (Contraindication or Caution)', "DTP Type": 'ADE', drn: 'Safety' },
-        { name: 'Allergic Reaction', "DTP Type": 'ADE', drn: 'Safety' },
-      ],
-      "Drug Interaction": [
-        { name: 'DI increase dose', "DTP Type": 'High Dose', drn: 'Safety' },
-        { name: 'DI decrease dose', "DTP Type": 'Low Dose', drn: 'Effectiveness' },
-        { name: 'DI linked to ADE', "DTP Type": 'ADE', drn: 'Safety' },
-      ],
-      Administration: [
-        { name: 'Incorrect administration decrease dose or efficacy', "DTP Type": 'Low Dose', drn: 'Effectiveness' },
-        { name: 'Incorrect administration linked to ADE', "DTP Type": 'ADE', drn: 'Safety' },
-        { name: 'Patient does not understand instructions', "DTP Type": 'Non-Adherence', drn: 'Adherence' },
-        { name: 'Cannot swallow or administer drug', "DTP Type": 'Non-Adherence', drn: 'Adherence' },
-      ],
-      Monitoring: [
-        { name: 'Need Monitoring to rule out effectiveness', "DTP Type": 'Needs additional monitoring', drn: 'Effectiveness' },
-        { name: 'Need Monitoring to rule out safety', "DTP Type": 'Needs additional monitoring', drn: 'Safety' },
-      ],
-      Adherence: [
-        { name: 'Patient prefers not to take drug', "DTP Type": 'Non-Adherence', drn: 'Adherence' },
-        { name: 'Patient forgets to take drug', "DTP Type": 'Non-Adherence', drn: 'Adherence' },
-        { name: 'Drug not available', "DTP Type": 'Non-Adherence', drn: 'Adherence' },
-        { name: 'More cost-effective drug available', "DTP Type": 'Cost', drn: 'Adherence' },
-        { name: 'Cannot afford drug', "DTP Type": 'Cost', drn: 'Adherence' },
-      ],
-      "Product Quality": [
-        { name: 'Product Quality Defect', "DTP Type": 'Product Quality Defect', drn: 'Product Quality' },
-      ],
-    };
+  
 
     // Get user ID from JWT token
     const getUserIdFromToken = () => {
