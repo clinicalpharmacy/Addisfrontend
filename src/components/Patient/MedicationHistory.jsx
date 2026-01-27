@@ -3,9 +3,7 @@ import supabase from '../../utils/supabase';
 import { 
   FaPills, FaCalendar, FaClock, FaEdit, FaTrash, FaSave, 
   FaFilter, FaSync, FaPrescription, FaUserMd, FaHospital,
-  FaCalendarCheck, FaNotesMedical, FaCapsules, FaTint,
-  FaExclamationTriangle, FaInfoCircle, FaCalculator,
-  FaFilePrescription, FaStethoscope, FaFlask
+  FaExclamationTriangle, FaInfoCircle
 } from 'react-icons/fa';
 
 const MedicationHistory = ({ patientCode }) => {
@@ -31,18 +29,6 @@ const MedicationHistory = ({ patientCode }) => {
         dosage_form: 'Tablet',
         strength: '',
         unit: 'mg',
-        total_daily_dose: '',
-        timing: '',
-        duration_days: '',
-        quantity: '',
-        refills: '0',
-        prescribed_date: '',
-        diagnosis: '',
-        therapeutic_category: '',
-        atc_code: '',
-        prescriber_name: '',
-        prescriber_type: 'Doctor',
-        pharmacy_name: '',
         
         // Status & Monitoring
         status: 'Active',
@@ -98,13 +84,6 @@ const MedicationHistory = ({ patientCode }) => {
         'With meals', 'On empty stomach', 'As needed (PRN)'
     ];
 
-    const timingOptions = [
-        'Morning (06:00-10:00)', 'Noon (10:00-14:00)', 'Evening (14:00-18:00)',
-        'Night (18:00-22:00)', 'Before breakfast', 'After breakfast',
-        'Before lunch', 'After lunch', 'Before dinner', 'After dinner',
-        'At bedtime', 'On empty stomach', 'With food', 'As directed'
-    ];
-
     const drugClasses = [
         'Analgesics', 'Antimicrobial', 'Antidiabetic', 'Cardiovascular',
         'Anesthetics', 'Antineoplastic', 'Antidepressant', 'Antipsychotic', 
@@ -119,11 +98,6 @@ const MedicationHistory = ({ patientCode }) => {
         { value: 'Discontinued', label: 'Discontinued', color: 'red' },
         { value: 'On Hold', label: 'On Hold', color: 'yellow' },
         { value: 'Planned', label: 'Planned', color: 'purple' }
-    ];
-
-    const prescriberTypes = [
-        'Doctor', 'Nurse', 'Pharmacist', 'Dentist', 'Midwife',
-        'Clinical Officer', 'Specialist', 'Other'
     ];
 
     const initiatedAtOptions = [
@@ -199,27 +173,6 @@ const MedicationHistory = ({ patientCode }) => {
         return parts.join(', ');
     };
 
-    const calculateDailyDose = () => {
-        if (!formData.dose || !formData.frequency || !formData.unit) return '';
-        
-        const doseValue = parseFloat(formData.dose);
-        if (isNaN(doseValue)) return '';
-        
-        let multiplier = 1;
-        const freq = formData.frequency.toLowerCase();
-        
-        if (freq.includes('twice') || freq.includes('bid')) multiplier = 2;
-        else if (freq.includes('three') || freq.includes('tid') || freq.includes('8 hourly')) multiplier = 3;
-        else if (freq.includes('four') || freq.includes('qid') || freq.includes('6 hourly')) multiplier = 4;
-        else if (freq.includes('every 4 hours')) multiplier = 6;
-        else if (freq.includes('every 6 hours')) multiplier = 4;
-        else if (freq.includes('every 8 hours')) multiplier = 3;
-        else if (freq.includes('every 12 hours')) multiplier = 2;
-        
-        const dailyDose = doseValue * multiplier;
-        return `${dailyDose} ${formData.unit}`;
-    };
-
     const validateForm = () => {
         if (!formData.drug_name.trim()) {
             alert('Drug Name is required');
@@ -249,7 +202,6 @@ const MedicationHistory = ({ patientCode }) => {
         setLoading(true);
         const duration = calculateDuration();
         const isActive = formData.status === 'Active';
-        const totalDailyDose = calculateDailyDose();
         
         // Build medication data object
         const medicationData = {
@@ -274,18 +226,6 @@ const MedicationHistory = ({ patientCode }) => {
             dosage_form: formData.dosage_form,
             strength: formData.strength || null,
             unit: formData.unit,
-            total_daily_dose: totalDailyDose || null,
-            timing: formData.timing || null,
-            duration_days: formData.duration_days || null,
-            quantity: formData.quantity || null,
-            refills: formData.refills,
-            prescribed_date: formData.prescribed_date || formData.start_date,
-            diagnosis: formData.diagnosis || null,
-            therapeutic_category: formData.therapeutic_category || null,
-            atc_code: formData.atc_code || null,
-            prescriber_name: formData.prescriber_name || null,
-            prescriber_type: formData.prescriber_type,
-            pharmacy_name: formData.pharmacy_name || null,
             
             // Status fields
             status: formData.status,
@@ -350,18 +290,6 @@ const MedicationHistory = ({ patientCode }) => {
             dosage_form: 'Tablet',
             strength: '',
             unit: 'mg',
-            total_daily_dose: '',
-            timing: '',
-            duration_days: '',
-            quantity: '',
-            refills: '0',
-            prescribed_date: '',
-            diagnosis: '',
-            therapeutic_category: '',
-            atc_code: '',
-            prescriber_name: '',
-            prescriber_type: 'Doctor',
-            pharmacy_name: '',
             status: 'Active',
             prn: false,
             notes: '',
@@ -380,8 +308,6 @@ const MedicationHistory = ({ patientCode }) => {
             unit: medication.unit || 'mg',
             status: medication.status || 'Active',
             initiated_at: medication.initiated_at || 'Hospital',
-            prescriber_type: medication.prescriber_type || 'Doctor',
-            refills: medication.refills || '0'
         });
         setIsEditing(true);
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -443,17 +369,6 @@ const MedicationHistory = ({ patientCode }) => {
             ...prev,
             [name]: type === 'checkbox' ? checked : value
         }));
-    };
-
-    const handleCalculate = () => {
-        const dailyDose = calculateDailyDose();
-        if (dailyDose) {
-            setFormData(prev => ({
-                ...prev,
-                total_daily_dose: dailyDose
-            }));
-            alert(`Calculated Daily Dose: ${dailyDose}`);
-        }
     };
 
     const getStatusColor = (status) => {
@@ -541,18 +456,10 @@ const MedicationHistory = ({ patientCode }) => {
             <div className="bg-gray-50 rounded-lg p-6 mb-8 border border-gray-200">
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-                        <FaFilePrescription />
+                        <FaPrescription />
                         {isEditing ? 'Edit Medication' : 'Add New Medication'}
                     </h3>
                     <div className="flex gap-2">
-                        <button
-                            type="button"
-                            onClick={handleCalculate}
-                            className="text-sm bg-green-100 text-green-800 hover:bg-green-200 px-3 py-1 rounded-lg flex items-center gap-1"
-                            title="Calculate daily dose"
-                        >
-                            <FaCalculator /> Calculate
-                        </button>
                         <button
                             type="button"
                             onClick={() => setShowAdvanced(!showAdvanced)}
@@ -738,346 +645,121 @@ const MedicationHistory = ({ patientCode }) => {
 
                 {/* Advanced Fields */}
                 {showAdvanced && (
-                    <>
-                        {/* Additional Drug Information */}
-                        <div className="mb-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                            <h4 className="font-medium text-yellow-800 mb-3 flex items-center gap-2">
-                                <FaCapsules /> Drug Information
-                            </h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {/* Generic Name */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Generic Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="generic_name"
-                                        value={formData.generic_name}
-                                        onChange={handleInputChange}
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                        placeholder="e.g., Metformin HCl"
-                                    />
-                                </div>
+                    <div className="mb-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                        <h4 className="font-medium text-yellow-800 mb-3 flex items-center gap-2">
+                            <FaPills /> Additional Information
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {/* Generic Name */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Generic Name
+                                </label>
+                                <input
+                                    type="text"
+                                    name="generic_name"
+                                    value={formData.generic_name}
+                                    onChange={handleInputChange}
+                                    className="w-full border border-gray-300 rounded-lg p-3"
+                                    placeholder="e.g., Metformin HCl"
+                                />
+                            </div>
 
-                                {/* Brand Name */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Brand Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="brand_name"
-                                        value={formData.brand_name}
-                                        onChange={handleInputChange}
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                        placeholder="e.g., Glucophage"
-                                    />
-                                </div>
+                            {/* Brand Name */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Brand Name
+                                </label>
+                                <input
+                                    type="text"
+                                    name="brand_name"
+                                    value={formData.brand_name}
+                                    onChange={handleInputChange}
+                                    className="w-full border border-gray-300 rounded-lg p-3"
+                                    placeholder="e.g., Glucophage"
+                                />
+                            </div>
 
-                                {/* Dosage Form */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Dosage Form
-                                    </label>
-                                    <select
-                                        name="dosage_form"
-                                        value={formData.dosage_form}
-                                        onChange={handleInputChange}
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                    >
-                                        {dosageForms.map(form => (
-                                            <option key={form} value={form}>{form}</option>
-                                        ))}
-                                    </select>
-                                </div>
+                            {/* Dosage Form */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Dosage Form
+                                </label>
+                                <select
+                                    name="dosage_form"
+                                    value={formData.dosage_form}
+                                    onChange={handleInputChange}
+                                    className="w-full border border-gray-300 rounded-lg p-3"
+                                >
+                                    {dosageForms.map(form => (
+                                        <option key={form} value={form}>{form}</option>
+                                    ))}
+                                </select>
+                            </div>
 
-                                {/* Strength */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Strength
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="strength"
-                                        value={formData.strength}
-                                        onChange={handleInputChange}
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                        placeholder="e.g., 500mg/5ml"
-                                    />
-                                </div>
+                            {/* Strength */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Strength
+                                </label>
+                                <input
+                                    type="text"
+                                    name="strength"
+                                    value={formData.strength}
+                                    onChange={handleInputChange}
+                                    className="w-full border border-gray-300 rounded-lg p-3"
+                                    placeholder="e.g., 500mg/5ml"
+                                />
+                            </div>
 
-                                {/* ATC Code */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        ATC Code
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="atc_code"
-                                        value={formData.atc_code}
-                                        onChange={handleInputChange}
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                        placeholder="e.g., A10BA02"
-                                    />
-                                </div>
+                            {/* Initiated At */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Initiated At
+                                </label>
+                                <select
+                                    name="initiated_at"
+                                    value={formData.initiated_at}
+                                    onChange={handleInputChange}
+                                    className="w-full border border-gray-300 rounded-lg p-3"
+                                >
+                                    {initiatedAtOptions.map(place => (
+                                        <option key={place} value={place}>{place}</option>
+                                    ))}
+                                </select>
+                            </div>
 
-                                {/* Therapeutic Category */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Therapeutic Category
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="therapeutic_category"
-                                        value={formData.therapeutic_category}
-                                        onChange={handleInputChange}
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                        placeholder="e.g., Biguanide"
-                                    />
-                                </div>
+                            {/* PRN */}
+                            <div className="flex items-center">
+                                <input
+                                    type="checkbox"
+                                    id="prn"
+                                    name="prn"
+                                    checked={formData.prn}
+                                    onChange={handleInputChange}
+                                    className="h-5 w-5 text-blue-600 rounded"
+                                />
+                                <label htmlFor="prn" className="ml-2 text-sm text-gray-700">
+                                    As Needed (PRN) Medication
+                                </label>
                             </div>
                         </div>
 
-                        {/* Prescription Details */}
-                        <div className="mb-6 p-4 bg-green-50 rounded-lg border border-green-200">
-                            <h4 className="font-medium text-green-800 mb-3 flex items-center gap-2">
-                                <FaFilePrescription /> Prescription Details
-                            </h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                {/* Duration */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Duration (Days)
-                                    </label>
-                                    <input
-                                        type="number"
-                                        name="duration_days"
-                                        value={formData.duration_days}
-                                        onChange={handleInputChange}
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                        placeholder="e.g., 30"
-                                    />
-                                </div>
-
-                                {/* Quantity */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Quantity
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="quantity"
-                                        value={formData.quantity}
-                                        onChange={handleInputChange}
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                        placeholder="e.g., 30 tablets"
-                                    />
-                                </div>
-
-                                {/* Refills */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Refills
-                                    </label>
-                                    <select
-                                        name="refills"
-                                        value={formData.refills}
-                                        onChange={handleInputChange}
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                    >
-                                        <option value="0">No refills</option>
-                                        <option value="1">1 refill</option>
-                                        <option value="2">2 refills</option>
-                                        <option value="3">3 refills</option>
-                                        <option value="unlimited">Unlimited</option>
-                                    </select>
-                                </div>
-
-                                {/* Timing */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Timing
-                                    </label>
-                                    <select
-                                        name="timing"
-                                        value={formData.timing}
-                                        onChange={handleInputChange}
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                    >
-                                        <option value="">Select timing</option>
-                                        {timingOptions.map(time => (
-                                            <option key={time} value={time}>{time}</option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                {/* PRN */}
-                                <div className="flex items-center col-span-2">
-                                    <input
-                                        type="checkbox"
-                                        id="prn"
-                                        name="prn"
-                                        checked={formData.prn}
-                                        onChange={handleInputChange}
-                                        className="h-5 w-5 text-blue-600 rounded"
-                                    />
-                                    <label htmlFor="prn" className="ml-2 text-sm text-gray-700">
-                                        As Needed (PRN) Medication
-                                    </label>
-                                </div>
-
-                                {/* Total Daily Dose */}
-                                <div className="col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Total Daily Dose
-                                    </label>
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="text"
-                                            name="total_daily_dose"
-                                            value={formData.total_daily_dose}
-                                            onChange={handleInputChange}
-                                            className="flex-1 border border-gray-300 rounded-lg p-3"
-                                            placeholder="Auto-calculated"
-                                            readOnly
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={handleCalculate}
-                                            className="px-4 py-3 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200"
-                                        >
-                                            <FaCalculator />
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
+                        {/* Notes */}
+                        <div className="mt-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Notes
+                            </label>
+                            <textarea
+                                name="notes"
+                                value={formData.notes}
+                                onChange={handleInputChange}
+                                rows="3"
+                                className="w-full border border-gray-300 rounded-lg p-3"
+                                placeholder="Additional notes..."
+                            />
                         </div>
-
-                        {/* Prescriber & Pharmacy Info */}
-                        <div className="mb-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
-                            <h4 className="font-medium text-purple-800 mb-3 flex items-center gap-2">
-                                <FaUserMd /> Prescriber & Pharmacy
-                            </h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {/* Prescriber Name */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Prescriber Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="prescriber_name"
-                                        value={formData.prescriber_name}
-                                        onChange={handleInputChange}
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                        placeholder="Dr. Name"
-                                    />
-                                </div>
-
-                                {/* Prescriber Type */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Prescriber Type
-                                    </label>
-                                    <select
-                                        name="prescriber_type"
-                                        value={formData.prescriber_type}
-                                        onChange={handleInputChange}
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                    >
-                                        {prescriberTypes.map(type => (
-                                            <option key={type} value={type}>{type}</option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                {/* Pharmacy Name */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        <FaHospital className="inline mr-1" /> Pharmacy
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="pharmacy_name"
-                                        value={formData.pharmacy_name}
-                                        onChange={handleInputChange}
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                        placeholder="Pharmacy Name"
-                                    />
-                                </div>
-
-                                {/* Initiated At */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Initiated At
-                                    </label>
-                                    <select
-                                        name="initiated_at"
-                                        value={formData.initiated_at}
-                                        onChange={handleInputChange}
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                    >
-                                        {initiatedAtOptions.map(place => (
-                                            <option key={place} value={place}>{place}</option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                {/* Prescribed Date */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Prescribed Date
-                                    </label>
-                                    <input
-                                        type="date"
-                                        name="prescribed_date"
-                                        value={formData.prescribed_date}
-                                        onChange={handleInputChange}
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Clinical Information */}
-                        <div className="mb-6 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
-                            <h4 className="font-medium text-indigo-800 mb-3 flex items-center gap-2">
-                                <FaStethoscope /> Clinical Information
-                            </h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {/* Diagnosis */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Diagnosis
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="diagnosis"
-                                        value={formData.diagnosis}
-                                        onChange={handleInputChange}
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                        placeholder="Primary diagnosis"
-                                    />
-                                </div>
-
-                                {/* Notes */}
-                                <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        <FaNotesMedical className="inline mr-1" /> Clinical Notes
-                                    </label>
-                                    <textarea
-                                        name="notes"
-                                        value={formData.notes}
-                                        onChange={handleInputChange}
-                                        rows="3"
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                        placeholder="Additional clinical notes..."
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </>
+                    </div>
                 )}
 
                 {/* Action Buttons */}
@@ -1238,9 +920,6 @@ const MedicationHistory = ({ patientCode }) => {
                                         </td>
                                         <td className="p-4">
                                             <div className="text-gray-700">{med.frequency}</div>
-                                            {med.timing && (
-                                                <div className="text-sm text-gray-500">{med.timing}</div>
-                                            )}
                                         </td>
                                         <td className="p-4">
                                             <div className="space-y-1">
@@ -1264,9 +943,6 @@ const MedicationHistory = ({ patientCode }) => {
                                         </td>
                                         <td className="p-4">
                                             <div className="text-gray-700">{med.indication || '—'}</div>
-                                            {med.diagnosis && (
-                                                <div className="text-sm text-gray-500">{med.diagnosis}</div>
-                                            )}
                                         </td>
                                         <td className="p-4">
                                             <span className={`px-3 py-1 text-xs rounded-full border ${getStatusColor(med.status)}`}>
