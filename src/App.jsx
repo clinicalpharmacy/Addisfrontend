@@ -50,21 +50,21 @@ const clearInvalidAuth = () => {
 // UPDATED: Simplified subscription check - Only check if explicitly required
 const hasValidSubscription = (user) => {
     if (!user) return false;
-    
+
     // Admin doesn't need subscription
     if (user.role === 'admin') return true;
-    
+
     // Check subscription status from localStorage or user object
     const subscriptionStatus = localStorage.getItem('subscription_status');
     const hasSubscription = localStorage.getItem('has_subscription');
-    
+
     console.log('Subscription check:', {
         userRole: user.role,
         subscriptionStatus,
         hasSubscription,
         user: user.email
     });
-    
+
     // Return true if subscription is active
     const isActive = subscriptionStatus === 'active' || hasSubscription === 'true';
     console.log('Is subscription active?', isActive);
@@ -96,31 +96,30 @@ const MainLayout = ({ children, showSidebar = true, showNavbar = true }) => {
         <div className="min-h-screen bg-gray-50">
             {/* Navbar */}
             {showNavbar && <Navbar onMenuClick={() => setSidebarOpen(true)} />}
-            
+
             {/* Mobile Sidebar Overlay */}
             {sidebarOpen && showSidebar && (
-                <div 
+                <div
                     className="fixed inset-0 bg-gray-600 bg-opacity-75 z-40 md:hidden"
                     onClick={() => setSidebarOpen(false)}
                 />
             )}
-            
+
             <div className="flex min-h-screen">
                 {/* Sidebar */}
                 {showSidebar && (
                     <>
-                        <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white transform transition-transform duration-300 ease-in-out ${
-                            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-                        } md:relative md:translate-x-0 border-r border-gray-200`}>
+                        <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+                            } md:relative md:translate-x-0 border-r border-gray-200`}>
                             <Sidebar onClose={() => setSidebarOpen(false)} />
                         </div>
                     </>
                 )}
-                
+
                 {/* Main Content Area */}
                 <div className={`flex-1 ${showSidebar ? 'md:ml-64' : ''}`}>
                     <main className="p-4 md:p-6 min-h-screen">
-                        <div className="max-w-7xl mx-auto">
+                        <div className="w-full">
                             {children}
                         </div>
                     </main>
@@ -160,7 +159,7 @@ const RootRedirector = () => {
             setTimeout(() => {
                 setLoading(false);
             }, 100);
-            
+
         } catch (error) {
             console.error('Auth check error:', error);
             clearInvalidAuth();
@@ -175,13 +174,13 @@ const RootRedirector = () => {
     // Check what dashboard to redirect to
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
-    
+
     if (token && userData) {
         try {
             const user = JSON.parse(userData);
-            
+
             // FIXED: Check user role and redirect accordingly
-            switch(user.role) {
+            switch (user.role) {
                 case 'admin':
                     // Admin users go to admin dashboard
                     console.log('RootRedirector: Admin user detected, redirecting to /admin/dashboard');
@@ -204,7 +203,7 @@ const RootRedirector = () => {
             return <Navigate to="/login" replace />;
         }
     }
-    
+
     // Not authenticated, go to signup
     console.log('RootRedirector: No auth, redirecting to /signup');
     return <Navigate to="/signup" replace />;
@@ -218,7 +217,7 @@ const PublicRoute = ({ children }) => {
         // Quick check without API call
         const token = localStorage.getItem('token');
         const userData = localStorage.getItem('user');
-        
+
         if (token && userData) {
             // Check if token is expired
             const tokenExpiry = localStorage.getItem('token_expiry');
@@ -226,7 +225,7 @@ const PublicRoute = ({ children }) => {
                 clearInvalidAuth();
             }
         }
-        
+
         setLoading(false);
     }, []);
 
@@ -261,9 +260,9 @@ const ProtectedRoute = ({ children, adminOnly = false, companyAdminOnly = false,
 
             const parsedUser = JSON.parse(userData);
             setUser(parsedUser);
-            
+
             console.log('ProtectedRoute: Checking auth for user:', parsedUser.email, 'Role:', parsedUser.role, 'Path:', location.pathname);
-            
+
             // Check if token is expired
             const tokenExpiry = localStorage.getItem('token_expiry');
             if (tokenExpiry && Date.now() > parseInt(tokenExpiry)) {
@@ -291,7 +290,7 @@ const ProtectedRoute = ({ children, adminOnly = false, companyAdminOnly = false,
                     hasSubscription: hasSubscription,
                     requireSubscription: requireSubscription
                 });
-                
+
                 if (!hasSubscription) {
                     // Store that subscription is needed for this route
                     localStorage.setItem('subscription_required_for', location.pathname);
@@ -307,16 +306,16 @@ const ProtectedRoute = ({ children, adminOnly = false, companyAdminOnly = false,
                         'Authorization': `Bearer ${token}`
                     }
                 });
-                
+
                 console.log('ProtectedRoute: /auth/me response status:', response.status);
-                
+
                 if (response.ok) {
                     setIsAuthenticated(true);
                 } else {
                     // If /auth/me fails, try to parse the response for debugging
                     const text = await response.text();
                     console.error('ProtectedRoute: /auth/me failed:', response.status, text);
-                    
+
                     // For admin users, we might still allow access even if /auth/me fails
                     // This prevents the redirect loop
                     if (parsedUser.role === 'admin') {
@@ -330,11 +329,11 @@ const ProtectedRoute = ({ children, adminOnly = false, companyAdminOnly = false,
                 // If network error, use localStorage data (offline mode)
                 console.log('ProtectedRoute: Network error, using localStorage data for authentication');
                 console.log('Error details:', error.message);
-                
+
                 // CRITICAL: Allow access even if network fails to prevent redirect loops
                 setIsAuthenticated(true);
             }
-            
+
         } catch (error) {
             console.error('Auth check error:', error);
             clearInvalidAuth();
@@ -349,28 +348,28 @@ const ProtectedRoute = ({ children, adminOnly = false, companyAdminOnly = false,
 
     if (!isAuthenticated) {
         console.log('ProtectedRoute: Not authenticated, redirecting to login');
-        
+
         // If user exists but not approved, show error and redirect to login
         if (user && !user.approved && user.role !== 'admin') {
-            return <Navigate to="/login" state={{ 
+            return <Navigate to="/login" state={{
                 message: 'Your account is pending admin approval. Please wait for approval.'
             }} replace />;
         }
-        
+
         // FIXED: Check if subscription is required for this specific route
         if (user && requireSubscription && !hasValidSubscription(user)) {
             // Store current route to return after subscription
             const subscriptionRequiredFor = localStorage.getItem('subscription_required_for') || location.pathname;
             console.log('Subscription required for route:', subscriptionRequiredFor);
-            
-            return <Navigate to="/subscription/plans" state={{ 
+
+            return <Navigate to="/subscription/plans" state={{
                 returnTo: subscriptionRequiredFor,
                 message: 'Subscription required to access this feature'
             }} replace />;
         }
-        
+
         // Otherwise, redirect to login
-        return <Navigate to="/login" state={{ 
+        return <Navigate to="/login" state={{
             redirectTo: location.pathname,
             message: 'Please login to access this page'
         }} replace />;
@@ -412,22 +411,22 @@ const ProtectedRoute = ({ children, adminOnly = false, companyAdminOnly = false,
         console.log('ProtectedRoute: Rendering admin layout');
         return <AdminLayout>{children}</AdminLayout>;
     }
-    
+
     // For company admin dashboard
     if (companyAdminOnly && user?.role === 'company_admin') {
         return <MainLayout>{children}</MainLayout>;
     }
-    
+
     // For admin routes (including CDSS), use AdminLayout
     if (user?.role === 'admin' && location.pathname.startsWith('/admin/')) {
         return <AdminLayout>{children}</AdminLayout>;
     }
-    
+
     // For regular users, show the main layout if specified
     if (showLayout) {
         return <MainLayout>{children}</MainLayout>;
     }
-    
+
     return children;
 };
 
@@ -477,17 +476,17 @@ const Dashboard = () => {
             if (userData) {
                 const parsedUser = JSON.parse(userData);
                 setUser(parsedUser);
-                
+
                 // CRITICAL FIX: Don't redirect admin users from here!
                 // If admin somehow reaches /dashboard, just show a message
                 if (parsedUser.role === 'admin') {
                     console.log('Dashboard: Admin user on /dashboard - showing admin message');
                     // Don't redirect, just load data normally
                 }
-                
+
                 // Load user-specific patients (only for non-admin users)
                 await loadUserPatients(parsedUser);
-                
+
                 // Check subscription but don't redirect - just show a banner
                 if (parsedUser.role !== 'admin') {
                     const hasSub = hasValidSubscription(parsedUser);
@@ -496,7 +495,7 @@ const Dashboard = () => {
                         role: parsedUser.role,
                         hasSubscription: hasSub
                     });
-                    
+
                     if (!hasSub) {
                         setShowSubscriptionBanner(true);
                     }
@@ -513,7 +512,7 @@ const Dashboard = () => {
         try {
             const token = localStorage.getItem('token');
             if (!token) return;
-            
+
             // Fetch user's own patients from backend
             const response = await fetch(`${API_URL}/patients/my-patients`, {
                 headers: {
@@ -521,24 +520,24 @@ const Dashboard = () => {
                     'Accept': 'application/json'
                 }
             });
-            
+
             if (response.ok) {
                 const data = await response.json();
                 console.log('Loaded user patients:', data);
-                
+
                 if (data.success && data.patients) {
                     // Store in user-specific localStorage
                     const storageKey = getUserStorageKey('user_patients', currentUser);
                     localStorage.setItem(storageKey, JSON.stringify(data.patients));
-                    
+
                     setUserPatients(data.patients);
-                    
+
                     // Calculate stats
                     const today = new Date().toISOString().split('T')[0];
-                    const todayPatients = data.patients.filter(p => 
+                    const todayPatients = data.patients.filter(p =>
                         p.created_at && new Date(p.created_at).toISOString().split('T')[0] === today
                     ).length;
-                    
+
                     setPatientStats({
                         total: data.patients.length,
                         today: todayPatients,
@@ -622,7 +621,7 @@ const Dashboard = () => {
                             You are logged in as an administrator. Please use the admin dashboard for system management.
                         </p>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-md mx-auto">
                         <button
                             onClick={() => navigate('/admin/dashboard')}
@@ -640,7 +639,7 @@ const Dashboard = () => {
                             Logout
                         </button>
                     </div>
-                    
+
                     <div className="mt-8 pt-6 border-t border-gray-200">
                         <p className="text-sm text-gray-500">
                             Admin users have access to system management, user approvals, and CDSS configuration.
@@ -670,7 +669,7 @@ const Dashboard = () => {
                     </button>
                 )}
             </div>
-            
+
             {/* Subscription Banner */}
             {showSubscriptionBanner && (
                 <div className="mb-6 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg animate-fadeIn">
@@ -705,7 +704,7 @@ const Dashboard = () => {
                     </div>
                 </div>
             )}
-            
+
             {user && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {/* User Info Card */}
@@ -726,21 +725,19 @@ const Dashboard = () => {
                             </div>
                             <div>
                                 <p className="text-sm text-gray-600">Approval Status</p>
-                                <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-                                    user.approved 
-                                        ? 'bg-green-100 text-green-800' 
+                                <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${user.approved
+                                        ? 'bg-green-100 text-green-800'
                                         : 'bg-yellow-100 text-yellow-800'
-                                }`}>
+                                    }`}>
                                     {user.approved ? '✓ Approved' : '⏳ Pending Approval'}
                                 </div>
                             </div>
                             <div>
                                 <p className="text-sm text-gray-600">Subscription Status</p>
-                                <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-                                    hasValidSubscription(user)
-                                        ? 'bg-green-100 text-green-800' 
+                                <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${hasValidSubscription(user)
+                                        ? 'bg-green-100 text-green-800'
                                         : 'bg-yellow-100 text-yellow-800'
-                                }`}>
+                                    }`}>
                                     {hasValidSubscription(user) ? '✓ Active' : '⚠️ Not Active'}
                                 </div>
                             </div>
@@ -786,7 +783,7 @@ const Dashboard = () => {
                         <div className="space-y-3 max-h-60 overflow-y-auto">
                             {userPatients.length > 0 ? (
                                 userPatients.slice(0, 5).map((patient, index) => (
-                                    <div 
+                                    <div
                                         key={index}
                                         onClick={() => handleViewPatient(patient.id || patient._id)}
                                         className="p-3 bg-gray-50 hover:bg-blue-50 rounded-lg cursor-pointer transition border border-gray-100"
@@ -800,13 +797,12 @@ const Dashboard = () => {
                                                     {patient.patient_code || patient.patientCode || 'No Code'}
                                                 </p>
                                             </div>
-                                            <div className={`px-2 py-1 rounded text-xs font-medium ${
-                                                patient.is_active || patient.status === 'active' 
+                                            <div className={`px-2 py-1 rounded text-xs font-medium ${patient.is_active || patient.status === 'active'
                                                     ? 'bg-green-100 text-green-800'
                                                     : patient.status === 'pending'
-                                                    ? 'bg-yellow-100 text-yellow-800'
-                                                    : 'bg-gray-100 text-gray-800'
-                                            }`}>
+                                                        ? 'bg-yellow-100 text-yellow-800'
+                                                        : 'bg-gray-100 text-gray-800'
+                                                }`}>
                                                 {patient.is_active ? 'active' : patient.status || 'unknown'}
                                             </div>
                                         </div>
@@ -885,21 +881,19 @@ const Dashboard = () => {
                         <div className="space-y-4">
                             <div className="flex items-center justify-between">
                                 <span className="text-gray-600">Current Plan</span>
-                                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                    hasValidSubscription(user)
-                                        ? 'bg-green-100 text-green-800' 
+                                <span className={`px-3 py-1 rounded-full text-sm font-medium ${hasValidSubscription(user)
+                                        ? 'bg-green-100 text-green-800'
                                         : 'bg-gray-100 text-gray-800'
-                                }`}>
+                                    }`}>
                                     {hasValidSubscription(user) ? 'Premium' : 'Free'}
                                 </span>
                             </div>
                             <div className="flex items-center justify-between">
                                 <span className="text-gray-600">Status</span>
-                                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                    hasValidSubscription(user)
-                                        ? 'bg-green-100 text-green-800' 
+                                <span className={`px-3 py-1 rounded-full text-sm font-medium ${hasValidSubscription(user)
+                                        ? 'bg-green-100 text-green-800'
                                         : 'bg-yellow-100 text-yellow-800'
-                                }`}>
+                                    }`}>
                                     {hasValidSubscription(user) ? 'Active' : 'Inactive'}
                                 </span>
                             </div>
@@ -938,99 +932,99 @@ function App() {
             <Routes>
                 {/* Root route */}
                 <Route path="/" element={<RootRedirector />} />
-                
+
                 {/* Public Routes */}
-                <Route 
-                    path="/login" 
+                <Route
+                    path="/login"
                     element={
                         <PublicRoute>
                             <SimpleLayout>
                                 <Login />
                             </SimpleLayout>
                         </PublicRoute>
-                    } 
+                    }
                 />
-                
-                <Route 
-                    path="/signup" 
+
+                <Route
+                    path="/signup"
                     element={
                         <PublicRoute>
                             <SimpleLayout>
                                 <Signup />
                             </SimpleLayout>
                         </PublicRoute>
-                    } 
+                    }
                 />
-                
+
                 {/* Subscription Routes - PUBLIC ACCESS */}
-                <Route 
-                    path="/subscription/plans" 
+                <Route
+                    path="/subscription/plans"
                     element={
                         <PublicRoute>
                             <SubscriptionLayout>
                                 <SubscriptionPlans />
                             </SubscriptionLayout>
                         </PublicRoute>
-                    } 
+                    }
                 />
-                
-                <Route 
-                    path="/subscription/success" 
+
+                <Route
+                    path="/subscription/success"
                     element={
                         <PublicRoute>
                             <SimpleLayout>
                                 <SubscriptionSuccess />
                             </SimpleLayout>
                         </PublicRoute>
-                    } 
+                    }
                 />
-                
+
                 {/* Dashboard Routes - FIXED: Admin users cannot access regular dashboard */}
-                <Route 
-                    path="/dashboard" 
+                <Route
+                    path="/dashboard"
                     element={
-                        <ProtectedRoute 
-                            adminOnly={false} 
-                            companyAdminOnly={false} 
+                        <ProtectedRoute
+                            adminOnly={false}
+                            companyAdminOnly={false}
                             requireSubscription={false}
                         >
                             <Dashboard />
                         </ProtectedRoute>
-                    } 
+                    }
                 />
-                
+
                 {/* Company Dashboard Route */}
-                <Route 
-                    path="/company/dashboard" 
+                <Route
+                    path="/company/dashboard"
                     element={
                         <ProtectedRoute companyAdminOnly={true} requireSubscription={false}>
                             <CompanyDashboard />
                         </ProtectedRoute>
-                    } 
+                    }
                 />
-                
+
                 {/* FIXED: Admin Dashboard Route - Only accessible by admin users */}
-                <Route 
-                    path="/admin/dashboard" 
+                <Route
+                    path="/admin/dashboard"
                     element={
                         <ProtectedRoute adminOnly={true}>
                             <AdminDashboard />
                         </ProtectedRoute>
-                    } 
+                    }
                 />
-                
+
                 {/* Admin CDSS Routes - ONLY for admin users */}
-                <Route 
-                    path="/admin/cdss/rules" 
+                <Route
+                    path="/admin/cdss/rules"
                     element={
                         <ProtectedRoute adminOnly={true}>
                             <ClinicalRulesAdmin />
                         </ProtectedRoute>
-                    } 
+                    }
                 />
-                
-                <Route 
-                    path="/admin/cdss/builder" 
+
+                <Route
+                    path="/admin/cdss/builder"
                     element={
                         <ProtectedRoute adminOnly={true}>
                             <AdminLayout>
@@ -1040,11 +1034,11 @@ function App() {
                                 </div>
                             </AdminLayout>
                         </ProtectedRoute>
-                    } 
+                    }
                 />
-                
-                <Route 
-                    path="/admin/cdss/alerts" 
+
+                <Route
+                    path="/admin/cdss/alerts"
                     element={
                         <ProtectedRoute adminOnly={true}>
                             <AdminLayout>
@@ -1054,11 +1048,11 @@ function App() {
                                 </div>
                             </AdminLayout>
                         </ProtectedRoute>
-                    } 
+                    }
                 />
-                
-                <Route 
-                    path="/admin/cdss/tools" 
+
+                <Route
+                    path="/admin/cdss/tools"
                     element={
                         <ProtectedRoute adminOnly={true}>
                             <AdminLayout>
@@ -1068,50 +1062,50 @@ function App() {
                                 </div>
                             </AdminLayout>
                         </ProtectedRoute>
-                    } 
+                    }
                 />
-                
+
                 {/* Protected Routes for regular users - NO subscription requirement */}
-                <Route 
-                    path="/home" 
+                <Route
+                    path="/home"
                     element={
                         <ProtectedRoute requireSubscription={false}>
                             <Home />
                         </ProtectedRoute>
-                    } 
+                    }
                 />
-                
+
                 {/* Patient Routes - NO subscription requirement */}
-                <Route 
-                    path="/patients" 
+                <Route
+                    path="/patients"
                     element={
                         <ProtectedRoute requireSubscription={false}>
                             <PatientList />
                         </ProtectedRoute>
-                    } 
+                    }
                 />
-                
-                <Route 
-                    path="/patients/new" 
+
+                <Route
+                    path="/patients/new"
                     element={
                         <ProtectedRoute requireSubscription={false}>
                             <PatientDetails />
                         </ProtectedRoute>
-                    } 
+                    }
                 />
-                
-                <Route 
-                    path="/patients/:patientCode" 
+
+                <Route
+                    path="/patients/:patientCode"
                     element={
                         <ProtectedRoute requireSubscription={false}>
                             <PatientDetails />
                         </ProtectedRoute>
-                    } 
+                    }
                 />
-                
+
                 {/* Knowledge Base Routes - NO subscription requirement */}
-                <Route 
-                    path="/knowledge" 
+                <Route
+                    path="/knowledge"
                     element={
                         <ProtectedRoute requireSubscription={false}>
                             <KnowledgeBaseLayout />
@@ -1124,34 +1118,34 @@ function App() {
                     <Route path="illnesses" element={<MinorIllnesses />} />
                     <Route path="compounding" element={<ExtemporaneousPrep />} />
                 </Route>
-                
+
                 {/* Other Routes - NO subscription requirement */}
-                <Route 
-                    path="/reports" 
+                <Route
+                    path="/reports"
                     element={
                         <ProtectedRoute requireSubscription={false}>
                             <Reports />
                         </ProtectedRoute>
-                    } 
+                    }
                 />
-                
-                <Route 
-                    path="/settings" 
+
+                <Route
+                    path="/settings"
                     element={
                         <ProtectedRoute requireSubscription={false}>
                             <Settings />
                         </ProtectedRoute>
-                    } 
+                    }
                 />
-                
+
                 {/* Catch-all route */}
-                <Route 
-                    path="*" 
+                <Route
+                    path="*"
                     element={
                         <PublicRoute>
                             <Navigate to="/" replace />
                         </PublicRoute>
-                    } 
+                    }
                 />
             </Routes>
         </Router>
