@@ -724,7 +724,21 @@ const MedicationHistory = ({ patientCode }) => {
                             <FaPills /> Additional Information
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {/* Dosage Form */}
+                          {/* Brand Name */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Brand Name
+                                </label>
+                                <input
+                                    type="text"
+                                    name="brand_name"
+                                    value={formData.brand_name}
+                                    onChange={handleInputChange}
+                                    className="w-full border border-gray-300 rounded-lg p-3"
+                                    placeholder="e.g., Glucophage"
+                                />
+                            </div>
+                          {/* Dosage Form */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Dosage Form
