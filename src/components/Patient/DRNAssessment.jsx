@@ -40,116 +40,116 @@ const DRNAssessment = ({ patientCode }) => {
         Indication: {
             icon: FaClipboardCheck,
             color: 'blue',
-            ruleTypes: ['duplicate_therapy', 'indication_check', 'prophylaxis', 'untreated_condition', 'nondrug_therapy', 'addiction_check', 'ade_treatment'],
-            description: 'Drug prescribed without valid indication or untreated condition'
+            ruleTypes: ['duplicate_therapy', 'no_medical_indication', 'nondrug_therapy_appropriate', 'addiction_or_recreational_medicine_use', 'treating_avoidable_ade', 'prophylaxis_needed', 'untreated_condition', 'synergistic_therapy_needed'],
+            description: 'Appropriateness of indication'
         },
         Dosage: {
             icon: FaPills,
             color: 'teal',
-            ruleTypes: ['low_dose', 'high_dose', 'frequency_check', 'duration_check', 'storage_check', 'dose_titration'],
-            description: 'Inappropriate dosage regimen'
+            ruleTypes: ['low_dose', 'less_frequent', 'short_duration', 'improper_storage', 'high_dose', 'high_frequent','longer_duration', 'dose_titration_slow_or_fast'],
+            description: 'Incorrect dose'
         },
         "Rule out Ineffective Drug Therapy": {
             icon: FaStethoscope,
             color: 'yellow',
-            ruleTypes: ['ineffective_therapy', 'refractory_condition', 'dosage_form', 'therapeutic_monitoring'],
-            description: 'Ineffective drug therapy or better alternatives available'
+            ruleTypes: ['more_effective_drug_available', 'condition_refractory_to_drug', 'dosage_form_inappropriate'],
+            description: 'Ineffective drug therapy'
         },
         "Contraindication or Caution or ADE or SE or Allergy": {
             icon: FaExclamationTriangle,
             color: 'red',
-            ruleTypes: ['contraindication', 'allergy_check', 'adverse_event', 'side_effect'],
-            description: 'Adverse drug reactions, contraindications, or allergies'
+            ruleTypes: ['undesirable_effect_ade_or_se', 'unsafe_drug_contraindication_or_caution', 'allergic_reaction'],
+            description: 'Medication safety'
         },
         "Drug Interaction": {
             icon: FaDatabase,
             color: 'orange',
-            ruleTypes: ['drug_interaction', 'dose_increase', 'dose_decrease', 'ade_interaction'],
-            description: 'Drug-drug interactions affecting safety or effectiveness'
+            ruleTypes: ['di_increase_dose', 'di_decrease_dose', 'di_linked_to_ade'],
+            description: 'Drug interactions'
         },
         Administration: {
             icon: FaUserMd,
             color: 'purple',
-            ruleTypes: ['administration_check', 'patient_education', 'administration_ade'],
-            description: 'Administration issues or patient understanding problems'
+            ruleTypes: ['incorrect_administration_decrease_dose_or_efficacy', 'incorrect _administration_linked_to_ade', 'patient_does_not_understand_instructions', 'cannot_swallow_or_administer_drug'],
+            description: 'Administration related problems'
         },
         Monitoring: {
             icon: FaHeartbeat,
             color: 'pink',
-            ruleTypes: ['monitoring_effectiveness', 'monitoring_safety', 'therapeutic_range'],
-            description: 'Need for therapeutic drug monitoring or safety monitoring'
+            ruleTypes: ['need_monitoring_to_rule_out_effectiveness', 'need_monitoring_to_rule_out_safety'],
+            description: 'Need for monitoring'
         },
         Adherence: {
             icon: FaUserCheck,
             color: 'indigo',
-            ruleTypes: ['adherence_check', 'drug_availability', 'cost_analysis', 'formulary_check'],
-            description: 'Patient adherence issues or cost-related problems'
+            ruleTypes: ['patient_prefers_not_to_take_drug', 'patient_forgets_to_take_drug', 'drug_not_available', 'more_cost-effective_drug_available', 'cannot_afford_drug'],
+            description: 'Adherence to medication'
         },
         "Product Quality": {
             icon: FaCapsules,
             color: 'green',
-            ruleTypes: ['quality_check', 'recall_check'],
-            description: 'Product quality, storage, or stability issues'
+            ruleTypes: ['product_quality_defect'],
+            description: 'Product quality defect'
         }
     };
 
     // ✅ Menu items matching original structure with 8 items for Indication
     const menuItemsData = {
-        Indication: [
-            { name: 'Duplicate Therapy', ruleType: 'duplicate_therapy', severity: 'moderate', "DTP Type": 'Unnecessary Drug Therapy', drn: 'Indication' },
-            { name: 'No medical indication', ruleType: 'indication_check', severity: 'low', "DTP Type": 'Unnecessary Drug Therapy', drn: 'Indication' },
-            { name: 'Nondrug therapy appropriate', ruleType: 'nondrug_therapy', severity: 'low', "DTP Type": 'Unnecessary Drug Therapy', drn: 'Indication' },
-            { name: 'Addiction or recreational medicine use', ruleType: 'addiction_check', severity: 'high', "DTP Type": 'Unnecessary Drug Therapy', drn: 'Indication' },
-            { name: 'Treating avoidable ADE', ruleType: 'ade_treatment', severity: 'high', "DTP Type": 'Unnecessary Drug Therapy', drn: 'Indication' },
-            { name: 'Prophylaxis needed', ruleType: 'prophylaxis', severity: 'moderate', "DTP Type": 'Needs Additional Drug Therapy', drn: 'Indication' },
-            { name: 'Untreated condition', ruleType: 'untreated_condition', severity: 'moderate', "DTP Type": 'Needs Additional Drug Therapy', drn: 'Indication' },
-            { name: 'Synergistic therapy needed', ruleType: 'indication_check', severity: 'low', "DTP Type": 'Needs Additional Drug Therapy', drn: 'Indication' },
-        ],
-        Dosage: [
-            { name: 'Low Dose', ruleType: 'low_dose', severity: 'moderate', "DTP Type": 'Low Dose', drn: 'Effectiveness' },
-            { name: 'Less Frequent', ruleType: 'frequency_check', severity: 'moderate', "DTP Type": 'Low Dose', drn: 'Effectiveness' },
-            { name: 'Short Duration', ruleType: 'duration_check', severity: 'moderate', "DTP Type": 'Low Dose', drn: 'Effectiveness' },
-            { name: 'Improper Storage', ruleType: 'storage_check', severity: 'low', "DTP Type": 'Low Dose', drn: 'Effectiveness' },
-            { name: 'High Dose', ruleType: 'high_dose', severity: 'high', "DTP Type": 'High Dose', drn: 'Safety' },
-            { name: 'More Frequent', ruleType: 'frequency_check', severity: 'high', "DTP Type": 'High Dose', drn: 'Safety' },
-            { name: 'Longer Duration', ruleType: 'duration_check', severity: 'high', "DTP Type": 'High Dose', drn: 'Safety' },
-            { name: 'Dose Titration Slow or Fast', ruleType: 'dose_titration', severity: 'moderate', "DTP Type": 'ADE', drn: 'Safety' },
-        ],
-        "Rule out Ineffective Drug Therapy": [
-            { name: 'More effective drug available', ruleType: 'ineffective_therapy', severity: 'moderate', "DTP Type": 'Ineffective Drug Therapy', drn: 'Effectiveness' },
-            { name: 'Condition refractory to drug', ruleType: 'refractory_condition', severity: 'moderate', "DTP Type": 'Ineffective Drug Therapy', drn: 'Effectiveness' },
-            { name: 'Dosage form inappropriate', ruleType: 'dosage_form', severity: 'low', "DTP Type": 'Ineffective Drug Therapy', drn: 'Effectiveness' },
-        ],
-        "Contraindication or Caution or ADE or SE or Allergy": [
-            { name: 'Undesirable Effect (ADE or SE)', ruleType: 'adverse_event', severity: 'high', "DTP Type": 'ADE', drn: 'Safety' },
-            { name: 'Unsafe Drug (Contraindication or Caution)', ruleType: 'contraindication', severity: 'high', "DTP Type": 'ADE', drn: 'Safety' },
-            { name: 'Allergic Reaction', ruleType: 'allergy_check', severity: 'critical', "DTP Type": 'ADE', drn: 'Safety' },
-        ],
-        "Drug Interaction": [
-            { name: 'DI increase dose', ruleType: 'dose_increase', severity: 'high', "DTP Type": 'High Dose', drn: 'Safety' },
-            { name: 'DI decrease dose', ruleType: 'dose_decrease', severity: 'moderate', "DTP Type": 'Low Dose', drn: 'Effectiveness' },
-            { name: 'DI linked to ADE', ruleType: 'ade_interaction', severity: 'high', "DTP Type": 'ADE', drn: 'Safety' },
-        ],
-        Administration: [
-            { name: 'Incorrect administration decrease dose or efficacy', ruleType: 'administration_check', severity: 'moderate', "DTP Type": 'Low Dose', drn: 'Effectiveness' },
-            { name: 'Incorrect administration linked to ADE', ruleType: 'administration_ade', severity: 'high', "DTP Type": 'ADE', drn: 'Safety' },
-            { name: 'Patient does not understand instructions', ruleType: 'patient_education', severity: 'moderate', "DTP Type": 'Non-Adherence', drn: 'Adherence' },
-            { name: 'Cannot swallow or administer drug', ruleType: 'administration_check', severity: 'moderate', "DTP Type": 'Non-Adherence', drn: 'Adherence' },
-        ],
-        Monitoring: [
-            { name: 'Need Monitoring to rule out effectiveness', ruleType: 'monitoring_effectiveness', severity: 'moderate', "DTP Type": 'Needs additional monitoring', drn: 'Effectiveness' },
-            { name: 'Need Monitoring to rule out safety', ruleType: 'monitoring_safety', severity: 'high', "DTP Type": 'Needs additional monitoring', drn: 'Safety' },
-        ],
-        Adherence: [
-            { name: 'Patient prefers not to take drug', ruleType: 'adherence_check', severity: 'moderate', "DTP Type": 'Non-Adherence', drn: 'Adherence' },
-            { name: 'Patient forgets to take drug', ruleType: 'adherence_check', severity: 'moderate', "DTP Type": 'Non-Adherence', drn: 'Adherence' },
-            { name: 'Drug not available', ruleType: 'drug_availability', severity: 'low', "DTP Type": 'Non-Adherence', drn: 'Adherence' },
-            { name: 'More cost-effective drug available', ruleType: 'cost_analysis', severity: 'low', "DTP Type": 'Cost', drn: 'Adherence' },
-            { name: 'Cannot afford drug', ruleType: 'cost_analysis', severity: 'moderate', "DTP Type": 'Cost', drn: 'Adherence' },
-        ],
-        "Product Quality": [
-            { name: 'Product Quality Defect', ruleType: 'quality_check', severity: 'high', "DTP Type": 'Product Quality Defect', drn: 'Product Quality' },
-        ]
+      Indication: [
+        { name: 'Duplicate Therapy', "DTP Type": 'Unnecessary Drug Therapy', drn: 'Indication' },
+        { name: 'No medical indication', "DTP Type": 'Unnecessary Drug Therapy', drn: 'Indication' },
+        { name: 'Nondrug therapy appropriate', "DTP Type": 'Unnecessary Drug Therapy', drn: 'Indication' },
+        { name: 'Addiction or recreational medicine use', "DTP Type": 'Unnecessary Drug Therapy', drn: 'Indication' },
+        { name: 'Treating avoidable ADE', "DTP Type": 'Unnecessary Drug Therapy', drn: 'Indication' },
+        { name: 'Prophylaxis needed', "DTP Type": 'Needs Additional Drug Therapy', drn: 'Indication' },
+        { name: 'Untreated condition', "DTP Type": 'Needs Additional Drug Therapy', drn: 'Indication' },
+        { name: 'Synergistic therapy needed', "DTP Type": 'Needs Additional Drug Therapy', drn: 'Indication' },
+      ],
+      Dosage: [
+        { name: 'Low Dose', "DTP Type": 'Low Dose', drn: 'Effectiveness' },
+        { name: 'Less Frequent', "DTP Type": 'Low Dose', drn: 'Effectiveness' },
+        { name: 'Short Duration', "DTP Type": 'Low Dose', drn: 'Effectiveness' },
+        { name: 'Improper Storage', "DTP Type": 'Low Dose', drn: 'Effectiveness' },
+        { name: 'High Dose', "DTP Type": 'High Dose', drn: 'Safety' },
+        { name: 'More Frequent', "DTP Type": 'High Dose', drn: 'Safety' },
+        { name: 'Longer Duration', "DTP Type": 'High Dose', drn: 'Safety' },
+        { name: 'Dose Titration Slow or Fast', "DTP Type": 'ADE', drn: 'Safety' },
+      ],
+      "Rule out Ineffective Drug Therapy": [
+        { name: 'More effective drug available', "DTP Type": 'Ineffective Drug Therapy', drn: 'Effectiveness' },
+        { name: 'Condition refractory to drug', "DTP Type": 'Ineffective Drug Therapy', drn: 'Effectiveness' },
+        { name: 'Dosage form inappropriate', "DTP Type": 'Ineffective Drug Therapy', drn: 'Effectiveness' },
+      ],
+      "Contraindication or Caution or ADE or SE or Allergy": [
+        { name: 'Undesirable Effect (ADE or SE)', "DTP Type": 'ADE', drn: 'Safety' },
+        { name: 'Unsafe Drug (Contraindication or Caution)', "DTP Type": 'ADE', drn: 'Safety' },
+        { name: 'Allergic Reaction', "DTP Type": 'ADE', drn: 'Safety' },
+      ],
+      "Drug Interaction": [
+        { name: 'DI increase dose', "DTP Type": 'High Dose', drn: 'Safety' },
+        { name: 'DI decrease dose', "DTP Type": 'Low Dose', drn: 'Effectiveness' },
+        { name: 'DI linked to ADE', "DTP Type": 'ADE', drn: 'Safety' },
+      ],
+      Administration: [
+        { name: 'Incorrect administration decrease dose or efficacy', "DTP Type": 'Low Dose', drn: 'Effectiveness' },
+        { name: 'Incorrect administration linked to ADE', "DTP Type": 'ADE', drn: 'Safety' },
+        { name: 'Patient does not understand instructions', "DTP Type": 'Non-Adherence', drn: 'Adherence' },
+        { name: 'Cannot swallow or administer drug', "DTP Type": 'Non-Adherence', drn: 'Adherence' },
+      ],
+      Monitoring: [
+        { name: 'Need Monitoring to rule out effectiveness', "DTP Type": 'Needs additional monitoring', drn: 'Effectiveness' },
+        { name: 'Need Monitoring to rule out safety', "DTP Type": 'Needs additional monitoring', drn: 'Safety' },
+      ],
+      Adherence: [
+        { name: 'Patient prefers not to take drug', "DTP Type": 'Non-Adherence', drn: 'Adherence' },
+        { name: 'Patient forgets to take drug', "DTP Type": 'Non-Adherence', drn: 'Adherence' },
+        { name: 'Drug not available', "DTP Type": 'Non-Adherence', drn: 'Adherence' },
+        { name: 'More cost-effective drug available', "DTP Type": 'Cost', drn: 'Adherence' },
+        { name: 'Cannot afford drug', "DTP Type": 'Cost', drn: 'Adherence' },
+      ],
+      "Product Quality": [
+        { name: 'Product Quality Defect', "DTP Type": 'Product Quality Defect', drn: 'Product Quality' },
+      ],
     };
 
     // Get user ID from JWT token
