@@ -1,4 +1,4 @@
-// src/components/Patient/DRNAssessment.jsx - COMPLETE FIXED VERSION
+// src/components/Patient/DRNAssessment.jsx - REVISED VERSION
 import React, { useState, useEffect } from 'react';
 import supabase from '../../utils/supabase';
 import { mapPatientToFacts, evaluateRule } from '../CDSS/RuleEngine';
@@ -93,77 +93,88 @@ const DRNAssessment = ({ patientCode }) => {
         }
     };
 
-    // ✅ Menu items matching original structure with 8 items for Indication
+    // ✅ Menu items matching original structure with DTP Type included
     const menuItemsData = {
         Indication: [
-            { name: 'Duplicate Therapy', ruleType: 'duplicate_therapy', "DTP Type": 'Unnecessary Drug Therapy', drn: 'Indication' },
-            { name: 'No medical indication', ruleType: 'no_medical_indication', "DTP Type": 'Unnecessary Drug Therapy', drn: 'Indication' },
-            { name: 'Nondrug therapy appropriate', ruleType: 'nondrug_therapy_appropriate', "DTP Type": 'Unnecessary Drug Therapy', drn: 'Indication' },
-            { name: 'Addiction or recreational medicine use', ruleType: 'addiction_or_recreational_medicine_use', "DTP Type": 'Unnecessary Drug Therapy', drn: 'Indication' },
-            { name: 'Treating avoidable ADE', ruleType: 'treating_avoidable_ade', "DTP Type": 'Unnecessary Drug Therapy', drn: 'Indication' },
-            { name: 'Prophylaxis needed', ruleType: 'prophylaxis_needed', "DTP Type": 'Needs Additional Drug Therapy', drn: 'Indication' },
-            { name: 'Untreated condition', ruleType: 'untreated_condition', "DTP Type": 'Needs Additional Drug Therapy', drn: 'Indication' },
-            { name: 'Synergistic therapy needed', ruleType: 'synergistic_therapy_needed', "DTP Type": 'Needs Additional Drug Therapy', drn: 'Indication' },
+            { name: 'Duplicate Therapy', ruleType: 'duplicate_therapy', dtpType: 'Unnecessary Drug Therapy', drn: 'Indication' },
+            { name: 'No medical indication', ruleType: 'no_medical_indication', dtpType: 'Unnecessary Drug Therapy', drn: 'Indication' },
+            { name: 'Nondrug therapy appropriate', ruleType: 'nondrug_therapy_appropriate', dtpType: 'Unnecessary Drug Therapy', drn: 'Indication' },
+            { name: 'Addiction or recreational medicine use', ruleType: 'addiction_or_recreational_medicine_use', dtpType: 'Unnecessary Drug Therapy', drn: 'Indication' },
+            { name: 'Treating avoidable ADE', ruleType: 'treating_avoidable_ade', dtpType: 'Unnecessary Drug Therapy', drn: 'Indication' },
+            { name: 'Prophylaxis needed', ruleType: 'prophylaxis_needed', dtpType: 'Needs Additional Drug Therapy', drn: 'Indication' },
+            { name: 'Untreated condition', ruleType: 'untreated_condition', dtpType: 'Needs Additional Drug Therapy', drn: 'Indication' },
+            { name: 'Synergistic therapy needed', ruleType: 'synergistic_therapy_needed', dtpType: 'Needs Additional Drug Therapy', drn: 'Indication' },
         ],
         Dosage: [
-            { name: 'Low Dose', ruleType: 'low_dose', "DTP Type": 'Low Dose', drn: 'Effectiveness' },
-            { name: 'Less Frequent', ruleType: 'less_frequent', "DTP Type": 'Low Dose', drn: 'Effectiveness' },
-            { name: 'Short Duration', ruleType: 'short_duration', "DTP Type": 'Low Dose', drn: 'Effectiveness' },
-            { name: 'Improper Storage', ruleType: 'improper_storage', "DTP Type": 'Low Dose', drn: 'Effectiveness' },
-            { name: 'High Dose', ruleType: 'high_dose', "DTP Type": 'High Dose', drn: 'Safety' },
-            { name: 'More Frequent', ruleType: 'high_frequent', "DTP Type": 'High Dose', drn: 'Safety' },
-            { name: 'Longer Duration', ruleType: 'longer_duration', "DTP Type": 'High Dose', drn: 'Safety' },
-            { name: 'Dose Titration Slow or Fast', ruleType: 'dose_titration_slow_or_fast', "DTP Type": 'ADE', drn: 'Safety' },
+            { name: 'Low Dose', ruleType: 'low_dose', dtpType: 'Low Dose', drn: 'Effectiveness' },
+            { name: 'Less Frequent', ruleType: 'less_frequent', dtpType: 'Low Dose', drn: 'Effectiveness' },
+            { name: 'Short Duration', ruleType: 'short_duration', dtpType: 'Low Dose', drn: 'Effectiveness' },
+            { name: 'Improper Storage', ruleType: 'improper_storage', dtpType: 'Low Dose', drn: 'Effectiveness' },
+            { name: 'High Dose', ruleType: 'high_dose', dtpType: 'High Dose', drn: 'Safety' },
+            { name: 'More Frequent', ruleType: 'high_frequent', dtpType: 'High Dose', drn: 'Safety' },
+            { name: 'Longer Duration', ruleType: 'longer_duration', dtpType: 'High Dose', drn: 'Safety' },
+            { name: 'Dose Titration Slow or Fast', ruleType: 'dose_titration_slow_or_fast', dtpType: 'ADE', drn: 'Safety' },
         ],
         "Rule out Ineffective Drug Therapy": [
-            { name: 'More effective drug available', ruleType: 'more_effective_drug_available', "DTP Type": 'Ineffective Drug Therapy', drn: 'Effectiveness' },
-            { name: 'Condition refractory to drug', ruleType: 'condition_refractory_to_drug', "DTP Type": 'Ineffective Drug Therapy', drn: 'Effectiveness' },
-            { name: 'Dosage form inappropriate', ruleType: 'dosage_form_inappropriate', "DTP Type": 'Ineffective Drug Therapy', drn: 'Effectiveness' },
+            { name: 'More effective drug available', ruleType: 'more_effective_drug_available', dtpType: 'Ineffective Drug Therapy', drn: 'Effectiveness' },
+            { name: 'Condition refractory to drug', ruleType: 'condition_refractory_to_drug', dtpType: 'Ineffective Drug Therapy', drn: 'Effectiveness' },
+            { name: 'Dosage form inappropriate', ruleType: 'dosage_form_inappropriate', dtpType: 'Ineffective Drug Therapy', drn: 'Effectiveness' },
         ],
         "Contraindication or Caution or ADE or SE or Allergy": [
-            { name: 'Undesirable Effect (ADE or SE)', ruleType: 'undesirable_effect_ade_or_se', "DTP Type": 'ADE', drn: 'Safety' },
-            { name: 'Unsafe Drug (Contraindication or Caution)', ruleType: 'unsafe_drug_contraindication_or_caution', "DTP Type": 'ADE', drn: 'Safety' },
-            { name: 'Allergic Reaction', ruleType: 'allergic_reaction', "DTP Type": 'ADE', drn: 'Safety' },
+            { name: 'Undesirable Effect (ADE or SE)', ruleType: 'undesirable_effect_ade_or_se', dtpType: 'ADE', drn: 'Safety' },
+            { name: 'Unsafe Drug (Contraindication or Caution)', ruleType: 'unsafe_drug_contraindication_or_caution', dtpType: 'ADE', drn: 'Safety' },
+            { name: 'Allergic Reaction', ruleType: 'allergic_reaction', dtpType: 'ADE', drn: 'Safety' },
         ],
         "Drug Interaction": [
-            { name: 'DI increase dose', ruleType: 'di_increase_dose', "DTP Type": 'High Dose', drn: 'Safety' },
-            { name: 'DI decrease dose', ruleType: 'di_decrease_dose', "DTP Type": 'Low Dose', drn: 'Effectiveness' },
-            { name: 'DI linked to ADE', ruleType: 'di_linked_to_ade', "DTP Type": 'ADE', drn: 'Safety' },
+            { name: 'DI increase dose', ruleType: 'di_increase_dose', dtpType: 'High Dose', drn: 'Safety' },
+            { name: 'DI decrease dose', ruleType: 'di_decrease_dose', dtpType: 'Low Dose', drn: 'Effectiveness' },
+            { name: 'DI linked to ADE', ruleType: 'di_linked_to_ade', dtpType: 'ADE', drn: 'Safety' },
         ],
         Administration: [
-            { name: 'Incorrect administration decrease dose or efficacy', ruleType: 'incorrect_administration_decrease_dose_or_efficacy', "DTP Type": 'Low Dose', drn: 'Effectiveness' },
-            { name: 'Incorrect administration linked to ADE', ruleType: 'incorrect _administration_linked_to_ade', "DTP Type": 'ADE', drn: 'Safety' },
-            { name: 'Patient does not understand instructions', ruleType: 'patient_does_not_understand_instructions', "DTP Type": 'Non-Adherence', drn: 'Adherence' },
-            { name: 'Cannot swallow or administer drug', ruleType: 'cannot_swallow_or_administer_drug', "DTP Type": 'Non-Adherence', drn: 'Adherence' },
+            { name: 'Incorrect administration decrease dose or efficacy', ruleType: 'incorrect_administration_decrease_dose_or_efficacy', dtpType: 'Low Dose', drn: 'Effectiveness' },
+            { name: 'Incorrect administration linked to ADE', ruleType: 'incorrect_administration_linked_to_ade', dtpType: 'ADE', drn: 'Safety' },
+            { name: 'Patient does not understand instructions', ruleType: 'patient_does_not_understand_instructions', dtpType: 'Non-Adherence', drn: 'Adherence' },
+            { name: 'Cannot swallow or administer drug', ruleType: 'cannot_swallow_or_administer_drug', dtpType: 'Non-Adherence', drn: 'Adherence' },
         ],
         Monitoring: [
-            { name: 'Need Monitoring to rule out effectiveness', ruleType: 'need_monitoring_to_rule_out_effectiveness', "DTP Type": 'Needs additional monitoring', drn: 'Effectiveness' },
-            { name: 'Need Monitoring to rule out safety', ruleType: 'need_monitoring_to_rule_out_safety', "DTP Type": 'Needs additional monitoring', drn: 'Safety' },
+            { name: 'Need Monitoring to rule out effectiveness', ruleType: 'need_monitoring_to_rule_out_effectiveness', dtpType: 'Needs additional monitoring', drn: 'Effectiveness' },
+            { name: 'Need Monitoring to rule out safety', ruleType: 'need_monitoring_to_rule_out_safety', dtpType: 'Needs additional monitoring', drn: 'Safety' },
         ],
         Adherence: [
-            { name: 'Patient prefers not to take drug', ruleType: 'patient_prefers_not_to_take_drug', "DTP Type": 'Non-Adherence', drn: 'Adherence' },
-            { name: 'Patient forgets to take drug', ruleType: 'patient_forgets_to_take_drug', "DTP Type": 'Non-Adherence', drn: 'Adherence' },
-            { name: 'Drug not available', ruleType: 'drug_not_available', "DTP Type": 'Non-Adherence', drn: 'Adherence' },
-            { name: 'More cost-effective drug available', ruleType: 'more_cost-effective_drug_available', "DTP Type": 'Cost', drn: 'Adherence' },
-            { name: 'Cannot afford drug', ruleType: 'cannot_afford_drug', "DTP Type": 'Cost', drn: 'Adherence' },
+            { name: 'Patient prefers not to take drug', ruleType: 'patient_prefers_not_to_take_drug', dtpType: 'Non-Adherence', drn: 'Adherence' },
+            { name: 'Patient forgets to take drug', ruleType: 'patient_forgets_to_take_drug', dtpType: 'Non-Adherence', drn: 'Adherence' },
+            { name: 'Drug not available', ruleType: 'drug_not_available', dtpType: 'Non-Adherence', drn: 'Adherence' },
+            { name: 'More cost-effective drug available', ruleType: 'more_cost_effective_drug_available', dtpType: 'Cost', drn: 'Adherence' },
+            { name: 'Cannot afford drug', ruleType: 'cannot_afford_drug', dtpType: 'Cost', drn: 'Adherence' },
         ],
         "Product Quality": [
-            { name: 'Product Quality Defect', ruleType: 'product_quality_defect', "DTP Type": 'Product Quality Defect', drn: 'Product Quality' },
+            { name: 'Product Quality Defect', ruleType: 'product_quality_defect', dtpType: 'Product Quality Defect', drn: 'Product Quality' },
         ]
     };
-  
+
+    // DTP Type colors for styling
+    const getDTPTypeColor = (dtpType) => {
+        const colors = {
+            'Unnecessary Drug Therapy': 'bg-red-100 text-red-800 border-red-200',
+            'Needs Additional Drug Therapy': 'bg-blue-100 text-blue-800 border-blue-200',
+            'Low Dose': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+            'High Dose': 'bg-orange-100 text-orange-800 border-orange-200',
+            'Ineffective Drug Therapy': 'bg-purple-100 text-purple-800 border-purple-200',
+            'ADE': 'bg-red-100 text-red-800 border-red-200',
+            'Non-Adherence': 'bg-indigo-100 text-indigo-800 border-indigo-200',
+            'Cost': 'bg-gray-100 text-gray-800 border-gray-200',
+            'Needs additional monitoring': 'bg-pink-100 text-pink-800 border-pink-200',
+            'Product Quality Defect': 'bg-green-100 text-green-800 border-green-200'
+        };
+        return colors[dtpType] || 'bg-gray-100 text-gray-800 border-gray-200';
+    };
+
     // Get user ID from JWT token
     const getUserIdFromToken = () => {
         try {
-            // Check localStorage for JWT token
             const token = localStorage.getItem('token') || localStorage.getItem('pharmacare_token');
+            if (!token) return null;
             
-            if (!token) {
-                console.log('No JWT token found in localStorage');
-                return null;
-            }
-            
-            // Decode JWT token
             const base64Url = token.split('.')[1];
             const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
             const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
@@ -171,18 +182,8 @@ const DRNAssessment = ({ patientCode }) => {
             }).join(''));
             
             const payload = JSON.parse(jsonPayload);
-            
-            // Extract user ID - check different possible field names
             const userId = payload.userId || payload.user_id || payload.sub || payload.id;
-            
-            if (!userId) {
-                console.log('No user ID found in token payload:', payload);
-                return null;
-            }
-            
-            console.log('Extracted user ID from token:', userId);
             return userId;
-            
         } catch (error) {
             console.error('Error parsing JWT token:', error);
             return null;
@@ -192,48 +193,33 @@ const DRNAssessment = ({ patientCode }) => {
     // Get user ID from session or localStorage
     const getUserIdFromSession = () => {
         try {
-            // Try to get from localStorage first (common in your app)
             const userData = localStorage.getItem('user');
             if (userData) {
                 try {
                     const user = JSON.parse(userData);
-                    if (user.id) {
-                        console.log('Found user ID in localStorage:', user.id);
-                        return user.id;
-                    }
-                    if (user.userId) {
-                        console.log('Found userId in localStorage:', user.userId);
-                        return user.userId;
-                    }
+                    if (user.id) return user.id;
+                    if (user.userId) return user.userId;
                 } catch (e) {
-                    console.error('Error parsing user data from localStorage:', e);
+                    console.error('Error parsing user data:', e);
                 }
             }
             
-            // Try sessionStorage
             const sessionUser = sessionStorage.getItem('user');
             if (sessionUser) {
                 try {
                     const user = JSON.parse(sessionUser);
-                    if (user.id || user.userId) {
-                        const userId = user.id || user.userId;
-                        console.log('Found user ID in sessionStorage:', userId);
-                        return userId;
-                    }
+                    if (user.id || user.userId) return user.id || user.userId;
                 } catch (e) {
-                    console.error('Error parsing user data from sessionStorage:', e);
+                    console.error('Error parsing session data:', e);
                 }
             }
             
-            // Check for auth data
             const authData = localStorage.getItem('auth');
             if (authData) {
                 try {
                     const auth = JSON.parse(authData);
                     if (auth.user && (auth.user.id || auth.user.userId)) {
-                        const userId = auth.user.id || auth.user.userId;
-                        console.log('Found user ID in auth data:', userId);
-                        return userId;
+                        return auth.user.id || auth.user.userId;
                     }
                 } catch (e) {
                     console.error('Error parsing auth data:', e);
@@ -241,9 +227,8 @@ const DRNAssessment = ({ patientCode }) => {
             }
             
             return null;
-            
         } catch (error) {
-            console.error('Error getting user ID from session:', error);
+            console.error('Error getting user ID:', error);
             return null;
         }
     };
@@ -252,60 +237,35 @@ const DRNAssessment = ({ patientCode }) => {
     useEffect(() => {
         const initializeComponent = async () => {
             if (!patientCode) {
-                console.error('Patient code is required');
                 setAuthError('Patient code is required');
                 return;
             }
             
             try {
-                // Get user ID from multiple sources
-                let currentUserId = null;
+                let currentUserId = getUserIdFromToken();
+                if (!currentUserId) currentUserId = getUserIdFromSession();
                 
-                // Try from JWT token first
-                currentUserId = getUserIdFromToken();
-                
-                // If not found, try from session/localStorage
-                if (!currentUserId) {
-                    currentUserId = getUserIdFromSession();
-                }
-                
-                // If still not found, try to get from Supabase auth (last resort)
                 if (!currentUserId) {
                     try {
                         const { data: { user } } = await supabase.auth.getUser();
-                        if (user) {
-                            currentUserId = user.id;
-                            console.log('Got user ID from Supabase auth:', currentUserId);
-                        }
+                        if (user) currentUserId = user.id;
                     } catch (authError) {
                         console.log('Supabase auth not available:', authError.message);
                     }
                 }
                 
                 if (!currentUserId) {
-                    console.warn('Could not determine user ID from any source');
-                    setAuthError('Please log in to use DRN Assessment. User session not found.');
+                    setAuthError('Please log in to use DRN Assessment.');
                     return;
                 }
                 
                 setUserId(currentUserId);
                 setAuthError(null);
-                
-                // Load patient data
                 await loadPatientData();
-                
-                // Then fetch clinical rules
                 await fetchClinicalRules();
-                
-                console.log('Component initialized with:', {
-                    patientCode,
-                    userId: currentUserId,
-                    patientId
-                });
-                
             } catch (error) {
-                console.error('Error initializing component:', error);
-                setAuthError('Failed to initialize component. Please refresh the page.');
+                console.error('Error initializing:', error);
+                setAuthError('Failed to initialize. Please refresh.');
             }
         };
 
@@ -314,15 +274,11 @@ const DRNAssessment = ({ patientCode }) => {
 
     // Fetch assessments when both IDs are available
     useEffect(() => {
-        if (patientId && userId) {
-            fetchAssessments();
-        }
+        if (patientId && userId) fetchAssessments();
     }, [patientId, userId]);
 
     const loadPatientData = async () => {
         try {
-            console.log('Loading patient data for:', patientCode);
-            
             const { data: patient, error } = await supabase
                 .from('patients')
                 .select('*')
@@ -330,16 +286,13 @@ const DRNAssessment = ({ patientCode }) => {
                 .single();
 
             if (error) {
-                console.error('Error loading patient data:', error);
                 setAuthError(`Patient not found: ${patientCode}`);
                 return;
             }
             
             setPatientData(patient);
             setPatientId(patient.id);
-            console.log('Patient data loaded, ID:', patient.id);
 
-            // Load medications
             const { data: medicationsData } = await supabase
                 .from('medication_history')
                 .select('*')
@@ -348,13 +301,10 @@ const DRNAssessment = ({ patientCode }) => {
 
             setMedications(medicationsData || patient.medication_history || []);
             
-            if (patient.labs) {
-                setLabs(patient.labs);
-            }
-            
+            if (patient.labs) setLabs(patient.labs);
         } catch (error) {
-            console.error('Error loading patient data:', error);
-            setAuthError('Failed to load patient data. Please check patient code.');
+            console.error('Error loading patient:', error);
+            setAuthError('Failed to load patient data.');
         }
     };
 
@@ -366,38 +316,26 @@ const DRNAssessment = ({ patientCode }) => {
                 .eq('is_active', true)
                 .order('rule_type', { ascending: true });
 
-            if (error) {
-                console.error('Error fetching clinical rules:', error);
-                return;
-            }
+            if (error) return;
             
             setClinicalRules(data || []);
             
             const rulesByType = {};
             data.forEach(rule => {
-                if (!rulesByType[rule.rule_type]) {
-                    rulesByType[rule.rule_type] = [];
-                }
+                if (!rulesByType[rule.rule_type]) rulesByType[rule.rule_type] = [];
                 rulesByType[rule.rule_type].push(rule);
             });
             setActiveRules(rulesByType);
-            
-            console.log('Clinical rules loaded:', data.length);
         } catch (error) {
-            console.error('Error fetching clinical rules:', error);
+            console.error('Error fetching rules:', error);
         }
     };
 
     const fetchAssessments = async () => {
-        if (!patientId || !userId) {
-            console.warn('Cannot fetch assessments: missing IDs', { patientId, userId });
-            return;
-        }
+        if (!patientId || !userId) return;
         
         setIsLoading(true);
         try {
-            console.log('Fetching assessments for:', { patientCode, userId });
-            
             const { data, error } = await supabase
                 .from('drn_assessments')
                 .select('*')
@@ -407,28 +345,10 @@ const DRNAssessment = ({ patientCode }) => {
 
             if (error) {
                 console.error('Error fetching assessments:', error);
-                
-                // Check if table exists
-                try {
-                    const { error: tableError } = await supabase
-                        .from('drn_assessments')
-                        .select('id')
-                        .limit(1);
-                        
-                    if (tableError) {
-                        console.error('DRN assessments table might not exist. Run the SQL script.');
-                        // Don't show error to user, just initialize empty array
-                    }
-                } catch (tableCheckError) {
-                    console.error('Error checking table:', tableCheckError);
-                }
-                
-                // Set empty assessments array
                 setAssessments([]);
                 return;
             }
             
-            console.log('Fetched assessments:', data?.length || 0);
             setAssessments(data || []);
         } catch (error) {
             console.error('Error fetching assessments:', error);
@@ -443,7 +363,7 @@ const DRNAssessment = ({ patientCode }) => {
         
         try {
             if (!patientData) await loadPatientData();
-            if (!patientData) throw new Error('No patient data available');
+            if (!patientData) throw new Error('No patient data');
 
             const facts = mapPatientToFacts(patientData, medications);
             const triggeredRules = [];
@@ -479,19 +399,21 @@ const DRNAssessment = ({ patientCode }) => {
                         // Map rule to DRN category
                         let drnCategory = 'Safety';
                         let causeName = rule.rule_name;
+                        let dtpType = '';
                         
-                        // Find matching category
+                        // Find matching category and DTP type
                         for (const [category, data] of Object.entries(drnCategories)) {
                             if (data.ruleTypes.includes(rule.rule_type)) {
                                 drnCategory = category;
+                                const categoryCauses = menuItemsData[category] || [];
+                                const matchingCause = categoryCauses.find(c => c.ruleType === rule.rule_type);
+                                if (matchingCause) {
+                                    causeName = matchingCause.name;
+                                    dtpType = matchingCause.dtpType;
+                                }
                                 break;
                             }
                         }
-                        
-                        // Find matching cause in the category
-                        const categoryCauses = menuItemsData[drnCategory] || [];
-                        const matchingCause = categoryCauses.find(c => c.ruleType === rule.rule_type);
-                        if (matchingCause) causeName = matchingCause.name;
                         
                         findings.push({
                             rule_id: rule.id,
@@ -499,6 +421,7 @@ const DRNAssessment = ({ patientCode }) => {
                             rule_name: rule.rule_name,
                             category: drnCategory,
                             cause: causeName,
+                            dtpType: dtpType,
                             message: message,
                             recommendation: recommendation,
                             severity: severity,
@@ -511,8 +434,7 @@ const DRNAssessment = ({ patientCode }) => {
                             evidence: rule.rule_description || '',
                             original_rule_name: rule.rule_name,
                             original_rule_type: rule.rule_type,
-                            "DTP Type": matchingCause?.["DTP Type"],
-                            drn: matchingCause?.drn
+                            drn: drnCategory
                         });
                     }
                 } catch (ruleError) {
@@ -520,7 +442,6 @@ const DRNAssessment = ({ patientCode }) => {
                 }
             });
 
-            // Group findings by category
             const findingsByCategory = {};
             Object.keys(drnCategories).forEach(category => {
                 findingsByCategory[category] = findings.filter(f => f.category === category);
@@ -590,7 +511,7 @@ const DRNAssessment = ({ patientCode }) => {
             'di_decrease_dose': 'Monitor for drug interaction that result in dose decrease.',
             'di_linked_to_ade': 'Monitor for ADE risk from drug interaction and consider alternative medication.',
             'incorrect_administration_decrease_dose_or_efficacy': 'Review medication administration technique and provide patient training.',
-            'incorrect _administration_linked_to_ade': 'Review medication administration technique to prevent ADEs.',
+            'incorrect_administration_linked_to_ade': 'Review medication administration technique to prevent ADEs.',
             'patient_does_not_understand_instructions': 'Provide patient education on proper medication use.',
             'cannot_swallow_or_administer_drug': 'Review medication administration and provide alternative options to administer the drug.',
             'need_monitoring_to_rule_out_effectiveness': 'Monitor drug therapy effectiveness with appropriate parameter.',
@@ -598,8 +519,8 @@ const DRNAssessment = ({ patientCode }) => {
             'patient_prefers_not_to_take_drug': 'Counsel patient to enhance medication adherence or concordance.',
             'patient_forgets_to_take_drug': 'Provide patient education and consider adherence aids.',
             'drug_not_available': 'Address drug availability issues with alternatives.',
-            'more_cost-effective_drug_available': 'Review medication costs and consider cost-effective alternatives.',
-            'cannot_afford_drug': 'Review medication costs and consider alternative option like health issurance coverage.',
+            'more_cost_effective_drug_available': 'Review medication costs and consider cost-effective alternatives.',
+            'cannot_afford_drug': 'Review medication costs and consider alternative option like health insurance coverage.',
             'product_quality_defect': 'Verify quality of the medication by physical inspection.',   
         };
         return recommendations[ruleType] || 'Review and consider appropriate clinical action.';
@@ -623,90 +544,80 @@ const DRNAssessment = ({ patientCode }) => {
         }));
     };
 
-   // DRNAssessment.jsx
-const saveAssessment = async (causeName) => {
-    if (!userId || !patientData) {
-        alert('User ID or patient data not available');
-        return;
-    }
-
-    if (!selectedCategory || !causeName) {
-        alert('Please select a category and cause');
-        return;
-    }
-
-    const causeDetails = menuItemsData[selectedCategory]?.find(c => c.name === causeName);
-    const writeUp = writeUps[causeName];
-
-    if (!writeUp?.specificCase || !writeUp?.medicalCondition || !writeUp?.medication) {
-        alert('Please fill all required fields: Specific Case, Medical Condition, and Medication');
-        return;
-    }
-
-    try {
-        const assessmentData = {
-            patient_id: patientData.id,
-            patient_code: patientCode,
-            user_id: userId,
-            category: selectedCategory,
-            cause_name: causeName,
-            rule_type: causeDetails?.ruleType,
-            specific_case: writeUp.specificCase,
-            medical_condition: writeUp.medicalCondition,
-            medication: writeUp.medication,
-            recommendation: writeUp.recommendation || '',
-            severity: writeUp.severity || 'moderate',
-            confidence: writeUp.confidence || 95,
-            dtp_type: causeDetails?.["DTP Type"],  // Corrected column name (no spaces)
-            drn: causeDetails?.drn,
-            cdss_rule_id: writeUp.cdssRuleId || null,
-            status: 'active',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-        };
-
-        let result;
-        
-        if (editId !== null) {
-            // Update existing assessment
-            const { data, error } = await supabase
-                .from('drn_assessments')
-                .update({
-                    ...assessmentData,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', editId)
-                .eq('user_id', userId)
-                .select();
-
-            if (error) throw error;
-            result = data[0];
-        } else {
-            // Create new assessment
-            const { data, error } = await supabase
-                .from('drn_assessments')
-                .insert([assessmentData])
-                .select();
-
-            if (error) throw error;
-            result = data[0];
+    const saveAssessment = async (causeName) => {
+        if (!userId || !patientData) {
+            alert('User ID or patient data not available');
+            return;
         }
 
-        // Refresh assessments list
-        await fetchAssessments();
-        
-        // Reset form
-        setSelectedCauses([]);
-        setWriteUps({});
-        setEditId(null);
-        
-        alert(`Assessment ${editId !== null ? 'updated' : 'saved'} successfully!`);
-        
-    } catch (error) {
-        console.error('Error saving assessment:', error);
-        alert(`Error ${editId !== null ? 'updating' : 'saving'} assessment: ${error.message}`);
-    }
-};
+        if (!selectedCategory || !causeName) {
+            alert('Please select a category and cause');
+            return;
+        }
+
+        const causeDetails = menuItemsData[selectedCategory]?.find(c => c.name === causeName);
+        const writeUp = writeUps[causeName];
+
+        if (!writeUp?.specificCase || !writeUp?.medicalCondition || !writeUp?.medication) {
+            alert('Please fill all required fields: Specific Case, Medical Condition, and Medication');
+            return;
+        }
+
+        try {
+            const assessmentData = {
+                patient_id: patientData.id,
+                patient_code: patientCode,
+                user_id: userId,
+                category: selectedCategory,
+                cause_name: causeName,
+                rule_type: causeDetails?.ruleType,
+                dtp_type: causeDetails?.dtpType,
+                specific_case: writeUp.specificCase,
+                medical_condition: writeUp.medicalCondition,
+                medication: writeUp.medication,
+                drn: causeDetails?.drn,
+                status: 'active',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            };
+
+            let result;
+            
+            if (editId !== null) {
+                const { data, error } = await supabase
+                    .from('drn_assessments')
+                    .update({
+                        ...assessmentData,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', editId)
+                    .eq('user_id', userId)
+                    .select();
+
+                if (error) throw error;
+                result = data[0];
+            } else {
+                const { data, error } = await supabase
+                    .from('drn_assessments')
+                    .insert([assessmentData])
+                    .select();
+
+                if (error) throw error;
+                result = data[0];
+            }
+
+            await fetchAssessments();
+            setSelectedCauses([]);
+            setWriteUps({});
+            setEditId(null);
+            alert(`Assessment ${editId !== null ? 'updated' : 'saved'} successfully!`);
+            
+        } catch (error) {
+            console.error('Error saving assessment:', error);
+            alert(`Error ${editId !== null ? 'updating' : 'saving'} assessment: ${error.message}`);
+        }
+    };
+
     const handleEdit = (assessment) => {
         setEditId(assessment.id);
         setSelectedCategory(assessment.category);
@@ -716,11 +627,7 @@ const saveAssessment = async (causeName) => {
             [assessment.cause_name]: {
                 specificCase: assessment.specific_case,
                 medicalCondition: assessment.medical_condition,
-                medication: assessment.medication,
-                recommendation: assessment.recommendation,
-                severity: assessment.severity,
-                confidence: assessment.confidence,
-                cdssRuleId: assessment.cdss_rule_id
+                medication: assessment.medication
             }
         });
         
@@ -738,9 +645,7 @@ const saveAssessment = async (causeName) => {
 
             if (error) throw error;
             
-            // Remove from local state
             setAssessments(assessments.filter(ass => ass.id !== id));
-            
             alert('Assessment deleted successfully!');
         } catch (error) {
             console.error('Error deleting assessment:', error);
@@ -756,11 +661,7 @@ const saveAssessment = async (causeName) => {
             [finding.cause]: {
                 specificCase: `CDSS Rule: ${finding.original_rule_name || finding.rule_name}`,
                 medicalCondition: patientData?.diagnosis || 'To be specified',
-                medication: finding.medications?.join(', ') || 'To be specified',
-                recommendation: finding.recommendation,
-                severity: finding.severity || 'moderate',
-                confidence: finding.confidence,
-                cdssRuleId: finding.rule_id
+                medication: finding.medications?.join(', ') || 'To be specified'
             }
         });
         
@@ -827,7 +728,7 @@ const saveAssessment = async (causeName) => {
             'di_decrease_dose': 'bg-orange-50 text-orange-700',
             'di_linked_to_ade': 'bg-orange-50 text-orange-700',
             'incorrect_administration_decrease_dose_or_efficacy': 'bg-purple-50 text-purple-700',
-            'incorrect _administration_linked_to_ade': 'bg-purple-50 text-purple-700',
+            'incorrect_administration_linked_to_ade': 'bg-purple-50 text-purple-700',
             'patient_does_not_understand_instructions': 'bg-purple-50 text-purple-700',
             'cannot_swallow_or_administer_drug': 'bg-pink-50 text-pink-700',
             'need_monitoring_to_rule_out_effectiveness': 'bg-pink-50 text-pink-700',
@@ -835,7 +736,7 @@ const saveAssessment = async (causeName) => {
             'patient_prefers_not_to_take_drug': 'bg-indigo-50 text-indigo-700',
             'patient_forgets_to_take_drug': 'bg-indigo-50 text-indigo-700',
             'drug_not_available': 'bg-indigo-50 text-indigo-700',
-            'more_cost-effective_drug_available': 'bg-indigo-50 text-indigo-700',
+            'more_cost_effective_drug_available': 'bg-indigo-50 text-indigo-700',
             'cannot_afford_drug': 'bg-green-50 text-green-700',
             'product_quality_defect': 'bg-green-50 text-green-700'
         };
@@ -847,7 +748,6 @@ const saveAssessment = async (causeName) => {
         return finding.severity === filterSeverity;
     }) || [];
 
-    // Show error message if authentication failed
     if (authError) {
         return (
             <div className="bg-white rounded-xl shadow-lg p-6">
@@ -855,34 +755,23 @@ const saveAssessment = async (causeName) => {
                     <FaExclamationCircle className="text-4xl text-yellow-500 mx-auto mb-4" />
                     <h3 className="text-xl font-semibold text-gray-800 mb-2">Authentication Required</h3>
                     <p className="text-gray-600 mb-4">{authError}</p>
-                    <div className="space-y-3">
-                        <button
-                            onClick={() => window.location.reload()}
-                            className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg"
-                        >
-                            Refresh Page
-                        </button>
-                        <div className="text-sm text-gray-500">
-                            <p>Debug Info:</p>
-                            <p>Patient Code: {patientCode || 'Not set'}</p>
-                            <p>User ID: {userId || 'Not found'}</p>
-                        </div>
-                    </div>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg"
+                    >
+                        Refresh Page
+                    </button>
                 </div>
             </div>
         );
     }
 
-    // Show loading state while initializing
     if (!patientId || !userId) {
         return (
             <div className="bg-white rounded-xl shadow-lg p-6">
                 <div className="text-center py-12">
                     <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto mb-4" />
                     <p className="text-gray-600">Initializing DRN Assessment...</p>
-                    <p className="text-sm text-gray-500 mt-2">
-                        Loading patient data and user information...
-                    </p>
                 </div>
             </div>
         );
@@ -903,46 +792,7 @@ const saveAssessment = async (causeName) => {
                 </div>
             </div>
 
-            {/* CDSS Rules Summary */}
-            <div className="mb-6 bg-blue-50 rounded-lg p-4 border border-blue-200">
-                <div className="flex justify-between items-center mb-3">
-                    <div className="flex items-center gap-2">
-                        <FaDatabase className="text-blue-600" />
-                        <h3 className="font-semibold text-blue-800">Active CDSS Rules</h3>
-                    </div>
-                    <button
-                        onClick={() => setShowRulesInfo(!showRulesInfo)}
-                        className="text-sm text-blue-600 hover:text-blue-800"
-                    >
-                        {showRulesInfo ? 'Hide Details' : 'Show Details'}
-                    </button>
-                </div>
-                
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-                    {Object.entries(activeRules).slice(0, 4).map(([ruleType, rules]) => (
-                        <div key={ruleType} className="bg-white p-3 rounded border">
-                            <div className="text-sm font-medium text-gray-700">{ruleType.replace(/_/g, ' ')}</div>
-                            <div className="text-lg font-bold text-blue-700">{rules.length}</div>
-                            <div className="text-xs text-gray-500">rules active</div>
-                        </div>
-                    ))}
-                </div>
-                
-                {showRulesInfo && (
-                    <div className="mt-4 pt-4 border-t border-blue-200">
-                        <h4 className="text-sm font-medium text-blue-700 mb-2">All Rule Types:</h4>
-                        <div className="flex flex-wrap gap-2">
-                            {Object.keys(activeRules).map(ruleType => (
-                                <span key={ruleType} className={`px-3 py-1 text-xs rounded-full ${getRuleTypeColor(ruleType)}`}>
-                                    {ruleType.replace(/_/g, ' ')} ({activeRules[ruleType].length})
-                                </span>
-                            ))}
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            {/* CDSS Analysis Section */}
+            {/* CDSS Analysis Section - UPDATED */}
             <div className="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-xl font-semibold text-blue-800 flex items-center gap-2">
@@ -962,9 +812,6 @@ const saveAssessment = async (causeName) => {
                             <div className="text-center py-8">
                                 <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto mb-4" />
                                 <p className="text-gray-600">Running CDSS analysis...</p>
-                                <p className="text-sm text-gray-500 mt-1">
-                                    Evaluating {clinicalRules.length} clinical rules against patient data
-                                </p>
                             </div>
                         ) : analysisResults ? (
                             <div className="space-y-4">
@@ -998,27 +845,7 @@ const saveAssessment = async (causeName) => {
                                         </div>
                                     </div>
                                     
-                                    {/* Severity Filter */}
-                                    <div className="mb-4">
-                                        <label className="text-sm font-medium text-gray-700 mb-2 block">Filter by Severity:</label>
-                                        <div className="flex flex-wrap gap-2">
-                                            {['all', 'critical', 'high', 'moderate', 'low'].map(severity => (
-                                                <button
-                                                    key={severity}
-                                                    onClick={() => setFilterSeverity(severity)}
-                                                    className={`px-3 py-1 text-sm rounded-full capitalize ${
-                                                        filterSeverity === severity
-                                                            ? getSeverityColor(severity)
-                                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                                    }`}
-                                                >
-                                                    {severity}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    
-                                    {/* Findings display */}
+                                    {/* Findings display - UPDATED WITHOUT ruleTypes */}
                                     {filteredFindings.length > 0 ? (
                                         <div className="space-y-3">
                                             {filteredFindings.map((finding, idx) => (
@@ -1033,20 +860,17 @@ const saveAssessment = async (causeName) => {
                                                                 <span className={`px-2 py-1 ${getCategoryColor(finding.category)} text-xs rounded`}>
                                                                     {finding.category}
                                                                 </span>
-                                                                <span className={`px-2 py-1 ${getRuleTypeColor(finding.rule_type)} text-xs rounded`}>
-                                                                    {finding.rule_type?.replace(/_/g, ' ')}
-                                                                </span>
+                                                                {/* DTP Type Display - NEW SECTION */}
+                                                                {finding.dtpType && (
+                                                                    <span className={`px-2 py-1 ${getDTPTypeColor(finding.dtpType)} text-xs rounded font-medium`}>
+                                                                        DTP: {finding.dtpType}
+                                                                    </span>
+                                                                )}
                                                             </div>
                                                             <p className="text-sm text-gray-600 mb-2">{finding.message}</p>
-                                                            <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded">
-                                                                <strong>Recommendation:</strong> {finding.recommendation}
-                                                            </p>
                                                             <div className="flex flex-wrap items-center gap-3 mt-2">
                                                                 <span className="text-xs text-gray-500">
-                                                                    Rule: {finding.original_rule_name || finding.rule_name}
-                                                                </span>
-                                                                <span className="text-xs text-green-600 font-medium">
-                                                                    95% confidence
+                                                                    Confidence: 95%
                                                                 </span>
                                                             </div>
                                                         </div>
@@ -1064,51 +888,20 @@ const saveAssessment = async (causeName) => {
                                         <div className="text-center py-8">
                                             <FaCheckCircle className="text-4xl text-green-500 mx-auto mb-3" />
                                             <p className="text-gray-600">No issues found matching current filter</p>
-                                            <p className="text-sm text-gray-500 mt-1">
-                                                Try changing the severity filter or run analysis again
-                                            </p>
                                         </div>
                                     )}
                                 </div>
-                                
-                                {/* Category Breakdown */}
-                                {analysisResults.totalFindings > 0 && (
-                                    <div className="bg-white rounded-lg p-4 border">
-                                        <h5 className="font-medium text-gray-700 mb-3">Findings by Category:</h5>
-                                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-                                            {Object.entries(drnCategories).map(([category, catData]) => {
-                                                const Icon = catData.icon;
-                                                const findingsCount = analysisResults.findingsByCategory?.[category]?.length || 0;
-                                                if (findingsCount === 0) return null;
-                                                
-                                                return (
-                                                    <div key={category} className={`p-3 rounded-lg border ${getCategoryColor(category)}`}>
-                                                        <div className="flex items-center gap-2 mb-1">
-                                                            <Icon className="text-current opacity-80" />
-                                                            <span className="font-medium">{category}</span>
-                                                        </div>
-                                                        <div className="text-2xl font-bold">{findingsCount}</div>
-                                                        <div className="text-xs opacity-75">issues detected</div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                )}
                             </div>
                         ) : (
                             <div className="text-center py-6">
                                 <FaDatabase className="text-4xl text-blue-400 mx-auto mb-4" />
-                                <p className="text-gray-600 mb-4">Run CDSS analysis to detect drug-related problems using clinical rules</p>
+                                <p className="text-gray-600 mb-4">Run CDSS analysis to detect drug-related problems</p>
                                 <button
                                     onClick={runCdssAnalysis}
                                     className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-lg font-medium shadow-md flex items-center gap-2 mx-auto"
                                 >
                                     <FaDatabase /> Run CDSS Analysis
                                 </button>
-                                <p className="text-xs text-gray-500 mt-3">
-                                    Evaluates {clinicalRules.length} clinical rules from database
-                                </p>
                             </div>
                         )}
                     </>
@@ -1157,7 +950,7 @@ const saveAssessment = async (causeName) => {
                 </div>
             </div>
 
-            {/* Cause Selection and Form */}
+            {/* Cause Selection and Form - UPDATED (REMOVED Recommendation and Severity) */}
             {selectedCategory && (
                 <div className="mb-8 p-6 border rounded-lg bg-gray-50">
                     <h3 className="text-lg font-semibold mb-6 text-gray-800">
@@ -1178,12 +971,12 @@ const saveAssessment = async (causeName) => {
                                     <div className="flex-1">
                                         <p className="font-medium text-gray-800">{cause.name}</p>
                                         <div className="flex gap-2 mt-1">
-                                            <span className={`px-2 py-1 text-xs rounded ${getRuleTypeColor(cause.ruleType)}`}>
-                                                {cause.ruleType.replace(/_/g, ' ')}
-                                            </span>
-                                            <span className={`px-2 py-1 text-xs rounded ${getSeverityColor(cause.severity)}`}>
-                                                {cause.severity}
-                                            </span>
+                                            {/* DTP Type Display - REPLACES ruleType display */}
+                                            {cause.dtpType && (
+                                                <span className={`px-2 py-1 text-xs rounded ${getDTPTypeColor(cause.dtpType)}`}>
+                                                    {cause.dtpType}
+                                                </span>
+                                            )}
                                             {ruleCount > 0 && (
                                                 <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
                                                     {ruleCount} rules
@@ -1196,14 +989,22 @@ const saveAssessment = async (causeName) => {
                         })}
                     </div>
 
-                    {/* Form for Selected Causes */}
+                    {/* Form for Selected Causes - UPDATED (REMOVED Recommendation and Severity fields) */}
                     {selectedCauses.map(causeName => {
                         const causeDetails = menuItemsData[selectedCategory]?.find(c => c.name === causeName);
                         return (
                             <div key={causeName} className="mb-8 p-6 border rounded-lg bg-white shadow-sm">
-                                <h4 className="font-semibold text-lg text-gray-800 mb-6">
-                                    {causeName} ({causeDetails?.ruleType?.replace(/_/g, ' ')})
-                                </h4>
+                                <div className="flex justify-between items-center mb-6">
+                                    <h4 className="font-semibold text-lg text-gray-800">
+                                        {causeName}
+                                    </h4>
+                                    {/* DTP Type Display in header */}
+                                    {causeDetails?.dtpType && (
+                                        <span className={`px-3 py-1 text-sm rounded ${getDTPTypeColor(causeDetails.dtpType)}`}>
+                                            DTP Type: {causeDetails.dtpType}
+                                        </span>
+                                    )}
+                                </div>
                                 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div>
@@ -1248,37 +1049,6 @@ const saveAssessment = async (causeName) => {
                                         />
                                     </div>
                                 </div>
-                                
-                                <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Recommendation
-                                        </label>
-                                        <textarea
-                                            value={writeUps[causeName]?.recommendation || ''}
-                                            onChange={(e) => handleWriteUpChange(causeName, 'recommendation', e.target.value)}
-                                            rows="3"
-                                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                            placeholder="Clinical recommendation..."
-                                        />
-                                    </div>
-                                    
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Severity
-                                        </label>
-                                        <select
-                                            value={writeUps[causeName]?.severity || 'moderate'}
-                                            onChange={(e) => handleWriteUpChange(causeName, 'severity', e.target.value)}
-                                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                        >
-                                            <option value="low">Low</option>
-                                            <option value="moderate">Moderate</option>
-                                            <option value="high">High</option>
-                                            <option value="critical">Critical</option>
-                                        </select>
-                                    </div>
-                                </div>
 
                                 <div className="flex gap-4 mt-8">
                                     <button
@@ -1307,7 +1077,7 @@ const saveAssessment = async (causeName) => {
                 </div>
             )}
 
-            {/* Saved Assessments */}
+            {/* Saved Assessments Table - UPDATED to show DTP Type instead of ruleType */}
             <div className="mt-12">
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-xl font-semibold text-gray-800">
@@ -1332,9 +1102,6 @@ const saveAssessment = async (causeName) => {
                     <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
                         <FaStethoscope className="text-4xl text-gray-300 mx-auto mb-3" />
                         <p className="text-gray-500">No assessments saved yet.</p>
-                        <p className="text-sm text-gray-400 mt-1">
-                            Run CDSS analysis or manually select categories to create assessments
-                        </p>
                     </div>
                 ) : (
                     <div className="overflow-x-auto rounded-lg border">
@@ -1343,8 +1110,7 @@ const saveAssessment = async (causeName) => {
                                 <tr>
                                     <th className="p-4 text-left font-medium text-gray-700">Category</th>
                                     <th className="p-4 text-left font-medium text-gray-700">Cause</th>
-                                    <th className="p-4 text-left font-medium text-gray-700">Rule Type</th>
-                                    <th className="p-4 text-left font-medium text-gray-700">Severity</th>
+                                    <th className="p-4 text-left font-medium text-gray-700">DTP Type</th> {/* Changed from Rule Type */}
                                     <th className="p-4 text-left font-medium text-gray-700">Specific Case</th>
                                     <th className="p-4 text-left font-medium text-gray-700">Status</th>
                                     <th className="p-4 text-left font-medium text-gray-700">Date</th>
@@ -1361,13 +1127,8 @@ const saveAssessment = async (causeName) => {
                                         </td>
                                         <td className="p-4 font-medium text-gray-800">{assessment.cause_name}</td>
                                         <td className="p-4">
-                                            <span className={`px-2 py-1 text-xs rounded ${getRuleTypeColor(assessment.rule_type)}`}>
-                                                {assessment.rule_type?.replace(/_/g, ' ') || 'N/A'}
-                                            </span>
-                                        </td>
-                                        <td className="p-4">
-                                            <span className={`px-2 py-1 text-xs rounded-full ${getSeverityColor(assessment.severity)}`}>
-                                                {assessment.severity}
+                                            <span className={`px-2 py-1 text-xs rounded ${getDTPTypeColor(assessment.dtp_type)}`}>
+                                                {assessment.dtp_type || 'N/A'}
                                             </span>
                                         </td>
                                         <td className="p-4 text-sm text-gray-700 max-w-xs">{assessment.specific_case}</td>
@@ -1381,11 +1142,7 @@ const saveAssessment = async (causeName) => {
                                             </span>
                                         </td>
                                         <td className="p-4 text-sm text-gray-600">
-                                            {new Date(assessment.created_at).toLocaleDateString('en-US', {
-                                                month: 'short',
-                                                day: 'numeric',
-                                                year: 'numeric'
-                                            })}
+                                            {new Date(assessment.created_at).toLocaleDateString()}
                                         </td>
                                         <td className="p-4">
                                             <div className="flex gap-2">
