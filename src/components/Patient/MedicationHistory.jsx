@@ -78,7 +78,7 @@ const MedicationHistory = ({ patientCode }) => {
         { value: 'Intraarticular', label: 'Intraarticular', icon: '💉' },
         { value: 'IT', label: 'Intrathecal', icon: '💉' },
         { value: 'Epidural', label: 'Epidural', icon: '💉' },
-        { value: 'Transdermal', label: 'Transdermal Patch', icon: '🩹' }
+        { value: 'Transdermal', label: 'Transdermal Patch', icon: '🩹' },
         { value: 'IP', label: 'Intraperitoneal', icon: '💉' },
         { value: 'NG', label: 'NG tube', icon: '💉' },
         { value: 'GT', label: 'Gastric tube', icon: '💉' },
