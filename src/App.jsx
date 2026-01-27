@@ -117,7 +117,7 @@ const MainLayout = ({ children, showSidebar = true, showNavbar = true }) => {
                 )}
 
                 {/* Main Content Area */}
-                <div className={`flex-1 ${showSidebar ? 'md:ml-64' : ''}`}>
+                <div className="flex-1">
                     <main className="p-4 md:p-6 min-h-screen">
                         <div className="w-full">
                             {children}
@@ -726,8 +726,8 @@ const Dashboard = () => {
                             <div>
                                 <p className="text-sm text-gray-600">Approval Status</p>
                                 <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${user.approved
-                                        ? 'bg-green-100 text-green-800'
-                                        : 'bg-yellow-100 text-yellow-800'
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-yellow-100 text-yellow-800'
                                     }`}>
                                     {user.approved ? '✓ Approved' : '⏳ Pending Approval'}
                                 </div>
@@ -735,8 +735,8 @@ const Dashboard = () => {
                             <div>
                                 <p className="text-sm text-gray-600">Subscription Status</p>
                                 <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${hasValidSubscription(user)
-                                        ? 'bg-green-100 text-green-800'
-                                        : 'bg-yellow-100 text-yellow-800'
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-yellow-100 text-yellow-800'
                                     }`}>
                                     {hasValidSubscription(user) ? '✓ Active' : '⚠️ Not Active'}
                                 </div>
@@ -798,10 +798,10 @@ const Dashboard = () => {
                                                 </p>
                                             </div>
                                             <div className={`px-2 py-1 rounded text-xs font-medium ${patient.is_active || patient.status === 'active'
-                                                    ? 'bg-green-100 text-green-800'
-                                                    : patient.status === 'pending'
-                                                        ? 'bg-yellow-100 text-yellow-800'
-                                                        : 'bg-gray-100 text-gray-800'
+                                                ? 'bg-green-100 text-green-800'
+                                                : patient.status === 'pending'
+                                                    ? 'bg-yellow-100 text-yellow-800'
+                                                    : 'bg-gray-100 text-gray-800'
                                                 }`}>
                                                 {patient.is_active ? 'active' : patient.status || 'unknown'}
                                             </div>
@@ -882,8 +882,8 @@ const Dashboard = () => {
                             <div className="flex items-center justify-between">
                                 <span className="text-gray-600">Current Plan</span>
                                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${hasValidSubscription(user)
-                                        ? 'bg-green-100 text-green-800'
-                                        : 'bg-gray-100 text-gray-800'
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-gray-100 text-gray-800'
                                     }`}>
                                     {hasValidSubscription(user) ? 'Premium' : 'Free'}
                                 </span>
@@ -891,8 +891,8 @@ const Dashboard = () => {
                             <div className="flex items-center justify-between">
                                 <span className="text-gray-600">Status</span>
                                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${hasValidSubscription(user)
-                                        ? 'bg-green-100 text-green-800'
-                                        : 'bg-yellow-100 text-yellow-800'
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-yellow-100 text-yellow-800'
                                     }`}>
                                     {hasValidSubscription(user) ? 'Active' : 'Inactive'}
                                 </span>
