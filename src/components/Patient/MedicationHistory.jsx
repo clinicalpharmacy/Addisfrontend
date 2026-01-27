@@ -82,7 +82,6 @@ const MedicationHistory = ({ patientCode }) => {
         { value: 'IP', label: 'Intraperitoneal', icon: '💉' },
         { value: 'NG', label: 'NG tube', icon: '💉' },
         { value: 'GT', label: 'Gastric tube', icon: '💉' },
-        
     ];
 
     const dosageForms = [
