@@ -951,170 +951,82 @@ const DRNAssessment = ({ patientCode }) => {
             </div>
 
             {/* Cause Selection and Form - UPDATED (REMOVED Recommendation and Severity) */}
-{selectedCategory && (
-  <div className="mb-8 p-6 border rounded-lg bg-gray-50">
-    <h3 className="text-lg font-semibold mb-6 text-gray-800">
-      {selectedCategory} - Select Causes
-    </h3>
-    
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-      {menuItemsData[selectedCategory]?.map(cause => {
-        const ruleCount = activeRules[cause.ruleType]?.length || 0;
-        const isSelected = selectedCauses.includes(cause.name);
-        
-        return (
-          <div key={cause.name} className="p-4 border rounded-lg bg-white hover:shadow transition">
-            <div className="flex items-start gap-3 mb-3">
-              <input
-                type="checkbox"
-                checked={isSelected}
-                onChange={() => handleCauseSelection(cause.name)}
-                className="h-5 w-5 text-blue-600 focus:ring-blue-500 mt-1"
-              />
-              <div className="flex-1">
-                <p className="font-medium text-gray-800">{cause.name}</p>
-                <div className="flex gap-2 mt-2">
-                  {/* Only show rule count, NOT DTP type */}
-                  {ruleCount > 0 && (
-                    <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
-                      {ruleCount} rules
-                    </span>
-                  )}
-                </div>
-                {/* Show default recommendation ONLY when selected */}
-                {isSelected && (
-                  <div className="mt-3 bg-blue-50 border border-blue-100 rounded p-3">
-                    <p className="text-xs font-medium text-blue-800 mb-1">Default Recommendation:</p>
-                    <p className="text-xs text-blue-700">{getDefaultRecommendation(cause.ruleType)}</p>
+        {selectedCategory && (
+          <div className="mb-8 p-6 border rounded-lg bg-gray-50">
+            <h3 className="text-lg font-semibold mb-6 text-gray-800">
+              {selectedCategory} - Select Causes
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+              {menuItemsData[selectedCategory]?.map(cause => {
+                const ruleCount = activeRules[cause.ruleType]?.length || 0;
+                const isSelected = selectedCauses.includes(cause.name);
+                
+                return (
+                  <div key={cause.name} className="p-4 border rounded-lg bg-white hover:shadow transition">
+                    <div className="flex items-start gap-3 mb-3">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => handleCauseSelection(cause.name)}
+                        className="h-5 w-5 text-blue-600 focus:ring-blue-500 mt-1"
+                      />
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-800">{cause.name}</p>
+                        <div className="flex gap-2 mt-2">
+                          {/* Only show rule count, NOT DTP type */}
+                          {ruleCount > 0 && (
+                            <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
+                              {ruleCount} rules
+                            </span>
+                          )}
+                        </div>
+                        {/* Show default recommendation ONLY when selected */}
+                        {isSelected && (
+                          <div className="mt-3 bg-blue-50 border border-blue-100 rounded p-3">
+                            <p className="text-xs font-medium text-blue-800 mb-1">Default Recommendation:</p>
+                            <p className="text-xs text-blue-700">{getDefaultRecommendation(cause.ruleType)}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                )}
-              </div>
+                );
+              })}
             </div>
-          </div>
-        );
-      })}
-    </div>
-
-    {/* Form for Selected Causes - NOW shows DTP type since they're selected */}
-    {selectedCauses.map(causeName => {
-      const causeDetails = menuItemsData[selectedCategory]?.find(c => c.name === causeName);
-      const ruleTypeRecommendation = getDefaultRecommendation(causeDetails?.ruleType);
-      
-      return (
-        <div key={causeName} className="mb-8 p-6 border rounded-lg bg-white shadow-sm">
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <h4 className="font-semibold text-lg text-gray-800">
-                {causeName}
-              </h4>
-              {/* DTP Type Display - NOW shows because it's in the form */}
-              {causeDetails?.dtpType && (
-                <span className={`px-3 py-1 text-sm rounded ${getDTPTypeColor(causeDetails.dtpType)} mt-2 inline-block`}>
-                  DTP Type: {causeDetails.dtpType}
-                </span>
-              )}
-            </div>
-            {/* Default Recommendation display */}
-            <div className="bg-blue-50 border border-blue-200 rounded p-3 max-w-md">
-              <p className="text-sm font-medium text-blue-800 mb-1">Default Recommendation:</p>
-              <p className="text-sm text-blue-700">{ruleTypeRecommendation}</p>
-            </div>
-          </div>
-          
-          {/* ... form fields remain the same ... */}
-        </div>
-      );
-    })}
-  </div>
-)}
-
-                    {/* Form for Selected Causes - UPDATED (REMOVED Recommendation and Severity fields) */}
-                    {selectedCauses.map(causeName => {
-                        const causeDetails = menuItemsData[selectedCategory]?.find(c => c.name === causeName);
-                        return (
-                            <div key={causeName} className="mb-8 p-6 border rounded-lg bg-white shadow-sm">
-                                <div className="flex justify-between items-center mb-6">
-                                    <h4 className="font-semibold text-lg text-gray-800">
-                                        {causeName}
-                                    </h4>
-                                    {/* DTP Type Display in header */}
-                                    {causeDetails?.dtpType && (
-                                        <span className={`px-3 py-1 text-sm rounded ${getDTPTypeColor(causeDetails.dtpType)}`}>
-                                            DTP Type: {causeDetails.dtpType}
-                                        </span>
-                                    )}
-                                </div>
-                                
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Specific Case *
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={writeUps[causeName]?.specificCase || ''}
-                                            onChange={(e) => handleWriteUpChange(causeName, 'specificCase', e.target.value)}
-                                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                            placeholder="Describe the specific case..."
-                                            required
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Medical Condition *
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={writeUps[causeName]?.medicalCondition || ''}
-                                            onChange={(e) => handleWriteUpChange(causeName, 'medicalCondition', e.target.value)}
-                                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                            placeholder="e.g., Hypertension, Diabetes"
-                                            required
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Medication *
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={writeUps[causeName]?.medication || ''}
-                                            onChange={(e) => handleWriteUpChange(causeName, 'medication', e.target.value)}
-                                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                            placeholder="e.g., Enalapril 10mg"
-                                            required
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="flex gap-4 mt-8">
-                                    <button
-                                        onClick={() => saveAssessment(causeName)}
-                                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-lg font-medium shadow-md"
-                                    >
-                                        {editId !== null ? 'Update Assessment' : 'Save Assessment'}
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            setSelectedCauses(prev => prev.filter(c => c !== causeName));
-                                            setWriteUps(prev => {
-                                                const newWriteUps = { ...prev };
-                                                delete newWriteUps[causeName];
-                                                return newWriteUps;
-                                            });
-                                        }}
-                                        className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-                                    >
-                                        Cancel
-                                    </button>
-                                </div>
-                            </div>
-                        );
-                    })}
+        
+            {/* Form for Selected Causes - NOW shows DTP type since they're selected */}
+            {selectedCauses.map(causeName => {
+              const causeDetails = menuItemsData[selectedCategory]?.find(c => c.name === causeName);
+              const ruleTypeRecommendation = getDefaultRecommendation(causeDetails?.ruleType);
+              
+              return (
+                <div key={causeName} className="mb-8 p-6 border rounded-lg bg-white shadow-sm">
+                  <div className="flex justify-between items-start mb-6">
+                    <div>
+                      <h4 className="font-semibold text-lg text-gray-800">
+                        {causeName}
+                      </h4>
+                      {/* DTP Type Display - NOW shows because it's in the form */}
+                      {causeDetails?.dtpType && (
+                        <span className={`px-3 py-1 text-sm rounded ${getDTPTypeColor(causeDetails.dtpType)} mt-2 inline-block`}>
+                          DTP Type: {causeDetails.dtpType}
+                        </span>
+                      )}
+                    </div>
+                    {/* Default Recommendation display */}
+                    <div className="bg-blue-50 border border-blue-200 rounded p-3 max-w-md">
+                      <p className="text-sm font-medium text-blue-800 mb-1">Default Recommendation:</p>
+                      <p className="text-sm text-blue-700">{ruleTypeRecommendation}</p>
+                    </div>
+                  </div>
+                  
+                  {/* ... form fields remain the same ... */}
                 </div>
-            )}
+              );
+            })}
+          </div>
+        )}
 
             {/* Saved Assessments Table - UPDATED to show DTP Type instead of ruleType */}
             <div className="mt-12">
