@@ -3,7 +3,7 @@ import supabase from '../../utils/supabase';
 import { 
   FaPills, FaCalendar, FaClock, FaEdit, FaTrash, FaSave, 
   FaFilter, FaSync, FaPrescription, FaUserMd, FaHospital,
-  FaExclamationTriangle, FaInfoCircle
+  FaExclamationTriangle, FaInfoCircle, FaCheckCircle
 } from 'react-icons/fa';
 
 const MedicationHistory = ({ patientCode }) => {
@@ -24,15 +24,12 @@ const MedicationHistory = ({ patientCode }) => {
         initiated_at: 'Hospital',
         
         // Additional Information
-        generic_name: '',
-        brand_name: '',
         dosage_form: 'Tablet',
         strength: '',
         unit: 'mg',
         
         // Status & Monitoring
         status: 'Active',
-        prn: false,
         notes: '',
         
         // Internal
@@ -40,12 +37,20 @@ const MedicationHistory = ({ patientCode }) => {
         is_active: true
     });
     
+    const [reconciliationData, setReconciliationData] = useState({
+        site: '',
+        findings: '',
+        date: new Date().toISOString().split('T')[0]
+    });
+    
     const [selectedClass, setSelectedClass] = useState('');
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [reconLoading, setReconLoading] = useState(false);
     const [activeFilter, setActiveFilter] = useState('all');
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [reconciliations, setReconciliations] = useState([]);
 
     // Dropdown Options
     const roaOptions = [
@@ -101,8 +106,8 @@ const MedicationHistory = ({ patientCode }) => {
     ];
 
     const initiatedAtOptions = [
-        'Hospital', 'Health Center', 'Clinic', 'Private Clinic',
-        'Pharmacy', 'Home', 'Community', 'Referral', 'Telemedicine'
+        'Inpatient', 'OPD', 'Private Clinic', 'Emergency',
+        'Surgical side', 'Pharmacy', 'Home Care', 'Telemedicine'
     ];
 
     const units = [
@@ -110,9 +115,15 @@ const MedicationHistory = ({ patientCode }) => {
         'puff', 'drop', 'patch', 'suppository', 'IU', '%', 'unit'
     ];
 
+    const reconciliationSites = [
+        'Admission', 'Discharge', 'Transfer In', 'Transfer Out',
+        'Clinic Visit', 'ER Visit', 'Medication Review', 'Consultation'
+    ];
+
     useEffect(() => {
         if (patientCode) {
             fetchMedications();
+            fetchReconciliations();
         }
     }, [patientCode]);
 
@@ -137,6 +148,22 @@ const MedicationHistory = ({ patientCode }) => {
         } catch (error) {
             console.error('Error fetching medications:', error);
             alert('Error loading medications. Please check console for details.');
+        }
+    };
+
+    const fetchReconciliations = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('medication_reconciliations')
+                .select('*')
+                .eq('patient_code', patientCode)
+                .order('date', { ascending: false });
+
+            if (error) throw error;
+            
+            setReconciliations(data || []);
+        } catch (error) {
+            console.error('Error fetching reconciliations:', error);
         }
     };
 
@@ -221,15 +248,12 @@ const MedicationHistory = ({ patientCode }) => {
             initiated_at: formData.initiated_at,
             
             // Additional fields
-            generic_name: formData.generic_name || null,
-            brand_name: formData.brand_name || null,
             dosage_form: formData.dosage_form,
             strength: formData.strength || null,
             unit: formData.unit,
             
             // Status fields
             status: formData.status,
-            prn: formData.prn,
             notes: formData.notes || null,
             
             // Calculated fields
@@ -285,13 +309,10 @@ const MedicationHistory = ({ patientCode }) => {
             indication: '',
             drug_class: 'Antimicrobial',
             initiated_at: 'Hospital',
-            generic_name: '',
-            brand_name: '',
             dosage_form: 'Tablet',
             strength: '',
             unit: 'mg',
             status: 'Active',
-            prn: false,
             notes: '',
             id: '',
             is_active: true
@@ -303,7 +324,6 @@ const MedicationHistory = ({ patientCode }) => {
     const handleEdit = (medication) => {
         setFormData({
             ...medication,
-            prn: medication.prn || false,
             dosage_form: medication.dosage_form || 'Tablet',
             unit: medication.unit || 'mg',
             status: medication.status || 'Active',
@@ -340,7 +360,6 @@ const MedicationHistory = ({ patientCode }) => {
             const term = searchTerm.toLowerCase();
             filtered = filtered.filter(med => 
                 med.drug_name?.toLowerCase().includes(term) ||
-                med.generic_name?.toLowerCase().includes(term) ||
                 med.indication?.toLowerCase().includes(term) ||
                 med.drug_class?.toLowerCase().includes(term)
             );
@@ -356,19 +375,72 @@ const MedicationHistory = ({ patientCode }) => {
             filtered = filtered.filter(med => med.status === 'Active' || med.is_active === true);
         } else if (activeFilter === 'inactive') {
             filtered = filtered.filter(med => med.status !== 'Active' && med.is_active !== true);
-        } else if (activeFilter === 'prn') {
-            filtered = filtered.filter(med => med.prn === true);
         }
         
         setFilteredMedications(filtered);
     };
 
     const handleInputChange = (e) => {
-        const { name, value, type, checked } = e.target;
+        const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
-            [name]: type === 'checkbox' ? checked : value
+            [name]: value
         }));
+    };
+
+    const handleReconciliationChange = (e) => {
+        const { name, value } = e.target;
+        setReconciliationData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handleSaveReconciliation = async () => {
+        if (!reconciliationData.site.trim()) {
+            alert('Reconciliation site is required');
+            return;
+        }
+
+        if (!reconciliationData.findings.trim()) {
+            alert('Findings and Decision is required');
+            return;
+        }
+
+        setReconLoading(true);
+
+        try {
+            const reconData = {
+                patient_code: patientCode,
+                site: reconciliationData.site.trim(),
+                findings: reconciliationData.findings.trim(),
+                date: reconciliationData.date,
+                created_at: new Date().toISOString(),
+                performed_by: 'User' // Replace with actual user if available
+            };
+
+            const { error } = await supabase
+                .from('medication_reconciliations')
+                .insert([reconData]);
+
+            if (error) throw error;
+
+            await fetchReconciliations();
+            
+            // Reset form
+            setReconciliationData({
+                site: '',
+                findings: '',
+                date: new Date().toISOString().split('T')[0]
+            });
+            
+            alert('✅ Medication reconciliation saved successfully!');
+        } catch (error) {
+            console.error('Error saving reconciliation:', error);
+            alert(`❌ Error: ${error.message || 'Failed to save reconciliation'}`);
+        } finally {
+            setReconLoading(false);
+        }
     };
 
     const getStatusColor = (status) => {
@@ -384,16 +456,15 @@ const MedicationHistory = ({ patientCode }) => {
 
     const getStats = () => {
         const activeMeds = medications.filter(m => m.status === 'Active' || m.is_active === true);
-        const prnMeds = medications.filter(m => m.prn === true);
         const oralMeds = medications.filter(m => m.roa === 'po');
         const uniqueClasses = [...new Set(medications.map(m => m.drug_class).filter(Boolean))];
         
         return {
             total: medications.length,
             active: activeMeds.length,
-            prn: prnMeds.length,
             oral: oralMeds.length,
-            classes: uniqueClasses.length
+            classes: uniqueClasses.length,
+            reconciliations: reconciliations.length
         };
     };
 
@@ -420,10 +491,13 @@ const MedicationHistory = ({ patientCode }) => {
                     </div>
                 </div>
                 <button
-                    onClick={fetchMedications}
+                    onClick={() => {
+                        fetchMedications();
+                        fetchReconciliations();
+                    }}
                     className="text-blue-600 hover:text-blue-800 flex items-center gap-2 px-4 py-2 border border-blue-200 rounded-lg hover:bg-blue-50 transition"
                 >
-                    <FaSync className={`${loading ? 'animate-spin' : ''}`} />
+                    <FaSync className={`${loading || reconLoading ? 'animate-spin' : ''}`} />
                     Refresh
                 </button>
             </div>
@@ -438,10 +512,6 @@ const MedicationHistory = ({ patientCode }) => {
                     <div className="text-sm text-green-700">Active</div>
                     <div className="text-xl font-bold text-green-800">{stats.active}</div>
                 </div>
-                <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100">
-                    <div className="text-sm text-yellow-700">PRN</div>
-                    <div className="text-xl font-bold text-yellow-800">{stats.prn}</div>
-                </div>
                 <div className="bg-purple-50 p-3 rounded-lg border border-purple-100">
                     <div className="text-sm text-purple-700">Oral</div>
                     <div className="text-xl font-bold text-purple-800">{stats.oral}</div>
@@ -449,6 +519,10 @@ const MedicationHistory = ({ patientCode }) => {
                 <div className="bg-indigo-50 p-3 rounded-lg border border-indigo-100">
                     <div className="text-sm text-indigo-700">Classes</div>
                     <div className="text-xl font-bold text-indigo-800">{stats.classes}</div>
+                </div>
+                <div className="bg-teal-50 p-3 rounded-lg border border-teal-100">
+                    <div className="text-sm text-teal-700">Reconciliations</div>
+                    <div className="text-xl font-bold text-teal-800">{stats.reconciliations}</div>
                 </div>
             </div>
 
@@ -480,7 +554,7 @@ const MedicationHistory = ({ patientCode }) => {
                         {/* Drug Name */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Drug Name *
+                                Drug Name (Generic) *
                             </label>
                             <input
                                 type="text"
@@ -614,7 +688,7 @@ const MedicationHistory = ({ patientCode }) => {
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Status
                         </label>
-                        <select
+                            <select
                             name="status"
                             value={formData.status}
                             onChange={handleInputChange}
@@ -650,36 +724,6 @@ const MedicationHistory = ({ patientCode }) => {
                             <FaPills /> Additional Information
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {/* Generic Name */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Generic Name
-                                </label>
-                                <input
-                                    type="text"
-                                    name="generic_name"
-                                    value={formData.generic_name}
-                                    onChange={handleInputChange}
-                                    className="w-full border border-gray-300 rounded-lg p-3"
-                                    placeholder="e.g., Metformin HCl"
-                                />
-                            </div>
-
-                            {/* Brand Name */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Brand Name
-                                </label>
-                                <input
-                                    type="text"
-                                    name="brand_name"
-                                    value={formData.brand_name}
-                                    onChange={handleInputChange}
-                                    className="w-full border border-gray-300 rounded-lg p-3"
-                                    placeholder="e.g., Glucophage"
-                                />
-                            </div>
-
                             {/* Dosage Form */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -727,21 +771,6 @@ const MedicationHistory = ({ patientCode }) => {
                                         <option key={place} value={place}>{place}</option>
                                     ))}
                                 </select>
-                            </div>
-
-                            {/* PRN */}
-                            <div className="flex items-center">
-                                <input
-                                    type="checkbox"
-                                    id="prn"
-                                    name="prn"
-                                    checked={formData.prn}
-                                    onChange={handleInputChange}
-                                    className="h-5 w-5 text-blue-600 rounded"
-                                />
-                                <label htmlFor="prn" className="ml-2 text-sm text-gray-700">
-                                    As Needed (PRN) Medication
-                                </label>
                             </div>
                         </div>
 
@@ -831,7 +860,7 @@ const MedicationHistory = ({ patientCode }) => {
                         <div className="flex items-center gap-2">
                             <span className="text-sm text-gray-600">Status:</span>
                             <div className="flex bg-gray-100 rounded-lg p-1">
-                                {['all', 'active', 'inactive', 'prn'].map(filter => (
+                                {['all', 'active', 'inactive'].map(filter => (
                                     <button
                                         key={filter}
                                         onClick={() => setActiveFilter(filter)}
@@ -866,7 +895,7 @@ const MedicationHistory = ({ patientCode }) => {
             </div>
 
             {/* Medications List */}
-            <div className="mb-6">
+            <div className="mb-8">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-semibold text-gray-800">
                         Medication List ({filteredMedications.length} of {medications.length})
@@ -903,20 +932,11 @@ const MedicationHistory = ({ patientCode }) => {
                                     <tr key={med.id} className="border-t hover:bg-gray-50 group">
                                         <td className="p-4">
                                             <div className="font-medium text-gray-800">{med.drug_name}</div>
-                                            {med.generic_name && (
-                                                <div className="text-sm text-gray-500">{med.generic_name}</div>
-                                            )}
-                                            {med.brand_name && (
-                                                <div className="text-xs text-blue-600">{med.brand_name}</div>
-                                            )}
                                             <div className="text-xs text-gray-400 mt-1">{med.drug_class}</div>
                                         </td>
                                         <td className="p-4">
                                             <div className="text-gray-700">{med.dose} {med.unit}</div>
                                             <div className="text-sm text-gray-500 uppercase">{med.roa}</div>
-                                            {med.prn && (
-                                                <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">PRN</span>
-                                            )}
                                         </td>
                                         <td className="p-4">
                                             <div className="text-gray-700">{med.frequency}</div>
@@ -971,6 +991,106 @@ const MedicationHistory = ({ patientCode }) => {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+                )}
+            </div>
+
+            {/* Medication Reconciliation Section */}
+            <div className="bg-gradient-to-r from-teal-50 to-blue-50 rounded-lg p-6 mb-8 border border-teal-200">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="bg-teal-100 p-3 rounded-full">
+                        <FaCheckCircle className="text-teal-600 text-xl" />
+                    </div>
+                    <div>
+                        <h3 className="text-xl font-semibold text-gray-800">Medication Reconciliation</h3>
+                        <p className="text-gray-600 text-sm">Document medication reconciliation findings and decisions</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    {/* Reconciliation Site */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Reconciliation Site *
+                        </label>
+                        <select
+                            name="site"
+                            value={reconciliationData.site}
+                            onChange={handleReconciliationChange}
+                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-teal-500"
+                        >
+                            <option value="">Select reconciliation site</option>
+                            {reconciliationSites.map(site => (
+                                <option key={site} value={site}>{site}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Date */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Date *
+                        </label>
+                        <input
+                            type="date"
+                            name="date"
+                            value={reconciliationData.date}
+                            onChange={handleReconciliationChange}
+                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-teal-500"
+                        />
+                    </div>
+                </div>
+
+                {/* Findings and Decision */}
+                <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Findings and Decision *
+                    </label>
+                    <textarea
+                        name="findings"
+                        value={reconciliationData.findings}
+                        onChange={handleReconciliationChange}
+                        rows="4"
+                        className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-teal-500"
+                        placeholder="Document findings, discrepancies, and decisions made during medication reconciliation..."
+                    />
+                </div>
+
+                {/* Save Button */}
+                <div className="flex justify-end">
+                    <button
+                        onClick={handleSaveReconciliation}
+                        disabled={reconLoading}
+                        className="bg-teal-500 hover:bg-teal-600 text-white px-6 py-3 rounded-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    >
+                        {reconLoading ? (
+                            <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                Saving...
+                            </>
+                        ) : (
+                            <>
+                                <FaSave /> Save Reconciliation
+                            </>
+                        )}
+                    </button>
+                </div>
+
+                {/* Previous Reconciliations */}
+                {reconciliations.length > 0 && (
+                    <div className="mt-8 pt-6 border-t border-teal-200">
+                        <h4 className="font-medium text-gray-700 mb-4">Previous Reconciliations ({reconciliations.length})</h4>
+                        <div className="space-y-4">
+                            {reconciliations.map((recon, index) => (
+                                <div key={recon.id} className="bg-white rounded-lg p-4 border border-gray-200">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div className="font-medium text-gray-800">{recon.site}</div>
+                                        <div className="text-sm text-gray-500">{recon.date}</div>
+                                    </div>
+                                    <p className="text-gray-600 text-sm">{recon.findings}</p>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
             </div>
