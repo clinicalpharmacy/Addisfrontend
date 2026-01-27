@@ -40,55 +40,55 @@ const DRNAssessment = ({ patientCode }) => {
         Indication: {
             icon: FaClipboardCheck,
             color: 'blue',
-            dTPType: ['unnecessary_drug_therapy', 'needs_additional_drug_therapy'],
+            ruleType: ['unnecessary_drug_therapy', 'needs_additional_drug_therapy'],
             description: 'Appropriateness of indication'
         },
         Dosage: {
             icon: FaPills,
             color: 'teal',
-            dTPType: ['low_dose', 'high_dose'],
+            ruleType: ['low_dose', 'high_dose'],
             description: 'Incorrect dose'
         },
         "Rule out Ineffective Drug Therapy": {
             icon: FaStethoscope,
             color: 'yellow',
-            dTPType: ['ineffective_drug_therapy'],
+            ruleType: ['ineffective_drug_therapy'],
             description: 'Ineffective drug therapy'
         },
         "Contraindication or Caution or ADE or SE or Allergy": {
             icon: FaExclamationTriangle,
             color: 'red',
-            dTPType: ['adverse_drug_event'],
+            ruleType: ['adverse_drug_event'],
             description: 'Medication safety'
         },
         "Drug Interaction": {
             icon: FaDatabase,
             color: 'orange',
-            dTPType: ['low_dose', 'high_dose', 'adverse_drug_event'],
+            ruleType: ['low_dose', 'high_dose', 'adverse_drug_event'],
             description: 'Drug interactions'
         },
         Administration: {
             icon: FaUserMd,
             color: 'purple',
-            dTPType: ['low_dose', 'high_dose', 'adverse_drug_event', 'non_adherence'],
+            ruleType: ['low_dose', 'high_dose', 'adverse_drug_event', 'non_adherence'],
             description: 'Administration related problems'
         },
         Monitoring: {
             icon: FaHeartbeat,
             color: 'pink',
-            dTPType: ['need_for_monitoring'],
+            ruleType: ['need_for_monitoring'],
             description: 'Need for monitoring'
         },
         Adherence: {
             icon: FaUserCheck,
             color: 'indigo',
-            dTPType: ['non_adherence'],
+            ruleType: ['non_adherence'],
             description: 'Adherence to medication'
         },
         "Product Quality": {
             icon: FaCapsules,
             color: 'green',
-            dTPType: ['product_quality_defect'],
+            ruleType: ['product_quality_defect'],
             description: 'Product quality defect'
         }
     };
@@ -96,59 +96,59 @@ const DRNAssessment = ({ patientCode }) => {
     // ✅ Menu items matching original structure with 8 items for Indication
     const menuItemsData = {
         Indication: [
-            { name: 'Duplicate Therapy', dTPType: 'unnecessary_drug_therapy', drn: 'Indication' },
-            { name: 'No medical indication', dTPType: 'unnecessary_drug_therapy', drn: 'Indication' },
-            { name: 'Nondrug therapy appropriate', dTPType: 'unnecessary_drug_therapy', drn: 'Indication' },
-            { name: 'Addiction or recreational medicine use', dTPType: 'unnecessary_drug_therapy', drn: 'Indication' },
-            { name: 'Treating avoidable ADE', dTPType: 'unnecessary_drug_therapy', drn: 'Indication' },
-            { name: 'Prophylaxis needed', dTPType: 'needs_additional_drug_therapy', drn: 'Indication' },
-            { name: 'Untreated condition', dTPType: 'needs_additional_drug_therapy', drn: 'Indication' },
-            { name: 'Synergistic therapy needed', dTPType: 'needs_additional_drug_therapy', drn: 'Indication' },
+            { name: 'Duplicate Therapy', ruleType: 'unnecessary_drug_therapy', drn: 'Indication' },
+            { name: 'No medical indication', ruleType: 'unnecessary_drug_therapy', drn: 'Indication' },
+            { name: 'Nondrug therapy appropriate', ruleType: 'unnecessary_drug_therapy', drn: 'Indication' },
+            { name: 'Addiction or recreational medicine use', ruleType: 'unnecessary_drug_therapy', drn: 'Indication' },
+            { name: 'Treating avoidable ADE', ruleType: 'unnecessary_drug_therapy', drn: 'Indication' },
+            { name: 'Prophylaxis needed', ruleType: 'needs_additional_drug_therapy', drn: 'Indication' },
+            { name: 'Untreated condition', ruleType: 'needs_additional_drug_therapy', drn: 'Indication' },
+            { name: 'Synergistic therapy needed', ruleType: 'needs_additional_drug_therapy', drn: 'Indication' },
         ],
         Dosage: [
-            { name: 'Low Dose', dTPType: 'low_dose', drn: 'Effectiveness' },
-            { name: 'Less Frequent', dTPType: 'low_dose', drn: 'Effectiveness' },
-            { name: 'Short Duration', dTPType: 'low_dose', drn: 'Effectiveness' },
-            { name: 'Improper Storage', dTPType: 'low_dose', drn: 'Effectiveness' },
-            { name: 'High Dose', dTPType: 'high_dose', drn: 'Safety' },
-            { name: 'More Frequent', dTPType: 'high_dose', drn: 'Safety' },
-            { name: 'Longer Duration', dTPType: 'high_dose', drn: 'Safety' },
-            { name: 'Dose Titration Slow or Fast', dTPType: 'high_dose', drn: 'Safety' },
+            { name: 'Low Dose', ruleType: 'low_dose', drn: 'Effectiveness' },
+            { name: 'Less Frequent', ruleType: 'low_dose', drn: 'Effectiveness' },
+            { name: 'Short Duration', ruleType: 'low_dose', drn: 'Effectiveness' },
+            { name: 'Improper Storage', ruleType: 'low_dose', drn: 'Effectiveness' },
+            { name: 'High Dose', ruleType: 'high_dose', drn: 'Safety' },
+            { name: 'More Frequent', ruleType: 'high_dose', drn: 'Safety' },
+            { name: 'Longer Duration', ruleType: 'high_dose', drn: 'Safety' },
+            { name: 'Dose Titration Slow or Fast', ruleType: 'high_dose', drn: 'Safety' },
         ],
         "Rule out Ineffective Drug Therapy": [
-            { name: 'More effective drug available', dTPType: 'ineffective_drug_therapy', drn: 'Effectiveness' },
-            { name: 'Condition refractory to drug', dTPType: 'ineffective_drug_therapy', drn: 'Effectiveness' },
-            { name: 'Dosage form inappropriate', dTPType: 'ineffective_drug_therapy', drn: 'Effectiveness' },
+            { name: 'More effective drug available', ruleType: 'ineffective_drug_therapy', drn: 'Effectiveness' },
+            { name: 'Condition refractory to drug', ruleType: 'ineffective_drug_therapy', drn: 'Effectiveness' },
+            { name: 'Dosage form inappropriate', ruleType: 'ineffective_drug_therapy', drn: 'Effectiveness' },
         ],
         "Contraindication or Caution or ADE or SE or Allergy": [
-            { name: 'Undesirable Effect (ADE or SE)', dTPType: 'adverse_drug_event', drn: 'Safety' },
-            { name: 'Unsafe Drug (Contraindication or Caution)', dTPType: 'adverse_drug_event', drn: 'Safety' },
-            { name: 'Allergic Reaction', dTPType: 'adverse_drug_event', drn: 'Safety' },
+            { name: 'Undesirable Effect (ADE or SE)', ruleType: 'adverse_drug_event', drn: 'Safety' },
+            { name: 'Unsafe Drug (Contraindication or Caution)', ruleType: 'adverse_drug_event', drn: 'Safety' },
+            { name: 'Allergic Reaction', ruleType: 'adverse_drug_event', drn: 'Safety' },
         ],
         "Drug Interaction": [
-            { name: 'DI increase dose', dTPType: 'high_dose', drn: 'Safety' },
-            { name: 'DI decrease dose', dTPType: 'low_dose', drn: 'Effectiveness' },
-            { name: 'DI linked to ADE', dTPType: 'adverse_drug_event', drn: 'Safety' },
+            { name: 'DI increase dose', ruleType: 'high_dose', drn: 'Safety' },
+            { name: 'DI decrease dose', ruleType: 'low_dose', drn: 'Effectiveness' },
+            { name: 'DI linked to ADE', ruleType: 'adverse_drug_event', drn: 'Safety' },
         ],
         Administration: [
-            { name: 'Incorrect administration decrease dose or efficacy', dTPType: 'low_dose', drn: 'Effectiveness' },
-            { name: 'Incorrect administration linked to ADE', dTPType: 'adverse_drug_event', drn: 'Safety' },
-            { name: 'Patient does not understand instructions', dTPType: 'non_adherence', drn: 'Adherence' },
-            { name: 'Cannot swallow or administer drug', dTPType: 'non_adherence', drn: 'Adherence' },
+            { name: 'Incorrect administration decrease dose or efficacy', ruleType: 'low_dose', drn: 'Effectiveness' },
+            { name: 'Incorrect administration linked to ADE', ruleType: 'adverse_drug_event', drn: 'Safety' },
+            { name: 'Patient does not understand instructions', ruleType: 'non_adherence', drn: 'Adherence' },
+            { name: 'Cannot swallow or administer drug', ruleType: 'non_adherence', drn: 'Adherence' },
         ],
         Monitoring: [
-            { name: 'Need Monitoring to rule out effectiveness', dTPType: 'need_for_monitoring', drn: 'Effectiveness' },
-            { name: 'Need Monitoring to rule out safety', dTPType: 'need_for_monitoring', drn: 'Safety' },
+            { name: 'Need Monitoring to rule out effectiveness', ruleType: 'need_for_monitoring', drn: 'Effectiveness' },
+            { name: 'Need Monitoring to rule out safety', ruleType: 'need_for_monitoring', drn: 'Safety' },
         ],
         Adherence: [
-            { name: 'Patient prefers not to take drug', dTPType: 'non_adherence', drn: 'Adherence' },
-            { name: 'Patient forgets to take drug', dTPType: 'non_adherence', drn: 'Adherence' },
-            { name: 'Drug not available', dTPType: 'non_adherence', drn: 'Adherence' },
-            { name: 'More cost-effective drug available', dTPType: 'non_adherence', drn: 'Adherence' },
-            { name: 'Cannot afford drug', dTPType: 'non_adherence', drn: 'Adherence' },
+            { name: 'Patient prefers not to take drug', ruleType: 'non_adherence', drn: 'Adherence' },
+            { name: 'Patient forgets to take drug', ruleType: 'non_adherence', drn: 'Adherence' },
+            { name: 'Drug not available', ruleType: 'non_adherence', drn: 'Adherence' },
+            { name: 'More cost-effective drug available', ruleType: 'non_adherence', drn: 'Adherence' },
+            { name: 'Cannot afford drug', ruleType: 'non_adherence', drn: 'Adherence' },
         ],
         "Product Quality": [
-            { name: 'Product Quality Defect', dTPType: 'product_quality_defect', drn: 'Product Quality' },
+            { name: 'Product Quality Defect', ruleType: 'product_quality_defect', drn: 'Product Quality' },
         ]
     };
   
