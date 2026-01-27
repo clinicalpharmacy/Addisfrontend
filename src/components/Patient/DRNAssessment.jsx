@@ -951,43 +951,82 @@ const DRNAssessment = ({ patientCode }) => {
             </div>
 
             {/* Cause Selection and Form - UPDATED (REMOVED Recommendation and Severity) */}
-            {selectedCategory && (
-                <div className="mb-8 p-6 border rounded-lg bg-gray-50">
-                    <h3 className="text-lg font-semibold mb-6 text-gray-800">
-                        {selectedCategory} - Select Causes
-                    </h3>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                        {menuItemsData[selectedCategory]?.map(cause => {
-                            const ruleCount = activeRules[cause.ruleType]?.length || 0;
-                            return (
-                                <div key={cause.name} className="flex items-center gap-3 p-4 border rounded-lg bg-white hover:shadow transition">
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedCauses.includes(cause.name)}
-                                        onChange={() => handleCauseSelection(cause.name)}
-                                        className="h-5 w-5 text-blue-600 focus:ring-blue-500"
-                                    />
-                                    <div className="flex-1">
-                                        <p className="font-medium text-gray-800">{cause.name}</p>
-                                        <div className="flex gap-2 mt-1">
-                                            {/* DTP Type Display - REPLACES ruleType display */}
-                                            {cause.dtpType && (
-                                                <span className={`px-2 py-1 text-xs rounded ${getDTPTypeColor(cause.dtpType)}`}>
-                                                    {cause.dtpType}
-                                                </span>
-                                            )}
-                                            {ruleCount > 0 && (
-                                                <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
-                                                    {ruleCount} rules
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
+{selectedCategory && (
+  <div className="mb-8 p-6 border rounded-lg bg-gray-50">
+    <h3 className="text-lg font-semibold mb-6 text-gray-800">
+      {selectedCategory} - Select Causes
+    </h3>
+    
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+      {menuItemsData[selectedCategory]?.map(cause => {
+        const ruleCount = activeRules[cause.ruleType]?.length || 0;
+        const isSelected = selectedCauses.includes(cause.name);
+        
+        return (
+          <div key={cause.name} className="p-4 border rounded-lg bg-white hover:shadow transition">
+            <div className="flex items-start gap-3 mb-3">
+              <input
+                type="checkbox"
+                checked={isSelected}
+                onChange={() => handleCauseSelection(cause.name)}
+                className="h-5 w-5 text-blue-600 focus:ring-blue-500 mt-1"
+              />
+              <div className="flex-1">
+                <p className="font-medium text-gray-800">{cause.name}</p>
+                <div className="flex gap-2 mt-2">
+                  {/* Only show rule count, NOT DTP type */}
+                  {ruleCount > 0 && (
+                    <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
+                      {ruleCount} rules
+                    </span>
+                  )}
+                </div>
+                {/* Show default recommendation ONLY when selected */}
+                {isSelected && (
+                  <div className="mt-3 bg-blue-50 border border-blue-100 rounded p-3">
+                    <p className="text-xs font-medium text-blue-800 mb-1">Default Recommendation:</p>
+                    <p className="text-xs text-blue-700">{getDefaultRecommendation(cause.ruleType)}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+
+    {/* Form for Selected Causes - NOW shows DTP type since they're selected */}
+    {selectedCauses.map(causeName => {
+      const causeDetails = menuItemsData[selectedCategory]?.find(c => c.name === causeName);
+      const ruleTypeRecommendation = getDefaultRecommendation(causeDetails?.ruleType);
+      
+      return (
+        <div key={causeName} className="mb-8 p-6 border rounded-lg bg-white shadow-sm">
+          <div className="flex justify-between items-start mb-6">
+            <div>
+              <h4 className="font-semibold text-lg text-gray-800">
+                {causeName}
+              </h4>
+              {/* DTP Type Display - NOW shows because it's in the form */}
+              {causeDetails?.dtpType && (
+                <span className={`px-3 py-1 text-sm rounded ${getDTPTypeColor(causeDetails.dtpType)} mt-2 inline-block`}>
+                  DTP Type: {causeDetails.dtpType}
+                </span>
+              )}
+            </div>
+            {/* Default Recommendation display */}
+            <div className="bg-blue-50 border border-blue-200 rounded p-3 max-w-md">
+              <p className="text-sm font-medium text-blue-800 mb-1">Default Recommendation:</p>
+              <p className="text-sm text-blue-700">{ruleTypeRecommendation}</p>
+            </div>
+          </div>
+          
+          {/* ... form fields remain the same ... */}
+        </div>
+      );
+    })}
+  </div>
+)}
 
                     {/* Form for Selected Causes - UPDATED (REMOVED Recommendation and Severity fields) */}
                     {selectedCauses.map(causeName => {
