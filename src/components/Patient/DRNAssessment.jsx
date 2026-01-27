@@ -70,7 +70,7 @@ const DRNAssessment = ({ patientCode }) => {
         Administration: {
             icon: FaUserMd,
             color: 'purple',
-            ruleTypes: ['incorrect_administration_decrease_dose_or_efficacy', 'incorrect _administration_linked_to_ade', 'patient_does_not_understand_instructions', 'cannot_swallow_or_administer_drug'],
+            ruleTypes: ['incorrect_administration_decrease_dose_or_efficacy', 'incorrect_administration_linked_to_ade', 'patient_does_not_understand_instructions', 'cannot_swallow_or_administer_drug'],
             description: 'Administration related problems'
         },
         Monitoring: {
@@ -82,7 +82,7 @@ const DRNAssessment = ({ patientCode }) => {
         Adherence: {
             icon: FaUserCheck,
             color: 'indigo',
-            ruleTypes: ['patient_prefers_not_to_take_drug', 'patient_forgets_to_take_drug', 'drug_not_available', 'more_cost-effective_drug_available', 'cannot_afford_drug'],
+            ruleTypes: ['patient_prefers_not_to_take_drug', 'patient_forgets_to_take_drug', 'drug_not_available', 'more_cost_effective_drug_available', 'cannot_afford_drug'],
             description: 'Adherence to medication'
         },
         "Product Quality": {
@@ -116,7 +116,7 @@ const DRNAssessment = ({ patientCode }) => {
             { name: 'Dose Titration Slow or Fast', ruleType: 'dose_titration_slow_or_fast', severity: 'moderate', "DTP Type": 'ADE', drn: 'Safety' },
         ],
         "Rule out Ineffective Drug Therapy": [
-            { name: 'More effective drug available', ruleType: 'more_effective_drug_available, severity: 'moderate', "DTP Type": 'Ineffective Drug Therapy', drn: 'Effectiveness' },
+            { name: 'More effective drug available', ruleType: 'more_effective_drug_available', severity: 'moderate', "DTP Type": 'Ineffective Drug Therapy', drn: 'Effectiveness' },
             { name: 'Condition refractory to drug', ruleType: 'condition_refractory_to_drug', severity: 'moderate', "DTP Type": 'Ineffective Drug Therapy', drn: 'Effectiveness' },
             { name: 'Dosage form inappropriate', ruleType: 'dosage_form_inappropriate', severity: 'low', "DTP Type": 'Ineffective Drug Therapy', drn: 'Effectiveness' },
         ],
@@ -152,7 +152,6 @@ const DRNAssessment = ({ patientCode }) => {
         ]
     };
   
-
     // Get user ID from JWT token
     const getUserIdFromToken = () => {
         try {
