@@ -17,10 +17,8 @@ const PatientOutcome = ({ patientCode }) => {
     const [formData, setFormData] = useState({
         outcome_type: 'clinical',
         outcome_status: 'resolved',
-        measurements: '',
-        improvement: '',
-        complications: '',
-        notes: ''
+        notes: '',
+        outcome_date: new Date().toISOString().split('T')[0]
     });
     const [editIndex, setEditIndex] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -50,124 +48,98 @@ const PatientOutcome = ({ patientCode }) => {
     }, [patientCode]);
 
     const fetchOutcomes = async () => {
-    try {
-        setLoading(true);
-        const token = localStorage.getItem('token');
-        console.log('🔍 Fetching outcomes for patient:', patientCode);
-        console.log('Using token:', token ? 'Token exists' : 'No token');
-        
-        const response = await fetch(`http://localhost:3000/api/outcomes/patient/${patientCode}`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        console.log('Response status:', response.status);
-        console.log('Response OK:', response.ok);
-        
-        if (response.ok) {
-            const result = await response.json();
-            console.log('API Response:', result);
-            console.log('Outcomes data:', result.outcomes);
-            console.log('Success:', result.success);
-            
-            if (result.success && result.outcomes) {
-                setOutcomes(result.outcomes);
-                console.log('✅ Outcomes set:', result.outcomes.length);
-            } else {
-                console.log('❌ API returned false success or no outcomes');
-            }
-        } else {
-            console.log('❌ Response not OK');
-            const errorText = await response.text();
-            console.log('Error response:', errorText);
-        }
-    } catch (error) {
-        console.error('❌ Error fetching outcomes:', error);
-        console.error('Error details:', error.message);
-    } finally {
-        setLoading(false);
-    }
-};
-
-    // Fixed saveOutcome function - removed patient?.id reference
-    const saveOutcome = async () => {
-    try {
-        setLoading(true);
-        
-        if (!formData.notes.trim()) {
-            alert('Please enter outcome notes/description');
-            return;
-        }
-
-        const token = localStorage.getItem('token');
-        
-        // Start with minimal required data
-        const outcomeData = {
-            patient_code: patientCode,
-            outcome_type: formData.outcome_type,
-            outcome_status: formData.outcome_status,
-            notes: formData.notes.trim()
-            // Skip optional fields for now: measurements, improvement, complications
-        };
-
-        console.log('Saving outcome with data:', outcomeData);
-
-        const response = await fetch('http://localhost:3000/api/outcomes', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(outcomeData)
-        });
-
-        const result = await response.json();
-        
-        if (response.ok && result.success) {
-            alert('Outcome saved successfully!');
-            // Clear form
-            setFormData({
-                outcome_type: 'clinical',
-                outcome_status: 'resolved',
-                measurements: '',
-                improvement: '',
-                complications: '',
-                notes: ''
+        try {
+            setLoading(true);
+            const token = localStorage.getItem('token');
+            const response = await fetch(`http://localhost:3000/api/outcomes/patient/${patientCode}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
             });
-            setEditIndex(null);
-            // Refresh list
-            fetchOutcomes();
-        } else {
-            throw new Error(result.error || 'Failed to save outcome');
+
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success && result.outcomes) {
+                    setOutcomes(result.outcomes);
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching outcomes:', error);
+        } finally {
+            setLoading(false);
         }
-    } catch (error) {
-        console.error('Error saving outcome:', error);
-        alert('Error saving outcome: ' + error.message);
-    } finally {
-        setLoading(false);
-    }
-};
+    };
+
+    const saveOutcome = async () => {
+        try {
+            setLoading(true);
+            if (!formData.notes.trim()) {
+                alert('Please enter outcome notes/description');
+                return;
+            }
+
+            const token = localStorage.getItem('token');
+
+            const outcomeData = {
+                patient_code: patientCode,
+                outcome_type: formData.outcome_type,
+                outcome_status: formData.outcome_status,
+                notes: formData.notes.trim(),
+                outcome_date: formData.outcome_date
+            };
+
+            const url = editIndex
+                ? `http://localhost:3000/api/outcomes/${editIndex}`
+                : 'http://localhost:3000/api/outcomes';
+
+            const method = editIndex ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method,
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(outcomeData)
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                alert(editIndex ? 'Outcome updated successfully!' : 'Outcome saved successfully!');
+                setFormData({
+                    outcome_type: 'clinical',
+                    outcome_status: 'resolved',
+                    notes: '',
+                    outcome_date: new Date().toISOString().split('T')[0]
+                });
+                setEditIndex(null);
+                fetchOutcomes();
+            } else {
+                throw new Error(result.error || 'Failed to save outcome');
+            }
+        } catch (error) {
+            console.error('Error saving outcome:', error);
+            alert('Error saving outcome: ' + error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleEdit = (outcomeItem) => {
         setFormData({
             outcome_type: outcomeItem.outcome_type || 'clinical',
             outcome_status: outcomeItem.outcome_status || 'resolved',
-            measurements: outcomeItem.measurements || '',
-            improvement: outcomeItem.improvement || '',
-            complications: outcomeItem.complications || '',
-            notes: outcomeItem.notes || ''
+            notes: outcomeItem.notes || '',
+            outcome_date: outcomeItem.outcome_date || new Date().toISOString().split('T')[0]
         });
         setEditIndex(outcomeItem.id);
     };
 
     const handleDelete = async (outcomeId) => {
-        if (!window.confirm('Are you sure you want to delete this outcome?')) {
-            return;
-        }
-
+        if (!window.confirm('Are you sure you want to delete this outcome?')) return;
         try {
             const token = localStorage.getItem('token');
             const response = await fetch(`http://localhost:3000/api/outcomes/${outcomeId}`, {
@@ -178,9 +150,12 @@ const PatientOutcome = ({ patientCode }) => {
                 }
             });
 
-            if (response.ok) {
+            const result = await response.json();
+            if (response.ok && result.success) {
                 alert('Outcome deleted successfully!');
                 fetchOutcomes();
+            } else {
+                throw new Error(result.error || 'Delete failed');
             }
         } catch (error) {
             console.error('Error deleting outcome:', error);
@@ -191,7 +166,6 @@ const PatientOutcome = ({ patientCode }) => {
     const getStatusColor = (status) => {
         const statusObj = outcomeStatusOptions.find(opt => opt.value === status);
         if (!statusObj) return 'bg-gray-100 text-gray-800';
-        
         switch (statusObj.color) {
             case 'green': return 'bg-green-100 text-green-800 border border-green-200';
             case 'red': return 'bg-red-100 text-red-800 border border-red-200';
@@ -248,124 +222,48 @@ const PatientOutcome = ({ patientCode }) => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Outcome Type *
-                            </label>
-                            <select
-                                value={formData.outcome_type}
-                                onChange={(e) => setFormData({...formData, outcome_type: e.target.value})}
-                                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-teal-500"
-                            >
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Outcome Type *</label>
+                            <select value={formData.outcome_type} onChange={(e) => setFormData({...formData, outcome_type: e.target.value})}
+                                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-teal-500">
                                 {outcomeTypeOptions.map(option => (
-                                    <option key={option.value} value={option.value}>
-                                        {option.label}
-                                    </option>
+                                    <option key={option.value} value={option.value}>{option.label}</option>
                                 ))}
                             </select>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Outcome Status *
-                            </label>
-                            <select
-                                value={formData.outcome_status}
-                                onChange={(e) => setFormData({...formData, outcome_status: e.target.value})}
-                                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-teal-500"
-                            >
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Outcome Status *</label>
+                            <select value={formData.outcome_status} onChange={(e) => setFormData({...formData, outcome_status: e.target.value})}
+                                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-teal-500">
                                 {outcomeStatusOptions.map(option => (
-                                    <option key={option.value} value={option.value}>
-                                        {option.label}
-                                    </option>
+                                    <option key={option.value} value={option.value}>{option.label}</option>
                                 ))}
                             </select>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Measurements/Parameters
-                            </label>
-                            <textarea
-                                value={formData.measurements}
-                                onChange={(e) => setFormData({...formData, measurements: e.target.value})}
-                                rows="3"
-                                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-teal-500"
-                                placeholder="Vital signs, lab results, scores, etc..."
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Improvement/Response
-                            </label>
-                            <textarea
-                                value={formData.improvement}
-                                onChange={(e) => setFormData({...formData, improvement: e.target.value})}
-                                rows="3"
-                                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-teal-500"
-                                placeholder="Describe improvement or response to treatment..."
-                            />
-                        </div>
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Outcome Date *</label>
+                        <input type="date" value={formData.outcome_date}
+                            onChange={(e) => setFormData({...formData, outcome_date: e.target.value})}
+                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-teal-500" />
                     </div>
 
                     <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Complications/Adverse Events
-                        </label>
-                        <textarea
-                            value={formData.complications}
-                            onChange={(e) => setFormData({...formData, complications: e.target.value})}
-                            rows="2"
-                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-teal-500"
-                            placeholder="Any complications, side effects, or adverse events..."
-                        />
-                    </div>
-
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Outcome Notes/Description *
-                        </label>
-                        <textarea
-                            value={formData.notes}
-                            onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                            rows="3"
-                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-teal-500"
-                            placeholder="Detailed description of the patient outcome..."
-                            required
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                            Include overall assessment, recommendations, and follow-up plan
-                        </p>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Outcome Notes/Description *</label>
+                        <textarea value={formData.notes} onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                            rows="4" className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-teal-500" required />
                     </div>
 
                     <div className="flex gap-3">
-                        <button
-                            onClick={saveOutcome}
-                            disabled={loading}
-                            className="bg-teal-500 hover:bg-teal-600 text-white px-6 py-3 rounded-lg flex items-center gap-2 disabled:opacity-50"
-                        >
+                        <button onClick={saveOutcome} disabled={loading}
+                            className="bg-teal-500 hover:bg-teal-600 text-white px-6 py-3 rounded-lg flex items-center gap-2 disabled:opacity-50">
                             <FaSave /> {loading ? 'Saving...' : (editIndex !== null ? 'Update Outcome' : 'Save Outcome')}
                         </button>
 
                         {editIndex !== null && (
-                            <button
-                                onClick={() => {
-                                    setFormData({
-                                        outcome_type: 'clinical',
-                                        outcome_status: 'resolved',
-                                        measurements: '',
-                                        improvement: '',
-                                        complications: '',
-                                        notes: ''
-                                    });
-                                    setEditIndex(null);
-                                }}
-                                className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-lg"
-                            >
-                                Cancel Edit
-                            </button>
+                            <button onClick={() => { setFormData({ outcome_type: 'clinical', outcome_status: 'resolved', notes: '', outcome_date: new Date().toISOString().split('T')[0] }); setEditIndex(null); }}
+                                className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-lg">Cancel Edit</button>
                         )}
                     </div>
                 </div>
@@ -374,96 +272,40 @@ const PatientOutcome = ({ patientCode }) => {
             {/* Saved Outcomes */}
             <div>
                 <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center gap-2">
-                    <FaNotesMedical />
-                    Patient Outcome History ({outcomes.length})
+                    <FaNotesMedical /> Patient Outcome History ({outcomes.length})
                 </h3>
 
                 {loading ? (
-                    <div className="text-center py-8">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500 mx-auto"></div>
-                        <p className="text-gray-600 mt-2">Loading outcomes...</p>
-                    </div>
+                    <div className="text-center py-8">Loading outcomes...</div>
                 ) : outcomes.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                        <FaChartLine className="text-4xl mx-auto mb-3 text-gray-300" />
-                        <p>No patient outcomes recorded yet.</p>
-                        <p className="text-sm mt-1">Record your first outcome using the form above.</p>
-                    </div>
+                    <div className="text-center py-8 text-gray-500">No patient outcomes recorded yet.</div>
                 ) : (
                     <div className="space-y-4">
                         {outcomes.map((item, index) => (
                             <div key={item.id} className="border rounded-lg p-4 bg-gray-50 hover:bg-white transition hover:shadow-md">
                                 <div className="flex justify-between items-start mb-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="text-xl">
-                                            {getStatusIcon(item.outcome_status)}
-                                        </div>
+                                        <div className="text-xl">{getStatusIcon(item.outcome_status)}</div>
                                         <div>
-                                            <h4 className="font-semibold text-gray-800">
-                                                {getOutcomeTypeLabel(item.outcome_type)} #{index + 1}
-                                            </h4>
+                                            <h4 className="font-semibold text-gray-800">{getOutcomeTypeLabel(item.outcome_type)} #{index + 1}</h4>
                                             <div className="flex flex-wrap gap-2 mt-1">
-                                                <p className="text-sm text-gray-600 flex items-center gap-1">
-                                                    <FaCalendarAlt />
-                                                    {new Date(item.created_at).toLocaleString()}
-                                                </p>
+                                                <p className="text-sm text-gray-600 flex items-center gap-1"><FaCalendarAlt /> {item.outcome_date || new Date(item.created_at).toLocaleDateString()}</p>
                                                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(item.outcome_status)}`}>
                                                     {getOutcomeStatusLabel(item.outcome_status)}
                                                 </span>
                                             </div>
                                         </div>
                                     </div>
-                                    
+
                                     <div className="flex gap-2">
-                                        <button
-                                            onClick={() => handleEdit(item)}
-                                            className="text-blue-500 hover:text-blue-700 flex items-center gap-2 px-3 py-1 rounded hover:bg-blue-50"
-                                        >
-                                            <FaEdit /> Edit
-                                        </button>
-                                        <button
-                                            onClick={() => handleDelete(item.id)}
-                                            className="text-red-500 hover:text-red-700 flex items-center gap-2 px-3 py-1 rounded hover:bg-red-50"
-                                        >
-                                            <FaTrash /> Delete
-                                        </button>
+                                        <button onClick={() => handleEdit(item)} className="text-blue-500 hover:text-blue-700 flex items-center gap-2 px-3 py-1 rounded hover:bg-blue-50"><FaEdit /> Edit</button>
+                                        <button onClick={() => handleDelete(item.id)} className="text-red-500 hover:text-red-700 flex items-center gap-2 px-3 py-1 rounded hover:bg-red-50"><FaTrash /> Delete</button>
                                     </div>
                                 </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                    {item.measurements && (
-                                        <div>
-                                            <h5 className="font-medium text-gray-700 mb-2">Measurements</h5>
-                                            <p className="text-gray-700 bg-white border rounded p-3 text-sm whitespace-pre-wrap">
-                                                {item.measurements}
-                                            </p>
-                                        </div>
-                                    )}
-                                    
-                                    {item.improvement && (
-                                        <div>
-                                            <h5 className="font-medium text-gray-700 mb-2">Improvement/Response</h5>
-                                            <p className="text-gray-700 bg-white border rounded p-3 text-sm whitespace-pre-wrap">
-                                                {item.improvement}
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {item.complications && (
-                                    <div className="mb-4">
-                                        <h5 className="font-medium text-gray-700 mb-2">Complications/Adverse Events</h5>
-                                        <p className="text-gray-700 bg-white border rounded p-3 text-sm whitespace-pre-wrap">
-                                            {item.complications}
-                                        </p>
-                                    </div>
-                                )}
 
                                 <div>
                                     <h5 className="font-medium text-gray-700 mb-2">Outcome Notes</h5>
-                                    <p className="text-gray-700 bg-white border rounded p-3 whitespace-pre-wrap">
-                                        {item.notes}
-                                    </p>
+                                    <p className="text-gray-700 bg-white border rounded p-3 whitespace-pre-wrap">{item.notes}</p>
                                 </div>
                             </div>
                         ))}
