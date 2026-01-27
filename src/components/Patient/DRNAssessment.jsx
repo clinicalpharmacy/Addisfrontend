@@ -845,44 +845,55 @@ const DRNAssessment = ({ patientCode }) => {
                                         </div>
                                     </div>
                                     
-                                    {/* Findings display - UPDATED WITHOUT ruleTypes */}
+                                    {/* Findings display - UPDATED WITH ruleType-based recommendation */}
                                     {filteredFindings.length > 0 ? (
                                         <div className="space-y-3">
-                                            {filteredFindings.map((finding, idx) => (
-                                                <div key={idx} className="p-4 border rounded-lg hover:shadow-md transition">
-                                                    <div className="flex justify-between items-start">
-                                                        <div className="flex-1">
-                                                            <div className="flex flex-wrap items-center gap-2 mb-2">
-                                                                <span className="font-semibold text-gray-800">{finding.cause}</span>
-                                                                <span className={`px-2 py-1 ${getSeverityColor(finding.severity)} text-xs rounded font-medium`}>
-                                                                    {finding.severity}
-                                                                </span>
-                                                                <span className={`px-2 py-1 ${getCategoryColor(finding.category)} text-xs rounded`}>
-                                                                    {finding.category}
-                                                                </span>
-                                                                {/* DTP Type Display - NEW SECTION */}
-                                                                {finding.dtpType && (
-                                                                    <span className={`px-2 py-1 ${getDTPTypeColor(finding.dtpType)} text-xs rounded font-medium`}>
-                                                                        DTP: {finding.dtpType}
+                                            {filteredFindings.map((finding, idx) => {
+                                                // Get the default recommendation based on ruleType
+                                                const ruleTypeRecommendation = getDefaultRecommendation(finding.original_rule_type || finding.rule_type);
+                                                return (
+                                                    <div key={idx} className="p-4 border rounded-lg hover:shadow-md transition">
+                                                        <div className="flex justify-between items-start">
+                                                            <div className="flex-1">
+                                                                <div className="flex flex-wrap items-center gap-2 mb-2">
+                                                                    <span className="font-semibold text-gray-800">{finding.cause}</span>
+                                                                    <span className={`px-2 py-1 ${getSeverityColor(finding.severity)} text-xs rounded font-medium`}>
+                                                                        {finding.severity}
                                                                     </span>
-                                                                )}
+                                                                    <span className={`px-2 py-1 ${getCategoryColor(finding.category)} text-xs rounded`}>
+                                                                        {finding.category}
+                                                                    </span>
+                                                                    {/* DTP Type Display - NEW SECTION */}
+                                                                    {finding.dtpType && (
+                                                                        <span className={`px-2 py-1 ${getDTPTypeColor(finding.dtpType)} text-xs rounded font-medium`}>
+                                                                            DTP: {finding.dtpType}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <p className="text-sm text-gray-600 mb-2">{finding.message}</p>
+                                                                <div className="bg-blue-50 border border-blue-200 rounded p-3 mt-2">
+                                                                    <p className="text-sm font-medium text-blue-800 mb-1">Default Recommendation:</p>
+                                                                    <p className="text-sm text-blue-700">{ruleTypeRecommendation}</p>
+                                                                </div>
+                                                                <div className="flex flex-wrap items-center gap-3 mt-2">
+                                                                    <span className="text-xs text-gray-500">
+                                                                        Rule Type: {finding.original_rule_type || finding.rule_type}
+                                                                    </span>
+                                                                    <span className="text-xs text-gray-500">
+                                                                        Confidence: 95%
+                                                                    </span>
+                                                                </div>
                                                             </div>
-                                                            <p className="text-sm text-gray-600 mb-2">{finding.message}</p>
-                                                            <div className="flex flex-wrap items-center gap-3 mt-2">
-                                                                <span className="text-xs text-gray-500">
-                                                                    Confidence: 95%
-                                                                </span>
-                                                            </div>
+                                                            <button
+                                                                onClick={() => handleReviewFinding(finding)}
+                                                                className="ml-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg transition flex items-center gap-2"
+                                                            >
+                                                                <FaEdit /> Add to Assessment
+                                                            </button>
                                                         </div>
-                                                        <button
-                                                            onClick={() => handleReviewFinding(finding)}
-                                                            className="ml-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg transition flex items-center gap-2"
-                                                        >
-                                                            <FaEdit /> Add to Assessment
-                                                        </button>
                                                     </div>
-                                                </div>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
                                     ) : (
                                         <div className="text-center py-8">
@@ -950,7 +961,7 @@ const DRNAssessment = ({ patientCode }) => {
                 </div>
             </div>
 
-            {/* Cause Selection and Form - UPDATED (REMOVED Recommendation and Severity) */}
+            {/* Cause Selection and Form - UPDATED (SHOWS DTP Type and Default Recommendation based on ruleType) */}
             {selectedCategory && (
                 <div className="mb-8 p-6 border rounded-lg bg-gray-50">
                     <h3 className="text-lg font-semibold mb-6 text-gray-800">
@@ -960,28 +971,36 @@ const DRNAssessment = ({ patientCode }) => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                         {menuItemsData[selectedCategory]?.map(cause => {
                             const ruleCount = activeRules[cause.ruleType]?.length || 0;
+                            const ruleTypeRecommendation = getDefaultRecommendation(cause.ruleType);
                             return (
-                                <div key={cause.name} className="flex items-center gap-3 p-4 border rounded-lg bg-white hover:shadow transition">
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedCauses.includes(cause.name)}
-                                        onChange={() => handleCauseSelection(cause.name)}
-                                        className="h-5 w-5 text-blue-600 focus:ring-blue-500"
-                                    />
-                                    <div className="flex-1">
-                                        <p className="font-medium text-gray-800">{cause.name}</p>
-                                        <div className="flex gap-2 mt-1">
-                                            {/* DTP Type Display - REPLACES ruleType display */}
-                                            {cause.dtpType && (
-                                                <span className={`px-2 py-1 text-xs rounded ${getDTPTypeColor(cause.dtpType)}`}>
-                                                    {cause.dtpType}
-                                                </span>
-                                            )}
-                                            {ruleCount > 0 && (
-                                                <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
-                                                    {ruleCount} rules
-                                                </span>
-                                            )}
+                                <div key={cause.name} className="p-4 border rounded-lg bg-white hover:shadow transition">
+                                    <div className="flex items-start gap-3 mb-3">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedCauses.includes(cause.name)}
+                                            onChange={() => handleCauseSelection(cause.name)}
+                                            className="h-5 w-5 text-blue-600 focus:ring-blue-500 mt-1"
+                                        />
+                                        <div className="flex-1">
+                                            <p className="font-medium text-gray-800">{cause.name}</p>
+                                            <div className="flex gap-2 mt-2">
+                                                {/* DTP Type Display */}
+                                                {cause.dtpType && (
+                                                    <span className={`px-2 py-1 text-xs rounded ${getDTPTypeColor(cause.dtpType)}`}>
+                                                        DTP: {cause.dtpType}
+                                                    </span>
+                                                )}
+                                                {ruleCount > 0 && (
+                                                    <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
+                                                        {ruleCount} rules
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {/* Default Recommendation based on ruleType */}
+                                            <div className="mt-3 bg-blue-50 border border-blue-100 rounded p-3">
+                                                <p className="text-xs font-medium text-blue-800 mb-1">Default Recommendation:</p>
+                                                <p className="text-xs text-blue-700">{ruleTypeRecommendation}</p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -989,21 +1008,29 @@ const DRNAssessment = ({ patientCode }) => {
                         })}
                     </div>
 
-                    {/* Form for Selected Causes - UPDATED (REMOVED Recommendation and Severity fields) */}
+                    {/* Form for Selected Causes - SHOWS DTP Type */}
                     {selectedCauses.map(causeName => {
                         const causeDetails = menuItemsData[selectedCategory]?.find(c => c.name === causeName);
+                        const ruleTypeRecommendation = getDefaultRecommendation(causeDetails?.ruleType);
                         return (
                             <div key={causeName} className="mb-8 p-6 border rounded-lg bg-white shadow-sm">
-                                <div className="flex justify-between items-center mb-6">
-                                    <h4 className="font-semibold text-lg text-gray-800">
-                                        {causeName}
-                                    </h4>
-                                    {/* DTP Type Display in header */}
-                                    {causeDetails?.dtpType && (
-                                        <span className={`px-3 py-1 text-sm rounded ${getDTPTypeColor(causeDetails.dtpType)}`}>
-                                            DTP Type: {causeDetails.dtpType}
-                                        </span>
-                                    )}
+                                <div className="flex justify-between items-start mb-6">
+                                    <div>
+                                        <h4 className="font-semibold text-lg text-gray-800">
+                                            {causeName}
+                                        </h4>
+                                        {/* DTP Type Display in header */}
+                                        {causeDetails?.dtpType && (
+                                            <span className={`px-3 py-1 text-sm rounded ${getDTPTypeColor(causeDetails.dtpType)} mt-2 inline-block`}>
+                                                DTP Type: {causeDetails.dtpType}
+                                            </span>
+                                        )}
+                                    </div>
+                                    {/* Default Recommendation display */}
+                                    <div className="bg-blue-50 border border-blue-200 rounded p-3 max-w-md">
+                                        <p className="text-sm font-medium text-blue-800 mb-1">Default Recommendation:</p>
+                                        <p className="text-sm text-blue-700">{ruleTypeRecommendation}</p>
+                                    </div>
                                 </div>
                                 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -1077,7 +1104,7 @@ const DRNAssessment = ({ patientCode }) => {
                 </div>
             )}
 
-            {/* Saved Assessments Table - UPDATED to show DTP Type instead of ruleType */}
+            {/* Saved Assessments Table - Shows DTP Type */}
             <div className="mt-12">
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-xl font-semibold text-gray-800">
@@ -1110,7 +1137,7 @@ const DRNAssessment = ({ patientCode }) => {
                                 <tr>
                                     <th className="p-4 text-left font-medium text-gray-700">Category</th>
                                     <th className="p-4 text-left font-medium text-gray-700">Cause</th>
-                                    <th className="p-4 text-left font-medium text-gray-700">DTP Type</th> {/* Changed from Rule Type */}
+                                    <th className="p-4 text-left font-medium text-gray-700">DTP Type</th>
                                     <th className="p-4 text-left font-medium text-gray-700">Specific Case</th>
                                     <th className="p-4 text-left font-medium text-gray-700">Status</th>
                                     <th className="p-4 text-left font-medium text-gray-700">Date</th>
