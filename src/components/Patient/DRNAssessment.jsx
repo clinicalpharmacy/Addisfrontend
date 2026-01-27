@@ -149,7 +149,7 @@ const DRNAssessment = ({ patientCode }) => {
         ],
         "Product Quality": [
             { name: 'Product Quality Defect', ruleType: 'product_quality_defect', severity: 'high', "DTP Type": 'Product Quality Defect', drn: 'Product Quality' },
-        ],
+        ]
     };
   
 
