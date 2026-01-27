@@ -107,13 +107,10 @@ const MedicationHistory = ({ patientCode }) => {
 
     const drugClasses = [
         'Analgesics', 'Antimicrobial', 'Antidiabetic', 'Cardiovascular',
-        'Antihypertensive', 'Diuretic', 'Bronchodilator', 'Corticosteroid',
-        'Antidepressant', 'Antipsychotic', 'Anticonvulsant', 'Antiplatelet',
-        'Anticoagulant', 'Antacid', 'PPI', 'H2 Blocker', 'Laxative',
-        'Antiemetic', 'Antihistamine', 'Immunosuppressant', 'Chemotherapy',
-        'Hormonal', 'Vitamin/Supplement', 'Antifungal', 'Antiviral',
-        'Antiparasitic', 'Muscle Relaxant', 'Ophthalmic', 'Dermatological',
-        'Other'
+        'Anesthetics', 'Antineoplastic', 'Antidepressant', 'Antipsychotic', 
+        'Anticonvulsant', 'Antiparkinsonism', 'Dermatologic agent', 'GI drug',
+        'Hormonal agent', 'Ophthalmologic agent', 'Otic agent', 
+        'Vitamin/Supplement', 'Respiratory agent', 'Ophthalmic', 'Other'
     ];
 
     const statusOptions = [
