@@ -59,20 +59,9 @@ const PhAssistPlan = ({ patientCode }) => {
                 notes: plan
             };
 
-<<<<<<< HEAD
             console.log('Saving plan with data:', planData);
 
             const result = await api.post('/plans/pharmacy-assistance', planData);
-=======
-            const response = await fetch('http://localhost:3000/api/plans/pharmacy-assistance', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(planData)
-            });
->>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
 
             if (result.success) {
                 alert('Plan saved successfully!');
