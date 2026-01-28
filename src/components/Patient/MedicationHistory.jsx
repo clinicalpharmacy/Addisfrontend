@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+<<<<<<< HEAD
 import api from '../../utils/api';
 import {
     FaPills, FaCalendar, FaClock, FaEdit, FaTrash, FaSave,
@@ -6,6 +7,13 @@ import {
     FaCalendarCheck, FaNotesMedical, FaCapsules, FaTint,
     FaExclamationTriangle, FaInfoCircle, FaCalculator,
     FaFilePrescription, FaStethoscope, FaFlask, FaCheckCircle
+=======
+import supabase from '../../utils/supabase';
+import { 
+  FaPills, FaCalendar, FaClock, FaEdit, FaTrash, FaSave, 
+  FaFilter, FaSync, FaPrescription, FaUserMd, FaHospital,
+  FaExclamationTriangle, FaInfoCircle, FaCheckCircle
+>>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
 } from 'react-icons/fa';
 
 const MedicationHistory = ({ patientCode }) => {
@@ -26,11 +34,10 @@ const MedicationHistory = ({ patientCode }) => {
         initiated_at: 'Hospital',
 
         // Additional Information
-        generic_name: '',
-        brand_name: '',
         dosage_form: 'Tablet',
         strength: '',
         unit: 'mg',
+<<<<<<< HEAD
         total_daily_dose: '',
         timing: '',
         duration_days: '',
@@ -44,23 +51,37 @@ const MedicationHistory = ({ patientCode }) => {
         prescriber_type: 'Doctor',
         pharmacy_name: '',
 
+=======
+        
+>>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
         // Status & Monitoring
         status: 'Active',
-        prn: false,
         notes: '',
 
         // Internal
         id: '',
         is_active: true
     });
+<<<<<<< HEAD
 
+=======
+    
+    const [reconciliationData, setReconciliationData] = useState({
+        site: '',
+        findings: '',
+        date: new Date().toISOString().split('T')[0]
+    });
+    
+>>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
     const [selectedClass, setSelectedClass] = useState('');
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [reconLoading, setReconLoading] = useState(false);
     const [activeFilter, setActiveFilter] = useState('all');
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [reconciliations, setReconciliations] = useState([]);
+<<<<<<< HEAD
     const [reconciliationData, setReconciliationData] = useState({
         site: '',
         findings: '',
@@ -72,6 +93,8 @@ const MedicationHistory = ({ patientCode }) => {
         'Admission', 'Discharge', 'Transfer In', 'Transfer Out',
         'Clinic Visit', 'ER Visit', 'Medication Review', 'Consultation'
     ];
+=======
+>>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
 
     // Dropdown Options
     const roaOptions = [
@@ -87,7 +110,13 @@ const MedicationHistory = ({ patientCode }) => {
         { value: 'Otic', label: 'Otic', icon: '👂' },
         { value: 'Rectal', label: 'Rectal', icon: '💊' },
         { value: 'Vaginal', label: 'Vaginal', icon: '💊' },
-        { value: 'Transdermal', label: 'Transdermal Patch', icon: '🩹' }
+        { value: 'Intraarticular', label: 'Intraarticular', icon: '💉' },
+        { value: 'IT', label: 'Intrathecal', icon: '💉' },
+        { value: 'Epidural', label: 'Epidural', icon: '💉' },
+        { value: 'Transdermal', label: 'Transdermal Patch', icon: '🩹' },
+        { value: 'IP', label: 'Intraperitoneal', icon: '💉' },
+        { value: 'NG', label: 'NG tube', icon: '💉' },
+        { value: 'GT', label: 'Gastric tube', icon: '💉' },
     ];
 
     const dosageForms = [
@@ -104,22 +133,12 @@ const MedicationHistory = ({ patientCode }) => {
         'With meals', 'On empty stomach', 'As needed (PRN)'
     ];
 
-    const timingOptions = [
-        'Morning (06:00-10:00)', 'Noon (10:00-14:00)', 'Evening (14:00-18:00)',
-        'Night (18:00-22:00)', 'Before breakfast', 'After breakfast',
-        'Before lunch', 'After lunch', 'Before dinner', 'After dinner',
-        'At bedtime', 'On empty stomach', 'With food', 'As directed'
-    ];
-
     const drugClasses = [
         'Analgesics', 'Antimicrobial', 'Antidiabetic', 'Cardiovascular',
-        'Antihypertensive', 'Diuretic', 'Bronchodilator', 'Corticosteroid',
-        'Antidepressant', 'Antipsychotic', 'Anticonvulsant', 'Antiplatelet',
-        'Anticoagulant', 'Antacid', 'PPI', 'H2 Blocker', 'Laxative',
-        'Antiemetic', 'Antihistamine', 'Immunosuppressant', 'Chemotherapy',
-        'Hormonal', 'Vitamin/Supplement', 'Antifungal', 'Antiviral',
-        'Antiparasitic', 'Muscle Relaxant', 'Ophthalmic', 'Dermatological',
-        'Other'
+        'Anesthetics', 'Antineoplastic', 'Antidepressant', 'Antipsychotic', 
+        'Anticonvulsant', 'Antiparkinsonism', 'Dermatologic agent', 'GI drug',
+        'Hormonal agent', 'Ophthalmologic agent', 'Otic agent', 
+        'Vitamin/Supplement', 'Respiratory agent', 'Ophthalmic', 'Other'
     ];
 
     const statusOptions = [
@@ -130,19 +149,19 @@ const MedicationHistory = ({ patientCode }) => {
         { value: 'Planned', label: 'Planned', color: 'purple' }
     ];
 
-    const prescriberTypes = [
-        'Doctor', 'Nurse', 'Pharmacist', 'Dentist', 'Midwife',
-        'Clinical Officer', 'Specialist', 'Other'
-    ];
-
     const initiatedAtOptions = [
-        'Hospital', 'Health Center', 'Clinic', 'Private Clinic',
-        'Pharmacy', 'Home', 'Community', 'Referral', 'Telemedicine'
+        'Inpatient', 'OPD', 'Private Clinic', 'Emergency',
+        'Surgical side', 'Pharmacy', 'Home Care', 'Telemedicine'
     ];
 
     const units = [
         'mg', 'g', 'mcg', 'ml', 'L', 'tablet', 'capsule', 'dose',
         'puff', 'drop', 'patch', 'suppository', 'IU', '%', 'unit'
+    ];
+
+    const reconciliationSites = [
+        'Admission', 'Discharge', 'Transfer In', 'Transfer Out',
+        'Clinic Visit', 'ER Visit', 'Medication Review', 'Consultation'
     ];
 
     useEffect(() => {
@@ -186,6 +205,22 @@ const MedicationHistory = ({ patientCode }) => {
         }
     };
 
+    const fetchReconciliations = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('medication_reconciliations')
+                .select('*')
+                .eq('patient_code', patientCode)
+                .order('date', { ascending: false });
+
+            if (error) throw error;
+            
+            setReconciliations(data || []);
+        } catch (error) {
+            console.error('Error fetching reconciliations:', error);
+        }
+    };
+
     const calculateDuration = () => {
         if (!formData.start_date) return '';
 
@@ -219,6 +254,7 @@ const MedicationHistory = ({ patientCode }) => {
         return parts.join(', ');
     };
 
+<<<<<<< HEAD
     const calculateDailyDose = () => {
         if (!formData.dose || !formData.frequency || !formData.unit) return '';
 
@@ -240,6 +276,8 @@ const MedicationHistory = ({ patientCode }) => {
         return `${dailyDose} ${formData.unit}`;
     };
 
+=======
+>>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
     const validateForm = () => {
         if (!formData.drug_name.trim()) {
             alert('Drug Name is required');
@@ -269,8 +307,12 @@ const MedicationHistory = ({ patientCode }) => {
         setLoading(true);
         const duration = calculateDuration();
         const isActive = formData.status === 'Active';
+<<<<<<< HEAD
         const totalDailyDose = calculateDailyDose();
 
+=======
+        
+>>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
         // Build medication data object
         const medicationData = {
             patient_code: patientCode,
@@ -289,11 +331,10 @@ const MedicationHistory = ({ patientCode }) => {
             initiated_at: formData.initiated_at,
 
             // Additional fields
-            generic_name: formData.generic_name || null,
-            brand_name: formData.brand_name || null,
             dosage_form: formData.dosage_form,
             strength: formData.strength || null,
             unit: formData.unit,
+<<<<<<< HEAD
             total_daily_dose: totalDailyDose || null,
             timing: formData.timing || null,
             duration_days: formData.duration_days || null,
@@ -307,9 +348,11 @@ const MedicationHistory = ({ patientCode }) => {
             prescriber_type: formData.prescriber_type,
             pharmacy_name: formData.pharmacy_name || null,
 
+=======
+            
+>>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
             // Status fields
             status: formData.status,
-            prn: formData.prn,
             notes: formData.notes || null,
 
             // Calculated fields
@@ -358,25 +401,10 @@ const MedicationHistory = ({ patientCode }) => {
             indication: '',
             drug_class: 'Antimicrobial',
             initiated_at: 'Hospital',
-            generic_name: '',
-            brand_name: '',
             dosage_form: 'Tablet',
             strength: '',
             unit: 'mg',
-            total_daily_dose: '',
-            timing: '',
-            duration_days: '',
-            quantity: '',
-            refills: '0',
-            prescribed_date: '',
-            diagnosis: '',
-            therapeutic_category: '',
-            atc_code: '',
-            prescriber_name: '',
-            prescriber_type: 'Doctor',
-            pharmacy_name: '',
             status: 'Active',
-            prn: false,
             notes: '',
             id: '',
             is_active: true
@@ -388,13 +416,10 @@ const MedicationHistory = ({ patientCode }) => {
     const handleEdit = (medication) => {
         setFormData({
             ...medication,
-            prn: medication.prn || false,
             dosage_form: medication.dosage_form || 'Tablet',
             unit: medication.unit || 'mg',
             status: medication.status || 'Active',
             initiated_at: medication.initiated_at || 'Hospital',
-            prescriber_type: medication.prescriber_type || 'Doctor',
-            refills: medication.refills || '0'
         });
         setIsEditing(true);
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -426,7 +451,6 @@ const MedicationHistory = ({ patientCode }) => {
             const term = searchTerm.toLowerCase();
             filtered = filtered.filter(med =>
                 med.drug_name?.toLowerCase().includes(term) ||
-                med.generic_name?.toLowerCase().includes(term) ||
                 med.indication?.toLowerCase().includes(term) ||
                 med.drug_class?.toLowerCase().includes(term)
             );
@@ -442,8 +466,6 @@ const MedicationHistory = ({ patientCode }) => {
             filtered = filtered.filter(med => med.status === 'Active' || med.is_active === true);
         } else if (activeFilter === 'inactive') {
             filtered = filtered.filter(med => med.status !== 'Active' && med.is_active !== true);
-        } else if (activeFilter === 'prn') {
-            filtered = filtered.filter(med => med.prn === true);
         }
 
         setFilteredMedications(filtered);
@@ -503,21 +525,65 @@ const MedicationHistory = ({ patientCode }) => {
     };
 
     const handleInputChange = (e) => {
-        const { name, value, type, checked } = e.target;
+        const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
-            [name]: type === 'checkbox' ? checked : value
+            [name]: value
         }));
     };
 
-    const handleCalculate = () => {
-        const dailyDose = calculateDailyDose();
-        if (dailyDose) {
-            setFormData(prev => ({
-                ...prev,
-                total_daily_dose: dailyDose
-            }));
-            alert(`Calculated Daily Dose: ${dailyDose}`);
+    const handleReconciliationChange = (e) => {
+        const { name, value } = e.target;
+        setReconciliationData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handleSaveReconciliation = async () => {
+        if (!reconciliationData.site.trim()) {
+            alert('Reconciliation site is required');
+            return;
+        }
+
+        if (!reconciliationData.findings.trim()) {
+            alert('Findings and Decision is required');
+            return;
+        }
+
+        setReconLoading(true);
+
+        try {
+            const reconData = {
+                patient_code: patientCode,
+                site: reconciliationData.site.trim(),
+                findings: reconciliationData.findings.trim(),
+                date: reconciliationData.date,
+                created_at: new Date().toISOString(),
+                performed_by: 'User' // Replace with actual user if available
+            };
+
+            const { error } = await supabase
+                .from('medication_reconciliations')
+                .insert([reconData]);
+
+            if (error) throw error;
+
+            await fetchReconciliations();
+            
+            // Reset form
+            setReconciliationData({
+                site: '',
+                findings: '',
+                date: new Date().toISOString().split('T')[0]
+            });
+            
+            alert('✅ Medication reconciliation saved successfully!');
+        } catch (error) {
+            console.error('Error saving reconciliation:', error);
+            alert(`❌ Error: ${error.message || 'Failed to save reconciliation'}`);
+        } finally {
+            setReconLoading(false);
         }
     };
 
@@ -534,14 +600,12 @@ const MedicationHistory = ({ patientCode }) => {
 
     const getStats = () => {
         const activeMeds = medications.filter(m => m.status === 'Active' || m.is_active === true);
-        const prnMeds = medications.filter(m => m.prn === true);
         const oralMeds = medications.filter(m => m.roa === 'po');
         const uniqueClasses = [...new Set(medications.map(m => m.drug_class).filter(Boolean))];
 
         return {
             total: medications.length,
             active: activeMeds.length,
-            prn: prnMeds.length,
             oral: oralMeds.length,
             classes: uniqueClasses.length,
             reconciliations: reconciliations.length
@@ -592,10 +656,6 @@ const MedicationHistory = ({ patientCode }) => {
                     <div className="text-sm text-green-700">Active</div>
                     <div className="text-xl font-bold text-green-800">{stats.active}</div>
                 </div>
-                <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100">
-                    <div className="text-sm text-yellow-700">PRN</div>
-                    <div className="text-xl font-bold text-yellow-800">{stats.prn}</div>
-                </div>
                 <div className="bg-purple-50 p-3 rounded-lg border border-purple-100">
                     <div className="text-sm text-purple-700">Oral</div>
                     <div className="text-xl font-bold text-purple-800">{stats.oral}</div>
@@ -614,18 +674,10 @@ const MedicationHistory = ({ patientCode }) => {
             <div className="bg-gray-50 rounded-lg p-6 mb-8 border border-gray-200">
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-                        <FaFilePrescription />
+                        <FaPrescription />
                         {isEditing ? 'Edit Medication' : 'Add New Medication'}
                     </h3>
                     <div className="flex gap-2">
-                        <button
-                            type="button"
-                            onClick={handleCalculate}
-                            className="text-sm bg-green-100 text-green-800 hover:bg-green-200 px-3 py-1 rounded-lg flex items-center gap-1"
-                            title="Calculate daily dose"
-                        >
-                            <FaCalculator /> Calculate
-                        </button>
                         <button
                             type="button"
                             onClick={() => setShowAdvanced(!showAdvanced)}
@@ -646,7 +698,7 @@ const MedicationHistory = ({ patientCode }) => {
                         {/* Drug Name */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Drug Name *
+                                Drug Name (Generic) *
                             </label>
                             <input
                                 type="text"
@@ -780,7 +832,7 @@ const MedicationHistory = ({ patientCode }) => {
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Status
                         </label>
-                        <select
+                            <select
                             name="status"
                             value={formData.status}
                             onChange={handleInputChange}
@@ -811,346 +863,90 @@ const MedicationHistory = ({ patientCode }) => {
 
                 {/* Advanced Fields */}
                 {showAdvanced && (
-                    <>
-                        {/* Additional Drug Information */}
-                        <div className="mb-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                            <h4 className="font-medium text-yellow-800 mb-3 flex items-center gap-2">
-                                <FaCapsules /> Drug Information
-                            </h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {/* Generic Name */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Generic Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="generic_name"
-                                        value={formData.generic_name}
-                                        onChange={handleInputChange}
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                        placeholder="e.g., Metformin HCl"
-                                    />
-                                </div>
+                    <div className="mb-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                        <h4 className="font-medium text-yellow-800 mb-3 flex items-center gap-2">
+                            <FaPills /> Additional Information
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {/* Brand Name */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Brand Name
+                                </label>
+                                <input
+                                    type="text"
+                                    name="brand_name"
+                                    value={formData.brand_name}
+                                    onChange={handleInputChange}
+                                    className="w-full border border-gray-300 rounded-lg p-3"
+                                    placeholder="e.g., Glucophage"
+                                />
+                            </div>
+                          {/* Dosage Form */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Dosage Form
+                                </label>
+                                <select
+                                    name="dosage_form"
+                                    value={formData.dosage_form}
+                                    onChange={handleInputChange}
+                                    className="w-full border border-gray-300 rounded-lg p-3"
+                                >
+                                    {dosageForms.map(form => (
+                                        <option key={form} value={form}>{form}</option>
+                                    ))}
+                                </select>
+                            </div>
 
-                                {/* Brand Name */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Brand Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="brand_name"
-                                        value={formData.brand_name}
-                                        onChange={handleInputChange}
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                        placeholder="e.g., Glucophage"
-                                    />
-                                </div>
+                            {/* Strength */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Strength
+                                </label>
+                                <input
+                                    type="text"
+                                    name="strength"
+                                    value={formData.strength}
+                                    onChange={handleInputChange}
+                                    className="w-full border border-gray-300 rounded-lg p-3"
+                                    placeholder="e.g., 500mg/5ml"
+                                />
+                            </div>
 
-                                {/* Dosage Form */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Dosage Form
-                                    </label>
-                                    <select
-                                        name="dosage_form"
-                                        value={formData.dosage_form}
-                                        onChange={handleInputChange}
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                    >
-                                        {dosageForms.map(form => (
-                                            <option key={form} value={form}>{form}</option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                {/* Strength */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Strength
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="strength"
-                                        value={formData.strength}
-                                        onChange={handleInputChange}
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                        placeholder="e.g., 500mg/5ml"
-                                    />
-                                </div>
-
-                                {/* ATC Code */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        ATC Code
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="atc_code"
-                                        value={formData.atc_code}
-                                        onChange={handleInputChange}
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                        placeholder="e.g., A10BA02"
-                                    />
-                                </div>
-
-                                {/* Therapeutic Category */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Therapeutic Category
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="therapeutic_category"
-                                        value={formData.therapeutic_category}
-                                        onChange={handleInputChange}
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                        placeholder="e.g., Biguanide"
-                                    />
-                                </div>
+                            {/* Initiated At */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Initiated At
+                                </label>
+                                <select
+                                    name="initiated_at"
+                                    value={formData.initiated_at}
+                                    onChange={handleInputChange}
+                                    className="w-full border border-gray-300 rounded-lg p-3"
+                                >
+                                    {initiatedAtOptions.map(place => (
+                                        <option key={place} value={place}>{place}</option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
 
-                        {/* Prescription Details */}
-                        <div className="mb-6 p-4 bg-green-50 rounded-lg border border-green-200">
-                            <h4 className="font-medium text-green-800 mb-3 flex items-center gap-2">
-                                <FaFilePrescription /> Prescription Details
-                            </h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                {/* Duration */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Duration (Days)
-                                    </label>
-                                    <input
-                                        type="number"
-                                        name="duration_days"
-                                        value={formData.duration_days}
-                                        onChange={handleInputChange}
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                        placeholder="e.g., 30"
-                                    />
-                                </div>
-
-                                {/* Quantity */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Quantity
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="quantity"
-                                        value={formData.quantity}
-                                        onChange={handleInputChange}
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                        placeholder="e.g., 30 tablets"
-                                    />
-                                </div>
-
-                                {/* Refills */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Refills
-                                    </label>
-                                    <select
-                                        name="refills"
-                                        value={formData.refills}
-                                        onChange={handleInputChange}
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                    >
-                                        <option value="0">No refills</option>
-                                        <option value="1">1 refill</option>
-                                        <option value="2">2 refills</option>
-                                        <option value="3">3 refills</option>
-                                        <option value="unlimited">Unlimited</option>
-                                    </select>
-                                </div>
-
-                                {/* Timing */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Timing
-                                    </label>
-                                    <select
-                                        name="timing"
-                                        value={formData.timing}
-                                        onChange={handleInputChange}
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                    >
-                                        <option value="">Select timing</option>
-                                        {timingOptions.map(time => (
-                                            <option key={time} value={time}>{time}</option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                {/* PRN */}
-                                <div className="flex items-center col-span-2">
-                                    <input
-                                        type="checkbox"
-                                        id="prn"
-                                        name="prn"
-                                        checked={formData.prn}
-                                        onChange={handleInputChange}
-                                        className="h-5 w-5 text-blue-600 rounded"
-                                    />
-                                    <label htmlFor="prn" className="ml-2 text-sm text-gray-700">
-                                        As Needed (PRN) Medication
-                                    </label>
-                                </div>
-
-                                {/* Total Daily Dose */}
-                                <div className="col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Total Daily Dose
-                                    </label>
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="text"
-                                            name="total_daily_dose"
-                                            value={formData.total_daily_dose}
-                                            onChange={handleInputChange}
-                                            className="flex-1 border border-gray-300 rounded-lg p-3"
-                                            placeholder="Auto-calculated"
-                                            readOnly
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={handleCalculate}
-                                            className="px-4 py-3 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200"
-                                        >
-                                            <FaCalculator />
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
+                        {/* Notes */}
+                        <div className="mt-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Notes
+                            </label>
+                            <textarea
+                                name="notes"
+                                value={formData.notes}
+                                onChange={handleInputChange}
+                                rows="3"
+                                className="w-full border border-gray-300 rounded-lg p-3"
+                                placeholder="Additional notes..."
+                            />
                         </div>
-
-                        {/* Prescriber & Pharmacy Info */}
-                        <div className="mb-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
-                            <h4 className="font-medium text-purple-800 mb-3 flex items-center gap-2">
-                                <FaUserMd /> Prescriber & Pharmacy
-                            </h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {/* Prescriber Name */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Prescriber Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="prescriber_name"
-                                        value={formData.prescriber_name}
-                                        onChange={handleInputChange}
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                        placeholder="Dr. Name"
-                                    />
-                                </div>
-
-                                {/* Prescriber Type */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Prescriber Type
-                                    </label>
-                                    <select
-                                        name="prescriber_type"
-                                        value={formData.prescriber_type}
-                                        onChange={handleInputChange}
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                    >
-                                        {prescriberTypes.map(type => (
-                                            <option key={type} value={type}>{type}</option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                {/* Pharmacy Name */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        <FaHospital className="inline mr-1" /> Pharmacy
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="pharmacy_name"
-                                        value={formData.pharmacy_name}
-                                        onChange={handleInputChange}
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                        placeholder="Pharmacy Name"
-                                    />
-                                </div>
-
-                                {/* Initiated At */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Initiated At
-                                    </label>
-                                    <select
-                                        name="initiated_at"
-                                        value={formData.initiated_at}
-                                        onChange={handleInputChange}
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                    >
-                                        {initiatedAtOptions.map(place => (
-                                            <option key={place} value={place}>{place}</option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                {/* Prescribed Date */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Prescribed Date
-                                    </label>
-                                    <input
-                                        type="date"
-                                        name="prescribed_date"
-                                        value={formData.prescribed_date}
-                                        onChange={handleInputChange}
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Clinical Information */}
-                        <div className="mb-6 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
-                            <h4 className="font-medium text-indigo-800 mb-3 flex items-center gap-2">
-                                <FaStethoscope /> Clinical Information
-                            </h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {/* Diagnosis */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Diagnosis
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="diagnosis"
-                                        value={formData.diagnosis}
-                                        onChange={handleInputChange}
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                        placeholder="Primary diagnosis"
-                                    />
-                                </div>
-
-                                {/* Notes */}
-                                <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        <FaNotesMedical className="inline mr-1" /> Clinical Notes
-                                    </label>
-                                    <textarea
-                                        name="notes"
-                                        value={formData.notes}
-                                        onChange={handleInputChange}
-                                        rows="3"
-                                        className="w-full border border-gray-300 rounded-lg p-3"
-                                        placeholder="Additional clinical notes..."
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </>
+                    </div>
                 )}
 
                 {/* Action Buttons */}
@@ -1222,7 +1018,7 @@ const MedicationHistory = ({ patientCode }) => {
                         <div className="flex items-center gap-2">
                             <span className="text-sm text-gray-600">Status:</span>
                             <div className="flex bg-gray-100 rounded-lg p-1">
-                                {['all', 'active', 'inactive', 'prn'].map(filter => (
+                                {['all', 'active', 'inactive'].map(filter => (
                                     <button
                                         key={filter}
                                         onClick={() => setActiveFilter(filter)}
@@ -1256,7 +1052,7 @@ const MedicationHistory = ({ patientCode }) => {
             </div>
 
             {/* Medications List */}
-            <div className="mb-6">
+            <div className="mb-8">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-semibold text-gray-800">
                         Medication List ({filteredMedications.length} of {medications.length})
@@ -1293,26 +1089,14 @@ const MedicationHistory = ({ patientCode }) => {
                                     <tr key={med.id} className="border-t hover:bg-gray-50 group">
                                         <td className="p-4">
                                             <div className="font-medium text-gray-800">{med.drug_name}</div>
-                                            {med.generic_name && (
-                                                <div className="text-sm text-gray-500">{med.generic_name}</div>
-                                            )}
-                                            {med.brand_name && (
-                                                <div className="text-xs text-blue-600">{med.brand_name}</div>
-                                            )}
                                             <div className="text-xs text-gray-400 mt-1">{med.drug_class}</div>
                                         </td>
                                         <td className="p-4">
                                             <div className="text-gray-700">{med.dose} {med.unit}</div>
                                             <div className="text-sm text-gray-500 uppercase">{med.roa}</div>
-                                            {med.prn && (
-                                                <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">PRN</span>
-                                            )}
                                         </td>
                                         <td className="p-4">
                                             <div className="text-gray-700">{med.frequency}</div>
-                                            {med.timing && (
-                                                <div className="text-sm text-gray-500">{med.timing}</div>
-                                            )}
                                         </td>
                                         <td className="p-4">
                                             <div className="space-y-1">
@@ -1336,9 +1120,6 @@ const MedicationHistory = ({ patientCode }) => {
                                         </td>
                                         <td className="p-4">
                                             <div className="text-gray-700">{med.indication || '—'}</div>
-                                            {med.diagnosis && (
-                                                <div className="text-sm text-gray-500">{med.diagnosis}</div>
-                                            )}
                                         </td>
                                         <td className="p-4">
                                             <span className={`px-3 py-1 text-xs rounded-full border ${getStatusColor(med.status)}`}>
@@ -1456,6 +1237,7 @@ const MedicationHistory = ({ patientCode }) => {
                 {reconciliations.length > 0 && (
                     <div className="mt-8 pt-6 border-t border-teal-200">
                         <h4 className="font-medium text-gray-700 mb-4">Previous Reconciliations ({reconciliations.length})</h4>
+<<<<<<< HEAD
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {reconciliations.map((recon) => (
                                 <div key={recon.id} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
@@ -1469,6 +1251,16 @@ const MedicationHistory = ({ patientCode }) => {
                                         </div>
                                     </div>
                                     <p className="text-gray-600 text-sm italic">{recon.findings}</p>
+=======
+                        <div className="space-y-4">
+                            {reconciliations.map((recon, index) => (
+                                <div key={recon.id} className="bg-white rounded-lg p-4 border border-gray-200">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div className="font-medium text-gray-800">{recon.site}</div>
+                                        <div className="text-sm text-gray-500">{recon.date}</div>
+                                    </div>
+                                    <p className="text-gray-600 text-sm">{recon.findings}</p>
+>>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
                                 </div>
                             ))}
                         </div>

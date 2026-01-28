@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// src/components/Patient/DRNAssessment.jsx - REVISED VERSION
+>>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
 import React, { useState, useEffect } from 'react';
 import supabase from '../../utils/supabase';
 import { mapPatientToFacts, evaluateRule } from '../CDSS/RuleEngine';
@@ -173,7 +177,11 @@ const DRNAssessment = ({ patientCode }) => {
         try {
             const token = localStorage.getItem('token') || localStorage.getItem('pharmacare_token');
             if (!token) return null;
+<<<<<<< HEAD
 
+=======
+            
+>>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
             const base64Url = token.split('.')[1];
             const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
             const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
@@ -202,7 +210,11 @@ const DRNAssessment = ({ patientCode }) => {
                     console.error('Error parsing user data:', e);
                 }
             }
+<<<<<<< HEAD
 
+=======
+            
+>>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
             const sessionUser = sessionStorage.getItem('user');
             if (sessionUser) {
                 try {
@@ -212,7 +224,11 @@ const DRNAssessment = ({ patientCode }) => {
                     console.error('Error parsing session data:', e);
                 }
             }
+<<<<<<< HEAD
 
+=======
+            
+>>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
             const authData = localStorage.getItem('auth');
             if (authData) {
                 try {
@@ -243,7 +259,11 @@ const DRNAssessment = ({ patientCode }) => {
             try {
                 let currentUserId = getUserIdFromToken();
                 if (!currentUserId) currentUserId = getUserIdFromSession();
+<<<<<<< HEAD
 
+=======
+                
+>>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
                 if (!currentUserId) {
                     try {
                         const { data: { user } } = await supabase.auth.getUser();
@@ -299,7 +319,11 @@ const DRNAssessment = ({ patientCode }) => {
                 .eq('is_active', true);
 
             setMedications(medicationsData || patient.medication_history || []);
+<<<<<<< HEAD
 
+=======
+            
+>>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
             if (patient.labs) setLabs(patient.labs);
         } catch (error) {
             console.error('Error loading patient:', error);
@@ -316,7 +340,11 @@ const DRNAssessment = ({ patientCode }) => {
                 .order('rule_type', { ascending: true });
 
             if (error) return;
+<<<<<<< HEAD
 
+=======
+            
+>>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
             setClinicalRules(data || []);
 
             const rulesByType = {};
@@ -332,7 +360,11 @@ const DRNAssessment = ({ patientCode }) => {
 
     const fetchAssessments = async () => {
         if (!patientId || !userId) return;
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
         setIsLoading(true);
         try {
             const { data, error } = await supabase
@@ -347,7 +379,11 @@ const DRNAssessment = ({ patientCode }) => {
                 setAssessments([]);
                 return;
             }
+<<<<<<< HEAD
 
+=======
+            
+>>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
             setAssessments(data || []);
         } catch (error) {
             console.error('Error fetching assessments:', error);
@@ -399,7 +435,11 @@ const DRNAssessment = ({ patientCode }) => {
                         let drnCategory = 'Safety';
                         let causeName = rule.rule_name;
                         let dtpType = '';
+<<<<<<< HEAD
 
+=======
+                        
+>>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
                         // Find matching category and DTP type
                         for (const [category, data] of Object.entries(drnCategories)) {
                             if (data.ruleTypes.includes(rule.rule_type)) {
@@ -413,7 +453,11 @@ const DRNAssessment = ({ patientCode }) => {
                                 break;
                             }
                         }
+<<<<<<< HEAD
 
+=======
+                        
+>>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
                         findings.push({
                             rule_id: rule.id,
                             rule_type: rule.rule_type,
@@ -520,7 +564,11 @@ const DRNAssessment = ({ patientCode }) => {
             'drug_not_available': 'Address drug availability issues with alternatives.',
             'more_cost_effective_drug_available': 'Review medication costs and consider cost-effective alternatives.',
             'cannot_afford_drug': 'Review medication costs and consider alternative option like health insurance coverage.',
+<<<<<<< HEAD
             'product_quality_defect': 'Verify quality of the medication by physical inspection.',
+=======
+            'product_quality_defect': 'Verify quality of the medication by physical inspection.',   
+>>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
         };
         return recommendations[ruleType] || 'Review and consider appropriate clinical action.';
     };
@@ -581,7 +629,11 @@ const DRNAssessment = ({ patientCode }) => {
             };
 
             let result;
+<<<<<<< HEAD
 
+=======
+            
+>>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
             if (editId !== null) {
                 const { data, error } = await supabase
                     .from('drn_assessments')
@@ -610,7 +662,11 @@ const DRNAssessment = ({ patientCode }) => {
             setWriteUps({});
             setEditId(null);
             alert(`Assessment ${editId !== null ? 'updated' : 'saved'} successfully!`);
+<<<<<<< HEAD
 
+=======
+            
+>>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
         } catch (error) {
             console.error('Error saving assessment:', error);
             alert(`Error ${editId !== null ? 'updating' : 'saving'} assessment: ${error.message}`);
@@ -643,7 +699,11 @@ const DRNAssessment = ({ patientCode }) => {
                 .eq('id', id);
 
             if (error) throw error;
+<<<<<<< HEAD
 
+=======
+            
+>>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
             setAssessments(assessments.filter(ass => ass.id !== id));
             alert('Assessment deleted successfully!');
         } catch (error) {
@@ -699,6 +759,52 @@ const DRNAssessment = ({ patientCode }) => {
         return colors[category] || 'bg-gray-100 text-gray-800 border-gray-200';
     };
 
+<<<<<<< HEAD
+=======
+    const getRuleTypeColor = (ruleType) => {
+        const colors = {
+            'duplicate_therapy': 'bg-blue-50 text-blue-700',
+            'no_medical_indication': 'bg-blue-50 text-blue-700',
+            'nondrug_therapy_appropriate': 'bg-blue-50 text-blue-700',
+            'addiction_or_recreational_medicine_use': 'bg-blue-50 text-blue-700',
+            'treating_avoidable_ade': 'bg-blue-50 text-blue-700',
+            'prophylaxis_needed': 'bg-blue-50 text-blue-700',
+            'untreated_condition': 'bg-blue-50 text-blue-700',
+            'synergistic_therapy_needed': 'bg-teal-50 text-teal-700',
+            'low_dose': 'bg-teal-50 text-teal-700',
+            'less_frequent': 'bg-teal-50 text-teal-700',
+            'short_duration': 'bg-teal-50 text-teal-700',
+            'improper_storage': 'bg-teal-50 text-teal-700',
+            'high_dose': 'bg-teal-50 text-teal-700',
+            'high_frequent': 'bg-yellow-50 text-yellow-700',
+            'longer_duration': 'bg-yellow-50 text-yellow-700',
+            'dose_titration_slow_or_fast': 'bg-yellow-50 text-yellow-700',
+            'more_effective_drug_available': 'bg-yellow-50 text-yellow-700',
+            'condition_refractory_to_drug': 'bg-red-50 text-red-700',
+            'dosage_form_inappropriate': 'bg-red-50 text-red-700',
+            'undesirable_effect_ade_or_se': 'bg-red-50 text-red-700',
+            'unsafe_drug_contraindication_or_caution': 'bg-red-50 text-red-700',
+            'allergic_reaction': 'bg-orange-50 text-orange-700',
+            'di_increase_dose': 'bg-orange-50 text-orange-700',
+            'di_decrease_dose': 'bg-orange-50 text-orange-700',
+            'di_linked_to_ade': 'bg-orange-50 text-orange-700',
+            'incorrect_administration_decrease_dose_or_efficacy': 'bg-purple-50 text-purple-700',
+            'incorrect_administration_linked_to_ade': 'bg-purple-50 text-purple-700',
+            'patient_does_not_understand_instructions': 'bg-purple-50 text-purple-700',
+            'cannot_swallow_or_administer_drug': 'bg-pink-50 text-pink-700',
+            'need_monitoring_to_rule_out_effectiveness': 'bg-pink-50 text-pink-700',
+            'need_monitoring_to_rule_out_safety': 'bg-pink-50 text-pink-700',
+            'patient_prefers_not_to_take_drug': 'bg-indigo-50 text-indigo-700',
+            'patient_forgets_to_take_drug': 'bg-indigo-50 text-indigo-700',
+            'drug_not_available': 'bg-indigo-50 text-indigo-700',
+            'more_cost_effective_drug_available': 'bg-indigo-50 text-indigo-700',
+            'cannot_afford_drug': 'bg-green-50 text-green-700',
+            'product_quality_defect': 'bg-green-50 text-green-700'
+        };
+        return colors[ruleType] || 'bg-gray-50 text-gray-700';
+    };
+
+>>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
     const filteredFindings = analysisResults?.findings?.filter(finding => {
         if (filterSeverity === 'all') return true;
         return finding.severity === filterSeverity;
@@ -748,7 +854,11 @@ const DRNAssessment = ({ patientCode }) => {
                 </div>
             </div>
 
+<<<<<<< HEAD
             {/* CDSS Analysis Section - RESTORED */}
+=======
+            {/* CDSS Analysis Section - UPDATED */}
+>>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
             <div className="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-xl font-semibold text-blue-800 flex items-center gap-2">
@@ -791,7 +901,12 @@ const DRNAssessment = ({ patientCode }) => {
                                             </button>
                                         </div>
                                     </div>
+<<<<<<< HEAD
 
+=======
+                                    
+                                    {/* Findings display - UPDATED WITHOUT ruleTypes */}
+>>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
                                     {filteredFindings.length > 0 ? (
                                         <div className="space-y-3">
                                             {filteredFindings.map((finding, idx) => (
@@ -806,6 +921,10 @@ const DRNAssessment = ({ patientCode }) => {
                                                                 <span className={`px-2 py-1 ${getCategoryColor(finding.category)} text-xs rounded`}>
                                                                     {finding.category}
                                                                 </span>
+<<<<<<< HEAD
+=======
+                                                                {/* DTP Type Display - NEW SECTION */}
+>>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
                                                                 {finding.dtpType && (
                                                                     <span className={`px-2 py-1 ${getDTPTypeColor(finding.dtpType)} text-xs rounded font-medium`}>
                                                                         DTP: {finding.dtpType}
@@ -813,6 +932,14 @@ const DRNAssessment = ({ patientCode }) => {
                                                                 )}
                                                             </div>
                                                             <p className="text-sm text-gray-600 mb-2">{finding.message}</p>
+<<<<<<< HEAD
+=======
+                                                            <div className="flex flex-wrap items-center gap-3 mt-2">
+                                                                <span className="text-xs text-gray-500">
+                                                                    Confidence: 95%
+                                                                </span>
+                                                            </div>
+>>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
                                                         </div>
                                                         <button
                                                             onClick={() => handleReviewFinding(finding)}
@@ -835,7 +962,11 @@ const DRNAssessment = ({ patientCode }) => {
                         ) : (
                             <div className="text-center py-6">
                                 <FaDatabase className="text-4xl text-blue-400 mx-auto mb-4" />
+<<<<<<< HEAD
                                 <p className="text-gray-600 mb-4">Run CDSS clinical analysis to detect drug-related problems</p>
+=======
+                                <p className="text-gray-600 mb-4">Run CDSS analysis to detect drug-related problems</p>
+>>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
                                 <button
                                     onClick={runCdssAnalysis}
                                     className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-lg font-medium shadow-md flex items-center gap-2 mx-auto"
@@ -889,6 +1020,7 @@ const DRNAssessment = ({ patientCode }) => {
                 </div>
             </div>
 
+<<<<<<< HEAD
             {/* Cause Selection and Form */}
             {selectedCategory && (
                 <div className="mb-8 p-6 border rounded-lg bg-gray-50">
@@ -1047,9 +1179,185 @@ const DRNAssessment = ({ patientCode }) => {
                         );
                     })}
                 </div>
-            )}
+=======
+{/* Cause Selection and Form - UPDATED (DTP type hidden unless selected) */}
+{selectedCategory && (
+  <div className="mb-8 p-6 border rounded-lg bg-gray-50">
+    <h3 className="text-lg font-semibold mb-6 text-gray-800">
+      {selectedCategory} - Select Causes
+    </h3>
+    
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+      {menuItemsData[selectedCategory]?.map(cause => {
+        const ruleCount = activeRules?.[cause.ruleType]?.length || 0;
+        const isSelected = selectedCauses.includes(cause.name);
 
+        return (
+          <div
+            key={cause.name}
+            className="flex items-center gap-3 p-4 border rounded-lg bg-white hover:shadow transition"
+          >
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={() => handleCauseSelection(cause.name)}
+              className="h-5 w-5 text-blue-600 focus:ring-blue-500"
+            />
+
+            <div className="flex-1">
+              <p className="font-medium text-gray-800">{cause.name}</p>
+
+              <div className="flex gap-2 mt-1">
+                {/* DTP Type ONLY when selected */}
+                {isSelected && cause.dtpType && (
+                  <span
+                    className={`px-2 py-1 text-xs rounded ${getDTPTypeColor(
+                      cause.dtpType
+                    )}`}
+                  >
+                    {cause.dtpType}
+                  </span>
+                )}
+
+                {/* Rule count always visible */}
+                {ruleCount > 0 && (
+                  <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
+                    {ruleCount} rules
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+
+    {/* Form for Selected Causes - UNCHANGED */}
+    {selectedCauses.map(causeName => {
+      const causeDetails = menuItemsData[selectedCategory]?.find(
+        c => c.name === causeName
+      );
+
+      return (
+        <div
+          key={causeName}
+          className="mb-8 p-6 border rounded-lg bg-white shadow-sm"
+        >
+          <div className="flex justify-between items-center mb-6">
+            <h4 className="font-semibold text-lg text-gray-800">
+              {causeName}
+            </h4>
+
+            {/* DTP Type shown here because cause is selected */}
+            {causeDetails?.dtpType && (
+              <span
+                className={`px-3 py-1 text-sm rounded ${getDTPTypeColor(
+                  causeDetails.dtpType
+                )}`}
+              >
+                DTP Type: {causeDetails.dtpType}
+              </span>
+>>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
+            )}
+          </div>
+
+<<<<<<< HEAD
             {/* Saved Assessments Table */}
+=======
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Specific Case *
+              </label>
+              <input
+                type="text"
+                value={writeUps[causeName]?.specificCase || ''}
+                onChange={e =>
+                  handleWriteUpChange(
+                    causeName,
+                    'specificCase',
+                    e.target.value
+                  )
+                }
+                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Describe the specific case..."
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Medical Condition *
+              </label>
+              <input
+                type="text"
+                value={writeUps[causeName]?.medicalCondition || ''}
+                onChange={e =>
+                  handleWriteUpChange(
+                    causeName,
+                    'medicalCondition',
+                    e.target.value
+                  )
+                }
+                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="e.g., Hypertension, Diabetes"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Medication *
+              </label>
+              <input
+                type="text"
+                value={writeUps[causeName]?.medication || ''}
+                onChange={e =>
+                  handleWriteUpChange(
+                    causeName,
+                    'medication',
+                    e.target.value
+                  )
+                }
+                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="e.g., Enalapril 10mg"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-4 mt-8">
+            <button
+              onClick={() => saveAssessment(causeName)}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-lg font-medium shadow-md"
+            >
+              {editId !== null ? 'Update Assessment' : 'Save Assessment'}
+            </button>
+
+            <button
+              onClick={() => {
+                setSelectedCauses(prev =>
+                  prev.filter(c => c !== causeName)
+                );
+                setWriteUps(prev => {
+                  const newWriteUps = { ...prev };
+                  delete newWriteUps[causeName];
+                  return newWriteUps;
+                });
+              }}
+              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      );
+    })}
+  </div>
+)}
+
+            {/* Saved Assessments Table - UPDATED to show DTP Type instead of ruleType */}
+>>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
             <div className="mt-12">
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-xl font-semibold text-gray-800">
@@ -1082,7 +1390,11 @@ const DRNAssessment = ({ patientCode }) => {
                                 <tr>
                                     <th className="p-4 text-left font-medium text-gray-700">Category</th>
                                     <th className="p-4 text-left font-medium text-gray-700">Cause</th>
+<<<<<<< HEAD
                                     <th className="p-4 text-left font-medium text-gray-700">DTP Type</th>
+=======
+                                    <th className="p-4 text-left font-medium text-gray-700">DTP Type</th> {/* Changed from Rule Type */}
+>>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
                                     <th className="p-4 text-left font-medium text-gray-700">Specific Case</th>
                                     <th className="p-4 text-left font-medium text-gray-700">Status</th>
                                     <th className="p-4 text-left font-medium text-gray-700">Date</th>
