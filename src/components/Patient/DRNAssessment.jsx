@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-=======
-// src/components/Patient/DRNAssessment.jsx - REVISED VERSION
->>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
 import React, { useState, useEffect } from 'react';
 import supabase from '../../utils/supabase';
 import { mapPatientToFacts, evaluateRule } from '../CDSS/RuleEngine';
@@ -177,11 +173,7 @@ const DRNAssessment = ({ patientCode }) => {
         try {
             const token = localStorage.getItem('token') || localStorage.getItem('pharmacare_token');
             if (!token) return null;
-<<<<<<< HEAD
 
-=======
-            
->>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
             const base64Url = token.split('.')[1];
             const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
             const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
@@ -210,11 +202,7 @@ const DRNAssessment = ({ patientCode }) => {
                     console.error('Error parsing user data:', e);
                 }
             }
-<<<<<<< HEAD
 
-=======
-            
->>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
             const sessionUser = sessionStorage.getItem('user');
             if (sessionUser) {
                 try {
@@ -224,11 +212,7 @@ const DRNAssessment = ({ patientCode }) => {
                     console.error('Error parsing session data:', e);
                 }
             }
-<<<<<<< HEAD
 
-=======
-            
->>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
             const authData = localStorage.getItem('auth');
             if (authData) {
                 try {
@@ -259,11 +243,7 @@ const DRNAssessment = ({ patientCode }) => {
             try {
                 let currentUserId = getUserIdFromToken();
                 if (!currentUserId) currentUserId = getUserIdFromSession();
-<<<<<<< HEAD
 
-=======
-                
->>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
                 if (!currentUserId) {
                     try {
                         const { data: { user } } = await supabase.auth.getUser();
@@ -319,11 +299,7 @@ const DRNAssessment = ({ patientCode }) => {
                 .eq('is_active', true);
 
             setMedications(medicationsData || patient.medication_history || []);
-<<<<<<< HEAD
 
-=======
-            
->>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
             if (patient.labs) setLabs(patient.labs);
         } catch (error) {
             console.error('Error loading patient:', error);
@@ -340,11 +316,7 @@ const DRNAssessment = ({ patientCode }) => {
                 .order('rule_type', { ascending: true });
 
             if (error) return;
-<<<<<<< HEAD
 
-=======
-            
->>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
             setClinicalRules(data || []);
 
             const rulesByType = {};
@@ -360,11 +332,7 @@ const DRNAssessment = ({ patientCode }) => {
 
     const fetchAssessments = async () => {
         if (!patientId || !userId) return;
-<<<<<<< HEAD
 
-=======
-        
->>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
         setIsLoading(true);
         try {
             const { data, error } = await supabase
@@ -379,11 +347,7 @@ const DRNAssessment = ({ patientCode }) => {
                 setAssessments([]);
                 return;
             }
-<<<<<<< HEAD
 
-=======
-            
->>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
             setAssessments(data || []);
         } catch (error) {
             console.error('Error fetching assessments:', error);
@@ -435,11 +399,7 @@ const DRNAssessment = ({ patientCode }) => {
                         let drnCategory = 'Safety';
                         let causeName = rule.rule_name;
                         let dtpType = '';
-<<<<<<< HEAD
 
-=======
-                        
->>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
                         // Find matching category and DTP type
                         for (const [category, data] of Object.entries(drnCategories)) {
                             if (data.ruleTypes.includes(rule.rule_type)) {
@@ -453,11 +413,7 @@ const DRNAssessment = ({ patientCode }) => {
                                 break;
                             }
                         }
-<<<<<<< HEAD
 
-=======
-                        
->>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
                         findings.push({
                             rule_id: rule.id,
                             rule_type: rule.rule_type,
@@ -564,11 +520,7 @@ const DRNAssessment = ({ patientCode }) => {
             'drug_not_available': 'Address drug availability issues with alternatives.',
             'more_cost_effective_drug_available': 'Review medication costs and consider cost-effective alternatives.',
             'cannot_afford_drug': 'Review medication costs and consider alternative option like health insurance coverage.',
-<<<<<<< HEAD
             'product_quality_defect': 'Verify quality of the medication by physical inspection.',
-=======
-            'product_quality_defect': 'Verify quality of the medication by physical inspection.',   
->>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
         };
         return recommendations[ruleType] || 'Review and consider appropriate clinical action.';
     };
@@ -629,11 +581,7 @@ const DRNAssessment = ({ patientCode }) => {
             };
 
             let result;
-<<<<<<< HEAD
 
-=======
-            
->>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
             if (editId !== null) {
                 const { data, error } = await supabase
                     .from('drn_assessments')
@@ -662,11 +610,7 @@ const DRNAssessment = ({ patientCode }) => {
             setWriteUps({});
             setEditId(null);
             alert(`Assessment ${editId !== null ? 'updated' : 'saved'} successfully!`);
-<<<<<<< HEAD
 
-=======
-            
->>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
         } catch (error) {
             console.error('Error saving assessment:', error);
             alert(`Error ${editId !== null ? 'updating' : 'saving'} assessment: ${error.message}`);
@@ -699,11 +643,7 @@ const DRNAssessment = ({ patientCode }) => {
                 .eq('id', id);
 
             if (error) throw error;
-<<<<<<< HEAD
 
-=======
-            
->>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
             setAssessments(assessments.filter(ass => ass.id !== id));
             alert('Assessment deleted successfully!');
         } catch (error) {
@@ -759,7 +699,6 @@ const DRNAssessment = ({ patientCode }) => {
         return colors[category] || 'bg-gray-100 text-gray-800 border-gray-200';
     };
 
-<<<<<<< HEAD
 =======
     const getRuleTypeColor = (ruleType) => {
         const colors = {
@@ -854,11 +793,7 @@ const DRNAssessment = ({ patientCode }) => {
                 </div>
             </div>
 
-<<<<<<< HEAD
             {/* CDSS Analysis Section - RESTORED */}
-=======
-            {/* CDSS Analysis Section - UPDATED */}
->>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
             <div className="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-xl font-semibold text-blue-800 flex items-center gap-2">
@@ -901,7 +836,6 @@ const DRNAssessment = ({ patientCode }) => {
                                             </button>
                                         </div>
                                     </div>
-<<<<<<< HEAD
 
 =======
                                     
@@ -921,10 +855,6 @@ const DRNAssessment = ({ patientCode }) => {
                                                                 <span className={`px-2 py-1 ${getCategoryColor(finding.category)} text-xs rounded`}>
                                                                     {finding.category}
                                                                 </span>
-<<<<<<< HEAD
-=======
-                                                                {/* DTP Type Display - NEW SECTION */}
->>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
                                                                 {finding.dtpType && (
                                                                     <span className={`px-2 py-1 ${getDTPTypeColor(finding.dtpType)} text-xs rounded font-medium`}>
                                                                         DTP: {finding.dtpType}
@@ -932,7 +862,6 @@ const DRNAssessment = ({ patientCode }) => {
                                                                 )}
                                                             </div>
                                                             <p className="text-sm text-gray-600 mb-2">{finding.message}</p>
-<<<<<<< HEAD
 =======
                                                             <div className="flex flex-wrap items-center gap-3 mt-2">
                                                                 <span className="text-xs text-gray-500">
@@ -962,11 +891,7 @@ const DRNAssessment = ({ patientCode }) => {
                         ) : (
                             <div className="text-center py-6">
                                 <FaDatabase className="text-4xl text-blue-400 mx-auto mb-4" />
-<<<<<<< HEAD
                                 <p className="text-gray-600 mb-4">Run CDSS clinical analysis to detect drug-related problems</p>
-=======
-                                <p className="text-gray-600 mb-4">Run CDSS analysis to detect drug-related problems</p>
->>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
                                 <button
                                     onClick={runCdssAnalysis}
                                     className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-lg font-medium shadow-md flex items-center gap-2 mx-auto"
@@ -1020,7 +945,6 @@ const DRNAssessment = ({ patientCode }) => {
                 </div>
             </div>
 
-<<<<<<< HEAD
             {/* Cause Selection and Form */}
             {selectedCategory && (
                 <div className="mb-8 p-6 border rounded-lg bg-gray-50">
@@ -1261,7 +1185,6 @@ const DRNAssessment = ({ patientCode }) => {
             )}
           </div>
 
-<<<<<<< HEAD
             {/* Saved Assessments Table */}
 =======
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -1390,11 +1313,7 @@ const DRNAssessment = ({ patientCode }) => {
                                 <tr>
                                     <th className="p-4 text-left font-medium text-gray-700">Category</th>
                                     <th className="p-4 text-left font-medium text-gray-700">Cause</th>
-<<<<<<< HEAD
                                     <th className="p-4 text-left font-medium text-gray-700">DTP Type</th>
-=======
-                                    <th className="p-4 text-left font-medium text-gray-700">DTP Type</th> {/* Changed from Rule Type */}
->>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
                                     <th className="p-4 text-left font-medium text-gray-700">Specific Case</th>
                                     <th className="p-4 text-left font-medium text-gray-700">Status</th>
                                     <th className="p-4 text-left font-medium text-gray-700">Date</th>
@@ -1457,3 +1376,4 @@ const DRNAssessment = ({ patientCode }) => {
 };
 
 export default DRNAssessment;
+
