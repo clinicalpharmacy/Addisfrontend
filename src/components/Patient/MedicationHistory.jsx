@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-<<<<<<< HEAD
 import api from '../../utils/api';
 import {
     FaPills, FaCalendar, FaClock, FaEdit, FaTrash, FaSave,
@@ -7,13 +6,6 @@ import {
     FaCalendarCheck, FaNotesMedical, FaCapsules, FaTint,
     FaExclamationTriangle, FaInfoCircle, FaCalculator,
     FaFilePrescription, FaStethoscope, FaFlask, FaCheckCircle
-=======
-import supabase from '../../utils/supabase';
-import { 
-  FaPills, FaCalendar, FaClock, FaEdit, FaTrash, FaSave, 
-  FaFilter, FaSync, FaPrescription, FaUserMd, FaHospital,
-  FaExclamationTriangle, FaInfoCircle, FaCheckCircle
->>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
 } from 'react-icons/fa';
 
 const MedicationHistory = ({ patientCode }) => {
@@ -35,9 +27,9 @@ const MedicationHistory = ({ patientCode }) => {
 
         // Additional Information
         dosage_form: 'Tablet',
+        brand_name: '',
         strength: '',
         unit: 'mg',
-<<<<<<< HEAD
         total_daily_dose: '',
         timing: '',
         duration_days: '',
@@ -51,9 +43,6 @@ const MedicationHistory = ({ patientCode }) => {
         prescriber_type: 'Doctor',
         pharmacy_name: '',
 
-=======
-        
->>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
         // Status & Monitoring
         status: 'Active',
         notes: '',
@@ -62,17 +51,13 @@ const MedicationHistory = ({ patientCode }) => {
         id: '',
         is_active: true
     });
-<<<<<<< HEAD
 
-=======
-    
     const [reconciliationData, setReconciliationData] = useState({
         site: '',
         findings: '',
         date: new Date().toISOString().split('T')[0]
     });
-    
->>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
+
     const [selectedClass, setSelectedClass] = useState('');
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -81,20 +66,11 @@ const MedicationHistory = ({ patientCode }) => {
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [reconciliations, setReconciliations] = useState([]);
-<<<<<<< HEAD
-    const [reconciliationData, setReconciliationData] = useState({
-        site: '',
-        findings: '',
-        date: new Date().toISOString().split('T')[0]
-    });
-    const [reconLoading, setReconLoading] = useState(false);
 
     const reconciliationSites = [
         'Admission', 'Discharge', 'Transfer In', 'Transfer Out',
         'Clinic Visit', 'ER Visit', 'Medication Review', 'Consultation'
     ];
-=======
->>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
 
     // Dropdown Options
     const roaOptions = [
@@ -135,9 +111,9 @@ const MedicationHistory = ({ patientCode }) => {
 
     const drugClasses = [
         'Analgesics', 'Antimicrobial', 'Antidiabetic', 'Cardiovascular',
-        'Anesthetics', 'Antineoplastic', 'Antidepressant', 'Antipsychotic', 
+        'Anesthetics', 'Antineoplastic', 'Antidepressant', 'Antipsychotic',
         'Anticonvulsant', 'Antiparkinsonism', 'Dermatologic agent', 'GI drug',
-        'Hormonal agent', 'Ophthalmologic agent', 'Otic agent', 
+        'Hormonal agent', 'Ophthalmologic agent', 'Otic agent',
         'Vitamin/Supplement', 'Respiratory agent', 'Ophthalmic', 'Other'
     ];
 
@@ -157,11 +133,6 @@ const MedicationHistory = ({ patientCode }) => {
     const units = [
         'mg', 'g', 'mcg', 'ml', 'L', 'tablet', 'capsule', 'dose',
         'puff', 'drop', 'patch', 'suppository', 'IU', '%', 'unit'
-    ];
-
-    const reconciliationSites = [
-        'Admission', 'Discharge', 'Transfer In', 'Transfer Out',
-        'Clinic Visit', 'ER Visit', 'Medication Review', 'Consultation'
     ];
 
     useEffect(() => {
@@ -205,22 +176,6 @@ const MedicationHistory = ({ patientCode }) => {
         }
     };
 
-    const fetchReconciliations = async () => {
-        try {
-            const { data, error } = await supabase
-                .from('medication_reconciliations')
-                .select('*')
-                .eq('patient_code', patientCode)
-                .order('date', { ascending: false });
-
-            if (error) throw error;
-            
-            setReconciliations(data || []);
-        } catch (error) {
-            console.error('Error fetching reconciliations:', error);
-        }
-    };
-
     const calculateDuration = () => {
         if (!formData.start_date) return '';
 
@@ -254,7 +209,6 @@ const MedicationHistory = ({ patientCode }) => {
         return parts.join(', ');
     };
 
-<<<<<<< HEAD
     const calculateDailyDose = () => {
         if (!formData.dose || !formData.frequency || !formData.unit) return '';
 
@@ -276,8 +230,6 @@ const MedicationHistory = ({ patientCode }) => {
         return `${dailyDose} ${formData.unit}`;
     };
 
-=======
->>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
     const validateForm = () => {
         if (!formData.drug_name.trim()) {
             alert('Drug Name is required');
@@ -307,12 +259,8 @@ const MedicationHistory = ({ patientCode }) => {
         setLoading(true);
         const duration = calculateDuration();
         const isActive = formData.status === 'Active';
-<<<<<<< HEAD
         const totalDailyDose = calculateDailyDose();
 
-=======
-        
->>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
         // Build medication data object
         const medicationData = {
             patient_code: patientCode,
@@ -332,9 +280,9 @@ const MedicationHistory = ({ patientCode }) => {
 
             // Additional fields
             dosage_form: formData.dosage_form,
+            brand_name: formData.brand_name || null,
             strength: formData.strength || null,
             unit: formData.unit,
-<<<<<<< HEAD
             total_daily_dose: totalDailyDose || null,
             timing: formData.timing || null,
             duration_days: formData.duration_days || null,
@@ -348,9 +296,6 @@ const MedicationHistory = ({ patientCode }) => {
             prescriber_type: formData.prescriber_type,
             pharmacy_name: formData.pharmacy_name || null,
 
-=======
-            
->>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
             // Status fields
             status: formData.status,
             notes: formData.notes || null,
@@ -370,7 +315,6 @@ const MedicationHistory = ({ patientCode }) => {
                 result = await api.put(`/medications/${formData.id}`, medicationData);
             } else {
                 // Add new medication
-                // The backend route handles insertion
                 result = await api.post('/medication-history', medicationData);
             }
 
@@ -402,8 +346,21 @@ const MedicationHistory = ({ patientCode }) => {
             drug_class: 'Antimicrobial',
             initiated_at: 'Hospital',
             dosage_form: 'Tablet',
+            brand_name: '',
             strength: '',
             unit: 'mg',
+            total_daily_dose: '',
+            timing: '',
+            duration_days: '',
+            quantity: '',
+            refills: '0',
+            prescribed_date: '',
+            diagnosis: '',
+            therapeutic_category: '',
+            atc_code: '',
+            prescriber_name: '',
+            prescriber_type: 'Doctor',
+            pharmacy_name: '',
             status: 'Active',
             notes: '',
             id: '',
@@ -451,6 +408,7 @@ const MedicationHistory = ({ patientCode }) => {
             const term = searchTerm.toLowerCase();
             filtered = filtered.filter(med =>
                 med.drug_name?.toLowerCase().includes(term) ||
+                med.brand_name?.toLowerCase().includes(term) ||
                 med.indication?.toLowerCase().includes(term) ||
                 med.drug_class?.toLowerCase().includes(term)
             );
@@ -469,6 +427,14 @@ const MedicationHistory = ({ patientCode }) => {
         }
 
         setFilteredMedications(filtered);
+    };
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
     };
 
     const handleReconciliationChange = (e) => {
@@ -516,69 +482,6 @@ const MedicationHistory = ({ patientCode }) => {
             } else {
                 throw new Error(result.error || 'Failed to save reconciliation');
             }
-        } catch (error) {
-            console.error('Error saving reconciliation:', error);
-            alert(`❌ Error: ${error.message || 'Failed to save reconciliation'}`);
-        } finally {
-            setReconLoading(false);
-        }
-    };
-
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
-    };
-
-    const handleReconciliationChange = (e) => {
-        const { name, value } = e.target;
-        setReconciliationData(prev => ({
-            ...prev,
-            [name]: value
-        }));
-    };
-
-    const handleSaveReconciliation = async () => {
-        if (!reconciliationData.site.trim()) {
-            alert('Reconciliation site is required');
-            return;
-        }
-
-        if (!reconciliationData.findings.trim()) {
-            alert('Findings and Decision is required');
-            return;
-        }
-
-        setReconLoading(true);
-
-        try {
-            const reconData = {
-                patient_code: patientCode,
-                site: reconciliationData.site.trim(),
-                findings: reconciliationData.findings.trim(),
-                date: reconciliationData.date,
-                created_at: new Date().toISOString(),
-                performed_by: 'User' // Replace with actual user if available
-            };
-
-            const { error } = await supabase
-                .from('medication_reconciliations')
-                .insert([reconData]);
-
-            if (error) throw error;
-
-            await fetchReconciliations();
-            
-            // Reset form
-            setReconciliationData({
-                site: '',
-                findings: '',
-                date: new Date().toISOString().split('T')[0]
-            });
-            
-            alert('✅ Medication reconciliation saved successfully!');
         } catch (error) {
             console.error('Error saving reconciliation:', error);
             alert(`❌ Error: ${error.message || 'Failed to save reconciliation'}`);
@@ -832,7 +735,7 @@ const MedicationHistory = ({ patientCode }) => {
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Status
                         </label>
-                            <select
+                        <select
                             name="status"
                             value={formData.status}
                             onChange={handleInputChange}
@@ -868,7 +771,7 @@ const MedicationHistory = ({ patientCode }) => {
                             <FaPills /> Additional Information
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {/* Brand Name */}
+                            {/* Brand Name */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Brand Name
@@ -882,7 +785,7 @@ const MedicationHistory = ({ patientCode }) => {
                                     placeholder="e.g., Glucophage"
                                 />
                             </div>
-                          {/* Dosage Form */}
+                            {/* Dosage Form */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Dosage Form
@@ -1127,7 +1030,7 @@ const MedicationHistory = ({ patientCode }) => {
                                             </span>
                                         </td>
                                         <td className="p-4">
-                                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition">
+                                            <div className="flex gap-2">
                                                 <button
                                                     onClick={() => handleEdit(med)}
                                                     className="text-blue-500 hover:text-blue-700 p-2 hover:bg-blue-50 rounded transition"
@@ -1237,7 +1140,6 @@ const MedicationHistory = ({ patientCode }) => {
                 {reconciliations.length > 0 && (
                     <div className="mt-8 pt-6 border-t border-teal-200">
                         <h4 className="font-medium text-gray-700 mb-4">Previous Reconciliations ({reconciliations.length})</h4>
-<<<<<<< HEAD
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {reconciliations.map((recon) => (
                                 <div key={recon.id} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
@@ -1251,16 +1153,6 @@ const MedicationHistory = ({ patientCode }) => {
                                         </div>
                                     </div>
                                     <p className="text-gray-600 text-sm italic">{recon.findings}</p>
-=======
-                        <div className="space-y-4">
-                            {reconciliations.map((recon, index) => (
-                                <div key={recon.id} className="bg-white rounded-lg p-4 border border-gray-200">
-                                    <div className="flex justify-between items-start mb-2">
-                                        <div className="font-medium text-gray-800">{recon.site}</div>
-                                        <div className="text-sm text-gray-500">{recon.date}</div>
-                                    </div>
-                                    <p className="text-gray-600 text-sm">{recon.findings}</p>
->>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
                                 </div>
                             ))}
                         </div>
