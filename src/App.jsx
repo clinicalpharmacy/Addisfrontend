@@ -16,6 +16,12 @@ import PatientList from "./pages/PatientList";
 import PatientDetails from "./pages/PatientDetails";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
+import CDSSAnalysisPage from './pages/CDSSAnalysisPage';
+import LabSettingsPage from './pages/LabSettingsPage';
+import CompanyPerformanceReport from './pages/CompanyPerformanceReport';
+import AdminUsefulLinks from './pages/AdminUsefulLinks';
+import UsefulLinks from './pages/UsefulLinks';
+import MedicationAvailability from './pages/MedicationAvailability';
 
 // Subscription Pages
 import SubscriptionPlans from "./pages/SubscriptionPlans";
@@ -35,6 +41,7 @@ import ClinicalRulesAdmin from "./components/CDSS/ClinicalRulesAdmin";
 
 // Use import.meta.env for Vite
 const API_URL = import.meta.env.VITE_API_URL;
+import api from './utils/api';
 
 // Helper function to clear invalid auth
 const clearInvalidAuth = () => {
@@ -54,21 +61,34 @@ const hasValidSubscription = (user) => {
     // Admin doesn't need subscription
     if (user.role === 'admin') return true;
 
-    // Check subscription status from localStorage or user object
-    const subscriptionStatus = localStorage.getItem('subscription_status');
-    const hasSubscription = localStorage.getItem('has_subscription');
+    // Prioritize values from user object if they exist
+    const subscriptionStatus = user.subscription_status || localStorage.getItem('subscription_status');
+    const hasSubscription = user.has_subscription !== undefined ? String(user.has_subscription) : localStorage.getItem('has_subscription');
+    const subscriptionEndDate = user.subscription_end_date || localStorage.getItem('subscription_end_date');
 
-    console.log('Subscription check:', {
-        userRole: user.role,
-        subscriptionStatus,
-        hasSubscription,
-        user: user.email
+    const isActive = subscriptionStatus === 'active' || hasSubscription === 'true';
+
+    console.log('Subscription check detailed:', {
+        userEmail: user.email,
+        statusInObject: user.subscription_status,
+        statusInStorage: localStorage.getItem('subscription_status'),
+        isActive,
+        endDate: subscriptionEndDate
     });
 
-    // Return true if subscription is active
-    const isActive = subscriptionStatus === 'active' || hasSubscription === 'true';
-    console.log('Is subscription active?', isActive);
-    return isActive;
+    if (!isActive) return false;
+
+    // Check expiration if we have an end date
+    if (subscriptionEndDate) {
+        const expiryDate = new Date(subscriptionEndDate);
+        const now = new Date();
+        if (now > expiryDate) {
+            console.warn('Subscription EXPIRED on:', subscriptionEndDate);
+            return false;
+        }
+    }
+
+    return true;
 };
 
 // NEW: Function to get user-specific storage key
@@ -258,85 +278,66 @@ const ProtectedRoute = ({ children, adminOnly = false, companyAdminOnly = false,
                 return;
             }
 
-            const parsedUser = JSON.parse(userData);
-            setUser(parsedUser);
+            // Verify token and fetch FRESH user data from backend
+            let freshUser = null;
+            try {
+                const data = await api.get('/auth/me');
+                if (data.success && data.user) {
+                    freshUser = data.user;
+                    // Update storage with fresh data (latest subscription status, etc.)
+                    localStorage.setItem('user', JSON.stringify(freshUser));
+                    localStorage.setItem('subscription_status', freshUser.subscription_status || 'inactive');
+                    if (freshUser.subscription_end_date) {
+                        localStorage.setItem('subscription_end_date', freshUser.subscription_end_date);
+                    }
+                    setUser(freshUser);
+                    setIsAuthenticated(true);
+                } else {
+                    console.warn('ProtectedRoute: /auth/me returned no user');
+                    // Fallback to local data if we have it and it's a temp network error
+                    freshUser = JSON.parse(userData);
+                    setUser(freshUser);
+                }
+            } catch (error) {
+                console.log('ProtectedRoute: Backend check failed, using cached data');
+                freshUser = JSON.parse(userData);
+                setUser(freshUser);
+                setIsAuthenticated(true);
+            }
 
-            console.log('ProtectedRoute: Checking auth for user:', parsedUser.email, 'Role:', parsedUser.role, 'Path:', location.pathname);
-
-            // Check if token is expired
-            const tokenExpiry = localStorage.getItem('token_expiry');
-            if (tokenExpiry && Date.now() > parseInt(tokenExpiry)) {
-                console.log('ProtectedRoute: Token expired');
+            if (!freshUser) {
                 clearInvalidAuth();
                 setLoading(false);
                 return;
             }
 
             // Check if user is approved (except admin)
-            if (!parsedUser.approved && parsedUser.role !== 'admin') {
-                // User not approved, show error message
-                console.log('ProtectedRoute: User not approved:', parsedUser.email);
+            if (!freshUser.approved && freshUser.role !== 'admin') {
+                console.log('ProtectedRoute: User not approved:', freshUser.email);
                 setLoading(false);
                 return;
             }
 
-            // FIXED: ONLY check subscription if explicitly required
-            // Dashboard and other routes will handle subscription within their own components
+            // ONLY check subscription if explicitly required
             if (requireSubscription) {
-                const hasSubscription = hasValidSubscription(parsedUser);
+                const hasSubscription = hasValidSubscription(freshUser);
                 console.log('ProtectedRoute subscription check:', {
                     route: location.pathname,
-                    user: parsedUser.email,
+                    user: freshUser.email,
                     hasSubscription: hasSubscription,
-                    requireSubscription: requireSubscription
+                    status: freshUser.subscription_status
                 });
 
                 if (!hasSubscription) {
-                    // Store that subscription is needed for this route
                     localStorage.setItem('subscription_required_for', location.pathname);
                     setLoading(false);
                     return;
                 }
             }
 
-            // CRITICAL FIX: Try to verify token with backend, but don't fail if network error
-            try {
-                const response = await fetch(`${API_URL}/auth/me`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                console.log('ProtectedRoute: /auth/me response status:', response.status);
-
-                if (response.ok) {
-                    setIsAuthenticated(true);
-                } else {
-                    // If /auth/me fails, try to parse the response for debugging
-                    const text = await response.text();
-                    console.error('ProtectedRoute: /auth/me failed:', response.status, text);
-
-                    // For admin users, we might still allow access even if /auth/me fails
-                    // This prevents the redirect loop
-                    if (parsedUser.role === 'admin') {
-                        console.log('ProtectedRoute: Admin user, allowing access despite /auth/me failure');
-                        setIsAuthenticated(true);
-                    } else {
-                        clearInvalidAuth();
-                    }
-                }
-            } catch (error) {
-                // If network error, use localStorage data (offline mode)
-                console.log('ProtectedRoute: Network error, using localStorage data for authentication');
-                console.log('Error details:', error.message);
-
-                // CRITICAL: Allow access even if network fails to prevent redirect loops
-                setIsAuthenticated(true);
-            }
-
         } catch (error) {
-            console.error('Auth check error:', error);
-            clearInvalidAuth();
+            console.error('Auth check error in ProtectedRoute:', error);
+            // Don't clear auth immediately on network errors, only on 401/403 which api.get handles
         } finally {
             setLoading(false);
         }
@@ -472,33 +473,51 @@ const Dashboard = () => {
 
     const loadUserData = async () => {
         try {
+            // 1. Initial load from localStorage for speed
             const userData = localStorage.getItem('user');
             if (userData) {
                 const parsedUser = JSON.parse(userData);
                 setUser(parsedUser);
 
-                // CRITICAL FIX: Don't redirect admin users from here!
-                // If admin somehow reaches /dashboard, just show a message
-                if (parsedUser.role === 'admin') {
-                    console.log('Dashboard: Admin user on /dashboard - showing admin message');
-                    // Don't redirect, just load data normally
+                // Check if we need to show banner initially
+                if (parsedUser.role !== 'admin' && !hasValidSubscription(parsedUser)) {
+                    setShowSubscriptionBanner(true);
                 }
+            }
 
-                // Load user-specific patients (only for non-admin users)
-                await loadUserPatients(parsedUser);
+            // 2. Fetch fresh data from backend to ensure status is current
+            if (localStorage.getItem('token')) {
+                console.log('Dashboard: Refreshing user data from backend...');
+                const authData = await api.get('/auth/me');
+                if (authData.success && authData.user) {
+                    console.log('Dashboard: Fresh user data:', authData.user);
+                    const freshUser = authData.user;
+                    setUser(freshUser);
+                    localStorage.setItem('user', JSON.stringify(freshUser));
 
-                // Check subscription but don't redirect - just show a banner
-                if (parsedUser.role !== 'admin') {
-                    const hasSub = hasValidSubscription(parsedUser);
-                    console.log('Dashboard subscription check:', {
-                        user: parsedUser.email,
-                        role: parsedUser.role,
-                        hasSubscription: hasSub
-                    });
+                    // Update individual flags too
+                    localStorage.setItem('subscription_status', freshUser.subscription_status || 'inactive');
+                    localStorage.setItem('subscription_end_date', freshUser.subscription_end_date || '');
+                    localStorage.setItem('has_subscription', freshUser.subscription_status === 'active' ? 'true' : 'false');
 
-                    if (!hasSub) {
-                        setShowSubscriptionBanner(true);
+                    // Re-calculate banner
+                    if (freshUser.role !== 'admin') {
+                        setShowSubscriptionBanner(!hasValidSubscription(freshUser));
                     }
+
+                    // Reload patients with fresh data
+                    if (freshUser.role === 'admin' || hasValidSubscription(freshUser)) {
+                        await loadUserPatients(freshUser);
+                    }
+                    return; // Exit early as we've handled everything
+                }
+            }
+
+            // Fallback: If no network or no fresh data, use what we have
+            const currentCachedUser = JSON.parse(localStorage.getItem('user'));
+            if (currentCachedUser) {
+                if (currentCachedUser.role === 'admin' || hasValidSubscription(currentCachedUser)) {
+                    await loadUserPatients(currentCachedUser);
                 }
             }
         } catch (error) {
@@ -510,62 +529,44 @@ const Dashboard = () => {
 
     const loadUserPatients = async (currentUser) => {
         try {
-            const token = localStorage.getItem('token');
-            if (!token) return;
-
             // Fetch user's own patients from backend
-            const response = await fetch(`${API_URL}/patients/my-patients`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json'
-                }
-            });
+            const data = await api.get('/patients/my-patients');
 
-            if (response.ok) {
-                const data = await response.json();
+            if (data.success && data.patients) {
                 console.log('Loaded user patients:', data);
-
-                if (data.success && data.patients) {
-                    // Store in user-specific localStorage
-                    const storageKey = getUserStorageKey('user_patients', currentUser);
-                    localStorage.setItem(storageKey, JSON.stringify(data.patients));
-
-                    setUserPatients(data.patients);
-
-                    // Calculate stats
-                    const today = new Date().toISOString().split('T')[0];
-                    const todayPatients = data.patients.filter(p =>
-                        p.created_at && new Date(p.created_at).toISOString().split('T')[0] === today
-                    ).length;
-
-                    setPatientStats({
-                        total: data.patients.length,
-                        today: todayPatients,
-                        active: data.patients.filter(p => p.status === 'active' || p.is_active).length
-                    });
-                }
-            } else {
-                // Fallback to localStorage if API fails
+                // Store in user-specific localStorage
                 const storageKey = getUserStorageKey('user_patients', currentUser);
-                const storedPatients = localStorage.getItem(storageKey);
-                if (storedPatients) {
-                    const patients = JSON.parse(storedPatients);
-                    setUserPatients(patients);
-                    setPatientStats({
-                        total: patients.length,
-                        today: 0,
-                        active: patients.filter(p => p.status === 'active' || p.is_active).length
-                    });
-                }
+                localStorage.setItem(storageKey, JSON.stringify(data.patients));
+
+                setUserPatients(data.patients);
+
+                // Calculate stats
+                const today = new Date().toISOString().split('T')[0];
+                const todayPatients = data.patients.filter(p =>
+                    p.created_at && new Date(p.created_at).toISOString().split('T')[0] === today
+                ).length;
+
+                setPatientStats({
+                    total: data.patients.length,
+                    today: todayPatients,
+                    active: data.patients.filter(p => p.status === 'active' || p.is_active).length
+                });
+            } else {
+                throw new Error('Failed to load patients');
             }
         } catch (error) {
-            console.error('Error loading patients:', error);
+            console.error('Error loading patients, falling back to storage:', error);
             // Fallback to localStorage
-            const storageKey = getUserStorageKey('user_patients', user);
+            const storageKey = getUserStorageKey('user_patients', currentUser);
             const storedPatients = localStorage.getItem(storageKey);
             if (storedPatients) {
                 const patients = JSON.parse(storedPatients);
                 setUserPatients(patients);
+                setPatientStats({
+                    total: patients.length,
+                    today: 0,
+                    active: patients.filter(p => p.status === 'active' || p.is_active).length
+                });
             }
         }
     };
@@ -660,7 +661,7 @@ const Dashboard = () => {
                         Welcome back, {user?.full_name || user?.email || 'User'}!
                     </p>
                 </div>
-                {!hasValidSubscription(user) && user?.role !== 'admin' && (
+                {!hasValidSubscription(user) && user?.role !== 'admin' && user?.account_type !== 'company_user' && (
                     <button
                         onClick={handleGetSubscription}
                         className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium py-2 px-4 rounded-lg transition shadow-md"
@@ -671,7 +672,7 @@ const Dashboard = () => {
             </div>
 
             {/* Subscription Banner */}
-            {showSubscriptionBanner && (
+            {showSubscriptionBanner && user?.account_type !== 'company_user' && (
                 <div className="mb-6 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg animate-fadeIn">
                     <div className="flex items-center justify-between">
                         <div className="flex items-start gap-3">
@@ -734,18 +735,75 @@ const Dashboard = () => {
                             </div>
                             <div>
                                 <p className="text-sm text-gray-600">Subscription Status</p>
-                                <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${hasValidSubscription(user)
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-yellow-100 text-yellow-800'
-                                    }`}>
-                                    {hasValidSubscription(user) ? '✓ Active' : '⚠️ Not Active'}
+                                <div className="flex items-center gap-2">
+                                    <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${hasValidSubscription(user)
+                                        ? 'bg-green-100 text-green-800'
+                                        : 'bg-red-100 text-red-800 font-bold'
+                                        }`}>
+                                        {hasValidSubscription(user)
+                                            ? '✓ Active'
+                                            : (user.subscription_end_date && !isNaN(new Date(user.subscription_end_date)) && new Date(user.subscription_end_date) < new Date()
+                                                ? '❌ Subscription Expired'
+                                                : (user.account_type === 'company_user' ? '❌ Inactive (Contact Admin)' : '❌ Inactive'))
+                                        }
+                                    </div>
+                                    {user?.account_type !== 'company_user' && (
+                                        <button
+                                            onClick={handleGetSubscription}
+                                            className="text-blue-600 hover:text-blue-800 text-sm font-semibold underline transition"
+                                        >
+                                            Renew Now
+                                        </button>
+                                    )}
                                 </div>
+                                {user.subscription_end_date && (
+                                    <div className={`mt-2 p-3 rounded-lg border ${new Date(user.subscription_end_date) < new Date()
+                                        ? 'bg-red-50 border-red-100'
+                                        : 'bg-gray-50 border-gray-100'
+                                        }`}>
+                                        <div className="flex justify-between items-center mb-1">
+                                            <p className="text-xs text-gray-500 uppercase font-semibold">Time Remaining</p>
+                                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${new Date(user.subscription_end_date) < new Date()
+                                                ? 'bg-red-500 text-white'
+                                                : 'bg-blue-100 text-blue-700'
+                                                }`}>
+                                                {(() => {
+                                                    const diff = new Date(user.subscription_end_date) - new Date();
+                                                    const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+                                                    return days > 0 ? `${days} days` : 'Expired';
+                                                })()}
+                                            </span>
+                                        </div>
+                                        <p className={`text-sm ${new Date(user.subscription_end_date) < new Date() ? 'text-red-700 font-medium' : 'text-gray-700'}`}>
+                                            Valid until: {new Date(user.subscription_end_date).toLocaleDateString()}
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
 
-                    {/* Patient Stats Card */}
-                    <div className="bg-white rounded-xl shadow-lg p-6">
+                    {/* Patient Stats Card - LOCKED if no subscription */}
+                    <div className={`bg-white rounded-xl shadow-lg p-6 relative ${!hasValidSubscription(user) && user.role !== 'admin' ? 'opacity-75 grayscale' : ''}`}>
+                        {!hasValidSubscription(user) && user.role !== 'admin' && (
+                            <div className="absolute inset-0 bg-white/20 backdrop-blur-[1px] z-10 rounded-xl flex items-center justify-center">
+                                <div className="bg-white/90 p-4 rounded-lg shadow-xl border border-blue-100 text-center mx-4">
+                                    <div className="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2 text-blue-600">
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
+                                    </div>
+                                    <h4 className="font-bold text-gray-800 text-sm">Feature Locked</h4>
+                                    <p className="text-xs text-gray-600 mb-2">Subscribe to manage patients</p>
+                                    <button
+                                        onClick={handleGetSubscription}
+                                        className="text-xs font-bold text-blue-600 hover:underline"
+                                    >
+                                        Unlock Now
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-bold text-gray-800">Your Patients</h3>
                             <button
@@ -777,8 +835,27 @@ const Dashboard = () => {
                         </button>
                     </div>
 
-                    {/* Recent Patients Card */}
-                    <div className="bg-white rounded-xl shadow-lg p-6">
+                    {/* Recent Patients Card - LOCKED if no subscription */}
+                    <div className={`bg-white rounded-xl shadow-lg p-6 relative ${!hasValidSubscription(user) && user.role !== 'admin' ? 'opacity-75 grayscale' : ''}`}>
+                        {!hasValidSubscription(user) && user.role !== 'admin' && (
+                            <div className="absolute inset-0 bg-white/20 backdrop-blur-[1px] z-10 rounded-xl flex items-center justify-center">
+                                <div className="bg-white/90 p-4 rounded-lg shadow-xl border border-blue-100 text-center mx-4">
+                                    <div className="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2 text-blue-600">
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
+                                    </div>
+                                    <h4 className="font-bold text-gray-800 text-sm">Feature Locked</h4>
+                                    <p className="text-xs text-gray-600 mb-2">Subscribe to view recent patients</p>
+                                    <button
+                                        onClick={handleGetSubscription}
+                                        className="text-xs font-bold text-blue-600 hover:underline"
+                                    >
+                                        Unlock Now
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                         <h3 className="text-lg font-bold text-gray-800 mb-4">Recent Patients</h3>
                         <div className="space-y-3 max-h-60 overflow-y-auto">
                             {userPatients.length > 0 ? (
@@ -822,8 +899,27 @@ const Dashboard = () => {
                         </div>
                     </div>
 
-                    {/* Quick Actions Card */}
-                    <div className="bg-white rounded-xl shadow-lg p-6">
+                    {/* Quick Actions Card - LOCKED if no subscription */}
+                    <div className={`bg-white rounded-xl shadow-lg p-6 relative ${!hasValidSubscription(user) && user.role !== 'admin' ? 'opacity-75 grayscale' : ''}`}>
+                        {!hasValidSubscription(user) && user.role !== 'admin' && (
+                            <div className="absolute inset-0 bg-white/20 backdrop-blur-[1px] z-10 rounded-xl flex items-center justify-center">
+                                <div className="bg-white/90 p-4 rounded-lg shadow-xl border border-blue-100 text-center mx-4">
+                                    <div className="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2 text-blue-600">
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
+                                    </div>
+                                    <h4 className="font-bold text-gray-800 text-sm">Feature Locked</h4>
+                                    <p className="text-xs text-gray-600 mb-2">Subscribe to access quick actions</p>
+                                    <button
+                                        onClick={handleGetSubscription}
+                                        className="text-xs font-bold text-blue-600 hover:underline"
+                                    >
+                                        Unlock Now
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                         <h3 className="text-lg font-bold text-gray-800 mb-4">Quick Actions</h3>
                         <div className="space-y-3">
                             <button
@@ -850,8 +946,27 @@ const Dashboard = () => {
                         </div>
                     </div>
 
-                    {/* System Status Card */}
-                    <div className="bg-white rounded-xl shadow-lg p-6">
+                    {/* System Status Card - LOCKED if no subscription */}
+                    <div className={`bg-white rounded-xl shadow-lg p-6 relative ${!hasValidSubscription(user) && user.role !== 'admin' ? 'opacity-75 grayscale' : ''}`}>
+                        {!hasValidSubscription(user) && user.role !== 'admin' && (
+                            <div className="absolute inset-0 bg-white/20 backdrop-blur-[1px] z-10 rounded-xl flex items-center justify-center">
+                                <div className="bg-white/90 p-4 rounded-lg shadow-xl border border-blue-100 text-center mx-4">
+                                    <div className="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2 text-blue-600">
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
+                                    </div>
+                                    <h4 className="font-bold text-gray-800 text-sm">Feature Locked</h4>
+                                    <p className="text-xs text-gray-600 mb-2">Subscribe to view system status</p>
+                                    <button
+                                        onClick={handleGetSubscription}
+                                        className="text-xs font-bold text-blue-600 hover:underline"
+                                    >
+                                        Unlock Now
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                         <h3 className="text-lg font-bold text-gray-800 mb-4">System Status</h3>
                         <div className="space-y-4">
                             <div className="flex items-center justify-between">
@@ -894,20 +1009,35 @@ const Dashboard = () => {
                                     ? 'bg-green-100 text-green-800'
                                     : 'bg-yellow-100 text-yellow-800'
                                     }`}>
-                                    {hasValidSubscription(user) ? 'Active' : 'Inactive'}
+                                    {hasValidSubscription(user)
+                                        ? 'Active'
+                                        : (user.subscription_end_date && !isNaN(new Date(user.subscription_end_date)) && new Date(user.subscription_end_date) < new Date()
+                                            ? 'Expired'
+                                            : 'Inactive')
+                                    }
                                 </span>
                             </div>
                             <div className="pt-4">
-                                <button
-                                    onClick={handleGetSubscription}
-                                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium py-3 px-4 rounded-lg transition shadow-md"
-                                >
-                                    {hasValidSubscription(user) ? 'Manage Subscription' : 'Upgrade Now'}
-                                </button>
-                                {!hasValidSubscription(user) && (
-                                    <p className="text-sm text-gray-600 mt-2 text-center">
-                                        Unlock all features with a subscription
-                                    </p>
+                                {user?.account_type === 'company_user' ? (
+                                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                                        <p className="text-sm text-blue-700 font-medium text-center">
+                                            Subscription managed by {user?.company_name || 'your company'}
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <button
+                                            onClick={handleGetSubscription}
+                                            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium py-3 px-4 rounded-lg transition shadow-md"
+                                        >
+                                            {hasValidSubscription(user) ? 'Manage Subscription' : 'Upgrade Now'}
+                                        </button>
+                                        {!hasValidSubscription(user) && (
+                                            <p className="text-sm text-gray-600 mt-2 text-center">
+                                                Unlock all features with a subscription
+                                            </p>
+                                        )}
+                                    </>
                                 )}
                             </div>
                         </div>
@@ -920,9 +1050,8 @@ const Dashboard = () => {
 
 function App() {
     useEffect(() => {
-        // Test API connection on app start - without problematic headers
-        fetch(`${API_URL}/health`)
-            .then(res => res.json())
+        // Test API connection on app start
+        api.get('/health')
             .then(data => console.log('API Health:', data))
             .catch(err => console.error('API Health check failed:', err));
     }, []);
@@ -1013,6 +1142,24 @@ function App() {
                     }
                 />
 
+                <Route
+                    path="/admin/labs"
+                    element={
+                        <ProtectedRoute adminOnly={true}>
+                            <LabSettingsPage />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/admin/useful-links"
+                    element={
+                        <ProtectedRoute adminOnly={true}>
+                            <AdminUsefulLinks />
+                        </ProtectedRoute>
+                    }
+                />
+
                 {/* Admin CDSS Routes - ONLY for admin users */}
                 <Route
                     path="/admin/cdss/rules"
@@ -1069,8 +1216,17 @@ function App() {
                 <Route
                     path="/home"
                     element={
-                        <ProtectedRoute requireSubscription={false}>
+                        <ProtectedRoute requireSubscription={true}>
                             <Home />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/cdss-analysis"
+                    element={
+                        <ProtectedRoute requireSubscription={true}>
+                            <CDSSAnalysisPage />
                         </ProtectedRoute>
                     }
                 />
@@ -1079,7 +1235,7 @@ function App() {
                 <Route
                     path="/patients"
                     element={
-                        <ProtectedRoute requireSubscription={false}>
+                        <ProtectedRoute requireSubscription={true}>
                             <PatientList />
                         </ProtectedRoute>
                     }
@@ -1088,7 +1244,7 @@ function App() {
                 <Route
                     path="/patients/new"
                     element={
-                        <ProtectedRoute requireSubscription={false}>
+                        <ProtectedRoute requireSubscription={true}>
                             <PatientDetails />
                         </ProtectedRoute>
                     }
@@ -1097,7 +1253,7 @@ function App() {
                 <Route
                     path="/patients/:patientCode"
                     element={
-                        <ProtectedRoute requireSubscription={false}>
+                        <ProtectedRoute requireSubscription={true}>
                             <PatientDetails />
                         </ProtectedRoute>
                     }
@@ -1107,7 +1263,7 @@ function App() {
                 <Route
                     path="/knowledge"
                     element={
-                        <ProtectedRoute requireSubscription={false}>
+                        <ProtectedRoute requireSubscription={true}>
                             <KnowledgeBaseLayout />
                         </ProtectedRoute>
                     }
@@ -1119,12 +1275,40 @@ function App() {
                     <Route path="compounding" element={<ExtemporaneousPrep />} />
                 </Route>
 
+                {/* Company Performance Report - Company Admin Only */}
+                <Route
+                    path="/company-performance"
+                    element={
+                        <ProtectedRoute requireSubscription={true} companyAdminOnly={true}>
+                            <CompanyPerformanceReport />
+                        </ProtectedRoute>
+                    }
+                />
+
                 {/* Other Routes - NO subscription requirement */}
                 <Route
                     path="/reports"
                     element={
-                        <ProtectedRoute requireSubscription={false}>
+                        <ProtectedRoute requireSubscription={true}>
                             <Reports />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/useful-links"
+                    element={
+                        <ProtectedRoute requireSubscription={true}>
+                            <UsefulLinks />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/medication-availability"
+                    element={
+                        <ProtectedRoute requireSubscription={true}>
+                            <MedicationAvailability />
                         </ProtectedRoute>
                     }
                 />
@@ -1148,7 +1332,7 @@ function App() {
                     }
                 />
             </Routes>
-        </Router>
+        </Router >
     );
 }
 

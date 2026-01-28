@@ -1,8 +1,9 @@
 // src/components/CDSS/CDSSDisplay.jsx - COMPLETE WORKING VERSION
 import React, { useState, useEffect, useRef } from 'react';
 import supabase from '../../utils/supabase';
+import api from '../../utils/api';
 import { mapPatientToFacts, evaluateRule, formatAlertMessage } from './RuleEngine';
-import { 
+import {
     FaBell, FaExclamationTriangle, FaCheckCircle, FaInfoCircle,
     FaUserMd, FaPills, FaFilter, FaSync, FaDownload, FaChartBar,
     FaFlask, FaDatabase, FaSearch, FaEye, FaEyeSlash,
@@ -171,6 +172,25 @@ const CDSSDisplay = ({ patientData }) => {
         }
     ];
 
+    // Auto-trigger analysis when data is ready
+    useEffect(() => {
+        // We want to trigger when:
+        // 1. We have patient data
+        // 2. Rules are loaded (length > 0)
+        // 3. Medications are loaded (they could be 0, but we shouldn't trigger before the fetch finishes)
+        // 4. We are not already loading/analyzing
+        // 5. No alerts yet (prevents loops)
+        // 6. Not in initial load phase (wait for fetches to start)
+
+        const hasRules = clinicalRules.length > 0;
+        const medsAreLoaded = medications.length >= 0; // This is always true if state is updated
+
+        if (patientData && hasRules && !loading && alerts.length === 0 && !analysisError && !isInitialLoad) {
+            console.log('⚡ Auto-triggering CDSS analysis for:', patientData.patient_code);
+            analyzePatient();
+        }
+    }, [clinicalRules, patientData, loading, alerts.length, analysisError, isInitialLoad, medications.length]);
+
     useEffect(() => {
         // Reset when patient changes
         if (patientData?.patient_code !== previousPatientCode.current) {
@@ -189,10 +209,10 @@ const CDSSDisplay = ({ patientData }) => {
 
         if (patientData && patientData.patient_code) {
             console.log('📁 CDSSDisplay: Patient data received:', patientData);
-            
+
             // Always fetch medications when patient changes
             fetchPatientMedications();
-            
+
             // Only fetch rules on initial load
             if (isInitialLoad) {
                 fetchClinicalRules();
@@ -207,7 +227,7 @@ const CDSSDisplay = ({ patientData }) => {
             setPatientFacts(null);
             setTestResults(null);
         }
-        
+
         // Cleanup function
         return () => {
             // Any cleanup if needed
@@ -216,44 +236,40 @@ const CDSSDisplay = ({ patientData }) => {
 
     const fetchClinicalRules = async () => {
         try {
-            console.log('📋 Fetching clinical rules from database...');
+            console.log('📋 Fetching clinical rules from backend API...');
             let debugText = '📋 Fetching clinical rules...\n';
             setDebugInfo(prev => prev + debugText);
-            
-            const { data, error } = await supabase
-                .from('clinical_rules')
-                .select('*')
-                .eq('is_active', true)
-                .order('severity', { ascending: false })
-                .order('rule_name', { ascending: true });
 
-            if (error) {
-                console.error('❌ Error fetching rules:', error);
-                debugText += `❌ Error fetching rules: ${error.message}\n`;
+            const result = await api.get('/clinical-rules');
+
+            if (!result.success) {
+                console.error('❌ Error fetching rules:', result.error);
+                debugText += `❌ Error fetching rules: ${result.error || 'Unknown error'}\n`;
                 setDebugInfo(prev => prev + debugText);
-                
+
                 // If database error, use sample test rules
                 console.log('⚠️ Using sample test rules due to database error');
                 setClinicalRules(sampleTestRules);
                 return;
             }
 
-            console.log(`✅ Loaded ${data?.length || 0} active rules`);
-            debugText += `✅ Loaded ${data?.length || 0} active rules\n`;
-            
+            const data = result.rules || [];
+            console.log(`✅ Loaded ${data.length} active rules`);
+            debugText += `✅ Loaded ${data.length} active rules\n`;
+
             // If no rules in database, use sample test rules
             if (data && data.length > 0) {
                 setClinicalRules(data);
-                
+
                 debugText += '\n📋 Available Rules:\n';
                 data.forEach((rule, index) => {
-                    debugText += 
+                    debugText +=
                         `  ${index + 1}. "${rule.rule_name}" (${rule.rule_type}) - ${rule.severity}\n`;
-                    
+
                     // Show condition if it's not too long
                     try {
-                        const conditionStr = typeof rule.rule_condition === 'string' 
-                            ? rule.rule_condition 
+                        const conditionStr = typeof rule.rule_condition === 'string'
+                            ? rule.rule_condition
                             : JSON.stringify(rule.rule_condition);
                         if (conditionStr && conditionStr.length < 100) {
                             debugText += `     Condition: ${conditionStr}\n`;
@@ -267,12 +283,11 @@ const CDSSDisplay = ({ patientData }) => {
                 setClinicalRules(sampleTestRules);
                 debugText += '⚠️ Using sample test rules (no rules in database)\n';
             }
-            
+
             setDebugInfo(prev => prev + debugText);
         } catch (error) {
             console.error('❌ Error fetching rules:', error);
             setDebugInfo(prev => prev + `❌ Exception fetching rules: ${error.message}\n`);
-            // Fallback to sample rules
             setClinicalRules(sampleTestRules);
         }
     };
@@ -283,39 +298,35 @@ const CDSSDisplay = ({ patientData }) => {
             setMedications([]);
             return;
         }
-        
+
         try {
             console.log('💊 Fetching medications for:', patientData.patient_code);
             let debugText = `💊 Fetching medications for ${patientData.patient_code}...\n`;
             setDebugInfo(prev => prev + debugText);
-            
-            const { data, error } = await supabase
-                .from('medication_history')
-                .select('*')
-                .eq('patient_code', patientData.patient_code)
-                .eq('is_active', true)
-                .order('start_date', { ascending: false });
 
-            if (error) {
-                console.error('❌ Error fetching medications:', error);
-                debugText += `❌ Error fetching medications: ${error.message}\n`;
+            const result = await api.get(`/medication-history/patient/${patientData.patient_code}`);
+
+            if (!result.success) {
+                console.error('❌ Error fetching medications:', result.error);
+                debugText += `❌ Error fetching medications: ${result.error || 'Unknown error'}\n`;
                 setDebugInfo(prev => prev + debugText);
                 setMedications([]);
                 return;
             }
 
-            console.log(`✅ Loaded ${data?.length || 0} medications`);
-            debugText += `✅ Loaded ${data?.length || 0} medications\n`;
-            
+            const data = result.medications || [];
+            console.log(`✅ Loaded ${data.length} medications`);
+            debugText += `✅ Loaded ${data.length} medications\n`;
+
             if (data && data.length > 0) {
                 debugText += '💊 Medications found:\n';
                 data.forEach((med, index) => {
                     debugText += `  ${index + 1}. ${med.drug_name} (${med.drug_class || 'No class'})\n`;
                 });
             }
-            
+
             setDebugInfo(prev => prev + debugText);
-            setMedications(data || []);
+            setMedications(data);
         } catch (error) {
             console.error('❌ Error in fetchPatientMedications:', error);
             setDebugInfo(prev => prev + `❌ Exception fetching medications: ${error.message}\n`);
@@ -328,21 +339,21 @@ const CDSSDisplay = ({ patientData }) => {
             alert('Please select a patient first');
             return;
         }
-        
+
         setIsTestingRules(true);
         setAlerts([]);
         setFilteredAlerts([]);
         setAnalysisStats(null);
         setAnalysisError(null);
         setExpandedAlert(null);
-        
+
         let debug = '🧪 === TESTING SAMPLE AGE-IN-DAYS RULES ===\n';
         debug += `Patient: ${patientData.patient_code}\n`;
         debug += `Time: ${new Date().toLocaleString()}\n`;
         debug += `Sample Rules: ${sampleTestRules.length}\n`;
         debug += `Active Medications: ${medications.length}\n\n`;
         setDebugInfo(debug);
-        
+
         try {
             // Use provided patient data
             const currentPatient = patientData;
@@ -350,12 +361,12 @@ const CDSSDisplay = ({ patientData }) => {
             debug += `  Age: ${currentPatient.age || 'N/A'}\n`;
             debug += `  Gender: ${currentPatient.gender || 'N/A'}\n`;
             debug += `  Diagnosis: ${currentPatient.diagnosis || 'N/A'}\n`;
-            
+
             // Map to facts
             debug += '\n🔍 === CREATING PATIENT FACTS ===\n';
             const facts = mapPatientToFacts(currentPatient, medications);
             setPatientFacts(facts);
-            
+
             // Log age-in-days information
             debug += `  Age: ${facts.age} years\n`;
             debug += `  Age in Days: ${facts.age_in_days || 'N/A'}\n`;
@@ -366,7 +377,7 @@ const CDSSDisplay = ({ patientData }) => {
             if (facts.is_child) debug += `  Child: Yes\n`;
             if (facts.is_adolescent) debug += `  Adolescent: Yes\n`;
             debug += `  Medications: ${facts.medication_names.length} drugs\n`;
-            
+
             // Log all medications for testing
             if (facts.medication_names.length > 0) {
                 debug += '  Medication Names:\n';
@@ -376,7 +387,7 @@ const CDSSDisplay = ({ patientData }) => {
             } else {
                 debug += '  No medications found for testing\n';
             }
-            
+
             // Evaluate sample rules
             debug += '\n⚡ === TESTING SAMPLE RULES ===\n';
             const triggeredAlerts = [];
@@ -385,23 +396,23 @@ const CDSSDisplay = ({ patientData }) => {
 
             for (const rule of sampleTestRules) {
                 rulesEvaluated++;
-                
+
                 try {
                     console.log(`🧪 Testing rule: "${rule.rule_name}"`);
                     const isTriggered = evaluateRule(rule, facts);
-                    
+
                     if (isTriggered) {
                         rulesTriggered++;
                         debug += `[${rulesEvaluated}] "${rule.rule_name}": ✅ TRIGGERED\n`;
-                        
+
                         // Create alert
                         const message = rule.rule_action?.message || rule.rule_name;
                         const details = rule.rule_action?.recommendation || rule.rule_description;
                         const severity = rule.rule_action?.severity || rule.severity || 'moderate';
-                        
+
                         const formattedMessage = formatAlertMessage(message, facts);
                         const formattedDetails = formatAlertMessage(details, facts);
-                        
+
                         const alert = {
                             id: `test-${rule.id}-${Date.now()}`,
                             rule_id: rule.id,
@@ -428,7 +439,7 @@ const CDSSDisplay = ({ patientData }) => {
                             is_pediatric: facts.is_pediatric,
                             is_test_rule: true
                         };
-                        
+
                         triggeredAlerts.push(alert);
                     } else {
                         debug += `[${rulesEvaluated}] "${rule.rule_name}": ❌ Not triggered\n`;
@@ -445,7 +456,7 @@ const CDSSDisplay = ({ patientData }) => {
             debug += `Sample Rules Tested: ${rulesEvaluated}\n`;
             debug += `Rules Triggered: ${rulesTriggered}\n`;
             debug += `Alerts Generated: ${triggeredAlerts.length}\n`;
-            
+
             const stats = {
                 totalRules: sampleTestRules.length,
                 rulesEvaluated,
@@ -470,7 +481,7 @@ const CDSSDisplay = ({ patientData }) => {
                 isAdolescent: facts.is_adolescent,
                 isTestRun: true
             };
-            
+
             debug += `Critical Alerts: ${stats.bySeverity.critical}\n`;
             debug += `High Alerts: ${stats.bySeverity.high}\n`;
             debug += `Moderate Alerts: ${stats.bySeverity.moderate}\n`;
@@ -479,7 +490,7 @@ const CDSSDisplay = ({ patientData }) => {
             debug += `Patient Age in Days: ${stats.patientAgeInDays}\n`;
             debug += `Patient Type: ${stats.patientType}\n`;
             if (stats.isPediatric) debug += `Pediatric Patient: Yes\n`;
-            
+
             // Update state
             setAlerts(triggeredAlerts);
             setFilteredAlerts(triggeredAlerts);
@@ -488,11 +499,11 @@ const CDSSDisplay = ({ patientData }) => {
             setLastAnalysisTime(new Date().toISOString());
             setTestResults({
                 passed: rulesTriggered > 0,
-                message: triggeredAlerts.length > 0 ? 
+                message: triggeredAlerts.length > 0 ?
                     `Successfully triggered ${triggeredAlerts.length} rules!` :
                     'No rules triggered with current patient data'
             });
-            
+
             console.log('✅ Sample Rules Test Complete', stats);
 
         } catch (error) {
@@ -504,7 +515,7 @@ const CDSSDisplay = ({ patientData }) => {
                 passed: false,
                 message: `Test failed: ${error.message}`
             });
-            
+
             setAlerts([]);
             setFilteredAlerts([]);
         } finally {
@@ -517,7 +528,7 @@ const CDSSDisplay = ({ patientData }) => {
             alert('❌ Please select a patient first');
             return;
         }
-        
+
         setLoading(true);
         setAlerts([]);
         setFilteredAlerts([]);
@@ -525,14 +536,14 @@ const CDSSDisplay = ({ patientData }) => {
         setAnalysisError(null);
         setExpandedAlert(null);
         setTestResults(null);
-        
+
         let debug = '🚀 === CDSS ANALYSIS STARTED ===\n';
         debug += `Patient: ${patientData.patient_code}\n`;
         debug += `Time: ${new Date().toLocaleString()}\n`;
         debug += `Active Rules: ${clinicalRules.length}\n`;
         debug += `Active Medications: ${medications.length}\n\n`;
         setDebugInfo(debug);
-        
+
         try {
             // Use provided patient data
             const currentPatient = patientData;
@@ -540,12 +551,12 @@ const CDSSDisplay = ({ patientData }) => {
             debug += `  Age: ${currentPatient.age || 'N/A'}\n`;
             debug += `  Gender: ${currentPatient.gender || 'N/A'}\n`;
             debug += `  Diagnosis: ${currentPatient.diagnosis || 'N/A'}\n`;
-            
+
             // Map to facts
             debug += '\n🔍 === CREATING PATIENT FACTS ===\n';
             const facts = mapPatientToFacts(currentPatient, medications);
             setPatientFacts(facts);
-            
+
             // Log age-in-days information
             debug += `  Age: ${facts.age} years\n`;
             debug += `  Age in Days: ${facts.age_in_days || 'N/A'}\n`;
@@ -561,13 +572,13 @@ const CDSSDisplay = ({ patientData }) => {
             debug += `  Creatinine: ${facts.creatinine || 'N/A'}\n`;
             debug += `  Potassium: ${facts.potassium || 'N/A'}\n`;
             debug += `  Medications: ${facts.medication_names.length} drugs\n`;
-            
+
             // Check if we have rules
             if (clinicalRules.length === 0) {
                 debug += '\n⚠️ === NO ACTIVE RULES FOUND ===\n';
                 debug += 'Using sample test rules for demonstration.\n';
             }
-            
+
             // Evaluate rules
             debug += '\n⚡ === EVALUATING CLINICAL RULES ===\n';
             const triggeredAlerts = [];
@@ -575,29 +586,29 @@ const CDSSDisplay = ({ patientData }) => {
             let rulesTriggered = 0;
 
             const rulesToEvaluate = clinicalRules.length > 0 ? clinicalRules : sampleTestRules;
-            
+
             for (const rule of rulesToEvaluate) {
                 rulesEvaluated++;
-                
+
                 try {
                     console.log(`🎯 Evaluating rule: "${rule.rule_name}"`);
                     const isTriggered = evaluateRule(rule, facts);
-                    
+
                     if (isTriggered) {
                         rulesTriggered++;
                         debug += `[${rulesEvaluated}] "${rule.rule_name}": ✅ TRIGGERED\n`;
-                        
+
                         // Create alert
                         let message = rule.rule_name;
                         let details = '';
                         let severity = rule.severity || 'moderate';
-                        
+
                         if (rule.rule_action) {
                             try {
-                                const actionData = typeof rule.rule_action === 'string' 
-                                    ? JSON.parse(rule.rule_action) 
+                                const actionData = typeof rule.rule_action === 'string'
+                                    ? JSON.parse(rule.rule_action)
                                     : rule.rule_action;
-                                
+
                                 message = actionData.message || rule.rule_name;
                                 details = actionData.recommendation || '';
                                 severity = actionData.severity || rule.severity || 'moderate';
@@ -610,11 +621,11 @@ const CDSSDisplay = ({ patientData }) => {
                         } else if (rule.rule_description) {
                             details = rule.rule_description;
                         }
-                        
+
                         // Format message with actual values
                         message = formatAlertMessage(message, facts);
                         details = formatAlertMessage(details, facts);
-                        
+
                         const alert = {
                             id: `${rule.id}-${Date.now()}`,
                             rule_id: rule.id,
@@ -642,7 +653,7 @@ const CDSSDisplay = ({ patientData }) => {
                             is_pediatric: facts.is_pediatric,
                             is_test_rule: clinicalRules.length === 0
                         };
-                        
+
                         triggeredAlerts.push(alert);
                     } else {
                         debug += `[${rulesEvaluated}] "${rule.rule_name}": ❌ Not triggered\n`;
@@ -663,7 +674,7 @@ const CDSSDisplay = ({ patientData }) => {
             debug += `Rules Evaluated: ${rulesEvaluated}\n`;
             debug += `Rules Triggered: ${rulesTriggered}\n`;
             debug += `Alerts Generated: ${triggeredAlerts.length}\n`;
-            
+
             const stats = {
                 totalRules: rulesToEvaluate.length,
                 rulesEvaluated,
@@ -688,7 +699,7 @@ const CDSSDisplay = ({ patientData }) => {
                 isAdolescent: facts.is_adolescent,
                 isTestRun: clinicalRules.length === 0
             };
-            
+
             debug += `Critical Alerts: ${stats.bySeverity.critical}\n`;
             debug += `High Alerts: ${stats.bySeverity.high}\n`;
             debug += `Moderate Alerts: ${stats.bySeverity.moderate}\n`;
@@ -697,7 +708,7 @@ const CDSSDisplay = ({ patientData }) => {
             debug += `Patient Age in Days: ${stats.patientAgeInDays}\n`;
             debug += `Patient Type: ${stats.patientType}\n`;
             if (stats.isPediatric) debug += `Pediatric Patient: Yes\n`;
-            
+
             if (triggeredAlerts.length === 0 && rulesToEvaluate.length > 0) {
                 debug += '\n✅ No clinical issues detected!\n';
                 debug += 'All rules passed successfully.\n';
@@ -709,7 +720,7 @@ const CDSSDisplay = ({ patientData }) => {
             setDebugInfo(debug);
             setAnalysisStats(stats);
             setLastAnalysisTime(new Date().toISOString());
-            
+
             console.log('✅ CDSS Analysis Complete', stats);
 
         } catch (error) {
@@ -717,7 +728,7 @@ const CDSSDisplay = ({ patientData }) => {
             debug += `\n❌ ERROR: ${error.message}\n`;
             setDebugInfo(debug);
             setAnalysisError(error.message);
-            
+
             setAlerts([]);
             setFilteredAlerts([]);
             setAnalysisStats({
@@ -744,11 +755,11 @@ const CDSSDisplay = ({ patientData }) => {
     };
 
     const acknowledgeAlert = (alertId) => {
-        const updatedAlerts = alerts.map(alert => 
+        const updatedAlerts = alerts.map(alert =>
             alert.id === alertId ? { ...alert, acknowledged: true } : alert
         );
         setAlerts(updatedAlerts);
-        setFilteredAlerts(updatedAlerts.filter(alert => 
+        setFilteredAlerts(updatedAlerts.filter(alert =>
             severityFilter === 'all' || alert.severity === severityFilter
         ));
     };
@@ -765,7 +776,7 @@ const CDSSDisplay = ({ patientData }) => {
 
     const downloadReport = () => {
         if (!patientData) return;
-        
+
         const report = {
             title: 'Clinical Decision Support Report',
             patient: {
@@ -841,7 +852,7 @@ const CDSSDisplay = ({ patientData }) => {
         const now = new Date();
         const diffMs = now - date;
         const diffMins = Math.floor(diffMs / 60000);
-        
+
         if (diffMins < 1) return 'Just now';
         if (diffMins < 60) return `${diffMins}m ago`;
         if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
@@ -873,7 +884,7 @@ const CDSSDisplay = ({ patientData }) => {
                     <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
                         <FaDatabase /> Triggering Evidence
                     </h4>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Age Information */}
                         {alert.evidence.age_in_days > 0 && (
@@ -883,25 +894,25 @@ const CDSSDisplay = ({ patientData }) => {
                                 </h5>
                                 <div className="space-y-1">
                                     <div className="text-sm pl-4">
-                                        • <span className="font-medium">Age in Days:</span> 
+                                        • <span className="font-medium">Age in Days:</span>
                                         <span className="ml-2 text-blue-600">{alert.evidence.age_in_days}</span>
                                     </div>
                                     {alert.evidence.patient_type && (
                                         <div className="text-sm pl-4">
-                                            • <span className="font-medium">Patient Type:</span> 
+                                            • <span className="font-medium">Patient Type:</span>
                                             <span className="ml-2 text-blue-600 capitalize">{alert.evidence.patient_type}</span>
                                         </div>
                                     )}
                                     {alert.evidence.is_pediatric && (
                                         <div className="text-sm pl-4">
-                                            • <span className="font-medium">Pediatric:</span> 
+                                            • <span className="font-medium">Pediatric:</span>
                                             <span className="ml-2 text-green-600">Yes</span>
                                         </div>
                                     )}
                                 </div>
                             </div>
                         )}
-                        
+
                         {/* Medications */}
                         {alert.evidence.medications && alert.evidence.medications.length > 0 && (
                             <div>
@@ -917,7 +928,7 @@ const CDSSDisplay = ({ patientData }) => {
                                 </div>
                             </div>
                         )}
-                        
+
                         {/* Labs */}
                         {alert.evidence.labs && Object.keys(alert.evidence.labs).length > 0 && (
                             <div>
@@ -927,7 +938,7 @@ const CDSSDisplay = ({ patientData }) => {
                                 <div className="space-y-1">
                                     {Object.entries(alert.evidence.labs).slice(0, 5).map(([key, value]) => (
                                         <div key={key} className="text-sm pl-4">
-                                            • <span className="font-medium">{key}:</span> 
+                                            • <span className="font-medium">{key}:</span>
                                             <span className={`ml-2 ${value > 5 ? 'text-red-600' : 'text-gray-700'}`}>
                                                 {typeof value === 'number' ? value.toFixed(1) : value}
                                             </span>
@@ -988,7 +999,7 @@ const CDSSDisplay = ({ patientData }) => {
                         )}
                     </div>
                 </div>
-                
+
                 <div className="flex flex-wrap gap-2">
                     {clinicalRules.length === 0 && patientData && (
                         <button
@@ -1071,7 +1082,7 @@ const CDSSDisplay = ({ patientData }) => {
                         </div>
                     )}
                 </div>
-                
+
                 <div className="bg-indigo-50 p-3 rounded-lg border border-indigo-200">
                     <div className="text-sm text-indigo-700 mb-1 flex items-center gap-1">
                         <AgeCategoryIcon /> Age Category
@@ -1085,7 +1096,7 @@ const CDSSDisplay = ({ patientData }) => {
                         </div>
                     )}
                 </div>
-                
+
                 <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
                     <div className="text-sm text-purple-700 mb-1 flex items-center gap-1">
                         <FaCapsules /> Medications
@@ -1095,7 +1106,7 @@ const CDSSDisplay = ({ patientData }) => {
                         Active prescriptions
                     </div>
                 </div>
-                
+
                 <div className="bg-green-50 p-3 rounded-lg border border-green-200">
                     <div className="text-sm text-green-700 mb-1 flex items-center gap-1">
                         <FaCheckCircle /> Available Rules
@@ -1105,7 +1116,7 @@ const CDSSDisplay = ({ patientData }) => {
                         For analysis
                     </div>
                 </div>
-                
+
                 <div className="bg-orange-50 p-3 rounded-lg border border-orange-200">
                     <div className="text-sm text-orange-700 mb-1 flex items-center gap-1">
                         <FaFlask /> Labs
@@ -1117,7 +1128,7 @@ const CDSSDisplay = ({ patientData }) => {
                         Available values
                     </div>
                 </div>
-                
+
                 <div className="bg-pink-50 p-3 rounded-lg border border-pink-200">
                     <div className="text-sm text-pink-700 mb-1 flex items-center gap-1">
                         <FaHeartbeat /> Vitals
@@ -1212,7 +1223,7 @@ const CDSSDisplay = ({ patientData }) => {
                             {isTestingRules ? 'Testing age-in-days rules...' : 'Running clinical analysis...'}
                         </p>
                         <p className="text-sm text-gray-400">
-                            {clinicalRules.length > 0 
+                            {clinicalRules.length > 0
                                 ? `Evaluating ${clinicalRules.length} rules against patient data`
                                 : 'Testing sample age-in-days rules'}
                         </p>
@@ -1233,8 +1244,8 @@ const CDSSDisplay = ({ patientData }) => {
                             {medications.length === 0
                                 ? 'Patient has no active medications to analyze.'
                                 : clinicalRules.length === 0
-                                ? 'Sample rules did not trigger with current patient data.'
-                                : 'Patient data passes all clinical rules. No issues detected.'}
+                                    ? 'Sample rules did not trigger with current patient data.'
+                                    : 'Patient data passes all clinical rules. No issues detected.'}
                         </p>
                         <div className="flex flex-wrap justify-center gap-2">
                             {clinicalRules.length === 0 && (
@@ -1265,12 +1276,12 @@ const CDSSDisplay = ({ patientData }) => {
                                         Clinical Alerts ({alerts.length})
                                     </h3>
                                     <p className="text-sm text-gray-600">
-                                        {alerts.filter(a => !a.acknowledged).length} unacknowledged • 
+                                        {alerts.filter(a => !a.acknowledged).length} unacknowledged •
                                         {alerts.filter(a => a.severity === 'critical').length} critical
                                     </p>
                                 </div>
                             </div>
-                            
+
                             <div className="flex flex-wrap items-center gap-3">
                                 {alerts.filter(a => !a.acknowledged).length > 0 && (
                                     <button
@@ -1280,7 +1291,7 @@ const CDSSDisplay = ({ patientData }) => {
                                         <FaCheckCircle /> Mark all as reviewed
                                     </button>
                                 )}
-                                
+
                                 <div className="flex items-center gap-2">
                                     <FaFilter className="text-gray-400" />
                                     <select
@@ -1297,7 +1308,7 @@ const CDSSDisplay = ({ patientData }) => {
                                 </div>
                             </div>
                         </div>
-                        
+
                         {/* Statistics Bar */}
                         {analysisStats && (
                             <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
@@ -1343,7 +1354,7 @@ const CDSSDisplay = ({ patientData }) => {
                                 )}
                             </div>
                         )}
-                        
+
                         {/* Alerts List */}
                         <div className="space-y-4">
                             {filteredAlerts.map((alert) => {
@@ -1353,10 +1364,10 @@ const CDSSDisplay = ({ patientData }) => {
                                 const ruleTypeInfo = getRuleTypeInfo(alert.rule_type);
                                 const TypeIcon = ruleTypeInfo.icon;
                                 const isExpanded = expandedAlert === alert.id;
-                                
+
                                 return (
-                                    <div 
-                                        key={alert.id} 
+                                    <div
+                                        key={alert.id}
                                         className={`border rounded-xl overflow-hidden transition-all duration-200 ${severityColor} ${alert.acknowledged ? 'opacity-60' : ''}`}
                                     >
                                         <div className="p-5">
@@ -1365,7 +1376,7 @@ const CDSSDisplay = ({ patientData }) => {
                                                     <div className={`p-3 rounded-full ${severityBgColor}`}>
                                                         <SeverityIcon className="text-white text-lg" />
                                                     </div>
-                                                    
+
                                                     <div className="flex-1">
                                                         <div className="flex flex-wrap items-center gap-2 mb-2">
                                                             <h3 className="font-bold text-lg text-gray-800">{alert.rule_name}</h3>
@@ -1398,12 +1409,12 @@ const CDSSDisplay = ({ patientData }) => {
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        
+
                                                         <div className="mb-3 p-3 bg-white bg-opacity-70 rounded-lg border border-opacity-30">
                                                             <h4 className="font-semibold text-gray-800 mb-2">Alert:</h4>
                                                             <p className="text-gray-700">{alert.message}</p>
                                                         </div>
-                                                        
+
                                                         {alert.details && (
                                                             <div className="mb-3 p-3 bg-white bg-opacity-70 rounded-lg border border-opacity-30">
                                                                 <h4 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
@@ -1412,20 +1423,19 @@ const CDSSDisplay = ({ patientData }) => {
                                                                 <p className="text-gray-600 whitespace-pre-line">{alert.details}</p>
                                                             </div>
                                                         )}
-                                                        
+
                                                         <div className="flex justify-between items-center mt-4 pt-3 border-t border-opacity-30">
                                                             <div className="flex items-center gap-2">
-                                                                <span className={`inline-flex items-center gap-2 px-2 py-1 rounded ${
-                                                                    alert.severity === 'critical' ? 'text-red-600 bg-red-50' :
+                                                                <span className={`inline-flex items-center gap-2 px-2 py-1 rounded ${alert.severity === 'critical' ? 'text-red-600 bg-red-50' :
                                                                     alert.severity === 'high' ? 'text-orange-600 bg-orange-50' :
-                                                                    alert.severity === 'moderate' ? 'text-yellow-600 bg-yellow-50' :
-                                                                    'text-blue-600 bg-blue-50'
-                                                                }`}>
+                                                                        alert.severity === 'moderate' ? 'text-yellow-600 bg-yellow-50' :
+                                                                            'text-blue-600 bg-blue-50'
+                                                                    }`}>
                                                                     <SeverityIcon />
                                                                     {alert.severity.toUpperCase()} • {alert.confidence}% confidence
                                                                 </span>
                                                             </div>
-                                                            
+
                                                             <div className="flex items-center gap-2">
                                                                 <button
                                                                     onClick={() => toggleExpandAlert(alert.id)}
@@ -1441,7 +1451,7 @@ const CDSSDisplay = ({ patientData }) => {
                                                                         </>
                                                                     )}
                                                                 </button>
-                                                                
+
                                                                 {!alert.acknowledged && (
                                                                     <button
                                                                         onClick={() => acknowledgeAlert(alert.id)}
@@ -1455,14 +1465,14 @@ const CDSSDisplay = ({ patientData }) => {
                                                     </div>
                                                 </div>
                                             </div>
-                                            
+
                                             {isExpanded && renderAlertDetails(alert)}
                                         </div>
                                     </div>
                                 );
                             })}
                         </div>
-                        
+
                         {filteredAlerts.length === 0 && severityFilter !== 'all' && (
                             <div className="text-center py-8 border-2 border-dashed border-gray-200 rounded-xl">
                                 <FaInfoCircle className="text-4xl text-gray-300 mx-auto mb-4" />

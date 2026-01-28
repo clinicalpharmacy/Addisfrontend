@@ -1,7 +1,7 @@
 // src/components/CDSS/ClinicalRulesAdmin.jsx - UPDATED WITH AGE-IN-DAYS EXAMPLES
 import React, { useState, useEffect } from 'react';
 import supabase from '../../utils/supabase';
-import { 
+import {
     FaCogs, FaPlus, FaEdit, FaTrash, FaToggleOn, FaToggleOff,
     FaExclamationTriangle, FaStethoscope, FaFilter, FaSave,
     FaCode, FaMagic, FaVial, FaPills, FaUser, FaHeart,
@@ -12,43 +12,43 @@ import {
 
 // Helper function to check backend authentication
 const checkBackendAuth = () => {
-  // Check localStorage for backend JWT tokens
-  const token = localStorage.getItem('token');
-  const userData = localStorage.getItem('user');
-  
-  if (token && userData) {
-    try {
-      const user = JSON.parse(userData);
-      return {
-        isLoggedIn: true,
-        email: user.email,
-        role: user.role || 'admin', // Default to admin if not set
-        token: token
-      };
-    } catch (e) {
-      console.error('Error parsing user data:', e);
+    // Check localStorage for backend JWT tokens
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+
+    if (token && userData) {
+        try {
+            const user = JSON.parse(userData);
+            return {
+                isLoggedIn: true,
+                email: user.email,
+                role: user.role || 'admin', // Default to admin if not set
+                token: token
+            };
+        } catch (e) {
+            console.error('Error parsing user data:', e);
+        }
     }
-  }
-  
-  // Also check for separate role/email items (common in backend auth)
-  const userRole = localStorage.getItem('userRole');
-  const userEmail = localStorage.getItem('userEmail');
-  
-  if (token && userEmail) {
+
+    // Also check for separate role/email items (common in backend auth)
+    const userRole = localStorage.getItem('userRole');
+    const userEmail = localStorage.getItem('userEmail');
+
+    if (token && userEmail) {
+        return {
+            isLoggedIn: true,
+            email: userEmail,
+            role: userRole || 'admin',
+            token: token
+        };
+    }
+
     return {
-      isLoggedIn: true,
-      email: userEmail,
-      role: userRole || 'admin',
-      token: token
+        isLoggedIn: false,
+        email: null,
+        role: null,
+        token: null
     };
-  }
-  
-  return {
-    isLoggedIn: false,
-    email: null,
-    role: null,
-    token: null
-  };
 };
 
 const ClinicalRulesAdmin = () => {
@@ -66,15 +66,15 @@ const ClinicalRulesAdmin = () => {
     const [checkingAdmin, setCheckingAdmin] = useState(true);
     const [authMethod, setAuthMethod] = useState(''); // 'supabase' or 'backend'
     const [dbConnected, setDbConnected] = useState(false);
-    
+
     // Form data matching your database schema
     const [formData, setFormData] = useState({
         rule_name: '',
         rule_type: 'drug_interaction',
         rule_description: '',
         rule_condition: JSON.stringify({ all: [] }, null, 2),
-        rule_action: JSON.stringify({ 
-            message: '', 
+        rule_action: JSON.stringify({
+            message: '',
             recommendation: '',
             severity: 'moderate'
         }, null, 2),
@@ -331,29 +331,29 @@ const ClinicalRulesAdmin = () => {
         checkUserStatus();
         fetchRules();
         checkDbConnection();
-        
+
         // Listen for auth changes
         const interval = setInterval(() => {
             checkUserStatus();
         }, 10000); // Check every 10 seconds
-        
+
         return () => clearInterval(interval);
     }, []);
 
     useEffect(() => {
         let filtered = rules;
-        
+
         if (filterType !== 'all') {
             filtered = filtered.filter(rule => rule.rule_type === filterType);
         }
-        
+
         if (searchTerm) {
-            filtered = filtered.filter(rule => 
+            filtered = filtered.filter(rule =>
                 rule.rule_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 rule.rule_description?.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
-        
+
         setFilteredRules(filtered);
     }, [filterType, searchTerm, rules]);
 
@@ -363,7 +363,7 @@ const ClinicalRulesAdmin = () => {
                 .from('clinical_rules')
                 .select('count')
                 .limit(1);
-            
+
             setDbConnected(!error);
         } catch (error) {
             setDbConnected(false);
@@ -373,15 +373,15 @@ const ClinicalRulesAdmin = () => {
     const checkUserStatus = async () => {
         try {
             setCheckingAdmin(true);
-            
+
             // METHOD 1: Check backend authentication first
             console.log('🔑 Checking backend authentication...');
             const backendAuth = checkBackendAuth();
-            
+
             if (backendAuth.isLoggedIn && backendAuth.email) {
                 console.log('✅ Authenticated via BACKEND:', backendAuth.email);
                 console.log('🔑 Backend auth details:', backendAuth);
-                
+
                 // Ensure localStorage has all required items
                 if (!localStorage.getItem('userRole') && backendAuth.role) {
                     localStorage.setItem('userRole', backendAuth.role);
@@ -389,18 +389,16 @@ const ClinicalRulesAdmin = () => {
                 if (!localStorage.getItem('userEmail') && backendAuth.email) {
                     localStorage.setItem('userEmail', backendAuth.email);
                 }
-                
-                setCurrentUser({ 
+
+                setCurrentUser({
                     email: backendAuth.email,
                     role: backendAuth.role
                 });
                 setAuthMethod('backend');
-                
-                // Check if admin via backend
-                const isUserAdmin = backendAuth.role === 'admin' || 
-                                   backendAuth.email.includes('admin') ||
-                                   backendAuth.email === 'admin@pharmacare.com';
-                
+
+                // Check if admin via backend - STRICT ROLE CHECK
+                const isUserAdmin = backendAuth.role === 'admin';
+
                 if (isUserAdmin) {
                     console.log('✅ User is ADMIN (backend detection)');
                     setIsAdmin(true);
@@ -408,20 +406,20 @@ const ClinicalRulesAdmin = () => {
                     console.log('❌ User is not admin (backend detection)');
                     setIsAdmin(false);
                 }
-                
+
                 setCheckingAdmin(false);
                 return;
             }
-            
+
             // METHOD 2: Check Supabase authentication
             console.log('🔑 Checking Supabase authentication...');
             const { data: { user } } = await supabase.auth.getUser();
-            
+
             if (user) {
                 console.log('✅ Authenticated via SUPABASE:', user.email);
                 setCurrentUser(user);
                 setAuthMethod('supabase');
-                
+
                 // Check users table for admin role
                 try {
                     const { data: userData, error } = await supabase
@@ -429,9 +427,9 @@ const ClinicalRulesAdmin = () => {
                         .select('role, approved, email')
                         .eq('email', user.email)
                         .single();
-                    
+
                     console.log('📊 User data from database:', userData);
-                    
+
                     if (userData && userData.role === 'admin' && userData.approved) {
                         console.log('✅ User is admin in database');
                         setIsAdmin(true);
@@ -441,9 +439,9 @@ const ClinicalRulesAdmin = () => {
                     }
                 } catch (dbError) {
                     console.log('⚠️ Database check failed:', dbError.message);
-                    // Fallback: check email pattern
-                    if (user.email === 'admin@pharmacare.com' || user.email.includes('admin')) {
-                        console.log('✅ Detected admin via email pattern');
+                    // Fallback: check specific admin email only, no loose pattern matching
+                    if (user.email === 'admin@pharmacare.com') {
+                        console.log('✅ Detected super admin via email');
                         setIsAdmin(true);
                     } else {
                         setIsAdmin(false);
@@ -455,7 +453,7 @@ const ClinicalRulesAdmin = () => {
                 setIsAdmin(false);
                 setAuthMethod('');
             }
-            
+
         } catch (error) {
             console.error('❌ Error checking user status:', error);
             setIsAdmin(false);
@@ -468,18 +466,18 @@ const ClinicalRulesAdmin = () => {
     const fetchRules = async () => {
         try {
             setLoading(true);
-            
+
             console.log('📋 Fetching rules from database...');
-            
+
             // Try to fetch all rules
             const { data, error } = await supabase
                 .from('clinical_rules')
                 .select('*')
                 .order('created_at', { ascending: false });
-            
+
             if (error) {
                 console.log('❌ Error fetching rules:', error.message);
-                
+
                 // If RLS blocks, try to fetch only active rules
                 if (error.message.includes('policy') || error.message.includes('RLS')) {
                     console.log('🔒 RLS restriction detected, trying active rules only...');
@@ -488,7 +486,7 @@ const ClinicalRulesAdmin = () => {
                         .select('*')
                         .eq('is_active', true)
                         .order('created_at', { ascending: false });
-                    
+
                     if (activeError) {
                         console.log('❌ Error fetching active rules:', activeError.message);
                         setRules([]);
@@ -507,7 +505,7 @@ const ClinicalRulesAdmin = () => {
                 setFilteredRules(data || []);
                 console.log(`✅ Successfully fetched ${data?.length || 0} rules`);
             }
-            
+
         } catch (error) {
             console.error('❌ Error in fetchRules:', error);
             setRules([]);
@@ -664,7 +662,7 @@ const ClinicalRulesAdmin = () => {
             console.log('🔄 Toggling rule status:', id, 'from', currentStatus, 'to', !currentStatus);
             const { error } = await supabase
                 .from('clinical_rules')
-                .update({ 
+                .update({
                     is_active: !currentStatus,
                     updated_at: new Date().toISOString()
                 })
@@ -693,8 +691,8 @@ const ClinicalRulesAdmin = () => {
             rule_type: 'drug_interaction',
             rule_description: '',
             rule_condition: JSON.stringify({ all: [] }, null, 2),
-            rule_action: JSON.stringify({ 
-                message: '', 
+            rule_action: JSON.stringify({
+                message: '',
                 recommendation: '',
                 severity: 'moderate'
             }, null, 2),
@@ -790,8 +788,8 @@ const ClinicalRulesAdmin = () => {
                                 <div className="flex items-center gap-2">
                                     <FaUserShield className="text-green-500" />
                                     <span className="text-sm text-gray-700 font-medium">{currentUser.email}</span>
-                                    <span className="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-800">
-                                        {isAdmin ? 'Admin' : 'Pharmacist'}
+                                    <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${isAdmin ? 'bg-red-100 text-red-800' : 'bg-purple-100 text-purple-800'}`}>
+                                        {currentUser.role?.replace('_', ' ')?.toUpperCase() || (isAdmin ? 'ADMIN' : 'USER')}
                                     </span>
                                     <span className="text-xs text-gray-400">
                                         ({authMethod === 'backend' ? 'Backend Auth' : 'Supabase Auth'})
@@ -826,7 +824,7 @@ const ClinicalRulesAdmin = () => {
                         <p className="text-sm">{isAdmin ? 'Full permissions granted' : 'View only mode'}</p>
                     </div>
                 </div>
-                
+
                 <div className={`p-4 rounded-lg flex items-center gap-3 ${dbConnected ? 'bg-blue-50 border border-blue-200' : 'bg-red-50 border border-red-200'}`}>
                     <div className={`p-2 rounded-full ${dbConnected ? 'bg-blue-100 text-blue-600' : 'bg-red-100 text-red-600'}`}>
                         <FaDatabase />
@@ -836,7 +834,7 @@ const ClinicalRulesAdmin = () => {
                         <p className="text-sm">{dbConnected ? `${rules.length} rules loaded` : 'Check connection'}</p>
                     </div>
                 </div>
-                
+
                 <div className="p-4 rounded-lg flex items-center gap-3 bg-gray-50 border border-gray-200">
                     <div className="p-2 rounded-full bg-gray-100 text-gray-600">
                         <FaUserCheck />
@@ -875,19 +873,19 @@ const ClinicalRulesAdmin = () => {
                         }, null, 2)}
                     </pre>
                     <div className="mt-2 flex gap-2 flex-wrap">
-                        <button 
+                        <button
                             onClick={checkUserStatus}
                             className="px-3 py-1 bg-blue-100 text-blue-700 rounded text-xs hover:bg-blue-200"
                         >
                             🔄 Refresh Status
                         </button>
-                        <button 
+                        <button
                             onClick={fetchRules}
                             className="px-3 py-1 bg-green-100 text-green-700 rounded text-xs hover:bg-green-200"
                         >
                             📋 Refresh Rules
                         </button>
-                        <button 
+                        <button
                             onClick={fixLocalStorage}
                             className="px-3 py-1 bg-purple-100 text-purple-700 rounded text-xs hover:bg-purple-200"
                         >
@@ -965,12 +963,11 @@ const ClinicalRulesAdmin = () => {
                                                         <span className={`px-2 py-1 text-xs rounded ${typeInfo.color}`}>
                                                             {typeInfo.label}
                                                         </span>
-                                                        <span className={`px-2 py-1 text-xs rounded ${
-                                                            rule.severity === 'critical' ? 'bg-red-100 text-red-800' :
+                                                        <span className={`px-2 py-1 text-xs rounded ${rule.severity === 'critical' ? 'bg-red-100 text-red-800' :
                                                             rule.severity === 'high' ? 'bg-orange-100 text-orange-800' :
-                                                            rule.severity === 'moderate' ? 'bg-yellow-100 text-yellow-800' :
-                                                            'bg-blue-100 text-blue-800'
-                                                        }`}>
+                                                                rule.severity === 'moderate' ? 'bg-yellow-100 text-yellow-800' :
+                                                                    'bg-blue-100 text-blue-800'
+                                                            }`}>
                                                             {rule.severity}
                                                         </span>
                                                     </div>
@@ -1005,7 +1002,7 @@ const ClinicalRulesAdmin = () => {
                                     const ruleTypeInfo = getRuleTypeInfo(rule.rule_type);
                                     const severityInfo = getSeverityInfo(rule.severity);
                                     const Icon = ruleTypeInfo.icon;
-                                    
+
                                     return (
                                         <tr key={rule.id} className="border-b hover:bg-gray-50">
                                             <td className="p-3">
@@ -1105,8 +1102,8 @@ const ClinicalRulesAdmin = () => {
                     <FaLock className="text-4xl text-gray-300 mx-auto mb-3" />
                     <h3 className="text-lg font-medium text-gray-700 mb-2">Authentication Required</h3>
                     <p className="text-gray-600 mb-4">Please log in to access the Clinical Rules Administration</p>
-                    <a 
-                        href="/login" 
+                    <a
+                        href="/login"
                         className="inline-block bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-2 rounded-lg"
                     >
                         Go to Login
@@ -1146,7 +1143,7 @@ const ClinicalRulesAdmin = () => {
                                     <input
                                         type="text"
                                         value={formData.rule_name}
-                                        onChange={(e) => setFormData({...formData, rule_name: e.target.value})}
+                                        onChange={(e) => setFormData({ ...formData, rule_name: e.target.value })}
                                         className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                                         placeholder="e.g., ACE Inhibitor + NSAID Interaction"
                                         required
@@ -1159,7 +1156,7 @@ const ClinicalRulesAdmin = () => {
                                     </label>
                                     <select
                                         value={formData.rule_type}
-                                        onChange={(e) => setFormData({...formData, rule_type: e.target.value})}
+                                        onChange={(e) => setFormData({ ...formData, rule_type: e.target.value })}
                                         className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                                         required
                                     >
@@ -1177,7 +1174,7 @@ const ClinicalRulesAdmin = () => {
                                     </label>
                                     <select
                                         value={formData.severity}
-                                        onChange={(e) => setFormData({...formData, severity: e.target.value})}
+                                        onChange={(e) => setFormData({ ...formData, severity: e.target.value })}
                                         className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                                         required
                                     >
@@ -1195,7 +1192,7 @@ const ClinicalRulesAdmin = () => {
                                     </label>
                                     <select
                                         value={formData.dtp_category}
-                                        onChange={(e) => setFormData({...formData, dtp_category: e.target.value})}
+                                        onChange={(e) => setFormData({ ...formData, dtp_category: e.target.value })}
                                         className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                                     >
                                         <option value="">Select Category</option>
@@ -1214,7 +1211,7 @@ const ClinicalRulesAdmin = () => {
                                 </label>
                                 <textarea
                                     value={formData.rule_description}
-                                    onChange={(e) => setFormData({...formData, rule_description: e.target.value})}
+                                    onChange={(e) => setFormData({ ...formData, rule_description: e.target.value })}
                                     rows="2"
                                     className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                                     placeholder="Brief description of what this rule checks..."
@@ -1238,20 +1235,19 @@ const ClinicalRulesAdmin = () => {
                                     value={formData.rule_condition}
                                     onChange={(e) => {
                                         const value = e.target.value;
-                                        setFormData({...formData, rule_condition: value});
+                                        setFormData({ ...formData, rule_condition: value });
                                         if (validateJson(value)) {
                                             setFormError('');
                                         }
                                     }}
                                     onBlur={(e) => {
                                         if (validateJson(e.target.value)) {
-                                            setFormData({...formData, rule_condition: formatJson(e.target.value)});
+                                            setFormData({ ...formData, rule_condition: formatJson(e.target.value) });
                                         }
                                     }}
                                     rows="8"
-                                    className={`w-full border rounded-lg p-3 font-mono text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${
-                                        validateJson(formData.rule_condition) ? 'border-gray-300' : 'border-red-300'
-                                    }`}
+                                    className={`w-full border rounded-lg p-3 font-mono text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${validateJson(formData.rule_condition) ? 'border-gray-300' : 'border-red-300'
+                                        }`}
                                     placeholder={`Example for age-in-days check:
 {
   "all": [
@@ -1283,14 +1279,14 @@ const ClinicalRulesAdmin = () => {
                                         <code className="bg-blue-100 px-2 py-1 rounded">is_child</code>
                                         <code className="bg-blue-100 px-2 py-1 rounded">is_adolescent</code>
                                         <code className="bg-blue-100 px-2 py-1 rounded">patient_type</code>
-                                        
+
                                         {/* Medical Facts */}
                                         <code className="bg-gray-100 px-2 py-1 rounded">medications</code>
                                         <code className="bg-gray-100 px-2 py-1 rounded">allergies</code>
                                         <code className="bg-gray-100 px-2 py-1 rounded">conditions</code>
                                         <code className="bg-gray-100 px-2 py-1 rounded">pregnancy</code>
                                         <code className="bg-gray-100 px-2 py-1 rounded">pregnancy_weeks</code>
-                                        
+
                                         {/* Lab Facts */}
                                         <code className="bg-gray-100 px-2 py-1 rounded">labs.creatinine</code>
                                         <code className="bg-gray-100 px-2 py-1 rounded">labs.blood_sugar</code>
@@ -1301,7 +1297,7 @@ const ClinicalRulesAdmin = () => {
                                         <code className="bg-gray-100 px-2 py-1 rounded">labs.inr</code>
                                         <code className="bg-gray-100 px-2 py-1 rounded">labs.hba1c</code>
                                         <code className="bg-gray-100 px-2 py-1 rounded">labs.egfr</code>
-                                        
+
                                         {/* Vital Signs */}
                                         <code className="bg-gray-100 px-2 py-1 rounded">weight</code>
                                         <code className="bg-gray-100 px-2 py-1 rounded">height</code>
@@ -1347,20 +1343,19 @@ const ClinicalRulesAdmin = () => {
                                     value={formData.rule_action}
                                     onChange={(e) => {
                                         const value = e.target.value;
-                                        setFormData({...formData, rule_action: value});
+                                        setFormData({ ...formData, rule_action: value });
                                         if (validateJson(value)) {
                                             setFormError('');
                                         }
                                     }}
                                     onBlur={(e) => {
                                         if (validateJson(e.target.value)) {
-                                            setFormData({...formData, rule_action: formatJson(e.target.value)});
+                                            setFormData({ ...formData, rule_action: formatJson(e.target.value) });
                                         }
                                     }}
                                     rows="8"
-                                    className={`w-full border rounded-lg p-3 font-mono text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${
-                                        validateJson(formData.rule_action) ? 'border-gray-300' : 'border-red-300'
-                                    }`}
+                                    className={`w-full border rounded-lg p-3 font-mono text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${validateJson(formData.rule_action) ? 'border-gray-300' : 'border-red-300'
+                                        }`}
                                     placeholder={`Example with variables:
 {
   "message": "Pediatric medication alert for {{age_in_days}} day old patient",
@@ -1390,7 +1385,7 @@ const ClinicalRulesAdmin = () => {
                                                         const newAppliesTo = e.target.checked
                                                             ? [...formData.applies_to, option.value]
                                                             : formData.applies_to.filter(v => v !== option.value);
-                                                        setFormData({...formData, applies_to: newAppliesTo});
+                                                        setFormData({ ...formData, applies_to: newAppliesTo });
                                                     }}
                                                     className="h-4 w-4 text-purple-600"
                                                 />
@@ -1405,7 +1400,7 @@ const ClinicalRulesAdmin = () => {
                                         <input
                                             type="checkbox"
                                             checked={formData.is_active}
-                                            onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
+                                            onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
                                             className="h-5 w-5 text-purple-600 focus:ring-purple-500"
                                         />
                                         <span className="text-sm font-medium text-gray-700">Active Rule</span>

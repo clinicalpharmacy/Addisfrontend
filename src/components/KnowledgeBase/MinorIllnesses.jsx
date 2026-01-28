@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import supabase from '../../utils/supabase';
-import { 
-    FaThermometerHalf, 
-    FaPlus, 
-    FaSearch, 
+import {
+    FaThermometerHalf,
+    FaPlus,
+    FaSearch,
     FaStethoscope,
     FaCapsules,
     FaExclamationTriangle,
@@ -97,7 +97,7 @@ const MinorIllnesses = () => {
                 setTimeout(() => setError(''), 3000);
                 return false;
             }
-            
+
             // Disable print shortcuts
             if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
                 e.preventDefault();
@@ -105,7 +105,7 @@ const MinorIllnesses = () => {
                 setTimeout(() => setError(''), 3000);
                 return false;
             }
-            
+
             if (e.key === 'PrintScreen' || e.key === 'F12') {
                 e.preventDefault();
                 setError('Screenshots are disabled to protect medical information.');
@@ -135,7 +135,7 @@ const MinorIllnesses = () => {
                 }
             `;
             document.head.appendChild(style);
-            
+
             return () => {
                 const styleEl = document.getElementById('prevent-copy-illnesses');
                 if (styleEl) {
@@ -231,9 +231,9 @@ const MinorIllnesses = () => {
                 .from('minor_illnesses')
                 .select('*')
                 .order('name');
-            
+
             if (error) throw error;
-            
+
             if (data) {
                 setIllnesses(data);
                 setFilteredIllnesses(data);
@@ -249,15 +249,15 @@ const MinorIllnesses = () => {
     const handleSearch = (term) => {
         setSearchTerm(term);
         let filtered = illnesses;
-        
+
         if (term) {
-            filtered = filtered.filter(illness => 
+            filtered = filtered.filter(illness =>
                 illness.name.toLowerCase().includes(term.toLowerCase()) ||
                 (illness.amharic_name && illness.amharic_name.toLowerCase().includes(term.toLowerCase())) ||
                 (illness.presentation && illness.presentation.toLowerCase().includes(term.toLowerCase()))
             );
         }
-        
+
         setFilteredIllnesses(filtered);
     };
 
@@ -276,7 +276,7 @@ const MinorIllnesses = () => {
     // ADD/EDIT ILLNESS - ADMIN ONLY
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         if (!isAdmin) {
             setError('Only administrators can add or edit illnesses');
             setTimeout(() => setError(''), 3000);
@@ -330,7 +330,7 @@ const MinorIllnesses = () => {
 
             fetchIllnesses();
             resetForm();
-            
+
         } catch (err) {
             console.error('Error saving illness:', err);
             setError('Error: ' + err.message);
@@ -378,7 +378,7 @@ const MinorIllnesses = () => {
 
             setSuccess('Illness deleted successfully!');
             fetchIllnesses();
-            
+
             setTimeout(() => setSuccess(''), 3000);
         } catch (err) {
             console.error('Error deleting illness:', err);
@@ -412,7 +412,7 @@ const MinorIllnesses = () => {
     }
 
     return (
-        <div 
+        <div
             className="min-h-screen bg-gray-50"
             onCopy={disableCopyPaste}
             onCut={disableCopyPaste}
@@ -430,7 +430,11 @@ const MinorIllnesses = () => {
                                 <h1 className="text-3xl font-bold text-gray-900">Minor Illnesses Guide</h1>
                                 <p className="text-gray-600 mt-1">
                                     Common minor illnesses and their management ({illnesses.length} illnesses)
-                                    {!isAdmin && (
+                                    {user?.role === 'company_admin' ? (
+                                        <span className="ml-2 text-sm bg-purple-100 text-purple-800 px-2 py-1 rounded">
+                                            <FaLock className="inline mr-1" /> Company Admin - View Only
+                                        </span>
+                                    ) : !isAdmin && (
                                         <span className="ml-2 text-sm bg-gray-100 text-gray-800 px-2 py-1 rounded">
                                             <FaLock className="inline mr-1" /> View Only
                                         </span>
@@ -443,11 +447,10 @@ const MinorIllnesses = () => {
                             {isAdmin && (
                                 <button
                                     onClick={toggleProtection}
-                                    className={`px-4 py-2 rounded-lg flex items-center gap-2 text-sm ${
-                                        protectionEnabled 
-                                            ? 'bg-red-500 hover:bg-red-600 text-white' 
+                                    className={`px-4 py-2 rounded-lg flex items-center gap-2 text-sm ${protectionEnabled
+                                            ? 'bg-red-500 hover:bg-red-600 text-white'
                                             : 'bg-green-500 hover:bg-green-600 text-white'
-                                    }`}
+                                        }`}
                                     title={protectionEnabled ? 'Disable Copy/Print Protection' : 'Enable Copy/Print Protection'}
                                 >
                                     {protectionEnabled ? <FaBan /> : <FaShieldAlt />}
@@ -498,7 +501,7 @@ const MinorIllnesses = () => {
                     </div>
                 )}
 
-          
+
                 {/* Search and Filter */}
                 <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -515,7 +518,7 @@ const MinorIllnesses = () => {
                                 onPaste={disableCopyPaste}
                             />
                         </div>
-                        
+
                         <div>
                             <select
                                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500"
@@ -529,7 +532,7 @@ const MinorIllnesses = () => {
                                 ))}
                             </select>
                         </div>
-                        
+
                         {/* Only show add button for admins */}
                         {isAdmin && (
                             <button
@@ -540,7 +543,7 @@ const MinorIllnesses = () => {
                             </button>
                         )}
                     </div>
-                    
+
                     <div className="mt-4 text-sm text-gray-500">
                         Showing {filteredIllnesses.length} of {illnesses.length} illnesses
                         {!isAdmin && ' (Read-only mode)'}
@@ -552,8 +555,8 @@ const MinorIllnesses = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {filteredIllnesses.length > 0 ? (
                         filteredIllnesses.map((illness) => (
-                            <div 
-                                key={illness.id} 
+                            <div
+                                key={illness.id}
                                 className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 illness-content"
                                 onCopy={disableCopyPaste}
                                 onCut={disableCopyPaste}
@@ -637,7 +640,7 @@ const MinorIllnesses = () => {
                             <FaBookMedical className="text-5xl text-gray-300 mx-auto mb-4" />
                             <h3 className="text-xl font-medium text-gray-800 mb-2">No Illnesses Found</h3>
                             <p className="text-gray-500 max-w-md mx-auto mb-6">
-                                {searchTerm 
+                                {searchTerm
                                     ? 'No illnesses match your search. Try a different term.'
                                     : 'No minor illnesses added yet.'}
                             </p>
@@ -691,8 +694,8 @@ const MinorIllnesses = () => {
                             </div>
                         </div>
                         <div className="mt-4 text-center text-sm text-gray-500">
-                            {isAdmin 
-                                ? 'Administrator Mode - Full access' 
+                            {isAdmin
+                                ? 'Administrator Mode - Full access'
                                 : `User Mode - View only (${protectionEnabled ? 'Copy/Print disabled' : 'Copy allowed'})`}
                             {isAdmin && (
                                 <button
@@ -734,7 +737,7 @@ const MinorIllnesses = () => {
                                             <input
                                                 type="text"
                                                 value={formData.name}
-                                                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500"
                                                 placeholder="e.g., Common Cold"
                                                 required
@@ -749,7 +752,7 @@ const MinorIllnesses = () => {
                                             <input
                                                 type="text"
                                                 value={formData.amharic_name}
-                                                onChange={(e) => setFormData({...formData, amharic_name: e.target.value})}
+                                                onChange={(e) => setFormData({ ...formData, amharic_name: e.target.value })}
                                                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500"
                                                 placeholder="እምቢልታ"
                                                 disabled={saving}
@@ -763,7 +766,7 @@ const MinorIllnesses = () => {
                                         </label>
                                         <textarea
                                             value={formData.presentation}
-                                            onChange={(e) => setFormData({...formData, presentation: e.target.value})}
+                                            onChange={(e) => setFormData({ ...formData, presentation: e.target.value })}
                                             rows="4"
                                             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500"
                                             placeholder="Describe symptoms, signs, duration..."
@@ -778,7 +781,7 @@ const MinorIllnesses = () => {
                                         </label>
                                         <textarea
                                             value={formData.folk_medicine}
-                                            onChange={(e) => setFormData({...formData, folk_medicine: e.target.value})}
+                                            onChange={(e) => setFormData({ ...formData, folk_medicine: e.target.value })}
                                             rows="3"
                                             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500"
                                             placeholder="Traditional remedies..."
@@ -792,7 +795,7 @@ const MinorIllnesses = () => {
                                         </label>
                                         <textarea
                                             value={formData.otc_drug}
-                                            onChange={(e) => setFormData({...formData, otc_drug: e.target.value})}
+                                            onChange={(e) => setFormData({ ...formData, otc_drug: e.target.value })}
                                             rows="3"
                                             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500"
                                             placeholder="Over-the-counter medications..."
@@ -806,7 +809,7 @@ const MinorIllnesses = () => {
                                         </label>
                                         <textarea
                                             value={formData.for_pharmacists}
-                                            onChange={(e) => setFormData({...formData, for_pharmacists: e.target.value})}
+                                            onChange={(e) => setFormData({ ...formData, for_pharmacists: e.target.value })}
                                             rows="3"
                                             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500"
                                             placeholder="Professional advice for pharmacists..."

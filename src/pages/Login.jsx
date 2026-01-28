@@ -1,22 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-    FaUserMd, FaLock, FaExclamationTriangle, FaSignInAlt, 
-    FaSpinner, FaUserCheck, FaBuilding 
+import {
+    FaUserMd, FaLock, FaExclamationTriangle, FaSignInAlt,
+    FaSpinner, FaUserCheck, FaBuilding
 } from 'react-icons/fa';
 
 // IMPORTANT: Update this URL to your actual backend URL
 // If using Vercel, it might be: https://pharmacare-backend.vercel.app
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+import api from '../utils/api';
 
 const Login = () => {
     const navigate = useNavigate();
-    
+
     const [formData, setFormData] = useState({
         email: '',
         password: ''
     });
-    
+
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -24,11 +25,11 @@ const Login = () => {
 
     useEffect(() => {
         checkBackendStatus();
-        
+
         // Check if user is already logged in
         const token = localStorage.getItem('token');
         const userRole = localStorage.getItem('userRole');
-        
+
         if (token) {
             // Redirect based on role
             if (userRole === 'admin') {
@@ -42,20 +43,10 @@ const Login = () => {
     const checkBackendStatus = async () => {
         try {
             console.log('🔍 Checking backend connection...');
-            const response = await fetch(`${API_URL}/health`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            });
-            
-            if (response.ok) {
-                setBackendStatus('online');
-                console.log('✅ Backend is online');
-            } else {
-                setBackendStatus('offline');
-                console.log('❌ Backend health check failed');
-            }
+            // Using api utility
+            await api.get('/health');
+            setBackendStatus('online');
+            console.log('✅ Backend is online');
         } catch (error) {
             console.error('❌ Error checking backend:', error);
             setBackendStatus('offline');
@@ -75,31 +66,12 @@ const Login = () => {
 
         try {
             console.log('🔐 Attempting login for:', formData.email);
-            
-            const response = await fetch(`${API_URL}/auth/login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 
-                    email: formData.email.trim().toLowerCase(),
-                    password: formData.password.trim() 
-                })
+
+            // Using centralized api utility
+            const data = await api.post('/auth/login', {
+                email: formData.email.trim().toLowerCase(),
+                password: formData.password.trim()
             });
-
-            const data = await response.json();
-            
-            if (!response.ok) {
-                // Handle specific error cases
-                if (data.error?.includes('pending approval')) {
-                    throw new Error('Your account is pending admin approval. Please wait for approval.');
-                }
-                throw new Error(data.error || data.message || 'Login failed');
-            }
-
-            if (!data.success) {
-                throw new Error(data.error || 'Login failed');
-            }
 
             console.log('✅ Login successful:', data);
 
@@ -110,34 +82,22 @@ const Login = () => {
                 localStorage.setItem('userRole', data.user.role || '');
                 localStorage.setItem('userId', data.user.id || '');
                 localStorage.setItem('userType', data.user_type || data.user.account_type || 'individual');
-            }
 
-            // Verify the token works
-            try {
-                const verifyResponse = await fetch(`${API_URL}/auth/me`, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${data.token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                if (verifyResponse.ok) {
-                    console.log('✅ Token verified successfully');
-                }
-            } catch (verifyError) {
-                console.warn('⚠️ Token verification failed:', verifyError);
+                // Store subscription info
+                localStorage.setItem('subscription_status', data.user.subscription_status || 'inactive');
+                localStorage.setItem('subscription_end_date', data.user.subscription_end_date || '');
+                localStorage.setItem('has_subscription', data.user.subscription_status === 'active' ? 'true' : 'false');
             }
 
             // Redirect based on role
             const role = data.user?.role;
             const accountType = data.user?.account_type;
-            
+
             console.log('🔄 Redirecting user:', { role, accountType });
-            
+
             if (role === 'admin') {
                 navigate('/admin/dashboard');
-            } else if (accountType === 'company_user') {
+            } else if (accountType === 'company_user' || data.user_type === 'company_user') {
                 navigate('/company/dashboard');
             } else {
                 navigate('/dashboard');
@@ -145,7 +105,7 @@ const Login = () => {
 
         } catch (err) {
             console.error('❌ Login error:', err);
-            setError(err.message || 'Login failed. Please check your credentials and try again.');
+            setError(err.error || err.message || 'Login failed. Please check your credentials and try again.');
         } finally {
             setLoading(false);
         }
@@ -155,7 +115,7 @@ const Login = () => {
     const testLogin = async (email, password) => {
         setFormData({ email, password });
         console.log(`🧪 Testing login with: ${email}`);
-        
+
         // Auto-submit after 1 second
         setTimeout(() => {
             handleSubmit(new Event('submit'));
@@ -175,17 +135,15 @@ const Login = () => {
                 </div>
 
                 {/* Status Indicator */}
-                <div className={`mb-6 flex items-center justify-center gap-2 px-4 py-2 rounded-full ${
-                    backendStatus === 'online' ? 'bg-green-100 text-green-800' : 
+                <div className={`mb-6 flex items-center justify-center gap-2 px-4 py-2 rounded-full ${backendStatus === 'online' ? 'bg-green-100 text-green-800' :
                     backendStatus === 'offline' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
-                }`}>
-                    <div className={`w-2 h-2 rounded-full ${
-                        backendStatus === 'online' ? 'bg-green-500' : 
+                    }`}>
+                    <div className={`w-2 h-2 rounded-full ${backendStatus === 'online' ? 'bg-green-500' :
                         backendStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-500'
-                    } ${backendStatus === 'checking' ? 'animate-pulse' : ''}`}></div>
+                        } ${backendStatus === 'checking' ? 'animate-pulse' : ''}`}></div>
                     <span className="text-sm font-medium">
-                        {backendStatus === 'online' ? 'System Online' : 
-                         backendStatus === 'offline' ? 'System Offline' : 'Checking System...'}
+                        {backendStatus === 'online' ? 'System Online' :
+                            backendStatus === 'offline' ? 'System Offline' : 'Checking System...'}
                     </span>
                 </div>
 
@@ -220,7 +178,7 @@ const Login = () => {
                                 <input
                                     type="email"
                                     value={formData.email}
-                                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                                     placeholder="your@email.com"
                                     required
@@ -248,7 +206,7 @@ const Login = () => {
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     value={formData.password}
-                                    onChange={(e) => setFormData({...formData, password: e.target.value})}
+                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition pr-10"
                                     placeholder="Enter your password"
                                     required
@@ -264,11 +222,10 @@ const Login = () => {
                         <button
                             type="submit"
                             disabled={loading || backendStatus === 'offline'}
-                            className={`w-full py-3 px-4 rounded-xl font-medium transition ${
-                                loading || backendStatus === 'offline'
-                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                    : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl'
-                            }`}
+                            className={`w-full py-3 px-4 rounded-xl font-medium transition ${loading || backendStatus === 'offline'
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl'
+                                }`}
                         >
                             {loading ? (
                                 <span className="flex items-center justify-center gap-2">

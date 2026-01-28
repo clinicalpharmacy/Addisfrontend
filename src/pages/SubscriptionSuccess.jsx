@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { 
-    FaCheckCircle, 
+import {
+    FaCheckCircle,
     FaDownload,
     FaHome,
     FaLock,
@@ -11,6 +11,7 @@ import {
     FaPhone,
     FaEnvelope
 } from 'react-icons/fa';
+import api from '../utils/api';
 
 const SubscriptionSuccess = () => {
     const navigate = useNavigate();
@@ -44,24 +45,42 @@ const SubscriptionSuccess = () => {
 
             // If status parameter exists, use it. Otherwise assume success
             const paymentSuccessful = status === 'success' || !status;
-            
+
             if (paymentSuccessful) {
                 try {
                     setVerifying(true);
-                    // Try to verify with backend
-                    const response = await fetch(`http://localhost:3000/api/payments/verify/${tx_ref}`);
-                    if (response.ok) {
-                        const data = await response.json();
-                        setPaymentData(data.payment);
+                    // FIXED: Corrected URL path to match backend
+                    const data = await api.get(`/payments/${tx_ref}/verify`);
+
+                    if (data.success && data.status === 'paid') {
+                        setPaymentData(data.payment || data);
+
+                        // Update localStorage flags for immediate UI feedback
+                        localStorage.setItem('subscription_status', 'active');
+                        localStorage.setItem('has_subscription', 'true');
+                        if (data.payment?.subscription_end_date) {
+                            localStorage.setItem('subscription_end_date', data.payment.subscription_end_date);
+                        }
+
+                        // If authenticated, refresh user data
+                        if (localStorage.getItem('token')) {
+                            try {
+                                const authData = await api.get('/auth/me');
+                                if (authData.success && authData.user) {
+                                    localStorage.setItem('user', JSON.stringify(authData.user));
+                                    // Update specific flags from user object too
+                                    localStorage.setItem('subscription_status', authData.user.subscription_status || 'active');
+                                    localStorage.setItem('subscription_end_date', authData.user.subscription_end_date || '');
+                                }
+                            } catch (authErr) {
+                                console.error('Error refreshing user after payment:', authErr);
+                            }
+                        }
                     } else {
-                        // If backend verification fails, still show success with available data
-                        setPaymentData({
-                            tx_ref: tx_ref,
-                            status: 'pending_verification',
-                            created_at: new Date().toISOString()
-                        });
+                        setPaymentData(data.payment || data);
                     }
                 } catch (err) {
+                    console.error('Verification error:', err);
                     console.log('Using fallback payment data');
                     setPaymentData({
                         tx_ref: tx_ref,
@@ -74,7 +93,7 @@ const SubscriptionSuccess = () => {
             } else {
                 setError('Payment was not completed successfully.');
             }
-            
+
             setLoading(false);
         };
 
@@ -127,9 +146,16 @@ Support: support@addismed.com
     };
 
     const goToLogin = () => {
+        // If user is already logged in, just go to dashboard
+        const activeUser = localStorage.getItem('user');
+        if (activeUser) {
+            navigate('/dashboard');
+            return;
+        }
+
         navigate('/login', {
             state: {
-                message: 'Payment received! Your account is pending admin approval.',
+                message: 'Payment received! Your account subscription is being updated.',
                 tx_ref: tx_ref
             }
         });
@@ -174,7 +200,7 @@ Support: support@addismed.com
                     </div>
                     <h2 className="text-2xl font-bold text-gray-800 mb-2 text-center">Payment Status</h2>
                     <p className="text-gray-600 mb-6 text-center">{error}</p>
-                    
+
                     {tx_ref && (
                         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
                             <div className="flex justify-between items-center">
@@ -192,7 +218,7 @@ Support: support@addismed.com
                             <p className="text-xs text-yellow-600 mt-2">Please save this ID and contact support.</p>
                         </div>
                     )}
-                    
+
                     <div className="space-y-3">
                         <button
                             onClick={contactSupport}
@@ -225,7 +251,7 @@ Support: support@addismed.com
                     </div>
                     <h1 className="text-3xl font-bold text-gray-800 mb-2">Payment Received!</h1>
                     <p className="text-gray-600">Thank you for your payment</p>
-                    
+
                     <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-800 rounded-full text-sm font-medium mt-4">
                         <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                         Payment Confirmed
@@ -248,9 +274,13 @@ Support: support@addismed.com
                                     </div>
                                 </div>
                                 <div>
-                                    <p className="text-blue-800 font-bold text-lg">Processing Your Account</p>
+                                    <p className="text-blue-800 font-bold text-lg">
+                                        {localStorage.getItem('user') ? 'Updating Subscription' : 'Processing Your Account'}
+                                    </p>
                                     <p className="text-blue-600 text-sm mt-1">
-                                        Your payment is being processed. Account activation usually takes 24-48 hours.
+                                        {localStorage.getItem('user')
+                                            ? 'Your subscription is being updated. This may take a few moments to reflect in your account.'
+                                            : 'Your payment is being processed. Account activation usually takes 24-48 hours.'}
                                     </p>
                                 </div>
                             </div>
@@ -278,7 +308,7 @@ Support: support@addismed.com
                                     Save this ID for future reference
                                 </p>
                             </div>
-                            
+
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <p className="text-sm text-gray-600 mb-1">Date</p>
@@ -293,7 +323,7 @@ Support: support@addismed.com
                                     </p>
                                 </div>
                             </div>
-                            
+
                             {paymentData && (
                                 <div className="mt-4 pt-4 border-t border-gray-200">
                                     <p className="text-sm text-gray-600 mb-2">Additional Information:</p>
@@ -343,15 +373,15 @@ Support: support@addismed.com
                         <FaDownload />
                         Download Payment Confirmation
                     </button>
-                    
+
                     <button
                         onClick={goToLogin}
                         className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium py-4 px-4 rounded-xl transition flex items-center justify-center gap-3"
                     >
                         <FaLock />
-                        Go to Login Page
+                        {localStorage.getItem('user') ? 'Go to Dashboard' : 'Go to Login Page'}
                     </button>
-                    
+
                     <button
                         onClick={() => navigate('/')}
                         className="w-full bg-white hover:bg-gray-50 text-gray-700 font-medium py-4 px-4 rounded-xl transition flex items-center justify-center gap-3 border border-gray-300"

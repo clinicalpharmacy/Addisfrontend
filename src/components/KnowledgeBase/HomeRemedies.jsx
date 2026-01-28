@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import supabase from '../../utils/supabase';
-import { 
-    FaHome, 
-    FaLeaf, 
-    FaSearch, 
-    FaPlus, 
+import {
+    FaHome,
+    FaLeaf,
+    FaSearch,
+    FaPlus,
     FaExclamationTriangle,
     FaLemon,
     FaTimes,
@@ -31,7 +31,7 @@ const HomeRemedies = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [protectionEnabled, setProtectionEnabled] = useState(true); // Protection ON by default
-    
+
     const [formData, setFormData] = useState({
         name: '',
         amharic_name: '',
@@ -86,7 +86,7 @@ const HomeRemedies = () => {
                 setTimeout(() => setError(''), 3000);
                 return false;
             }
-            
+
             // Disable print shortcuts
             if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
                 e.preventDefault();
@@ -94,7 +94,7 @@ const HomeRemedies = () => {
                 setTimeout(() => setError(''), 3000);
                 return false;
             }
-            
+
             if (e.key === 'PrintScreen' || e.key === 'F12') {
                 e.preventDefault();
                 setError('Screenshots are disabled to protect proprietary information.');
@@ -124,7 +124,7 @@ const HomeRemedies = () => {
                 }
             `;
             document.head.appendChild(style);
-            
+
             return () => {
                 const styleEl = document.getElementById('prevent-copy-remedies');
                 if (styleEl) {
@@ -220,7 +220,7 @@ const HomeRemedies = () => {
                 .from('home_remedies')
                 .select('*')
                 .order('name');
-            
+
             if (!error && data) {
                 setRemedies(data);
                 setFilteredRemedies(data);
@@ -238,7 +238,7 @@ const HomeRemedies = () => {
 
     const handleSearch = (term) => {
         setSearchTerm(term);
-        const filtered = remedies.filter(remedy => 
+        const filtered = remedies.filter(remedy =>
             remedy.name.toLowerCase().includes(term.toLowerCase()) ||
             remedy.amharic_name?.toLowerCase().includes(term.toLowerCase()) ||
             remedy.home_remedies.toLowerCase().includes(term.toLowerCase()) ||
@@ -361,7 +361,7 @@ const HomeRemedies = () => {
     }
 
     return (
-        <div 
+        <div
             className="min-h-screen bg-gray-50"
             onCopy={disableCopyPaste}
             onCut={disableCopyPaste}
@@ -379,7 +379,11 @@ const HomeRemedies = () => {
                                 <h1 className="text-3xl font-bold text-gray-900">Home Remedies Knowledge Base</h1>
                                 <p className="text-gray-600 mt-1">
                                     Traditional and natural remedies for common ailments ({remedies.length} remedies)
-                                    {!isAdmin && (
+                                    {user?.role === 'company_admin' ? (
+                                        <span className="ml-2 text-sm bg-purple-100 text-purple-800 px-2 py-1 rounded">
+                                            <FaLock className="inline mr-1" /> Company Admin - View Only
+                                        </span>
+                                    ) : !isAdmin && (
                                         <span className="ml-2 text-sm bg-gray-100 text-gray-800 px-2 py-1 rounded">
                                             <FaLock className="inline mr-1" /> View Only
                                         </span>
@@ -392,11 +396,10 @@ const HomeRemedies = () => {
                             {isAdmin && (
                                 <button
                                     onClick={toggleProtection}
-                                    className={`px-4 py-2 rounded-lg flex items-center gap-2 text-sm ${
-                                        protectionEnabled 
-                                            ? 'bg-red-500 hover:bg-red-600 text-white' 
+                                    className={`px-4 py-2 rounded-lg flex items-center gap-2 text-sm ${protectionEnabled
+                                            ? 'bg-red-500 hover:bg-red-600 text-white'
                                             : 'bg-green-500 hover:bg-green-600 text-white'
-                                    }`}
+                                        }`}
                                     title={protectionEnabled ? 'Disable Copy/Print Protection' : 'Enable Copy/Print Protection'}
                                 >
                                     {protectionEnabled ? <FaBan /> : <FaShieldAlt />}
@@ -443,7 +446,7 @@ const HomeRemedies = () => {
                 )}
 
                 {/* Protection Warning */}
-          
+
 
                 {/* Search and Filter */}
                 <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
@@ -461,7 +464,7 @@ const HomeRemedies = () => {
                                 onPaste={disableCopyPaste}
                             />
                         </div>
-                        
+
                         <div>
                             <select
                                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500"
@@ -475,7 +478,7 @@ const HomeRemedies = () => {
                                 ))}
                             </select>
                         </div>
-                        
+
                         {/* Only show add button for admins */}
                         {isAdmin && (
                             <button
@@ -486,7 +489,7 @@ const HomeRemedies = () => {
                             </button>
                         )}
                     </div>
-                    
+
                     <div className="mt-4 text-sm text-gray-500">
                         Showing {filteredRemedies.length} of {remedies.length} remedies
                         {!isAdmin && ' (Read-only mode)'}
@@ -518,7 +521,7 @@ const HomeRemedies = () => {
                                         <input
                                             type="text"
                                             value={formData.name}
-                                            onChange={(e) => setFormData({...formData, name: e.target.value})}
+                                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500"
                                             placeholder="e.g., Ginger Tea for Cold"
                                             required
@@ -533,7 +536,7 @@ const HomeRemedies = () => {
                                         <input
                                             type="text"
                                             value={formData.amharic_name}
-                                            onChange={(e) => setFormData({...formData, amharic_name: e.target.value})}
+                                            onChange={(e) => setFormData({ ...formData, amharic_name: e.target.value })}
                                             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500"
                                             placeholder="እምቢልታ"
                                             disabled={saving}
@@ -546,7 +549,7 @@ const HomeRemedies = () => {
                                         </label>
                                         <textarea
                                             value={formData.home_remedies}
-                                            onChange={(e) => setFormData({...formData, home_remedies: e.target.value})}
+                                            onChange={(e) => setFormData({ ...formData, home_remedies: e.target.value })}
                                             rows="4"
                                             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500"
                                             placeholder="Describe the remedy, ingredients, and preparation..."
@@ -561,7 +564,7 @@ const HomeRemedies = () => {
                                         </label>
                                         <textarea
                                             value={formData.medical_advise}
-                                            onChange={(e) => setFormData({...formData, medical_advise: e.target.value})}
+                                            onChange={(e) => setFormData({ ...formData, medical_advise: e.target.value })}
                                             rows="3"
                                             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500"
                                             placeholder="Any medical advice, precautions, or when to see a doctor..."
@@ -604,8 +607,8 @@ const HomeRemedies = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {filteredRemedies.length > 0 ? (
                         filteredRemedies.map((remedy, index) => (
-                            <div 
-                                key={remedy.id} 
+                            <div
+                                key={remedy.id}
                                 className={`border rounded-xl shadow-lg overflow-hidden ${getRemedyColor(index)} remedy-content`}
                                 onCopy={disableCopyPaste}
                                 onCut={disableCopyPaste}
@@ -669,7 +672,7 @@ const HomeRemedies = () => {
                             <FaLemon className="text-5xl text-gray-300 mx-auto mb-4" />
                             <h3 className="text-xl font-medium text-gray-800 mb-2">No Home Remedies Found</h3>
                             <p className="text-gray-500 max-w-md mx-auto mb-6">
-                                {searchTerm 
+                                {searchTerm
                                     ? 'No remedies match your search. Try a different term.'
                                     : 'No home remedies added yet.'}
                             </p>
@@ -723,8 +726,8 @@ const HomeRemedies = () => {
                             </div>
                         </div>
                         <div className="mt-4 text-center text-sm text-gray-500">
-                            {isAdmin 
-                                ? 'Administrator Mode - Full access' 
+                            {isAdmin
+                                ? 'Administrator Mode - Full access'
                                 : `User Mode - View only (${protectionEnabled ? 'Copy/Print disabled' : 'Copy allowed'})`}
                             {isAdmin && (
                                 <button

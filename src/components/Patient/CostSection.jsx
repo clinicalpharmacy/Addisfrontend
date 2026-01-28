@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import supabase from '../../utils/supabase';
+import api from '../../utils/api';
 import { FaMoneyBillWave, FaEdit, FaTrash, FaPlus, FaChevronDown, FaChevronUp, FaChartLine } from 'react-icons/fa';
 
 const CostSection = ({ patientCode }) => {
@@ -7,7 +7,7 @@ const CostSection = ({ patientCode }) => {
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [formData, setFormData] = useState({
-        analysis_type: 'medication', // incurred or reduced
+        analysis_type: 'medication',
         direct_costs: '',
         indirect_costs: '',
         cost_savings: '',
@@ -39,18 +39,13 @@ const CostSection = ({ patientCode }) => {
 
     const fetchCostEntries = async () => {
         try {
-            const { data, error } = await supabase
-                .from('cost_analyses')
-                .select('*')
-                .eq('patient_code', patientCode)
-                .order('analysis_date', { ascending: false });
+            const result = await api.get(`/costs/patient/${patientCode}`);
 
-            if (!error && data) {
-                // Transform data to match your UI format
-                const transformedData = data.map(cost => {
+            if (result.success && result.costs) {
+                const transformedData = result.costs.map(cost => {
                     const totalCost = parseFloat(cost.total_costs) || 0;
                     const costSavings = parseFloat(cost.cost_savings) || 0;
-                    
+
                     return {
                         id: cost.id,
                         type: totalCost > 0 ? 'incurred' : 'reduced',
@@ -76,108 +71,70 @@ const CostSection = ({ patientCode }) => {
         }
     };
 
-const saveCostEntry = async () => {
-    try {
-        setLoading(true);
-        
-        // Get token from localStorage for authentication
-        const token = localStorage.getItem('token');
-        if (!token) {
-            throw new Error('Please login to save cost analysis');
-        }
+    const saveCostEntry = async () => {
+        try {
+            setLoading(true);
 
-        // Get patient ID first (this returns the UUID)
-        const patientResponse = await fetch(`http://localhost:3000/api/patients/code/${patientCode}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
+            // Get patient info first to get patient_id
+            const patientResult = await api.get(`/patients/code/${patientCode}`);
+            const patientId = patientResult.patient?.id;
+
+            if (!patientId) throw new Error('Patient ID not found');
+
+            // Calculate totals
+            const directCosts = parseFloat(formData.direct_costs) || 0;
+            const indirectCosts = parseFloat(formData.indirect_costs) || 0;
+            const savings = parseFloat(formData.cost_savings) || 0;
+            const totalCosts = directCosts + indirectCosts;
+
+            // For cost reduction, total_costs can be negative
+            const isReduced = formData.analysis_type === 'reduced';
+            const finalTotalCosts = isReduced ? -savings : totalCosts;
+
+            // Calculate ROI if there are savings
+            const roi = savings > 0 && totalCosts > 0 ?
+                ((savings - totalCosts) / totalCosts * 100) : 0;
+
+            const costData = {
+                patient_id: patientId,
+                patient_code: patientCode,
+                analysis_date: formData.analysis_date,
+                analysis_type: formData.category || 'other',
+                direct_costs: directCosts,
+                indirect_costs: indirectCosts,
+                total_costs: finalTotalCosts,
+                cost_savings: savings,
+                roi: roi,
+                cost_per_outcome: totalCosts > 0 ? totalCosts : 0,
+                currency: 'ETB',
+                methodology: formData.methodology || 'Standard cost analysis',
+                assumptions: formData.assumptions || '',
+                findings: formData.description || 'Cost analysis conducted',
+                recommendations: [],
+                analyzed_by: 'System User',
+                notes: formData.notes || ''
+            };
+
+            let result;
+            if (editingId) {
+                result = await api.put(`/costs/${editingId}`, costData);
+            } else {
+                result = await api.post('/costs', costData);
             }
-        });
 
-        if (!patientResponse.ok) {
-            throw new Error('Failed to fetch patient data');
+            if (result.success) {
+                alert(editingId ? 'Cost analysis updated successfully!' : 'Cost analysis added successfully!');
+                resetForm();
+                fetchCostEntries();
+            }
+        } catch (error) {
+            console.error('Error saving cost analysis:', error);
+            alert('Error saving cost analysis: ' + (error.message || error.error || 'Failed'));
+        } finally {
+            setLoading(false);
         }
+    };
 
-        const patientData = await patientResponse.json();
-        if (!patientData.success || !patientData.patient) {
-            throw new Error('Patient not found');
-        }
-
-        // Calculate totals
-        const directCosts = parseFloat(formData.direct_costs) || 0;
-        const indirectCosts = parseFloat(formData.indirect_costs) || 0;
-        const savings = parseFloat(formData.cost_savings) || 0;
-        const totalCosts = directCosts + indirectCosts;
-        
-        // For cost reduction, total_costs can be negative
-        const isReduced = formData.analysis_type === 'reduced';
-        const finalTotalCosts = isReduced ? -savings : totalCosts;
-
-        // Calculate ROI if there are savings
-        const roi = savings > 0 && totalCosts > 0 ? 
-            ((savings - totalCosts) / totalCosts * 100) : 0;
-
-        // ✅ FIXED: Don't send patient_id, let backend look it up
-        const costData = {
-            // Remove: patient_id: patientData.patient.id, // Don't send ID
-            patient_code: patientCode, // Send only patient_code
-            analysis_date: formData.analysis_date,
-            analysis_type: formData.category || 'other',
-            direct_costs: directCosts,
-            indirect_costs: indirectCosts,
-            total_costs: finalTotalCosts,
-            cost_savings: savings,
-            roi: roi,
-            cost_per_outcome: totalCosts > 0 ? totalCosts : 0,
-            currency: 'ETB',
-            methodology: formData.methodology || 'Standard cost analysis',
-            assumptions: formData.assumptions || '',
-            findings: formData.description || 'Cost analysis conducted',
-            recommendations: [],
-            analyzed_by: 'System User',
-            notes: formData.notes || ''
-        };
-
-        console.log('📤 Sending cost data to backend:', {
-            patient_code: costData.patient_code,
-            analysis_type: costData.analysis_type,
-            direct_costs: costData.direct_costs,
-            indirect_costs: costData.indirect_costs,
-            total_costs: costData.total_costs
-        });
-
-        // Use your backend API
-        const url = editingId 
-            ? `http://localhost:3000/api/costs/${editingId}`
-            : 'http://localhost:3000/api/costs';
-        
-        const method = editingId ? 'PUT' : 'POST';
-
-        const response = await fetch(url, {
-            method: method,
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(costData)
-        });
-
-        const result = await response.json();
-        
-        if (!response.ok) {
-            throw new Error(result.error || 'Failed to save cost analysis');
-        }
-
-        alert(editingId ? 'Cost analysis updated successfully!' : 'Cost analysis added successfully!');
-        resetForm();
-        fetchCostEntries();
-        
-    } catch (error) {
-        console.error('Error saving cost analysis:', error);
-        alert('Error saving cost analysis: ' + error.message);
-    } finally {
-        setLoading(false);
-    }
-};
     const handleEdit = (cost) => {
         setEditingId(cost.id);
         setFormData({
@@ -200,18 +157,14 @@ const saveCostEntry = async () => {
         if (!window.confirm('Are you sure you want to delete this cost analysis?')) return;
 
         try {
-            const { error } = await supabase
-                .from('cost_analyses')
-                .delete()
-                .eq('id', id);
-
-            if (error) throw error;
-
-            setCostEntries(prev => prev.filter(entry => entry.id !== id));
-            alert('Cost analysis deleted successfully!');
+            const result = await api.delete(`/costs/${id}`);
+            if (result.success) {
+                setCostEntries(prev => prev.filter(entry => entry.id !== id));
+                alert('Cost analysis deleted successfully!');
+            }
         } catch (error) {
             console.error('Error deleting cost analysis:', error);
-            alert('Error deleting cost analysis: ' + error.message);
+            alert('Error deleting cost analysis: ' + (error.message || error.error || 'Failed'));
         }
     };
 
@@ -343,14 +296,14 @@ const saveCostEntry = async () => {
                             <div className="flex gap-2">
                                 <button
                                     type="button"
-                                    onClick={() => setFormData({...formData, analysis_type: 'incurred'})}
+                                    onClick={() => setFormData({ ...formData, analysis_type: 'incurred' })}
                                     className={`flex-1 py-2 rounded-lg ${formData.analysis_type === 'incurred' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
                                 >
                                     Cost Incurred
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => setFormData({...formData, analysis_type: 'reduced'})}
+                                    onClick={() => setFormData({ ...formData, analysis_type: 'reduced' })}
                                     className={`flex-1 py-2 rounded-lg ${formData.analysis_type === 'reduced' ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'}`}
                                 >
                                     Cost Reduced/Savings
@@ -364,7 +317,7 @@ const saveCostEntry = async () => {
                             </label>
                             <select
                                 value={formData.category}
-                                onChange={(e) => setFormData({...formData, category: e.target.value})}
+                                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                                 className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-amber-500"
                             >
                                 <option value="">Select category</option>
@@ -381,7 +334,7 @@ const saveCostEntry = async () => {
                             <input
                                 type="number"
                                 value={formData.direct_costs}
-                                onChange={(e) => setFormData({...formData, direct_costs: e.target.value})}
+                                onChange={(e) => setFormData({ ...formData, direct_costs: e.target.value })}
                                 className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-amber-500"
                                 placeholder="0.00"
                                 min="0"
@@ -396,7 +349,7 @@ const saveCostEntry = async () => {
                             <input
                                 type="number"
                                 value={formData.indirect_costs}
-                                onChange={(e) => setFormData({...formData, indirect_costs: e.target.value})}
+                                onChange={(e) => setFormData({ ...formData, indirect_costs: e.target.value })}
                                 className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-amber-500"
                                 placeholder="0.00"
                                 min="0"
@@ -412,7 +365,7 @@ const saveCostEntry = async () => {
                                 <input
                                     type="number"
                                     value={formData.cost_savings}
-                                    onChange={(e) => setFormData({...formData, cost_savings: e.target.value})}
+                                    onChange={(e) => setFormData({ ...formData, cost_savings: e.target.value })}
                                     className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-amber-500"
                                     placeholder="0.00"
                                     min="0"
@@ -422,7 +375,7 @@ const saveCostEntry = async () => {
                                 <input
                                     type="text"
                                     value={formData.notes}
-                                    onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                                     className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-amber-500"
                                     placeholder="Additional notes..."
                                 />
@@ -436,7 +389,7 @@ const saveCostEntry = async () => {
                             <input
                                 type="date"
                                 value={formData.analysis_date}
-                                onChange={(e) => setFormData({...formData, analysis_date: e.target.value})}
+                                onChange={(e) => setFormData({ ...formData, analysis_date: e.target.value })}
                                 className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-amber-500"
                             />
                         </div>
@@ -448,7 +401,7 @@ const saveCostEntry = async () => {
                         </label>
                         <textarea
                             value={formData.description}
-                            onChange={(e) => setFormData({...formData, description: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                             rows="3"
                             className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-amber-500"
                             placeholder="Describe the cost analysis findings..."
@@ -463,7 +416,7 @@ const saveCostEntry = async () => {
                             </label>
                             <textarea
                                 value={formData.methodology}
-                                onChange={(e) => setFormData({...formData, methodology: e.target.value})}
+                                onChange={(e) => setFormData({ ...formData, methodology: e.target.value })}
                                 rows="2"
                                 className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-amber-500"
                                 placeholder="Analysis methodology used..."
@@ -476,7 +429,7 @@ const saveCostEntry = async () => {
                             </label>
                             <textarea
                                 value={formData.assumptions}
-                                onChange={(e) => setFormData({...formData, assumptions: e.target.value})}
+                                onChange={(e) => setFormData({ ...formData, assumptions: e.target.value })}
                                 rows="2"
                                 className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-amber-500"
                                 placeholder="Key assumptions made..."
@@ -527,7 +480,7 @@ const saveCostEntry = async () => {
                             Total: ETB {totals.incurred.toLocaleString()}
                         </p>
                     </div>
-                    
+
                     {showIncurred && (
                         <div className="p-4">
                             {incurredEntries.length === 0 ? (
@@ -614,7 +567,7 @@ const saveCostEntry = async () => {
                             Total Savings: ETB {totals.reduced.toLocaleString()}
                         </p>
                     </div>
-                    
+
                     {showReduced && (
                         <div className="p-4">
                             {reducedEntries.length === 0 ? (

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import supabase from '../../utils/supabase';
-import { 
-    FaFlask, 
-    FaPlus, 
+import {
+    FaFlask,
+    FaPlus,
     FaSearch,
     FaExclamationTriangle,
     FaEdit,
@@ -80,14 +80,14 @@ const ExtemporaneousPrep = () => {
                 alert('Copying is disabled. You can view but not copy this information.');
                 return false;
             }
-            
+
             // Disable print shortcuts
             if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
                 e.preventDefault();
                 alert('Printing is disabled. You can view but not print this information.');
                 return false;
             }
-            
+
             if (e.key === 'PrintScreen' || e.key === 'F12') {
                 e.preventDefault();
                 alert('Screenshots are disabled to protect proprietary information.');
@@ -116,7 +116,7 @@ const ExtemporaneousPrep = () => {
                 }
             `;
             document.head.appendChild(style);
-            
+
             return () => {
                 const styleEl = document.getElementById('prevent-copy');
                 if (styleEl) {
@@ -213,7 +213,7 @@ const ExtemporaneousPrep = () => {
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
-            
+
             if (data) {
                 setPreparations(data);
                 setFilteredPreparations(data);
@@ -234,7 +234,7 @@ const ExtemporaneousPrep = () => {
         let filtered = preparations;
 
         if (searchTerm.trim()) {
-            filtered = filtered.filter(prep => 
+            filtered = filtered.filter(prep =>
                 (prep.name && prep.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
                 (prep.use && prep.use.toLowerCase().includes(searchTerm.toLowerCase())) ||
                 (prep.materials && prep.materials.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -251,7 +251,7 @@ const ExtemporaneousPrep = () => {
     // SAVE PREPARATION - ADMIN ONLY
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         if (!isAdmin) {
             alert('Only administrators can add or edit preparations');
             return;
@@ -283,7 +283,7 @@ const ExtemporaneousPrep = () => {
             };
 
             let result;
-            
+
             if (editPrep) {
                 const { data, error } = await supabase
                     .from('extemporaneous_preparations')
@@ -310,7 +310,7 @@ const ExtemporaneousPrep = () => {
             setSuccess(message);
 
             await fetchPreparations();
-            
+
             setTimeout(() => {
                 resetForm();
             }, 1500);
@@ -360,10 +360,10 @@ const ExtemporaneousPrep = () => {
             if (error) throw error;
 
             setSuccess('Preparation deleted successfully!');
-            
+
             const updatedPreparations = preparations.filter(prep => prep.id !== id);
             setPreparations(updatedPreparations);
-            
+
             setTimeout(() => setSuccess(''), 3000);
 
         } catch (err) {
@@ -422,7 +422,7 @@ const ExtemporaneousPrep = () => {
 
             setSuccess('Sample preparations added!');
             fetchPreparations();
-            
+
         } catch (err) {
             console.error('Error adding sample data:', err);
             setError(`Failed: ${err.message}`);
@@ -457,7 +457,7 @@ const ExtemporaneousPrep = () => {
     }
 
     return (
-        <div 
+        <div
             className="min-h-screen bg-gray-50 p-4"
             onCopy={disableCopyPaste}
             onCut={disableCopyPaste}
@@ -475,14 +475,21 @@ const ExtemporaneousPrep = () => {
                                 <h1 className="text-2xl font-bold text-gray-800">Extemporaneous Preparations</h1>
                                 <p className="text-gray-600 text-sm">
                                     {preparations.length} formulas • Last updated: {new Date().toLocaleDateString()}
-                                    <span className={`ml-2 text-sm px-2 py-1 rounded ${
-                                        isAdmin 
-                                            ? 'bg-green-100 text-green-800' 
-                                            : 'bg-gray-100 text-gray-800'
-                                    }`}>
-                                        
-                                       
-                                    </span>
+                                    {isAdmin && (
+                                        <span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
+                                            Admin
+                                        </span>
+                                    )}
+                                    {user?.role === 'company_admin' && (
+                                        <span className="ml-2 bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full font-medium">
+                                            <FaLock className="inline mr-1" /> Company Admin - View Only
+                                        </span>
+                                    )}
+                                    {!isAdmin && user?.role !== 'company_admin' && (
+                                        <span className="ml-2 bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full font-medium">
+                                            <FaLock className="inline mr-1" /> View Only
+                                        </span>
+                                    )}
                                 </p>
                             </div>
                         </div>
@@ -491,11 +498,10 @@ const ExtemporaneousPrep = () => {
                             {isAdmin && (
                                 <button
                                     onClick={toggleProtection}
-                                    className={`px-4 py-2 rounded-lg flex items-center gap-2 text-sm ${
-                                        protectionEnabled 
-                                            ? 'bg-red-500 hover:bg-red-600 text-white' 
+                                    className={`px-4 py-2 rounded-lg flex items-center gap-2 text-sm ${protectionEnabled
+                                            ? 'bg-red-500 hover:bg-red-600 text-white'
                                             : 'bg-green-500 hover:bg-green-600 text-white'
-                                    }`}
+                                        }`}
                                     title={protectionEnabled ? 'Disable Copy/Print Protection' : 'Enable Copy/Print Protection'}
                                 >
                                     {protectionEnabled ? <FaBan /> : <FaShieldAlt />}
@@ -529,7 +535,7 @@ const ExtemporaneousPrep = () => {
                     </div>
 
                     {/* Protection Warning */}
-                   
+
 
                     {/* Messages */}
                     {success && (
@@ -578,8 +584,8 @@ const ExtemporaneousPrep = () => {
                         <>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {filteredPreparations.map((prep) => (
-                                    <div 
-                                        key={prep.id} 
+                                    <div
+                                        key={prep.id}
                                         className="border border-gray-200 rounded-xl p-5 bg-white hover:shadow-lg transition-shadow duration-200 prep-content"
                                         onCopy={disableCopyPaste}
                                         onCut={disableCopyPaste}
@@ -700,8 +706,8 @@ const ExtemporaneousPrep = () => {
                                     </div>
                                 </div>
                                 <div className="mt-4 text-center text-sm text-gray-500">
-                                    {isAdmin 
-                                        ? 'Administrator Mode - Full access' 
+                                    {isAdmin
+                                        ? 'Administrator Mode - Full access'
                                         : `User Mode - View only (${protectionEnabled ? 'Copy/Print disabled' : 'Copy allowed'})`}
                                     {isAdmin && (
                                         <button
@@ -719,7 +725,7 @@ const ExtemporaneousPrep = () => {
                             <FaFlask className="text-5xl text-gray-300 mx-auto mb-4" />
                             <h3 className="text-xl font-medium text-gray-800 mb-2">No Preparations Found</h3>
                             <p className="text-gray-500 max-w-md mx-auto mb-6">
-                                {searchTerm 
+                                {searchTerm
                                     ? 'No matches found. Try a different search.'
                                     : 'Start by adding your first preparation or loading sample data.'}
                             </p>
@@ -780,7 +786,7 @@ const ExtemporaneousPrep = () => {
                                             <input
                                                 type="text"
                                                 value={formData.name}
-                                                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                                                 placeholder="e.g., Amoxicillin Oral Suspension"
                                                 required
@@ -794,7 +800,7 @@ const ExtemporaneousPrep = () => {
                                             </label>
                                             <textarea
                                                 value={formData.use}
-                                                onChange={(e) => setFormData({...formData, use: e.target.value})}
+                                                onChange={(e) => setFormData({ ...formData, use: e.target.value })}
                                                 rows="2"
                                                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                                                 placeholder="What is this preparation used for?"
@@ -808,7 +814,7 @@ const ExtemporaneousPrep = () => {
                                             </label>
                                             <textarea
                                                 value={formData.formula}
-                                                onChange={(e) => setFormData({...formData, formula: e.target.value})}
+                                                onChange={(e) => setFormData({ ...formData, formula: e.target.value })}
                                                 rows="3"
                                                 className="w-full border border-gray-300 rounded-lg px-4 py-3 font-mono text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                                                 placeholder="List ingredients with quantities..."
@@ -822,7 +828,7 @@ const ExtemporaneousPrep = () => {
                                             </label>
                                             <textarea
                                                 value={formData.materials}
-                                                onChange={(e) => setFormData({...formData, materials: e.target.value})}
+                                                onChange={(e) => setFormData({ ...formData, materials: e.target.value })}
                                                 rows="2"
                                                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                                                 placeholder="Equipment and materials needed..."
@@ -836,7 +842,7 @@ const ExtemporaneousPrep = () => {
                                             </label>
                                             <textarea
                                                 value={formData.preparation}
-                                                onChange={(e) => setFormData({...formData, preparation: e.target.value})}
+                                                onChange={(e) => setFormData({ ...formData, preparation: e.target.value })}
                                                 rows="4"
                                                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                                                 placeholder="Step-by-step instructions..."
@@ -852,7 +858,7 @@ const ExtemporaneousPrep = () => {
                                             </label>
                                             <textarea
                                                 value={formData.label}
-                                                onChange={(e) => setFormData({...formData, label: e.target.value})}
+                                                onChange={(e) => setFormData({ ...formData, label: e.target.value })}
                                                 rows="2"
                                                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                                                 placeholder="What should be on the label?"

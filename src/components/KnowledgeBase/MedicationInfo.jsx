@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import supabase from '../../utils/supabase';
-import { 
-    FaPills, 
-    FaSearch, 
-    FaBookMedical, 
+import {
+    FaPills,
+    FaSearch,
+    FaBookMedical,
     FaExclamationTriangle,
     FaCapsules,
     FaPlus,
@@ -106,7 +106,7 @@ const MedicationInfo = () => {
                 setTimeout(() => setError(''), 3000);
                 return false;
             }
-            
+
             // Disable print shortcuts
             if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
                 e.preventDefault();
@@ -114,7 +114,7 @@ const MedicationInfo = () => {
                 setTimeout(() => setError(''), 3000);
                 return false;
             }
-            
+
             if (e.key === 'PrintScreen' || e.key === 'F12') {
                 e.preventDefault();
                 setError('Screenshots are disabled to protect proprietary information.');
@@ -144,7 +144,7 @@ const MedicationInfo = () => {
                 }
             `;
             document.head.appendChild(style);
-            
+
             return () => {
                 const styleEl = document.getElementById('prevent-copy-medications');
                 if (styleEl) {
@@ -234,7 +234,7 @@ const MedicationInfo = () => {
         setError('');
         try {
             console.log('Fetching medications from database...');
-            
+
             const { data, error } = await supabase
                 .from('medication_information')
                 .select('*')
@@ -246,7 +246,7 @@ const MedicationInfo = () => {
             }
 
             console.log('Fetched medications:', data);
-            
+
             if (data && data.length > 0) {
                 setMedications(data);
                 setFilteredMedications(data);
@@ -278,7 +278,7 @@ const MedicationInfo = () => {
 
         // Apply search filter
         if (searchTerm.trim()) {
-            filtered = filtered.filter(med => 
+            filtered = filtered.filter(med =>
                 (med.name && med.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
                 (med.amharic_name && med.amharic_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
                 (med.usage && med.usage.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -357,9 +357,9 @@ const MedicationInfo = () => {
             }
 
             console.log('Medication saved:', data);
-            
+
             setSuccessMessage('Medication added successfully!');
-            
+
             // Reset form
             setFormData({
                 name: '',
@@ -373,9 +373,9 @@ const MedicationInfo = () => {
                 missed_dose: '',
                 storage: ''
             });
-            
+
             setShowAddForm(false);
-            
+
             // Refresh medication list
             setTimeout(() => {
                 fetchMedications();
@@ -415,13 +415,13 @@ const MedicationInfo = () => {
             }
 
             console.log('Medication deleted');
-            
+
             setSuccessMessage('Medication deleted successfully!');
-            
+
             // Remove from local state
             const updatedMedications = medications.filter(med => med.id !== id);
             setMedications(updatedMedications);
-            
+
             setTimeout(() => {
                 setSuccessMessage('');
             }, 3000);
@@ -496,7 +496,7 @@ const MedicationInfo = () => {
 
             setSuccessMessage('Sample medications added successfully!');
             fetchMedications();
-            
+
         } catch (err) {
             console.error('Error initializing database:', err);
             setError('Failed to initialize database');
@@ -517,7 +517,7 @@ const MedicationInfo = () => {
     }
 
     return (
-        <div 
+        <div
             className="min-h-screen bg-gray-50"
             onCopy={disableCopyPaste}
             onCut={disableCopyPaste}
@@ -535,7 +535,11 @@ const MedicationInfo = () => {
                                 <h1 className="text-3xl font-bold text-gray-900">Medication Knowledge Base</h1>
                                 <p className="text-gray-600 mt-1">
                                     Drug information database with {medications.length} medications
-                                    {!isAdmin && (
+                                    {user?.role === 'company_admin' ? (
+                                        <span className="ml-2 text-sm bg-purple-100 text-purple-800 px-2 py-1 rounded">
+                                            <FaLock className="inline mr-1" /> Company Admin - View Only
+                                        </span>
+                                    ) : !isAdmin && (
                                         <span className="ml-2 text-sm bg-gray-100 text-gray-800 px-2 py-1 rounded">
                                             <FaLock className="inline mr-1" /> View Only
                                         </span>
@@ -548,11 +552,10 @@ const MedicationInfo = () => {
                             {isAdmin && (
                                 <button
                                     onClick={toggleProtection}
-                                    className={`px-4 py-2 rounded-lg flex items-center gap-2 text-sm ${
-                                        protectionEnabled 
-                                            ? 'bg-red-500 hover:bg-red-600 text-white' 
+                                    className={`px-4 py-2 rounded-lg flex items-center gap-2 text-sm ${protectionEnabled
+                                            ? 'bg-red-500 hover:bg-red-600 text-white'
                                             : 'bg-green-500 hover:bg-green-600 text-white'
-                                    }`}
+                                        }`}
                                     title={protectionEnabled ? 'Disable Copy/Print Protection' : 'Enable Copy/Print Protection'}
                                 >
                                     {protectionEnabled ? <FaBan /> : <FaShieldAlt />}
@@ -614,7 +617,7 @@ const MedicationInfo = () => {
                     </div>
                 )}
 
-               
+
 
                 {/* Search and Filter Bar */}
                 <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
@@ -632,7 +635,7 @@ const MedicationInfo = () => {
                                 onPaste={disableCopyPaste}
                             />
                         </div>
-                        
+
                         <div>
                             <select
                                 value={selectedDrugClass}
@@ -646,7 +649,7 @@ const MedicationInfo = () => {
                                 ))}
                             </select>
                         </div>
-                        
+
                         {/* Admin-only add button */}
                         {isAdmin && (
                             <button
@@ -657,7 +660,7 @@ const MedicationInfo = () => {
                             </button>
                         )}
                     </div>
-                    
+
                     <div className="mt-4 text-sm text-gray-500">
                         Showing {filteredMedications.length} of {medications.length} medications
                         {!isAdmin && ' (Read-only mode)'}
@@ -690,7 +693,7 @@ const MedicationInfo = () => {
                                             <input
                                                 type="text"
                                                 value={formData.name}
-                                                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500"
                                                 placeholder="e.g., Paracetamol"
                                                 required
@@ -705,7 +708,7 @@ const MedicationInfo = () => {
                                             <input
                                                 type="text"
                                                 value={formData.amharic_name}
-                                                onChange={(e) => setFormData({...formData, amharic_name: e.target.value})}
+                                                onChange={(e) => setFormData({ ...formData, amharic_name: e.target.value })}
                                                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500"
                                                 placeholder="e.g., ፓራሲታሞል"
                                                 disabled={saving}
@@ -719,7 +722,7 @@ const MedicationInfo = () => {
                                         </label>
                                         <textarea
                                             value={formData.usage}
-                                            onChange={(e) => setFormData({...formData, usage: e.target.value})}
+                                            onChange={(e) => setFormData({ ...formData, usage: e.target.value })}
                                             rows="3"
                                             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500"
                                             placeholder="What is this medication used for?"
@@ -735,7 +738,7 @@ const MedicationInfo = () => {
                                             </label>
                                             <textarea
                                                 value={formData.before_taking}
-                                                onChange={(e) => setFormData({...formData, before_taking: e.target.value})}
+                                                onChange={(e) => setFormData({ ...formData, before_taking: e.target.value })}
                                                 rows="3"
                                                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500"
                                                 placeholder="Precautions before taking..."
@@ -749,7 +752,7 @@ const MedicationInfo = () => {
                                             </label>
                                             <textarea
                                                 value={formData.while_taking}
-                                                onChange={(e) => setFormData({...formData, while_taking: e.target.value})}
+                                                onChange={(e) => setFormData({ ...formData, while_taking: e.target.value })}
                                                 rows="3"
                                                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500"
                                                 placeholder="Precautions during treatment..."
@@ -765,7 +768,7 @@ const MedicationInfo = () => {
                                             </label>
                                             <textarea
                                                 value={formData.side_effects}
-                                                onChange={(e) => setFormData({...formData, side_effects: e.target.value})}
+                                                onChange={(e) => setFormData({ ...formData, side_effects: e.target.value })}
                                                 rows="3"
                                                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500"
                                                 placeholder="Common side effects..."
@@ -779,7 +782,7 @@ const MedicationInfo = () => {
                                             </label>
                                             <textarea
                                                 value={formData.serious_side_effects}
-                                                onChange={(e) => setFormData({...formData, serious_side_effects: e.target.value})}
+                                                onChange={(e) => setFormData({ ...formData, serious_side_effects: e.target.value })}
                                                 rows="3"
                                                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500"
                                                 placeholder="Serious side effects requiring medical attention..."
@@ -794,7 +797,7 @@ const MedicationInfo = () => {
                                         </label>
                                         <textarea
                                             value={formData.how_to_take}
-                                            onChange={(e) => setFormData({...formData, how_to_take: e.target.value})}
+                                            onChange={(e) => setFormData({ ...formData, how_to_take: e.target.value })}
                                             rows="2"
                                             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500"
                                             placeholder="Instructions for taking the medication..."
@@ -809,7 +812,7 @@ const MedicationInfo = () => {
                                             </label>
                                             <textarea
                                                 value={formData.missed_dose}
-                                                onChange={(e) => setFormData({...formData, missed_dose: e.target.value})}
+                                                onChange={(e) => setFormData({ ...formData, missed_dose: e.target.value })}
                                                 rows="2"
                                                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500"
                                                 placeholder="What to do if a dose is missed..."
@@ -823,7 +826,7 @@ const MedicationInfo = () => {
                                             </label>
                                             <textarea
                                                 value={formData.storage}
-                                                onChange={(e) => setFormData({...formData, storage: e.target.value})}
+                                                onChange={(e) => setFormData({ ...formData, storage: e.target.value })}
                                                 rows="2"
                                                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500"
                                                 placeholder="How to store the medication..."
@@ -867,8 +870,8 @@ const MedicationInfo = () => {
                 {filteredMedications.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredMedications.map((med) => (
-                            <div 
-                                key={med.id} 
+                            <div
+                                key={med.id}
                                 className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition-shadow duration-200 medication-content"
                                 onCopy={disableCopyPaste}
                                 onCut={disableCopyPaste}
@@ -938,7 +941,7 @@ const MedicationInfo = () => {
                                                     <h4 className="font-semibold text-gray-700 mb-2 text-sm">ይህ መድሃኒት ለምን ጥቅም ላይ ይውላል?:</h4>
                                                     <p className="text-sm text-gray-600">{med.usage}</p>
                                                 </div>
-                                                
+
                                                 {med.before_taking && (
                                                     <div>
                                                         <h4 className="font-semibold text-gray-700 mb-2 text-sm">ይህንን መድሃኒት ከመውሰዴ በፊት ለዶክተሬ ምን መንገር አለብኝ?:</h4>
@@ -999,7 +1002,7 @@ const MedicationInfo = () => {
                         <FaPills className="text-5xl text-gray-300 mx-auto mb-4" />
                         <h3 className="text-xl font-medium text-gray-800 mb-2">No Medications Found</h3>
                         <p className="text-gray-500 max-w-md mx-auto mb-6">
-                            {searchTerm || selectedDrugClass !== 'all' 
+                            {searchTerm || selectedDrugClass !== 'all'
                                 ? 'No medications match your search criteria. Try a different search or filter.'
                                 : 'No medications found in the database.'}
                         </p>
@@ -1060,8 +1063,8 @@ const MedicationInfo = () => {
                             </div>
                         </div>
                         <div className="mt-4 text-center text-sm text-gray-500">
-                            {isAdmin 
-                                ? 'Administrator Mode - Full access' 
+                            {isAdmin
+                                ? 'Administrator Mode - Full access'
                                 : `User Mode - View only (${protectionEnabled ? 'Copy/Print disabled' : 'Copy allowed'})`}
                             {isAdmin && (
                                 <button

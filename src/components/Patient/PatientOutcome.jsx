@@ -1,38 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  FaCheckCircle, 
-  FaTimesCircle, 
-  FaUserMd, 
-  FaEdit, 
-  FaSave, 
-  FaTrash,
-  FaCalendarAlt,
-  FaFileMedical,
-  FaChartLine,
-  FaNotesMedical 
+import api from '../../utils/api';
+import {
+    FaCheckCircle,
+    FaTimesCircle,
+    FaUserMd,
+    FaEdit,
+    FaSave,
+    FaTrash,
+    FaCalendarAlt,
+    FaFileMedical,
+    FaChartLine,
+    FaNotesMedical
 } from 'react-icons/fa';
 
 const PatientOutcome = ({ patientCode }) => {
     const [outcomes, setOutcomes] = useState([]);
     const [formData, setFormData] = useState({
-        outcome_type: 'clinical',
         outcome_status: 'resolved',
-        measurements: '',
-        improvement: '',
-        complications: '',
         notes: ''
     });
     const [editIndex, setEditIndex] = useState(null);
     const [loading, setLoading] = useState(false);
-
-    const outcomeTypeOptions = [
-        { value: 'clinical', label: 'Clinical Outcome' },
-        { value: 'medication', label: 'Medication Outcome' },
-        { value: 'safety', label: 'Safety Outcome' },
-        { value: 'economic', label: 'Economic Outcome' },
-        { value: 'patient_reported', label: 'Patient-Reported Outcome' },
-        { value: 'other', label: 'Other' }
-    ];
 
     const outcomeStatusOptions = [
         { value: 'resolved', label: 'Resolved', color: 'green' },
@@ -50,148 +38,89 @@ const PatientOutcome = ({ patientCode }) => {
     }, [patientCode]);
 
     const fetchOutcomes = async () => {
-    try {
-        setLoading(true);
-        const token = localStorage.getItem('token');
-        console.log('🔍 Fetching outcomes for patient:', patientCode);
-        console.log('Using token:', token ? 'Token exists' : 'No token');
-        
-        const response = await fetch(`http://localhost:3000/api/outcomes/patient/${patientCode}`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
+        try {
+            setLoading(true);
+            const result = await api.get(`/outcomes/patient/${patientCode}`);
 
-        console.log('Response status:', response.status);
-        console.log('Response OK:', response.ok);
-        
-        if (response.ok) {
-            const result = await response.json();
-            console.log('API Response:', result);
-            console.log('Outcomes data:', result.outcomes);
-            console.log('Success:', result.success);
-            
             if (result.success && result.outcomes) {
                 setOutcomes(result.outcomes);
-                console.log('✅ Outcomes set:', result.outcomes.length);
-            } else {
-                console.log('❌ API returned false success or no outcomes');
             }
-        } else {
-            console.log('❌ Response not OK');
-            const errorText = await response.text();
-            console.log('Error response:', errorText);
+        } catch (error) {
+            console.error('Error fetching outcomes:', error);
+        } finally {
+            setLoading(false);
         }
-    } catch (error) {
-        console.error('❌ Error fetching outcomes:', error);
-        console.error('Error details:', error.message);
-    } finally {
-        setLoading(false);
-    }
-};
+    };
 
-    // Fixed saveOutcome function - removed patient?.id reference
     const saveOutcome = async () => {
-    try {
-        setLoading(true);
-        
-        if (!formData.notes.trim()) {
-            alert('Please enter outcome notes/description');
-            return;
+        try {
+            setLoading(true);
+
+            if (!formData.notes.trim()) {
+                alert('Please add a progress note');
+                setLoading(false);
+                return;
+            }
+
+            const outcomeData = {
+                patient_code: patientCode,
+                outcome_type: 'general', // Default since UI removed it
+                ...formData
+            };
+
+            let result;
+            if (editIndex !== null) {
+                result = await api.put(`/outcomes/${editIndex}`, outcomeData);
+            } else {
+                result = await api.post('/outcomes', outcomeData);
+            }
+
+            if (result.success) {
+                alert(editIndex !== null ? 'Outcome updated successfully!' : 'Outcome recorded successfully!');
+                setFormData({
+                    outcome_status: 'resolved',
+                    notes: ''
+                });
+                setEditIndex(null);
+                fetchOutcomes();
+            }
+        } catch (error) {
+            console.error('Error saving outcome:', error);
+            alert('Error saving outcome: ' + (error.message || error.error || 'Failed'));
+        } finally {
+            setLoading(false);
         }
-
-        const token = localStorage.getItem('token');
-        
-        // Start with minimal required data
-        const outcomeData = {
-            patient_code: patientCode,
-            outcome_type: formData.outcome_type,
-            outcome_status: formData.outcome_status,
-            notes: formData.notes.trim()
-            // Skip optional fields for now: measurements, improvement, complications
-        };
-
-        console.log('Saving outcome with data:', outcomeData);
-
-        const response = await fetch('http://localhost:3000/api/outcomes', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(outcomeData)
-        });
-
-        const result = await response.json();
-        
-        if (response.ok && result.success) {
-            alert('Outcome saved successfully!');
-            // Clear form
-            setFormData({
-                outcome_type: 'clinical',
-                outcome_status: 'resolved',
-                measurements: '',
-                improvement: '',
-                complications: '',
-                notes: ''
-            });
-            setEditIndex(null);
-            // Refresh list
-            fetchOutcomes();
-        } else {
-            throw new Error(result.error || 'Failed to save outcome');
-        }
-    } catch (error) {
-        console.error('Error saving outcome:', error);
-        alert('Error saving outcome: ' + error.message);
-    } finally {
-        setLoading(false);
-    }
-};
+    };
 
     const handleEdit = (outcomeItem) => {
         setFormData({
-            outcome_type: outcomeItem.outcome_type || 'clinical',
             outcome_status: outcomeItem.outcome_status || 'resolved',
-            measurements: outcomeItem.measurements || '',
-            improvement: outcomeItem.improvement || '',
-            complications: outcomeItem.complications || '',
             notes: outcomeItem.notes || ''
         });
         setEditIndex(outcomeItem.id);
     };
 
     const handleDelete = async (outcomeId) => {
-        if (!window.confirm('Are you sure you want to delete this outcome?')) {
+        if (!window.confirm('Are you sure you want to delete this record?')) {
             return;
         }
 
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:3000/api/outcomes/${outcomeId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (response.ok) {
-                alert('Outcome deleted successfully!');
+            const result = await api.delete(`/outcomes/${outcomeId}`);
+            if (result.success) {
+                alert('Record deleted successfully!');
                 fetchOutcomes();
             }
         } catch (error) {
             console.error('Error deleting outcome:', error);
-            alert('Error deleting outcome: ' + error.message);
+            alert('Error deleting outcome: ' + (error.message || error.error || 'Failed'));
         }
     };
 
     const getStatusColor = (status) => {
         const statusObj = outcomeStatusOptions.find(opt => opt.value === status);
         if (!statusObj) return 'bg-gray-100 text-gray-800';
-        
+
         switch (statusObj.color) {
             case 'green': return 'bg-green-100 text-green-800 border border-green-200';
             case 'red': return 'bg-red-100 text-red-800 border border-red-200';
@@ -216,11 +145,6 @@ const PatientOutcome = ({ patientCode }) => {
         }
     };
 
-    const getOutcomeTypeLabel = (type) => {
-        const typeObj = outcomeTypeOptions.find(opt => opt.value === type);
-        return typeObj ? typeObj.label : type;
-    };
-
     const getOutcomeStatusLabel = (status) => {
         const statusObj = outcomeStatusOptions.find(opt => opt.value === status);
         return statusObj ? statusObj.label : status;
@@ -242,35 +166,18 @@ const PatientOutcome = ({ patientCode }) => {
             <div className="mb-8">
                 <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
                     <h3 className="text-xl font-semibold mb-4 text-gray-800 flex items-center gap-2">
-                        <FaFileMedical /> 
+                        <FaFileMedical />
                         {editIndex !== null ? 'Edit Patient Outcome' : 'Record Patient Outcome'}
                     </h3>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Outcome Type *
-                            </label>
-                            <select
-                                value={formData.outcome_type}
-                                onChange={(e) => setFormData({...formData, outcome_type: e.target.value})}
-                                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-teal-500"
-                            >
-                                {outcomeTypeOptions.map(option => (
-                                    <option key={option.value} value={option.value}>
-                                        {option.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
+                    <div className="grid grid-cols-1 gap-4 mb-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Outcome Status *
                             </label>
                             <select
                                 value={formData.outcome_status}
-                                onChange={(e) => setFormData({...formData, outcome_status: e.target.value})}
+                                onChange={(e) => setFormData({ ...formData, outcome_status: e.target.value })}
                                 className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-teal-500"
                             >
                                 {outcomeStatusOptions.map(option => (
@@ -282,62 +189,18 @@ const PatientOutcome = ({ patientCode }) => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Measurements/Parameters
-                            </label>
-                            <textarea
-                                value={formData.measurements}
-                                onChange={(e) => setFormData({...formData, measurements: e.target.value})}
-                                rows="3"
-                                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-teal-500"
-                                placeholder="Vital signs, lab results, scores, etc..."
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Improvement/Response
-                            </label>
-                            <textarea
-                                value={formData.improvement}
-                                onChange={(e) => setFormData({...formData, improvement: e.target.value})}
-                                rows="3"
-                                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-teal-500"
-                                placeholder="Describe improvement or response to treatment..."
-                            />
-                        </div>
-                    </div>
-
                     <div className="mb-4">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Complications/Adverse Events
-                        </label>
-                        <textarea
-                            value={formData.complications}
-                            onChange={(e) => setFormData({...formData, complications: e.target.value})}
-                            rows="2"
-                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-teal-500"
-                            placeholder="Any complications, side effects, or adverse events..."
-                        />
-                    </div>
-
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Outcome Notes/Description *
+                            Progress Note *
                         </label>
                         <textarea
                             value={formData.notes}
-                            onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                            rows="3"
+                            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                            rows="4"
                             className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-teal-500"
-                            placeholder="Detailed description of the patient outcome..."
+                            placeholder="Describe the patient's current progress and overall assessment..."
                             required
                         />
-                        <p className="text-xs text-gray-500 mt-1">
-                            Include overall assessment, recommendations, and follow-up plan
-                        </p>
                     </div>
 
                     <div className="flex gap-3">
@@ -353,11 +216,7 @@ const PatientOutcome = ({ patientCode }) => {
                             <button
                                 onClick={() => {
                                     setFormData({
-                                        outcome_type: 'clinical',
                                         outcome_status: 'resolved',
-                                        measurements: '',
-                                        improvement: '',
-                                        complications: '',
                                         notes: ''
                                     });
                                     setEditIndex(null);
@@ -375,7 +234,7 @@ const PatientOutcome = ({ patientCode }) => {
             <div>
                 <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center gap-2">
                     <FaNotesMedical />
-                    Patient Outcome History ({outcomes.length})
+                    Outcome History ({outcomes.length})
                 </h3>
 
                 {loading ? (
@@ -386,8 +245,8 @@ const PatientOutcome = ({ patientCode }) => {
                 ) : outcomes.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
                         <FaChartLine className="text-4xl mx-auto mb-3 text-gray-300" />
-                        <p>No patient outcomes recorded yet.</p>
-                        <p className="text-sm mt-1">Record your first outcome using the form above.</p>
+                        <p>No outcomes recorded yet.</p>
+                        <p className="text-sm mt-1">Record the first outcome using the form above.</p>
                     </div>
                 ) : (
                     <div className="space-y-4">
@@ -400,7 +259,7 @@ const PatientOutcome = ({ patientCode }) => {
                                         </div>
                                         <div>
                                             <h4 className="font-semibold text-gray-800">
-                                                {getOutcomeTypeLabel(item.outcome_type)} #{index + 1}
+                                                Outcome Entry #{outcomes.length - index}
                                             </h4>
                                             <div className="flex flex-wrap gap-2 mt-1">
                                                 <p className="text-sm text-gray-600 flex items-center gap-1">
@@ -413,7 +272,7 @@ const PatientOutcome = ({ patientCode }) => {
                                             </div>
                                         </div>
                                     </div>
-                                    
+
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => handleEdit(item)}
@@ -430,37 +289,8 @@ const PatientOutcome = ({ patientCode }) => {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                    {item.measurements && (
-                                        <div>
-                                            <h5 className="font-medium text-gray-700 mb-2">Measurements</h5>
-                                            <p className="text-gray-700 bg-white border rounded p-3 text-sm whitespace-pre-wrap">
-                                                {item.measurements}
-                                            </p>
-                                        </div>
-                                    )}
-                                    
-                                    {item.improvement && (
-                                        <div>
-                                            <h5 className="font-medium text-gray-700 mb-2">Improvement/Response</h5>
-                                            <p className="text-gray-700 bg-white border rounded p-3 text-sm whitespace-pre-wrap">
-                                                {item.improvement}
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {item.complications && (
-                                    <div className="mb-4">
-                                        <h5 className="font-medium text-gray-700 mb-2">Complications/Adverse Events</h5>
-                                        <p className="text-gray-700 bg-white border rounded p-3 text-sm whitespace-pre-wrap">
-                                            {item.complications}
-                                        </p>
-                                    </div>
-                                )}
-
                                 <div>
-                                    <h5 className="font-medium text-gray-700 mb-2">Outcome Notes</h5>
+                                    <h5 className="font-medium text-gray-700 mb-2">Progress Note</h5>
                                     <p className="text-gray-700 bg-white border rounded p-3 whitespace-pre-wrap">
                                         {item.notes}
                                     </p>

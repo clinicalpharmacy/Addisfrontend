@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-    FaSearch, 
-    FaPlus, 
-    FaFilter, 
-    FaUserInjured, 
+import {
+    FaSearch,
+    FaPlus,
+    FaFilter,
+    FaUserInjured,
     FaCalendarAlt,
     FaEdit,
     FaEye,
@@ -14,10 +14,7 @@ import {
     FaSortDown
 } from 'react-icons/fa';
 
-// API Configuration - Pointing to your Vercel backend
-const API_BASE_URL = window.location.hostname === 'localhost' 
-    ? 'http://localhost:3000' 
-    : 'https://addis-backend-ten.vercel.app';
+import api from '../utils/api';
 
 const PatientList = () => {
     const navigate = useNavigate();
@@ -28,6 +25,8 @@ const PatientList = () => {
     const [statusFilter, setStatusFilter] = useState('all');
     const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
     const [userRole, setUserRole] = useState('');
+    const [userAccountType, setUserAccountType] = useState('');
+    const [userCompanyId, setUserCompanyId] = useState(null);
 
     useEffect(() => {
         // Get user role from token
@@ -36,11 +35,13 @@ const PatientList = () => {
             try {
                 const payload = JSON.parse(atob(token.split('.')[1]));
                 setUserRole(payload.role || 'user');
+                setUserAccountType(payload.account_type || '');
+                setUserCompanyId(payload.company_id || null);
             } catch (e) {
                 console.log('Error parsing token:', e);
             }
         }
-        
+
         fetchPatients();
     }, []);
 
@@ -48,41 +49,18 @@ const PatientList = () => {
         try {
             setLoading(true);
             const token = localStorage.getItem('token');
-            
+
             if (!token) {
                 navigate('/login');
                 return;
             }
-            
-            // Fixed: Using API_BASE_URL variable
-            const response = await fetch(`${API_BASE_URL}/api/patients`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            console.log('Fetching patients from:', `${API_BASE_URL}/api/patients`);
-            console.log('Response status:', response.status);
-            
-            if (response.ok) {
-                const result = await response.json();
-                console.log('Patients fetched:', result.patients?.length || 0);
-                
-                if (result.success && result.patients) {
-                    setPatients(result.patients);
-                    setFilteredPatients(result.patients);
-                } else {
-                    setPatients([]);
-                    setFilteredPatients([]);
-                }
-            } else if (response.status === 401) {
-                localStorage.removeItem('token');
-                navigate('/login');
+
+            const result = await api.get('/patients');
+
+            if (result.success && result.patients) {
+                setPatients(result.patients);
+                setFilteredPatients(result.patients);
             } else {
-                const errorText = await response.text();
-                console.error('Error response:', errorText);
                 setPatients([]);
                 setFilteredPatients([]);
             }
@@ -98,26 +76,26 @@ const PatientList = () => {
     const handleSearch = (e) => {
         const term = e.target.value.toLowerCase();
         setSearchTerm(term);
-        
+
         let filtered = patients;
-        
+
         if (term) {
-            filtered = filtered.filter(patient => 
+            filtered = filtered.filter(patient =>
                 (patient.patient_code && patient.patient_code.toLowerCase().includes(term)) ||
                 (patient.diagnosis && patient.diagnosis.toLowerCase().includes(term)) ||
                 (patient.full_name && patient.full_name.toLowerCase().includes(term)) ||
                 (patient.phone && patient.phone.toLowerCase().includes(term))
             );
         }
-        
+
         if (statusFilter !== 'all') {
-            filtered = filtered.filter(patient => 
-                statusFilter === 'active' 
+            filtered = filtered.filter(patient =>
+                statusFilter === 'active'
                     ? patient.is_active !== false
                     : patient.is_active === false
             );
         }
-        
+
         setFilteredPatients(filtered);
     };
 
@@ -126,15 +104,15 @@ const PatientList = () => {
         if (sortConfig.key === key && sortConfig.direction === 'asc') {
             direction = 'desc';
         }
-        
+
         setSortConfig({ key, direction });
-        
+
         const sorted = [...filteredPatients].sort((a, b) => {
             if (a[key] < b[key]) return direction === 'asc' ? -1 : 1;
             if (a[key] > b[key]) return direction === 'asc' ? 1 : -1;
             return 0;
         });
-        
+
         setFilteredPatients(sorted);
     };
 
@@ -144,31 +122,13 @@ const PatientList = () => {
         }
 
         try {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                navigate('/login');
-                return;
-            }
-            
-            // Fixed: Using API_BASE_URL variable
-            const response = await fetch(`${API_BASE_URL}/api/patients/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            if (response.ok) {
-                const result = await response.json();
-                if (result.success) {
-                    fetchPatients();
-                } else {
-                    alert('Failed to delete patient');
-                }
+            // Using centralized api utility
+            const result = await api.delete(`/patients/${id}`);
+
+            if (result.success) {
+                fetchPatients();
             } else {
-                const errorData = await response.json();
-                alert(errorData.error || 'Error deleting patient');
+                alert('Failed to delete patient');
             }
         } catch (error) {
             alert('Error deleting patient');
@@ -197,6 +157,14 @@ const PatientList = () => {
     };
 
     const handleNewPatient = () => {
+        // Individual accounts without a company can only create one patient
+        const isIndividual = (userAccountType === 'individual' || userRole === 'individual_user' || userRole === 'pharmacist') && !userCompanyId;
+        if (isIndividual && userRole !== 'admin' && patients.length >= 1) {
+            alert('Individual subscription plan is limited to 1 patient record. Please upgrade to a Professional or Enterprise plan to manage more patients.');
+            navigate('/subscription');
+            return;
+        }
+
         const newPatientCode = generatePatientCode();
         navigate(`/patients/${newPatientCode}`);
     };
@@ -214,24 +182,24 @@ const PatientList = () => {
 
     const handleEditClick = (patient) => {
         console.log('🔵 Edit clicked for patient:', patient.patient_code);
-        
+
         // Store patient data in localStorage instead of sessionStorage
         localStorage.setItem('editPatientData', JSON.stringify(patient));
         localStorage.setItem('editPatientCode', patient.patient_code);
         localStorage.setItem('editMode', 'true');
-        
+
         // Navigate to patient details with edit mode
         navigate(`/patients/${patient.patient_code}?edit=true`);
     };
 
     const handleViewClick = (patientCode) => {
         console.log('🔵 View clicked for patient:', patientCode);
-        
+
         // Clear any edit data
         localStorage.removeItem('editPatientData');
         localStorage.removeItem('editPatientCode');
         localStorage.removeItem('editMode');
-        
+
         // Navigate without edit mode
         navigate(`/patients/${patientCode}`);
     };
@@ -254,7 +222,11 @@ const PatientList = () => {
                 </div>
                 <button
                     onClick={handleNewPatient}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-colors"
+                    className={`px-6 py-3 rounded-lg flex items-center gap-2 transition-colors ${((userAccountType === 'individual' || userRole === 'individual_user' || userRole === 'pharmacist') && !userCompanyId) && userRole !== 'admin' && patients.length >= 1
+                        ? 'bg-gray-400 cursor-not-allowed text-white'
+                        : 'bg-blue-500 hover:bg-blue-600 text-white'
+                        }`}
+                    title={((userAccountType === 'individual' || userRole === 'individual_user' || userRole === 'pharmacist') && !userCompanyId) && userRole !== 'admin' && patients.length >= 1 ? "Limit reached for Individual plan" : "Add New Patient"}
                 >
                     <FaPlus /> New Patient
                 </button>
@@ -273,7 +245,7 @@ const PatientList = () => {
                             className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                     </div>
-                    
+
                     <select
                         value={statusFilter}
                         onChange={(e) => {
@@ -286,7 +258,7 @@ const PatientList = () => {
                         <option value="active">Active Only</option>
                         <option value="inactive">Inactive Only</option>
                     </select>
-                    
+
                     <button
                         onClick={fetchPatients}
                         className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-6 py-3 rounded-lg flex items-center justify-center gap-2 transition-colors"
@@ -294,7 +266,7 @@ const PatientList = () => {
                         <FaFilter /> Refresh
                     </button>
                 </div>
-                
+
                 {/* Stats */}
                 <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                     <div className="bg-blue-50 p-3 rounded">
@@ -328,7 +300,7 @@ const PatientList = () => {
                     <table className="w-full border-collapse">
                         <thead>
                             <tr className="bg-gray-100 text-gray-700">
-                                <th 
+                                <th
                                     className="border p-3 text-left cursor-pointer hover:bg-gray-200"
                                     onClick={() => handleSort('patient_code')}
                                 >
@@ -339,7 +311,7 @@ const PatientList = () => {
                                 </th>
                                 <th className="border p-3 text-left">Name</th>
                                 <th className="border p-3 text-left">Diagnosis</th>
-                                <th 
+                                <th
                                     className="border p-3 text-left cursor-pointer hover:bg-gray-200"
                                     onClick={() => handleSort('created_at')}
                                 >
@@ -357,7 +329,7 @@ const PatientList = () => {
                                 filteredPatients.map((patient) => {
                                     const currentUserId = getCurrentUserId();
                                     const canDelete = userRole === 'admin' || patient.user_id === currentUserId;
-                                    
+
                                     return (
                                         <tr key={patient.id} className="border-b hover:bg-gray-50 transition-colors">
                                             <td className="border p-3">
@@ -444,7 +416,7 @@ const PatientList = () => {
                             Showing {filteredPatients.length} of {patients.length} patients
                         </div>
                         <div className="flex gap-2">
-                            <button 
+                            <button
                                 className="px-3 py-1 border rounded text-sm hover:bg-gray-100"
                                 disabled
                             >
@@ -453,7 +425,7 @@ const PatientList = () => {
                             <button className="px-3 py-1 bg-blue-500 text-white rounded text-sm">
                                 1
                             </button>
-                            <button 
+                            <button
                                 className="px-3 py-1 border rounded text-sm hover:bg-gray-100"
                                 disabled
                             >

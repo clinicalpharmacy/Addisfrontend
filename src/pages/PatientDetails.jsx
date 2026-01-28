@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { 
-    FaUser, 
-    FaStethoscope, 
-    FaFlask, 
+import {
+    FaUser,
+    FaStethoscope,
+    FaFlask,
     FaSave,
     FaPills,
     FaChartLine,
@@ -34,7 +34,9 @@ import {
     FaProcedures,
     FaPrescriptionBottleAlt,
     FaWifi,
-    FaSync
+    FaSync,
+    FaBrain,
+    FaHistory
 } from 'react-icons/fa';
 
 // Import components
@@ -43,77 +45,21 @@ import DRNAssessment from '../components/Patient/DRNAssessment';
 import PhAssistPlan from '../components/Patient/PhAssistPlan';
 import PatientOutcome from '../components/Patient/PatientOutcome';
 import CostSection from '../components/Patient/CostSection';
+import CDSSDisplay from '../components/CDSS/CDSSDisplay';
 
-// ====== FIX: API Base URL Configuration ======
-// Check environment and set proper API URL
-const getApiBaseUrl = () => {
-    // Check if we're in development mode (localhost)
-    const isDevelopment = window.location.hostname === 'localhost' || 
-                         window.location.hostname === '127.0.0.1' ||
-                         window.location.hostname.includes('vercel.app');
-    
-    // Production backend URL - Your Vercel backend
-    const PRODUCTION_URL = 'https://addis-backend-ten.vercel.app/api';
-    
-    // Development backend URL - Use Vercel for now, but you can change this if you have a local backend
-    const DEVELOPMENT_URL = 'https://addis-backend-ten.vercel.app/api';
-    
-    return isDevelopment ? DEVELOPMENT_URL : PRODUCTION_URL;
-};
+import api from '../utils/api';
+import supabase from '../utils/supabase';
 
-// Set the API base URL
-const API_BASE_URL = getApiBaseUrl();
-console.log('🌐 API Configuration:', {
-    hostname: window.location.hostname,
-    apiBaseUrl: API_BASE_URL,
-    isDevelopment: window.location.hostname.includes('localhost') || 
-                   window.location.hostname.includes('vercel.app')
-});
-
-// Patch fetch to redirect localhost calls to Vercel
-if (typeof window !== 'undefined') {
-    const originalFetch = window.fetch;
-    window.fetch = function(url, options) {
-        // Log all API calls for debugging
-        if (typeof url === 'string') {
-            console.log('🌐 Fetch intercepted:', {
-                url,
-                isLocalhost: url.includes('localhost'),
-                isRelative: url.startsWith('/api/')
-            });
-            
-            // Fix relative API calls
-            if (url.startsWith('/api/')) {
-                url = API_BASE_URL + url.substring(4);
-                console.log('🔄 Fixed relative URL to:', url);
-            }
-            
-            // Fix localhost API calls
-            else if (url.includes('localhost:3000/api/')) {
-                url = url.replace('http://localhost:3000/api/', API_BASE_URL);
-                console.log('🔄 Fixed localhost URL to:', url);
-            }
-            
-            // Fix localhost:3000 without /api
-            else if (url.includes('localhost:3000')) {
-                url = url.replace('http://localhost:3000', 'https://addis-backend-ten.vercel.app');
-                console.log('🔄 Fixed localhost URL to:', url);
-            }
-        }
-        
-        return originalFetch.call(this, url, options);
-    };
-}
 
 // Create memoized LabInputField component
-const LabInputField = React.memo(({ 
-    label, 
-    value, 
-    field, 
-    unit, 
-    placeholder, 
-    isEditing, 
-    handleChange, 
+const LabInputField = React.memo(({
+    label,
+    value,
+    field,
+    unit,
+    placeholder,
+    isEditing,
+    handleChange,
     normalRange,
     readOnly = false,
     type = "number"
@@ -167,6 +113,8 @@ const PatientDetails = () => {
     const { patientCode } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
+
+    // --- 1. PRIMARY STATE INITIALIZATION ---
     const [patient, setPatient] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isNewPatient, setIsNewPatient] = useState(false);
@@ -180,320 +128,169 @@ const PatientDetails = () => {
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [backendStatus, setBackendStatus] = useState('checking');
     const [retryCount, setRetryCount] = useState(0);
-    
-    // Form state with all complete fields
+    const [user, setUser] = useState(null);
+    const [customLabs, setCustomLabs] = useState([]);
+    const [globalLabDefinitions, setGlobalLabDefinitions] = useState([]);
+    const [vitalsHistory, setVitalsHistory] = useState([]);
+    const [labsHistory, setLabsHistory] = useState([]);
+
+    // Form state (all fields)
     const [formData, setFormData] = useState({
-        // Basic Info
-        full_name: '',
-        age: '',
-        age_in_days: '',
-        gender: '',
-        date_of_birth: '',
-        contact_number: '',
-        address: '',
-        diagnosis: '',
-        appointment_date: '',
-        is_active: true,
-        allergies: [],
-        
-        // Patient type
-        patient_type: 'adult',
-        
-        // Pregnancy status
-        is_pregnant: false,
-        pregnancy_weeks: '',
-        pregnancy_trimester: '',
-        edd: '',
-        pregnancy_notes: '',
-        
-        // Vitals - Complete
-        blood_pressure: '',
-        heart_rate: '',
-        temperature: '',
-        respiratory_rate: '',
-        oxygen_saturation: '',
-        weight: '',
-        height: '',
-        length: '',
-        head_circumference: '',
-        bmi: '',
-        last_measured: '',
-        
-        // Growth percentiles
-        weight_percentile: '',
-        height_percentile: '',
-        head_circumference_percentile: '',
-        bmi_percentile: '',
-        
-        // Pediatric info
-        developmental_milestones: '',
-        feeding_method: '',
-        birth_weight: '',
-        birth_length: '',
-        vaccination_status: '',
-        special_instructions: '',
-        
-        // Labs - Complete CBC
-        hemoglobin: '',
-        hematocrit: '',
-        wbc_count: '',
-        rbc_count: '',
-        platelet_count: '',
-        mcv: '',
-        mch: '',
-        mchc: '',
-        rdw: '',
-        neutrophils: '',
-        lymphocytes: '',
-        monocytes: '',
-        eosinophils: '',
-        basophils: '',
-        
-        // Chemistry
-        blood_sugar: '',
-        creatinine: '',
-        urea: '',
-        uric_acid: '',
-        sodium: '',
-        potassium: '',
-        chloride: '',
-        bicarbonate: '',
-        calcium: '',
-        magnesium: '',
-        phosphate: '',
-        
-        // Liver Function
-        alt: '',
-        ast: '',
-        alp: '',
-        ggt: '',
-        bilirubin_total: '',
-        bilirubin_direct: '',
-        bilirubin_indirect: '',
-        albumin: '',
-        total_protein: '',
-        
-        // Cardiac
-        troponin: '',
-        ck_mb: '',
-        ldh: '',
-        myoglobin: '',
-        
-        // Thyroid
-        tsh: '',
-        free_t4: '',
-        free_t3: '',
-        total_t4: '',
-        total_t3: '',
-        
-        // Inflammatory
-        crp: '',
-        esr: '',
-        ferritin: '',
-        procalcitonin: '',
-        
-        // Coagulation
-        inr: '',
-        pt: '',
-        ptt: '',
-        fibrinogen: '',
-        d_dimer: '',
-        
-        // Urinalysis
-        urine_protein: '',
-        urine_glucose: '',
-        urine_blood: '',
-        urine_leukocytes: '',
-        urine_nitrite: '',
-        urine_specific_gravity: '',
-        urine_ph: '',
-        urine_ketones: '',
-        urine_bilirubin: '',
-        urine_urobilinogen: '',
-        
-        // Diabetes
-        hba1c: '',
-        fasting_glucose: '',
-        postprandial_glucose: '',
-        random_glucose: '',
-        insulin: '',
-        c_peptide: '',
-        
-        // Lipid Profile
-        total_cholesterol: '',
-        hdl_cholesterol: '',
-        ldl_cholesterol: '',
-        triglycerides: '',
-        vldl_cholesterol: '',
-        
-        // Renal
-        egfr: '',
-        bun: '',
-        
-        // Pediatric labs
-        bilirubin_neonatal: '',
-        glucose_neonatal: '',
-        calcium_neonatal: '',
-        pku_result: '',
-        thyroid_screening: '',
-        
-        // Last tested
-        last_tested: ''
+        full_name: '', age: '', age_in_days: '', gender: '', date_of_birth: '',
+        contact_number: '', address: '', diagnosis: '', appointment_date: '',
+        is_active: true, allergies: [], patient_type: 'adult',
+        is_pregnant: false, pregnancy_weeks: '', pregnancy_trimester: '', edd: '', pregnancy_notes: '',
+        weight_percentile: '', height_percentile: '', head_circumference_percentile: '', bmi_percentile: '',
+        blood_pressure: '', heart_rate: '', temperature: '', respiratory_rate: '', oxygen_saturation: '',
+        weight: '', height: '', last_measured: '',
+        developmental_milestones: '', feeding_method: '', birth_weight: '', birth_length: '',
+        vaccination_status: '', special_instructions: '',
+        // Labs
+        hemoglobin: '', hematocrit: '', wbc_count: '', rbc_count: '', platelet_count: '',
+        mcv: '', mch: '', mchc: '', rdw: '', neutrophils: '', lymphocytes: '', monocytes: '',
+        eosinophils: '', basophils: '', blood_sugar: '', creatinine: '', urea: '', uric_acid: '',
+        sodium: '', potassium: '', chloride: '', bicarbonate: '', calcium: '', magnesium: '',
+        phosphate: '', alt: '', ast: '', alp: '', ggt: '', bilirubin_total: '', bilirubin_direct: '',
+        bilirubin_indirect: '', albumin: '', total_protein: '', troponin: '', ck_mb: '', ldh: '',
+        myoglobin: '', tsh: '', free_t4: '', free_t3: '', total_t4: '', total_t3: '', crp: '', esr: '',
+        ferritin: '', procalcitonin: '', inr: '', pt: '', ptt: '', fibrinogen: '', d_dimer: '',
+        urine_protein: '', urine_glucose: '', urine_blood: '', urine_leukocytes: '',
+        urine_nitrite: '', urine_specific_gravity: '', urine_ph: '', urine_ketones: '',
+        urine_bilirubin: '', urine_urobilinogen: '', hba1c: '', fasting_glucose: '',
+        postprandial_glucose: '', random_glucose: '', insulin: '', c_peptide: '',
+        total_cholesterol: '', hdl_cholesterol: '', ldl_cholesterol: '', triglycerides: '',
+        vldl_cholesterol: '', egfr: '', bun: '', bilirubin_neonatal: '', glucose_neonatal: '',
+        calcium_neonatal: '', pku_result: '', thyroid_screening: '',
+        last_tested: new Date().toISOString().split('T')[0]
     });
+
+    // --- 2. HELPERS & UTILS ---
+    const debugLog = useCallback((message, data = null) => {
+        console.log(`🔍 [PatientDetails] ${message}`, data ? data : '');
+    }, []);
+
+    // --- 3. EFFECTS ---
+    // Initialize user from localStorage
+    useEffect(() => {
+        const userData = localStorage.getItem('user');
+        if (userData) {
+            try { setUser(JSON.parse(userData)); } catch (e) { console.error('JSON Error:', e); }
+        }
+    }, []);
+
+    // Global Lab definitions fetcher
+    const fetchGlobalLabs = useCallback(async () => {
+        try {
+            const response = await api.get('/lab-definitions');
+            if (response.success && response.labs) {
+                setGlobalLabDefinitions(response.labs);
+                debugLog('Fetched global lab definitions:', response.labs.length);
+            }
+        } catch (err) {
+            console.error('Error fetching global labs:', err);
+            // Fallback to direct supabase if API fails (as emergency)
+            try {
+                const { data, error } = await supabase.from('lab_tests').select('*').eq('is_active', true);
+                if (data) setGlobalLabDefinitions(data);
+            } catch (inner) { console.error('Supabase fallback failed:', inner); }
+        }
+    }, [debugLog]);
+
+    useEffect(() => { fetchGlobalLabs(); }, [fetchGlobalLabs]);
+
+    // Ensure global labs are merged whenever definitions are loaded or updated
+    useEffect(() => {
+        if (globalLabDefinitions.length > 0) {
+            setCustomLabs(prev => {
+                // Create a map of existing labs (both global and custom)
+                const existingMap = new Map();
+                prev.forEach(l => {
+                    const name = (l.name || '').toLowerCase().trim();
+                    if (name) existingMap.set(name, l);
+                });
+
+                // Create updated list from globals
+                const updatedGlobals = globalLabDefinitions.map(g => {
+                    const nameKey = (g.name || '').toLowerCase().trim();
+                    const existing = existingMap.get(nameKey);
+                    return {
+                        id: 'global-' + g.id,
+                        name: g.name,
+                        value: existing ? existing.value : '',
+                        isGlobal: true,
+                        unit: g.unit,
+                        reference_range: g.reference_range,
+                        category: g.category,
+                        description: g.description
+                    };
+                });
+
+                // Keep non-global custom labs
+                const globalNames = new Set(globalLabDefinitions.map(g => (g.name || '').toLowerCase().trim()));
+                const nonGlobals = prev.filter(l => {
+                    const name = (l.name || '').toLowerCase().trim();
+                    return name && !globalNames.has(name);
+                });
+
+                return [...updatedGlobals, ...nonGlobals];
+            });
+        }
+    }, [globalLabDefinitions]);
+
 
     // Use useMemo for heavy computations that depend on formData
     const pediatricAgeGroups = useMemo(() => [
         { type: 'neonate', minDays: 0, maxDays: 28, label: 'Neonate (0-28 days)', icon: FaBaby },
         { type: 'infant', minDays: 29, maxDays: 365, label: 'Infant (29 days - 1 year)', icon: FaBabyCarriage },
-        { type: 'child', minDays: 366, maxDays: 12*365, label: 'Child (1-12 years)', icon: FaChild },
-        { type: 'adolescent', minDays: 13*365 + 1, maxDays: 18*365, label: 'Adolescent (13-18 years)', icon: FaUser },
-        { type: 'adult', minDays: 18*365 + 1, maxDays: 99999, label: 'Adult (>18 years)', icon: FaUser }
+        { type: 'child', minDays: 366, maxDays: 12 * 365, label: 'Child (1-12 years)', icon: FaChild },
+        { type: 'adolescent', minDays: 13 * 365 + 1, maxDays: 18 * 365, label: 'Adolescent (13-18 years)', icon: FaUser },
+        { type: 'adult', minDays: 18 * 365 + 1, maxDays: 99999, label: 'Adult (>18 years)', icon: FaUser }
     ], []);
 
-    const tabs = useMemo(() => [
-        { id: 'overview', label: 'Overview', icon: FaUser },
-        { id: 'demographics', label: 'Demographics', icon: FaUser },
-        { id: 'vitals', label: 'Vitals', icon: FaHeartbeat },
-        { id: 'labs', label: 'Labs', icon: FaFlask },
-        { id: 'medications', label: 'Medications', icon: FaPills },
-        { id: 'drn', label: 'DRN Assessment', icon: FaStethoscope },
-        { id: 'plan', label: 'PharmAssist Plan', icon: FaFileMedical },
-        { id: 'outcome', label: 'Outcome', icon: FaChartLine },
-        { id: 'cost', label: 'Cost', icon: FaMoneyBillWave }
-    ], []);
+    const tabs = useMemo(() => {
+        const allTabs = [
+            { id: 'overview', label: 'Overview', icon: FaUser },
+            { id: 'demographics', label: 'Demographics', icon: FaUser },
+            { id: 'vitals', label: 'Vitals', icon: FaHeartbeat },
+            { id: 'labs', label: 'Labs', icon: FaFlask },
+            { id: 'medications', label: 'Medications', icon: FaPills },
+            { id: 'analysis', label: 'Clinical Analysis', icon: FaBrain },
+            { id: 'drn', label: 'DRN Assessment', icon: FaBrain },
+            { id: 'plan', label: 'PharmAssist Plan', icon: FaFileMedical },
+            { id: 'outcome', label: 'Outcome', icon: FaChartLine },
+            { id: 'cost', label: 'Cost', icon: FaMoneyBillWave }
+        ];
 
-    // Debug function
-    const debugLog = useCallback((message, data = null) => {
-        console.log(`🔍 [PatientDetails] ${message}`, data ? data : '');
-    }, []);
+        // Core access check: User must be an admin, have an active subscription, or be part of a company
+        const hasActiveSubscription = user?.subscription_status === 'active';
+        const isCompanyUser = !!user?.company_id ||
+            user?.account_type === 'company' ||
+            ['company_admin', 'company_user'].includes(user?.role);
+        const isAdmin = user?.role === 'admin';
 
-    // Network and backend status monitoring
-    useEffect(() => {
-        const handleOnline = () => {
-            setIsOnline(true);
-            console.log('Device is online');
-        };
-        
-        const handleOffline = () => {
-            setIsOnline(false);
-            console.log('Device is offline');
-        };
-        
-        window.addEventListener('online', handleOnline);
-        window.addEventListener('offline', handleOffline);
-        
-        // Check backend status periodically
-        const checkBackendStatus = async () => {
-            try {
-                console.log('🌐 Checking backend status at:', `${API_BASE_URL}/health`);
-                const response = await fetch(`${API_BASE_URL}/health`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    signal: AbortSignal.timeout(5000) // 5 second timeout
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('✅ Backend is online:', data);
-                    setBackendStatus('online');
-                } else {
-                    console.log('❌ Backend returned error status:', response.status);
-                    setBackendStatus('offline');
-                }
-            } catch (error) {
-                console.log('❌ Backend is offline:', error.message);
-                setBackendStatus('offline');
-            }
-        };
-        
-        // Initial check
-        checkBackendStatus();
-        
-        // Check every 30 seconds
-        const intervalId = setInterval(checkBackendStatus, 30000);
-        
-        return () => {
-            window.removeEventListener('online', handleOnline);
-            window.removeEventListener('offline', handleOffline);
-            clearInterval(intervalId);
-        };
-    }, []);
-
-    // Initialize component
-    useEffect(() => {
-        debugLog('Component mounted with patientCode:', patientCode);
-        debugLog('API Base URL:', API_BASE_URL);
-        
-        // Check URL for edit mode
-        const searchParams = new URLSearchParams(location.search);
-        const isEditMode = searchParams.get('edit') === 'true';
-        
-        if (isEditMode) {
-            debugLog('Edit mode detected from URL');
-            setIsEditing(true);
+        // Basic check for tabs that require at least a subscription
+        if (!hasActiveSubscription && !isAdmin) {
+            return allTabs.filter(tab => !['analysis', 'plan', 'outcome', 'cost', 'drn', 'medications'].includes(tab.id));
         }
-        
-        // Always fetch patient data
-        fetchPatientData();
-        
-        // Clean up sessionStorage on unmount
-        return () => {
-            sessionStorage.removeItem('editPatientData');
-            sessionStorage.removeItem('editPatientCode');
-        };
-    }, [patientCode, location.search, debugLog]);
 
-    // Enhanced fetch with retry logic
-    const fetchWithRetry = useCallback(async (url, options, maxRetries = 3) => {
-        let lastError;
-        
-        for (let attempt = 1; attempt <= maxRetries; attempt++) {
-            try {
-                debugLog(`Attempt ${attempt}/${maxRetries} to fetch ${url}`);
-                
-                // Add timeout to fetch
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000);
-                
-                const response = await fetch(url, {
-                    ...options,
-                    signal: controller.signal
-                });
-                
-                clearTimeout(timeoutId);
-                
-                if (response.ok) {
-                    return response;
-                }
-                
-                // Don't retry on 404 or 401 errors
-                if (response.status === 404 || response.status === 401) {
-                    return response;
-                }
-                
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            } catch (error) {
-                lastError = error;
-                debugLog(`Attempt ${attempt} failed:`, error.message);
-                
-                if (attempt < maxRetries) {
-                    // Wait before retrying (exponential backoff)
-                    const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000);
-                    debugLog(`Waiting ${delay}ms before retry...`);
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                }
-            }
+        // Tiered restriction: Individual subscribers do NOT get clinical tools (plan, outcome, cost, drn)
+        // BUT they DO get Clinical Analysis (after Medications)
+        if (user?.account_type === 'individual' && !isAdmin) {
+            return allTabs.filter(tab => !['plan', 'outcome', 'cost', 'drn'].includes(tab.id));
         }
-        
-        throw lastError;
-    }, [debugLog]);
+
+        // Everyone else (Admins and Company users with active sub) get everything
+        return allTabs;
+    }, [user]);
+
+
 
     const generatePatientCode = useCallback(() => {
         const timestamp = Date.now().toString().slice(-6);
-        const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-        return `PAT${timestamp}${randomNum}`;
+        const randomNum = Math.floor(Math.random() * 9000) + 1000; // 1000-9999
+        const code = `PAT${timestamp}${randomNum}`;
+        debugLog('Generated patient code:', code);
+        return code;
     }, []);
 
     const getCurrentPatientCode = useCallback(() => {
@@ -521,10 +318,10 @@ const PatientDetails = () => {
         try {
             const today = new Date();
             const birthDate = new Date(dateOfBirth);
-            
+
             const diffTime = today - birthDate;
             const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-            
+
             return diffDays.toString();
         } catch (error) {
             debugLog('Error calculating age in days:', error);
@@ -537,14 +334,14 @@ const PatientDetails = () => {
         try {
             const today = new Date();
             const birthDate = new Date(dateOfBirth);
-            
+
             let age = today.getFullYear() - birthDate.getFullYear();
             const monthDiff = today.getMonth() - birthDate.getMonth();
-            
+
             if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
                 age--;
             }
-            
+
             return age.toString();
         } catch (error) {
             debugLog('Error calculating age:', error);
@@ -556,30 +353,30 @@ const PatientDetails = () => {
         if (!ageInDays || ageInDays === '' || isNaN(parseInt(ageInDays))) {
             return 'adult';
         }
-        
+
         const days = parseInt(ageInDays);
-        
+
         for (const group of pediatricAgeGroups) {
             if (days >= group.minDays && days <= group.maxDays) {
                 return group.type;
             }
         }
-        
+
         return 'adult';
     }, [pediatricAgeGroups]);
 
     const formatAgeDisplay = useCallback((ageInDays, dateOfBirth) => {
         if (!dateOfBirth && !ageInDays) return '';
-        
+
         let days = ageInDays;
         if (!days && dateOfBirth && isValidDate(dateOfBirth)) {
             days = calculateAgeInDays(dateOfBirth);
         }
-        
+
         if (!days || isNaN(parseInt(days))) return '';
-        
+
         const daysNum = parseInt(days);
-        
+
         if (daysNum < 28) {
             return `${daysNum} days (Neonate)`;
         } else if (daysNum < 365) {
@@ -589,14 +386,14 @@ const PatientDetails = () => {
                 return `${months} months ${remainingDays} days (Infant)`;
             }
             return `${months} months (Infant)`;
-        } else if (daysNum < 13*365) {
+        } else if (daysNum < 13 * 365) {
             const years = Math.floor(daysNum / 365);
             const months = Math.floor((daysNum % 365) / 30.44);
             if (months > 0) {
                 return `${years} years ${months} months (Child)`;
             }
             return `${years} years (Child)`;
-        } else if (daysNum < 19*365) {
+        } else if (daysNum < 19 * 365) {
             const years = Math.floor(daysNum / 365);
             return `${years} years (Adolescent)`;
         } else {
@@ -621,31 +418,168 @@ const PatientDetails = () => {
         return '3rd Trimester';
     }, []);
 
+    // FIXED: loadPatientData with proper date validation
+    const fetchClinicalHistory = useCallback(async (code) => {
+        if (!code) return;
+        try {
+            console.log('Fetching clinical history for:', code);
+            const [vResult, lResult] = await Promise.all([
+                api.get(`/vitals/patient/${code}`),
+                api.get(`/labs-history/patient/${code}`)
+            ]);
+            if (vResult.success) setVitalsHistory(vResult.vitals || []);
+            if (lResult.success) setLabsHistory(lResult.labs || []);
+        } catch (err) {
+            console.error('Error fetching clinical history:', err);
+        }
+    }, []);
+
+    const loadPatientData = useCallback(async (patientData) => {
+        debugLog('Loading patient data:', patientData.patient_code);
+
+        setIsNewPatient(false);
+        setPatient(patientData);
+        setCurrentPatientCode(patientData.patient_code);
+        fetchClinicalHistory(patientData.patient_code);
+
+        const data = patientData;
+
+        // Standard lab fields list (sync with handleSave)
+        const explicitLabFields = [
+            'hemoglobin', 'hematocrit', 'wbc_count', 'rbc_count', 'platelet_count',
+            'mcv', 'mch', 'mchc', 'rdw', 'neutrophils', 'lymphocytes', 'monocytes',
+            'eosinophils', 'basophils', 'blood_sugar', 'creatinine', 'urea', 'uric_acid',
+            'sodium', 'potassium', 'chloride', 'bicarbonate', 'calcium', 'magnesium',
+            'phosphate', 'alt', 'ast', 'alp', 'ggt', 'bilirubin_total', 'bilirubin_direct',
+            'bilirubin_indirect', 'albumin', 'total_protein', 'troponin', 'ck_mb', 'ldh',
+            'myoglobin', 'tsh', 'free_t4', 'free_t3', 'total_t4', 'total_t3', 'crp', 'esr',
+            'ferritin', 'procalcitonin', 'inr', 'pt', 'ptt', 'fibrinogen', 'd_dimer',
+            'urine_protein', 'urine_glucose', 'urine_blood', 'urine_leukocytes',
+            'urine_nitrite', 'urine_specific_gravity', 'urine_ph', 'urine_ketones',
+            'urine_bilirubin', 'urine_urobilinogen', 'hba1c', 'fasting_glucose',
+            'postprandial_glucose', 'random_glucose', 'insulin', 'c_peptide',
+            'total_cholesterol', 'hdl_cholesterol', 'ldl_cholesterol', 'triglycerides',
+            'vldl_cholesterol', 'egfr', 'bun', 'bilirubin_neonatal', 'glucose_neonatal',
+            'calcium_neonatal', 'pku_result', 'thyroid_screening'
+        ];
+
+        // Consistently load labs from both top-level and JSONB labs object
+        const sourceLabs = data.labs && typeof data.labs === 'object' ? (data.labs.labs || data.labs) : {};
+
+        // Normalize source labs keys for easier matching
+        const normalizedSourceLabs = {};
+        Object.entries(sourceLabs).forEach(([key, value]) => {
+            normalizedSourceLabs[key.toLowerCase().replace(/\s+/g, '_')] = value;
+        });
+
+        const extractedToFormData = {};
+        const loadedCustomLabs = [];
+
+        // Merge explicit fields from either location - PREFER JSONB values for "sticks" efficiency
+        explicitLabFields.forEach(field => {
+            // Priority: Normalized JSONB > Original JSONB > Top-level column
+            const val = normalizedSourceLabs[field] || sourceLabs[field] || data[field] || '';
+            extractedToFormData[field] = val;
+        });
+
+        // Pull non-explicit custom labs
+        Object.entries(sourceLabs).forEach(([key, value]) => {
+            const normalizedKey = key.toLowerCase().replace(/\s+/g, '_');
+            if (!explicitLabFields.includes(normalizedKey)) {
+                loadedCustomLabs.push({
+                    id: Date.now() + Math.random(),
+                    name: key,
+                    value: value
+                });
+            }
+        });
+
+        const dob = data.date_of_birth;
+        const ageInDays = calculateAgeInDays(dob);
+        const ageInYears = calculateAge(dob);
+        const patientType = determinePatientType(ageInDays);
+
+        // Build complete form data object
+        const formDataToSet = {
+            ...data,
+            ...extractedToFormData,
+            age: ageInYears,
+            age_in_days: ageInDays,
+            patient_type: patientType,
+            date_of_birth: (dob && isValidDate(dob)) ? dob.split('T')[0] : '',
+            appointment_date: (data.appointment_date && isValidDate(data.appointment_date)) ? data.appointment_date.split('T')[0] : '',
+            edd: (data.edd && isValidDate(data.edd)) ? data.edd.split('T')[0] : '',
+            last_measured: (data.last_measured && isValidDate(data.last_measured)) ? data.last_measured.split('T')[0] : new Date().toISOString().split('T')[0],
+            last_tested: (data.last_tested && isValidDate(data.last_tested)) ? data.last_tested.split('T')[0] : new Date().toISOString().split('T')[0]
+        };
+
+        setFormData(formDataToSet);
+
+        // Merge Custom Labs with Global Definitions
+        if (globalLabDefinitions && globalLabDefinitions.length > 0) {
+            const existingMap = new Map();
+            loadedCustomLabs.forEach(l => {
+                const name = (l.name || '').toLowerCase().trim();
+                if (name) existingMap.set(name, l);
+            });
+
+            const merged = globalLabDefinitions.map(g => {
+                const nameKey = (g.name || '').toLowerCase().trim();
+                const existing = existingMap.get(nameKey);
+                return {
+                    id: 'global-' + g.id,
+                    name: g.name,
+                    value: existing ? existing.value : '',
+                    isGlobal: true,
+                    unit: g.unit,
+                    reference_range: g.reference_range,
+                    category: g.category,
+                    description: g.description
+                };
+            });
+
+            const globalNames = new Set(globalLabDefinitions.map(g => (g.name || '').toLowerCase().trim()));
+            const nonGlobals = loadedCustomLabs.filter(l => {
+                const name = (l.name || '').toLowerCase().trim();
+                return name && !globalNames.has(name);
+            });
+
+            setCustomLabs([...merged, ...nonGlobals]);
+        } else {
+            setCustomLabs(loadedCustomLabs);
+        }
+
+        // Set age mode
+        if (ageInDays && parseInt(ageInDays) < 365) {
+            setAgeMode('days');
+            setShowPediatricLabs(true);
+        } else {
+            setAgeMode('years');
+            setShowPediatricLabs(false);
+        }
+
+        debugLog('Patient data loaded successfully');
+    }, [debugLog, isValidDate, calculateAgeInDays, calculateAge, determinePatientType, calculateBMI, setCustomLabs, globalLabDefinitions, fetchClinicalHistory]);
+
     // FIXED: fetchPatientData with better error handling
     const fetchPatientData = useCallback(async () => {
         try {
             setLoading(true);
             setError(null);
-            
+
             debugLog('Starting patient fetch for:', patientCode);
-            
-            const token = localStorage.getItem('token');
-            if (!token) {
-                alert('Please login again');
-                navigate('/login');
-                return;
-            }
-            
-            // CASE 1: Creating a new patient
-            if (patientCode === 'new') {
+
+            // CASE 0: Creating a new patient
+            const isNewPatientRoute = patientCode === 'new' || location.pathname.endsWith('/patients/new');
+
+            if (isNewPatientRoute) {
                 debugLog('Creating new patient');
-                
                 setIsNewPatient(true);
                 setIsEditing(true);
-                
+
                 const newCode = generatePatientCode();
                 setCurrentPatientCode(newCode);
-                
+
                 const today = new Date().toISOString().split('T')[0];
                 setFormData(prev => ({
                     ...prev,
@@ -655,289 +589,86 @@ const PatientDetails = () => {
                     allergies: [],
                     patient_type: 'adult'
                 }));
-                
+
                 setLoading(false);
                 return;
             }
-            
+
+            // CASE 1: Invalid or missing patientCode
+            if (!isNewPatientRoute && (!patientCode || patientCode === 'undefined' || patientCode === 'null')) {
+                debugLog('⚠️ No patient code provided');
+                setError('No patient selected. Please select a patient from the list.');
+                setLoading(false);
+                // Redirect to create new patient instead of showing error
+                navigate('/patients/new');
+                return;
+            }
+
+            // CASE 1: Creating a new patient
+            if (patientCode === 'new') {
+                debugLog('Creating new patient');
+                setIsNewPatient(true);
+                setIsEditing(true);
+
+                const newCode = generatePatientCode();
+                setCurrentPatientCode(newCode);
+
+                const today = new Date().toISOString().split('T')[0];
+                setFormData(prev => ({
+                    ...prev,
+                    last_measured: today,
+                    last_tested: today,
+                    is_active: true,
+                    allergies: [],
+                    patient_type: 'adult'
+                }));
+
+                setLoading(false);
+                return;
+            }
+
             // CASE 2: Fetching existing patient
-            debugLog('Fetching existing patient from API...');
-            
-            const url = `${API_BASE_URL}/patients/code/${patientCode}`;
-            debugLog('Fetch URL:', url);
-            
-            const response = await fetchWithRetry(url, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            debugLog('API Response status:', response.status);
-            
-            if (response.ok) {
-                const result = await response.json();
-                debugLog('API Response data:', result);
-                
+            debugLog('Fetching existing patient:', patientCode);
+
+            try {
+                const result = await api.get(`/patients/code/${patientCode}`);
+                debugLog('API Result:', result);
+
                 if (result.success && result.patient) {
                     debugLog('✅ Patient found:', result.patient.patient_code);
                     loadPatientData(result.patient);
-                    
+
                     const searchParams = new URLSearchParams(location.search);
-                    const isEditMode = searchParams.get('edit') === 'true';
-                    
-                    if (isEditMode) {
+                    if (searchParams.get('edit') === 'true') {
                         setIsEditing(true);
                     }
-                } else if (result.data) {
-                    // Handle case where patient is returned directly in data
-                    debugLog('✅ Patient found in data:', result.data.patient_code);
-                    loadPatientData(result.data);
                 } else {
-                    throw new Error('Patient data not found in response');
+                    setError('Patient not found. Please check the patient code.');
+                    setIsNewPatient(true);
+                    setIsEditing(true);
                 }
-            } else if (response.status === 404) {
-                debugLog('Patient not found (404)');
-                setError('Patient not found. This patient may have been deleted or you may not have permission to view it.');
-                setIsNewPatient(true);
-                setIsEditing(true);
-            } else if (response.status === 401 || response.status === 403) {
-                debugLog('Authentication error');
-                setError('Access denied. Please login again.');
-                navigate('/login');
-            } else {
-                const errorText = await response.text();
-                throw new Error(`API Error ${response.status}: ${errorText}`);
+            } catch (apiError) {
+                debugLog('❌ API Error:', apiError);
+                if (apiError.response?.status === 404) {
+                    setError('Patient not found. You can create a new patient instead.');
+                    setIsNewPatient(true);
+                    setIsEditing(true);
+                } else {
+                    setError(`Failed to load patient: ${apiError.message || 'Server error'}`);
+                }
             }
         } catch (error) {
-            debugLog('❌ Error fetching patient:', error);
-            
-            // Check if it's a network error
-            if (error.message.includes('Network') || 
-                error.message.includes('fetch') || 
-                error.message.includes('Failed') ||
-                error.message.includes('timeout') ||
-                error.message.includes('abort')) {
-                setError('Cannot connect to server. Please check your internet connection and try again.');
-                setRetryCount(prev => prev + 1);
-            } else {
-                setError(`Failed to load patient: ${error.message}`);
-            }
-            
-            // Don't auto-set to new patient on network errors
-            if (error.message.includes('Network') || error.message.includes('Failed to fetch')) {
-                // Keep loading state for network errors
-            } else {
-                setIsNewPatient(true);
-                setIsEditing(true);
-            }
+            debugLog('❌ General error:', error);
+            setError(`Error loading patient: ${error.message || 'Unknown error'}`);
         } finally {
             setLoading(false);
         }
-    }, [patientCode, navigate, debugLog, generatePatientCode, location.search, fetchWithRetry]);
-
-    // FIXED: loadPatientData with proper date validation
-    const loadPatientData = useCallback((patientData) => {
-        debugLog('Loading patient data:', patientData.patient_code);
-        
-        setIsNewPatient(false);
-        setPatient(patientData);
-        setCurrentPatientCode(patientData.patient_code);
-        
-        const data = patientData;
-        
-        // Validate and calculate age
-        const dob = data.date_of_birth;
-        let ageInDays = data.age_in_days || '';
-        let ageInYears = data.age || '';
-        
-        if (dob && isValidDate(dob)) {
-            ageInDays = calculateAgeInDays(dob);
-            ageInYears = calculateAge(dob);
-        } else if (data.date_of_birth) {
-            // Invalid date in database, clear it
-            debugLog('Invalid date of birth in database:', data.date_of_birth);
-        }
-        
-        const patientType = data.patient_type || determinePatientType(ageInDays);
-        
-        // Build complete form data object
-        const formDataToSet = {
-            // Basic Info
-            full_name: data.full_name || '',
-            age: ageInYears,
-            age_in_days: ageInDays,
-            gender: data.gender || '',
-            date_of_birth: (dob && isValidDate(dob)) ? dob.split('T')[0] : '',
-            contact_number: data.contact_number || '',
-            address: data.address || '',
-            diagnosis: data.diagnosis || '',
-            appointment_date: (data.appointment_date && isValidDate(data.appointment_date)) ? data.appointment_date.split('T')[0] : '',
-            is_active: data.is_active !== false,
-            allergies: Array.isArray(data.allergies) ? data.allergies : [],
-            patient_type: patientType,
-            
-            // Pregnancy
-            is_pregnant: data.is_pregnant || false,
-            pregnancy_weeks: data.pregnancy_weeks || '',
-            pregnancy_trimester: data.pregnancy_trimester || '',
-            edd: (data.edd && isValidDate(data.edd)) ? data.edd.split('T')[0] : '',
-            pregnancy_notes: data.pregnancy_notes || '',
-            
-            // Vitals
-            blood_pressure: data.blood_pressure || '',
-            heart_rate: data.heart_rate || '',
-            temperature: data.temperature || '',
-            respiratory_rate: data.respiratory_rate || '',
-            oxygen_saturation: data.oxygen_saturation || '',
-            weight: data.weight || '',
-            height: data.height || '',
-            length: data.length || '',
-            head_circumference: data.head_circumference || '',
-            bmi: data.bmi || calculateBMI(data.weight, data.height),
-            last_measured: (data.last_measured && isValidDate(data.last_measured)) ? data.last_measured.split('T')[0] : new Date().toISOString().split('T')[0],
-            
-            // Growth percentiles
-            weight_percentile: data.weight_percentile || '',
-            height_percentile: data.height_percentile || '',
-            head_circumference_percentile: data.head_circumference_percentile || '',
-            bmi_percentile: data.bmi_percentile || '',
-            
-            // Pediatric info
-            developmental_milestones: data.developmental_milestones || '',
-            feeding_method: data.feeding_method || '',
-            birth_weight: data.birth_weight || '',
-            birth_length: data.birth_length || '',
-            vaccination_status: data.vaccination_status || '',
-            special_instructions: data.special_instructions || '',
-            
-            // Labs - CBC
-            hemoglobin: data.hemoglobin || '',
-            hematocrit: data.hematocrit || '',
-            wbc_count: data.wbc_count || '',
-            rbc_count: data.rbc_count || '',
-            platelet_count: data.platelet_count || '',
-            mcv: data.mcv || '',
-            mch: data.mch || '',
-            mchc: data.mchc || '',
-            rdw: data.rdw || '',
-            neutrophils: data.neutrophils || '',
-            lymphocytes: data.lymphocytes || '',
-            monocytes: data.monocytes || '',
-            eosinophils: data.eosinophils || '',
-            basophils: data.basophils || '',
-            
-            // Chemistry
-            blood_sugar: data.blood_sugar || '',
-            creatinine: data.creatinine || '',
-            urea: data.urea || '',
-            uric_acid: data.uric_acid || '',
-            sodium: data.sodium || '',
-            potassium: data.potassium || '',
-            chloride: data.chloride || '',
-            bicarbonate: data.bicarbonate || '',
-            calcium: data.calcium || '',
-            magnesium: data.magnesium || '',
-            phosphate: data.phosphate || '',
-            
-            // Liver Function
-            alt: data.alt || '',
-            ast: data.ast || '',
-            alp: data.alp || '',
-            ggt: data.ggt || '',
-            bilirubin_total: data.bilirubin_total || '',
-            bilirubin_direct: data.bilirubin_direct || '',
-            bilirubin_indirect: data.bilirubin_indirect || '',
-            albumin: data.albumin || '',
-            total_protein: data.total_protein || '',
-            
-            // Cardiac
-            troponin: data.troponin || '',
-            ck_mb: data.ck_mb || '',
-            ldh: data.ldh || '',
-            myoglobin: data.myoglobin || '',
-            
-            // Thyroid
-            tsh: data.tsh || '',
-            free_t4: data.free_t4 || '',
-            free_t3: data.free_t3 || '',
-            total_t4: data.total_t4 || '',
-            total_t3: data.total_t3 || '',
-            
-            // Inflammatory
-            crp: data.crp || '',
-            esr: data.esr || '',
-            ferritin: data.ferritin || '',
-            procalcitonin: data.procalcitonin || '',
-            
-            // Coagulation
-            inr: data.inr || '',
-            pt: data.pt || '',
-            ptt: data.ptt || '',
-            fibrinogen: data.fibrinogen || '',
-            d_dimer: data.d_dimer || '',
-            
-            // Urinalysis
-            urine_protein: data.urine_protein || '',
-            urine_glucose: data.urine_glucose || '',
-            urine_blood: data.urine_blood || '',
-            urine_leukocytes: data.urine_leukocytes || '',
-            urine_nitrite: data.urine_nitrite || '',
-            urine_specific_gravity: data.urine_specific_gravity || '',
-            urine_ph: data.urine_ph || '',
-            urine_ketones: data.urine_ketones || '',
-            urine_bilirubin: data.urine_bilirubin || '',
-            urine_urobilinogen: data.urine_urobilinogen || '',
-            
-            // Diabetes
-            hba1c: data.hba1c || '',
-            fasting_glucose: data.fasting_glucose || '',
-            postprandial_glucose: data.postprandial_glucose || '',
-            random_glucose: data.random_glucose || '',
-            insulin: data.insulin || '',
-            c_peptide: data.c_peptide || '',
-            
-            // Lipid Profile
-            total_cholesterol: data.total_cholesterol || '',
-            hdl_cholesterol: data.hdl_cholesterol || '',
-            ldl_cholesterol: data.ldl_cholesterol || '',
-            triglycerides: data.triglycerides || '',
-            vldl_cholesterol: data.vldl_cholesterol || '',
-            
-            // Renal
-            egfr: data.egfr || '',
-            bun: data.bun || '',
-            
-            // Pediatric labs
-            bilirubin_neonatal: data.bilirubin_neonatal || '',
-            glucose_neonatal: data.glucose_neonatal || '',
-            calcium_neonatal: data.calcium_neonatal || '',
-            pku_result: data.pku_result || '',
-            thyroid_screening: data.thyroid_screening || '',
-            
-            // Last tested
-            last_tested: (data.last_tested && isValidDate(data.last_tested)) ? data.last_tested.split('T')[0] : new Date().toISOString().split('T')[0]
-        };
-        
-        setFormData(formDataToSet);
-        
-        // Set age mode for pediatric patients
-        if (ageInDays && parseInt(ageInDays) < 365) {
-            setAgeMode('days');
-            setShowPediatricLabs(true);
-        } else {
-            setAgeMode('years');
-            setShowPediatricLabs(false);
-        }
-        
-        debugLog('Patient data loaded successfully');
-    }, [debugLog, isValidDate, calculateAgeInDays, calculateAge, determinePatientType, calculateBMI]);
+    }, [patientCode, navigate, debugLog, generatePatientCode, location.search, location.pathname, loadPatientData]);
 
     // Create a memoized change handler for lab inputs
     const handleLabInputChange = useCallback((field, value) => {
         debugLog(`Lab input change: ${field} =`, value);
-        
+
         // For numeric fields, allow empty string or valid numbers
         const numericFields = [
             'hemoglobin', 'hematocrit', 'wbc_count', 'rbc_count', 'platelet_count',
@@ -954,7 +685,7 @@ const PatientDetails = () => {
             'triglycerides', 'vldl_cholesterol', 'egfr', 'bun', 'bilirubin_neonatal',
             'glucose_neonatal', 'calcium_neonatal'
         ];
-        
+
         if (numericFields.includes(field)) {
             if (value === '' || value === null || value === undefined) {
                 setFormData(prev => ({
@@ -963,10 +694,9 @@ const PatientDetails = () => {
                 }));
                 return;
             }
-            
-            // Allow decimal numbers
-            const numValue = parseFloat(value);
-            if (!isNaN(numValue)) {
+
+            // Allow decimal numbers and partial typing
+            if (value === '' || /^-?\d*\.?\d*$/.test(value)) {
                 setFormData(prev => ({
                     ...prev,
                     [field]: value
@@ -974,7 +704,7 @@ const PatientDetails = () => {
             }
             return;
         }
-        
+
         // For text fields
         setFormData(prev => ({
             ...prev,
@@ -985,13 +715,13 @@ const PatientDetails = () => {
     // Create a memoized change handler for vitals inputs
     const handleVitalsInputChange = useCallback((field, value) => {
         debugLog(`Vitals input change: ${field} =`, value);
-        
+
         // Handle weight and height for BMI calculation
         if (field === 'weight' || field === 'height') {
             const newWeight = field === 'weight' ? value : formData.weight;
             const newHeight = field === 'height' ? value : formData.height;
             const newBmi = calculateBMI(newWeight, newHeight);
-            
+
             setFormData(prev => ({
                 ...prev,
                 [field]: value,
@@ -999,12 +729,12 @@ const PatientDetails = () => {
             }));
             return;
         }
-        
+
         // For numeric vitals fields
-        const numericVitals = ['heart_rate', 'temperature', 'respiratory_rate', 
-                              'oxygen_saturation', 'weight', 'height', 'length', 
-                              'head_circumference'];
-        
+        const numericVitals = ['heart_rate', 'temperature', 'respiratory_rate',
+            'oxygen_saturation', 'weight', 'height', 'length',
+            'head_circumference'];
+
         if (numericVitals.includes(field)) {
             if (value === '' || value === null || value === undefined) {
                 setFormData(prev => ({
@@ -1013,7 +743,7 @@ const PatientDetails = () => {
                 }));
                 return;
             }
-            
+
             // Allow decimal for temperature and weight
             if (field === 'temperature' || field === 'weight') {
                 const numValue = parseFloat(value);
@@ -1035,7 +765,7 @@ const PatientDetails = () => {
             }
             return;
         }
-        
+
         // For text fields like blood pressure
         setFormData(prev => ({
             ...prev,
@@ -1045,7 +775,7 @@ const PatientDetails = () => {
 
     const handleInputChange = useCallback((field, value) => {
         debugLog(`Input change: ${field} =`, value);
-        
+
         // Handle date fields with validation
         if (field === 'date_of_birth' && value) {
             if (!isValidDate(value)) {
@@ -1056,11 +786,11 @@ const PatientDetails = () => {
                 }));
                 return;
             }
-            
+
             const ageInDays = calculateAgeInDays(value);
             const ageInYears = calculateAge(value);
             const patientType = determinePatientType(ageInDays);
-            
+
             setFormData(prev => ({
                 ...prev,
                 [field]: value,
@@ -1068,7 +798,7 @@ const PatientDetails = () => {
                 age: ageInYears,
                 patient_type: patientType
             }));
-            
+
             if (ageInDays && parseInt(ageInDays) < 365) {
                 setAgeMode('days');
                 setShowPediatricLabs(true);
@@ -1078,18 +808,18 @@ const PatientDetails = () => {
             }
             return;
         }
-        
+
         if (field === 'age_in_days') {
             const patientType = determinePatientType(value);
             const years = value ? Math.floor(parseInt(value) / 365) : '';
-            
+
             setFormData(prev => ({
                 ...prev,
                 [field]: value,
                 age: years.toString(),
                 patient_type: patientType
             }));
-            
+
             if (value && parseInt(value) < 365) {
                 setAgeMode('days');
                 setShowPediatricLabs(true);
@@ -1099,18 +829,18 @@ const PatientDetails = () => {
             }
             return;
         }
-        
+
         if (field === 'age') {
             const days = value ? parseInt(value) * 365 : '';
             const patientType = determinePatientType(days.toString());
-            
+
             setFormData(prev => ({
                 ...prev,
                 [field]: value,
                 age_in_days: days.toString(),
                 patient_type: patientType
             }));
-            
+
             if (value && parseInt(value) < 1) {
                 setAgeMode('days');
                 setShowPediatricLabs(true);
@@ -1120,7 +850,7 @@ const PatientDetails = () => {
             }
             return;
         }
-        
+
         if (field === 'pregnancy_weeks') {
             const newTrimester = calculateTrimester(value);
             setFormData(prev => ({
@@ -1130,7 +860,7 @@ const PatientDetails = () => {
             }));
             return;
         }
-        
+
         // Handle date fields
         if (field.includes('date') || field.includes('edd') || field === 'appointment_date') {
             if (value && !isValidDate(value)) {
@@ -1139,7 +869,7 @@ const PatientDetails = () => {
                 return;
             }
         }
-        
+
         // For basic text/number fields in demographics
         setFormData(prev => ({
             ...prev,
@@ -1149,7 +879,7 @@ const PatientDetails = () => {
 
     const handleAddAllergy = useCallback(() => {
         if (newAllergy.trim() === '') return;
-        
+
         const allergyText = newAllergy.trim();
         if (!formData.allergies.includes(allergyText)) {
             setFormData(prev => ({
@@ -1159,6 +889,80 @@ const PatientDetails = () => {
         }
         setNewAllergy('');
     }, [newAllergy, formData.allergies]);
+
+    // Network and backend status monitoring
+    useEffect(() => {
+        const handleOnline = () => {
+            setIsOnline(true);
+            console.log('Device is online');
+        };
+
+        const handleOffline = () => {
+            setIsOnline(false);
+            console.log('Device is offline');
+        };
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        // Check backend status periodically
+        const checkBackendStatus = async () => {
+            try {
+                const result = await api.get('/health');
+                if (result) {
+                    setBackendStatus('online');
+                } else {
+                    setBackendStatus('offline');
+                }
+            } catch (error) {
+                setBackendStatus('offline');
+            }
+        };
+
+        // Initial check
+        checkBackendStatus();
+
+        // Check every 30 seconds
+        const intervalId = setInterval(checkBackendStatus, 30000);
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+            clearInterval(intervalId);
+        };
+    }, []);
+
+    // Initialize component
+    // Initialize component
+    useEffect(() => {
+        debugLog('Component mounted with patientCode:', patientCode);
+
+        // Only fetch if we have a valid patientCode
+        const isNewPatientRoute = patientCode === 'new' || location.pathname.endsWith('/patients/new');
+
+        // Only fetch if we have a valid patientCode OR we are on the new patient route
+        if (isNewPatientRoute || (patientCode && patientCode !== 'undefined' && patientCode !== 'null')) {
+            const searchParams = new URLSearchParams(location.search);
+            const isEditMode = searchParams.get('edit') === 'true';
+
+            if (isEditMode || isNewPatientRoute) {
+                debugLog('Edit mode detected');
+                setIsEditing(true);
+            }
+
+            fetchPatientData();
+        } else {
+            // If patientCode is invalid, show error immediately
+            setError('No patient selected. Please select a patient from the list.');
+            setLoading(false);
+        }
+
+        // Clean up sessionStorage on unmount
+        return () => {
+            sessionStorage.removeItem('editPatientData');
+            sessionStorage.removeItem('editPatientCode');
+        };
+    }, [patientCode, location.search, debugLog, fetchPatientData]);
 
     const handleRemoveAllergy = useCallback((index) => {
         setFormData(prev => ({
@@ -1171,66 +975,48 @@ const PatientDetails = () => {
     const getPediatricNormalRange = useCallback((measurement, ageInDays) => {
         if (!ageInDays) return '';
         const days = parseInt(ageInDays);
-        
+
         if (measurement === 'heart_rate') {
             if (days < 28) return '120-160 bpm';
             if (days < 365) return '100-140 bpm';
-            if (days < 6*365) return '75-115 bpm';
-            if (days < 12*365) return '70-110 bpm';
-            if (days < 18*365) return '60-100 bpm';
+            if (days < 6 * 365) return '75-115 bpm';
+            if (days < 12 * 365) return '70-110 bpm';
+            if (days < 18 * 365) return '60-100 bpm';
             return '60-100 bpm';
         }
-        
+
         if (measurement === 'respiratory_rate') {
             if (days < 28) return '40-60 breaths/min';
             if (days < 365) return '30-40 breaths/min';
-            if (days < 6*365) return '20-30 breaths/min';
-            if (days < 12*365) return '18-25 breaths/min';
-            if (days < 18*365) return '12-20 breaths/min';
+            if (days < 6 * 365) return '20-30 breaths/min';
+            if (days < 12 * 365) return '18-25 breaths/min';
+            if (days < 18 * 365) return '12-20 breaths/min';
             return '12-20 breaths/min';
         }
-        
+
         if (measurement === 'blood_pressure') {
             if (days < 28) return '65/45 mmHg';
             if (days < 365) return '80/55 mmHg';
-            if (days < 6*365) return '95/60 mmHg';
-            if (days < 12*365) return '105/65 mmHg';
-            if (days < 18*365) return '110/70 mmHg';
+            if (days < 6 * 365) return '95/60 mmHg';
+            if (days < 12 * 365) return '105/65 mmHg';
+            if (days < 18 * 365) return '110/70 mmHg';
             return '120/80 mmHg';
         }
-        
+
         return '';
     }, []);
 
     // Test backend connection
     const testBackendConnection = useCallback(async () => {
         try {
-            console.log('Testing backend connection to:', API_BASE_URL);
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 5000);
-            
-            const response = await fetch(`${API_BASE_URL}/health`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                signal: controller.signal
-            });
-            
-            clearTimeout(timeoutId);
-            
-            if (response.ok) {
-                const data = await response.json();
-                console.log('✅ Backend is healthy:', data);
+            const result = await api.get('/health');
+            if (result) {
                 setBackendStatus('online');
                 return true;
-            } else {
-                console.log('❌ Backend returned error:', response.status);
-                setBackendStatus('offline');
-                return false;
             }
+            setBackendStatus('offline');
+            return false;
         } catch (error) {
-            console.log('❌ Backend connection failed:', error.message);
             setBackendStatus('offline');
             return false;
         }
@@ -1240,20 +1026,6 @@ const PatientDetails = () => {
     const handleSave = useCallback(async (section = 'all') => {
         try {
             console.log(`💾 Saving ${section}...`);
-            
-            const token = localStorage.getItem('token');
-            if (!token) {
-                alert('Please login again');
-                navigate('/login');
-                return;
-            }
-
-            // Check backend connection first
-            const isBackendOnline = await testBackendConnection();
-            if (!isBackendOnline) {
-                alert('Cannot connect to server. Please check your internet connection and try again.');
-                return;
-            }
 
             // For new patients, validate required fields
             if (isNewPatient) {
@@ -1264,25 +1036,36 @@ const PatientDetails = () => {
             }
 
             let savePatientCode = getCurrentPatientCode();
-            
-            // For NEW patients, generate code
-            if (isNewPatient && (!savePatientCode || savePatientCode.trim() === '')) {
+
+            // For NEW patients, ALWAYS generate a fresh code
+            if (isNewPatient) {
                 savePatientCode = generatePatientCode();
                 setCurrentPatientCode(savePatientCode);
-                console.log('Generated patient code:', savePatientCode);
+                debugLog('Generated new patient code:', savePatientCode);
             }
-            
-            // For EXISTING patients, ensure we have the code
-            if (!isNewPatient && (!savePatientCode || savePatientCode.trim() === '')) {
-                console.error('Patient code missing');
-                alert('Patient code missing. Please reload.');
-                return;
+
+            // Validate we have a patient code
+            // BETTER VERSION:
+            if (!savePatientCode || savePatientCode.trim() === '') {
+                if (isNewPatient) {
+                    // New patient - generate code
+                    savePatientCode = generatePatientCode();
+                    setCurrentPatientCode(savePatientCode);
+                    debugLog('Generated patient code for new patient:', savePatientCode);
+                } else {
+                    // Existing patient missing code - error
+                    alert('Patient code missing. Please reload or go back to patient list.');
+                    return;
+                }
             }
+
+            // Log what we're saving
+            debugLog('Saving patient with code:', savePatientCode, 'isNew:', isNewPatient);
 
             // Calculate ages
             let ageInDays = formData.age_in_days;
             let ageInYears = formData.age;
-            
+
             if (formData.date_of_birth) {
                 if (!isValidDate(formData.date_of_birth)) {
                     alert('Invalid date of birth');
@@ -1337,7 +1120,7 @@ const PatientDetails = () => {
                     edd: cleanDate(formData.edd),
                     pregnancy_notes: cleanText(formData.pregnancy_notes),
                 },
-                
+
                 vitals: {
                     blood_pressure: cleanText(formData.blood_pressure),
                     heart_rate: cleanNumber(formData.heart_rate),
@@ -1361,131 +1144,72 @@ const PatientDetails = () => {
                     vaccination_status: cleanText(formData.vaccination_status),
                     special_instructions: cleanText(formData.special_instructions),
                 },
-                
+
                 labs: {
-                    // CBC
-                    hemoglobin: cleanNumber(formData.hemoglobin),
-                    hematocrit: cleanNumber(formData.hematocrit),
-                    wbc_count: cleanNumber(formData.wbc_count),
-                    rbc_count: cleanNumber(formData.rbc_count),
-                    platelet_count: cleanNumber(formData.platelet_count),
-                    mcv: cleanNumber(formData.mcv),
-                    mch: cleanNumber(formData.mch),
-                    mchc: cleanNumber(formData.mchc),
-                    rdw: cleanNumber(formData.rdw),
-                    neutrophils: cleanNumber(formData.neutrophils),
-                    lymphocytes: cleanNumber(formData.lymphocytes),
-                    monocytes: cleanNumber(formData.monocytes),
-                    eosinophils: cleanNumber(formData.eosinophils),
-                    basophils: cleanNumber(formData.basophils),
-                    
-                    // Chemistry
-                    blood_sugar: cleanNumber(formData.blood_sugar),
-                    creatinine: cleanNumber(formData.creatinine),
-                    urea: cleanNumber(formData.urea),
-                    uric_acid: cleanNumber(formData.uric_acid),
-                    sodium: cleanNumber(formData.sodium),
-                    potassium: cleanNumber(formData.potassium),
-                    chloride: cleanNumber(formData.chloride),
-                    bicarbonate: cleanNumber(formData.bicarbonate),
-                    calcium: cleanNumber(formData.calcium),
-                    magnesium: cleanNumber(formData.magnesium),
-                    phosphate: cleanNumber(formData.phosphate),
-                    
-                    // Liver Function
-                    alt: cleanNumber(formData.alt),
-                    ast: cleanNumber(formData.ast),
-                    alp: cleanNumber(formData.alp),
-                    ggt: cleanNumber(formData.ggt),
-                    bilirubin_total: cleanNumber(formData.bilirubin_total),
-                    bilirubin_direct: cleanNumber(formData.bilirubin_direct),
-                    bilirubin_indirect: cleanNumber(formData.bilirubin_indirect),
-                    albumin: cleanNumber(formData.albumin),
-                    total_protein: cleanNumber(formData.total_protein),
-                    
-                    // Cardiac
-                    troponin: cleanNumber(formData.troponin),
-                    ck_mb: cleanNumber(formData.ck_mb),
-                    ldh: cleanNumber(formData.ldh),
-                    myoglobin: cleanNumber(formData.myoglobin),
-                    
-                    // Thyroid
-                    tsh: cleanNumber(formData.tsh),
-                    free_t4: cleanNumber(formData.free_t4),
-                    free_t3: cleanNumber(formData.free_t3),
-                    total_t4: cleanNumber(formData.total_t4),
-                    total_t3: cleanNumber(formData.total_t3),
-                    
-                    // Inflammatory
-                    crp: cleanNumber(formData.crp),
-                    esr: cleanNumber(formData.esr),
-                    ferritin: cleanNumber(formData.ferritin),
-                    procalcitonin: cleanNumber(formData.procalcitonin),
-                    
-                    // Coagulation
-                    inr: cleanNumber(formData.inr),
-                    pt: cleanNumber(formData.pt),
-                    ptt: cleanNumber(formData.ptt),
-                    fibrinogen: cleanNumber(formData.fibrinogen),
-                    d_dimer: cleanNumber(formData.d_dimer),
-                    
-                    // Urinalysis
-                    urine_protein: cleanText(formData.urine_protein),
-                    urine_glucose: cleanText(formData.urine_glucose),
-                    urine_blood: cleanText(formData.urine_blood),
-                    urine_leukocytes: cleanText(formData.urine_leukocytes),
-                    urine_nitrite: cleanText(formData.urine_nitrite),
-                    urine_specific_gravity: cleanNumber(formData.urine_specific_gravity),
-                    urine_ph: cleanNumber(formData.urine_ph),
-                    urine_ketones: cleanText(formData.urine_ketones),
-                    urine_bilirubin: cleanText(formData.urine_bilirubin),
-                    urine_urobilinogen: cleanNumber(formData.urine_urobilinogen),
-                    
-                    // Diabetes
-                    hba1c: cleanNumber(formData.hba1c),
-                    fasting_glucose: cleanNumber(formData.fasting_glucose),
-                    postprandial_glucose: cleanNumber(formData.postprandial_glucose),
-                    random_glucose: cleanNumber(formData.random_glucose),
-                    insulin: cleanNumber(formData.insulin),
-                    c_peptide: cleanNumber(formData.c_peptide),
-                    
-                    // Lipid Profile
-                    total_cholesterol: cleanNumber(formData.total_cholesterol),
-                    hdl_cholesterol: cleanNumber(formData.hdl_cholesterol),
-                    ldl_cholesterol: cleanNumber(formData.ldl_cholesterol),
-                    triglycerides: cleanNumber(formData.triglycerides),
-                    vldl_cholesterol: cleanNumber(formData.vldl_cholesterol),
-                    
-                    // Renal
-                    egfr: cleanNumber(formData.egfr),
-                    bun: cleanNumber(formData.bun),
-                    
-                    // Pediatric labs
-                    bilirubin_neonatal: cleanNumber(formData.bilirubin_neonatal),
-                    glucose_neonatal: cleanNumber(formData.glucose_neonatal),
-                    calcium_neonatal: cleanNumber(formData.calcium_neonatal),
-                    pku_result: cleanText(formData.pku_result),
-                    thyroid_screening: cleanText(formData.thyroid_screening),
-                    
+                    labs: (() => {
+                        const allLabsData = {};
+
+                        // 1. Pack all explicit lab fields from formData
+                        const explicitLabFields = [
+                            'hemoglobin', 'hematocrit', 'wbc_count', 'rbc_count', 'platelet_count',
+                            'mcv', 'mch', 'mchc', 'rdw', 'neutrophils', 'lymphocytes', 'monocytes',
+                            'eosinophils', 'basophils', 'blood_sugar', 'creatinine', 'urea', 'uric_acid',
+                            'sodium', 'potassium', 'chloride', 'bicarbonate', 'calcium', 'magnesium',
+                            'phosphate', 'alt', 'ast', 'alp', 'ggt', 'bilirubin_total', 'bilirubin_direct',
+                            'bilirubin_indirect', 'albumin', 'total_protein', 'troponin', 'ck_mb', 'ldh',
+                            'myoglobin', 'tsh', 'free_t4', 'free_t3', 'total_t4', 'total_t3', 'crp', 'esr',
+                            'ferritin', 'procalcitonin', 'inr', 'pt', 'ptt', 'fibrinogen', 'd_dimer',
+                            'urine_protein', 'urine_glucose', 'urine_blood', 'urine_leukocytes',
+                            'urine_nitrite', 'urine_specific_gravity', 'urine_ph', 'urine_ketones',
+                            'urine_bilirubin', 'urine_urobilinogen', 'hba1c', 'fasting_glucose',
+                            'postprandial_glucose', 'random_glucose', 'insulin', 'c_peptide',
+                            'total_cholesterol', 'hdl_cholesterol', 'ldl_cholesterol', 'triglycerides',
+                            'vldl_cholesterol', 'egfr', 'bun', 'bilirubin_neonatal', 'glucose_neonatal',
+                            'calcium_neonatal', 'pku_result', 'thyroid_screening'
+                        ];
+
+                        explicitLabFields.forEach(field => {
+                            const val = formData[field];
+                            if (val !== '' && val !== null && val !== undefined) {
+                                allLabsData[field] = val;
+                            }
+                        });
+
+                        // 2. Add dynamic Custom/Global Labs from customLabs state
+                        customLabs.forEach(lab => {
+                            if (lab.name && lab.name.trim() !== '' && lab.value !== '') {
+                                // Normalize key for saving (matches explicitLabFields and database columns)
+                                const key = lab.name.toLowerCase().trim().replace(/\s+/g, '_');
+                                allLabsData[key] = lab.value;
+                            }
+                        });
+
+                        return allLabsData;
+                    })(),
                     last_tested: cleanDate(formData.last_tested)
                 }
             };
 
             // Combine based on section
             let patientData = {};
-            
+
             if (section === 'all' || isNewPatient) {
-                patientData = { ...sectionData.basic, ...sectionData.vitals, ...sectionData.labs };
-                console.log('📦 Saving ALL data');
+                patientData = {
+                    ...sectionData.basic,
+                    ...sectionData.vitals,
+                    labs: sectionData.labs.labs, // Keep inside JSONB object
+                    last_tested: sectionData.labs.last_tested
+                };
             } else if (section === 'vitals') {
                 patientData = { ...sectionData.basic, ...sectionData.vitals };
-                console.log('📊 Saving VITALS data');
             } else if (section === 'labs') {
-                patientData = { ...sectionData.basic, ...sectionData.labs };
-                console.log('🧪 Saving LABS data');
+                patientData = {
+                    ...sectionData.basic,
+                    labs: sectionData.labs.labs, // Keep inside JSONB object
+                    last_tested: sectionData.labs.last_tested
+                };
             } else if (section === 'basic') {
                 patientData = sectionData.basic;
-                console.log('👤 Saving BASIC data');
             }
 
             // Clean data
@@ -1496,163 +1220,92 @@ const PatientDetails = () => {
                 }
             });
 
-            console.log(`Saving ${Object.keys(cleanedPatientData).length} fields`);
-
             // API call
-            let endpoint, method;
-            
+            let result;
             if (isNewPatient) {
-                endpoint = `${API_BASE_URL}/patients`;
-                method = 'POST';
+                result = await api.post('/patients', cleanedPatientData);
             } else {
-                endpoint = `${API_BASE_URL}/patients/code/${savePatientCode}`;
-                method = 'PUT';
                 delete cleanedPatientData.patient_code;
+                result = await api.put(`/patients/code/${savePatientCode}`, cleanedPatientData);
             }
 
-            console.log(`${method} ${endpoint}`);
+            if (result.success) {
+                const savedPatient = result.patient || result.data;
 
-            const response = await fetchWithRetry(endpoint, {
-                method: method,
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(cleanedPatientData)
-            });
+                // ✅ CRITICAL FIX: Use loadPatientData to properly unfold the labs JSONB
+                // back into the individual form fields after a successful save.
+                await loadPatientData(savedPatient);
 
-            console.log(`Status: ${response.status}`);
-            
-            // Get response text first
-            const responseText = await response.text();
-            let responseData;
-            
-            try {
-                responseData = JSON.parse(responseText);
-            } catch (parseError) {
-                console.error('Invalid JSON:', responseText.substring(0, 200));
-                throw new Error('Invalid server response');
-            }
-            
-            if (!response.ok) {
-                console.error('Error:', responseData);
-                
-                // Handle duplicate patient code
-                if (responseData.error && responseData.error.includes('patient code already exists')) {
-                    if (isNewPatient) {
-                        console.log('Switching to update mode...');
-                        setIsNewPatient(false);
-                        delete cleanedPatientData.patient_code;
-                        
-                        const updateResponse = await fetchWithRetry(`${API_BASE_URL}/patients/code/${savePatientCode}`, {
-                            method: 'PUT',
-                            headers: {
-                                'Authorization': `Bearer ${token}`,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify(cleanedPatientData)
-                        });
-                        
-                        const updateData = await updateResponse.json();
-                        if (!updateResponse.ok) {
-                            throw new Error(updateData.error || 'Update failed');
-                        }
-                        
-                        responseData = updateData;
-                    } else {
-                        throw new Error(responseData.error);
-                    }
-                } else {
-                    throw new Error(responseData.error || `Failed to save (${response.status})`);
-                }
-            }
+                if (setPatient) setPatient(savedPatient);
+                setCurrentPatientCode(savedPatient.patient_code);
 
-            if (!responseData.success) {
-                throw new Error(responseData.error || 'Save failed');
-            }
-
-            const result = responseData.patient || responseData.data;
-            console.log('✅ Saved:', result?.patient_code);
-
-            // CRITICAL FIX: Update form state to show in inputs immediately
-            if (result) {
-                // Create a completely NEW object to force React update
-                const updatedFormData = { ...formData };
-                
-                // Update ALL fields from the saved result
-                Object.keys(result).forEach(key => {
-                    if (result[key] !== undefined) {
-                        updatedFormData[key] = result[key];
-                    }
-                });
-                
-                // Ensure patient_code is set
-                if (!updatedFormData.patient_code && savePatientCode) {
-                    updatedFormData.patient_code = savePatientCode;
-                }
-                
-                console.log('📝 Setting form data with saved values:', {
-                    blood_pressure: updatedFormData.blood_pressure,
-                    heart_rate: updatedFormData.heart_rate,
-                    hemoglobin: updatedFormData.hemoglobin,
-                    creatinine: updatedFormData.creatinine
-                });
-                
-                // FORCE React to update by creating a deep copy
-                setFormData(JSON.parse(JSON.stringify(updatedFormData)));
-                
-                if (setPatient) setPatient(result);
-                setCurrentPatientCode(result.patient_code);
-                
                 if (isNewPatient) {
                     setIsNewPatient(false);
                 }
+
+                // Fetch clinical history too
+                fetchClinicalHistory(savePatientCode);
+
+                if (section === 'all' || isNewPatient) {
+                    setIsEditing(false);
+                }
+
+                alert(isNewPatient ? 'Patient created successfully!' : 'Patient updated successfully!');
+
+                if (patientCode === 'new' && isNewPatient) {
+                    navigate(`/patients/${savedPatient.patient_code}`);
+                }
+
+                // --- PUSH TO HISTORY TABLES ---
+                try {
+                    if (section === 'vitals' || section === 'all' || isNewPatient) {
+                        const hasVitals = ['blood_pressure', 'heart_rate', 'temperature', 'respiratory_rate', 'oxygen_saturation', 'weight', 'height'].some(k => formData[k]);
+                        if (hasVitals) {
+                            await api.post('/vitals', {
+                                patient_code: savePatientCode,
+                                ...sectionData.vitals,
+                                recorded_at: new Date().toISOString()
+                            });
+                        }
+                    }
+                    if (section === 'labs' || section === 'all' || isNewPatient) {
+                        const hasLabs = Object.keys(sectionData.labs.labs).length > 0;
+                        if (hasLabs) {
+                            await api.post('/labs-history', {
+                                patient_code: savePatientCode,
+                                labs: sectionData.labs.labs,
+                                test_date: formData.last_tested || new Date().toISOString().split('T')[0],
+                                recorded_at: new Date().toISOString()
+                            });
+                        }
+                    }
+                    // Refresh history
+                    fetchClinicalHistory(savePatientCode);
+                } catch (histError) {
+                    console.warn('History push failed (may be table missing):', histError);
+                }
+
+            } else {
+                throw new Error(result.error || 'Save failed');
             }
 
-            // Exit edit mode for full saves
-            if (section === 'all' || isNewPatient) {
-                setIsEditing(false);
-            }
-            
-            // Success message
-            const messages = {
-                'all': isNewPatient ? 'Patient created successfully!' : 'Patient updated successfully!',
-                'vitals': 'Vitals saved successfully!',
-                'labs': 'Lab results saved successfully!',
-                'basic': 'Patient information saved successfully!'
-            };
-            
-            alert(messages[section] || 'Saved successfully!');
-            
-            // Redirect for new patients
-            if (patientCode === 'new' && isNewPatient) {
-                navigate(`/patients/${result.patient_code}`);
-            }
-            
-            // CRITICAL: Force immediate UI refresh
-            // This makes saved values appear in inputs
-            setTimeout(() => {
-                // Create a new object to trigger React re-render
-                setFormData(prev => ({ ...prev }));
-            }, 100);
-            
         } catch (error) {
             console.error('❌ Save error:', error);
-            
-            let errorMessage = error.message;
-            if (error.message.includes('NetworkError') || 
-                error.message.includes('Failed to fetch') ||
-                error.message.includes('timeout') ||
-                error.message.includes('abort')) {
-                errorMessage = 'Network error. Please check your internet connection.';
-            } else if (error.message.includes('401') || error.message.includes('403')) {
-                errorMessage = 'Session expired. Please login again.';
-                navigate('/login');
+
+            // Check if it's a patient limit error
+            if (error.response?.status === 403 && error.response?.data?.error === 'Patient limit reached') {
+                const errorData = error.response.data;
+                alert(
+                    `❌ Patient Limit Reached\n\n` +
+                    `${errorData.message}\n\n` +
+                    `Current: ${errorData.current}/${errorData.limit} patients\n\n` +
+                    `To add more patients, please upgrade to a Company subscription.`
+                );
+            } else {
+                alert('Error saving patient: ' + (error.response?.data?.message || error.message || 'Failed'));
             }
-            
-            alert('Error saving patient: ' + errorMessage);
         }
-    }, [isNewPatient, formData, getCurrentPatientCode, generatePatientCode, navigate, patientCode, isValidDate, calculateAgeInDays, calculateAge, determinePatientType, testBackendConnection, fetchWithRetry]);
+    }, [isNewPatient, formData, getCurrentPatientCode, generatePatientCode, navigate, patientCode, isValidDate, calculateAgeInDays, calculateAge, determinePatientType, customLabs, fetchClinicalHistory]);
 
     // Helper functions
     const handleSaveAll = useCallback(() => handleSave('all'), [handleSave]);
@@ -1672,27 +1325,9 @@ const PatientDetails = () => {
         }
 
         try {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                alert('Please login again');
-                navigate('/login');
-                return;
-            }
-            
-            const url = `${API_BASE_URL}/patients/code/${deletePatientCode}`;
-            console.log('Delete URL:', url);
-            
-            const response = await fetchWithRetry(url, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            const result = await response.json();
-            
-            if (response.ok && result.success) {
+            const result = await api.delete(`/patients/code/${deletePatientCode}`);
+
+            if (result.success) {
                 alert('Patient deleted successfully!');
                 navigate('/patients');
             } else {
@@ -1700,9 +1335,9 @@ const PatientDetails = () => {
             }
         } catch (error) {
             debugLog('Error deleting patient:', error);
-            alert('Error deleting patient: ' + error.message);
+            alert('Error deleting patient: ' + (error.message || 'Failed'));
         }
-    }, [getCurrentPatientCode, navigate, debugLog, fetchWithRetry]);
+    }, [getCurrentPatientCode, navigate, debugLog]);
 
     // Retry fetching data
     const handleRetry = useCallback(() => {
@@ -1714,7 +1349,7 @@ const PatientDetails = () => {
     const renderVitalsSection = useCallback(() => {
         const isPediatric = formData.patient_type && formData.patient_type !== 'adult';
         const ageInDays = parseInt(formData.age_in_days) || 0;
-        
+
         return (
             <div className="space-y-6">
                 <div className="flex items-center justify-between mb-6">
@@ -1727,8 +1362,8 @@ const PatientDetails = () => {
                                 Vital Signs {isPediatric && <span className="text-pink-600">(Pediatric)</span>}
                             </h2>
                             <p className="text-gray-600">
-                                {isPediatric 
-                                    ? 'Pediatric vital signs with age-appropriate ranges' 
+                                {isPediatric
+                                    ? 'Pediatric vital signs with age-appropriate ranges'
                                     : 'Record and monitor patient vital signs'}
                             </p>
                         </div>
@@ -1971,7 +1606,7 @@ const PatientDetails = () => {
                                     step="0.1"
                                     value={isPediatric && ageInDays < 730 ? (formData.length || '') : (formData.height || '')}
                                     onChange={(e) => handleVitalsInputChange(
-                                        isPediatric && ageInDays < 730 ? 'length' : 'height', 
+                                        isPediatric && ageInDays < 730 ? 'length' : 'height',
                                         e.target.value
                                     )}
                                     className="flex-1 border border-gray-300 rounded-lg p-3"
@@ -2099,13 +1734,65 @@ const PatientDetails = () => {
                         )}
                     </div>
                 </div>
+
+                {/* Vitals History Table */}
+                {!isNewPatient && vitalsHistory.length > 0 && (
+                    <div className="mt-12 bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                        <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                            <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                                <FaHistory className="text-gray-400" /> Previous Vitals Records
+                            </h3>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">BP</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">HR</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Temp</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SpO₂</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Weight</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {vitalsHistory.map((h, idx) => (
+                                        <tr key={idx} className="hover:bg-gray-50">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {new Date(h.created_at || h.recorded_at).toLocaleDateString()}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{h.blood_pressure || '-'}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{h.heart_rate || '-'}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{h.temperature ? `${h.temperature}°C` : '-'}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{h.oxygen_saturation ? `${h.oxygen_saturation}%` : '-'}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{h.weight ? `${h.weight}kg` : '-'}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                <button
+                                                    onClick={() => {
+                                                        setFormData(prev => ({ ...prev, ...h }));
+                                                        alert('Historical vitals copied to form.');
+                                                    }}
+                                                    className="text-blue-600 hover:text-blue-900 flex items-center gap-1"
+                                                    title="Copy to current session"
+                                                >
+                                                    <FaSync size={12} /> <span className="text-xs">Copy</span>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
             </div>
         );
-    }, [formData, isEditing, handleSaveVitals, formatAgeDisplay, getPediatricNormalRange, handleVitalsInputChange, handleInputChange]);
+    }, [formData, isEditing, handleSaveVitals, formatAgeDisplay, getPediatricNormalRange, handleVitalsInputChange, handleInputChange, vitalsHistory, isNewPatient]);
 
     const renderLabsSection = useCallback(() => {
         const isPediatric = formData.patient_type && formData.patient_type !== 'adult';
-        
+
         return (
             <div className="space-y-6">
                 <div className="flex items-center justify-between mb-6">
@@ -2128,6 +1815,56 @@ const PatientDetails = () => {
                     )}
                 </div>
 
+                {/* --- GLOBAL ADMIN DEFINED LABS (Grouped by Category) --- */}
+                {(() => {
+                    const globals = customLabs.filter(l => l.isGlobal);
+                    const categories = [...new Set(globals.map(g => g.category || 'Other'))];
+
+                    return categories.map(cat => {
+                        const labsInCat = globals.filter(g => (g.category || 'Other') === cat);
+                        if (labsInCat.length === 0) return null;
+
+                        return (
+                            <div key={cat} className="bg-white p-6 rounded-xl shadow-sm border border-indigo-100 mb-6">
+                                <h3 className="text-lg font-bold text-indigo-900 mb-4 flex items-center gap-2 border-b border-indigo-50 pb-2">
+                                    <FaFlask className="text-indigo-400" /> {cat}
+                                    <span className="text-[10px] bg-indigo-50 text-indigo-500 px-2 py-0.5 rounded-full uppercase ml-2 tracking-wider">System Tests</span>
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    {labsInCat.map((lab) => {
+                                        const labIndex = customLabs.findIndex(l => l.id === lab.id);
+                                        return (
+                                            <div key={lab.id} className="relative group">
+                                                <LabInputField
+                                                    label={lab.name}
+                                                    value={lab.value}
+                                                    unit={lab.unit}
+                                                    normalRange={lab.reference_range}
+                                                    isEditing={isEditing}
+                                                    placeholder="Enter result..."
+                                                    type="text"
+                                                    handleChange={(_, val) => {
+                                                        const updated = [...customLabs];
+                                                        updated[labIndex].value = val;
+                                                        setCustomLabs(updated);
+                                                    }}
+                                                />
+                                                {lab.description && (
+                                                    <div className="hidden group-hover:block absolute z-10 top-full left-0 mt-2 p-2 bg-gray-800 text-white text-[10px] rounded shadow-lg max-w-[200px]">
+                                                        {lab.description}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        );
+                    });
+                })()}
+
+
+
                 {isPediatric && (
                     <div className="mb-6">
                         <button
@@ -2146,7 +1883,7 @@ const PatientDetails = () => {
                             <FaBaby /> Pediatric/Neonatal Labs
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <LabInputField 
+                            <LabInputField
                                 label="Bilirubin (Neonatal)"
                                 value={formData.bilirubin_neonatal}
                                 field="bilirubin_neonatal"
@@ -2156,7 +1893,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="<5.0"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Glucose (Neonatal)"
                                 value={formData.glucose_neonatal}
                                 field="glucose_neonatal"
@@ -2166,7 +1903,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="40-100"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Calcium (Neonatal)"
                                 value={formData.calcium_neonatal}
                                 field="calcium_neonatal"
@@ -2231,7 +1968,7 @@ const PatientDetails = () => {
                             <FaVial /> Complete Blood Count (CBC)
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <LabInputField 
+                            <LabInputField
                                 label="Hemoglobin"
                                 value={formData.hemoglobin}
                                 field="hemoglobin"
@@ -2241,7 +1978,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="13.5-17.5"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Hematocrit"
                                 value={formData.hematocrit}
                                 field="hematocrit"
@@ -2251,7 +1988,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="40-50"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="WBC Count"
                                 value={formData.wbc_count}
                                 field="wbc_count"
@@ -2261,7 +1998,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="4.5-11.0"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="RBC Count"
                                 value={formData.rbc_count}
                                 field="rbc_count"
@@ -2271,7 +2008,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="4.5-5.9"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Platelet Count"
                                 value={formData.platelet_count}
                                 field="platelet_count"
@@ -2281,7 +2018,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="150-450"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="MCV"
                                 value={formData.mcv}
                                 field="mcv"
@@ -2291,7 +2028,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="80-100"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="MCH"
                                 value={formData.mch}
                                 field="mch"
@@ -2301,7 +2038,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="27-33"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="MCHC"
                                 value={formData.mchc}
                                 field="mchc"
@@ -2311,7 +2048,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="32-36"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="RDW"
                                 value={formData.rdw}
                                 field="rdw"
@@ -2328,7 +2065,7 @@ const PatientDetails = () => {
                     <div className="bg-gray-50 p-4 rounded-lg">
                         <h3 className="text-lg font-semibold text-blue-800 mb-4">Differential Count</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <LabInputField 
+                            <LabInputField
                                 label="Neutrophils"
                                 value={formData.neutrophils}
                                 field="neutrophils"
@@ -2338,7 +2075,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="40-75"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Lymphocytes"
                                 value={formData.lymphocytes}
                                 field="lymphocytes"
@@ -2348,7 +2085,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="20-50"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Monocytes"
                                 value={formData.monocytes}
                                 field="monocytes"
@@ -2358,7 +2095,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="2-10"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Eosinophils"
                                 value={formData.eosinophils}
                                 field="eosinophils"
@@ -2368,7 +2105,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="0-6"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Basophils"
                                 value={formData.basophils}
                                 field="basophils"
@@ -2385,7 +2122,7 @@ const PatientDetails = () => {
                     <div className="bg-gray-50 p-4 rounded-lg">
                         <h3 className="text-lg font-semibold text-blue-800 mb-4">Basic Chemistry</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <LabInputField 
+                            <LabInputField
                                 label="Blood Sugar (FBS)"
                                 value={formData.blood_sugar}
                                 field="blood_sugar"
@@ -2395,7 +2132,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="70-100"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Creatinine"
                                 value={formData.creatinine}
                                 field="creatinine"
@@ -2405,7 +2142,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="0.6-1.2"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Urea"
                                 value={formData.urea}
                                 field="urea"
@@ -2415,7 +2152,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="7-20"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Uric Acid"
                                 value={formData.uric_acid}
                                 field="uric_acid"
@@ -2432,7 +2169,7 @@ const PatientDetails = () => {
                     <div className="bg-gray-50 p-4 rounded-lg">
                         <h3 className="text-lg font-semibold text-blue-800 mb-4">Electrolytes</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <LabInputField 
+                            <LabInputField
                                 label="Sodium (Na)"
                                 value={formData.sodium}
                                 field="sodium"
@@ -2442,7 +2179,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="135-145"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Potassium (K)"
                                 value={formData.potassium}
                                 field="potassium"
@@ -2452,7 +2189,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="3.5-5.0"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Chloride (Cl)"
                                 value={formData.chloride}
                                 field="chloride"
@@ -2462,7 +2199,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="98-106"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Bicarbonate (HCO₃)"
                                 value={formData.bicarbonate}
                                 field="bicarbonate"
@@ -2479,7 +2216,7 @@ const PatientDetails = () => {
                     <div className="bg-gray-50 p-4 rounded-lg">
                         <h3 className="text-lg font-semibold text-blue-800 mb-4">Calcium & Phosphorus</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <LabInputField 
+                            <LabInputField
                                 label="Calcium"
                                 value={formData.calcium}
                                 field="calcium"
@@ -2489,7 +2226,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="8.8-10.8"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Magnesium"
                                 value={formData.magnesium}
                                 field="magnesium"
@@ -2499,7 +2236,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="1.7-2.2"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Phosphate"
                                 value={formData.phosphate}
                                 field="phosphate"
@@ -2516,7 +2253,7 @@ const PatientDetails = () => {
                     <div className="bg-gray-50 p-4 rounded-lg">
                         <h3 className="text-lg font-semibold text-blue-800 mb-4">Liver Function Tests</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <LabInputField 
+                            <LabInputField
                                 label="ALT"
                                 value={formData.alt}
                                 field="alt"
@@ -2526,7 +2263,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="7-56"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="AST"
                                 value={formData.ast}
                                 field="ast"
@@ -2536,7 +2273,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="10-40"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="ALP"
                                 value={formData.alp}
                                 field="alp"
@@ -2546,7 +2283,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="44-147"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="GGT"
                                 value={formData.ggt}
                                 field="ggt"
@@ -2556,7 +2293,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="9-48"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Total Bilirubin"
                                 value={formData.bilirubin_total}
                                 field="bilirubin_total"
@@ -2566,7 +2303,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="0.1-1.2"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Direct Bilirubin"
                                 value={formData.bilirubin_direct}
                                 field="bilirubin_direct"
@@ -2576,7 +2313,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="0-0.3"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Indirect Bilirubin"
                                 value={formData.bilirubin_indirect}
                                 field="bilirubin_indirect"
@@ -2586,7 +2323,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="0.1-0.9"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Albumin"
                                 value={formData.albumin}
                                 field="albumin"
@@ -2596,7 +2333,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="3.5-5.0"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Total Protein"
                                 value={formData.total_protein}
                                 field="total_protein"
@@ -2613,7 +2350,7 @@ const PatientDetails = () => {
                     <div className="bg-gray-50 p-4 rounded-lg">
                         <h3 className="text-lg font-semibold text-blue-800 mb-4">Renal Function</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <LabInputField 
+                            <LabInputField
                                 label="BUN"
                                 value={formData.bun}
                                 field="bun"
@@ -2623,7 +2360,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="7-20"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="eGFR"
                                 value={formData.egfr}
                                 field="egfr"
@@ -2641,7 +2378,7 @@ const PatientDetails = () => {
                     <div className="bg-gray-50 p-4 rounded-lg">
                         <h3 className="text-lg font-semibold text-blue-800 mb-4">Cardiac Markers</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <LabInputField 
+                            <LabInputField
                                 label="Troponin"
                                 value={formData.troponin}
                                 field="troponin"
@@ -2651,7 +2388,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="<0.04"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="CK-MB"
                                 value={formData.ck_mb}
                                 field="ck_mb"
@@ -2661,7 +2398,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="<5"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="LDH"
                                 value={formData.ldh}
                                 field="ldh"
@@ -2671,7 +2408,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="140-280"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Myoglobin"
                                 value={formData.myoglobin}
                                 field="myoglobin"
@@ -2688,7 +2425,7 @@ const PatientDetails = () => {
                     <div className="bg-gray-50 p-4 rounded-lg">
                         <h3 className="text-lg font-semibold text-blue-800 mb-4">Thyroid Function</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <LabInputField 
+                            <LabInputField
                                 label="TSH"
                                 value={formData.tsh}
                                 field="tsh"
@@ -2698,7 +2435,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="0.4-4.0"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Free T4"
                                 value={formData.free_t4}
                                 field="free_t4"
@@ -2708,7 +2445,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="0.8-1.8"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Free T3"
                                 value={formData.free_t3}
                                 field="free_t3"
@@ -2718,7 +2455,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="2.3-4.2"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Total T4"
                                 value={formData.total_t4}
                                 field="total_t4"
@@ -2728,7 +2465,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="5.0-12.0"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Total T3"
                                 value={formData.total_t3}
                                 field="total_t3"
@@ -2745,7 +2482,7 @@ const PatientDetails = () => {
                     <div className="bg-gray-50 p-4 rounded-lg">
                         <h3 className="text-lg font-semibold text-blue-800 mb-4">Inflammatory Markers</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <LabInputField 
+                            <LabInputField
                                 label="CRP"
                                 value={formData.crp}
                                 field="crp"
@@ -2755,7 +2492,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="<10"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="ESR"
                                 value={formData.esr}
                                 field="esr"
@@ -2765,7 +2502,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="0-20"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Ferritin"
                                 value={formData.ferritin}
                                 field="ferritin"
@@ -2775,7 +2512,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="20-300"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Procalcitonin"
                                 value={formData.procalcitonin}
                                 field="procalcitonin"
@@ -2792,7 +2529,7 @@ const PatientDetails = () => {
                     <div className="bg-gray-50 p-4 rounded-lg">
                         <h3 className="text-lg font-semibold text-blue-800 mb-4">Coagulation Profile</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <LabInputField 
+                            <LabInputField
                                 label="INR"
                                 value={formData.inr}
                                 field="inr"
@@ -2802,7 +2539,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="0.8-1.2"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="PT"
                                 value={formData.pt}
                                 field="pt"
@@ -2812,7 +2549,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="11-13.5"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="PTT"
                                 value={formData.ptt}
                                 field="ptt"
@@ -2822,7 +2559,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="25-35"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Fibrinogen"
                                 value={formData.fibrinogen}
                                 field="fibrinogen"
@@ -2832,7 +2569,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="200-400"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="D-Dimer"
                                 value={formData.d_dimer}
                                 field="d_dimer"
@@ -2945,7 +2682,7 @@ const PatientDetails = () => {
                                     </div>
                                 )}
                             </div>
-                            <LabInputField 
+                            <LabInputField
                                 label="Specific Gravity"
                                 value={formData.urine_specific_gravity}
                                 field="urine_specific_gravity"
@@ -2955,7 +2692,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="1.005-1.030"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="pH"
                                 value={formData.urine_ph}
                                 field="urine_ph"
@@ -2995,7 +2732,7 @@ const PatientDetails = () => {
                     <div className="bg-gray-50 p-4 rounded-lg">
                         <h3 className="text-lg font-semibold text-blue-800 mb-4">Diabetes Markers</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <LabInputField 
+                            <LabInputField
                                 label="HbA1c"
                                 value={formData.hba1c}
                                 field="hba1c"
@@ -3005,7 +2742,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="<5.7"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Fasting Glucose"
                                 value={formData.fasting_glucose}
                                 field="fasting_glucose"
@@ -3015,7 +2752,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="70-100"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Postprandial Glucose"
                                 value={formData.postprandial_glucose}
                                 field="postprandial_glucose"
@@ -3025,7 +2762,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="<140"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Random Glucose"
                                 value={formData.random_glucose}
                                 field="random_glucose"
@@ -3035,7 +2772,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="<200"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Insulin"
                                 value={formData.insulin}
                                 field="insulin"
@@ -3045,7 +2782,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="2-25"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="C-Peptide"
                                 value={formData.c_peptide}
                                 field="c_peptide"
@@ -3062,7 +2799,7 @@ const PatientDetails = () => {
                     <div className="bg-gray-50 p-4 rounded-lg">
                         <h3 className="text-lg font-semibold text-blue-800 mb-4">Lipid Profile</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <LabInputField 
+                            <LabInputField
                                 label="Total Cholesterol"
                                 value={formData.total_cholesterol}
                                 field="total_cholesterol"
@@ -3072,7 +2809,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="<200"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="HDL Cholesterol"
                                 value={formData.hdl_cholesterol}
                                 field="hdl_cholesterol"
@@ -3082,7 +2819,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange=">40"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="LDL Cholesterol"
                                 value={formData.ldl_cholesterol}
                                 field="ldl_cholesterol"
@@ -3092,7 +2829,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="<100"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="Triglycerides"
                                 value={formData.triglycerides}
                                 field="triglycerides"
@@ -3102,7 +2839,7 @@ const PatientDetails = () => {
                                 handleChange={handleLabInputChange}
                                 normalRange="<150"
                             />
-                            <LabInputField 
+                            <LabInputField
                                 label="VLDL Cholesterol"
                                 value={formData.vldl_cholesterol}
                                 field="vldl_cholesterol"
@@ -3139,24 +2876,94 @@ const PatientDetails = () => {
                         )}
                     </div>
                 </div>
+
+                {/* Labs History Table */}
+                {!isNewPatient && labsHistory.length > 0 && (
+                    <div className="mt-12 bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                        <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                            <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                                <FaHistory className="text-gray-400" /> Laboratory History
+                            </h3>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Key Markers</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {labsHistory.map((h, idx) => {
+                                        const labData = typeof h.labs === 'string' ? JSON.parse(h.labs) : h.labs;
+                                        const markers = Object.entries(labData || {})
+                                            .slice(0, 5) // Show first 5 markers
+                                            .map(([k, v]) => `${k}: ${v}`)
+                                            .join(', ');
+
+                                        return (
+                                            <tr key={idx} className="hover:bg-gray-50">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                    {new Date(h.test_date || h.created_at).toLocaleDateString()}
+                                                </td>
+                                                <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
+                                                    {markers || 'No detailed data'}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                    <button
+                                                        onClick={() => {
+                                                            const unpacked = {};
+                                                            Object.entries(labData || {}).forEach(([k, v]) => {
+                                                                // Normalize keys if needed
+                                                                unpacked[k] = v;
+                                                            });
+                                                            setFormData(prev => ({ ...prev, ...unpacked }));
+                                                            alert('Historical lab values copied to form.');
+                                                        }}
+                                                        className="text-blue-600 hover:text-blue-900"
+                                                        title="Copy to current session"
+                                                    >
+                                                        <FaSync />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
             </div>
         );
-    }, [formData, isEditing, showPediatricLabs, handleSaveLabs, handleLabInputChange, handleInputChange]);
+    }, [formData, isEditing, showPediatricLabs, handleSaveLabs, handleLabInputChange, handleInputChange, labsHistory, isNewPatient, customLabs, setCustomLabs]);
 
     const renderDemographicsSection = useCallback(() => {
         const ageDisplay = formatAgeDisplay(formData.age_in_days, formData.date_of_birth);
         const isPediatric = formData.patient_type && formData.patient_type !== 'adult';
-        
+        const patientCodeToDisplay = getCurrentPatientCode();
+
         return (
             <div className="space-y-6">
-                <div className="flex items-center gap-3 mb-6">
-                    <div className="bg-indigo-100 p-3 rounded-full">
-                        <FaUser className="text-indigo-600 text-xl" />
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-indigo-100 p-3 rounded-full">
+                            <FaUser className="text-indigo-600 text-xl" />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold text-gray-800">Patient Demographics</h2>
+                            <p className="text-gray-600">Basic patient information</p>
+                        </div>
                     </div>
-                    <div>
-                        <h2 className="text-xl font-bold text-gray-800">Patient Demographics</h2>
-                        <p className="text-gray-600">Basic patient information</p>
-                    </div>
+                    {isEditing && (
+                        <button
+                            onClick={handleSaveDemographics}
+                            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                        >
+                            <FaSave /> Save Info
+                        </button>
+                    )}
                 </div>
 
                 {ageDisplay && (
@@ -3164,8 +2971,8 @@ const PatientDetails = () => {
                         <div className="flex items-center gap-3">
                             {isPediatric ? (
                                 formData.patient_type === 'neonate' ? <FaBaby className="text-blue-600 text-2xl" /> :
-                                formData.patient_type === 'infant' ? <FaBabyCarriage className="text-blue-600 text-2xl" /> :
-                                <FaChild className="text-blue-600 text-2xl" />
+                                    formData.patient_type === 'infant' ? <FaBabyCarriage className="text-blue-600 text-2xl" /> :
+                                        <FaChild className="text-blue-600 text-2xl" />
                             ) : (
                                 <FaUser className="text-blue-600 text-2xl" />
                             )}
@@ -3490,7 +3297,7 @@ const PatientDetails = () => {
                                     <FaBaby className="text-pink-500" /> Pregnant
                                 </span>
                             </label>
-                            
+
                             {formData.is_pregnant && (
                                 <div className="mt-3 p-4 bg-pink-50 rounded-lg border border-pink-200">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -3721,28 +3528,27 @@ const PatientDetails = () => {
         const ageDisplay = formatAgeDisplay(formData.age_in_days, formData.date_of_birth);
         const isPediatric = formData.patient_type && formData.patient_type !== 'adult';
         const patientCodeToDisplay = getCurrentPatientCode();
-        
+
         return (
             <div className="space-y-6">
                 {/* Header Card */}
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6">
                     <div className="flex flex-col md:flex-row md:items-center gap-6">
                         <div className="flex-shrink-0">
-                            <div className={`w-24 h-24 rounded-full flex items-center justify-center shadow-lg ${
-                                isPediatric 
-                                    ? 'bg-gradient-to-br from-pink-500 to-purple-600' 
-                                    : 'bg-gradient-to-br from-blue-500 to-indigo-600'
-                            }`}>
+                            <div className={`w-24 h-24 rounded-full flex items-center justify-center shadow-lg ${isPediatric
+                                ? 'bg-gradient-to-br from-pink-500 to-purple-600'
+                                : 'bg-gradient-to-br from-blue-500 to-indigo-600'
+                                }`}>
                                 {isPediatric ? (
                                     formData.patient_type === 'neonate' ? <FaBaby className="text-white text-4xl" /> :
-                                    formData.patient_type === 'infant' ? <FaBabyCarriage className="text-white text-4xl" /> :
-                                    <FaChild className="text-white text-4xl" />
+                                        formData.patient_type === 'infant' ? <FaBabyCarriage className="text-white text-4xl" /> :
+                                            <FaChild className="text-white text-4xl" />
                                 ) : (
                                     <FaUser className="text-white text-4xl" />
                                 )}
                             </div>
                         </div>
-                        
+
                         <div className="flex-1">
                             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                                 <div>
@@ -3769,8 +3575,8 @@ const PatientDetails = () => {
                                         {isPediatric && (
                                             <div className="bg-pink-100 text-pink-800 px-3 py-1 rounded-full flex items-center gap-1">
                                                 {formData.patient_type === 'neonate' ? <FaBaby /> :
-                                                 formData.patient_type === 'infant' ? <FaBabyCarriage /> :
-                                                 <FaChild />}
+                                                    formData.patient_type === 'infant' ? <FaBabyCarriage /> :
+                                                        <FaChild />}
                                                 {formData.patient_type.toUpperCase()}
                                             </div>
                                         )}
@@ -3781,18 +3587,17 @@ const PatientDetails = () => {
                                         )}
                                     </div>
                                 </div>
-                                
+
                                 <div className="flex-shrink-0">
-                                    <span className={`px-4 py-2 rounded-full text-sm font-medium ${
-                                        formData.is_active
-                                            ? 'bg-green-100 text-green-800 border border-green-200' 
-                                            : 'bg-gray-100 text-gray-800 border border-gray-200'
-                                    }`}>
+                                    <span className={`px-4 py-2 rounded-full text-sm font-medium ${formData.is_active
+                                        ? 'bg-green-100 text-green-800 border border-green-200'
+                                        : 'bg-gray-100 text-gray-800 border border-gray-200'
+                                        }`}>
                                         {formData.is_active ? 'Active Patient' : 'Inactive'}
                                     </span>
                                 </div>
                             </div>
-                            
+
                             {(formData.contact_number || formData.address) && (
                                 <div className="mt-4 pt-4 border-t border-blue-200">
                                     <div className="flex flex-wrap gap-4">
@@ -3832,15 +3637,21 @@ const PatientDetails = () => {
                         </div>
                         <p className="text-xs text-gray-500 mt-2">Recorded parameters</p>
                     </div>
-                    
+
                     <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm text-gray-600">Lab Tests</p>
                                 <p className="text-2xl font-bold text-green-600">
                                     {(() => {
-                                        const labs = ['hemoglobin', 'creatinine', 'sodium', 'potassium', 'inr', 'tsh'];
-                                        return labs.filter(l => formData[l] && formData[l].toString().trim() !== '').length;
+                                        const explicitLabs = [
+                                            'hemoglobin', 'hematocrit', 'wbc_count', 'rbc_count', 'platelet_count',
+                                            'blood_sugar', 'creatinine', 'urea', 'sodium', 'potassium', 'inr', 'tsh',
+                                            'crp', 'alt', 'ast', 'bilirubin_total', 'hba1c'
+                                        ];
+                                        const recordedExplicit = explicitLabs.filter(l => formData[l] && formData[l].toString().trim() !== '').length;
+                                        const recordedCustom = customLabs.filter(l => l.value && l.value.toString().trim() !== '').length;
+                                        return recordedExplicit + recordedCustom;
                                     })()}
                                 </p>
                             </div>
@@ -3848,7 +3659,7 @@ const PatientDetails = () => {
                         </div>
                         <p className="text-xs text-gray-500 mt-2">Completed tests</p>
                     </div>
-                    
+
                     <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
                         <div className="flex items-center justify-between">
                             <div>
@@ -3861,7 +3672,7 @@ const PatientDetails = () => {
                         </div>
                         <p className="text-xs text-gray-500 mt-2">Known allergies</p>
                     </div>
-                    
+
                     <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
                         <div className="flex items-center justify-between">
                             <div>
@@ -3926,11 +3737,75 @@ const PatientDetails = () => {
                     </div>
                 )}
 
+                {/* --- CONSOLIDATED RECENT LABS (HIGH PRIORITY) --- */}
+                {(() => {
+                    const explicitLabList = [
+                        { field: 'hemoglobin', label: 'Hemoglobin', unit: 'g/dL' },
+                        { field: 'creatinine', label: 'Creatinine', unit: 'mg/dL' },
+                        { field: 'blood_sugar', label: 'Blood Sugar', unit: 'mg/dL' },
+                        { field: 'inr', label: 'INR', unit: '' },
+                        { field: 'tsh', label: 'TSH', unit: 'μIU/mL' },
+                        { field: 'sodium', label: 'Sodium', unit: 'mmol/L' },
+                        { field: 'potassium', label: 'Potassium', unit: 'mmol/L' },
+                        { field: 'hba1c', label: 'HbA1c', unit: '%' },
+                        { field: 'crp', label: 'CRP', unit: 'mg/L' }
+                    ];
+
+                    const results = [];
+                    // Add explicit ones
+                    explicitLabList.forEach(f => {
+                        const val = formData[f.field];
+                        if (val && val.toString().trim() !== '') {
+                            results.push({ name: f.label, value: val, unit: f.unit });
+                        }
+                    });
+
+                    // Add custom ones
+                    const resultsNames = new Set(results.map(r => r.name.toLowerCase()));
+                    customLabs.forEach(lab => {
+                        if (lab.value && lab.value.toString().trim() !== '' && !resultsNames.has(lab.name.toLowerCase())) {
+                            results.push({ name: lab.name, value: lab.value, unit: lab.unit || '' });
+                        }
+                    });
+
+                    if (results.length === 0) return null;
+
+                    return (
+                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200 p-6 shadow-sm overflow-hidden relative">
+                            <div className="absolute top-0 right-0 p-4 opacity-10">
+                                <FaFlask className="text-6xl text-green-600" />
+                            </div>
+                            <h3 className="text-lg font-bold text-green-800 mb-4 flex items-center gap-2">
+                                <FaFlask className="text-green-500" /> Key Laboratory Findings
+                            </h3>
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 relative z-10">
+                                {results.slice(0, 12).map((lab, idx) => (
+                                    <div key={idx} className="bg-white/80 backdrop-blur-sm p-3 rounded-lg border border-green-100 flex flex-col items-center justify-center shadow-sm">
+                                        <p className="text-[10px] uppercase font-bold text-green-600 tracking-wider mb-1 text-center">{lab.name}</p>
+                                        <p className="text-xl font-black text-gray-800">{lab.value}</p>
+                                        {lab.unit && <p className="text-[10px] text-gray-400 font-medium">{lab.unit}</p>}
+                                    </div>
+                                ))}
+                            </div>
+                            {results.length > 12 && (
+                                <p className="text-xs text-green-600 mt-4 text-center font-medium">
+                                    + {results.length - 12} more results available in the <strong>Labs</strong> tab
+                                </p>
+                            )}
+                            {formData.last_tested && (
+                                <p className="text-[10px] text-gray-400 mt-4 text-right italic">
+                                    Last laboratory update: {new Date(formData.last_tested).toLocaleDateString()}
+                                </p>
+                            )}
+                        </div>
+                    );
+                })()}
+
                 {/* Recent Vitals */}
                 {(() => {
                     const hasVitals = ['blood_pressure', 'heart_rate', 'temperature', 'oxygen_saturation'].some(v => formData[v] && formData[v].toString().trim() !== '');
                     if (!hasVitals) return null;
-                    
+
                     return (
                         <div className="bg-white rounded-lg border border-gray-200 p-6">
                             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
@@ -3975,55 +3850,6 @@ const PatientDetails = () => {
                     );
                 })()}
 
-                {/* Recent Labs */}
-                {(() => {
-                    const hasLabs = ['creatinine', 'potassium', 'sodium', 'hemoglobin'].some(l => formData[l] && formData[l].toString().trim() !== '');
-                    if (!hasLabs) return null;
-                    
-                    return (
-                        <div className="bg-white rounded-lg border border-gray-200 p-6">
-                            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                                <FaFlask className="text-green-500" /> Recent Labs
-                            </h3>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                {formData.creatinine && (
-                                    <div className="text-center p-3 bg-green-50 rounded-lg">
-                                        <p className="text-sm text-gray-600">Creatinine</p>
-                                        <p className="text-xl font-bold text-gray-800">{formData.creatinine}</p>
-                                        <p className="text-xs text-gray-500">mg/dL</p>
-                                    </div>
-                                )}
-                                {formData.potassium && (
-                                    <div className="text-center p-3 bg-green-50 rounded-lg">
-                                        <p className="text-sm text-gray-600">Potassium</p>
-                                        <p className="text-xl font-bold text-gray-800">{formData.potassium}</p>
-                                        <p className="text-xs text-gray-500">mmol/L</p>
-                                    </div>
-                                )}
-                                {formData.sodium && (
-                                    <div className="text-center p-3 bg-green-50 rounded-lg">
-                                        <p className="text-sm text-gray-600">Sodium</p>
-                                        <p className="text-xl font-bold text-gray-800">{formData.sodium}</p>
-                                        <p className="text-xs text-gray-500">mmol/L</p>
-                                    </div>
-                                )}
-                                {formData.hemoglobin && (
-                                    <div className="text-center p-3 bg-green-50 rounded-lg">
-                                        <p className="text-sm text-gray-600">Hemoglobin</p>
-                                        <p className="text-xl font-bold text-gray-800">{formData.hemoglobin}</p>
-                                        <p className="text-xs text-gray-500">g/dL</p>
-                                    </div>
-                                )}
-                            </div>
-                            {formData.last_tested && (
-                                <p className="text-xs text-gray-500 mt-4 text-right">
-                                    Last tested: {new Date(formData.last_tested).toLocaleDateString()}
-                                </p>
-                            )}
-                        </div>
-                    );
-                })()}
-
                 {/* Diagnosis */}
                 <div className="bg-white rounded-lg border border-gray-200 p-6">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
@@ -4039,7 +3865,7 @@ const PatientDetails = () => {
                 </div>
             </div>
         );
-    }, [formData, patient, getCurrentPatientCode, formatAgeDisplay]);
+    }, [formData, patient, getCurrentPatientCode, formatAgeDisplay, customLabs]);
 
     const renderTabContent = useCallback(() => {
         switch (activeTab) {
@@ -4053,6 +3879,8 @@ const PatientDetails = () => {
                 return renderLabsSection();
             case 'medications':
                 return <MedicationHistory patientCode={getCurrentPatientCode()} />;
+            case 'analysis':
+                return <CDSSDisplay patientData={patient} />;
             case 'drn':
                 return <DRNAssessment patientCode={getCurrentPatientCode()} />;
             case 'plan':
@@ -4107,6 +3935,8 @@ const PatientDetails = () => {
             )}
 
             <div className="max-w-7xl mx-auto">
+
+
                 {/* Error Display */}
                 {error && (
                     <div className="mb-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg">
@@ -4165,14 +3995,21 @@ const PatientDetails = () => {
                             </button>
                             <button
                                 onClick={() => setIsEditing(!isEditing)}
-                                className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
-                                    isEditing 
-                                        ? 'bg-gray-300 hover:bg-gray-400 text-gray-800' 
-                                        : 'bg-yellow-500 hover:bg-yellow-600 text-white'
-                                }`}
+                                className={`px-4 py-2 rounded-lg flex items-center gap-2 ${isEditing
+                                    ? 'bg-gray-300 hover:bg-gray-400 text-gray-800'
+                                    : 'bg-yellow-500 hover:bg-yellow-600 text-white'
+                                    }`}
                             >
                                 <FaEdit /> {isEditing ? 'Cancel Edit' : 'Edit'}
                             </button>
+                            {isEditing && (
+                                <button
+                                    onClick={handleSaveAll}
+                                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                                >
+                                    <FaSave /> {isNewPatient ? 'Create Patient' : 'Save Patient'}
+                                </button>
+                            )}
                             {!isNewPatient && (
                                 <button
                                     onClick={handleDelete}
@@ -4193,11 +4030,10 @@ const PatientDetails = () => {
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
-                                    className={`py-2 px-4 rounded-lg font-medium text-sm flex items-center gap-2 whitespace-nowrap ${
-                                        activeTab === tab.id
-                                            ? 'bg-blue-500 text-white'
-                                            : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
-                                    }`}
+                                    className={`py-2 px-4 rounded-lg font-medium text-sm flex items-center gap-2 whitespace-nowrap ${activeTab === tab.id
+                                        ? 'bg-blue-500 text-white'
+                                        : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                                        }`}
                                 >
                                     <Icon /> {tab.label}
                                 </button>

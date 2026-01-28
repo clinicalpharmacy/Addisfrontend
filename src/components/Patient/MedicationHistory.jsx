@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import supabase from '../../utils/supabase';
-import { 
-  FaPills, FaCalendar, FaClock, FaEdit, FaTrash, FaSave, 
-  FaFilter, FaSync, FaPrescription, FaUserMd, FaHospital,
-  FaCalendarCheck, FaNotesMedical, FaCapsules, FaTint,
-  FaExclamationTriangle, FaInfoCircle, FaCalculator,
-  FaFilePrescription, FaStethoscope, FaFlask
+import api from '../../utils/api';
+import {
+    FaPills, FaCalendar, FaClock, FaEdit, FaTrash, FaSave,
+    FaFilter, FaSync, FaPrescription, FaUserMd, FaHospital,
+    FaCalendarCheck, FaNotesMedical, FaCapsules, FaTint,
+    FaExclamationTriangle, FaInfoCircle, FaCalculator,
+    FaFilePrescription, FaStethoscope, FaFlask, FaCheckCircle
 } from 'react-icons/fa';
 
 const MedicationHistory = ({ patientCode }) => {
@@ -15,7 +15,7 @@ const MedicationHistory = ({ patientCode }) => {
         // Required Information
         drug_name: '',
         start_date: '',
-        
+
         // Basic Information
         dose: '',
         roa: 'po',
@@ -24,7 +24,7 @@ const MedicationHistory = ({ patientCode }) => {
         indication: '',
         drug_class: 'Antimicrobial',
         initiated_at: 'Hospital',
-        
+
         // Additional Information
         generic_name: '',
         brand_name: '',
@@ -43,23 +43,35 @@ const MedicationHistory = ({ patientCode }) => {
         prescriber_name: '',
         prescriber_type: 'Doctor',
         pharmacy_name: '',
-        
+
         // Status & Monitoring
         status: 'Active',
         prn: false,
         notes: '',
-        
+
         // Internal
         id: '',
         is_active: true
     });
-    
+
     const [selectedClass, setSelectedClass] = useState('');
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
     const [activeFilter, setActiveFilter] = useState('all');
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [reconciliations, setReconciliations] = useState([]);
+    const [reconciliationData, setReconciliationData] = useState({
+        site: '',
+        findings: '',
+        date: new Date().toISOString().split('T')[0]
+    });
+    const [reconLoading, setReconLoading] = useState(false);
+
+    const reconciliationSites = [
+        'Admission', 'Discharge', 'Transfer In', 'Transfer Out',
+        'Clinic Visit', 'ER Visit', 'Medication Review', 'Consultation'
+    ];
 
     // Dropdown Options
     const roaOptions = [
@@ -136,75 +148,86 @@ const MedicationHistory = ({ patientCode }) => {
     useEffect(() => {
         if (patientCode) {
             fetchMedications();
+            fetchReconciliations();
         }
     }, [patientCode]);
 
+    const fetchReconciliations = async () => {
+        try {
+            const result = await api.get(`/reconciliations/patient/${patientCode}`);
+            if (result.success) {
+                setReconciliations(result.reconciliations || []);
+            }
+        } catch (error) {
+            console.error('Error fetching reconciliations:', error);
+        }
+    };
+
     const fetchMedications = async () => {
         try {
+            setLoading(true);
             console.log('Fetching medications for patient:', patientCode);
-            
-            const { data, error } = await supabase
-                .from('medication_history')
-                .select('*')
-                .eq('patient_code', patientCode)
-                .order('start_date', { ascending: false });
 
-            if (error) {
-                console.error('Supabase error:', error);
-                throw error;
+            const result = await api.get(`/medication-history/patient/${patientCode}`);
+
+            if (result.success && result.medications) {
+                setMedications(result.medications);
+                applyFilters(result.medications);
+            } else {
+                console.error('API error:', result.error || 'Unknown error');
+                alert('Error loading medications. Please check console for details.');
             }
-            
-            console.log(`Fetched ${data?.length || 0} medications`);
-            setMedications(data || []);
-            applyFilters(data || []);
         } catch (error) {
             console.error('Error fetching medications:', error);
-            alert('Error loading medications. Please check console for details.');
+            const errorMsg = error.error || error.message || 'Error loading medications';
+            alert(`❌ ${errorMsg}`);
+        } finally {
+            setLoading(false);
         }
     };
 
     const calculateDuration = () => {
         if (!formData.start_date) return '';
-        
+
         const start = new Date(formData.start_date);
         const stop = formData.stop_date ? new Date(formData.stop_date) : new Date();
-        
+
         if (isNaN(start.getTime())) return '';
-        
+
         let years = stop.getFullYear() - start.getFullYear();
         let months = stop.getMonth() - start.getMonth();
         let days = stop.getDate() - start.getDate();
-        
+
         // Adjust for negative days
         if (days < 0) {
             months--;
             const prevMonth = new Date(stop.getFullYear(), stop.getMonth(), 0);
             days += prevMonth.getDate();
         }
-        
+
         // Adjust for negative months
         if (months < 0) {
             years--;
             months += 12;
         }
-        
+
         const parts = [];
         if (years > 0) parts.push(`${years} year${years > 1 ? 's' : ''}`);
         if (months > 0) parts.push(`${months} month${months > 1 ? 's' : ''}`);
         if (days > 0 || parts.length === 0) parts.push(`${days} day${days !== 1 ? 's' : ''}`);
-        
+
         return parts.join(', ');
     };
 
     const calculateDailyDose = () => {
         if (!formData.dose || !formData.frequency || !formData.unit) return '';
-        
+
         const doseValue = parseFloat(formData.dose);
         if (isNaN(doseValue)) return '';
-        
+
         let multiplier = 1;
         const freq = formData.frequency.toLowerCase();
-        
+
         if (freq.includes('twice') || freq.includes('bid')) multiplier = 2;
         else if (freq.includes('three') || freq.includes('tid') || freq.includes('8 hourly')) multiplier = 3;
         else if (freq.includes('four') || freq.includes('qid') || freq.includes('6 hourly')) multiplier = 4;
@@ -212,7 +235,7 @@ const MedicationHistory = ({ patientCode }) => {
         else if (freq.includes('every 6 hours')) multiplier = 4;
         else if (freq.includes('every 8 hours')) multiplier = 3;
         else if (freq.includes('every 12 hours')) multiplier = 2;
-        
+
         const dailyDose = doseValue * multiplier;
         return `${dailyDose} ${formData.unit}`;
     };
@@ -222,12 +245,12 @@ const MedicationHistory = ({ patientCode }) => {
             alert('Drug Name is required');
             return false;
         }
-        
+
         if (!formData.start_date) {
             alert('Start Date is required');
             return false;
         }
-        
+
         if (formData.start_date && formData.stop_date) {
             const start = new Date(formData.start_date);
             const stop = new Date(formData.stop_date);
@@ -236,26 +259,26 @@ const MedicationHistory = ({ patientCode }) => {
                 return false;
             }
         }
-        
+
         return true;
     };
 
     const handleSave = async () => {
         if (!validateForm()) return;
-        
+
         setLoading(true);
         const duration = calculateDuration();
         const isActive = formData.status === 'Active';
         const totalDailyDose = calculateDailyDose();
-        
+
         // Build medication data object
         const medicationData = {
             patient_code: patientCode,
-            
+
             // Required fields
             drug_name: formData.drug_name.trim(),
             start_date: formData.start_date,
-            
+
             // Basic fields
             dose: formData.dose || null,
             roa: formData.roa,
@@ -264,7 +287,7 @@ const MedicationHistory = ({ patientCode }) => {
             indication: formData.indication || null,
             drug_class: formData.drug_class,
             initiated_at: formData.initiated_at,
-            
+
             // Additional fields
             generic_name: formData.generic_name || null,
             brand_name: formData.brand_name || null,
@@ -283,49 +306,42 @@ const MedicationHistory = ({ patientCode }) => {
             prescriber_name: formData.prescriber_name || null,
             prescriber_type: formData.prescriber_type,
             pharmacy_name: formData.pharmacy_name || null,
-            
+
             // Status fields
             status: formData.status,
             prn: formData.prn,
             notes: formData.notes || null,
-            
+
             // Calculated fields
             duration: duration,
-            is_active: isActive,
-            updated_at: new Date().toISOString()
+            is_active: isActive
         };
 
         console.log('Saving medication:', medicationData);
 
         try {
             let result;
-            
+
             if (isEditing && formData.id) {
                 // Update existing medication
-                result = await supabase
-                    .from('medication_history')
-                    .update(medicationData)
-                    .eq('id', formData.id)
-                    .select();
+                result = await api.put(`/medications/${formData.id}`, medicationData);
             } else {
                 // Add new medication
-                result = await supabase
-                    .from('medication_history')
-                    .insert([medicationData])
-                    .select();
+                // The backend route handles insertion
+                result = await api.post('/medication-history', medicationData);
             }
 
-            if (result.error) {
-                console.error('Database error:', result.error);
-                throw result.error;
+            if (result.success) {
+                await fetchMedications();
+                resetForm();
+                alert(`✅ Medication ${isEditing ? 'updated' : 'added'} successfully!`);
+            } else {
+                throw new Error(result.error || 'Failed');
             }
-
-            await fetchMedications();
-            resetForm();
-            alert(`✅ Medication ${isEditing ? 'updated' : 'added'} successfully!`);
         } catch (error) {
             console.error('Error saving medication:', error);
-            alert(`❌ Error: ${error.message || 'Failed to save medication'}`);
+            const errorMsg = error.error || error.message || 'Failed to save medication';
+            alert(`❌ Error: ${errorMsg}`);
         } finally {
             setLoading(false);
         }
@@ -388,15 +404,14 @@ const MedicationHistory = ({ patientCode }) => {
         if (!window.confirm('Are you sure you want to delete this medication record?\nThis action cannot be undone.')) return;
 
         try {
-            const { error } = await supabase
-                .from('medication_history')
-                .delete()
-                .eq('id', medicationId);
+            const result = await api.delete(`/medication-history/${medicationId}`);
 
-            if (error) throw error;
-
-            await fetchMedications();
-            alert('✅ Medication deleted successfully!');
+            if (result.success) {
+                await fetchMedications();
+                alert('✅ Medication deleted successfully!');
+            } else {
+                throw new Error(result.error || 'Failed');
+            }
         } catch (error) {
             console.error('Error deleting medication:', error);
             alert(`❌ Error: ${error.message || 'Failed to delete medication'}`);
@@ -405,23 +420,23 @@ const MedicationHistory = ({ patientCode }) => {
 
     const applyFilters = (meds) => {
         let filtered = meds || [];
-        
+
         // Apply search term filter
         if (searchTerm) {
             const term = searchTerm.toLowerCase();
-            filtered = filtered.filter(med => 
+            filtered = filtered.filter(med =>
                 med.drug_name?.toLowerCase().includes(term) ||
                 med.generic_name?.toLowerCase().includes(term) ||
                 med.indication?.toLowerCase().includes(term) ||
                 med.drug_class?.toLowerCase().includes(term)
             );
         }
-        
+
         // Apply class filter
         if (selectedClass) {
             filtered = filtered.filter(med => med.drug_class === selectedClass);
         }
-        
+
         // Apply status filter
         if (activeFilter === 'active') {
             filtered = filtered.filter(med => med.status === 'Active' || med.is_active === true);
@@ -430,8 +445,61 @@ const MedicationHistory = ({ patientCode }) => {
         } else if (activeFilter === 'prn') {
             filtered = filtered.filter(med => med.prn === true);
         }
-        
+
         setFilteredMedications(filtered);
+    };
+
+    const handleReconciliationChange = (e) => {
+        const { name, value } = e.target;
+        setReconciliationData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handleSaveReconciliation = async () => {
+        if (!reconciliationData.site.trim()) {
+            alert('Reconciliation site is required');
+            return;
+        }
+
+        if (!reconciliationData.findings.trim()) {
+            alert('Findings and Decision is required');
+            return;
+        }
+
+        setReconLoading(true);
+
+        try {
+            const reconPayload = {
+                patient_code: patientCode,
+                site: reconciliationData.site.trim(),
+                findings: reconciliationData.findings.trim(),
+                date: reconciliationData.date
+            };
+
+            const result = await api.post('/reconciliations', reconPayload);
+
+            if (result.success) {
+                await fetchReconciliations();
+
+                // Reset form
+                setReconciliationData({
+                    site: '',
+                    findings: '',
+                    date: new Date().toISOString().split('T')[0]
+                });
+
+                alert('✅ Medication reconciliation saved successfully!');
+            } else {
+                throw new Error(result.error || 'Failed to save reconciliation');
+            }
+        } catch (error) {
+            console.error('Error saving reconciliation:', error);
+            alert(`❌ Error: ${error.message || 'Failed to save reconciliation'}`);
+        } finally {
+            setReconLoading(false);
+        }
     };
 
     const handleInputChange = (e) => {
@@ -454,7 +522,7 @@ const MedicationHistory = ({ patientCode }) => {
     };
 
     const getStatusColor = (status) => {
-        switch(status) {
+        switch (status) {
             case 'Active': return 'bg-green-100 text-green-800 border-green-200';
             case 'Completed': return 'bg-blue-100 text-blue-800 border-blue-200';
             case 'Discontinued': return 'bg-red-100 text-red-800 border-red-200';
@@ -469,13 +537,14 @@ const MedicationHistory = ({ patientCode }) => {
         const prnMeds = medications.filter(m => m.prn === true);
         const oralMeds = medications.filter(m => m.roa === 'po');
         const uniqueClasses = [...new Set(medications.map(m => m.drug_class).filter(Boolean))];
-        
+
         return {
             total: medications.length,
             active: activeMeds.length,
             prn: prnMeds.length,
             oral: oralMeds.length,
-            classes: uniqueClasses.length
+            classes: uniqueClasses.length,
+            reconciliations: reconciliations.length
         };
     };
 
@@ -502,10 +571,13 @@ const MedicationHistory = ({ patientCode }) => {
                     </div>
                 </div>
                 <button
-                    onClick={fetchMedications}
+                    onClick={() => {
+                        fetchMedications();
+                        fetchReconciliations();
+                    }}
                     className="text-blue-600 hover:text-blue-800 flex items-center gap-2 px-4 py-2 border border-blue-200 rounded-lg hover:bg-blue-50 transition"
                 >
-                    <FaSync className={`${loading ? 'animate-spin' : ''}`} />
+                    <FaSync className={`${loading || reconLoading ? 'animate-spin' : ''}`} />
                     Refresh
                 </button>
             </div>
@@ -531,6 +603,10 @@ const MedicationHistory = ({ patientCode }) => {
                 <div className="bg-indigo-50 p-3 rounded-lg border border-indigo-100">
                     <div className="text-sm text-indigo-700">Classes</div>
                     <div className="text-xl font-bold text-indigo-800">{stats.classes}</div>
+                </div>
+                <div className="bg-teal-50 p-3 rounded-lg border border-teal-100">
+                    <div className="text-sm text-teal-700">Reconciliations</div>
+                    <div className="text-xl font-bold text-teal-800">{stats.reconciliations}</div>
                 </div>
             </div>
 
@@ -1129,7 +1205,7 @@ const MedicationHistory = ({ patientCode }) => {
                         <FaFilter className="text-gray-500" />
                         <span className="text-sm font-medium text-gray-700">Filter & Search:</span>
                     </div>
-                    
+
                     <div className="flex flex-wrap gap-3">
                         {/* Search */}
                         <div className="flex-1 min-w-[200px]">
@@ -1150,11 +1226,10 @@ const MedicationHistory = ({ patientCode }) => {
                                     <button
                                         key={filter}
                                         onClick={() => setActiveFilter(filter)}
-                                        className={`px-3 py-1 text-sm rounded capitalize ${
-                                            activeFilter === filter
-                                                ? 'bg-blue-500 text-white'
-                                                : 'text-gray-700 hover:bg-gray-200'
-                                        }`}
+                                        className={`px-3 py-1 text-sm rounded capitalize ${activeFilter === filter
+                                            ? 'bg-blue-500 text-white'
+                                            : 'text-gray-700 hover:bg-gray-200'
+                                            }`}
                                     >
                                         {filter}
                                     </button>
@@ -1292,6 +1367,111 @@ const MedicationHistory = ({ patientCode }) => {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+                )}
+            </div>
+
+            {/* Medication Reconciliation Section */}
+            <div className="bg-gradient-to-r from-teal-50 to-blue-50 rounded-lg p-6 mb-8 border border-teal-200">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="bg-teal-100 p-3 rounded-full">
+                        <FaCheckCircle className="text-teal-600 text-xl" />
+                    </div>
+                    <div>
+                        <h3 className="text-xl font-semibold text-gray-800">Medication Reconciliation</h3>
+                        <p className="text-gray-600 text-sm">Document medication reconciliation findings and decisions</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    {/* Reconciliation Site */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Reconciliation Site *
+                        </label>
+                        <select
+                            name="site"
+                            value={reconciliationData.site}
+                            onChange={handleReconciliationChange}
+                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-teal-500"
+                        >
+                            <option value="">Select reconciliation site</option>
+                            {reconciliationSites.map(site => (
+                                <option key={site} value={site}>{site}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Date */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Date *
+                        </label>
+                        <input
+                            type="date"
+                            name="date"
+                            value={reconciliationData.date}
+                            onChange={handleReconciliationChange}
+                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-teal-500"
+                        />
+                    </div>
+                </div>
+
+                {/* Findings and Decision */}
+                <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Findings and Decision *
+                    </label>
+                    <textarea
+                        name="findings"
+                        value={reconciliationData.findings}
+                        onChange={handleReconciliationChange}
+                        rows="4"
+                        className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-teal-500"
+                        placeholder="Document findings, discrepancies, and decisions made during medication reconciliation..."
+                    />
+                </div>
+
+                {/* Save Button */}
+                <div className="flex justify-end">
+                    <button
+                        onClick={handleSaveReconciliation}
+                        disabled={reconLoading}
+                        className="bg-teal-500 hover:bg-teal-600 text-white px-6 py-3 rounded-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    >
+                        {reconLoading ? (
+                            <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                Saving...
+                            </>
+                        ) : (
+                            <>
+                                <FaSave /> Save Reconciliation
+                            </>
+                        )}
+                    </button>
+                </div>
+
+                {/* Previous Reconciliations */}
+                {reconciliations.length > 0 && (
+                    <div className="mt-8 pt-6 border-t border-teal-200">
+                        <h4 className="font-medium text-gray-700 mb-4">Previous Reconciliations ({reconciliations.length})</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {reconciliations.map((recon) => (
+                                <div key={recon.id} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div className="font-semibold text-gray-800 flex items-center gap-2">
+                                            <FaHospital className="text-teal-500 text-xs" />
+                                            {recon.site}
+                                        </div>
+                                        <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
+                                            {new Date(recon.date).toLocaleDateString()}
+                                        </div>
+                                    </div>
+                                    <p className="text-gray-600 text-sm italic">{recon.findings}</p>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
             </div>

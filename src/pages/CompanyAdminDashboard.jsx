@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
+import {
     FaUsers, FaUserPlus, FaUserEdit, FaUserTimes, FaBuilding,
     FaChartLine, FaSignOutAlt, FaSync, FaSearch, FaFilter,
     FaCheckCircle, FaExclamationTriangle, FaPhone,
@@ -12,7 +12,7 @@ import {
     FaCrown, FaExclamation, FaChartBar,
     FaCheck
 } from 'react-icons/fa';
-const API_URL = import.meta.env.VITE_API_URL;
+import api from '../utils/api';
 
 const CompanyAdminDashboard = () => {
     const navigate = useNavigate();
@@ -38,32 +38,32 @@ const CompanyAdminDashboard = () => {
     const [editingUser, setEditingUser] = useState(null);
     const [isAddingUser, setIsAddingUser] = useState(false);
 
-    useEffect(() => { 
-        checkCompanyAdminAccess(); 
+    useEffect(() => {
+        checkCompanyAdminAccess();
     }, []);
 
     const checkCompanyAdminAccess = async () => {
         try {
             const token = localStorage.getItem('token');
             const userData = localStorage.getItem('user');
-            if (!token || !userData) { 
-                navigate('/login'); 
-                return; 
+            if (!token || !userData) {
+                navigate('/login');
+                return;
             }
-            
+
             const user = JSON.parse(userData);
             if (user.role !== 'company_admin') {
                 setError(`Access denied. Your role is ${user.role}`);
                 setTimeout(() => navigate('/'), 3000);
                 return;
             }
-            
+
             if (!user.company_id) {
                 setError('You are not associated with any company.');
                 setTimeout(() => navigate('/'), 3000);
                 return;
             }
-            
+
             setCurrentUser(user);
             await loadDashboardData(user.company_id);
         } catch (error) {
@@ -77,35 +77,23 @@ const CompanyAdminDashboard = () => {
         try {
             setLoading(true);
             setError('');
-            const token = localStorage.getItem('token');
-            
-            if (!token) { 
-                setError('Authentication token missing'); 
-                return; 
-            }
 
             // Load company info
-            const companyResponse = await fetch(`${API_URL}/company/info`, {
-                method: 'GET', 
-                headers: { 
-                    'Authorization': `Bearer ${token}`, 
-                    'Content-Type': 'application/json' 
-                }
-            });
-            
-            if (companyResponse.ok) {
-                const companyData = await companyResponse.json();
+            try {
+                const companyData = await api.get('/company/info');
                 if (companyData.success && companyData.company) {
                     setCompanyInfo(companyData.company);
                 }
+            } catch (err) {
+                console.warn('Could not load company info:', err);
             }
-            
+
             // Load company users
             await loadCompanyUsers(companyId);
-            
+
             // Load recent activities
             await loadRecentActivities(companyId);
-            
+
         } catch (error) {
             console.error('Error loading company data:', error);
             setError('Failed to load company data: ' + error.message);
@@ -116,58 +104,26 @@ const CompanyAdminDashboard = () => {
 
     const loadCompanyUsers = async (companyId) => {
         try {
-            const token = localStorage.getItem('token');
             console.log('Loading users for company:', companyId);
-            
-            // Try different endpoints
-            const endpoints = [
-                `${API_URL}/users?company_id=${companyId}`,
-                `${API_URL}/company/${companyId}/users`,
-                `${API_URL}/company/users`
-            ];
-            
+
+            // Refactored backend should have /company/users as the main endpoint
+            const data = await api.get('/company/users');
+            console.log('API Response for company users:', data);
+
             let users = [];
-            let lastError = null;
-            
-            for (const endpoint of endpoints) {
-                try {
-                    const response = await fetch(endpoint, {
-                        method: 'GET', 
-                        headers: { 
-                            'Authorization': `Bearer ${token}`, 
-                            'Content-Type': 'application/json' 
-                        }
-                    });
-                    
-                    if (response.ok) {
-                        const data = await response.json();
-                        console.log('API Response from', endpoint, ':', data);
-                        
-                        // Handle different response formats
-                        if (Array.isArray(data)) {
-                            users = data.filter(user => user.company_id === companyId);
-                            break;
-                        } else if (data.users && Array.isArray(data.users)) {
-                            users = data.users.filter(user => user.company_id === companyId);
-                            break;
-                        } else if (data.success && data.users && Array.isArray(data.users)) {
-                            users = data.users.filter(user => user.company_id === companyId);
-                            break;
-                        } else if (data && data.length > 0) {
-                            users = data.filter(user => user.company_id === companyId);
-                            break;
-                        }
-                    }
-                } catch (err) {
-                    lastError = err;
-                    console.log(`Endpoint ${endpoint} failed:`, err.message);
-                }
+            if (data.success && data.users && Array.isArray(data.users)) {
+                users = data.users;
+            } else if (Array.isArray(data)) {
+                users = data;
             }
-            
-            console.log('Final users list:', users);
-            setCompanyUsers(users);
-            updateStats(users);
-            
+
+            // Additional safety filter
+            const companyUsers = users.filter(user => user.company_id === companyId);
+
+            console.log('Final users list:', companyUsers);
+            setCompanyUsers(companyUsers);
+            updateStats(companyUsers);
+
         } catch (userError) {
             console.error('Error loading company users:', userError);
             setCompanyUsers([]);
@@ -178,19 +134,19 @@ const CompanyAdminDashboard = () => {
         try {
             // Mock recent activities
             setRecentActivities([
-                { 
-                    id: 1, 
-                    action: 'dashboard_access', 
-                    user_name: currentUser?.full_name || 'Admin', 
-                    details: 'Accessed company dashboard', 
-                    created_at: new Date().toISOString() 
+                {
+                    id: 1,
+                    action: 'dashboard_access',
+                    user_name: currentUser?.full_name || 'Admin',
+                    details: 'Accessed company dashboard',
+                    created_at: new Date().toISOString()
                 },
-                { 
-                    id: 2, 
-                    action: 'user_management', 
-                    user_name: currentUser?.full_name || 'Admin', 
-                    details: 'Viewed user management section', 
-                    created_at: new Date(Date.now() - 3600000).toISOString() 
+                {
+                    id: 2,
+                    action: 'user_management',
+                    user_name: currentUser?.full_name || 'Admin',
+                    details: 'Viewed user management section',
+                    created_at: new Date(Date.now() - 3600000).toISOString()
                 }
             ]);
         } catch (error) {
@@ -203,94 +159,84 @@ const CompanyAdminDashboard = () => {
         const total_users = users.length;
         const active_users = users.filter(user => user.approved).length;
         const pending_users = users.filter(user => !user.approved).length;
-        
+
         console.log('Stats updated:', { total_users, active_users, pending_users });
-        
+
         setStats({
-            total_users, 
-            active_users, 
+            total_users,
+            active_users,
             pending_users
         });
     };
 
     const handleAddUser = async (e) => {
         e.preventDefault();
-        if (isAddingUser) { 
-            console.log('Already adding user, please wait...'); 
-            return; 
+        if (isAddingUser) {
+            console.log('Already adding user, please wait...');
+            return;
         }
-        
+
         try {
             setIsAddingUser(true);
             setError('');
             setSuccess('');
-            
-            const token = localStorage.getItem('token');
+
             const user = currentUser || JSON.parse(localStorage.getItem('user'));
-            
-            if (!user?.company_id) { 
-                setError('Cannot add user: No company associated'); 
-                return; 
-            }
-            
-            if (!newUserData.email || !newUserData.password || !newUserData.full_name) {
-                setError('Email, password, and full name are required'); 
+            if (!user?.company_id) {
+                setError('Cannot add user: No company associated');
                 return;
             }
-            
+
+            if (!newUserData.email || !newUserData.password || !newUserData.full_name) {
+                setError('Email, password, and full name are required');
+                return;
+            }
+
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(newUserData.email)) { 
-                setError('Please enter a valid email'); 
-                return; 
+            if (!emailRegex.test(newUserData.email)) {
+                setError('Please enter a valid email');
+                return;
             }
-            
-            if (newUserData.password.length < 6) { 
-                setError('Password must be at least 6 characters'); 
-                return; 
+
+            if (newUserData.password.length < 6) {
+                setError('Password must be at least 6 characters');
+                return;
             }
-            
+
             console.log('Adding user with data:', {
                 email: newUserData.email,
                 full_name: newUserData.full_name,
                 role: newUserData.role,
                 company_id: user.company_id
             });
-            
-            const response = await fetch(`${API_URL}/company/users`, {
-                method: 'POST',
-                headers: { 
-                    'Authorization': `Bearer ${token}`, 
-                    'Content-Type': 'application/json' 
-                },
-                body: JSON.stringify({
-                    email: newUserData.email, 
-                    password: newUserData.password,
-                    full_name: newUserData.full_name, 
-                    phone: newUserData.phone || '+251900000000', 
-                    role: newUserData.role,
-                    company_id: user.company_id
-                })
+
+            const data = await api.post('/company/users', {
+                email: newUserData.email,
+                password: newUserData.password,
+                full_name: newUserData.full_name,
+                phone: newUserData.phone || '+251900000000',
+                role: newUserData.role,
+                company_id: user.company_id
             });
-            
-            const data = await response.json();
+
             console.log('Add user response:', data);
-            
-            if (response.ok) {
+
+            if (data.success || data.id) {
                 setSuccess(`User ${newUserData.email} added successfully! They will be pending approval.`);
                 setShowAddUserModal(false);
-                setNewUserData({ 
-                    email: '', 
-                    password: '', 
-                    full_name: '', 
-                    phone: '', 
-                    role: 'pharmacist' 
+                setNewUserData({
+                    email: '',
+                    password: '',
+                    full_name: '',
+                    phone: '',
+                    role: 'pharmacist'
                 });
-                
+
                 // Reload users after a short delay
                 setTimeout(() => {
                     loadCompanyUsers(user.company_id);
                 }, 1000);
-                
+
             } else {
                 setError(data.error || data.message || 'Failed to add user');
             }
@@ -305,27 +251,17 @@ const CompanyAdminDashboard = () => {
     const handleUpdateUser = async (e) => {
         e.preventDefault();
         if (!editingUser) return;
-        
+
         try {
-            const token = localStorage.getItem('token');
             const user = currentUser || JSON.parse(localStorage.getItem('user'));
-            
-            const response = await fetch(`${API_URL}/company/users/${editingUser.id}`, {
-                method: 'PUT',
-                headers: { 
-                    'Authorization': `Bearer ${token}`, 
-                    'Content-Type': 'application/json' 
-                },
-                body: JSON.stringify({
-                    full_name: editingUser.full_name, 
-                    phone: editingUser.phone, 
-                    role: editingUser.role
-                })
+
+            const data = await api.put(`/company/users/${editingUser.id}`, {
+                full_name: editingUser.full_name,
+                phone: editingUser.phone,
+                role: editingUser.role
             });
-            
-            const data = await response.json();
-            
-            if (response.ok) {
+
+            if (data.success || data.id) {
                 setSuccess(`User ${editingUser.email} updated successfully!`);
                 setEditingUser(null);
                 setTimeout(() => {
@@ -342,26 +278,18 @@ const CompanyAdminDashboard = () => {
 
     const handleDeleteUser = async (userId, userEmail) => {
         if (!window.confirm(`Are you sure you want to delete user ${userEmail}?`)) return;
-        
+
         try {
-            const token = localStorage.getItem('token');
             const user = currentUser || JSON.parse(localStorage.getItem('user'));
-            
-            const response = await fetch(`${API_URL}/company/users/${userId}`, {
-                method: 'DELETE', 
-                headers: { 
-                    'Authorization': `Bearer ${token}`, 
-                    'Content-Type': 'application/json' 
-                }
-            });
-            
-            if (response.ok) {
+
+            const data = await api.delete(`/company/users/${userId}`);
+
+            if (data.success || data.message === 'User deleted') {
                 setSuccess(`User ${userEmail} deleted successfully!`);
                 setTimeout(() => {
                     loadCompanyUsers(user.company_id);
                 }, 1000);
             } else {
-                const data = await response.json();
                 setError(data.error || 'Failed to delete user');
             }
         } catch (error) {
@@ -372,20 +300,11 @@ const CompanyAdminDashboard = () => {
 
     const handleApproveUser = async (userId, userEmail) => {
         try {
-            const token = localStorage.getItem('token');
             const user = currentUser || JSON.parse(localStorage.getItem('user'));
-            
-            const response = await fetch(`${API_URL}/company/users/${userId}/approve`, {
-                method: 'POST', 
-                headers: { 
-                    'Authorization': `Bearer ${token}`, 
-                    'Content-Type': 'application/json' 
-                }
-            });
-            
-            const data = await response.json();
-            
-            if (response.ok) {
+
+            const data = await api.post(`/company/users/${userId}/approve`);
+
+            if (data.success) {
                 setSuccess(`User ${userEmail} approved successfully!`);
                 setTimeout(() => {
                     loadCompanyUsers(user.company_id);
@@ -413,17 +332,17 @@ const CompanyAdminDashboard = () => {
             const diffMs = now - date;
             const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
             const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-            
+
             if (diffHours < 1) return 'Just now';
             else if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
             else if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
-            else return date.toLocaleDateString('en-US', { 
-                month: 'short', 
-                day: 'numeric', 
-                year: 'numeric' 
+            else return date.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
             });
-        } catch { 
-            return 'Invalid date'; 
+        } catch {
+            return 'Invalid date';
         }
     };
 
@@ -435,9 +354,9 @@ const CompanyAdminDashboard = () => {
             staff: 'bg-gray-100 text-gray-800',
             company_admin: 'bg-red-100 text-red-800'
         };
-        
+
         const style = roleStyles[role] || 'bg-gray-100 text-gray-800';
-        
+
         return (
             <span className={`px-3 py-1 text-xs rounded-full font-medium ${style}`}>
                 {role.charAt(0).toUpperCase() + role.slice(1)}
@@ -446,22 +365,22 @@ const CompanyAdminDashboard = () => {
     };
 
     const getStatusBadge = (approved) => {
-        return approved ? 
+        return approved ?
             <span className="px-3 py-1 text-xs bg-green-100 text-green-800 rounded-full font-medium">Active</span> :
             <span className="px-3 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full font-medium">Pending</span>;
     };
 
     const filteredUsers = companyUsers.filter(user => {
-        const matchesSearch = searchTerm === '' || 
+        const matchesSearch = searchTerm === '' ||
             (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
             (user.full_name && user.full_name.toLowerCase().includes(searchTerm.toLowerCase()));
-        
+
         const matchesRole = filterRole === 'all' || user.role === filterRole;
-        
-        const matchesStatus = filterStatus === 'all' || 
+
+        const matchesStatus = filterStatus === 'all' ||
             (filterStatus === 'active' && user.approved) ||
             (filterStatus === 'pending' && !user.approved);
-        
+
         return matchesSearch && matchesRole && matchesStatus;
     });
 
@@ -484,8 +403,8 @@ const CompanyAdminDashboard = () => {
                 <div className="px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-16">
                         <div className="flex items-center">
-                            <button 
-                                onClick={() => setShowSidebar(!showSidebar)} 
+                            <button
+                                onClick={() => setShowSidebar(!showSidebar)}
                                 className="p-2 rounded-lg hover:bg-gray-100 mr-2"
                             >
                                 {showSidebar ? <FaTimes className="text-gray-600" /> : <FaBars className="text-gray-600" />}
@@ -501,9 +420,9 @@ const CompanyAdminDashboard = () => {
                             </div>
                         </div>
                         <div className="flex items-center gap-3">
-                            <button 
-                                onClick={() => loadDashboardData(currentUser?.company_id)} 
-                                className="p-2 text-gray-600 hover:text-blue-600" 
+                            <button
+                                onClick={() => loadDashboardData(currentUser?.company_id)}
+                                className="p-2 text-gray-600 hover:text-blue-600"
                                 title="Refresh"
                             >
                                 <FaSync />
@@ -527,29 +446,26 @@ const CompanyAdminDashboard = () => {
             </header>
 
             {/* Sidebar */}
-            <div className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-white shadow-lg transform transition-transform duration-300 z-30 ${
-                showSidebar ? 'translate-x-0' : '-translate-x-full'}`}
+            <div className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-white shadow-lg transform transition-transform duration-300 z-30 ${showSidebar ? 'translate-x-0' : '-translate-x-full'}`}
             >
                 <div className="w-64 h-full overflow-y-auto">
                     <nav className="p-4 space-y-1">
-                        <button 
-                            onClick={() => setActiveTab('dashboard')} 
-                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                                activeTab === 'dashboard' 
-                                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg' 
-                                    : 'text-gray-700 hover:bg-gray-100'
-                            }`}
+                        <button
+                            onClick={() => setActiveTab('dashboard')}
+                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'dashboard'
+                                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
+                                : 'text-gray-700 hover:bg-gray-100'
+                                }`}
                         >
                             <FaTachometerAlt className="text-lg" />
                             <span className="font-medium">Dashboard</span>
                         </button>
-                        <button 
-                            onClick={() => setActiveTab('users')} 
-                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                                activeTab === 'users' 
-                                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg' 
-                                    : 'text-gray-700 hover:bg-gray-100'
-                            }`}
+                        <button
+                            onClick={() => setActiveTab('users')}
+                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'users'
+                                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
+                                : 'text-gray-700 hover:bg-gray-100'
+                                }`}
                         >
                             <FaUserFriends className="text-lg" />
                             <span className="font-medium">User Management</span>
@@ -560,8 +476,8 @@ const CompanyAdminDashboard = () => {
                             )}
                         </button>
                         <div className="pt-8 mt-8 border-t">
-                            <button 
-                                onClick={handleLogout} 
+                            <button
+                                onClick={handleLogout}
                                 className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-all"
                             >
                                 <FaSignOutAlt className="text-lg" />
@@ -586,7 +502,7 @@ const CompanyAdminDashboard = () => {
                             </div>
                         </div>
                     )}
-                    
+
                     {success && (
                         <div className="mb-6 bg-green-50 border-l-4 border-green-400 p-4 rounded-lg animate-fade-in">
                             <div className="flex items-center gap-3">
@@ -617,8 +533,12 @@ const CompanyAdminDashboard = () => {
                                                 <p className="font-medium text-gray-800">{companyInfo.company_name}</p>
                                             </div>
                                             <div>
-                                                <p className="text-sm text-gray-600">Registration Number</p>
-                                                <p className="font-medium text-gray-800">{companyInfo.company_registration_number}</p>
+                                                <p className="text-sm text-gray-600">Company Email</p>
+                                                <p className="font-medium text-gray-800">{companyInfo.email}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-600">Admin Email</p>
+                                                <p className="font-medium text-gray-800">{companyInfo.admin_email || currentUser?.email}</p>
                                             </div>
                                             <div>
                                                 <p className="text-sm text-gray-600">Company Type</p>
@@ -626,13 +546,24 @@ const CompanyAdminDashboard = () => {
                                             </div>
                                             <div>
                                                 <p className="text-sm text-gray-600">Subscription Status</p>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
-                                                        <FaCheck className="inline mr-1" /> Active
+                                                <div className="flex items-center gap-4 mt-1">
+                                                    <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${currentUser?.subscription_status === 'active'
+                                                        ? 'bg-green-100 text-green-800'
+                                                        : 'bg-red-100 text-red-800'
+                                                        }`}>
+                                                        {currentUser?.subscription_status === 'active' ? (
+                                                            <><FaCheckCircle /> Active</>
+                                                        ) : (
+                                                            <><FaExclamationTriangle /> Inactive</>
+                                                        )}
                                                     </span>
-                                                    <span className="text-sm text-gray-500">
-                                                        (Access Granted)
-                                                    </span>
+                                                    <button
+                                                        onClick={() => navigate('/subscription')}
+                                                        className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+                                                    >
+                                                        <FaCreditCard className="text-xs" />
+                                                        Manage Subscription
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
@@ -684,7 +615,7 @@ const CompanyAdminDashboard = () => {
                                             </div>
                                             <FaChevronRight />
                                         </button>
-                                        
+
                                         <button
                                             onClick={() => setShowAddUserModal(true)}
                                             className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-6 py-4 rounded-lg flex items-center justify-between transition-all transform hover:scale-[1.02]"
@@ -766,7 +697,7 @@ const CompanyAdminDashboard = () => {
                                         onClick={() => setShowAddUserModal(true)}
                                         className="px-6 py-3 rounded-lg flex items-center gap-2 font-medium transition-all transform hover:scale-105 bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg hover:shadow-xl"
                                     >
-                                        <FaUserPlus className="text-lg" /> 
+                                        <FaUserPlus className="text-lg" />
                                         Add User
                                     </button>
                                 </div>
@@ -887,7 +818,7 @@ const CompanyAdminDashboard = () => {
                                             <FaUserFriends className="text-6xl text-gray-300 mx-auto mb-4" />
                                             <h3 className="text-xl font-medium text-gray-800 mb-2">No Users Found</h3>
                                             <p className="text-gray-600 mb-4">
-                                                {companyUsers.length === 0 
+                                                {companyUsers.length === 0
                                                     ? "You haven't added any users yet. Click 'Add User' to get started."
                                                     : "No users match your search criteria."
                                                 }
@@ -927,7 +858,7 @@ const CompanyAdminDashboard = () => {
                                     ✕
                                 </button>
                             </div>
-                            
+
                             <form onSubmit={handleAddUser} className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -936,14 +867,14 @@ const CompanyAdminDashboard = () => {
                                     <input
                                         type="text"
                                         value={newUserData.full_name}
-                                        onChange={(e) => setNewUserData({...newUserData, full_name: e.target.value})}
+                                        onChange={(e) => setNewUserData({ ...newUserData, full_name: e.target.value })}
                                         className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                                         placeholder="John Doe"
                                         required
                                         disabled={isAddingUser}
                                     />
                                 </div>
-                                
+
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                         Email Address *
@@ -951,14 +882,14 @@ const CompanyAdminDashboard = () => {
                                     <input
                                         type="email"
                                         value={newUserData.email}
-                                        onChange={(e) => setNewUserData({...newUserData, email: e.target.value})}
+                                        onChange={(e) => setNewUserData({ ...newUserData, email: e.target.value })}
                                         className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                                         placeholder="user@company.com"
                                         required
                                         disabled={isAddingUser}
                                     />
                                 </div>
-                                
+
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                         Password *
@@ -966,7 +897,7 @@ const CompanyAdminDashboard = () => {
                                     <input
                                         type="password"
                                         value={newUserData.password}
-                                        onChange={(e) => setNewUserData({...newUserData, password: e.target.value})}
+                                        onChange={(e) => setNewUserData({ ...newUserData, password: e.target.value })}
                                         className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                                         placeholder="••••••••"
                                         required
@@ -975,7 +906,7 @@ const CompanyAdminDashboard = () => {
                                     />
                                     <p className="text-xs text-gray-500 mt-2">Minimum 6 characters required</p>
                                 </div>
-                                
+
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                         Phone Number
@@ -983,20 +914,20 @@ const CompanyAdminDashboard = () => {
                                     <input
                                         type="tel"
                                         value={newUserData.phone}
-                                        onChange={(e) => setNewUserData({...newUserData, phone: e.target.value})}
+                                        onChange={(e) => setNewUserData({ ...newUserData, phone: e.target.value })}
                                         className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                                         placeholder="+251 912 345678"
                                         disabled={isAddingUser}
                                     />
                                 </div>
-                                
+
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                         Role *
                                     </label>
                                     <select
                                         value={newUserData.role}
-                                        onChange={(e) => setNewUserData({...newUserData, role: e.target.value})}
+                                        onChange={(e) => setNewUserData({ ...newUserData, role: e.target.value })}
                                         className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                                         required
                                         disabled={isAddingUser}
@@ -1007,7 +938,7 @@ const CompanyAdminDashboard = () => {
                                         <option value="staff">Staff</option>
                                     </select>
                                 </div>
-                                
+
                                 <div className="flex gap-3 pt-4 border-t">
                                     <button
                                         type="button"
@@ -1055,7 +986,7 @@ const CompanyAdminDashboard = () => {
                                     ✕
                                 </button>
                             </div>
-                            
+
                             <form onSubmit={handleUpdateUser} className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1064,12 +995,12 @@ const CompanyAdminDashboard = () => {
                                     <input
                                         type="text"
                                         value={editingUser.full_name}
-                                        onChange={(e) => setEditingUser({...editingUser, full_name: e.target.value})}
+                                        onChange={(e) => setEditingUser({ ...editingUser, full_name: e.target.value })}
                                         className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                                         required
                                     />
                                 </div>
-                                
+
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                         Phone Number
@@ -1077,18 +1008,18 @@ const CompanyAdminDashboard = () => {
                                     <input
                                         type="tel"
                                         value={editingUser.phone}
-                                        onChange={(e) => setEditingUser({...editingUser, phone: e.target.value})}
+                                        onChange={(e) => setEditingUser({ ...editingUser, phone: e.target.value })}
                                         className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                                     />
                                 </div>
-                                
+
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                         Role
                                     </label>
                                     <select
                                         value={editingUser.role}
-                                        onChange={(e) => setEditingUser({...editingUser, role: e.target.value})}
+                                        onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value })}
                                         className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                                         required
                                     >
@@ -1098,7 +1029,7 @@ const CompanyAdminDashboard = () => {
                                         <option value="staff">Staff</option>
                                     </select>
                                 </div>
-                                
+
                                 <div className="flex gap-3 pt-4 border-t">
                                     <button
                                         type="button"

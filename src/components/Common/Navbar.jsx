@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { 
-    FaUserMd, 
-    FaHome, 
-    FaPills, 
-    FaBookMedical, 
-    FaFlask, 
+import {
+    FaUserMd,
+    FaHome,
+    FaPills,
+    FaBookMedical,
+    FaFlask,
     FaCogs,
     FaBell,
     FaUserCircle,
@@ -27,7 +27,7 @@ const Navbar = ({ onMenuClick }) => {
 
     useEffect(() => {
         checkUser();
-    }, []);
+    }, [location]);
 
     const checkUser = async () => {
         try {
@@ -77,7 +77,7 @@ const Navbar = ({ onMenuClick }) => {
                         >
                             <FaBars className="text-xl" />
                         </button>
-                        
+
                         {/* Logo and Brand */}
                         <div>
                             <Link to="/home" className="flex items-center gap-2">
@@ -99,7 +99,7 @@ const Navbar = ({ onMenuClick }) => {
                     {/* Right side - User Menu and Notifications */}
                     <div className="flex items-center gap-4">
                         {/* Quick Add Button - Removed */}
-                        
+
                         {/* Notifications */}
                         <div className="relative">
                             <button className="relative p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100">
@@ -143,11 +143,11 @@ const Navbar = ({ onMenuClick }) => {
                             {showUserMenu && (
                                 <>
                                     {/* Overlay */}
-                                    <div 
+                                    <div
                                         className="fixed inset-0 z-10"
                                         onClick={() => setShowUserMenu(false)}
                                     />
-                                    
+
                                     {/* User Menu Dropdown */}
                                     <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border py-1 z-20">
                                         <div className="px-4 py-3 border-b">
@@ -161,7 +161,7 @@ const Navbar = ({ onMenuClick }) => {
                                                 {user?.institution || 'PharmaCare System'}
                                             </p>
                                         </div>
-                                        
+
                                         <Link
                                             to="/settings"
                                             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -169,7 +169,7 @@ const Navbar = ({ onMenuClick }) => {
                                         >
                                             Settings
                                         </Link>
-                                        
+
                                         {user?.role === 'admin' && (
                                             <Link
                                                 to="/admin/dashboard"
@@ -179,7 +179,7 @@ const Navbar = ({ onMenuClick }) => {
                                                 <FaShieldAlt /> Admin Dashboard
                                             </Link>
                                         )}
-                                        
+
                                         <button
                                             onClick={handleLogout}
                                             className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 mt-2"

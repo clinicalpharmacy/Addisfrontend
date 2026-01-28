@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
+import {
     // User icons
     FaUsers, FaUserMd, FaUserCheck, FaUserTimes, FaUserCircle,
     // Medication icons
@@ -31,57 +31,10 @@ import {
     // Card view icon
     FaThLarge,
     // Additional icons
-    FaPhone
+    FaPhone, FaFlask
 } from 'react-icons/fa';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-
-// Helper function for API calls
-const makeApiCall = async (endpoint, options = {}) => {
-    const token = localStorage.getItem('token');
-    
-    const headers = {
-        'Content-Type': 'application/json',
-        ...options.headers,
-    };
-    
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-    
-    const url = `${API_URL}${endpoint}`;
-    console.log(`🌐 API Call: ${url}`);
-    
-    try {
-        const response = await fetch(url, {
-            ...options,
-            headers,
-        });
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error(`❌ API Error (${response.status}):`, errorText);
-            
-            if (response.status === 401) {
-                localStorage.clear();
-                window.location.href = '/login';
-                throw new Error('Session expired. Please login again.');
-            }
-            
-            throw new Error(`API Error ${response.status}: ${errorText || 'Unknown error'}`);
-        }
-        
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-            return await response.json();
-        }
-        
-        return await response.text();
-    } catch (error) {
-        console.error('🚨 Fetch Error:', error.message);
-        throw error;
-    }
-};
+import api from '../utils/api';
+import LabSettings from '../components/LabManagement/LabSettings';
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
@@ -96,7 +49,7 @@ const AdminDashboard = () => {
         currency: 'ETB',
         last_updated: null
     });
-    
+
     const [recentActivities, setRecentActivities] = useState([]);
     const [userManagement, setUserManagement] = useState([]);
     const [pendingUsers, setPendingUsers] = useState([]);
@@ -111,6 +64,8 @@ const AdminDashboard = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterRole, setFilterRole] = useState('all');
     const [filterStatus, setFilterStatus] = useState('all');
+    const [companies, setCompanies] = useState([]);
+    const [loadingCompanies, setLoadingCompanies] = useState(false);
 
     // Medication Knowledge Base States
     const [medications, setMedications] = useState([]);
@@ -149,7 +104,40 @@ const AdminDashboard = () => {
         result: null
     });
 
-    // Patient Management States
+    const getRemainingDays = (endDate) => {
+        if (!endDate) return 'N/A';
+        const now = new Date();
+        const expiry = new Date(endDate);
+        const diffTime = expiry - now;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays > 0 ? `${diffDays} days` : 'Expired';
+    };
+
+    const [companyError, setCompanyError] = useState('');
+    const loadCompanies = async () => {
+        try {
+            setLoadingCompanies(true);
+            setCompanyError('');
+            const data = await api.get('/admin/companies');
+            if (data.success) {
+                const companyList = data.companies || [];
+                setCompanies(companyList);
+                setStats(prev => ({
+                    ...prev,
+                    total_companies: data.count || companyList.length
+                }));
+            } else {
+                setCompanyError(data.error || 'Failed to load companies');
+            }
+        } catch (err) {
+            console.error('Error loading companies:', err);
+            setCompanyError('Network error while loading companies');
+        } finally {
+            setLoadingCompanies(false);
+        }
+    };
+
+    // Load user management data
     const [patients, setPatients] = useState([]);
     const [patientFilter, setPatientFilter] = useState('');
     const [loadingPatients, setLoadingPatients] = useState(false);
@@ -227,28 +215,25 @@ const AdminDashboard = () => {
         if (selectedTab === 'medications' && currentUser) {
             loadMedications();
         }
-    }, [selectedTab, currentUser]);
+    }, [selectedTab, currentUser, forceRefresh]);
 
     // Load patients when patients tab is selected
     useEffect(() => {
         if (selectedTab === 'patients' && currentUser) {
             loadPatients();
         }
-    }, [selectedTab, currentUser]);
+    }, [selectedTab, currentUser, forceRefresh]);
 
     // Check if user is admin
     const checkAdminAccess = async () => {
         try {
-            const token = localStorage.getItem('token');
             const userData = localStorage.getItem('user');
-
-            if (!token || !userData) {
+            if (!userData) {
                 navigate('/login');
                 return;
             }
 
             const user = JSON.parse(userData);
-
             if (user.role !== 'admin') {
                 if (user.role === 'company_admin') {
                     navigate('/company/dashboard');
@@ -260,9 +245,9 @@ const AdminDashboard = () => {
 
             setCurrentUser(user);
 
-            // Verify with backend using makeApiCall
+            // Verify with backend
             try {
-                const data = await makeApiCall('/auth/me');
+                const data = await api.get('/auth/me');
                 if (data.user) {
                     localStorage.setItem('user', JSON.stringify(data.user));
                     setCurrentUser(data.user);
@@ -281,30 +266,21 @@ const AdminDashboard = () => {
         try {
             setLoading(true);
             setError('');
-            
+
             // Test connection first
             try {
-                const testResponse = await fetch(API_URL.replace('/api', '') + '/health');
-                if (!testResponse.ok) {
-                    throw new Error(`Backend connection failed: ${testResponse.status}`);
-                }
+                await api.get('/health');
                 console.log('✅ Backend connection successful');
             } catch (testError) {
                 console.error('❌ Backend connection error:', testError);
-                setError(`Cannot connect to backend server. Make sure it's running at ${API_URL.replace('/api', '')}`);
+                setError('Cannot connect to backend server. Please make sure it\'s running.');
                 setLoading(false);
-                return;
-            }
-
-            const token = localStorage.getItem('token');
-            if (!token) {
-                navigate('/login');
                 return;
             }
 
             // Load pending approvals
             try {
-                const pendingData = await makeApiCall('/admin/pending-approvals');
+                const pendingData = await api.get('/admin/pending-approvals');
                 const usersList = pendingData.users || [];
                 setPendingUsers(usersList);
                 setRealPendingUsers(usersList);
@@ -315,9 +291,16 @@ const AdminDashboard = () => {
                 setRealPendingUsers([]);
             }
 
+            // Load companies
+            try {
+                await loadCompanies();
+            } catch (companyError) {
+                console.warn('Could not load companies:', companyError);
+            }
+
             // Load stats
             try {
-                const statsData = await makeApiCall('/admin/stats');
+                const statsData = await api.get('/admin/stats');
                 if (statsData.stats) {
                     setStats(prev => ({ ...prev, ...statsData.stats }));
                 }
@@ -327,29 +310,30 @@ const AdminDashboard = () => {
 
             // Load all users
             try {
-                const usersData = await makeApiCall('/admin/users');
+                const usersData = await api.get('/admin/users');
                 if (usersData.users) {
                     setUserManagement(usersData.users);
                     setStats(prev => ({ ...prev, total_users: usersData.users.length }));
                 }
             } catch (usersError) {
-                console.warn('Could not load users:', usersError);
-                setUserManagement([]);
+                console.warn('Could not load all users:', usersError);
             }
 
-            // Add sample activity
-            const sampleActivity = {
-                id: Date.now(),
-                user_name: currentUser?.full_name || 'Admin',
-                action_type: 'view_dashboard',
-                description: 'Viewed admin dashboard',
-                created_at: new Date().toISOString()
-            };
-            setRecentActivities(prev => [sampleActivity, ...prev.slice(0, 9)]);
+            // Load recent activities
+            try {
+                const activityData = await api.get('/admin/recent-activities');
+                if (activityData.activities) {
+                    setRecentActivities(activityData.activities);
+                }
+            } catch (activityError) {
+                console.warn('Could not load recent activities:', activityError);
+            }
 
+            setLoading(false);
         } catch (error) {
-            console.error('Dashboard load error:', error);
-            setError(`Failed to load dashboard: ${error.message}`);
+            console.error('Error in loadDashboardData:', error);
+            setError('Failed to load dashboard data');
+            setLoading(false);
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -361,9 +345,9 @@ const AdminDashboard = () => {
         try {
             setLoadingMedications(true);
             setError('');
-            
+
             try {
-                const data = await makeApiCall('/admin/medications');
+                const data = await api.get('/admin/medications');
                 const meds = data.medications || data || [];
                 setMedications(meds);
                 calculateMedicationStats(meds);
@@ -385,9 +369,9 @@ const AdminDashboard = () => {
         try {
             setLoadingPatients(true);
             setError('');
-            
+
             try {
-                const data = await makeApiCall('/admin/all-patients');
+                const data = await api.get('/admin/all-patients');
                 const patientsList = data.patients || [];
                 setPatients(patientsList);
                 calculatePatientStats(patientsList);
@@ -434,7 +418,7 @@ const AdminDashboard = () => {
             adult: patientsList.filter(p => p.age && p.age >= 18).length,
             pregnant: patientsList.filter(p => p.is_pregnant).length || 0
         };
-        
+
         setPatientStats(stats);
     };
 
@@ -450,7 +434,7 @@ const AdminDashboard = () => {
     }).sort((a, b) => {
         const aValue = a[medicationSortField] || '';
         const bValue = b[medicationSortField] || '';
-        
+
         if (medicationSortDirection === 'asc') {
             return aValue.toString().localeCompare(bValue.toString());
         } else {
@@ -470,7 +454,7 @@ const AdminDashboard = () => {
     }).sort((a, b) => {
         const aValue = a[patientSortField] || '';
         const bValue = b[patientSortField] || '';
-        
+
         if (patientSortDirection === 'asc') {
             return aValue.toString().localeCompare(bValue.toString());
         } else {
@@ -502,16 +486,13 @@ const AdminDashboard = () => {
     const handleAddMedication = async () => {
         try {
             setError('');
-            
+
             if (!newMedication.name || !newMedication.generic_name) {
                 setError('Medication name and generic name are required');
                 return;
             }
 
-            const data = await makeApiCall('/admin/medications', {
-                method: 'POST',
-                body: JSON.stringify(newMedication)
-            });
+            const data = await api.post('/admin/medications', newMedication);
 
             setMedications([data.medication || data, ...medications]);
             setShowAddMedication(false);
@@ -532,7 +513,7 @@ const AdminDashboard = () => {
                 schedule: '',
                 notes: ''
             });
-            
+
             const newActivity = {
                 id: Date.now(),
                 user_name: currentUser?.full_name || 'Admin',
@@ -541,7 +522,7 @@ const AdminDashboard = () => {
                 created_at: new Date().toISOString()
             };
             setRecentActivities(prev => [newActivity, ...prev]);
-            
+
             setSuccessMessage('Medication added successfully!');
             setTimeout(() => setSuccessMessage(''), 3000);
 
@@ -555,25 +536,35 @@ const AdminDashboard = () => {
     const handleAddPatient = async () => {
         try {
             setError('');
-            
+            setLoading(true);
+
             if (!newPatient.full_name) {
                 setError('Patient name is required');
+                setLoading(false);
                 return;
             }
 
+            // Ensure age is a number or null
+            const ageVal = newPatient.age === '' ? null : parseInt(newPatient.age);
+
             const patientData = {
                 ...newPatient,
-                patient_code: `PAT-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
-                user_id: currentUser?.id || 'admin'
+                age: ageVal,
+                patient_code: newPatient.patient_code || `PAT-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+                user_id: currentUser?.id
             };
 
-            const data = await makeApiCall('/patients', {
-                method: 'POST',
-                body: JSON.stringify(patientData)
-            });
+            console.log('📝 Adding patient with data:', patientData);
+            const data = await api.post('/patients', patientData);
+            console.log('✅ Patient added successfully:', data);
 
-            setPatients([data.patient || data, ...patients]);
+            const addedPatient = data.patient || data;
+            const updatedPatients = [addedPatient, ...patients];
+
+            setPatients(updatedPatients);
+            calculatePatientStats(updatedPatients);
             setShowPatientForm(false);
+
             setNewPatient({
                 full_name: '',
                 age: '',
@@ -583,22 +574,25 @@ const AdminDashboard = () => {
                 diagnosis: '',
                 is_active: true
             });
-            
+
             const newActivity = {
                 id: Date.now(),
                 user_name: currentUser?.full_name || 'Admin',
                 action_type: 'create',
-                description: `Added patient: ${data.patient?.full_name || newPatient.full_name}`,
+                description: `Added patient: ${addedPatient.full_name}`,
                 created_at: new Date().toISOString()
             };
             setRecentActivities(prev => [newActivity, ...prev]);
-            
+
             setSuccessMessage('Patient added successfully!');
             setTimeout(() => setSuccessMessage(''), 3000);
 
         } catch (error) {
-            console.error('Error adding patient:', error);
-            setError(`Failed to add patient: ${error.message}`);
+            console.error('❌ Error adding patient:', error);
+            const errorMessage = error.error || error.message || 'An unknown error occurred';
+            setError(`Failed to add patient: ${errorMessage}`);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -606,17 +600,14 @@ const AdminDashboard = () => {
     const handleUpdateMedication = async () => {
         try {
             setError('');
-            
-            const data = await makeApiCall(`/admin/medications/${editingMedication.id}`, {
-                method: 'PUT',
-                body: JSON.stringify(editingMedication)
-            });
 
-            setMedications(medications.map(med => 
+            const data = await api.put(`/admin/medications/${editingMedication.id}`, editingMedication);
+
+            setMedications(medications.map(med =>
                 med.id === editingMedication.id ? (data.medication || data) : med
             ));
             setEditingMedication(null);
-            
+
             const newActivity = {
                 id: Date.now(),
                 user_name: currentUser?.full_name || 'Admin',
@@ -625,7 +616,7 @@ const AdminDashboard = () => {
                 created_at: new Date().toISOString()
             };
             setRecentActivities(prev => [newActivity, ...prev]);
-            
+
             setSuccessMessage('Medication updated successfully!');
             setTimeout(() => setSuccessMessage(''), 3000);
 
@@ -639,17 +630,14 @@ const AdminDashboard = () => {
     const handleUpdatePatient = async () => {
         try {
             setError('');
-            
-            const data = await makeApiCall(`/patients/${editingPatient.id}`, {
-                method: 'PUT',
-                body: JSON.stringify(editingPatient)
-            });
 
-            setPatients(patients.map(patient => 
+            const data = await api.put(`/patients/${editingPatient.id}`, editingPatient);
+
+            setPatients(patients.map(patient =>
                 patient.id === editingPatient.id ? (data.patient || data) : patient
             ));
             setEditingPatient(null);
-            
+
             const newActivity = {
                 id: Date.now(),
                 user_name: currentUser?.full_name || 'Admin',
@@ -658,13 +646,14 @@ const AdminDashboard = () => {
                 created_at: new Date().toISOString()
             };
             setRecentActivities(prev => [newActivity, ...prev]);
-            
+
             setSuccessMessage('Patient updated successfully!');
             setTimeout(() => setSuccessMessage(''), 3000);
 
         } catch (error) {
             console.error('Error updating patient:', error);
-            setError(`Failed to update patient: ${error.message}`);
+            const errorMessage = error.error || error.message || 'An unknown error occurred';
+            setError(`Failed to update patient: ${errorMessage}`);
         }
     };
 
@@ -675,12 +664,10 @@ const AdminDashboard = () => {
         }
 
         try {
-            await makeApiCall(`/admin/medications/${id}`, {
-                method: 'DELETE'
-            });
+            await api.delete(`/admin/medications/${id}`);
 
             setMedications(medications.filter(med => med.id !== id));
-            
+
             const newActivity = {
                 id: Date.now(),
                 user_name: currentUser?.full_name || 'Admin',
@@ -689,7 +676,7 @@ const AdminDashboard = () => {
                 created_at: new Date().toISOString()
             };
             setRecentActivities(prev => [newActivity, ...prev]);
-            
+
             setSuccessMessage('Medication deleted successfully!');
             setTimeout(() => setSuccessMessage(''), 3000);
 
@@ -706,12 +693,10 @@ const AdminDashboard = () => {
         }
 
         try {
-            await makeApiCall(`/patients/${id}`, {
-                method: 'DELETE'
-            });
+            await api.delete(`/patients/${id}`);
 
             setPatients(patients.filter(patient => patient.id !== id));
-            
+
             const newActivity = {
                 id: Date.now(),
                 user_name: currentUser?.full_name || 'Admin',
@@ -720,13 +705,19 @@ const AdminDashboard = () => {
                 created_at: new Date().toISOString()
             };
             setRecentActivities(prev => [newActivity, ...prev]);
-            
+
+            // Refresh stats if we're on dashboard
+            if (selectedTab === 'dashboard') {
+                loadDashboardData();
+            }
+
             setSuccessMessage('Patient deleted successfully!');
             setTimeout(() => setSuccessMessage(''), 3000);
 
         } catch (error) {
             console.error('Error deleting patient:', error);
-            setError(`Failed to delete patient: ${error.message}`);
+            const errorMessage = error.error || error.message || 'An unknown error occurred';
+            setError(`Failed to delete patient: ${errorMessage}`);
         }
     };
 
@@ -738,12 +729,9 @@ const AdminDashboard = () => {
         }
 
         try {
-            const data = await makeApiCall('/admin/check-interaction', {
-                method: 'POST',
-                body: JSON.stringify({
-                    med1: interactionCheck.medication1,
-                    med2: interactionCheck.medication2
-                })
+            const data = await api.post('/admin/check-interaction', {
+                med1: interactionCheck.medication1,
+                med2: interactionCheck.medication2
             });
 
             setInteractionCheck(prev => ({ ...prev, result: data }));
@@ -757,30 +745,28 @@ const AdminDashboard = () => {
     const handleApproveUser = async (userId, userEmail) => {
         try {
             setProcessingApproval(prev => ({ ...prev, [userId]: true }));
-            
+
             const userToApprove = realPendingUsers.find(u => u.id === userId || u.email === userEmail);
-            
+
             if (!userToApprove) {
                 setError('User not found in pending list');
                 setProcessingApproval(prev => ({ ...prev, [userId]: false }));
                 return;
             }
-            
+
             let confirmMessage = `APPROVE USER?\n\n` +
-                               `Name: ${userToApprove.full_name}\n` +
-                               `Email: ${userToApprove.email}\n` +
-                               `Institution: ${userToApprove.institution}\n\n` +
-                               `This will allow them to login to the system.`;
-            
+                `Name: ${userToApprove.full_name}\n` +
+                `Email: ${userToApprove.email}\n` +
+                `Institution: ${userToApprove.institution}\n\n` +
+                `This will allow them to login to the system.`;
+
             if (!window.confirm(confirmMessage)) {
                 setProcessingApproval(prev => ({ ...prev, [userId]: false }));
                 return;
             }
 
-            const responseData = await makeApiCall(`/admin/users/${userToApprove.id}/approve`, {
-                method: 'POST'
-            });
-            
+            const responseData = await api.post(`/admin/users/${userToApprove.id}/approve`);
+
             if (responseData.success) {
                 const newActivity = {
                     id: Date.now(),
@@ -790,22 +776,22 @@ const AdminDashboard = () => {
                     created_at: new Date().toISOString()
                 };
                 setRecentActivities(prev => [newActivity, ...prev]);
-                
+
                 setSuccessMessage(`User approved successfully! ${userToApprove.email} can now login.`);
                 setTimeout(() => setSuccessMessage(''), 5000);
-                
+
                 setPendingUsers(prev => prev.filter(user => user.id !== userToApprove.id));
                 setRealPendingUsers(prev => prev.filter(user => user.id !== userToApprove.id));
-                
-                setUserManagement(prev => prev.map(user => 
+
+                setUserManagement(prev => prev.map(user =>
                     user.id === userToApprove.id ? { ...user, approved: true } : user
                 ));
-                
+
                 setStats(prev => ({
                     ...prev,
                     pending_approvals: prev.pending_approvals - 1
                 }));
-                
+
                 setTimeout(() => {
                     setForceRefresh(prev => prev + 1);
                 }, 1000);
@@ -823,25 +809,23 @@ const AdminDashboard = () => {
     const handleRejectUser = async (userId, userEmail) => {
         try {
             const userToReject = realPendingUsers.find(u => u.id === userId || u.email === userEmail);
-            
+
             if (!userToReject) {
                 setError('User not found in pending list');
                 return;
             }
 
             const confirmMessage = `Are you sure you want to REJECT and DELETE this user?\n\n` +
-                                  `This action cannot be undone!\n\n` +
-                                  `Name: ${userToReject.full_name}\n` +
-                                  `Email: ${userToReject.email}\n` +
-                                  `Institution: ${userToReject.institution}`;
+                `This action cannot be undone!\n\n` +
+                `Name: ${userToReject.full_name}\n` +
+                `Email: ${userToReject.email}\n` +
+                `Institution: ${userToReject.institution}`;
 
             if (!window.confirm(confirmMessage)) {
                 return;
             }
 
-            await makeApiCall(`/admin/users/${userToReject.id}/reject`, {
-                method: 'DELETE'
-            });
+            await api.delete(`/admin/users/${userToReject.id}/reject`);
 
             const newActivity = {
                 id: Date.now(),
@@ -851,10 +835,10 @@ const AdminDashboard = () => {
                 created_at: new Date().toISOString()
             };
             setRecentActivities(prev => [newActivity, ...prev]);
-            
+
             setSuccessMessage(`User rejected and deleted!`);
             setTimeout(() => setSuccessMessage(''), 5000);
-            
+
             setForceRefresh(prev => prev + 1);
 
         } catch (error) {
@@ -890,7 +874,7 @@ const AdminDashboard = () => {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        
+
         setSuccessMessage('Report downloaded successfully!');
         setTimeout(() => setSuccessMessage(''), 3000);
     };
@@ -928,7 +912,7 @@ const AdminDashboard = () => {
 
     // Get activity icon
     const getActivityIcon = (actionType) => {
-        switch(actionType) {
+        switch (actionType) {
             case 'login': return <FaUserLock className="text-green-500 text-lg" />;
             case 'create': return <FaFileAlt className="text-blue-500 text-lg" />;
             case 'update': return <FaEdit className="text-yellow-500 text-lg" />;
@@ -951,14 +935,14 @@ const AdminDashboard = () => {
         if (role === 'admin') {
             return <span className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded">Admin</span>;
         }
-        return approved ? 
+        return approved ?
             <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">Approved</span> :
             <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded">Pending</span>;
     };
 
     // Get role badge
     const getRoleBadge = (role) => {
-        switch(role) {
+        switch (role) {
             case 'admin': return <span className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded">Admin</span>;
             case 'pharmacist': return <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">Pharmacist</span>;
             case 'company_admin': return <span className="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded">Company Admin</span>;
@@ -968,14 +952,14 @@ const AdminDashboard = () => {
 
     // Get patient status badge
     const getPatientStatusBadge = (is_active) => {
-        return is_active ? 
+        return is_active ?
             <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">Active</span> :
             <span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded">Inactive</span>;
     };
 
     // Get gender badge
     const getGenderBadge = (gender) => {
-        switch(gender) {
+        switch (gender) {
             case 'male': return <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">Male</span>;
             case 'female': return <span className="px-2 py-1 text-xs bg-pink-100 text-pink-800 rounded">Female</span>;
             case 'other': return <span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded">Other</span>;
@@ -985,17 +969,17 @@ const AdminDashboard = () => {
 
     // Filter users based on search and filters
     const filteredUsers = userManagement.filter(user => {
-        const matchesSearch = searchTerm === '' || 
+        const matchesSearch = searchTerm === '' ||
             (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
             (user.full_name && user.full_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
             (user.institution && user.institution.toLowerCase().includes(searchTerm.toLowerCase()));
-        
+
         const matchesRole = filterRole === 'all' || user.role === filterRole;
-        
-        const matchesStatus = filterStatus === 'all' || 
+
+        const matchesStatus = filterStatus === 'all' ||
             (filterStatus === 'approved' && user.approved) ||
             (filterStatus === 'pending' && !user.approved);
-        
+
         return matchesSearch && matchesRole && matchesStatus;
     });
 
@@ -1011,19 +995,19 @@ const AdminDashboard = () => {
             'Antidepressant': 'bg-indigo-100 text-indigo-800',
             'Anticoagulant': 'bg-pink-100 text-pink-800'
         };
-        
+
         for (const [key, value] of Object.entries(classColors)) {
             if (medClass && medClass.includes(key)) {
                 return value;
             }
         }
-        
+
         return 'bg-gray-100 text-gray-800';
     };
 
     // Get pregnancy category color
     const getPregnancyCategoryColor = (category) => {
-        switch(category) {
+        switch (category) {
             case 'A': return 'bg-green-100 text-green-800';
             case 'B': return 'bg-blue-100 text-blue-800';
             case 'C': return 'bg-yellow-100 text-yellow-800';
@@ -1109,21 +1093,21 @@ const AdminDashboard = () => {
                             >
                                 <FaHome /> Main Dashboard
                             </button>
-                            
+
                             <button
                                 onClick={goToMedicationKnowledgeBase}
                                 className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition text-sm"
                             >
                                 <FaBookMedical /> Medication KB
                             </button>
-                            
+
                             <button
                                 onClick={downloadReport}
                                 className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition text-sm"
                             >
                                 <FaDownload /> Export Report
                             </button>
-                            
+
                             <button
                                 onClick={() => setForceRefresh(prev => prev + 1)}
                                 disabled={refreshing}
@@ -1136,7 +1120,7 @@ const AdminDashboard = () => {
                                 )}
                                 Refresh
                             </button>
-                            
+
                             <button
                                 onClick={handleLogout}
                                 className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition text-sm"
@@ -1152,7 +1136,7 @@ const AdminDashboard = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
                 <div className="bg-white rounded-xl shadow-lg p-2">
                     <nav className="flex space-x-1 overflow-x-auto">
-                        {['overview', 'approvals', 'users', 'medications', 'patients'].map((tab) => (
+                        {['overview', 'approvals', 'users', 'companies', 'medications', 'patients', 'labs'].map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => {
@@ -1160,11 +1144,10 @@ const AdminDashboard = () => {
                                     if (tab === 'medications') loadMedications();
                                     if (tab === 'patients') loadPatients();
                                 }}
-                                className={`py-2 px-4 rounded-lg font-medium text-sm flex items-center gap-2 whitespace-nowrap transition-all ${
-                                    selectedTab === tab
-                                        ? 'bg-blue-500 text-white shadow-md'
-                                        : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
-                                }`}
+                                className={`py-2 px-4 rounded-lg font-medium text-sm flex items-center gap-2 whitespace-nowrap transition-all ${selectedTab === tab
+                                    ? 'bg-blue-500 text-white shadow-md'
+                                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                                    }`}
                             >
                                 {tab === 'overview' && 'Overview'}
                                 {tab === 'approvals' && (
@@ -1184,6 +1167,17 @@ const AdminDashboard = () => {
                                         Users
                                     </div>
                                 )}
+                                {tab === 'companies' && (
+                                    <div className="flex items-center gap-2">
+                                        <FaHospital />
+                                        Companies
+                                        {companies.length > 0 && (
+                                            <span className="ml-1 bg-purple-500 text-white text-xs px-2 py-0.5 rounded-full">
+                                                {companies.length}
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
                                 {tab === 'medications' && (
                                     <div className="flex items-center gap-2">
                                         <FaPills />
@@ -1200,6 +1194,12 @@ const AdminDashboard = () => {
                                         <span className="ml-1 bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">
                                             {patients.length}
                                         </span>
+                                    </div>
+                                )}
+                                {tab === 'labs' && (
+                                    <div className="flex items-center gap-2">
+                                        <FaFlask />
+                                        Global Labs
                                     </div>
                                 )}
                             </button>
@@ -1254,6 +1254,19 @@ const AdminDashboard = () => {
                                     </div>
                                     <div className="p-3 bg-green-100 rounded-full">
                                         <FaPills className="text-green-600 text-xl" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-xl shadow p-6">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-gray-600">Companies</p>
+                                        <p className="text-3xl font-bold text-purple-600">{companies.length}</p>
+                                        <p className="text-xs text-gray-500 mt-1">Registered Institutions</p>
+                                    </div>
+                                    <div className="p-3 bg-purple-100 rounded-full">
+                                        <FaHospital className="text-purple-600 text-xl" />
                                     </div>
                                 </div>
                             </div>
@@ -1325,7 +1338,7 @@ const AdminDashboard = () => {
                                                 </span>
                                             )}
                                         </button>
-                                        
+
                                         <button
                                             onClick={() => setSelectedTab('medications')}
                                             className="w-full bg-purple-500 hover:bg-purple-600 text-white px-4 py-3 rounded-lg flex items-center justify-between"
@@ -1335,7 +1348,7 @@ const AdminDashboard = () => {
                                             </div>
                                             <span className="text-sm">{medications.length} meds</span>
                                         </button>
-                                        
+
                                         <button
                                             onClick={() => setSelectedTab('patients')}
                                             className="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-lg flex items-center justify-between"
@@ -1345,7 +1358,7 @@ const AdminDashboard = () => {
                                             </div>
                                             <span className="text-sm">{patients.length} patients</span>
                                         </button>
-                                        
+
                                         <button
                                             onClick={downloadReport}
                                             className="w-full bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-lg flex items-center gap-2"
@@ -1367,7 +1380,7 @@ const AdminDashboard = () => {
                                 <h2 className="text-lg font-semibold text-gray-800">
                                     Pending Approvals ({realPendingUsers.length})
                                 </h2>
-                                <button 
+                                <button
                                     onClick={() => setForceRefresh(prev => prev + 1)}
                                     className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition"
                                 >
@@ -1375,7 +1388,7 @@ const AdminDashboard = () => {
                                 </button>
                             </div>
                         </div>
-                        
+
                         <div className="p-6">
                             {realPendingUsers.length > 0 ? (
                                 <div className="space-y-4">
@@ -1403,20 +1416,18 @@ const AdminDashboard = () => {
                                                                 <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
                                                                     {user.institution}
                                                                 </span>
-                                                                <span className={`text-xs px-2 py-1 rounded ${
-                                                                    user.account_type === 'company' 
-                                                                        ? 'bg-purple-100 text-purple-800' 
-                                                                        : 'bg-blue-100 text-blue-800'
-                                                                }`}>
+                                                                <span className={`text-xs px-2 py-1 rounded ${user.account_type === 'company'
+                                                                    ? 'bg-purple-100 text-purple-800'
+                                                                    : 'bg-blue-100 text-blue-800'
+                                                                    }`}>
                                                                     {user.account_type === 'company' ? 'Company Admin' : 'Individual'}
                                                                 </span>
-                                                                <span className={`text-xs px-2 py-1 rounded ${
-                                                                    user.role === 'company_admin' 
-                                                                        ? 'bg-purple-100 text-purple-800' 
-                                                                        : user.role === 'pharmacist' 
-                                                                        ? 'bg-blue-100 text-blue-800' 
+                                                                <span className={`text-xs px-2 py-1 rounded ${user.role === 'company_admin'
+                                                                    ? 'bg-purple-100 text-purple-800'
+                                                                    : user.role === 'pharmacist'
+                                                                        ? 'bg-blue-100 text-blue-800'
                                                                         : 'bg-gray-100 text-gray-800'
-                                                                }`}>
+                                                                    }`}>
                                                                     {user.role}
                                                                 </span>
                                                             </div>
@@ -1424,9 +1435,8 @@ const AdminDashboard = () => {
                                                                 <button
                                                                     onClick={() => handleApproveUser(user.id, user.email)}
                                                                     disabled={processingApproval[user.id]}
-                                                                    className={`bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition ${
-                                                                        processingApproval[user.id] ? 'opacity-50 cursor-not-allowed' : ''
-                                                                    }`}
+                                                                    className={`bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition ${processingApproval[user.id] ? 'opacity-50 cursor-not-allowed' : ''
+                                                                        }`}
                                                                 >
                                                                     {processingApproval[user.id] ? (
                                                                         <FaSpinner className="animate-spin" />
@@ -1462,6 +1472,116 @@ const AdminDashboard = () => {
                     </div>
                 )}
 
+                {/* Companies Tab */}
+                {selectedTab === 'companies' && (
+                    <div className="space-y-6">
+                        <div className="flex justify-between items-center bg-white p-6 rounded-xl shadow border-l-4 border-purple-500">
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-800">Company Management</h2>
+                                <p className="text-gray-600">Overview of all registered medical institutions and pharmacies.</p>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <button
+                                    onClick={loadCompanies}
+                                    className="bg-purple-100 text-purple-600 p-2 rounded-lg hover:bg-purple-200 transition"
+                                    title="Refresh Companies"
+                                >
+                                    <FaSync className={loadingCompanies ? 'animate-spin' : ''} />
+                                </button>
+                                <div className="text-right">
+                                    <p className="text-3xl font-bold text-purple-600">{companies.length}</p>
+                                    <p className="text-sm text-gray-500">Total Registered</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {companyError && (
+                            <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg flex items-center gap-3">
+                                <FaExclamationTriangle className="text-red-500" />
+                                <p className="text-red-700">{companyError}</p>
+                                <button
+                                    onClick={loadCompanies}
+                                    className="ml-auto text-sm font-bold text-red-600 hover:underline"
+                                >
+                                    Try Again
+                                </button>
+                            </div>
+                        )}
+
+                        {loadingCompanies ? (
+                            <div className="flex justify-center py-12">
+                                <FaSpinner className="text-4xl text-purple-500 animate-spin" />
+                            </div>
+                        ) : companies.length > 0 ? (
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                {companies.map((company) => (
+                                    <div key={company.id} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition">
+                                        <div className="p-6">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="bg-purple-100 p-3 rounded-lg text-purple-600">
+                                                        <FaHospital className="text-2xl" />
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="text-lg font-bold text-gray-800">{company.company_name}</h3>
+                                                        <p className="text-sm text-gray-500">{company.company_type || 'Institution'}</p>
+                                                    </div>
+                                                </div>
+                                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${company.subscription_status === 'active'
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : 'bg-yellow-100 text-yellow-800'
+                                                    }`}>
+                                                    {company.subscription_status?.toUpperCase() || 'INACTIVE'}
+                                                </span>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-4 mt-6">
+                                                <div className="space-y-2">
+                                                    <p className="text-xs text-gray-500 uppercase font-semibold">Contact Details</p>
+                                                    <div className="flex items-center gap-2 text-sm text-gray-700">
+                                                        <FaPhone className="text-gray-400" /> {company.admin_phone || 'N/A'}
+                                                    </div>
+                                                    <p className="text-sm text-gray-700 flex items-center gap-2">
+                                                        <FaCalendarAlt className="text-gray-400" /> Reg: {formatDate(company.created_at)}
+                                                    </p>
+                                                </div>
+                                                <div className="space-y-2 text-right">
+                                                    <p className="text-xs text-gray-500 uppercase font-semibold">Capacity & Size</p>
+                                                    <p className="text-sm text-gray-700">Size: {company.company_size || 'N/A'}</p>
+                                                    <p className="text-sm text-gray-700">Users: {company.user_capacity || 0}</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="mt-6 pt-4 border-t border-gray-100">
+                                                <p className="text-xs text-gray-500 uppercase font-semibold mb-2">Admin User</p>
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-xs font-bold text-gray-600">
+                                                            {company.users?.full_name?.charAt(0) || 'A'}
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-medium text-gray-700">{company.users?.full_name || 'N/A'}</p>
+                                                            <p className="text-xs text-gray-500">{company.users?.email || 'N/A'}</p>
+                                                        </div>
+                                                    </div>
+                                                    <button className="text-purple-600 hover:text-purple-800 text-sm font-medium">View Details</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="bg-white rounded-xl shadow p-12 text-center">
+                                <FaHospital className="text-6xl text-gray-200 mx-auto mb-4" />
+                                <h3 className="text-xl font-medium text-gray-800 mb-2">No Companies Registered</h3>
+                                <p className="text-gray-500">Registration requests from medical institutions will appear here.</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+
                 {/* Users Tab */}
                 {selectedTab === 'users' && (
                     <div className="bg-white rounded-xl shadow">
@@ -1470,14 +1590,14 @@ const AdminDashboard = () => {
                                 <h2 className="text-lg font-semibold text-gray-800">
                                     All Users ({filteredUsers.length})
                                 </h2>
-                                <button 
+                                <button
                                     onClick={() => setForceRefresh(prev => prev + 1)}
                                     className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition"
                                 >
                                     <FaSync /> Refresh
                                 </button>
                             </div>
-                            
+
                             {/* Filters */}
                             <div className="flex flex-col md:flex-row gap-4 mb-4">
                                 <div className="flex-1">
@@ -1515,7 +1635,7 @@ const AdminDashboard = () => {
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div className="p-6">
                             {filteredUsers.length > 0 ? (
                                 <div className="overflow-x-auto">
@@ -1524,10 +1644,10 @@ const AdminDashboard = () => {
                                             <tr className="bg-gray-50 text-gray-700">
                                                 <th className="border p-3 text-left">User</th>
                                                 <th className="border p-3 text-left">Role</th>
-                                                <th className="border p-3 text-left">Type</th>
+                                                <th className="border p-3 text-left">Subscription</th>
+                                                <th className="border p-3 text-left">Remaining</th>
                                                 <th className="border p-3 text-left">Status</th>
                                                 <th className="border p-3 text-left">Institution</th>
-                                                <th className="border p-3 text-left">Registered</th>
                                                 <th className="border p-3 text-left">Actions</th>
                                             </tr>
                                         </thead>
@@ -1544,13 +1664,24 @@ const AdminDashboard = () => {
                                                         {getRoleBadge(user.role)}
                                                     </td>
                                                     <td className="border p-3">
-                                                        <span className={`text-xs px-2 py-1 rounded ${
-                                                            user.account_type === 'company' 
-                                                                ? 'bg-purple-100 text-purple-800' 
-                                                                : 'bg-blue-100 text-blue-800'
-                                                        }`}>
-                                                            {user.account_type === 'company' ? 'Company' : 'Individual'}
+                                                        <span className={`text-xs px-2 py-1 rounded ${user.subscription_status === 'active'
+                                                            ? 'bg-green-100 text-green-800'
+                                                            : 'bg-yellow-100 text-yellow-800'
+                                                            }`}>
+                                                            {user.subscription_status || 'inactive'}
                                                         </span>
+                                                    </td>
+                                                    <td className="border p-3">
+                                                        {user.role === 'admin' ? (
+                                                            <span className="text-sm text-gray-400">∞ (Admin)</span>
+                                                        ) : (
+                                                            <span className={`text-sm font-medium ${parseInt(getRemainingDays(user.subscription_end_date)) < 7
+                                                                ? 'text-red-600 animate-pulse'
+                                                                : 'text-gray-700'
+                                                                }`}>
+                                                                {getRemainingDays(user.subscription_end_date)}
+                                                            </span>
+                                                        )}
                                                     </td>
                                                     <td className="border p-3">
                                                         {getStatusBadge(user.approved, user.role)}
@@ -1558,14 +1689,6 @@ const AdminDashboard = () => {
                                                     <td className="border p-3">
                                                         <div>
                                                             <p className="text-sm">{user.institution}</p>
-                                                        </div>
-                                                    </td>
-                                                    <td className="border p-3">
-                                                        <div className="flex items-center gap-2">
-                                                            <FaCalendarAlt className="text-gray-400" />
-                                                            <span className="text-sm">
-                                                                {formatDate(user.created_at)}
-                                                            </span>
                                                         </div>
                                                     </td>
                                                     <td className="border p-3">
@@ -1733,7 +1856,7 @@ const AdminDashboard = () => {
                                         <FaExclamationTriangle /> Check Interaction
                                     </button>
                                 </div>
-                                
+
                                 {interactionCheck.result && (
                                     <div className="mt-4 p-4 border rounded-lg bg-white">
                                         <div className="flex items-center gap-2 mb-2">
@@ -1758,7 +1881,7 @@ const AdminDashboard = () => {
                                         <table className="w-full border-collapse">
                                             <thead>
                                                 <tr className="bg-gray-50 text-gray-700">
-                                                    <th 
+                                                    <th
                                                         className="border p-3 text-left cursor-pointer"
                                                         onClick={() => handleMedicationSort('name')}
                                                     >
@@ -1769,7 +1892,7 @@ const AdminDashboard = () => {
                                                             )}
                                                         </div>
                                                     </th>
-                                                    <th 
+                                                    <th
                                                         className="border p-3 text-left cursor-pointer"
                                                         onClick={() => handleMedicationSort('class')}
                                                     >
@@ -1984,7 +2107,7 @@ const AdminDashboard = () => {
                                             <table className="w-full border-collapse">
                                                 <thead>
                                                     <tr className="bg-gray-50 text-gray-700">
-                                                        <th 
+                                                        <th
                                                             className="border p-3 text-left cursor-pointer"
                                                             onClick={() => handlePatientSort('full_name')}
                                                         >
@@ -1995,7 +2118,7 @@ const AdminDashboard = () => {
                                                                 )}
                                                             </div>
                                                         </th>
-                                                        <th 
+                                                        <th
                                                             className="border p-3 text-left cursor-pointer"
                                                             onClick={() => handlePatientSort('age')}
                                                         >
@@ -2133,6 +2256,12 @@ const AdminDashboard = () => {
                                 )}
                             </div>
                         </div>
+                    </div>
+                )}
+
+                {selectedTab === 'labs' && (
+                    <div className="animate-fadeIn">
+                        <LabSettings />
                     </div>
                 )}
             </main>

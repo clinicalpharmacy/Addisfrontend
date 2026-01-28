@@ -1,14 +1,14 @@
-// components/Patient/PhAssistPlan.jsx
 import React, { useState, useEffect } from 'react';
-import { 
-  FaClipboardList, 
-  FaEdit, 
-  FaSave, 
-  FaTrash,
-  FaCalendarAlt,
-  FaPills,
-  FaUserMd,
-  FaFileMedical 
+import api from '../../utils/api';
+import {
+    FaClipboardList,
+    FaEdit,
+    FaSave,
+    FaTrash,
+    FaCalendarAlt,
+    FaPills,
+    FaUserMd,
+    FaFileMedical
 } from 'react-icons/fa';
 
 const PhAssistPlan = ({ patientCode }) => {
@@ -27,20 +27,10 @@ const PhAssistPlan = ({ patientCode }) => {
     const fetchSavedPlans = async () => {
         try {
             setLoading(true);
-            const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:3000/api/plans/patient/${patientCode}`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
+            const result = await api.get(`/plans/patient/${patientCode}`);
 
-            if (response.ok) {
-                const result = await response.json();
-                if (result.success && result.plans) {
-                    setSavedPlans(result.plans);
-                }
+            if (result.success && result.plans) {
+                setSavedPlans(result.plans);
             }
         } catch (error) {
             console.error('Error fetching pharmacy plans:', error);
@@ -49,17 +39,16 @@ const PhAssistPlan = ({ patientCode }) => {
         }
     };
 
-    // Fixed savePlan function - removed patient?.id reference
     const savePlan = async () => {
         try {
             setLoading(true);
-            
+
             if (!pharmacyAssessment.trim() || !plan.trim()) {
                 alert('Please fill in both Pharmacy Assessment and Plan of Action');
+                setLoading(false);
                 return;
             }
 
-            const token = localStorage.getItem('token');
             const planData = {
                 patient_code: patientCode,
                 plan_type: planType,
@@ -72,33 +61,22 @@ const PhAssistPlan = ({ patientCode }) => {
 
             console.log('Saving plan with data:', planData);
 
-            const response = await fetch('http://localhost:3000/api/plans/pharmacy-assistance', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(planData)
-            });
+            const result = await api.post('/plans/pharmacy-assistance', planData);
 
-            const result = await response.json();
-            
-            if (response.ok && result.success) {
+            if (result.success) {
                 alert('Plan saved successfully!');
-                // Clear form
                 setPharmacyAssessment('');
                 setPlan('');
                 setFollowUpDate('');
                 setPlanType('medication_review');
                 setEditIndex(null);
-                // Refresh list
                 fetchSavedPlans();
             } else {
                 throw new Error(result.error || 'Failed to save plan');
             }
         } catch (error) {
             console.error('Error saving plan:', error);
-            alert('Error saving plan: ' + error.message);
+            alert('Error: ' + error.message);
         } finally {
             setLoading(false);
         }
@@ -118,22 +96,14 @@ const PhAssistPlan = ({ patientCode }) => {
         }
 
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:3000/api/plans/${planId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (response.ok) {
+            const result = await api.delete(`/plans/${planId}`);
+            if (result.success) {
                 alert('Plan deleted successfully!');
                 fetchSavedPlans();
             }
         } catch (error) {
             console.error('Error deleting plan:', error);
-            alert('Error deleting plan: ' + error.message);
+            alert('Error deleting plan: ' + (error.message || error.error || 'Failed'));
         }
     };
 
@@ -153,7 +123,7 @@ const PhAssistPlan = ({ patientCode }) => {
             <div className="mb-8">
                 <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
                     <h3 className="text-xl font-semibold mb-4 text-gray-800 flex items-center gap-2">
-                        <FaFileMedical /> 
+                        <FaFileMedical />
                         {editIndex !== null ? 'Edit Assessment & Plan' : 'New Assessment & Plan'}
                     </h3>
 

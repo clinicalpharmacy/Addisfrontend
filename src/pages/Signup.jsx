@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
+import {
     FaUserMd, FaLock, FaEnvelope, FaUser, FaPhone,
     FaBuilding, FaMapMarker, FaFileInvoiceDollar,
     FaArrowRight, FaCheck, FaCreditCard, FaShieldAlt,
@@ -14,6 +14,7 @@ import {
 } from 'react-icons/fa';
 
 const API_URL = import.meta.env.VITE_API_URL;
+import api from '../utils/api';
 
 // Define subscription plans with updated pricing
 const SUBSCRIPTION_PLANS = [
@@ -129,7 +130,7 @@ const Signup = () => {
         role: 'pharmacist',
         woreda: '',
         company_name: '',
-        company_registration_number: '',
+        company_email: '', // Replaced registration number
         company_address: '',
         company_size: '1-10',
         company_type: 'pharmacy',
@@ -140,7 +141,7 @@ const Signup = () => {
         admin_phone: '',
         user_capacity: 5
     });
-    
+
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [showAdminPassword, setShowAdminPassword] = useState(false);
@@ -176,7 +177,7 @@ const Signup = () => {
             role: 'pharmacist',
             woreda: '',
             company_name: '',
-            company_registration_number: '',
+            company_email: '',
             company_address: '',
             company_size: '1-10',
             company_type: 'pharmacy',
@@ -198,12 +199,12 @@ const Signup = () => {
     };
 
     const handlePasswordChange = (value) => {
-        setFormData({...formData, password: value});
+        setFormData({ ...formData, password: value });
         setPasswordStrength(checkPasswordStrength(value));
     };
 
     const handleAdminPasswordChange = (value) => {
-        setFormData({...formData, admin_password: value});
+        setFormData({ ...formData, admin_password: value });
         setAdminPasswordStrength(checkPasswordStrength(value));
     };
 
@@ -226,9 +227,9 @@ const Signup = () => {
 
         const trimmedPassword = formData.password ? formData.password.trim() : '';
         const trimmedConfirmPassword = formData.confirmPassword ? formData.confirmPassword.trim() : '';
-        const trimmedAdminPassword = formData.account_type === 'company' ? 
+        const trimmedAdminPassword = formData.account_type === 'company' ?
             (formData.admin_password ? formData.admin_password.trim() : '') : '';
-        const trimmedAdminConfirmPassword = formData.account_type === 'company' ? 
+        const trimmedAdminConfirmPassword = formData.account_type === 'company' ?
             (formData.admin_confirm_password ? formData.admin_confirm_password.trim() : '') : '';
 
         // Validation
@@ -269,7 +270,7 @@ const Signup = () => {
                 endpoint = '/auth/register-company';
                 requestData = {
                     company_name: formData.company_name.trim(),
-                    company_registration_number: formData.company_registration_number.trim(),
+                    company_email: formData.company_email.trim(),
                     company_address: formData.company_address.trim(),
                     company_size: formData.company_size,
                     company_type: formData.company_type,
@@ -289,27 +290,9 @@ const Signup = () => {
 
             console.log('📤 Sending registration request:', { endpoint, requestData });
 
-            const response = await fetch(`${API_URL}${endpoint}`, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(requestData)
-            });
+            const data = await api.post(endpoint, requestData);
 
-            const data = await response.json();
-            console.log('📥 Registration response:', { 
-                status: response.status, 
-                statusText: response.statusText,
-                ok: response.ok,
-                data: data
-            });
-
-            if (!response.ok) {
-                console.error('❌ Registration failed response:', data);
-                throw new Error(data.error || data.details || data.message || `Registration failed (${response.status})`);
-            }
+            console.log('📥 Registration response:', data);
 
             if (!data.success) {
                 throw new Error(data.error || 'Registration failed');
@@ -370,10 +353,10 @@ const Signup = () => {
             };
 
             console.log('💾 Storing user data in localStorage:', userData);
-            
+
             localStorage.setItem('registered_user', JSON.stringify(userData));
             localStorage.setItem('last_registration', new Date().toISOString());
-            
+
             const paymentUserData = {
                 email: userEmail,
                 name: userName,
@@ -384,16 +367,18 @@ const Signup = () => {
                 selected_plan_details: selectedPlanDetails
             };
             localStorage.setItem('payment_user_data', JSON.stringify(paymentUserData));
-            
+
             setRegisteredUser(userData);
             setRegistrationComplete(true);
-            
+
             setStep(3);
             setSuccess(`✅ Registration successful! Please proceed to payment.`);
 
         } catch (err) {
             console.error('❌ Registration error:', err);
-            setError(err.message || 'An error occurred during registration');
+            // Extracts error from backend response { success: false, error: "..." } which becomes 'err' here due to interceptor
+            const errorMessage = err.error || err.message || (typeof err === 'string' ? err : 'An error occurred during registration');
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -401,7 +386,7 @@ const Signup = () => {
 
     const handleChapaPayment = async () => {
         setPaymentLoading(true);
-        
+
         try {
             const userDataStr = localStorage.getItem('registered_user');
             if (!userDataStr) {
@@ -411,7 +396,7 @@ const Signup = () => {
             }
 
             const userData = JSON.parse(userDataStr);
-            
+
             if (!userData.phone) {
                 setPlanError('Phone number is required for payment');
                 setPaymentLoading(false);
@@ -424,21 +409,17 @@ const Signup = () => {
                 userName: userData.name || userData.full_name || 'User',
                 userPhone: userData.phone,
                 userId: userData.userId || userData.id,
-                account_type: userData.account_type || 'individual'
+                account_type: userData.account_type || 'individual',
+                frontendUrl: window.location.origin
             };
 
             console.log('📤 Sending payment request:', paymentRequest);
 
-            const response = await fetch(`${API_URL}/chapa/create-payment`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(paymentRequest)
-            });
+            const data = await api.post('/chapa/create-payment', paymentRequest);
 
-            const data = await response.json();
             console.log('📥 Payment response:', data);
 
-            if (!response.ok || !data.success) {
+            if (!data.success) {
                 throw new Error(data.error || 'Payment failed');
             }
 
@@ -454,11 +435,11 @@ const Signup = () => {
                     status: 'pending',
                     payment_url: data.payment_url
                 };
-                
+
                 localStorage.setItem('pending_subscription', JSON.stringify(paymentInfo));
                 setChapaTxRef(data.tx_ref);
                 setChapaPaymentUrl(data.payment_url);
-                
+
                 window.location.href = data.payment_url;
             }
 
@@ -520,13 +501,12 @@ const Signup = () => {
                                 {SUBSCRIPTION_PLANS.filter(plan => plan.account_type === 'individual').map((plan) => {
                                     const PlanIcon = plan.icon;
                                     return (
-                                        <div 
+                                        <div
                                             key={plan.id}
-                                            className={`border-3 rounded-2xl p-6 md:p-8 cursor-pointer transition-all duration-300 transform hover:scale-[1.02] ${
-                                                selectedPlan === plan.id 
-                                                    ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-blue-100 shadow-2xl' 
-                                                    : 'border-gray-200 hover:border-blue-300 hover:shadow-xl bg-white'
-                                            }`}
+                                            className={`border-3 rounded-2xl p-6 md:p-8 cursor-pointer transition-all duration-300 transform hover:scale-[1.02] ${selectedPlan === plan.id
+                                                ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-blue-100 shadow-2xl'
+                                                : 'border-gray-200 hover:border-blue-300 hover:shadow-xl bg-white'
+                                                }`}
                                             onClick={() => handlePlanSelect(plan)}
                                         >
                                             <div className="flex items-center justify-between mb-4">
@@ -545,7 +525,7 @@ const Signup = () => {
                                                     </span>
                                                 )}
                                             </div>
-                                            
+
                                             <div className="mb-4">
                                                 <div className="text-2xl font-bold text-gray-800 mb-1">
                                                     {plan.price} <span className="text-base font-normal text-gray-600">{plan.currency}</span>
@@ -575,11 +555,10 @@ const Signup = () => {
                                             </ul>
 
                                             <button
-                                                className={`w-full py-3 rounded-xl font-semibold transition-all duration-300 ${
-                                                    selectedPlan === plan.id
-                                                        ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg'
-                                                        : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                                                }`}
+                                                className={`w-full py-3 rounded-xl font-semibold transition-all duration-300 ${selectedPlan === plan.id
+                                                    ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg'
+                                                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                                                    }`}
                                             >
                                                 {selectedPlan === plan.id ? 'Selected ✓' : 'Select This Plan'}
                                             </button>
@@ -604,13 +583,12 @@ const Signup = () => {
                                 {SUBSCRIPTION_PLANS.filter(plan => plan.account_type === 'company').map((plan) => {
                                     const PlanIcon = plan.icon;
                                     return (
-                                        <div 
+                                        <div
                                             key={plan.id}
-                                            className={`border-3 rounded-2xl p-6 md:p-8 cursor-pointer transition-all duration-300 transform hover:scale-[1.02] ${
-                                                selectedPlan === plan.id 
-                                                    ? 'border-green-500 bg-gradient-to-br from-green-50 to-green-100 shadow-2xl' 
-                                                    : 'border-gray-200 hover:border-green-300 hover:shadow-xl bg-white'
-                                            }`}
+                                            className={`border-3 rounded-2xl p-6 md:p-8 cursor-pointer transition-all duration-300 transform hover:scale-[1.02] ${selectedPlan === plan.id
+                                                ? 'border-green-500 bg-gradient-to-br from-green-50 to-green-100 shadow-2xl'
+                                                : 'border-gray-200 hover:border-green-300 hover:shadow-xl bg-white'
+                                                }`}
                                             onClick={() => handlePlanSelect(plan)}
                                         >
                                             <div className="flex items-center justify-between mb-4">
@@ -629,7 +607,7 @@ const Signup = () => {
                                                     </span>
                                                 )}
                                             </div>
-                                            
+
                                             <div className="mb-4">
                                                 <div className="text-2xl font-bold text-gray-800 mb-1">
                                                     {plan.price} <span className="text-base font-normal text-gray-600">{plan.currency}</span>
@@ -659,11 +637,10 @@ const Signup = () => {
                                             </ul>
 
                                             <button
-                                                className={`w-full py-3 rounded-xl font-semibold transition-all duration-300 ${
-                                                    selectedPlan === plan.id
-                                                        ? 'bg-gradient-to-r from-green-600 to-green-500 text-white shadow-lg'
-                                                        : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                                                }`}
+                                                className={`w-full py-3 rounded-xl font-semibold transition-all duration-300 ${selectedPlan === plan.id
+                                                    ? 'bg-gradient-to-r from-green-600 to-green-500 text-white shadow-lg'
+                                                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                                                    }`}
                                             >
                                                 {selectedPlan === plan.id ? 'Selected ✓' : 'Select This Plan'}
                                             </button>
@@ -716,7 +693,7 @@ const Signup = () => {
     // Step 2: Registration Form
     if (step === 2) {
         const isIndividual = selectedPlanDetails?.account_type === 'individual';
-        
+
         return (
             <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
                 <div className="w-full max-w-4xl">
@@ -759,12 +736,12 @@ const Signup = () => {
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="p-2 bg-white rounded-lg">
-                                        {selectedPlanDetails.icon && 
-                                            React.createElement(selectedPlanDetails.icon, { 
-                                                className: `text-xl ${selectedPlanDetails.color.includes('blue') ? 'text-blue-600' : 
+                                        {selectedPlanDetails.icon &&
+                                            React.createElement(selectedPlanDetails.icon, {
+                                                className: `text-xl ${selectedPlanDetails.color.includes('blue') ? 'text-blue-600' :
                                                     selectedPlanDetails.color.includes('green') ? 'text-green-600' :
-                                                    selectedPlanDetails.color.includes('purple') ? 'text-purple-600' :
-                                                    'text-orange-600'}`
+                                                        selectedPlanDetails.color.includes('purple') ? 'text-purple-600' :
+                                                            'text-orange-600'}`
                                             })
                                         }
                                     </div>
@@ -842,7 +819,7 @@ const Signup = () => {
                                                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                                                 placeholder="Enter your full name"
                                                 value={formData.full_name}
-                                                onChange={(e) => setFormData({...formData, full_name: e.target.value})}
+                                                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                                             />
                                         </div>
                                         <div>
@@ -856,7 +833,7 @@ const Signup = () => {
                                                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                                                 placeholder="Enter your email"
                                                 value={formData.email}
-                                                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                             />
                                         </div>
                                     </div>
@@ -873,7 +850,7 @@ const Signup = () => {
                                                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                                                 placeholder="Enter your phone number"
                                                 value={formData.phone}
-                                                onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                             />
                                         </div>
                                         <div>
@@ -886,7 +863,7 @@ const Signup = () => {
                                                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                                                 placeholder="Enter TIN number (optional)"
                                                 value={formData.tin_number}
-                                                onChange={(e) => setFormData({...formData, tin_number: e.target.value})}
+                                                onChange={(e) => setFormData({ ...formData, tin_number: e.target.value })}
                                             />
                                         </div>
                                     </div>
@@ -916,7 +893,7 @@ const Signup = () => {
                                                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                                                 placeholder="Enter your region"
                                                 value={formData.region}
-                                                onChange={(e) => setFormData({...formData, region: e.target.value})}
+                                                onChange={(e) => setFormData({ ...formData, region: e.target.value })}
                                             />
                                         </div>
                                         <div>
@@ -929,7 +906,7 @@ const Signup = () => {
                                                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                                                 placeholder="Enter your woreda"
                                                 value={formData.woreda}
-                                                onChange={(e) => setFormData({...formData, woreda: e.target.value})}
+                                                onChange={(e) => setFormData({ ...formData, woreda: e.target.value })}
                                             />
                                         </div>
                                     </div>
@@ -959,13 +936,12 @@ const Signup = () => {
                                             </div>
                                             {passwordStrength && (
                                                 <p className="mt-2 text-sm">
-                                                    Password strength: 
-                                                    <span className={`ml-2 font-bold ${
-                                                        passwordStrength === 'weak' ? 'text-red-500' :
+                                                    Password strength:
+                                                    <span className={`ml-2 font-bold ${passwordStrength === 'weak' ? 'text-red-500' :
                                                         passwordStrength === 'fair' ? 'text-yellow-500' :
-                                                        passwordStrength === 'good' ? 'text-blue-500' :
-                                                        'text-green-500'
-                                                    }`}>
+                                                            passwordStrength === 'good' ? 'text-blue-500' :
+                                                                'text-green-500'
+                                                        }`}>
                                                         {passwordStrength.charAt(0).toUpperCase() + passwordStrength.slice(1)}
                                                     </span>
                                                 </p>
@@ -983,7 +959,7 @@ const Signup = () => {
                                                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition pr-12"
                                                     placeholder="Confirm your password"
                                                     value={formData.confirmPassword}
-                                                    onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
+                                                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                                                 />
                                                 <button
                                                     type="button"
@@ -1017,20 +993,21 @@ const Signup = () => {
                                                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                                                     placeholder="Enter company name"
                                                     value={formData.company_name}
-                                                    onChange={(e) => setFormData({...formData, company_name: e.target.value})}
+                                                    onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
                                                 />
                                             </div>
                                             <div>
                                                 <label className="block text-gray-700 font-medium mb-2">
-                                                    Registration Number *
+                                                    <FaEnvelope className="inline mr-2" />
+                                                    Company Email *
                                                 </label>
                                                 <input
-                                                    type="text"
+                                                    type="email"
                                                     required
                                                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                                    placeholder="Enter registration number"
-                                                    value={formData.company_registration_number}
-                                                    onChange={(e) => setFormData({...formData, company_registration_number: e.target.value})}
+                                                    placeholder="Enter company email"
+                                                    value={formData.company_email}
+                                                    onChange={(e) => setFormData({ ...formData, company_email: e.target.value })}
                                                 />
                                             </div>
                                         </div>
@@ -1048,103 +1025,71 @@ const Signup = () => {
                                                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                                                 placeholder="Enter company address"
                                                 value={formData.company_address}
-                                                onChange={(e) => setFormData({...formData, company_address: e.target.value})}
+                                                onChange={(e) => setFormData({ ...formData, company_address: e.target.value })}
                                             />
                                         </div>
-                                        <div>
-                                            <label className="block text-gray-700 font-medium mb-2">
-                                                <FaUsers className="inline mr-2" />
-                                                User Capacity
-                                            </label>
-                                            <select
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                                value={formData.user_capacity}
-                                                onChange={(e) => setFormData({...formData, user_capacity: e.target.value})}
-                                            >
-                                                <option value="5">5 users</option>
-                                                <option value="10">10 users</option>
-                                                <option value="20">20 users</option>
-                                                <option value="50">50 users</option>
-                                            </select>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-gray-700 font-medium mb-2">
+                                                    <FaBriefcase className="inline mr-2" />
+                                                    Company Type
+                                                </label>
+                                                <select
+                                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                    value={formData.company_type}
+                                                    onChange={(e) => setFormData({ ...formData, company_type: e.target.value })}
+                                                >
+                                                    <option value="pharmacy">Pharmacy</option>
+                                                    <option value="hospital">Hospital</option>
+                                                    <option value="clinic">Clinic</option>
+                                                    <option value="pharmaceutical">Pharmaceutical Company</option>
+                                                    <option value="health_center">Health Center</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-gray-700 font-medium mb-2">
+                                                    <FaFileInvoiceDollar className="inline mr-2" />
+                                                    TIN Number *
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                    placeholder="Enter company TIN number"
+                                                    value={formData.tin_number}
+                                                    onChange={(e) => setFormData({ ...formData, tin_number: e.target.value })}
+                                                />
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
-                                            <label className="block text-gray-700 font-medium mb-2">
-                                                <FaBriefcase className="inline mr-2" />
-                                                Company Type
-                                            </label>
-                                            <select
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                                value={formData.company_type}
-                                                onChange={(e) => setFormData({...formData, company_type: e.target.value})}
-                                            >
-                                                <option value="pharmacy">Pharmacy</option>
-                                                <option value="hospital">Hospital</option>
-                                                <option value="clinic">Clinic</option>
-                                                <option value="pharmaceutical">Pharmaceutical Company</option>
-                                                <option value="health_center">Health Center</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className="block text-gray-700 font-medium mb-2">
-                                                <FaFileInvoiceDollar className="inline mr-2" />
-                                                TIN Number *
-                                            </label>
-                                            <input
-                                                type="text"
-                                                required
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                                placeholder="Enter company TIN number"
-                                                value={formData.tin_number}
-                                                onChange={(e) => setFormData({...formData, tin_number: e.target.value})}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        <div>
-                                            <label className="block text-gray-700 font-medium mb-2">
-                                                <FaGlobe className="inline mr-2" />
-                                                Country *
-                                            </label>
-                                            <input
-                                                type="text"
-                                                required
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                                value={formData.country}
-                                                readOnly
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-gray-700 font-medium mb-2">
-                                                <FaMapMarker className="inline mr-2" />
-                                                Region/State *
-                                            </label>
-                                            <input
-                                                type="text"
-                                                required
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                                placeholder="Enter region"
-                                                value={formData.region}
-                                                onChange={(e) => setFormData({...formData, region: e.target.value})}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-gray-700 font-medium mb-2">
-                                                Company Size
-                                            </label>
-                                            <select
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                                value={formData.company_size}
-                                                onChange={(e) => setFormData({...formData, company_size: e.target.value})}
-                                            >
-                                                <option value="1-10">1-10 employees</option>
-                                                <option value="11-50">11-50 employees</option>
-                                                <option value="51-200">51-200 employees</option>
-                                                <option value="201+">201+ employees</option>
-                                            </select>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-gray-700 font-medium mb-2">
+                                                    <FaGlobe className="inline mr-2" />
+                                                    Country *
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                    value={formData.country}
+                                                    readOnly
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-gray-700 font-medium mb-2">
+                                                    <FaMapMarker className="inline mr-2" />
+                                                    Region/State *
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                    placeholder="Enter region"
+                                                    value={formData.region}
+                                                    onChange={(e) => setFormData({ ...formData, region: e.target.value })}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
 
@@ -1164,7 +1109,7 @@ const Signup = () => {
                                                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                                                     placeholder="Enter admin full name"
                                                     value={formData.admin_full_name}
-                                                    onChange={(e) => setFormData({...formData, admin_full_name: e.target.value})}
+                                                    onChange={(e) => setFormData({ ...formData, admin_full_name: e.target.value })}
                                                 />
                                             </div>
                                             <div>
@@ -1178,7 +1123,7 @@ const Signup = () => {
                                                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                                                     placeholder="Enter admin email"
                                                     value={formData.admin_email}
-                                                    onChange={(e) => setFormData({...formData, admin_email: e.target.value})}
+                                                    onChange={(e) => setFormData({ ...formData, admin_email: e.target.value })}
                                                 />
                                             </div>
                                         </div>
@@ -1194,7 +1139,7 @@ const Signup = () => {
                                                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                                                     placeholder="Enter admin phone number"
                                                     value={formData.admin_phone}
-                                                    onChange={(e) => setFormData({...formData, admin_phone: e.target.value})}
+                                                    onChange={(e) => setFormData({ ...formData, admin_phone: e.target.value })}
                                                 />
                                             </div>
                                         </div>
@@ -1223,13 +1168,12 @@ const Signup = () => {
                                                 </div>
                                                 {adminPasswordStrength && (
                                                     <p className="mt-2 text-sm">
-                                                        Password strength: 
-                                                        <span className={`ml-2 font-bold ${
-                                                            adminPasswordStrength === 'weak' ? 'text-red-500' :
+                                                        Password strength:
+                                                        <span className={`ml-2 font-bold ${adminPasswordStrength === 'weak' ? 'text-red-500' :
                                                             adminPasswordStrength === 'fair' ? 'text-yellow-500' :
-                                                            adminPasswordStrength === 'good' ? 'text-blue-500' :
-                                                            'text-green-500'
-                                                        }`}>
+                                                                adminPasswordStrength === 'good' ? 'text-blue-500' :
+                                                                    'text-green-500'
+                                                            }`}>
                                                             {adminPasswordStrength.charAt(0).toUpperCase() + adminPasswordStrength.slice(1)}
                                                         </span>
                                                     </p>
@@ -1247,7 +1191,7 @@ const Signup = () => {
                                                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition pr-12"
                                                         placeholder="Confirm admin password"
                                                         value={formData.admin_confirm_password}
-                                                        onChange={(e) => setFormData({...formData, admin_confirm_password: e.target.value})}
+                                                        onChange={(e) => setFormData({ ...formData, admin_confirm_password: e.target.value })}
                                                     />
                                                     <button
                                                         type="button"
@@ -1295,7 +1239,7 @@ const Signup = () => {
                         </form>
                     </div>
                 </div>
-            </div>
+            </div >
         );
     }
 
@@ -1363,12 +1307,12 @@ const Signup = () => {
                                 <div className="flex items-center justify-between mb-4">
                                     <div className="flex items-center gap-4">
                                         <div className="p-3 bg-white rounded-xl">
-                                            {selectedPlanDetails.icon && 
-                                                React.createElement(selectedPlanDetails.icon, { 
-                                                    className: `text-2xl ${selectedPlanDetails.color.includes('blue') ? 'text-blue-600' : 
+                                            {selectedPlanDetails.icon &&
+                                                React.createElement(selectedPlanDetails.icon, {
+                                                    className: `text-2xl ${selectedPlanDetails.color.includes('blue') ? 'text-blue-600' :
                                                         selectedPlanDetails.color.includes('green') ? 'text-green-600' :
-                                                        selectedPlanDetails.color.includes('purple') ? 'text-purple-600' :
-                                                        'text-orange-600'}`
+                                                            selectedPlanDetails.color.includes('purple') ? 'text-purple-600' :
+                                                                'text-orange-600'}`
                                                 })
                                             }
                                         </div>
@@ -1410,7 +1354,7 @@ const Signup = () => {
                             >
                                 <span>← Back to Registration</span>
                             </button>
-                            
+
                             <button
                                 onClick={handleChapaPayment}
                                 disabled={paymentLoading}
@@ -1451,7 +1395,7 @@ const Signup = () => {
     if (step === 4) {
         const userData = JSON.parse(localStorage.getItem('registered_user') || '{}');
         const paymentData = JSON.parse(localStorage.getItem('user_payment') || '{}');
-        
+
         return (
             <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
                 <div className="w-full max-w-4xl">
