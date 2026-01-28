@@ -699,7 +699,6 @@ const DRNAssessment = ({ patientCode }) => {
         return colors[category] || 'bg-gray-100 text-gray-800 border-gray-200';
     };
 
-=======
     const getRuleTypeColor = (ruleType) => {
         const colors = {
             'duplicate_therapy': 'bg-blue-50 text-blue-700',
@@ -743,7 +742,6 @@ const DRNAssessment = ({ patientCode }) => {
         return colors[ruleType] || 'bg-gray-50 text-gray-700';
     };
 
->>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
     const filteredFindings = analysisResults?.findings?.filter(finding => {
         if (filterSeverity === 'all') return true;
         return finding.severity === filterSeverity;
@@ -821,8 +819,8 @@ const DRNAssessment = ({ patientCode }) => {
                                         <div>
                                             <h4 className="font-semibold text-gray-800 text-lg">Analysis Results</h4>
                                             <p className={`text-lg font-medium mt-2 ${analysisResults.totalFindings > 0
-                                                    ? 'text-gray-800'
-                                                    : 'text-green-600'
+                                                ? 'text-gray-800'
+                                                : 'text-green-600'
                                                 }`}>
                                                 {analysisResults.summary}
                                             </p>
@@ -837,10 +835,8 @@ const DRNAssessment = ({ patientCode }) => {
                                         </div>
                                     </div>
 
-=======
-                                    
+
                                     {/* Findings display - UPDATED WITHOUT ruleTypes */}
->>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
                                     {filteredFindings.length > 0 ? (
                                         <div className="space-y-3">
                                             {filteredFindings.map((finding, idx) => (
@@ -862,13 +858,11 @@ const DRNAssessment = ({ patientCode }) => {
                                                                 )}
                                                             </div>
                                                             <p className="text-sm text-gray-600 mb-2">{finding.message}</p>
-=======
                                                             <div className="flex flex-wrap items-center gap-3 mt-2">
                                                                 <span className="text-xs text-gray-500">
                                                                     Confidence: 95%
                                                                 </span>
                                                             </div>
->>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
                                                         </div>
                                                         <button
                                                             onClick={() => handleReviewFinding(finding)}
@@ -924,8 +918,8 @@ const DRNAssessment = ({ patientCode }) => {
                                     setEditId(null);
                                 }}
                                 className={`p-4 rounded-lg text-left transition-all duration-200 border ${selectedCategory === category
-                                        ? 'border-blue-500 bg-blue-50 text-blue-800 shadow-sm'
-                                        : 'border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700 hover:shadow'
+                                    ? 'border-blue-500 bg-blue-50 text-blue-800 shadow-sm'
+                                    : 'border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700 hover:shadow'
                                     }`}
                             >
                                 <div className="flex items-center gap-3">
@@ -1103,184 +1097,9 @@ const DRNAssessment = ({ patientCode }) => {
                         );
                     })}
                 </div>
-=======
-{/* Cause Selection and Form - UPDATED (DTP type hidden unless selected) */}
-{selectedCategory && (
-  <div className="mb-8 p-6 border rounded-lg bg-gray-50">
-    <h3 className="text-lg font-semibold mb-6 text-gray-800">
-      {selectedCategory} - Select Causes
-    </h3>
-    
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-      {menuItemsData[selectedCategory]?.map(cause => {
-        const ruleCount = activeRules?.[cause.ruleType]?.length || 0;
-        const isSelected = selectedCauses.includes(cause.name);
-
-        return (
-          <div
-            key={cause.name}
-            className="flex items-center gap-3 p-4 border rounded-lg bg-white hover:shadow transition"
-          >
-            <input
-              type="checkbox"
-              checked={isSelected}
-              onChange={() => handleCauseSelection(cause.name)}
-              className="h-5 w-5 text-blue-600 focus:ring-blue-500"
-            />
-
-            <div className="flex-1">
-              <p className="font-medium text-gray-800">{cause.name}</p>
-
-              <div className="flex gap-2 mt-1">
-                {/* DTP Type ONLY when selected */}
-                {isSelected && cause.dtpType && (
-                  <span
-                    className={`px-2 py-1 text-xs rounded ${getDTPTypeColor(
-                      cause.dtpType
-                    )}`}
-                  >
-                    {cause.dtpType}
-                  </span>
-                )}
-
-                {/* Rule count always visible */}
-                {ruleCount > 0 && (
-                  <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
-                    {ruleCount} rules
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-
-    {/* Form for Selected Causes - UNCHANGED */}
-    {selectedCauses.map(causeName => {
-      const causeDetails = menuItemsData[selectedCategory]?.find(
-        c => c.name === causeName
-      );
-
-      return (
-        <div
-          key={causeName}
-          className="mb-8 p-6 border rounded-lg bg-white shadow-sm"
-        >
-          <div className="flex justify-between items-center mb-6">
-            <h4 className="font-semibold text-lg text-gray-800">
-              {causeName}
-            </h4>
-
-            {/* DTP Type shown here because cause is selected */}
-            {causeDetails?.dtpType && (
-              <span
-                className={`px-3 py-1 text-sm rounded ${getDTPTypeColor(
-                  causeDetails.dtpType
-                )}`}
-              >
-                DTP Type: {causeDetails.dtpType}
-              </span>
->>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
             )}
-          </div>
-
-            {/* Saved Assessments Table */}
-=======
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Specific Case *
-              </label>
-              <input
-                type="text"
-                value={writeUps[causeName]?.specificCase || ''}
-                onChange={e =>
-                  handleWriteUpChange(
-                    causeName,
-                    'specificCase',
-                    e.target.value
-                  )
-                }
-                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Describe the specific case..."
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Medical Condition *
-              </label>
-              <input
-                type="text"
-                value={writeUps[causeName]?.medicalCondition || ''}
-                onChange={e =>
-                  handleWriteUpChange(
-                    causeName,
-                    'medicalCondition',
-                    e.target.value
-                  )
-                }
-                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="e.g., Hypertension, Diabetes"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Medication *
-              </label>
-              <input
-                type="text"
-                value={writeUps[causeName]?.medication || ''}
-                onChange={e =>
-                  handleWriteUpChange(
-                    causeName,
-                    'medication',
-                    e.target.value
-                  )
-                }
-                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="e.g., Enalapril 10mg"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="flex gap-4 mt-8">
-            <button
-              onClick={() => saveAssessment(causeName)}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-lg font-medium shadow-md"
-            >
-              {editId !== null ? 'Update Assessment' : 'Save Assessment'}
-            </button>
-
-            <button
-              onClick={() => {
-                setSelectedCauses(prev =>
-                  prev.filter(c => c !== causeName)
-                );
-                setWriteUps(prev => {
-                  const newWriteUps = { ...prev };
-                  delete newWriteUps[causeName];
-                  return newWriteUps;
-                });
-              }}
-              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      );
-    })}
-  </div>
-)}
 
             {/* Saved Assessments Table - UPDATED to show DTP Type instead of ruleType */}
->>>>>>> 87c6b3e4020877166519ea3f54e834b9edbcb268
             <div className="mt-12">
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-xl font-semibold text-gray-800">
@@ -1337,8 +1156,8 @@ const DRNAssessment = ({ patientCode }) => {
                                         <td className="p-4 text-sm text-gray-700 max-w-xs">{assessment.specific_case}</td>
                                         <td className="p-4">
                                             <span className={`px-2 py-1 text-xs rounded-full ${assessment.status === 'active' ? 'bg-yellow-100 text-yellow-800' :
-                                                    assessment.status === 'resolved' ? 'bg-green-100 text-green-800' :
-                                                        'bg-blue-100 text-blue-800'
+                                                assessment.status === 'resolved' ? 'bg-green-100 text-green-800' :
+                                                    'bg-blue-100 text-blue-800'
                                                 }`}>
                                                 {assessment.status}
                                             </span>
@@ -1376,4 +1195,5 @@ const DRNAssessment = ({ patientCode }) => {
 };
 
 export default DRNAssessment;
+
 
