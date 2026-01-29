@@ -288,11 +288,11 @@ const Signup = () => {
                 };
             }
 
-            console.log('📤 Sending registration request:', { endpoint, requestData });
+
 
             const data = await api.post(endpoint, requestData);
 
-            console.log('📥 Registration response:', data);
+
 
             if (!data.success) {
                 throw new Error(data.error || 'Registration failed');
@@ -352,7 +352,7 @@ const Signup = () => {
                 form_name: formData.account_type === 'individual' ? formData.full_name.trim() : formData.admin_full_name.trim()
             };
 
-            console.log('💾 Storing user data in localStorage:', userData);
+
 
             localStorage.setItem('registered_user', JSON.stringify(userData));
             localStorage.setItem('last_registration', new Date().toISOString());
@@ -375,7 +375,7 @@ const Signup = () => {
             setSuccess(`✅ Registration successful! Please proceed to payment.`);
 
         } catch (err) {
-            console.error('❌ Registration error:', err);
+
             // Extracts error from backend response { success: false, error: "..." } which becomes 'err' here due to interceptor
             const errorMessage = err.error || err.message || (typeof err === 'string' ? err : 'An error occurred during registration');
             setError(errorMessage);
@@ -413,11 +413,11 @@ const Signup = () => {
                 frontendUrl: window.location.origin
             };
 
-            console.log('📤 Sending payment request:', paymentRequest);
+
 
             const data = await api.post('/chapa/create-payment', paymentRequest);
 
-            console.log('📥 Payment response:', data);
+
 
             if (!data.success) {
                 throw new Error(data.error || 'Payment failed');
@@ -444,7 +444,7 @@ const Signup = () => {
             }
 
         } catch (err) {
-            console.error('Payment error:', err);
+
             setPlanError(err.message);
             setPaymentLoading(false);
         }

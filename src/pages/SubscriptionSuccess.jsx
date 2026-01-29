@@ -27,14 +27,6 @@ const SubscriptionSuccess = () => {
     const chapaRef = searchParams.get('chapa_ref');
 
     useEffect(() => {
-        console.log('📊 URL Parameters:', {
-            tx_ref,
-            status,
-            txid,
-            chapaRef,
-            allParams: Object.fromEntries(searchParams.entries())
-        });
-
         // Auto-assume success if tx_ref exists (Chapa doesn't always add status=success)
         const checkPayment = async () => {
             if (!tx_ref) {
@@ -73,15 +65,12 @@ const SubscriptionSuccess = () => {
                                     localStorage.setItem('subscription_end_date', authData.user.subscription_end_date || '');
                                 }
                             } catch (authErr) {
-                                console.error('Error refreshing user after payment:', authErr);
                             }
                         }
                     } else {
                         setPaymentData(data.payment || data);
                     }
                 } catch (err) {
-                    console.error('Verification error:', err);
-                    console.log('Using fallback payment data');
                     setPaymentData({
                         tx_ref: tx_ref,
                         status: 'pending_verification',
@@ -139,7 +128,6 @@ Support: support@addismed.com
             navigator.clipboard.writeText(tx_ref)
                 .then(() => alert('Transaction ID copied to clipboard!'))
                 .catch(err => {
-                    console.error('Copy failed:', err);
                     alert('Please manually copy the Transaction ID');
                 });
         }

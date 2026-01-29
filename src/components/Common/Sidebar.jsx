@@ -104,6 +104,7 @@ const Sidebar = ({ onClose }) => {
     // Check user roles
     const isAdmin = user?.role === 'admin';
     const isCompanyAdmin = user?.role === 'company_admin';
+    const isCompanyUser = !!user?.company_id || user?.account_type === 'company' || ['company_admin', 'company_user'].includes(user?.role);
 
     return (
         <aside className="w-64 bg-white h-full flex flex-col border-r border-gray-200 shadow-lg">

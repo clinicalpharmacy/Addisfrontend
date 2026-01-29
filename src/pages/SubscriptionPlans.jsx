@@ -38,7 +38,6 @@ const SubscriptionPlans = () => {
     if (activeUser) {
       try {
         const parsedUser = JSON.parse(activeUser);
-        console.log('Active user renewing subscription:', parsedUser);
         setUser(parsedUser);
         setAccountType(parsedUser.account_type || (parsedUser.role === 'company_admin' ? 'company' : 'individual'));
         setIsRegistered(true);
@@ -50,7 +49,6 @@ const SubscriptionPlans = () => {
         }
         return;
       } catch (e) {
-        console.error('Error parsing active user:', e);
       }
     }
 
@@ -60,7 +58,7 @@ const SubscriptionPlans = () => {
     if (registeredUserData) {
       try {
         const parsedRegisteredUser = JSON.parse(registeredUserData);
-        console.log('Newly registered user:', parsedRegisteredUser);
+
 
         // Set user state
         setUser(parsedRegisteredUser);
@@ -80,7 +78,6 @@ const SubscriptionPlans = () => {
         }
         return;
       } catch (e) {
-        console.error('Error parsing registered user:', e);
       }
     }
 
@@ -192,7 +189,6 @@ const SubscriptionPlans = () => {
       return;
     }
 
-    console.log('Starting Chapa payment for user:', plan);
 
     setLoading(true);
     setError('');
@@ -229,10 +225,8 @@ const SubscriptionPlans = () => {
         frontendUrl: window.location.origin
       };
 
-      console.log('Chapa payment data:', chapaData);
-
       const data = await api.post('/chapa/create-payment', chapaData);
-      console.log('Chapa payment response:', data);
+
 
       if (!data.success) {
         throw new Error(data.error || 'Payment initialization failed');
@@ -263,7 +257,6 @@ const SubscriptionPlans = () => {
       }
 
     } catch (err) {
-      console.error('Chapa payment error:', err);
       setError(err.message || 'Failed to initiate payment. Please try again.');
     } finally {
       setLoading(false);

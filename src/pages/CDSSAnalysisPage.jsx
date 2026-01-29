@@ -17,7 +17,7 @@ const CDSSAnalysisPage = () => {
 
     useEffect(() => {
         fetchPatients();
-    }, []);
+    }, [navigate]);
 
     const fetchPatients = async () => {
         try {
@@ -67,9 +67,10 @@ const CDSSAnalysisPage = () => {
                     <div className="flex items-center gap-4">
                         <button
                             onClick={() => selectedPatient ? setSelectedPatient(null) : navigate(-1)}
-                            className="bg-white p-2 rounded-full shadow-sm hover:bg-gray-100 transition-colors"
+                            className="bg-white px-4 py-2 rounded-lg shadow-sm hover:bg-gray-100 transition-colors flex items-center gap-2 text-sm font-medium text-gray-600 border border-gray-100"
                         >
-                            <FaArrowLeft className="text-gray-600" />
+                            <FaArrowLeft />
+                            <span>{selectedPatient ? 'Back to Patient List' : 'Back to Dashboard'}</span>
                         </button>
                         <div>
                             <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
@@ -155,7 +156,10 @@ const CDSSAnalysisPage = () => {
                 ) : (
                     /* CDSS Display Component */
                     <div className="animate-in fade-in duration-500">
-                        <CDSSDisplay patientData={selectedPatient} />
+                        <CDSSDisplay
+                            patientData={selectedPatient}
+                            onBack={() => setSelectedPatient(null)}
+                        />
                     </div>
                 )}
             </div>

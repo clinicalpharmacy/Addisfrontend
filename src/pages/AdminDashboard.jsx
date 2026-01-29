@@ -73,10 +73,6 @@ const AdminDashboard = () => {
                 await usersManager.loadUsers();
             } else if (selectedTab === 'companies') {
                 await companiesManager.loadCompanies();
-            } else if (selectedTab === 'medications') {
-                await medicationsManager.loadMedications();
-            } else if (selectedTab === 'patients') {
-                await patientsManager.loadPatients();
             }
         };
 
@@ -90,9 +86,7 @@ const AdminDashboard = () => {
             await Promise.all([
                 dashboardData.loadDashboardData(),
                 usersManager.loadUsers(),
-                companiesManager.loadCompanies(),
-                medicationsManager.loadMedications(),
-                patientsManager.loadPatients()
+                companiesManager.loadCompanies()
             ]);
         } finally {
             setRefreshing(false);
@@ -183,9 +177,6 @@ const AdminDashboard = () => {
                             <button onClick={() => navigate('/home')} className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg flex items-center gap-2">
                                 <FaHome /> Main
                             </button>
-                            <button onClick={() => { setSelectedTab('medications'); medicationsManager.loadMedications(); }} className="bg-purple-100 hover:bg-purple-200 text-purple-700 px-3 py-2 rounded-lg flex items-center gap-2">
-                                <FaBookMedical /> KB
-                            </button>
                             <button onClick={downloadReport} className="bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-2 rounded-lg flex items-center gap-2">
                                 <FaDownload /> Report
                             </button>
@@ -209,16 +200,14 @@ const AdminDashboard = () => {
                             { id: 'approvals', label: 'Approvals', icon: FaUserCheck, count: usersManager.pendingUsers.length, color: 'bg-red-500' },
                             { id: 'users', label: 'Users', icon: FaUsers },
                             { id: 'companies', label: 'Companies', icon: FaHospital, count: companiesManager.companies.length, color: 'bg-purple-500' },
-                            { id: 'medications', label: 'Medications', icon: FaPills, count: medicationsManager.medications.length, color: 'bg-green-500' },
-                            { id: 'patients', label: 'Patients', icon: FaUserInjured, count: patientsManager.patients.length, color: 'bg-blue-500' },
                             { id: 'labs', label: 'Global Labs', icon: FaFlask }
                         ].map(tab => (
                             <button
                                 key={tab.id}
                                 onClick={() => setSelectedTab(tab.id)}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-all ${selectedTab === tab.id
-                                        ? 'bg-blue-600 text-white shadow-md'
-                                        : 'text-gray-600 hover:bg-gray-50'
+                                    ? 'bg-blue-600 text-white shadow-md'
+                                    : 'text-gray-600 hover:bg-gray-50'
                                     }`}
                             >
                                 {tab.icon && <tab.icon />}
@@ -300,31 +289,7 @@ const AdminDashboard = () => {
                     />
                 )}
 
-                {selectedTab === 'medications' && (
-                    <AdminMedications
-                        medications={medicationsManager.medications}
-                        loading={medicationsManager.loading}
-                        error={medicationsManager.error}
-                        onAdd={medicationsManager.addMedication}
-                        onUpdate={medicationsManager.updateMedication}
-                        onDelete={medicationsManager.deleteMedication}
-                        getMedicationClassColor={getMedicationClassColor}
-                        getPregnancyCategoryColor={getPregnancyCategoryColor}
-                    />
-                )}
 
-                {selectedTab === 'patients' && (
-                    <AdminPatients
-                        patients={patientsManager.patients}
-                        loading={patientsManager.loading}
-                        onAdd={patientsManager.addPatient}
-                        onUpdate={patientsManager.updatePatient}
-                        onDelete={patientsManager.deletePatient}
-                        getPatientStatusBadge={getPatientStatusBadge}
-                        getGenderBadge={getGenderBadge}
-                        formatDate={formatDate}
-                    />
-                )}
 
                 {selectedTab === 'labs' && (
                     <LabSettings />

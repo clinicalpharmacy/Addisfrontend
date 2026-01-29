@@ -11,7 +11,7 @@ import {
     FaExclamationCircle, FaHeartbeat
 } from 'react-icons/fa';
 
-const CDSSDisplay = ({ patientData }) => {
+const CDSSDisplay = ({ patientData, onBack }) => {
     const [showDebug, setShowDebug] = useState(false);
 
     const {
@@ -497,6 +497,18 @@ const CDSSDisplay = ({ patientData }) => {
                             })}
                         </div>
                     </>
+                )}
+
+                {onBack && (
+                    <div className="mt-12 flex justify-center pb-8">
+                        <button
+                            onClick={onBack}
+                            className="flex items-center gap-2 px-8 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold transition-all border border-gray-200 shadow-sm"
+                        >
+                            <FaSync className="rotate-180" />
+                            Back to Patient Selection
+                        </button>
+                    </div>
                 )}
             </div>
         </div>

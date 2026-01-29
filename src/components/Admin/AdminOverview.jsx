@@ -1,7 +1,7 @@
 import React from 'react';
 import {
     FaUsers, FaHospital, FaPills, FaUserInjured, FaClock,
-    FaHistory, FaCog, FaUserCheck, FaDownload
+    FaHistory, FaCog, FaUserCheck, FaDownload, FaFlask, FaBriefcase
 } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
@@ -50,12 +50,77 @@ export const AdminOverview = ({
                 <div className="bg-white rounded-xl shadow p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-gray-600">Medications in KB</p>
-                            <p className="text-3xl font-bold text-green-600">{medicationsCount || 0}</p>
-                            <p className="text-xs text-gray-500 mt-1">Knowledge Base Entries</p>
+                            <p className="text-sm text-gray-600">Doctors</p>
+                            <p className="text-3xl font-bold text-green-600">{stats.doctor_count || 0}</p>
+                            <p className="text-xs text-gray-500 mt-1">Registered Doctors</p>
                         </div>
                         <div className="p-3 bg-green-100 rounded-full">
                             <FaPills className="text-green-600 text-xl" />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-xl shadow p-6">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm text-gray-600">Nurses</p>
+                            <p className="text-3xl font-bold text-orange-600">{stats.nurse_count || 0}</p>
+                            <p className="text-xs text-gray-500 mt-1">Registered Nurses</p>
+                        </div>
+                        <div className="p-3 bg-orange-100 rounded-full">
+                            <FaUsers className="text-orange-600 text-xl" />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-xl shadow p-6">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm text-gray-600">Pharmacists</p>
+                            <p className="text-3xl font-bold text-indigo-600">{stats.pharmacist_count || 0}</p>
+                            <p className="text-xs text-gray-500 mt-1">Registered Pharmacists</p>
+                        </div>
+                        <div className="p-3 bg-indigo-100 rounded-full">
+                            <FaHospital className="text-indigo-600 text-xl" />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-xl shadow p-6">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm text-gray-600">Students</p>
+                            <p className="text-3xl font-bold text-blue-500">{stats.student_count || 0}</p>
+                            <p className="text-xs text-gray-500 mt-1">Medical Students</p>
+                        </div>
+                        <div className="p-3 bg-blue-100 rounded-full">
+                            <FaUsers className="text-blue-500 text-xl" />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-xl shadow p-6">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm text-gray-600">Laboratory</p>
+                            <p className="text-3xl font-bold text-red-600">{stats.laboratory_count || 0}</p>
+                            <p className="text-xs text-gray-500 mt-1">Lab Professionals</p>
+                        </div>
+                        <div className="p-3 bg-red-100 rounded-full">
+                            <FaFlask className="text-red-600 text-xl" />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-xl shadow p-6">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm text-gray-600">Other Pros</p>
+                            <p className="text-3xl font-bold text-gray-600">{stats.others_count || 0}</p>
+                            <p className="text-xs text-gray-500 mt-1">Health Officers/Other</p>
+                        </div>
+                        <div className="p-3 bg-gray-100 rounded-full">
+                            <FaBriefcase className="text-gray-600 text-xl" />
                         </div>
                     </div>
                 </div>
@@ -69,19 +134,6 @@ export const AdminOverview = ({
                         </div>
                         <div className="p-3 bg-purple-100 rounded-full">
                             <FaHospital className="text-purple-600 text-xl" />
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-white rounded-xl shadow p-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm text-gray-600">Total Patients</p>
-                            <p className="text-3xl font-bold text-blue-600">{patientsCount || 0}</p>
-                            <p className="text-xs text-gray-500 mt-1">All system patients</p>
-                        </div>
-                        <div className="p-3 bg-blue-100 rounded-full">
-                            <FaUserInjured className="text-blue-600 text-xl" />
                         </div>
                     </div>
                 </div>
@@ -143,26 +195,6 @@ export const AdminOverview = ({
                                         {pendingApprovalsCount} pending
                                     </span>
                                 )}
-                            </button>
-
-                            <button
-                                onClick={() => onTabChange('medications')}
-                                className="w-full bg-purple-500 hover:bg-purple-600 text-white px-4 py-3 rounded-lg flex items-center justify-between transition"
-                            >
-                                <div className="flex items-center gap-2">
-                                    <FaPills /> Medication Knowledge Base
-                                </div>
-                                <span className="text-sm">{medicationsCount} meds</span>
-                            </button>
-
-                            <button
-                                onClick={() => onTabChange('patients')}
-                                className="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-lg flex items-center justify-between transition"
-                            >
-                                <div className="flex items-center gap-2">
-                                    <FaUserInjured /> Patient Management
-                                </div>
-                                <span className="text-sm">{patientsCount} patients</span>
                             </button>
 
                             <button

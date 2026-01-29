@@ -373,6 +373,14 @@ export const useCDSSLogic = (patientData) => {
         }
     }, [patientData, isInitialLoad, fetchClinicalRules, fetchPatientMedications]);
 
+    // Auto-analyze when data is ready
+    useEffect(() => {
+        if (patientData && clinicalRules.length > 0 && !lastAnalysisTime && !loading) {
+            console.log('🔄 Auto-triggering clinical analysis...');
+            analyzePatient();
+        }
+    }, [patientData, clinicalRules, medications, analyzePatient, lastAnalysisTime, loading]);
+
     const handleFilterChange = useCallback((severity) => {
         setSeverityFilter(severity);
         if (severity === 'all') {

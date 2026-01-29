@@ -38,7 +38,6 @@ const PatientList = () => {
                 setUserAccountType(payload.account_type || '');
                 setUserCompanyId(payload.company_id || null);
             } catch (e) {
-                console.log('Error parsing token:', e);
             }
         }
 
@@ -65,7 +64,6 @@ const PatientList = () => {
                 setFilteredPatients([]);
             }
         } catch (error) {
-            console.error('Error fetching patients:', error);
             setPatients([]);
             setFilteredPatients([]);
         } finally {
@@ -158,15 +156,14 @@ const PatientList = () => {
 
     const handleNewPatient = () => {
         // Individual accounts without a company can only create one patient
-        const isIndividual = (userAccountType === 'individual' || userRole === 'individual_user' || userRole === 'pharmacist') && !userCompanyId;
+        const isIndividual = userAccountType === 'individual' && !userCompanyId;
         if (isIndividual && userRole !== 'admin' && patients.length >= 1) {
             alert('Individual subscription plan is limited to 1 patient record. Please upgrade to a Professional or Enterprise plan to manage more patients.');
             navigate('/subscription');
             return;
         }
 
-        const newPatientCode = generatePatientCode();
-        navigate(`/patients/${newPatientCode}`);
+        navigate('/patients/new');
     };
 
     const getCurrentUserId = () => {
@@ -181,8 +178,6 @@ const PatientList = () => {
     };
 
     const handleEditClick = (patient) => {
-        console.log('🔵 Edit clicked for patient:', patient.patient_code);
-
         // Store patient data in localStorage instead of sessionStorage
         localStorage.setItem('editPatientData', JSON.stringify(patient));
         localStorage.setItem('editPatientCode', patient.patient_code);
@@ -193,8 +188,6 @@ const PatientList = () => {
     };
 
     const handleViewClick = (patientCode) => {
-        console.log('🔵 View clicked for patient:', patientCode);
-
         // Clear any edit data
         localStorage.removeItem('editPatientData');
         localStorage.removeItem('editPatientCode');
@@ -222,11 +215,11 @@ const PatientList = () => {
                 </div>
                 <button
                     onClick={handleNewPatient}
-                    className={`px-6 py-3 rounded-lg flex items-center gap-2 transition-colors ${((userAccountType === 'individual' || userRole === 'individual_user' || userRole === 'pharmacist') && !userCompanyId) && userRole !== 'admin' && patients.length >= 1
+                    className={`px-6 py-3 rounded-lg flex items-center gap-2 transition-colors ${(userAccountType === 'individual' && !userCompanyId) && userRole !== 'admin' && patients.length >= 1
                         ? 'bg-gray-400 cursor-not-allowed text-white'
                         : 'bg-blue-500 hover:bg-blue-600 text-white'
                         }`}
-                    title={((userAccountType === 'individual' || userRole === 'individual_user' || userRole === 'pharmacist') && !userCompanyId) && userRole !== 'admin' && patients.length >= 1 ? "Limit reached for Individual plan" : "Add New Patient"}
+                    title={(userAccountType === 'individual' && !userCompanyId) && userRole !== 'admin' && patients.length >= 1 ? "Limit reached for Individual plan" : "Add New Patient"}
                 >
                     <FaPlus /> New Patient
                 </button>
@@ -328,7 +321,9 @@ const PatientList = () => {
                             {filteredPatients.length > 0 ? (
                                 filteredPatients.map((patient) => {
                                     const currentUserId = getCurrentUserId();
-                                    const canDelete = userRole === 'admin' || patient.user_id === currentUserId;
+                                    const isIndividual = (userAccountType === 'individual' || userRole === 'individual_user' || userRole === 'pharmacist') && !userCompanyId;
+                                    const isAdmin = userRole === 'admin';
+                                    const canDelete = isAdmin || (patient.user_id === currentUserId && !isIndividual);
 
                                     return (
                                         <tr key={patient.id} className="border-b hover:bg-gray-50 transition-colors">
@@ -377,7 +372,7 @@ const PatientList = () => {
                                                     <button
                                                         onClick={() => handleDelete(patient.id)}
                                                         className={`p-2 rounded ${canDelete ? 'text-red-500 hover:text-red-700 hover:bg-red-50' : 'text-gray-300 cursor-not-allowed'}`}
-                                                        title={canDelete ? "Delete Patient" : "Cannot delete this patient"}
+                                                        title={isAdmin ? "Delete Patient" : (isIndividual ? "Individual accounts cannot delete records" : (canDelete ? "Delete Patient" : "Cannot delete this patient"))}
                                                         disabled={!canDelete}
                                                     >
                                                         <FaTrash />

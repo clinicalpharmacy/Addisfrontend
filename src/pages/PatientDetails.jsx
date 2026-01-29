@@ -165,16 +165,14 @@ const PatientDetails = () => {
     });
 
     // --- 2. HELPERS & UTILS ---
-    const debugLog = useCallback((message, data = null) => {
-        console.log(`🔍 [PatientDetails] ${message}`, data ? data : '');
-    }, []);
+
 
     // --- 3. EFFECTS ---
     // Initialize user from localStorage
     useEffect(() => {
         const userData = localStorage.getItem('user');
         if (userData) {
-            try { setUser(JSON.parse(userData)); } catch (e) { console.error('JSON Error:', e); }
+            try { setUser(JSON.parse(userData)); } catch (e) { }
         }
     }, []);
 
@@ -184,17 +182,15 @@ const PatientDetails = () => {
             const response = await api.get('/lab-definitions');
             if (response.success && response.labs) {
                 setGlobalLabDefinitions(response.labs);
-                debugLog('Fetched global lab definitions:', response.labs.length);
             }
         } catch (err) {
-            console.error('Error fetching global labs:', err);
             // Fallback to direct supabase if API fails (as emergency)
             try {
                 const { data, error } = await supabase.from('lab_tests').select('*').eq('is_active', true);
                 if (data) setGlobalLabDefinitions(data);
-            } catch (inner) { console.error('Supabase fallback failed:', inner); }
+            } catch (inner) { }
         }
-    }, [debugLog]);
+    }, []);
 
     useEffect(() => { fetchGlobalLabs(); }, [fetchGlobalLabs]);
 
@@ -205,13 +201,13 @@ const PatientDetails = () => {
                 // Create a map of existing labs (both global and custom)
                 const existingMap = new Map();
                 prev.forEach(l => {
-                    const name = (l.name || '').toLowerCase().trim();
+                    const name = (l.name || '').toLowerCase().trim().replace(/\s+/g, '_');
                     if (name) existingMap.set(name, l);
                 });
 
                 // Create updated list from globals
                 const updatedGlobals = globalLabDefinitions.map(g => {
-                    const nameKey = (g.name || '').toLowerCase().trim();
+                    const nameKey = (g.name || '').toLowerCase().trim().replace(/\s+/g, '_');
                     const existing = existingMap.get(nameKey);
                     return {
                         id: 'global-' + g.id,
@@ -226,9 +222,9 @@ const PatientDetails = () => {
                 });
 
                 // Keep non-global custom labs
-                const globalNames = new Set(globalLabDefinitions.map(g => (g.name || '').toLowerCase().trim()));
+                const globalNames = new Set(globalLabDefinitions.map(g => (g.name || '').toLowerCase().trim().replace(/\s+/g, '_')));
                 const nonGlobals = prev.filter(l => {
-                    const name = (l.name || '').toLowerCase().trim();
+                    const name = (l.name || '').toLowerCase().trim().replace(/\s+/g, '_');
                     return name && !globalNames.has(name);
                 });
 
@@ -280,6 +276,11 @@ const PatientDetails = () => {
         }
 
         // Everyone else (Admins and Company users with active sub) get everything
+        // EXCEPT: Remove Clinical Analysis for Company Users (as requested)
+        if (isCompanyUser && !isAdmin) {
+            return allTabs.filter(tab => tab.id !== 'analysis');
+        }
+
         return allTabs;
     }, [user]);
 
@@ -289,7 +290,7 @@ const PatientDetails = () => {
         const timestamp = Date.now().toString().slice(-6);
         const randomNum = Math.floor(Math.random() * 9000) + 1000; // 1000-9999
         const code = `PAT${timestamp}${randomNum}`;
-        debugLog('Generated patient code:', code);
+
         return code;
     }, []);
 
@@ -324,10 +325,10 @@ const PatientDetails = () => {
 
             return diffDays.toString();
         } catch (error) {
-            debugLog('Error calculating age in days:', error);
+
             return '';
         }
-    }, [isValidDate, debugLog]);
+    }, [isValidDate]);
 
     const calculateAge = useCallback((dateOfBirth) => {
         if (!dateOfBirth || !isValidDate(dateOfBirth)) return '';
@@ -344,10 +345,10 @@ const PatientDetails = () => {
 
             return age.toString();
         } catch (error) {
-            debugLog('Error calculating age:', error);
+
             return '';
         }
-    }, [isValidDate, debugLog]);
+    }, [isValidDate]);
 
     const determinePatientType = useCallback((ageInDays) => {
         if (!ageInDays || ageInDays === '' || isNaN(parseInt(ageInDays))) {
@@ -422,7 +423,6 @@ const PatientDetails = () => {
     const fetchClinicalHistory = useCallback(async (code) => {
         if (!code) return;
         try {
-            console.log('Fetching clinical history for:', code);
             const [vResult, lResult] = await Promise.all([
                 api.get(`/vitals/patient/${code}`),
                 api.get(`/labs-history/patient/${code}`)
@@ -430,13 +430,10 @@ const PatientDetails = () => {
             if (vResult.success) setVitalsHistory(vResult.vitals || []);
             if (lResult.success) setLabsHistory(lResult.labs || []);
         } catch (err) {
-            console.error('Error fetching clinical history:', err);
         }
     }, []);
 
     const loadPatientData = useCallback(async (patientData) => {
-        debugLog('Loading patient data:', patientData.patient_code);
-
         setIsNewPatient(false);
         setPatient(patientData);
         setCurrentPatientCode(patientData.patient_code);
@@ -464,7 +461,15 @@ const PatientDetails = () => {
         ];
 
         // Consistently load labs from both top-level and JSONB labs object
-        const sourceLabs = data.labs && typeof data.labs === 'object' ? (data.labs.labs || data.labs) : {};
+        let rawLabs = patientData.labs;
+        if (typeof rawLabs === 'string') {
+            try {
+                rawLabs = JSON.parse(rawLabs);
+            } catch (e) {
+                rawLabs = {};
+            }
+        }
+        const sourceLabs = rawLabs && typeof rawLabs === 'object' ? (rawLabs.labs || rawLabs) : {};
 
         // Normalize source labs keys for easier matching
         const normalizedSourceLabs = {};
@@ -518,13 +523,25 @@ const PatientDetails = () => {
         // Merge Custom Labs with Global Definitions
         if (globalLabDefinitions && globalLabDefinitions.length > 0) {
             const existingMap = new Map();
+
+            // 1. Add hardcoded field values to the lookup map
+            Object.entries(extractedToFormData).forEach(([key, value]) => {
+                if (value !== undefined && value !== null && value !== '') {
+                    existingMap.set(key, { value });
+                }
+            });
+
+            // 2. Add dynamic/custom lab values to the lookup map
             loadedCustomLabs.forEach(l => {
-                const name = (l.name || '').toLowerCase().trim();
-                if (name) existingMap.set(name, l);
+                // Normalize name for lookup (replace spaces with underscores to match DB keys)
+                const name = (l.name || '').toLowerCase().trim().replace(/\s+/g, '_');
+                if (name && l.value !== undefined && l.value !== null && l.value !== '') {
+                    existingMap.set(name, l);
+                }
             });
 
             const merged = globalLabDefinitions.map(g => {
-                const nameKey = (g.name || '').toLowerCase().trim();
+                const nameKey = (g.name || '').toLowerCase().trim().replace(/\s+/g, '_');
                 const existing = existingMap.get(nameKey);
                 return {
                     id: 'global-' + g.id,
@@ -538,9 +555,9 @@ const PatientDetails = () => {
                 };
             });
 
-            const globalNames = new Set(globalLabDefinitions.map(g => (g.name || '').toLowerCase().trim()));
+            const globalNames = new Set(globalLabDefinitions.map(g => (g.name || '').toLowerCase().trim().replace(/\s+/g, '_')));
             const nonGlobals = loadedCustomLabs.filter(l => {
-                const name = (l.name || '').toLowerCase().trim();
+                const name = (l.name || '').toLowerCase().trim().replace(/\s+/g, '_');
                 return name && !globalNames.has(name);
             });
 
@@ -557,9 +574,7 @@ const PatientDetails = () => {
             setAgeMode('years');
             setShowPediatricLabs(false);
         }
-
-        debugLog('Patient data loaded successfully');
-    }, [debugLog, isValidDate, calculateAgeInDays, calculateAge, determinePatientType, calculateBMI, setCustomLabs, globalLabDefinitions, fetchClinicalHistory]);
+    }, [isValidDate, calculateAgeInDays, calculateAge, determinePatientType, setCustomLabs, globalLabDefinitions, fetchClinicalHistory]);
 
     // FIXED: fetchPatientData with better error handling
     const fetchPatientData = useCallback(async () => {
@@ -567,13 +582,13 @@ const PatientDetails = () => {
             setLoading(true);
             setError(null);
 
-            debugLog('Starting patient fetch for:', patientCode);
+
 
             // CASE 0: Creating a new patient
             const isNewPatientRoute = patientCode === 'new' || location.pathname.endsWith('/patients/new');
 
             if (isNewPatientRoute) {
-                debugLog('Creating new patient');
+
                 setIsNewPatient(true);
                 setIsEditing(true);
 
@@ -596,7 +611,6 @@ const PatientDetails = () => {
 
             // CASE 1: Invalid or missing patientCode
             if (!isNewPatientRoute && (!patientCode || patientCode === 'undefined' || patientCode === 'null')) {
-                debugLog('⚠️ No patient code provided');
                 setError('No patient selected. Please select a patient from the list.');
                 setLoading(false);
                 // Redirect to create new patient instead of showing error
@@ -604,38 +618,15 @@ const PatientDetails = () => {
                 return;
             }
 
-            // CASE 1: Creating a new patient
-            if (patientCode === 'new') {
-                debugLog('Creating new patient');
-                setIsNewPatient(true);
-                setIsEditing(true);
-
-                const newCode = generatePatientCode();
-                setCurrentPatientCode(newCode);
-
-                const today = new Date().toISOString().split('T')[0];
-                setFormData(prev => ({
-                    ...prev,
-                    last_measured: today,
-                    last_tested: today,
-                    is_active: true,
-                    allergies: [],
-                    patient_type: 'adult'
-                }));
-
-                setLoading(false);
-                return;
-            }
-
             // CASE 2: Fetching existing patient
-            debugLog('Fetching existing patient:', patientCode);
+
 
             try {
                 const result = await api.get(`/patients/code/${patientCode}`);
-                debugLog('API Result:', result);
+
 
                 if (result.success && result.patient) {
-                    debugLog('✅ Patient found:', result.patient.patient_code);
+
                     loadPatientData(result.patient);
 
                     const searchParams = new URLSearchParams(location.search);
@@ -648,26 +639,29 @@ const PatientDetails = () => {
                     setIsEditing(true);
                 }
             } catch (apiError) {
-                debugLog('❌ API Error:', apiError);
-                if (apiError.response?.status === 404) {
+
+                const errorMsg = apiError?.error || apiError?.message || 'Server error';
+                const isNotFound = apiError?.status === 404 || errorMsg.toLowerCase().includes('not found');
+
+                if (isNotFound) {
                     setError('Patient not found. You can create a new patient instead.');
                     setIsNewPatient(true);
                     setIsEditing(true);
                 } else {
-                    setError(`Failed to load patient: ${apiError.message || 'Server error'}`);
+                    setError(`Failed to load patient: ${errorMsg}`);
                 }
             }
         } catch (error) {
-            debugLog('❌ General error:', error);
+
             setError(`Error loading patient: ${error.message || 'Unknown error'}`);
         } finally {
             setLoading(false);
         }
-    }, [patientCode, navigate, debugLog, generatePatientCode, location.search, location.pathname, loadPatientData]);
+    }, [patientCode, navigate, generatePatientCode, location.search, location.pathname, loadPatientData]);
 
     // Create a memoized change handler for lab inputs
     const handleLabInputChange = useCallback((field, value) => {
-        debugLog(`Lab input change: ${field} =`, value);
+
 
         // For numeric fields, allow empty string or valid numbers
         const numericFields = [
@@ -710,11 +704,11 @@ const PatientDetails = () => {
             ...prev,
             [field]: value
         }));
-    }, [debugLog]);
+    }, []);
 
     // Create a memoized change handler for vitals inputs
     const handleVitalsInputChange = useCallback((field, value) => {
-        debugLog(`Vitals input change: ${field} =`, value);
+
 
         // Handle weight and height for BMI calculation
         if (field === 'weight' || field === 'height') {
@@ -771,15 +765,14 @@ const PatientDetails = () => {
             ...prev,
             [field]: value
         }));
-    }, [formData.weight, formData.height, debugLog, calculateBMI]);
+    }, [formData.weight, formData.height, calculateBMI]);
 
     const handleInputChange = useCallback((field, value) => {
-        debugLog(`Input change: ${field} =`, value);
+
 
         // Handle date fields with validation
         if (field === 'date_of_birth' && value) {
             if (!isValidDate(value)) {
-                debugLog('Invalid date entered:', value);
                 setFormData(prev => ({
                     ...prev,
                     [field]: ''
@@ -864,7 +857,6 @@ const PatientDetails = () => {
         // Handle date fields
         if (field.includes('date') || field.includes('edd') || field === 'appointment_date') {
             if (value && !isValidDate(value)) {
-                debugLog('Invalid date for field', field, value);
                 // Don't update if invalid
                 return;
             }
@@ -875,7 +867,7 @@ const PatientDetails = () => {
             ...prev,
             [field]: value
         }));
-    }, [debugLog, isValidDate, calculateAgeInDays, calculateAge, determinePatientType, calculateTrimester]);
+    }, [isValidDate, calculateAgeInDays, calculateAge, determinePatientType, calculateTrimester]);
 
     const handleAddAllergy = useCallback(() => {
         if (newAllergy.trim() === '') return;
@@ -894,12 +886,10 @@ const PatientDetails = () => {
     useEffect(() => {
         const handleOnline = () => {
             setIsOnline(true);
-            console.log('Device is online');
         };
 
         const handleOffline = () => {
             setIsOnline(false);
-            console.log('Device is offline');
         };
 
         window.addEventListener('online', handleOnline);
@@ -933,20 +923,14 @@ const PatientDetails = () => {
     }, []);
 
     // Initialize component
-    // Initialize component
     useEffect(() => {
-        debugLog('Component mounted with patientCode:', patientCode);
-
-        // Only fetch if we have a valid patientCode
         const isNewPatientRoute = patientCode === 'new' || location.pathname.endsWith('/patients/new');
 
-        // Only fetch if we have a valid patientCode OR we are on the new patient route
         if (isNewPatientRoute || (patientCode && patientCode !== 'undefined' && patientCode !== 'null')) {
             const searchParams = new URLSearchParams(location.search);
             const isEditMode = searchParams.get('edit') === 'true';
 
             if (isEditMode || isNewPatientRoute) {
-                debugLog('Edit mode detected');
                 setIsEditing(true);
             }
 
@@ -962,7 +946,7 @@ const PatientDetails = () => {
             sessionStorage.removeItem('editPatientData');
             sessionStorage.removeItem('editPatientCode');
         };
-    }, [patientCode, location.search, debugLog, fetchPatientData]);
+    }, [patientCode, location.search, fetchPatientData]);
 
     const handleRemoveAllergy = useCallback((index) => {
         setFormData(prev => ({
@@ -1025,7 +1009,6 @@ const PatientDetails = () => {
     // ✅ FIXED: handleSave with proper error handling and data cleaning
     const handleSave = useCallback(async (section = 'all') => {
         try {
-            console.log(`💾 Saving ${section}...`);
 
             // For new patients, validate required fields
             if (isNewPatient) {
@@ -1041,17 +1024,14 @@ const PatientDetails = () => {
             if (isNewPatient) {
                 savePatientCode = generatePatientCode();
                 setCurrentPatientCode(savePatientCode);
-                debugLog('Generated new patient code:', savePatientCode);
             }
 
             // Validate we have a patient code
             // BETTER VERSION:
             if (!savePatientCode || savePatientCode.trim() === '') {
                 if (isNewPatient) {
-                    // New patient - generate code
                     savePatientCode = generatePatientCode();
                     setCurrentPatientCode(savePatientCode);
-                    debugLog('Generated patient code for new patient:', savePatientCode);
                 } else {
                     // Existing patient missing code - error
                     alert('Patient code missing. Please reload or go back to patient list.');
@@ -1060,7 +1040,7 @@ const PatientDetails = () => {
             }
 
             // Log what we're saving
-            debugLog('Saving patient with code:', savePatientCode, 'isNew:', isNewPatient);
+
 
             // Calculate ages
             let ageInDays = formData.age_in_days;
@@ -1282,7 +1262,6 @@ const PatientDetails = () => {
                     // Refresh history
                     fetchClinicalHistory(savePatientCode);
                 } catch (histError) {
-                    console.warn('History push failed (may be table missing):', histError);
                 }
 
             } else {
@@ -1290,7 +1269,6 @@ const PatientDetails = () => {
             }
 
         } catch (error) {
-            console.error('❌ Save error:', error);
 
             // Check if it's a patient limit error
             if (error.response?.status === 403 && error.response?.data?.error === 'Patient limit reached') {
@@ -1334,10 +1312,9 @@ const PatientDetails = () => {
                 throw new Error(result.error || 'Failed to delete patient');
             }
         } catch (error) {
-            debugLog('Error deleting patient:', error);
             alert('Error deleting patient: ' + (error.message || 'Failed'));
         }
-    }, [getCurrentPatientCode, navigate, debugLog]);
+    }, [getCurrentPatientCode, navigate]);
 
     // Retry fetching data
     const handleRetry = useCallback(() => {
@@ -4068,7 +4045,6 @@ const PatientDetails = () => {
                         <div className="flex flex-wrap gap-2">
                             <button
                                 onClick={() => {
-                                    console.log('Testing backend connection...');
                                     testBackendConnection();
                                 }}
                                 className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg flex items-center gap-2"

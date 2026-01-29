@@ -28,8 +28,11 @@ export const mapPatientToFacts = (patientData, medicationHistory = []) => {
 
     // Method 1: Direct age_in_days from patient data (highest priority)
     if (patientData.age_in_days !== undefined && patientData.age_in_days !== null && patientData.age_in_days !== '') {
-        ageInDays = parseInt(patientData.age_in_days);
-        console.log(`✅ Using direct age_in_days from patient: ${ageInDays}`);
+        const val = parseInt(patientData.age_in_days);
+        if (!isNaN(val)) {
+            ageInDays = val;
+            console.log(`✅ Using direct age_in_days from patient: ${ageInDays}`);
+        }
     }
 
     // Method 2: If patientData has an "age" field (in years), convert to days
@@ -320,8 +323,8 @@ export const mapPatientToFacts = (patientData, medicationHistory = []) => {
         last_tested: patientData.last_tested || ''
     };
 
-    // ✅ FIXED: AGE CATEGORY DETERMINATION
-    if (ageInDays > 0) {
+    // ✅ FIXED: AGE CATEGORY DETERMINATION (Allow 0 for newborns)
+    if (ageInDays >= 0) {
         console.log(`📊 Determining age categories for ${ageInDays} days old patient`);
 
         // Set precise age flags
@@ -366,8 +369,8 @@ export const mapPatientToFacts = (patientData, medicationHistory = []) => {
             facts.is_adult = true;
             console.log('👨 Patient classified as: ADULT');
         }
-    } else if (age > 0) {
-        // Fallback using age in years
+    } else if (age >= 0) {
+        // Fallback using age in years (Allow 0)
         facts.is_age_over_65 = age > 65;
 
         if (age < 1) {
@@ -515,36 +518,76 @@ export const mapPatientToFacts = (patientData, medicationHistory = []) => {
         'bilirubin_neonatal', 'glucose_neonatal', 'calcium_neonatal'
     ];
 
-    // Check patientData.labs first and extract ALL keys (supporting dynamic labs)
-    if (patientData.labs && typeof patientData.labs === 'object') {
-        const sourceLabs = patientData.labs.labs || patientData.labs;
-        Object.keys(sourceLabs).forEach(lab => {
-            const value = extractLabValue(patientData.labs, lab);
-            if (value !== null && value !== '') {
-                // Determine if value is numeric or string
-                const numVal = parseFloat(value);
-                const normalizedLab = lab.toLowerCase().trim();
-                const factValue = !isNaN(numVal) ? numVal : value;
-
-                facts.labs[normalizedLab] = factValue;
-                console.log(`🧪 Lab Fact Created: facts.labs["${normalizedLab}"] =`, factValue);
-
-                // Also store with underscores for consistency in rules
-                const snakeCaseLab = normalizedLab.replace(/ /g, '_');
-                if (snakeCaseLab !== normalizedLab) {
-                    facts.labs[snakeCaseLab] = factValue;
-                    console.log(`🧪 Lab Fact Created: facts.labs["${snakeCaseLab}"] =`, factValue);
-                }
-
-                // Also set as top-level fact if not conflicting
-                if (facts[normalizedLab] === undefined) {
-                    facts[normalizedLab] = factValue;
-                }
-                if (facts[snakeCaseLab] === undefined) {
-                    facts[snakeCaseLab] = factValue;
-                }
+    // ✅ FIXED: Handle patientData.labs if it's a string (JSONB)
+    if (patientData.labs) {
+        let sourceLabs = patientData.labs;
+        if (typeof sourceLabs === 'string') {
+            try {
+                sourceLabs = JSON.parse(sourceLabs);
+            } catch (e) {
+                console.warn('❌ Could not parse patient labs string:', e);
+                sourceLabs = {};
             }
-        });
+        }
+
+        sourceLabs = sourceLabs.labs || sourceLabs;
+
+        if (sourceLabs && typeof sourceLabs === 'object') {
+
+            // Common mappings for System Labs -> Standard Keys
+            const labAliases = {
+                'c_reactive_protein': 'crp', 'c-reactive_protein': 'crp',
+                'high_sensitivity_crp': 'crp', 'hs_crp': 'crp',
+                'erythrocyte_sedimentation_rate': 'esr',
+                'thyroid_stimulating_hormone': 'tsh',
+                'blood_sugar_fasting': 'fasting_glucose', 'fasting_blood_sugar': 'fasting_glucose',
+                'random_blood_sugar': 'random_glucose', 'rbs': 'random_glucose',
+                'post_prandial_blood_sugar': 'postprandial_glucose', 'ppbs': 'postprandial_glucose',
+                'glycosylated_hemoglobin': 'hba1c', 'hemoglobin_a1c': 'hba1c',
+                'white_blood_cell_count': 'wbc_count', 'wbc': 'wbc_count',
+                'red_blood_cell_count': 'rbc_count', 'rbc': 'rbc_count',
+                'platelet_count': 'platelet_count', 'platelets': 'platelet_count',
+                'blood_urea_nitrogen': 'bun',
+                'low_density_lipoprotein': 'ldl_cholesterol', 'ldl': 'ldl_cholesterol',
+                'high_density_lipoprotein': 'hdl_cholesterol', 'hdl': 'hdl_cholesterol',
+                'total_cholesterol_count': 'total_cholesterol'
+            };
+
+            Object.keys(sourceLabs).forEach(lab => {
+                const value = extractLabValue(patientData.labs, lab);
+                if (value !== null && value !== '') {
+                    // Determine if value is numeric or string
+                    const numVal = parseFloat(value);
+                    const normalizedLab = lab.toLowerCase().trim();
+                    const factValue = !isNaN(numVal) ? numVal : value;
+
+                    // 1. Store normalized key
+                    facts.labs[normalizedLab] = factValue;
+
+                    // 2. Store snake_case key (replacing spaces and hyphens)
+                    const snakeCaseLab = normalizedLab.replace(/[ -]/g, '_');
+                    if (snakeCaseLab !== normalizedLab) {
+                        facts.labs[snakeCaseLab] = factValue;
+                    }
+
+                    // 3. Check Aliases and store standard key
+                    if (labAliases[snakeCaseLab]) {
+                        const alias = labAliases[snakeCaseLab];
+                        facts.labs[alias] = factValue;
+                        if (facts[alias] === undefined) facts[alias] = factValue;
+                        console.log(`🧪 Lab Alias Mapped: ${snakeCaseLab} -> ${alias} =`, factValue);
+                    }
+
+                    // 4. Also set as top-level fact if not conflicting
+                    if (facts[normalizedLab] === undefined) {
+                        facts[normalizedLab] = factValue;
+                    }
+                    if (facts[snakeCaseLab] === undefined) {
+                        facts[snakeCaseLab] = factValue;
+                    }
+                }
+            });
+        }
     }
 
     // Also check patientData directly for labs
@@ -1245,6 +1288,27 @@ export const evaluateRule = (rule, facts) => {
         }
 
         console.log(`\n🎯 Evaluating rule: "${rule.rule_name}"`);
+
+        // ✅ NEW: Check if rule applies to this patient type
+        if (rule.applies_to && Array.isArray(rule.applies_to) && rule.applies_to.length > 0) {
+            const appliesTo = rule.applies_to;
+            const patientType = facts.patient_type;
+
+            let isApplicable = false;
+
+            // Check for direct match or general categories
+            if (appliesTo.includes('all_patients')) isApplicable = true;
+            else if (appliesTo.includes(patientType)) isApplicable = true;
+            else if (facts.is_pediatric && appliesTo.includes('pediatric')) isApplicable = true;
+            else if (facts.is_adult && appliesTo.includes('adult')) isApplicable = true;
+            else if (facts.is_geriatric && appliesTo.includes('geriatric')) isApplicable = true;
+            else if (facts.is_pregnant && appliesTo.includes('pregnancy')) isApplicable = true;
+
+            if (!isApplicable) {
+                console.log(`⏭️ Rule "${rule.rule_name}" does not apply to ${patientType} patients. Skipping.`);
+                return false;
+            }
+        }
 
         const result = debugRuleEvaluation(rule, facts);
 

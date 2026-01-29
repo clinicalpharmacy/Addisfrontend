@@ -7,7 +7,7 @@ const CostSection = ({ patientCode }) => {
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [formData, setFormData] = useState({
-        analysis_type: 'medication',
+        analysis_type: 'incurred',
         direct_costs: '',
         indirect_costs: '',
         cost_savings: '',
@@ -43,24 +43,33 @@ const CostSection = ({ patientCode }) => {
 
             if (result.success && result.costs) {
                 const transformedData = result.costs.map(cost => {
-                    const totalCost = parseFloat(cost.total_costs) || 0;
-                    const costSavings = parseFloat(cost.cost_savings) || 0;
+                    const totalCostVal = parseFloat(cost.total_costs) || 0;
+                    const costSavingsVal = parseFloat(cost.cost_savings) || 0;
+                    const directCostsVal = parseFloat(cost.direct_costs) || 0;
+                    const indirectCostsVal = parseFloat(cost.indirect_costs) || 0;
+
+                    // Strictly check for savings: either positive cost_savings field or negative total_costs
+                    const isReduced = costSavingsVal > 0 || totalCostVal < 0;
+
+                    // Amount should be the savings value for reduced types, or absolute total cost
+                    const amount = isReduced ? (costSavingsVal || Math.abs(totalCostVal)) : (totalCostVal || (directCostsVal + indirectCostsVal));
 
                     return {
                         id: cost.id,
-                        type: totalCost > 0 ? 'incurred' : 'reduced',
-                        amount: Math.abs(totalCost) || costSavings,
-                        description: cost.findings || `Cost Analysis: ${cost.analysis_type}`,
-                        category: cost.analysis_type,
+                        type: isReduced ? 'reduced' : 'incurred',
+                        amount: amount,
+                        description: cost.findings || cost.notes || `Cost Analysis: ${cost.analysis_type || 'Other'}`,
+                        category: (cost.analysis_type || 'other').toLowerCase(),
                         date: cost.analysis_date,
-                        direct_costs: cost.direct_costs,
-                        indirect_costs: cost.indirect_costs,
-                        total_costs: cost.total_costs,
-                        cost_savings: cost.cost_savings,
-                        roi: cost.roi,
-                        currency: cost.currency,
+                        direct_costs: directCostsVal,
+                        indirect_costs: indirectCostsVal,
+                        total_costs: totalCostVal,
+                        cost_savings: costSavingsVal,
+                        roi: parseFloat(cost.roi) || 0,
+                        currency: cost.currency || 'ETB',
                         findings: cost.findings,
-                        recommendations: cost.recommendations,
+                        notes: cost.notes,
+                        recommendations: cost.recommendations || [],
                         originalData: cost
                     };
                 });
@@ -84,19 +93,23 @@ const CostSection = ({ patientCode }) => {
             // Calculate totals
             const directCosts = parseFloat(formData.direct_costs) || 0;
             const indirectCosts = parseFloat(formData.indirect_costs) || 0;
-            const savings = parseFloat(formData.cost_savings) || 0;
+            const enteredSavings = parseFloat(formData.cost_savings) || 0;
             const totalCosts = directCosts + indirectCosts;
 
-            // For cost reduction, total_costs can be negative
+            // For cost reduction, if they enter costs but no explicit savings, use the costs as the savings amount
             const isReduced = formData.analysis_type === 'reduced';
+            const savings = isReduced && enteredSavings === 0 ? totalCosts : enteredSavings;
             const finalTotalCosts = isReduced ? -savings : totalCosts;
 
             // Calculate ROI if there are savings
-            const roi = savings > 0 && totalCosts > 0 ?
-                ((savings - totalCosts) / totalCosts * 100) : 0;
+            const roi = savings > 0 && (isReduced ? totalCosts > 0 : true) ?
+                (isReduced && totalCosts > 0 ? ((savings - totalCosts) / totalCosts * 100) : 0) : 0;
+
+            // Validate UUID if provided (some legacy IDs might not be UUIDs)
+            const isUUID = (id) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
             const costData = {
-                patient_id: patientId,
+                patient_id: isUUID(patientId) ? patientId : null,
                 patient_code: patientCode,
                 analysis_date: formData.analysis_date,
                 analysis_type: formData.category || 'other',
@@ -125,11 +138,11 @@ const CostSection = ({ patientCode }) => {
             if (result.success) {
                 alert(editingId ? 'Cost analysis updated successfully!' : 'Cost analysis added successfully!');
                 resetForm();
-                fetchCostEntries();
+                await fetchCostEntries();
             }
         } catch (error) {
             console.error('Error saving cost analysis:', error);
-            alert('Error saving cost analysis: ' + (error.message || error.error || 'Failed'));
+            alert('Error saving cost analysis: ' + (error.message || 'Failed to save'));
         } finally {
             setLoading(false);
         }
@@ -187,13 +200,17 @@ const CostSection = ({ patientCode }) => {
     };
 
     const calculateTotals = () => {
-        const incurred = costEntries
-            .filter(entry => entry.type === 'incurred')
-            .reduce((sum, entry) => sum + (parseFloat(entry.amount) || 0), 0);
+        let incurred = 0;
+        let reduced = 0;
 
-        const reduced = costEntries
-            .filter(entry => entry.type === 'reduced')
-            .reduce((sum, entry) => sum + (parseFloat(entry.amount) || 0), 0);
+        costEntries.forEach(entry => {
+            const val = parseFloat(entry.amount) || 0;
+            if (entry.type === 'reduced') {
+                reduced += val;
+            } else {
+                incurred += val;
+            }
+        });
 
         return { incurred, reduced };
     };
