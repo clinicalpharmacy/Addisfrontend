@@ -106,7 +106,7 @@ const Sidebar = ({ onClose }) => {
     const isCompanyAdmin = user?.role === 'company_admin';
 
     return (
-        <aside className="w-64 bg-white h-screen flex flex-col border-r border-gray-200 shadow-lg">
+        <aside className="w-64 bg-white h-full flex flex-col border-r border-gray-200 shadow-lg">
             {/* Close button for mobile */}
             <div className="p-4 border-b border-gray-200 flex justify-between items-center md:hidden">
                 <div className="flex items-center gap-3">

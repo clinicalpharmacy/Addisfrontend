@@ -59,7 +59,8 @@ const MainLayout = ({ children, showSidebar = true, showNavbar = true }) => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     return (
-        <div className="min-h-screen bg-gray-50">
+
+        <div className="min-h-screen bg-gray-50 flex flex-col">
             {/* Navbar */}
             {showNavbar && <Navbar onMenuClick={() => setSidebarOpen(true)} />}
 
@@ -71,7 +72,7 @@ const MainLayout = ({ children, showSidebar = true, showNavbar = true }) => {
                 />
             )}
 
-            <div className="flex min-h-screen">
+            <div className="flex flex-1">
                 {/* Sidebar */}
                 {showSidebar && (
                     <>
