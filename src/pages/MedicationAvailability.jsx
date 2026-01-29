@@ -238,7 +238,7 @@ const MedicationAvailability = () => {
                 <div>
                     <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
                         <FaPills className="text-blue-600" />
-                        Medication Availability & Chat
+                        ያጡትን መድሃኒት ማፈላለጊያ
                     </h1>
                     <p className="text-gray-600 mt-1">Found a shortage? See who has it or post what you can share.</p>
                 </div>
@@ -252,7 +252,7 @@ const MedicationAvailability = () => {
                     }}
                     className={`${showAddForm ? 'bg-gray-500' : 'bg-blue-600'} text-white px-6 py-3 rounded-xl flex items-center gap-2 hover:opacity-90 transition shadow-lg font-bold`}
                 >
-                    {showAddForm ? 'Cancel' : <><FaPlus /> Post Med</>}
+                    {showAddForm ? 'Cancel' : <><FaPlus /> መድሃኒቱን ያጋሩ</>}
                 </button>
             </div>
 
