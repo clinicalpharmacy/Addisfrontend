@@ -24,7 +24,7 @@ const SUBSCRIPTION_PLANS = [
         price: 300,
         currency: 'ETB',
         interval: 'month',
-        description: 'For individual pharmacists',
+        description: 'For healthcare professionals & students',
         user_limit: 1,
         icon: FaUserMd,
         color: 'from-blue-500 to-blue-600',
@@ -262,7 +262,7 @@ const Signup = () => {
                     woreda: formData.woreda.trim(),
                     tin_number: formData.tin_number.trim(),
                     license_number: formData.license_number?.trim() || '',
-                    role: 'pharmacist',
+                    role: formData.role, // Use selected role
                     account_type: 'individual',
                     selected_plan: selectedPlan
                 };
@@ -807,6 +807,27 @@ const Signup = () => {
                             {isIndividual ? (
                                 // Individual Registration Form - WITHOUT INSTITUTION
                                 <>
+                                    <div className="mb-6">
+                                        <label className="block text-gray-700 font-medium mb-2">
+                                            <FaUserMd className="inline mr-2" />
+                                            Select Your Profession *
+                                        </label>
+                                        <select
+                                            required
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-white"
+                                            value={formData.role}
+                                            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                                        >
+                                            <option value="pharmacist">Pharmacist</option>
+                                            <option value="student">Student</option>
+                                            <option value="nurse">Nurse</option>
+                                            <option value="laboratory">Laboratory Professional</option>
+                                            <option value="health_officer">Health Officer</option>
+                                            <option value="doctor">Medical Doctor</option>
+                                            <option value="other_health_professional">Other Health Professional</option>
+                                        </select>
+                                    </div>
+
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
                                             <label className="block text-gray-700 font-medium mb-2">
