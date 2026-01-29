@@ -44,16 +44,6 @@ const MinorIllnesses = () => {
         for_pharmacists: ''
     });
 
-    const categories = [
-        { value: 'respiratory', label: 'Respiratory', color: 'bg-blue-100 text-blue-800' },
-        { value: 'gastrointestinal', label: 'Gastrointestinal', color: 'bg-green-100 text-green-800' },
-        { value: 'dermatological', label: 'Dermatological', color: 'bg-yellow-100 text-yellow-800' },
-        { value: 'musculoskeletal', label: 'Musculoskeletal', color: 'bg-purple-100 text-purple-800' },
-        { value: 'neurological', label: 'Neurological', color: 'bg-indigo-100 text-indigo-800' },
-        { value: 'ophthalmic', label: 'Ophthalmic', color: 'bg-pink-100 text-pink-800' },
-        { value: 'ent', label: 'ENT', color: 'bg-teal-100 text-teal-800' },
-        { value: 'other', label: 'Other', color: 'bg-gray-100 text-gray-800' }
-    ];
 
     // Enhanced Protection functions - users CAN SEE but CANNOT COPY
     const disableCopyPaste = (e) => {
@@ -519,19 +509,6 @@ const MinorIllnesses = () => {
                             />
                         </div>
 
-                        <div>
-                            <select
-                                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500"
-                                onChange={(e) => {
-                                    if (e.target.value) handleSearch(e.target.value);
-                                }}
-                            >
-                                <option value="">All Categories</option>
-                                {categories.map(cat => (
-                                    <option key={cat.value} value={cat.label}>{cat.label}</option>
-                                ))}
-                            </select>
-                        </div>
 
                         {/* Only show add button for admins */}
                         {isAdmin && (
