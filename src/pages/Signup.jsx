@@ -824,7 +824,7 @@ const Signup = () => {
                                             <option value="laboratory">Laboratory Professional</option>
                                             <option value="health_officer">Health Officer</option>
                                             <option value="physician">Physician</option>
-                                            <option value="non_health_professional">Non Health Professional</option>
+                                            <option value="health_care_client">Health Care Client</option>
                                         </select>
                                     </div>
 
