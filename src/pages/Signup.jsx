@@ -819,12 +819,12 @@ const Signup = () => {
                                             onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                                         >
                                             <option value="pharmacist">Pharmacist</option>
-                                            <option value="student">Student</option>
+                                            <option value="student">Health Science Student</option>
                                             <option value="nurse">Nurse</option>
                                             <option value="laboratory">Laboratory Professional</option>
                                             <option value="health_officer">Health Officer</option>
-                                            <option value="doctor">Medical Doctor</option>
-                                            <option value="other_health_professional">Other Health Professional</option>
+                                            <option value="physician">Physician</option>
+                                            <option value="non_health_professional">Non Health Professional</option>
                                         </select>
                                     </div>
 
