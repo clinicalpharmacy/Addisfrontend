@@ -211,7 +211,7 @@ const PatientList = () => {
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-800">Comprehensive Medication Management</h1>
-                    <p className="text-gray-600">Manage your patients</p>
+                    <p className="text-gray-600">Manage medication safety and effectiveness</p>
                 </div>
                 <button
                     onClick={handleNewPatient}
