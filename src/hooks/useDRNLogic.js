@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import supabase from '../utils/supabase';
-import { mapPatientToFacts, evaluateRule } from '../CDSS/RuleEngine';
+import { mapPatientToFacts, evaluateRule } from '../components/CDSS/RuleEngine';
 import { drnCategories, menuItemsData } from '../constants/drnConstants';
 
 export const useDRNLogic = (patientCode) => {
