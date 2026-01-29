@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-    FaHeartbeat, FaWeight, FaRulerVertical, FaThermometerHalf, FaLungs, FaClock
+    FaHeartbeat, FaWeight, FaRulerVertical, FaThermometerHalf, FaLungs, FaClock, FaBaby
 } from 'react-icons/fa';
 
 export const PatientVitals = ({ formData, handleChange, isEditing, history = [] }) => {
@@ -60,6 +60,58 @@ export const PatientVitals = ({ formData, handleChange, isEditing, history = [] 
                     })}
                 </div>
             </div>
+
+            {/* Pregnancy Status (Females Only) */}
+            {formData.gender === 'Female' && (
+                <div className="bg-white rounded-xl shadow-lg p-6 animate-fade-in">
+                    <div className="flex justify-between items-center mb-6 border-b pb-2">
+                        <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                            <FaBaby className="text-pink-500" /> Pregnancy Status
+                        </h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Is Pregnant?</label>
+                            <select
+                                value={formData.pregnancy_status || 'No'}
+                                onChange={e => handleChange('pregnancy_status', e.target.value)}
+                                disabled={!isEditing}
+                                className="w-full px-3 py-2 border rounded-md outline-none focus:ring-2 focus:ring-blue-500 bg-white disabled:bg-gray-100"
+                            >
+                                <option value="No">No</option>
+                                <option value="Yes">Yes</option>
+                                <option value="Unknown">Unknown</option>
+                            </select>
+                        </div>
+                        {formData.pregnancy_status === 'Yes' && (
+                            <>
+                                <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Weeks</label>
+                                    <input
+                                        type="number"
+                                        placeholder="e.g. 12"
+                                        value={formData.pregnancy_weeks || ''}
+                                        onChange={e => handleChange('pregnancy_weeks', e.target.value)}
+                                        disabled={!isEditing}
+                                        className="w-full px-3 py-2 border rounded-md outline-none focus:ring-2 focus:ring-blue-500 transition bg-white disabled:bg-gray-100"
+                                    />
+                                </div>
+                                <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Trimester</label>
+                                    <input
+                                        type="text"
+                                        readOnly
+                                        value={formData.pregnancy_trimester || ''}
+                                        placeholder="Auto-calc"
+                                        className="w-full px-3 py-2 border rounded-md outline-none bg-gray-100 text-gray-600"
+                                    />
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
+
 
             {/* Simple history chart or list could go here if needed, utilizing `history` prop */}
             {history.length > 0 && (

@@ -106,6 +106,11 @@ export const usePatientLogic = (patientCode) => {
             setShowPediatricLabs(false);
         }
 
+        // 4. Set Custom Labs
+        // Prepare list from global definitions, merging with any patient specific values
+        if (globalLabDefinitions && globalLabDefinitions.length > 0) {
+            setCustomLabs(globalLabDefinitions);
+        }
     }, [globalLabDefinitions]);
 
     // Main Fetch Effect

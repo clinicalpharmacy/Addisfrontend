@@ -5,7 +5,7 @@ import LabInputField from '../LabInputField'; // Assuming it's in parent dir rel
 
 export const PatientLabs = ({
     formData, handleChange, isEditing,
-    showPediatricLabs, customLabs
+    showPediatricLabs, customLabs, history
 }) => {
 
     // Group definitions (can be moved to constants if reused)
@@ -22,7 +22,7 @@ export const PatientLabs = ({
             ]
         },
         biochemistry: {
-            title: "Biochemistry",
+            title: "Biochemistry & Organ Function",
             fields: [
                 { id: 'blood_sugar', label: 'Blood Glucose', unit: 'mg/dL', range: '70-99' },
                 { id: 'hba1c', label: 'HbA1c', unit: '%', range: '< 5.7' },
@@ -30,8 +30,42 @@ export const PatientLabs = ({
                 { id: 'urea', label: 'Urea', unit: 'mg/dL', range: '10-50' },
                 { id: 'alt', label: 'ALT (SGPT)', unit: 'U/L', range: '7-56' },
                 { id: 'ast', label: 'AST (SGOT)', unit: 'U/L', range: '10-40' },
+                { id: 'alp', label: 'ALP', unit: 'U/L', range: '44-147' },
+                { id: 'albumin', label: 'Albumin', unit: 'g/dL', range: '3.4-5.4' },
+                { id: 'bilirubin_total', label: 'Total Bilirubin', unit: 'mg/dL', range: '0.1-1.2' },
                 { id: 'total_cholesterol', label: 'Total Cholesterol', unit: 'mg/dL', range: '< 200' },
-                { id: 'triglycerides', label: 'Triglycerides', unit: 'mg/dL', range: '< 150' }
+                { id: 'triglycerides', label: 'Triglycerides', unit: 'mg/dL', range: '< 150' },
+                { id: 'ldl', label: 'LDL Cholesterol', unit: 'mg/dL', range: '< 100' },
+                { id: 'hdl', label: 'HDL Cholesterol', unit: 'mg/dL', range: '> 40 (M), > 50 (F)' }
+            ]
+        },
+        electrolytes: {
+            title: "Electrolytes",
+            fields: [
+                { id: 'sodium', label: 'Sodium (Na+)', unit: 'mEq/L', range: '135-145' },
+                { id: 'potassium', label: 'Potassium (K+)', unit: 'mEq/L', range: '3.5-5.0' },
+                { id: 'chloride', label: 'Chloride (Cl-)', unit: 'mEq/L', range: '98-106' },
+                { id: 'bicarbonate', label: 'Bicarbonate (HCO3-)', unit: 'mEq/L', range: '22-29' },
+                { id: 'calcium', label: 'Calcium', unit: 'mg/dL', range: '8.5-10.2' },
+                { id: 'magnesium', label: 'Magnesium', unit: 'mg/dL', range: '1.7-2.2' }
+            ]
+        },
+        thyroid: {
+            title: "Thyroid Function",
+            fields: [
+                { id: 'tsh', label: 'TSH', unit: 'mIU/L', range: '0.4-4.0' },
+                { id: 't4_free', label: 'Free T4', unit: 'ng/dL', range: '0.8-1.8' },
+                { id: 't3_free', label: 'Free T3', unit: 'pg/mL', range: '2.3-4.2' }
+            ]
+        },
+        urinalysis: {
+            title: "Urinalysis",
+            fields: [
+                { id: 'urine_ph', label: 'pH', unit: '', range: '4.6-8.0' },
+                { id: 'urine_sg', label: 'Specific Gravity', unit: '', range: '1.005-1.030' },
+                { id: 'urine_protein', label: 'Protein', unit: 'mg/dL', range: 'Neg/<10' },
+                { id: 'urine_glucose', label: 'Glucose', unit: 'mg/dL', range: 'Neg' },
+                { id: 'urine_ketones', label: 'Ketones', unit: '', range: 'Neg' }
             ]
         }
     };
@@ -78,6 +112,9 @@ export const PatientLabs = ({
             {/* Core Panels */}
             {renderSection(labGroups.hematology.title, labGroups.hematology.fields)}
             {renderSection(labGroups.biochemistry.title, labGroups.biochemistry.fields)}
+            {renderSection(labGroups.electrolytes.title, labGroups.electrolytes.fields)}
+            {renderSection(labGroups.thyroid.title, labGroups.thyroid.fields)}
+            {renderSection(labGroups.urinalysis.title, labGroups.urinalysis.fields)}
 
             {/* Dynamic / Custom Labs */}
             {customLabs.length > 0 && (
@@ -108,6 +145,39 @@ export const PatientLabs = ({
                                 normalRange={lab.reference_range}
                             />
                         ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Lab History Section */}
+            {history && history.length > 0 && (
+                <div className="bg-white p-6 rounded-xl shadow-lg mt-6">
+                    <h3 className="text-lg font-bold text-gray-700 mb-4">Lab History</h3>
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full text-sm text-left">
+                            <thead className="bg-gray-50 text-gray-600 font-medium">
+                                <tr>
+                                    <th className="px-4 py-2">Date</th>
+                                    <th className="px-4 py-2">Hemoglobin</th>
+                                    <th className="px-4 py-2">WBC</th>
+                                    <th className="px-4 py-2">Platelets</th>
+                                    <th className="px-4 py-2">Glucose</th>
+                                    <th className="px-4 py-2">Creatinine</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y">
+                                {history.slice(0, 5).map((h, i) => (
+                                    <tr key={i}>
+                                        <td className="px-4 py-2">{new Date(h.test_date || h.created_at).toLocaleDateString()}</td>
+                                        <td className="px-4 py-2">{h.hemoglobin || '--'}</td>
+                                        <td className="px-4 py-2">{h.wbc_count || '--'}</td>
+                                        <td className="px-4 py-2">{h.platelet_count || '--'}</td>
+                                        <td className="px-4 py-2">{h.blood_sugar || '--'}</td>
+                                        <td className="px-4 py-2">{h.creatinine || '--'}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             )}
