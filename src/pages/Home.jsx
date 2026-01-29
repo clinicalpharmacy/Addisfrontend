@@ -26,7 +26,7 @@ const Home = () => {
                             {getGreeting()}.
                         </h1>
                         <p className="text-blue-100 mt-1">
-                            Addismed Digital Health
+                            AddisMed Digital Health
                         </p>
                     </div>
                     <div className="mt-4 md:mt-0 text-right">
