@@ -39,11 +39,6 @@ const HomeRemedies = () => {
         medical_advise: ''
     });
 
-    const categories = [
-        'Common Cold', 'Cough', 'Fever', 'Headache', 'Sore Throat',
-        'Indigestion', 'Constipation', 'Diarrhea', 'Skin Rash', 'Burns'
-    ];
-
     // Protection functions - users CAN SEE but CANNOT COPY
     const disableCopyPaste = (e) => {
         if (protectionEnabled && !isAdmin) {
@@ -463,20 +458,6 @@ const HomeRemedies = () => {
                                 onCut={disableCopyPaste}
                                 onPaste={disableCopyPaste}
                             />
-                        </div>
-
-                        <div>
-                            <select
-                                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500"
-                                onChange={(e) => {
-                                    if (e.target.value) handleSearch(e.target.value);
-                                }}
-                            >
-                                <option value="">All Categories</option>
-                                {categories.map(cat => (
-                                    <option key={cat} value={cat}>{cat}</option>
-                                ))}
-                            </select>
                         </div>
 
                         {/* Only show add button for admins */}
