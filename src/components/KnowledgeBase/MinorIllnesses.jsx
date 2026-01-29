@@ -739,7 +739,7 @@ const MinorIllnesses = () => {
 
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Clinical Presentation *
+                                            How to Assess  Minor Illness *
                                         </label>
                                         <textarea
                                             value={formData.presentation}
@@ -754,7 +754,7 @@ const MinorIllnesses = () => {
 
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Folk/Traditional Medicine
+                                            When to Refer
                                         </label>
                                         <textarea
                                             value={formData.folk_medicine}
@@ -782,7 +782,7 @@ const MinorIllnesses = () => {
 
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Pharmacist Guidance
+                                            Additional tips to the Pharmacist
                                         </label>
                                         <textarea
                                             value={formData.for_pharmacists}
