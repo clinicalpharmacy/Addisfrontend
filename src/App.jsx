@@ -42,61 +42,7 @@ import ClinicalRulesAdmin from "./components/CDSS/ClinicalRulesAdmin";
 // Use import.meta.env for Vite
 const API_URL = import.meta.env.VITE_API_URL;
 import api from './utils/api';
-
-// Helper function to clear invalid auth
-const clearInvalidAuth = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('account_type');
-    localStorage.removeItem('token_expiry');
-    localStorage.removeItem('has_subscription');
-    localStorage.removeItem('subscription_status');
-    localStorage.removeItem('user_patients'); // Clear cached patient data
-};
-
-// UPDATED: Simplified subscription check - Only check if explicitly required
-const hasValidSubscription = (user) => {
-    if (!user) return false;
-
-    // Admin doesn't need subscription
-    if (user.role === 'admin') return true;
-
-    // Prioritize values from user object if they exist
-    const subscriptionStatus = user.subscription_status || localStorage.getItem('subscription_status');
-    const hasSubscription = user.has_subscription !== undefined ? String(user.has_subscription) : localStorage.getItem('has_subscription');
-    const subscriptionEndDate = user.subscription_end_date || localStorage.getItem('subscription_end_date');
-
-    const isActive = subscriptionStatus === 'active' || hasSubscription === 'true';
-
-    console.log('Subscription check detailed:', {
-        userEmail: user.email,
-        statusInObject: user.subscription_status,
-        statusInStorage: localStorage.getItem('subscription_status'),
-        isActive,
-        endDate: subscriptionEndDate
-    });
-
-    if (!isActive) return false;
-
-    // Check expiration if we have an end date
-    if (subscriptionEndDate) {
-        const expiryDate = new Date(subscriptionEndDate);
-        const now = new Date();
-        if (now > expiryDate) {
-            console.warn('Subscription EXPIRED on:', subscriptionEndDate);
-            return false;
-        }
-    }
-
-    return true;
-};
-
-// NEW: Function to get user-specific storage key
-const getUserStorageKey = (key, user) => {
-    if (!user || !user.email) return key;
-    const userEmail = user.email.replace(/[^a-zA-Z0-9]/g, '_');
-    return `${key}_${userEmail}`;
-};
+import { clearInvalidAuth, hasValidSubscription, getUserStorageKey } from './utils/authUtils';
 
 // Loading Component
 const LoadingSpinner = () => (
@@ -202,20 +148,12 @@ const RootRedirector = () => {
             // FIXED: Check user role and redirect accordingly
             switch (user.role) {
                 case 'admin':
-                    // Admin users go to admin dashboard
-                    console.log('RootRedirector: Admin user detected, redirecting to /admin/dashboard');
                     return <Navigate to="/admin/dashboard" replace />;
                 case 'company_admin':
-                    // Company admin users go to company dashboard
-                    console.log('RootRedirector: Company admin detected, redirecting to /company/dashboard');
                     return <Navigate to="/company/dashboard" replace />;
                 case 'pharmacist':
-                    // Pharmacist users go to regular dashboard
-                    console.log('RootRedirector: Pharmacist detected, redirecting to /dashboard');
                     return <Navigate to="/dashboard" replace />;
                 default:
-                    // All other roles go to regular dashboard
-                    console.log('RootRedirector: Default user detected, redirecting to /dashboard');
                     return <Navigate to="/dashboard" replace />;
             }
         } catch (error) {
@@ -225,7 +163,6 @@ const RootRedirector = () => {
     }
 
     // Not authenticated, go to signup
-    console.log('RootRedirector: No auth, redirecting to /signup');
     return <Navigate to="/signup" replace />;
 };
 
@@ -313,7 +250,6 @@ const ProtectedRoute = ({ children, adminOnly = false, companyAdminOnly = false,
 
             // Check if user is approved (except admin)
             if (!freshUser.approved && freshUser.role !== 'admin') {
-                console.log('ProtectedRoute: User not approved:', freshUser.email);
                 setLoading(false);
                 return;
             }
@@ -321,13 +257,6 @@ const ProtectedRoute = ({ children, adminOnly = false, companyAdminOnly = false,
             // ONLY check subscription if explicitly required
             if (requireSubscription) {
                 const hasSubscription = hasValidSubscription(freshUser);
-                console.log('ProtectedRoute subscription check:', {
-                    route: location.pathname,
-                    user: freshUser.email,
-                    hasSubscription: hasSubscription,
-                    status: freshUser.subscription_status
-                });
-
                 if (!hasSubscription) {
                     localStorage.setItem('subscription_required_for', location.pathname);
                     setLoading(false);
@@ -348,8 +277,6 @@ const ProtectedRoute = ({ children, adminOnly = false, companyAdminOnly = false,
     }
 
     if (!isAuthenticated) {
-        console.log('ProtectedRoute: Not authenticated, redirecting to login');
-
         // If user exists but not approved, show error and redirect to login
         if (user && !user.approved && user.role !== 'admin') {
             return <Navigate to="/login" state={{
@@ -361,7 +288,6 @@ const ProtectedRoute = ({ children, adminOnly = false, companyAdminOnly = false,
         if (user && requireSubscription && !hasValidSubscription(user)) {
             // Store current route to return after subscription
             const subscriptionRequiredFor = localStorage.getItem('subscription_required_for') || location.pathname;
-            console.log('Subscription required for route:', subscriptionRequiredFor);
 
             return <Navigate to="/subscription/plans" state={{
                 returnTo: subscriptionRequiredFor,
@@ -378,10 +304,8 @@ const ProtectedRoute = ({ children, adminOnly = false, companyAdminOnly = false,
 
     // FIXED: Check role-based access with clearer logic
     if (adminOnly) {
-        console.log('ProtectedRoute: Checking admin access for user role:', user?.role);
         // Only admin users can access
         if (user?.role !== 'admin') {
-            console.log('ProtectedRoute: User is not admin, redirecting based on role:', user?.role);
             // Redirect non-admin users based on their role
             if (user?.role === 'company_admin') {
                 return <Navigate to="/company/dashboard" replace />;
@@ -392,10 +316,8 @@ const ProtectedRoute = ({ children, adminOnly = false, companyAdminOnly = false,
     }
 
     if (companyAdminOnly) {
-        console.log('ProtectedRoute: Checking company admin access for user role:', user?.role);
         // Only company admin users can access
         if (user?.role !== 'company_admin') {
-            console.log('ProtectedRoute: User is not company admin, redirecting based on role:', user?.role);
             // Redirect non-company-admin users based on their role
             if (user?.role === 'admin') {
                 return <Navigate to="/admin/dashboard" replace />;
@@ -405,11 +327,8 @@ const ProtectedRoute = ({ children, adminOnly = false, companyAdminOnly = false,
         }
     }
 
-    console.log('ProtectedRoute: User authenticated, role:', user?.role, 'Path:', location.pathname);
-
     // For admin dashboard, don't show the main layout
     if (adminOnly && user?.role === 'admin') {
-        console.log('ProtectedRoute: Rendering admin layout');
         return <AdminLayout>{children}</AdminLayout>;
     }
 
@@ -487,10 +406,8 @@ const Dashboard = () => {
 
             // 2. Fetch fresh data from backend to ensure status is current
             if (localStorage.getItem('token')) {
-                console.log('Dashboard: Refreshing user data from backend...');
                 const authData = await api.get('/auth/me');
                 if (authData.success && authData.user) {
-                    console.log('Dashboard: Fresh user data:', authData.user);
                     const freshUser = authData.user;
                     setUser(freshUser);
                     localStorage.setItem('user', JSON.stringify(freshUser));
@@ -533,7 +450,6 @@ const Dashboard = () => {
             const data = await api.get('/patients/my-patients');
 
             if (data.success && data.patients) {
-                console.log('Loaded user patients:', data);
                 // Store in user-specific localStorage
                 const storageKey = getUserStorageKey('user_patients', currentUser);
                 localStorage.setItem(storageKey, JSON.stringify(data.patients));
@@ -795,58 +711,6 @@ const Dashboard = () => {
                                     </div>
                                     <h4 className="font-bold text-gray-800 text-sm">Feature Locked</h4>
                                     <p className="text-xs text-gray-600 mb-2">Subscribe to manage patients</p>
-                                    <button
-                                        onClick={handleGetSubscription}
-                                        className="text-xs font-bold text-blue-600 hover:underline"
-                                    >
-                                        Unlock Now
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-bold text-gray-800">Your Patients</h3>
-                            <button
-                                onClick={handleCreateNewPatient}
-                                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-1 px-3 rounded-lg transition text-sm"
-                            >
-                                + New Patient
-                            </button>
-                        </div>
-                        <div className="grid grid-cols-3 gap-4 mb-4">
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-blue-600">{patientStats.total}</div>
-                                <div className="text-sm text-gray-600">Total</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-green-600">{patientStats.active}</div>
-                                <div className="text-sm text-gray-600">Active</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-purple-600">{patientStats.today}</div>
-                                <div className="text-sm text-gray-600">Today</div>
-                            </div>
-                        </div>
-                        <button
-                            onClick={handleViewAllPatients}
-                            className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-2 px-4 rounded-lg transition text-sm"
-                        >
-                            View All Patients
-                        </button>
-                    </div>
-
-                    {/* Recent Patients Card - LOCKED if no subscription */}
-                    <div className={`bg-white rounded-xl shadow-lg p-6 relative ${!hasValidSubscription(user) && user.role !== 'admin' ? 'opacity-75 grayscale' : ''}`}>
-                        {!hasValidSubscription(user) && user.role !== 'admin' && (
-                            <div className="absolute inset-0 bg-white/20 backdrop-blur-[1px] z-10 rounded-xl flex items-center justify-center">
-                                <div className="bg-white/90 p-4 rounded-lg shadow-xl border border-blue-100 text-center mx-4">
-                                    <div className="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2 text-blue-600">
-                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                        </svg>
-                                    </div>
-                                    <h4 className="font-bold text-gray-800 text-sm">Feature Locked</h4>
-                                    <p className="text-xs text-gray-600 mb-2">Subscribe to view recent patients</p>
                                     <button
                                         onClick={handleGetSubscription}
                                         className="text-xs font-bold text-blue-600 hover:underline"
