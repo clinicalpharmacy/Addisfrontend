@@ -210,7 +210,7 @@ const PatientList = () => {
             {/* Header */}
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Patient Management</h1>
+                    <h1 className="text-2xl font-bold text-gray-800">Comprehensive Medication Management</h1>
                     <p className="text-gray-600">Manage your patients</p>
                 </div>
                 <button
