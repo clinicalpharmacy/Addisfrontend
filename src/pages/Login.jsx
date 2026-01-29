@@ -131,7 +131,7 @@ const Login = () => {
                         <FaUserMd className="text-white text-2xl" />
                     </div>
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">Addis Med</h1>
-                    <p className="text-gray-600">Digital Health System</p>
+                    <p className="text-gray-600 italic">Enhance Patient Safety & Optimize Medicines Use</p>
                 </div>
 
                 {/* Status Indicator */}
