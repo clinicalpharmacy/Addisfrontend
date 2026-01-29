@@ -24,7 +24,7 @@ const MedicationAvailability = () => {
 
     const [formData, setFormData] = useState({
         medication_name: '',
-        quantity: '',
+        waiting_time: '',
         expiry_date: '',
         notes: '',
         status: 'available'
@@ -165,7 +165,7 @@ const MedicationAvailability = () => {
                     setEditPostId(null);
                     setFormData({
                         medication_name: '',
-                        quantity: '',
+                        waiting_time: '',
                         expiry_date: '',
                         notes: '',
                         status: 'available'
@@ -179,7 +179,7 @@ const MedicationAvailability = () => {
                     setShowAddForm(false);
                     setFormData({
                         medication_name: '',
-                        quantity: '',
+                        waiting_time: '',
                         expiry_date: '',
                         notes: '',
                         status: 'available'
@@ -197,7 +197,7 @@ const MedicationAvailability = () => {
     const handleEdit = (post) => {
         setFormData({
             medication_name: post.medication_name,
-            quantity: post.quantity || '',
+            waiting_time: post.waiting_time || '',
             expiry_date: post.expiry_date || '',
             notes: post.notes || '',
             status: post.status || 'available'
@@ -247,12 +247,12 @@ const MedicationAvailability = () => {
                         setShowAddForm(!showAddForm);
                         if (isEditing) {
                             setIsEditing(false);
-                            setFormData({ medication_name: '', quantity: '', expiry_date: '', notes: '', status: 'available' });
+                            setFormData({ medication_name: '', waiting_time: '', expiry_date: '', notes: '', status: 'available' });
                         }
                     }}
                     className={`${showAddForm ? 'bg-gray-500' : 'bg-blue-600'} text-white px-6 py-3 rounded-xl flex items-center gap-2 hover:opacity-90 transition shadow-lg font-bold`}
                 >
-                    {showAddForm ? 'Cancel' : <><FaPlus /> Post Available Med</>}
+                    {showAddForm ? 'Cancel' : <><FaPlus /> Post Med</>}
                 </button>
             </div>
 
@@ -274,7 +274,7 @@ const MedicationAvailability = () => {
                     {/* Add/Edit Form (In-list) */}
                     {showAddForm && (
                         <div className="bg-white p-6 rounded-2xl shadow-lg border-2 border-blue-100 mb-6">
-                            <h2 className="text-lg font-bold mb-4 text-gray-800">{isEditing ? 'Edit Medication' : 'Share Medication'}</h2>
+                            <h2 className="text-lg font-bold mb-4 text-gray-800">{isEditing ? 'Edit Medication' : 'የሚፈልጉትን መድሃኒት ይጻፉ'}</h2>
                             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="md:col-span-2">
                                     <input
@@ -283,15 +283,15 @@ const MedicationAvailability = () => {
                                         value={formData.medication_name}
                                         onChange={(e) => setFormData({ ...formData, medication_name: e.target.value })}
                                         className="w-full border border-gray-200 rounded-xl p-3 focus:border-blue-500"
-                                        placeholder="Medication Name (e.g. Insulin Glargine)"
+                                        placeholder="የመድሃኒቱ ስም"
                                     />
                                 </div>
                                 <input
                                     type="text"
-                                    value={formData.quantity}
-                                    onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                                    value={formData.waiting_time}
+                                    onChange={(e) => setFormData({ ...formData, waiting_time: e.target.value })}
                                     className="border border-gray-200 rounded-xl p-3"
-                                    placeholder="Quantity"
+                                    placeholder="የጊዜ ገደብ"
                                 />
                                 <input
                                     type="date"
@@ -310,7 +310,7 @@ const MedicationAvailability = () => {
                                     />
                                 </div>
                                 <button type="submit" className="md:col-span-2 bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700">
-                                    {isEditing ? 'Update medication' : 'Post Available medication'}
+                                    {isEditing ? 'Update medication' : 'Post medication'}
                                 </button>
                             </form>
                         </div>
@@ -359,7 +359,7 @@ const MedicationAvailability = () => {
                                     </div>
                                 </div>
                                 <div className="mt-3 flex gap-2">
-                                    {post.quantity && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-bold">Qty: {post.quantity}</span>}
+                                    {post.waiting_time && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-bold">Qty: {post.waiting_time}</span>}
                                     {post.expiry_date && <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-bold">Exp: {post.expiry_date}</span>}
                                 </div>
                             </div>
