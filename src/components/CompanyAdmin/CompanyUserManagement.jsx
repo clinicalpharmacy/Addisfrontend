@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
     FaSearch, FaUserPlus, FaUsers, FaPhone, FaCalendarAlt, FaUserFriends
 } from 'react-icons/fa';
-import { formatDate } from '../utils/adminUtils'; // Reuse general admin utils where possible
+import { formatDate } from '../../utils/adminUtils'; // Reuse general admin utils where possible
 
 export const CompanyUserManagement = ({
     users,

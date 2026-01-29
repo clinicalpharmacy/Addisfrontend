@@ -4,7 +4,7 @@ import {
     FaUsers, FaShieldAlt, FaHistory, FaChevronRight, FaUserPlus
 } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-import { formatDate } from '../utils/adminUtils';
+import { formatDate } from '../../utils/adminUtils';
 
 export const CompanyDashboardOverview = ({
     companyInfo,
