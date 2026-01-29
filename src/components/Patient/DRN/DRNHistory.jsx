@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FaEdit, FaTrash, FaHistory, FaCheck, FaSortAmountDown, FaFileAlt } from 'react-icons/fa';
-import { drnCategories } from '../../constants/drnConstants';
+import { drnCategories } from '../../../constants/drnConstants';
 
 export const DRNHistory = ({ assessments, onEdit, onDelete }) => {
 

@@ -3,7 +3,7 @@ import {
     FaSave, FaTrash, FaCheckCircle, FaExclamationCircle,
     FaChevronDown, FaChevronUp, FaCheck
 } from 'react-icons/fa';
-import { drnCategories, menuItemsData } from '../../constants/drnConstants';
+import { drnCategories, menuItemsData } from '../../../constants/drnConstants';
 
 export const DRNForm = ({
     selectedCategory, setSelectedCategory,
@@ -47,8 +47,8 @@ export const DRNForm = ({
                                 // But keeps simplistic for now.
                             }}
                             className={`p-3 rounded-xl border transition-all flex flex-col items-center gap-2 text-center h-full ${isSelected
-                                    ? `bg-${catData.color}-50 border-${catData.color}-500 ring-2 ring-${catData.color}-200 shadow-md transform -translate-y-1`
-                                    : 'bg-white border-gray-200 hover:border-blue-300 hover:shadow-sm'
+                                ? `bg-${catData.color}-50 border-${catData.color}-500 ring-2 ring-${catData.color}-200 shadow-md transform -translate-y-1`
+                                : 'bg-white border-gray-200 hover:border-blue-300 hover:shadow-sm'
                                 }`}
                         >
                             <div className={`p-2 rounded-full ${isSelected ? `bg-${catData.color}-100 text-${catData.color}-600` : 'bg-gray-100 text-gray-500'}`}>
@@ -76,8 +76,8 @@ export const DRNForm = ({
                                     key={item.name}
                                     onClick={() => handleCauseToggle(item.name)}
                                     className={`cursor-pointer p-3 rounded-lg border transition-all flex items-center justify-between ${isSelected
-                                            ? 'bg-blue-50 border-blue-500 shadow-sm'
-                                            : 'hover:bg-gray-50 border-gray-200'
+                                        ? 'bg-blue-50 border-blue-500 shadow-sm'
+                                        : 'hover:bg-gray-50 border-gray-200'
                                         }`}
                                 >
                                     <div>

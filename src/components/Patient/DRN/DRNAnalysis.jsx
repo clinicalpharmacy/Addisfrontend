@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FaDatabase, FaSpinner, FaChevronDown, FaChevronUp, FaExclamationCircle } from 'react-icons/fa';
-import { drnCategories } from '../../constants/drnConstants';
+import { drnCategories } from '../../../constants/drnConstants';
 
 export const DRNAnalysis = ({ results, isAnalyzing, onRunAnalysis, onReviewFinding }) => {
     const [showAnalysis, setShowAnalysis] = useState(true);
