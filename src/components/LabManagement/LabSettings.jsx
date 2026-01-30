@@ -185,25 +185,25 @@ const LabSettings = ({ onUpdate }) => {
     };
 
     return (
-        <div className="space-y-6 animate-fadeIn pb-10">
+        <div className="space-y-4 animate-fadeIn pb-6">
             {/* Header Controls */}
-            <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                <div className="flex-1 w-full md:max-w-md relative">
-                    <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <div className="flex flex-col md:flex-row gap-3 justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div className="flex-1 w-full md:max-w-xs relative">
+                    <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xs" />
                     <input
                         type="text"
-                        placeholder="Search laboratory tests..."
-                        className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
+                        placeholder="Search tests..."
+                        className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-xs"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
 
-                <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
+                <div className="flex items-center gap-2 w-full md:w-auto">
                     <select
                         value={filterCategory}
                         onChange={(e) => setFilterCategory(e.target.value)}
-                        className="w-full md:w-48 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 font-bold cursor-pointer transition-all"
+                        className="w-full md:w-40 border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 font-bold cursor-pointer transition-all"
                     >
                         <option value="All">All Categories</option>
                         {categories.map(c => <option key={c} value={c}>{c}</option>)}
@@ -212,33 +212,29 @@ const LabSettings = ({ onUpdate }) => {
                     <button
                         onClick={() => {
                             setEditingLab(null);
-                            setFormData({ name: '', unit: '', category: 'General', is_active: true, reference_range: '', description: '' });
+                            setFormData({ name: '', unit: '', category: 'General', is_active: true, description: '' });
                             setShowAddForm(true);
                         }}
-                        className="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md font-bold text-sm active:scale-95"
+                        className="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-all shadow-sm font-bold text-xs active:scale-95 whitespace-nowrap"
                     >
-                        <FaPlus /> Add Definition
+                        <FaPlus className="text-[10px]" /> Add Test
                     </button>
                 </div>
             </div>
 
             {/* Stats Summary */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Total Tests</div>
-                    <div className="text-2xl font-black text-gray-800">{labs.length}</div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                    <div className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-0.5">Total Tests</div>
+                    <div className="text-lg font-black text-gray-800">{labs.length}</div>
                 </div>
-                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-                    <div className="text-[10px] font-black uppercase tracking-widest text-green-500 mb-1">Active Now</div>
-                    <div className="text-2xl font-black text-gray-800">{labs.filter(l => l.is_active).length}</div>
+                <div className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                    <div className="text-[9px] font-black uppercase tracking-widest text-green-500 mb-0.5">Active</div>
+                    <div className="text-lg font-black text-gray-800">{labs.filter(l => l.is_active).length}</div>
                 </div>
-                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-                    <div className="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-1">Categories</div>
-                    <div className="text-2xl font-black text-gray-800">{new Set(labs.map(l => l.category)).size}</div>
-                </div>
-                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-                    <div className="text-[10px] font-black uppercase tracking-widest text-amber-500 mb-1">Status</div>
-                    <div className="text-2xl font-black text-gray-800">Live</div>
+                <div className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                    <div className="text-[9px] font-black uppercase tracking-widest text-indigo-500 mb-0.5">Categories</div>
+                    <div className="text-lg font-black text-gray-800">{new Set(labs.map(l => l.category)).size}</div>
                 </div>
             </div>
 
@@ -281,51 +277,51 @@ const LabSettings = ({ onUpdate }) => {
                     )}
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {filteredLabs.map((lab) => (
-                        <div key={lab.id} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden group flex flex-col">
-                            <div className="p-6 flex-1">
-                                <div className="flex justify-between items-start mb-6">
-                                    <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${getCategoryStyles(lab.category)}`}>
+                        <div key={lab.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group flex flex-col">
+                            <div className="p-4 flex-1">
+                                <div className="flex justify-between items-start mb-3">
+                                    <div className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider border ${getCategoryStyles(lab.category)}`}>
                                         {lab.category}
                                     </div>
                                     <button
                                         onClick={() => toggleStatus(lab)}
-                                        className={`transition-all duration-300 transform active:scale-90 ${lab.is_active ? 'text-green-500' : 'text-gray-300'}`}
-                                        title={lab.is_active ? 'Disable Test' : 'Enable Test'}
+                                        className={`transition-all duration-300 transform active:scale-90 ${lab.is_active ? 'text-green-500' : 'text-gray-200'}`}
+                                        title={lab.is_active ? 'Disable' : 'Enable'}
                                     >
-                                        {lab.is_active ? <FaToggleOn size={32} /> : <FaToggleOff size={32} />}
+                                        {lab.is_active ? <FaToggleOn size={24} /> : <FaToggleOff size={24} />}
                                     </button>
                                 </div>
 
-                                <div className="mb-6">
-                                    <h3 className="text-xl font-black text-gray-900 leading-tight mb-2 flex items-center gap-2">
+                                <div className="mb-3">
+                                    <h3 className="text-sm font-black text-gray-900 leading-tight mb-1 truncate flex items-center gap-1.5">
                                         {lab.name}
-                                        {!lab.is_active && <span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-black uppercase">Inactive</span>}
+                                        {!lab.is_active && <span className="text-[8px] bg-red-100 text-red-600 px-1 py-0.5 rounded font-black uppercase">OFF</span>}
                                     </h3>
-                                    <p className="text-sm text-gray-500 line-clamp-2 min-h-[40px] italic">
-                                        {lab.description || "No detailed description provided for this definition."}
+                                    <p className="text-[11px] text-gray-500 line-clamp-2 min-h-[32px] italic leading-tight">
+                                        {lab.description || "Global clinical definition."}
                                     </p>
                                 </div>
 
-                                <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 group-hover:bg-indigo-50/30 transition-colors">
-                                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Measurement Unit</div>
-                                    <div className="text-sm font-bold text-gray-800">{lab.unit || "N/A"}</div>
+                                <div className="bg-gray-50 p-2.5 rounded-xl border border-gray-100 group-hover:bg-indigo-50/50 transition-colors">
+                                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Measurement Unit</div>
+                                    <div className="text-xs font-bold text-gray-800">{lab.unit || "N/A"}</div>
                                 </div>
                             </div>
 
-                            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <div className="px-4 py-2 bg-gray-50 border-t border-gray-100 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-all duration-200">
                                 <button
                                     onClick={() => handleEdit(lab)}
-                                    className="text-indigo-600 hover:text-indigo-800 text-xs font-black uppercase tracking-wider flex items-center gap-1.5"
+                                    className="text-indigo-600 hover:text-indigo-800 text-[10px] font-black uppercase tracking-wider flex items-center gap-1"
                                 >
-                                    <FaEdit /> Edit Setup
+                                    <FaEdit className="text-[9px]" /> Edit
                                 </button>
                                 <button
                                     onClick={() => handleDelete(lab.id)}
-                                    className="text-red-500 hover:text-red-700 text-xs font-black uppercase tracking-wider flex items-center gap-1.5"
+                                    className="text-red-400 hover:text-red-600 text-[10px] font-black uppercase tracking-wider flex items-center gap-1"
                                 >
-                                    <FaTrash /> Remove
+                                    <FaTrash className="text-[9px]" /> Delete
                                 </button>
                             </div>
                         </div>
