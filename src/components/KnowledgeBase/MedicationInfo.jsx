@@ -502,48 +502,48 @@ const MedicationInfo = () => {
 
     return (
         <div
-            className="min-h-screen bg-gray-50"
+            className="bg-gray-50 min-h-full pb-8"
             onCopy={disableCopyPaste}
             onCut={disableCopyPaste}
             onPaste={disableCopyPaste}
         >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 md:py-8">
                 {/* Header */}
-                <div className="mb-8">
+                <div className="mb-6 md:mb-8">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-                        <div className="flex items-center gap-3">
-                            <div className="bg-indigo-100 p-3 rounded-full">
-                                <FaBookMedical className="text-indigo-600 text-2xl" />
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <div className="bg-indigo-100 p-3 rounded-full flex-shrink-0">
+                                <FaBookMedical className="text-indigo-600 text-xl md:text-2xl" />
                             </div>
-                            <div>
-                                <h1 className="text-3xl font-bold text-gray-900">Medication Knowledge Base</h1>
-                                <p className="text-gray-600 mt-1">
+                            <div className="min-w-0 flex-1">
+                                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 truncate">Medications</h1>
+                                <p className="text-gray-600 mt-1 text-sm md:text-base">
                                     Drug information database with {medications.length} medications
                                     {user?.role === 'company_admin' ? (
-                                        <span className="ml-2 text-sm bg-purple-100 text-purple-800 px-2 py-1 rounded">
-                                            <FaLock className="inline mr-1" /> Company Admin - View Only
+                                        <span className="ml-2 text-xs md:text-sm bg-purple-100 text-purple-800 px-2 py-1 rounded inline-flex items-center">
+                                            <FaLock className="mr-1" /> Admin View
                                         </span>
                                     ) : !isAdmin && (
-                                        <span className="ml-2 text-sm bg-gray-100 text-gray-800 px-2 py-1 rounded">
-                                            <FaLock className="inline mr-1" /> View Only
+                                        <span className="ml-2 text-xs md:text-sm bg-gray-100 text-gray-800 px-2 py-1 rounded inline-flex items-center">
+                                            <FaLock className="mr-1" /> View Only
                                         </span>
                                     )}
                                 </p>
                             </div>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
                             {/* Protection Toggle - Admin only */}
                             {isAdmin && (
                                 <button
                                     onClick={toggleProtection}
-                                    className={`px-4 py-2 rounded-lg flex items-center gap-2 text-sm ${protectionEnabled
-                                            ? 'bg-red-500 hover:bg-red-600 text-white'
-                                            : 'bg-green-500 hover:bg-green-600 text-white'
+                                    className={`px-3 py-2 rounded-lg flex items-center gap-2 text-sm ${protectionEnabled
+                                        ? 'bg-red-500 hover:bg-red-600 text-white'
+                                        : 'bg-green-500 hover:bg-green-600 text-white'
                                         }`}
                                     title={protectionEnabled ? 'Disable Copy/Print Protection' : 'Enable Copy/Print Protection'}
                                 >
                                     {protectionEnabled ? <FaBan /> : <FaShieldAlt />}
-                                    {protectionEnabled ? 'Allow Copy' : 'No Copy'}
+                                    <span className="hidden sm:inline">{protectionEnabled ? 'Allow Copy' : 'No Copy'}</span>
                                 </button>
                             )}
                             {/* REMOVED: Export button */}
@@ -552,25 +552,25 @@ const MedicationInfo = () => {
                                 <>
                                     <button
                                         onClick={initializeDatabase}
-                                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
+                                        className="bg-green-600 hover:bg-green-700 text-white px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
                                         title="Add sample data"
                                     >
-                                        <FaDatabase /> Initialize DB
+                                        <FaDatabase /> <span className="hidden sm:inline">Initialize DB</span>
                                     </button>
                                     <button
                                         onClick={() => setShowAddForm(true)}
-                                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
+                                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
                                     >
-                                        <FaPlus /> Add Medication
+                                        <FaPlus /> <span className="hidden sm:inline">Add Med</span><span className="sm:hidden">Add</span>
                                     </button>
                                 </>
                             )}
                             <button
                                 onClick={fetchMedications}
-                                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
+                                className="bg-gray-600 hover:bg-gray-700 text-white px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
                                 title="Refresh data"
                             >
-                                <FaSync /> Refresh
+                                <FaSync /> <span className="hidden sm:inline">Refresh</span>
                             </button>
                         </div>
                     </div>
@@ -578,9 +578,9 @@ const MedicationInfo = () => {
 
                 {/* Success/Error Messages */}
                 {successMessage && (
-                    <div className="mb-4 p-4 bg-green-100 text-green-800 rounded-lg flex items-center justify-between">
+                    <div className="mb-4 p-4 bg-green-100 text-green-800 rounded-lg flex items-center justify-between text-sm md:text-base">
                         <div className="flex items-center gap-2">
-                            <FaExclamationCircle />
+                            <FaExclamationCircle className="flex-shrink-0" />
                             <span>{successMessage}</span>
                         </div>
                         <button onClick={() => setSuccessMessage('')} className="text-green-800">
@@ -590,9 +590,9 @@ const MedicationInfo = () => {
                 )}
 
                 {error && (
-                    <div className="mb-4 p-4 bg-red-100 text-red-800 rounded-lg flex items-center justify-between">
+                    <div className="mb-4 p-4 bg-red-100 text-red-800 rounded-lg flex items-center justify-between text-sm md:text-base">
                         <div className="flex items-center gap-2">
-                            <FaExclamationTriangle />
+                            <FaExclamationTriangle className="flex-shrink-0" />
                             <span>{error}</span>
                         </div>
                         <button onClick={() => setError('')} className="text-red-800">
@@ -604,16 +604,16 @@ const MedicationInfo = () => {
 
 
                 {/* Search and Filter Bar */}
-                <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 mb-6 md:mb-8">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="relative">
+                        <div className="relative md:col-span-2">
                             <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                             <input
                                 type="text"
                                 value={searchTerm}
                                 onChange={handleSearchChange}
                                 placeholder="Search medications..."
-                                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                className="w-full pl-10 pr-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm md:text-base"
                                 onCopy={disableCopyPaste}
                                 onCut={disableCopyPaste}
                                 onPaste={disableCopyPaste}
@@ -625,17 +625,17 @@ const MedicationInfo = () => {
                         {isAdmin && (
                             <button
                                 onClick={() => setShowAddForm(true)}
-                                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg flex items-center justify-center gap-2 font-medium"
+                                className="hidden md:flex bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg items-center justify-center gap-2 font-medium"
                             >
                                 <FaPlus /> Add New Medication
                             </button>
                         )}
                     </div>
 
-                    <div className="mt-4 text-sm text-gray-500">
-                        Showing {filteredMedications.length} of {medications.length} medications
-                        {!isAdmin && ' (Read-only mode)'}
-                        {protectionEnabled && !isAdmin && ' • Copy/Print disabled'}
+                    <div className="mt-4 text-xs md:text-sm text-gray-500 flex flex-wrap gap-2 items-center">
+                        <span>Showing {filteredMedications.length} of {medications.length} medications</span>
+                        {!isAdmin && <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-600">Read-only</span>}
+                        {protectionEnabled && !isAdmin && <span className="bg-red-50 text-red-600 px-2 py-0.5 rounded flex items-center gap-1"><FaLock size={10} /> Protected</span>}
                     </div>
                 </div>
 

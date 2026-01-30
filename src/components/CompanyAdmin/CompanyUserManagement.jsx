@@ -100,46 +100,104 @@ export const CompanyUserManagement = ({
             {/* Table */}
             <div className="bg-white rounded-xl shadow-lg overflow-hidden">
                 {filteredUsers.length > 0 ? (
-                    <div className="overflow-x-auto">
-                        <table className="w-full border-collapse">
-                            <thead>
-                                <tr className="bg-gray-50 text-gray-700">
-                                    <th className="border-b p-4 text-left">User</th>
-                                    <th className="border-b p-4 text-left">Role</th>
-                                    <th className="border-b p-4 text-left">Status</th>
-                                    <th className="border-b p-4 text-left">Joined</th>
-                                    <th className="border-b p-4 text-left">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredUsers.map(user => (
-                                    <tr key={user.id} className="hover:bg-gray-50 transition">
-                                        <td className="border-b p-4">
-                                            <div>
-                                                <p className="font-medium text-gray-800">{user.full_name}</p>
-                                                <p className="text-sm text-gray-600">{user.email}</p>
-                                                {user.phone && <p className="text-xs text-gray-500 flex items-center gap-1 mt-1"><FaPhone className="text-xs" />{user.phone}</p>}
-                                            </div>
-                                        </td>
-                                        <td className="border-b p-4">{getRoleBadge(user.role)}</td>
-                                        <td className="border-b p-4">{getStatusBadge(user.approved)}</td>
-                                        <td className="border-b p-4 text-sm text-gray-600 flex items-center gap-2">
-                                            <FaCalendarAlt className="text-gray-400" /> {formatDate(user.created_at)}
-                                        </td>
-                                        <td className="border-b p-4">
-                                            <div className="flex gap-2">
-                                                {!user.approved && (
-                                                    <button onClick={() => onApproveUser(user.id)} className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600">Approve</button>
-                                                )}
-                                                <button onClick={() => onEditUser(user)} className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600">Edit</button>
-                                                <button onClick={() => onDeleteUser(user.id, user.email)} className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600">Delete</button>
-                                            </div>
-                                        </td>
+                    <>
+                        {/* Desktop Table View */}
+                        <div className="hidden md:block overflow-x-auto">
+                            <table className="w-full border-collapse">
+                                <thead>
+                                    <tr className="bg-gray-50 text-gray-700">
+                                        <th className="border-b p-4 text-left">User</th>
+                                        <th className="border-b p-4 text-left">Role</th>
+                                        <th className="border-b p-4 text-left">Status</th>
+                                        <th className="border-b p-4 text-left">Joined</th>
+                                        <th className="border-b p-4 text-left">Actions</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody>
+                                    {filteredUsers.map(user => (
+                                        <tr key={user.id} className="hover:bg-gray-50 transition">
+                                            <td className="border-b p-4">
+                                                <div>
+                                                    <p className="font-medium text-gray-800">{user.full_name}</p>
+                                                    <p className="text-sm text-gray-600">{user.email}</p>
+                                                    {user.phone && <p className="text-xs text-gray-500 flex items-center gap-1 mt-1"><FaPhone className="text-xs" />{user.phone}</p>}
+                                                </div>
+                                            </td>
+                                            <td className="border-b p-4">{getRoleBadge(user.role)}</td>
+                                            <td className="border-b p-4">{getStatusBadge(user.approved)}</td>
+                                            <td className="border-b p-4 text-sm text-gray-600 flex items-center gap-2">
+                                                <FaCalendarAlt className="text-gray-400" /> {formatDate(user.created_at)}
+                                            </td>
+                                            <td className="border-b p-4">
+                                                <div className="flex gap-2">
+                                                    {!user.approved && (
+                                                        <button onClick={() => onApproveUser(user.id)} className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600">Approve</button>
+                                                    )}
+                                                    <button onClick={() => onEditUser(user)} className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600">Edit</button>
+                                                    <button onClick={() => onDeleteUser(user.id, user.email)} className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600">Delete</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Mobile Card View */}
+                        <div className="md:hidden divide-y divide-gray-100">
+                            {filteredUsers.map(user => (
+                                <div key={user.id} className="p-4 bg-white hover:bg-gray-50 transition-colors">
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div>
+                                            <p className="font-bold text-gray-900">{user.full_name}</p>
+                                            <p className="text-sm text-gray-600">{user.email}</p>
+                                        </div>
+                                        <div>{getStatusBadge(user.approved)}</div>
+                                    </div>
+
+                                    <div className="space-y-2 text-sm mb-4">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-gray-500">Role:</span>
+                                            <span>{getRoleBadge(user.role)}</span>
+                                        </div>
+                                        {user.phone && (
+                                            <div className="flex justify-between items-center text-gray-500">
+                                                <span className="flex items-center gap-1"><FaPhone className="text-xs" /> Phone:</span>
+                                                <span>{user.phone}</span>
+                                            </div>
+                                        )}
+                                        <div className="flex justify-between items-center text-xs text-gray-400">
+                                            <span className="flex items-center gap-1"><FaCalendarAlt /> Joined:</span>
+                                            <span>{formatDate(user.created_at)}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-2 pt-2 border-t border-dashed">
+                                        {!user.approved && (
+                                            <button
+                                                onClick={() => onApproveUser(user.id)}
+                                                className="flex-1 py-2 bg-green-50 text-green-700 rounded-lg text-sm font-medium hover:bg-green-100 border border-green-200"
+                                            >
+                                                Approve
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={() => onEditUser(user)}
+                                            className="flex-1 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-100 border border-blue-200"
+                                        >
+                                            Edit
+                                        </button>
+                                        <button
+                                            onClick={() => onDeleteUser(user.id, user.email)}
+                                            className="flex-1 py-2 bg-red-50 text-red-700 rounded-lg text-sm font-medium hover:bg-red-100 border border-red-200"
+                                        >
+                                            Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </>
                 ) : (
                     <div className="text-center py-12">
                         <FaUserFriends className="text-6xl text-gray-300 mx-auto mb-4" />
@@ -149,6 +207,6 @@ export const CompanyUserManagement = ({
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 };

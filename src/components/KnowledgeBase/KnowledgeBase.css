@@ -1,0 +1,47 @@
+/* Knowledge Base Mobile Optimization */
+
+/* Prevent horizontal scroll on all knowledge base pages */
+.knowledge-base-container {
+    overflow-x: hidden;
+    max-width: 100vw;
+}
+
+/* Ensure all child elements respect container width */
+.knowledge-base-container * {
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* Prevent text overflow */
+.knowledge-base-container h1,
+.knowledge-base-container h2,
+.knowledge-base-container h3,
+.knowledge-base-container h4 {
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 640px) {
+
+    /* Remove any potential overflow sources */
+    body {
+        overflow-x: hidden;
+    }
+
+    /* Ensure cards don't cause overflow */
+    .remedy-content,
+    .illness-content,
+    .medication-card {
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    /* Prevent long words from causing overflow */
+    p,
+    span,
+    div {
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+}

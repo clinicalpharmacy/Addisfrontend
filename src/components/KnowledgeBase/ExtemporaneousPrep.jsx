@@ -458,36 +458,36 @@ const ExtemporaneousPrep = () => {
 
     return (
         <div
-            className="min-h-screen bg-gray-50 p-4"
+            className="bg-gray-50 min-h-full pb-8"
             onCopy={disableCopyPaste}
             onCut={disableCopyPaste}
             onPaste={disableCopyPaste}
         >
-            <div className="max-w-7xl mx-auto">
-                <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 md:py-8">
+                <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 mb-6">
                     {/* Header */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                        <div className="flex items-center gap-3">
-                            <div className="bg-indigo-100 p-3 rounded-full">
-                                <FaFlask className="text-indigo-600 text-xl" />
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <div className="bg-indigo-100 p-3 rounded-full flex-shrink-0">
+                                <FaFlask className="text-indigo-600 text-xl md:text-2xl" />
                             </div>
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-800">Extemporaneous Preparations</h1>
-                                <p className="text-gray-600 text-sm">
+                            <div className="min-w-0 flex-1">
+                                <h1 className="text-2xl md:text-3xl font-bold text-gray-800 truncate">Extemporaneous Preps</h1>
+                                <p className="text-gray-600 text-sm md:text-base mt-1">
                                     {preparations.length} formulas • Last updated: {new Date().toLocaleDateString()}
                                     {isAdmin && (
-                                        <span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
+                                        <span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium inline-flex items-center">
                                             Admin
                                         </span>
                                     )}
                                     {user?.role === 'company_admin' && (
-                                        <span className="ml-2 bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full font-medium">
-                                            <FaLock className="inline mr-1" /> Company Admin - View Only
+                                        <span className="ml-2 bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full font-medium inline-flex items-center">
+                                            <FaLock className="mr-1" /> Admin View
                                         </span>
                                     )}
                                     {!isAdmin && user?.role !== 'company_admin' && (
-                                        <span className="ml-2 bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full font-medium">
-                                            <FaLock className="inline mr-1" /> View Only
+                                        <span className="ml-2 bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full font-medium inline-flex items-center">
+                                            <FaLock className="mr-1" /> View Only
                                         </span>
                                     )}
                                 </p>
@@ -498,36 +498,36 @@ const ExtemporaneousPrep = () => {
                             {isAdmin && (
                                 <button
                                     onClick={toggleProtection}
-                                    className={`px-4 py-2 rounded-lg flex items-center gap-2 text-sm ${protectionEnabled
-                                            ? 'bg-red-500 hover:bg-red-600 text-white'
-                                            : 'bg-green-500 hover:bg-green-600 text-white'
+                                    className={`px-3 py-2 rounded-lg flex items-center gap-2 text-sm ${protectionEnabled
+                                        ? 'bg-red-500 hover:bg-red-600 text-white'
+                                        : 'bg-green-500 hover:bg-green-600 text-white'
                                         }`}
                                     title={protectionEnabled ? 'Disable Copy/Print Protection' : 'Enable Copy/Print Protection'}
                                 >
                                     {protectionEnabled ? <FaBan /> : <FaShieldAlt />}
-                                    {protectionEnabled ? 'Allow Copy' : 'No Copy'}
+                                    <span className="hidden sm:inline">{protectionEnabled ? 'Allow Copy' : 'No Copy'}</span>
                                 </button>
                             )}
                             <button
                                 onClick={fetchPreparations}
-                                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
+                                className="bg-gray-500 hover:bg-gray-600 text-white px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
                             >
-                                <FaSync /> Refresh
+                                <FaSync /> <span className="hidden sm:inline">Refresh</span>
                             </button>
                             {/* Only show admin buttons to admins */}
                             {isAdmin && (
                                 <>
                                     <button
                                         onClick={initializeSampleData}
-                                        className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
+                                        className="bg-green-500 hover:bg-green-600 text-white px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
                                     >
-                                        <FaPlus /> Add Samples
+                                        <FaPlus /> <span className="hidden sm:inline">Samples</span>
                                     </button>
                                     <button
                                         onClick={() => setShowForm(true)}
-                                        className="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
+                                        className="bg-indigo-500 hover:bg-indigo-600 text-white px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
                                     >
-                                        <FaPlus /> New Prep
+                                        <FaPlus /> <span className="hidden sm:inline">New Prep</span><span className="sm:hidden">Add</span>
                                     </button>
                                 </>
                             )}
@@ -539,9 +539,9 @@ const ExtemporaneousPrep = () => {
 
                     {/* Messages */}
                     {success && (
-                        <div className="mb-4 p-4 bg-green-100 text-green-800 rounded-lg flex items-center justify-between">
+                        <div className="mb-4 p-4 bg-green-100 text-green-800 rounded-lg flex items-center justify-between text-sm md:text-base">
                             <div className="flex items-center gap-2">
-                                <FaCheckCircle />
+                                <FaCheckCircle className="flex-shrink-0" />
                                 <span className="font-medium">{success}</span>
                             </div>
                             <button onClick={() => setSuccess('')} className="text-green-800 hover:text-green-900">
@@ -551,9 +551,9 @@ const ExtemporaneousPrep = () => {
                     )}
 
                     {error && (
-                        <div className="mb-4 p-4 bg-red-100 text-red-800 rounded-lg flex items-center justify-between">
+                        <div className="mb-4 p-4 bg-red-100 text-red-800 rounded-lg flex items-center justify-between text-sm md:text-base">
                             <div className="flex items-center gap-2">
-                                <FaExclamationTriangle />
+                                <FaExclamationTriangle className="flex-shrink-0" />
                                 <span className="font-medium">{error}</span>
                             </div>
                             <button onClick={() => setError('')} className="text-red-800 hover:text-red-900">
@@ -563,344 +563,345 @@ const ExtemporaneousPrep = () => {
                     )}
 
                     {/* Search */}
-                    <div className="mb-6">
+                    <div>
                         <div className="relative">
                             <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                             <input
                                 type="text"
                                 value={searchTerm}
                                 onChange={handleSearchChange}
-                                placeholder="Search preparations by name, use, or materials..."
-                                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                placeholder="Search preparations..."
+                                className="w-full pl-10 pr-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm md:text-base"
                                 onCopy={disableCopyPaste}
                                 onCut={disableCopyPaste}
                                 onPaste={disableCopyPaste}
                             />
                         </div>
                     </div>
+                </div>
 
-                    {/* Preparations Grid - ALL CONTENT VISIBLE but protected from copying */}
-                    {filteredPreparations.length > 0 ? (
-                        <>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {filteredPreparations.map((prep) => (
-                                    <div
-                                        key={prep.id}
-                                        className="border border-gray-200 rounded-xl p-5 bg-white hover:shadow-lg transition-shadow duration-200 prep-content"
-                                        onCopy={disableCopyPaste}
-                                        onCut={disableCopyPaste}
-                                        onPaste={disableCopyPaste}
-                                        onContextMenu={disableRightClick}
-                                        style={disableTextSelection()}
-                                    >
-                                        <div className="flex justify-between items-start mb-4">
-                                            <div className="flex-1">
-                                                <h3 className="font-bold text-lg text-gray-800 mb-1">
-                                                    {prep.name || 'Unnamed'}
-                                                </h3>
-                                                {prep.use && (
-                                                    <p className="text-sm text-gray-600 line-clamp-2">
-                                                        {prep.use}
-                                                    </p>
-                                                )}
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                {isAdmin ? (
-                                                    <>
-                                                        <button
-                                                            onClick={() => handleEdit(prep)}
-                                                            className="text-blue-500 hover:text-blue-700 p-1.5 rounded hover:bg-blue-50"
-                                                            title="Edit"
-                                                        >
-                                                            <FaEdit />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDelete(prep.id)}
-                                                            className="text-red-500 hover:text-red-700 p-1.5 rounded hover:bg-red-50"
-                                                            title="Delete"
-                                                        >
-                                                            <FaTrash />
-                                                        </button>
-                                                    </>
-                                                ) : (
-                                                    <span className="text-xs text-gray-500">
-                                                        <FaLock className="inline mr-1" /> View Only
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-3 mb-4">
-                                            {prep.formula && (
-                                                <div>
-                                                    <h4 className="font-semibold text-gray-700 mb-1 text-sm">Formula:</h4>
-                                                    <div className="p-2 bg-gray-50 rounded">
-                                                        <p className="text-sm text-gray-600 whitespace-pre-wrap">
-                                                            {prep.formula}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {prep.materials && (
-                                                <div>
-                                                    <h4 className="font-semibold text-gray-700 mb-1 text-sm">Materials:</h4>
-                                                    <p className="text-sm text-gray-600 line-clamp-3">
-                                                        {prep.materials}
-                                                    </p>
-                                                </div>
-                                            )}
-
-                                            <div>
-                                                <h4 className="font-semibold text-gray-700 mb-1 text-sm">Method:</h4>
-                                                <div className="p-2 bg-gray-50 rounded">
-                                                    <p className="text-sm text-gray-600 whitespace-pre-wrap">
-                                                        {prep.preparation}
-                                                    </p>
-                                                </div>
-                                            </div>
-
-                                            {prep.label && (
-                                                <div>
-                                                    <h4 className="font-semibold text-gray-700 mb-1 text-sm">Label:</h4>
-                                                    <p className="text-sm text-gray-600 line-clamp-2">
-                                                        {prep.label}
-                                                    </p>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="pt-4 border-t border-gray-100">
-                                            <div className="text-xs text-gray-500">
-                                                {prep.created_at && (
-                                                    <span>Added: {new Date(prep.created_at).toLocaleDateString()}</span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* Summary Footer */}
-                            <div className="mt-8 bg-white rounded-xl shadow-lg p-6">
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                    <div className="text-center">
-                                        <div className="text-2xl font-bold text-indigo-600">{preparations.length}</div>
-                                        <div className="text-sm text-gray-600">Total Preparations</div>
-                                    </div>
-                                    <div className="text-center">
-                                        <div className="text-2xl font-bold text-green-600">
-                                            {preparations.filter(p => p.formula).length}
-                                        </div>
-                                        <div className="text-sm text-gray-600">With Formulas</div>
-                                    </div>
-                                    <div className="text-center">
-                                        <div className="text-2xl font-bold text-blue-600">
-                                            {preparations.filter(p => p.materials).length}
-                                        </div>
-                                        <div className="text-sm text-gray-600">With Materials</div>
-                                    </div>
-                                    <div className="text-center">
-                                        <div className="text-2xl font-bold text-purple-600">{filteredPreparations.length}</div>
-                                        <div className="text-sm text-gray-600">Currently Filtered</div>
-                                    </div>
-                                </div>
-                                <div className="mt-4 text-center text-sm text-gray-500">
-                                    {isAdmin
-                                        ? 'Administrator Mode - Full access'
-                                        : `User Mode - View only (${protectionEnabled ? 'Copy/Print disabled' : 'Copy allowed'})`}
-                                    {isAdmin && (
-                                        <button
-                                            onClick={toggleProtection}
-                                            className="ml-2 text-blue-600 hover:text-blue-800 text-xs"
-                                        >
-                                            ({protectionEnabled ? 'No Copy Mode' : 'Copy Allowed'})
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        </>
-                    ) : (
-                        <div className="text-center py-12">
-                            <FaFlask className="text-5xl text-gray-300 mx-auto mb-4" />
-                            <h3 className="text-xl font-medium text-gray-800 mb-2">No Preparations Found</h3>
-                            <p className="text-gray-500 max-w-md mx-auto mb-6">
-                                {searchTerm
-                                    ? 'No matches found. Try a different search.'
-                                    : 'Start by adding your first preparation or loading sample data.'}
-                            </p>
-                            <div className="flex flex-wrap gap-3 justify-center">
-                                {isAdmin && (
-                                    <>
-                                        <button
-                                            onClick={() => setShowForm(true)}
-                                            className="bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-2.5 rounded-lg flex items-center gap-2"
-                                        >
-                                            <FaPlus /> Add First Preparation
-                                        </button>
-                                        <button
-                                            onClick={initializeSampleData}
-                                            className="bg-green-500 hover:bg-green-600 text-white px-6 py-2.5 rounded-lg flex items-center gap-2"
-                                        >
-                                            <FaPlus /> Load Samples
-                                        </button>
-                                    </>
-                                )}
-                                <button
-                                    onClick={() => {
-                                        setSearchTerm('');
-                                        handleSearchAndFilter();
-                                    }}
-                                    className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2.5 rounded-lg"
+                {/* Preparations Grid - ALL CONTENT VISIBLE but protected from copying */}
+                {filteredPreparations.length > 0 ? (
+                    <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {filteredPreparations.map((prep) => (
+                                <div
+                                    key={prep.id}
+                                    className="border border-gray-200 rounded-xl p-5 bg-white hover:shadow-lg transition-shadow duration-200 prep-content"
+                                    onCopy={disableCopyPaste}
+                                    onCut={disableCopyPaste}
+                                    onPaste={disableCopyPaste}
+                                    onContextMenu={disableRightClick}
+                                    style={disableTextSelection()}
                                 >
-                                    Clear Search
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Form Modal - ADMIN ONLY */}
-                    {showForm && isAdmin && (
-                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                            <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-                                <form onSubmit={handleSubmit} className="p-6">
-                                    <div className="flex justify-between items-center mb-6">
-                                        <h2 className="text-xl font-bold text-gray-800">
-                                            {editPrep ? 'Edit Preparation' : 'Create New Preparation'}
-                                        </h2>
-                                        <button
-                                            type="button"
-                                            onClick={resetForm}
-                                            className="text-gray-500 hover:text-gray-700 text-2xl"
-                                            disabled={saving}
-                                        >
-                                            <FaTimes />
-                                        </button>
-                                    </div>
-
-                                    <div className="space-y-5">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Preparation Name *
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={formData.name}
-                                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                                                placeholder="e.g., Amoxicillin Oral Suspension"
-                                                required
-                                                disabled={saving}
-                                            />
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="flex-1">
+                                            <h3 className="font-bold text-lg text-gray-800 mb-1">
+                                                {prep.name || 'Unnamed'}
+                                            </h3>
+                                            {prep.use && (
+                                                <p className="text-sm text-gray-600 line-clamp-2">
+                                                    {prep.use}
+                                                </p>
+                                            )}
                                         </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Use / Indication
-                                            </label>
-                                            <textarea
-                                                value={formData.use}
-                                                onChange={(e) => setFormData({ ...formData, use: e.target.value })}
-                                                rows="2"
-                                                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                                                placeholder="What is this preparation used for?"
-                                                disabled={saving}
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Formula / Ingredients
-                                            </label>
-                                            <textarea
-                                                value={formData.formula}
-                                                onChange={(e) => setFormData({ ...formData, formula: e.target.value })}
-                                                rows="3"
-                                                className="w-full border border-gray-300 rounded-lg px-4 py-3 font-mono text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                                                placeholder="List ingredients with quantities..."
-                                                disabled={saving}
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Materials Required
-                                            </label>
-                                            <textarea
-                                                value={formData.materials}
-                                                onChange={(e) => setFormData({ ...formData, materials: e.target.value })}
-                                                rows="2"
-                                                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                                                placeholder="Equipment and materials needed..."
-                                                disabled={saving}
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Preparation Method *
-                                            </label>
-                                            <textarea
-                                                value={formData.preparation}
-                                                onChange={(e) => setFormData({ ...formData, preparation: e.target.value })}
-                                                rows="4"
-                                                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                                                placeholder="Step-by-step instructions..."
-                                                required
-                                                disabled={saving}
-                                            />
-                                            <p className="text-xs text-gray-500 mt-1">Use numbered steps for clarity</p>
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Labeling Instructions
-                                            </label>
-                                            <textarea
-                                                value={formData.label}
-                                                onChange={(e) => setFormData({ ...formData, label: e.target.value })}
-                                                rows="2"
-                                                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                                                placeholder="What should be on the label?"
-                                                disabled={saving}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="flex gap-3 mt-8 pt-6 border-t">
-                                        <button
-                                            type="submit"
-                                            disabled={saving}
-                                            className="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                                        >
-                                            {saving ? (
+                                        <div className="flex items-center gap-2">
+                                            {isAdmin ? (
                                                 <>
-                                                    <FaSpinner className="animate-spin" />
-                                                    Saving...
+                                                    <button
+                                                        onClick={() => handleEdit(prep)}
+                                                        className="text-blue-500 hover:text-blue-700 p-1.5 rounded hover:bg-blue-50"
+                                                        title="Edit"
+                                                    >
+                                                        <FaEdit />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(prep.id)}
+                                                        className="text-red-500 hover:text-red-700 p-1.5 rounded hover:bg-red-50"
+                                                        title="Delete"
+                                                    >
+                                                        <FaTrash />
+                                                    </button>
                                                 </>
                                             ) : (
-                                                <>
-                                                    <FaFlask />
-                                                    {editPrep ? 'Update Preparation' : 'Save Preparation'}
-                                                </>
+                                                <span className="text-xs text-gray-500">
+                                                    <FaLock className="inline mr-1" /> View Only
+                                                </span>
                                             )}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={resetForm}
-                                            disabled={saving}
-                                            className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-lg font-medium disabled:opacity-50"
-                                        >
-                                            Cancel
-                                        </button>
+                                        </div>
                                     </div>
-                                </form>
+
+                                    <div className="space-y-3 mb-4">
+                                        {prep.formula && (
+                                            <div>
+                                                <h4 className="font-semibold text-gray-700 mb-1 text-sm">Formula:</h4>
+                                                <div className="p-2 bg-gray-50 rounded">
+                                                    <p className="text-sm text-gray-600 whitespace-pre-wrap">
+                                                        {prep.formula}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {prep.materials && (
+                                            <div>
+                                                <h4 className="font-semibold text-gray-700 mb-1 text-sm">Materials:</h4>
+                                                <p className="text-sm text-gray-600 line-clamp-3">
+                                                    {prep.materials}
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        <div>
+                                            <h4 className="font-semibold text-gray-700 mb-1 text-sm">Method:</h4>
+                                            <div className="p-2 bg-gray-50 rounded">
+                                                <p className="text-sm text-gray-600 whitespace-pre-wrap">
+                                                    {prep.preparation}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {prep.label && (
+                                            <div>
+                                                <h4 className="font-semibold text-gray-700 mb-1 text-sm">Label:</h4>
+                                                <p className="text-sm text-gray-600 line-clamp-2">
+                                                    {prep.label}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="pt-4 border-t border-gray-100">
+                                        <div className="text-xs text-gray-500">
+                                            {prep.created_at && (
+                                                <span>Added: {new Date(prep.created_at).toLocaleDateString()}</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Summary Footer */}
+                        <div className="mt-8 bg-white rounded-xl shadow-lg p-6">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div className="text-center">
+                                    <div className="text-2xl font-bold text-indigo-600">{preparations.length}</div>
+                                    <div className="text-sm text-gray-600">Total Preparations</div>
+                                </div>
+                                <div className="text-center">
+                                    <div className="text-2xl font-bold text-green-600">
+                                        {preparations.filter(p => p.formula).length}
+                                    </div>
+                                    <div className="text-sm text-gray-600">With Formulas</div>
+                                </div>
+                                <div className="text-center">
+                                    <div className="text-2xl font-bold text-blue-600">
+                                        {preparations.filter(p => p.materials).length}
+                                    </div>
+                                    <div className="text-sm text-gray-600">With Materials</div>
+                                </div>
+                                <div className="text-center">
+                                    <div className="text-2xl font-bold text-purple-600">{filteredPreparations.length}</div>
+                                    <div className="text-sm text-gray-600">Currently Filtered</div>
+                                </div>
+                            </div>
+                            <div className="mt-4 text-center text-sm text-gray-500">
+                                {isAdmin
+                                    ? 'Administrator Mode - Full access'
+                                    : `User Mode - View only (${protectionEnabled ? 'Copy/Print disabled' : 'Copy allowed'})`}
+                                {isAdmin && (
+                                    <button
+                                        onClick={toggleProtection}
+                                        className="ml-2 text-blue-600 hover:text-blue-800 text-xs"
+                                    >
+                                        ({protectionEnabled ? 'No Copy Mode' : 'Copy Allowed'})
+                                    </button>
+                                )}
                             </div>
                         </div>
-                    )}
-                </div>
+                    </>
+                ) : (
+                    <div className="text-center py-12">
+                        <FaFlask className="text-5xl text-gray-300 mx-auto mb-4" />
+                        <h3 className="text-xl font-medium text-gray-800 mb-2">No Preparations Found</h3>
+                        <p className="text-gray-500 max-w-md mx-auto mb-6">
+                            {searchTerm
+                                ? 'No matches found. Try a different search.'
+                                : 'Start by adding your first preparation or loading sample data.'}
+                        </p>
+                        <div className="flex flex-wrap gap-3 justify-center">
+                            {isAdmin && (
+                                <>
+                                    <button
+                                        onClick={() => setShowForm(true)}
+                                        className="bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-2.5 rounded-lg flex items-center gap-2"
+                                    >
+                                        <FaPlus /> Add First Preparation
+                                    </button>
+                                    <button
+                                        onClick={initializeSampleData}
+                                        className="bg-green-500 hover:bg-green-600 text-white px-6 py-2.5 rounded-lg flex items-center gap-2"
+                                    >
+                                        <FaPlus /> Load Samples
+                                    </button>
+                                </>
+                            )}
+                            <button
+                                onClick={() => {
+                                    setSearchTerm('');
+                                    handleSearchAndFilter();
+                                }}
+                                className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2.5 rounded-lg"
+                            >
+                                Clear Search
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Form Modal - ADMIN ONLY */}
+                {showForm && isAdmin && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+                            <form onSubmit={handleSubmit} className="p-6">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h2 className="text-xl font-bold text-gray-800">
+                                        {editPrep ? 'Edit Preparation' : 'Create New Preparation'}
+                                    </h2>
+                                    <button
+                                        type="button"
+                                        onClick={resetForm}
+                                        className="text-gray-500 hover:text-gray-700 text-2xl"
+                                        disabled={saving}
+                                    >
+                                        <FaTimes />
+                                    </button>
+                                </div>
+
+                                <div className="space-y-5">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Preparation Name *
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={formData.name}
+                                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                            placeholder="e.g., Amoxicillin Oral Suspension"
+                                            required
+                                            disabled={saving}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Use / Indication
+                                        </label>
+                                        <textarea
+                                            value={formData.use}
+                                            onChange={(e) => setFormData({ ...formData, use: e.target.value })}
+                                            rows="2"
+                                            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                            placeholder="What is this preparation used for?"
+                                            disabled={saving}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Formula / Ingredients
+                                        </label>
+                                        <textarea
+                                            value={formData.formula}
+                                            onChange={(e) => setFormData({ ...formData, formula: e.target.value })}
+                                            rows="3"
+                                            className="w-full border border-gray-300 rounded-lg px-4 py-3 font-mono text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                            placeholder="List ingredients with quantities..."
+                                            disabled={saving}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Materials Required
+                                        </label>
+                                        <textarea
+                                            value={formData.materials}
+                                            onChange={(e) => setFormData({ ...formData, materials: e.target.value })}
+                                            rows="2"
+                                            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                            placeholder="Equipment and materials needed..."
+                                            disabled={saving}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Preparation Method *
+                                        </label>
+                                        <textarea
+                                            value={formData.preparation}
+                                            onChange={(e) => setFormData({ ...formData, preparation: e.target.value })}
+                                            rows="4"
+                                            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                            placeholder="Step-by-step instructions..."
+                                            required
+                                            disabled={saving}
+                                        />
+                                        <p className="text-xs text-gray-500 mt-1">Use numbered steps for clarity</p>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Labeling Instructions
+                                        </label>
+                                        <textarea
+                                            value={formData.label}
+                                            onChange={(e) => setFormData({ ...formData, label: e.target.value })}
+                                            rows="2"
+                                            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                            placeholder="What should be on the label?"
+                                            disabled={saving}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-3 mt-8 pt-6 border-t">
+                                    <button
+                                        type="submit"
+                                        disabled={saving}
+                                        className="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    >
+                                        {saving ? (
+                                            <>
+                                                <FaSpinner className="animate-spin" />
+                                                Saving...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <FaFlask />
+                                                {editPrep ? 'Update Preparation' : 'Save Preparation'}
+                                            </>
+                                        )}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={resetForm}
+                                        disabled={saving}
+                                        className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-lg font-medium disabled:opacity-50"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
+
     );
 };
 

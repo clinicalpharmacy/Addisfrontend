@@ -357,48 +357,48 @@ const HomeRemedies = () => {
 
     return (
         <div
-            className="min-h-screen bg-gray-50"
+            className="bg-gray-50 min-h-full pb-8"
             onCopy={disableCopyPaste}
             onCut={disableCopyPaste}
             onPaste={disableCopyPaste}
         >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 md:py-8">
                 {/* Header */}
-                <div className="mb-8">
+                <div className="mb-6 md:mb-8">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                         <div className="flex items-center gap-3">
-                            <div className="bg-green-100 p-3 rounded-full">
-                                <FaHome className="text-green-600 text-2xl" />
+                            <div className="bg-green-100 p-3 rounded-full flex-shrink-0">
+                                <FaHome className="text-green-600 text-xl md:text-2xl" />
                             </div>
-                            <div>
-                                <h1 className="text-3xl font-bold text-gray-900">Home Remedies Knowledge Base</h1>
-                                <p className="text-gray-600 mt-1">
-                                    Traditional and natural remedies for common ailments ({remedies.length} remedies)
+                            <div className="min-w-0 flex-1">
+                                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 truncate">Home Remedies</h1>
+                                <p className="text-gray-600 mt-1 text-sm md:text-base">
+                                    Traditional and natural treatments ({remedies.length} items)
                                     {user?.role === 'company_admin' ? (
-                                        <span className="ml-2 text-sm bg-purple-100 text-purple-800 px-2 py-1 rounded">
-                                            <FaLock className="inline mr-1" /> Company Admin - View Only
+                                        <span className="ml-2 text-xs md:text-sm bg-purple-100 text-purple-800 px-2 py-1 rounded inline-flex items-center">
+                                            <FaLock className="mr-1" /> Admin View
                                         </span>
                                     ) : !isAdmin && (
-                                        <span className="ml-2 text-sm bg-gray-100 text-gray-800 px-2 py-1 rounded">
-                                            <FaLock className="inline mr-1" /> View Only
+                                        <span className="ml-2 text-xs md:text-sm bg-gray-100 text-gray-800 px-2 py-1 rounded inline-flex items-center">
+                                            <FaLock className="mr-1" /> View Only
                                         </span>
                                     )}
                                 </p>
                             </div>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
                             {/* Protection Toggle - Admin only */}
                             {isAdmin && (
                                 <button
                                     onClick={toggleProtection}
-                                    className={`px-4 py-2 rounded-lg flex items-center gap-2 text-sm ${protectionEnabled
-                                            ? 'bg-red-500 hover:bg-red-600 text-white'
-                                            : 'bg-green-500 hover:bg-green-600 text-white'
+                                    className={`px-3 py-2 rounded-lg flex items-center gap-2 text-sm ${protectionEnabled
+                                        ? 'bg-red-500 hover:bg-red-600 text-white'
+                                        : 'bg-green-500 hover:bg-green-600 text-white'
                                         }`}
                                     title={protectionEnabled ? 'Disable Copy/Print Protection' : 'Enable Copy/Print Protection'}
                                 >
                                     {protectionEnabled ? <FaBan /> : <FaShieldAlt />}
-                                    {protectionEnabled ? 'Allow Copy' : 'No Copy'}
+                                    <span className="hidden sm:inline">{protectionEnabled ? 'Allow Copy' : 'No Copy'}</span>
                                 </button>
                             )}
                             {/* REMOVED: Export button */}
@@ -406,9 +406,9 @@ const HomeRemedies = () => {
                             {isAdmin && (
                                 <button
                                     onClick={() => setShowForm(true)}
-                                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
+                                    className="bg-green-600 hover:bg-green-700 text-white px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
                                 >
-                                    <FaPlus /> Add Remedy
+                                    <FaPlus /> <span className="hidden sm:inline">Add Remedy</span><span className="sm:hidden">Add</span>
                                 </button>
                             )}
                         </div>
@@ -417,9 +417,9 @@ const HomeRemedies = () => {
 
                 {/* Messages */}
                 {success && (
-                    <div className="mb-4 p-4 bg-green-100 text-green-800 rounded-lg flex items-center justify-between">
+                    <div className="mb-4 p-4 bg-green-100 text-green-800 rounded-lg flex items-center justify-between text-sm md:text-base">
                         <div className="flex items-center gap-2">
-                            <FaCheckCircle />
+                            <FaCheckCircle className="flex-shrink-0" />
                             <span className="font-medium">{success}</span>
                         </div>
                         <button onClick={() => setSuccess('')} className="text-green-800 hover:text-green-900">
@@ -429,9 +429,9 @@ const HomeRemedies = () => {
                 )}
 
                 {error && (
-                    <div className="mb-4 p-4 bg-red-100 text-red-800 rounded-lg flex items-center justify-between">
+                    <div className="mb-4 p-4 bg-red-100 text-red-800 rounded-lg flex items-center justify-between text-sm md:text-base">
                         <div className="flex items-center gap-2">
-                            <FaExclamationTriangle />
+                            <FaExclamationTriangle className="flex-shrink-0" />
                             <span className="font-medium">{error}</span>
                         </div>
                         <button onClick={() => setError('')} className="text-red-800 hover:text-red-900">
@@ -444,16 +444,16 @@ const HomeRemedies = () => {
 
 
                 {/* Search and Filter */}
-                <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 mb-6 md:mb-8">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="relative">
+                        <div className="relative md:col-span-2">
                             <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                             <input
                                 type="text"
                                 value={searchTerm}
                                 onChange={(e) => handleSearch(e.target.value)}
                                 placeholder="Search remedies..."
-                                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                                className="w-full pl-10 pr-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm md:text-base"
                                 onCopy={disableCopyPaste}
                                 onCut={disableCopyPaste}
                                 onPaste={disableCopyPaste}
@@ -464,17 +464,17 @@ const HomeRemedies = () => {
                         {isAdmin && (
                             <button
                                 onClick={() => setShowForm(true)}
-                                className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg flex items-center justify-center gap-2 font-medium"
+                                className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg flex items-center justify-center gap-2 font-medium text-sm md:text-base"
                             >
                                 <FaPlus /> Add New Remedy
                             </button>
                         )}
                     </div>
 
-                    <div className="mt-4 text-sm text-gray-500">
-                        Showing {filteredRemedies.length} of {remedies.length} remedies
-                        {!isAdmin && ' (Read-only mode)'}
-                        {protectionEnabled && !isAdmin && ' • Copy/Print disabled'}
+                    <div className="mt-4 text-xs md:text-sm text-gray-500 flex flex-wrap gap-2 items-center">
+                        <span>Showing {filteredRemedies.length} remedies</span>
+                        {!isAdmin && <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-600">Read-only</span>}
+                        {protectionEnabled && !isAdmin && <span className="bg-red-50 text-red-600 px-2 py-0.5 rounded flex items-center gap-1"><FaLock size={10} /> Protected</span>}
                     </div>
                 </div>
 
@@ -585,7 +585,7 @@ const HomeRemedies = () => {
                 )}
 
                 {/* Remedies Grid - ALL CONTENT VISIBLE but protected from copying */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
                     {filteredRemedies.length > 0 ? (
                         filteredRemedies.map((remedy, index) => (
                             <div
@@ -597,17 +597,17 @@ const HomeRemedies = () => {
                                 onContextMenu={disableRightClick}
                                 style={disableTextSelection()}
                             >
-                                <div className="p-6">
-                                    <div className="flex justify-between items-start mb-4">
+                                <div className="p-3 md:p-6">
+                                    <div className="flex justify-between items-start mb-3 md:mb-4">
                                         <div className="flex-1">
-                                            <h3 className="text-xl font-bold text-gray-900 mb-1">{remedy.name}</h3>
+                                            <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-1">{remedy.name}</h3>
                                             {remedy.amharic_name && (
-                                                <p className="text-sm text-gray-600 mb-2">{remedy.amharic_name}</p>
+                                                <p className="text-xs md:text-sm text-gray-600 mb-2">{remedy.amharic_name}</p>
                                             )}
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <div className="p-2 bg-green-100 rounded-full">
-                                                <FaLeaf className="text-green-600" />
+                                            <div className="p-1.5 md:p-2 bg-green-100 rounded-full">
+                                                <FaLeaf className="text-green-600 text-sm md:text-base" />
                                             </div>
                                             {/* Only show delete button for admins */}
                                             {isAdmin && (
@@ -616,33 +616,33 @@ const HomeRemedies = () => {
                                                     className="text-red-500 hover:text-red-700 p-1"
                                                     title="Delete remedy"
                                                 >
-                                                    <FaTrash />
+                                                    <FaTrash className="text-sm" />
                                                 </button>
                                             )}
                                         </div>
                                     </div>
 
-                                    <div className="mb-4">
-                                        <h4 className="font-semibold text-gray-700 mb-2">Home Remedy:</h4>
-                                        <p className="text-gray-700 whitespace-pre-line">{remedy.home_remedies}</p>
+                                    <div className="mb-3 md:mb-4">
+                                        <h4 className="font-semibold text-gray-700 mb-1.5 md:mb-2 text-sm md:text-base">Home Remedy:</h4>
+                                        <p className="text-gray-700 whitespace-pre-line text-sm md:text-base leading-relaxed">{remedy.home_remedies}</p>
                                     </div>
 
                                     {remedy.medical_advise && (
-                                        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-100 rounded">
-                                            <h4 className="font-semibold text-yellow-700 mb-1 flex items-center gap-2">
-                                                <FaExclamationTriangle /> Medical Advice:
+                                        <div className="mb-3 md:mb-4 p-2 md:p-3 bg-yellow-50 border border-yellow-100 rounded">
+                                            <h4 className="font-semibold text-yellow-700 mb-1 flex items-center gap-2 text-sm md:text-base">
+                                                <FaExclamationTriangle className="text-xs md:text-sm" /> Medical Advice:
                                             </h4>
-                                            <p className="text-sm text-yellow-800 whitespace-pre-line">{remedy.medical_advise}</p>
+                                            <p className="text-xs md:text-sm text-yellow-800 whitespace-pre-line leading-relaxed">{remedy.medical_advise}</p>
                                         </div>
                                     )}
 
-                                    <div className="flex justify-between items-center mt-6 pt-4 border-t border-gray-100">
+                                    <div className="flex justify-between items-center mt-3 md:mt-6 pt-3 md:pt-4 border-t border-gray-100">
                                         <div className="text-xs text-gray-500">
                                             Added {new Date(remedy.created_at).toLocaleDateString()}
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <FaHeart className="text-red-400" />
-                                            <span className="text-xs text-gray-500">Traditional Remedy</span>
+                                        <div className="flex items-center gap-1.5 md:gap-2">
+                                            <FaHeart className="text-red-400 text-xs" />
+                                            <span className="text-xs text-gray-500">Traditional</span>
                                         </div>
                                     </div>
                                 </div>

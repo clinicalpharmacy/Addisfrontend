@@ -11,7 +11,10 @@ import {
     FaTrash,
     FaSort,
     FaSortUp,
-    FaSortDown
+    FaSortDown,
+    FaChevronRight,
+    FaIdCard,
+    FaClock
 } from 'react-icons/fa';
 
 import api from '../utils/api';
@@ -287,8 +290,8 @@ const PatientList = () => {
                 </div>
             </div>
 
-            {/* Patients Table */}
-            <div className="bg-white rounded-xl shadow overflow-hidden">
+            {/* Patients Table (Desktop) */}
+            <div className="hidden md:block bg-white rounded-xl shadow overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full border-collapse">
                         <thead>
@@ -403,33 +406,116 @@ const PatientList = () => {
                         </tbody>
                     </table>
                 </div>
+            </div>
 
-                {/* Pagination/Info */}
-                {filteredPatients.length > 0 && (
-                    <div className="p-4 border-t flex flex-col md:flex-row justify-between items-center gap-4">
-                        <div className="text-sm text-gray-600">
-                            Showing {filteredPatients.length} of {patients.length} patients
-                        </div>
-                        <div className="flex gap-2">
-                            <button
-                                className="px-3 py-1 border rounded text-sm hover:bg-gray-100"
-                                disabled
-                            >
-                                ← Previous
-                            </button>
-                            <button className="px-3 py-1 bg-blue-500 text-white rounded text-sm">
-                                1
-                            </button>
-                            <button
-                                className="px-3 py-1 border rounded text-sm hover:bg-gray-100"
-                                disabled
-                            >
-                                Next →
-                            </button>
-                        </div>
+            {/* Patients List (Mobile) */}
+            <div className="md:hidden space-y-4">
+                {filteredPatients.length > 0 ? (
+                    filteredPatients.map((patient) => {
+                        const currentUserId = getCurrentUserId();
+                        const isIndividual = (userAccountType === 'individual' || userRole === 'individual_user' || userRole === 'pharmacist') && !userCompanyId;
+                        const isAdmin = userRole === 'admin';
+                        const canDelete = isAdmin || (patient.user_id === currentUserId && !isIndividual);
+
+                        return (
+                            <div key={patient.id} className="bg-white rounded-xl shadow p-4 border border-gray-100">
+                                <div className="flex justify-between items-start mb-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                            <FaUserInjured className="text-blue-600 text-xl" />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold text-gray-800">{patient.full_name || 'No Name'}</h3>
+                                            <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                                                <FaIdCard />
+                                                <span className="font-mono">{patient.patient_code}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(patient.is_active)}`}>
+                                        {getStatusText(patient.is_active)}
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2 mb-4">
+                                    {patient.diagnosis && (
+                                        <div className="text-sm text-gray-700 bg-gray-50 p-2 rounded">
+                                            <span className="font-medium">Diagnosis:</span> {patient.diagnosis}
+                                        </div>
+                                    )}
+                                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                                        <FaClock /> Created: {patient.created_at ? new Date(patient.created_at).toLocaleDateString() : 'N/A'}
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => handleViewClick(patient.patient_code)}
+                                        className="flex-1 bg-blue-50 text-blue-700 py-2 rounded-lg flex items-center justify-center gap-2 text-sm font-medium hover:bg-blue-100 transition"
+                                    >
+                                        <FaEye /> View
+                                    </button>
+                                    <button
+                                        onClick={() => handleEditClick(patient)}
+                                        className="flex-1 bg-yellow-50 text-yellow-700 py-2 rounded-lg flex items-center justify-center gap-2 text-sm font-medium hover:bg-yellow-100 transition"
+                                    >
+                                        <FaEdit /> Edit
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(patient.id)}
+                                        disabled={!canDelete}
+                                        className={`w-10 flex items-center justify-center rounded-lg transition ${canDelete
+                                            ? 'bg-red-50 text-red-600 hover:bg-red-100'
+                                            : 'bg-gray-100 text-gray-300 cursor-not-allowed'
+                                            }`}
+                                    >
+                                        <FaTrash />
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })
+                ) : (
+                    <div className="bg-white rounded-xl shadow p-8 text-center">
+                        <FaUserInjured className="text-4xl text-gray-300 mx-auto mb-3" />
+                        <p className="text-gray-500 mb-4">
+                            {searchTerm ? 'No patients found matching your search.' : 'No patients found.'}
+                        </p>
+                        <button
+                            onClick={handleNewPatient}
+                            className="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg text-sm font-medium"
+                        >
+                            + Add New Patient
+                        </button>
                     </div>
                 )}
             </div>
+
+            {/* Pagination/Info */}
+            {filteredPatients.length > 0 && (
+                <div className="bg-white rounded-xl shadow p-4 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div className="text-sm text-gray-600">
+                        Showing {filteredPatients.length} of {patients.length} patients
+                    </div>
+                    <div className="flex gap-2">
+                        <button
+                            className="px-3 py-1 border rounded text-sm hover:bg-gray-100"
+                            disabled
+                        >
+                            ← Previous
+                        </button>
+                        <button className="px-3 py-1 bg-blue-500 text-white rounded text-sm">
+                            1
+                        </button>
+                        <button
+                            className="px-3 py-1 border rounded text-sm hover:bg-gray-100"
+                            disabled
+                        >
+                            Next →
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

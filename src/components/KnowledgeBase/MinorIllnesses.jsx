@@ -403,63 +403,63 @@ const MinorIllnesses = () => {
 
     return (
         <div
-            className="min-h-screen bg-gray-50"
+            className="bg-gray-50 min-h-full pb-8"
             onCopy={disableCopyPaste}
             onCut={disableCopyPaste}
             onPaste={disableCopyPaste}
         >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 md:py-8">
                 {/* Header */}
-                <div className="mb-8">
+                <div className="mb-6 md:mb-8">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-                        <div className="flex items-center gap-3">
-                            <div className="bg-red-100 p-3 rounded-full">
-                                <FaThermometerHalf className="text-red-600 text-2xl" />
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <div className="bg-red-100 p-3 rounded-full flex-shrink-0">
+                                <FaThermometerHalf className="text-red-600 text-xl md:text-2xl" />
                             </div>
-                            <div>
-                                <h1 className="text-3xl font-bold text-gray-900">Minor Illnesses Guide</h1>
-                                <p className="text-gray-600 mt-1">
-                                    Common minor illnesses and their management ({illnesses.length} illnesses)
+                            <div className="min-w-0 flex-1">
+                                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 truncate">Minor Illnesses</h1>
+                                <p className="text-gray-600 mt-1 text-sm md:text-base">
+                                    Management guide for {illnesses.length} common illnesses
                                     {user?.role === 'company_admin' ? (
-                                        <span className="ml-2 text-sm bg-purple-100 text-purple-800 px-2 py-1 rounded">
-                                            <FaLock className="inline mr-1" /> Company Admin - View Only
+                                        <span className="ml-2 text-xs md:text-sm bg-purple-100 text-purple-800 px-2 py-1 rounded inline-flex items-center">
+                                            <FaLock className="mr-1" /> Admin View
                                         </span>
                                     ) : !isAdmin && (
-                                        <span className="ml-2 text-sm bg-gray-100 text-gray-800 px-2 py-1 rounded">
-                                            <FaLock className="inline mr-1" /> View Only
+                                        <span className="ml-2 text-xs md:text-sm bg-gray-100 text-gray-800 px-2 py-1 rounded inline-flex items-center">
+                                            <FaLock className="mr-1" /> View Only
                                         </span>
                                     )}
                                 </p>
                             </div>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
                             {/* Protection Toggle - Admin only */}
                             {isAdmin && (
                                 <button
                                     onClick={toggleProtection}
-                                    className={`px-4 py-2 rounded-lg flex items-center gap-2 text-sm ${protectionEnabled
-                                            ? 'bg-red-500 hover:bg-red-600 text-white'
-                                            : 'bg-green-500 hover:bg-green-600 text-white'
+                                    className={`px-3 py-2 rounded-lg flex items-center gap-2 text-sm ${protectionEnabled
+                                        ? 'bg-red-500 hover:bg-red-600 text-white'
+                                        : 'bg-green-500 hover:bg-green-600 text-white'
                                         }`}
                                     title={protectionEnabled ? 'Disable Copy/Print Protection' : 'Enable Copy/Print Protection'}
                                 >
                                     {protectionEnabled ? <FaBan /> : <FaShieldAlt />}
-                                    {protectionEnabled ? 'Allow Copy' : 'No Copy'}
+                                    <span className="hidden sm:inline">{protectionEnabled ? 'Allow Copy' : 'No Copy'}</span>
                                 </button>
                             )}
                             <button
                                 onClick={fetchIllnesses}
-                                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
+                                className="bg-gray-500 hover:bg-gray-600 text-white px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
                             >
-                                <FaSync /> Refresh
+                                <FaSync /> <span className="hidden sm:inline">Refresh</span>
                             </button>
                             {/* Only show add button for admins */}
                             {isAdmin && (
                                 <button
                                     onClick={() => setShowForm(true)}
-                                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
+                                    className="bg-red-600 hover:bg-red-700 text-white px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
                                 >
-                                    <FaPlus /> Add Illness
+                                    <FaPlus /> <span className="hidden sm:inline">Add Illness</span><span className="sm:hidden">Add</span>
                                 </button>
                             )}
                         </div>
@@ -468,9 +468,9 @@ const MinorIllnesses = () => {
 
                 {/* Success/Error Messages */}
                 {success && (
-                    <div className="mb-4 p-4 bg-green-100 text-green-800 rounded-lg flex items-center justify-between">
+                    <div className="mb-4 p-4 bg-green-100 text-green-800 rounded-lg flex items-center justify-between text-sm md:text-base">
                         <div className="flex items-center gap-2">
-                            <FaCheckCircle />
+                            <FaCheckCircle className="flex-shrink-0" />
                             <span className="font-medium">{success}</span>
                         </div>
                         <button onClick={() => setSuccess('')} className="text-green-800 hover:text-green-900">
@@ -480,9 +480,9 @@ const MinorIllnesses = () => {
                 )}
 
                 {error && (
-                    <div className="mb-4 p-4 bg-red-100 text-red-800 rounded-lg flex items-center justify-between">
+                    <div className="mb-4 p-4 bg-red-100 text-red-800 rounded-lg flex items-center justify-between text-sm md:text-base">
                         <div className="flex items-center gap-2">
-                            <FaExclamationTriangle />
+                            <FaExclamationTriangle className="flex-shrink-0" />
                             <span className="font-medium">{error}</span>
                         </div>
                         <button onClick={() => setError('')} className="text-red-800 hover:text-red-900">
@@ -493,16 +493,16 @@ const MinorIllnesses = () => {
 
 
                 {/* Search and Filter */}
-                <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 mb-6 md:mb-8">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="relative">
+                        <div className="relative md:col-span-2">
                             <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                             <input
                                 type="text"
                                 value={searchTerm}
                                 onChange={(e) => handleSearch(e.target.value)}
                                 placeholder="Search illnesses..."
-                                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+                                className="w-full pl-10 pr-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 text-sm md:text-base"
                                 onCopy={disableCopyPaste}
                                 onCut={disableCopyPaste}
                                 onPaste={disableCopyPaste}
@@ -514,22 +514,23 @@ const MinorIllnesses = () => {
                         {isAdmin && (
                             <button
                                 onClick={() => setShowForm(true)}
-                                className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg flex items-center justify-center gap-2 font-medium"
+                                className="hidden md:flex bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg items-center justify-center gap-2 font-medium"
                             >
                                 <FaPlus /> Add Illness
                             </button>
                         )}
                     </div>
 
-                    <div className="mt-4 text-sm text-gray-500">
-                        Showing {filteredIllnesses.length} of {illnesses.length} illnesses
-                        {!isAdmin && ' (Read-only mode)'}
-                        {protectionEnabled && !isAdmin && ' • Copy/Print disabled'}
+                    <div className="mt-4 text-xs md:text-sm text-gray-500 flex flex-wrap gap-2 items-center">
+                        <span>Showing {filteredIllnesses.length} of {illnesses.length} illnesses</span>
+                        {!isAdmin && <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-600">Read-only</span>}
+                        {protectionEnabled && !isAdmin && <span className="bg-red-50 text-red-600 px-2 py-0.5 rounded flex items-center gap-1"><FaLock size={10} /> Protected</span>}
                     </div>
                 </div>
 
+
                 {/* Illnesses Grid - ALL CONTENT VISIBLE but protected from copying */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
                     {filteredIllnesses.length > 0 ? (
                         filteredIllnesses.map((illness) => (
                             <div
@@ -541,12 +542,12 @@ const MinorIllnesses = () => {
                                 onContextMenu={disableRightClick}
                                 style={disableTextSelection()}
                             >
-                                <div className="p-6">
-                                    <div className="flex justify-between items-start mb-4">
+                                <div className="p-3 md:p-6">
+                                    <div className="flex justify-between items-start mb-3 md:mb-4">
                                         <div className="flex-1">
-                                            <h3 className="text-xl font-bold text-gray-900 mb-1">{illness.name}</h3>
+                                            <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-1">{illness.name}</h3>
                                             {illness.amharic_name && (
-                                                <p className="text-sm text-gray-600 mb-2">{illness.amharic_name}</p>
+                                                <p className="text-xs md:text-sm text-gray-600 mb-2">{illness.amharic_name}</p>
                                             )}
                                         </div>
                                         <div className="flex gap-2">
@@ -558,14 +559,14 @@ const MinorIllnesses = () => {
                                                         className="text-blue-500 hover:text-blue-700 p-1"
                                                         title="Edit"
                                                     >
-                                                        <FaEdit />
+                                                        <FaEdit className="text-sm" />
                                                     </button>
                                                     <button
                                                         onClick={() => handleDelete(illness.id)}
                                                         className="text-red-500 hover:text-red-700 p-1"
                                                         title="Delete"
                                                     >
-                                                        <FaTrash />
+                                                        <FaTrash className="text-sm" />
                                                     </button>
                                                 </>
                                             )}
@@ -573,40 +574,40 @@ const MinorIllnesses = () => {
                                     </div>
 
                                     {illness.presentation && (
-                                        <div className="mb-4">
-                                            <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-1">
-                                                <FaStethoscope /> Presentation:
+                                        <div className="mb-3 md:mb-4">
+                                            <h4 className="font-semibold text-gray-700 mb-1.5 md:mb-2 flex items-center gap-1 text-sm md:text-base">
+                                                <FaStethoscope className="text-xs md:text-sm" /> Presentation:
                                             </h4>
-                                            <p className="text-sm text-gray-600 whitespace-pre-line">{illness.presentation}</p>
+                                            <p className="text-xs md:text-sm text-gray-600 whitespace-pre-line leading-relaxed">{illness.presentation}</p>
                                         </div>
                                     )}
 
                                     {illness.folk_medicine && (
-                                        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-100 rounded">
-                                            <h4 className="font-semibold text-yellow-700 mb-1">Folk Medicine:</h4>
-                                            <p className="text-sm text-yellow-800 whitespace-pre-line">{illness.folk_medicine}</p>
+                                        <div className="mb-3 md:mb-4 p-2 md:p-3 bg-yellow-50 border border-yellow-100 rounded">
+                                            <h4 className="font-semibold text-yellow-700 mb-1 text-sm md:text-base">Folk Medicine:</h4>
+                                            <p className="text-xs md:text-sm text-yellow-800 whitespace-pre-line leading-relaxed">{illness.folk_medicine}</p>
                                         </div>
                                     )}
 
                                     {illness.otc_drug && (
-                                        <div className="mb-4">
-                                            <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-1">
-                                                <FaCapsules /> OTC Drugs:
+                                        <div className="mb-3 md:mb-4">
+                                            <h4 className="font-semibold text-gray-700 mb-1.5 md:mb-2 flex items-center gap-1 text-sm md:text-base">
+                                                <FaCapsules className="text-xs md:text-sm" /> OTC Drugs:
                                             </h4>
-                                            <p className="text-sm text-gray-600 whitespace-pre-line">{illness.otc_drug}</p>
+                                            <p className="text-xs md:text-sm text-gray-600 whitespace-pre-line leading-relaxed">{illness.otc_drug}</p>
                                         </div>
                                     )}
 
                                     {illness.for_pharmacists && (
-                                        <div className="mb-4 p-3 bg-blue-50 border border-blue-100 rounded">
-                                            <h4 className="font-semibold text-blue-700 mb-1 flex items-center gap-1">
-                                                <FaUserMd /> For Pharmacists:
+                                        <div className="mb-3 md:mb-4 p-2 md:p-3 bg-blue-50 border border-blue-100 rounded">
+                                            <h4 className="font-semibold text-blue-700 mb-1 flex items-center gap-1 text-sm md:text-base">
+                                                <FaUserMd className="text-xs md:text-sm" /> For Pharmacists:
                                             </h4>
-                                            <p className="text-sm text-blue-800 whitespace-pre-line">{illness.for_pharmacists}</p>
+                                            <p className="text-xs md:text-sm text-blue-800 whitespace-pre-line leading-relaxed">{illness.for_pharmacists}</p>
                                         </div>
                                     )}
 
-                                    <div className="text-xs text-gray-500 mt-4 pt-3 border-t border-gray-100">
+                                    <div className="text-xs text-gray-500 mt-3 md:mt-4 pt-2 md:pt-3 border-t border-gray-100">
                                         Last updated: {new Date(illness.created_at).toLocaleDateString()}
                                     </div>
                                 </div>

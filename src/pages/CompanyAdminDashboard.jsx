@@ -132,13 +132,21 @@ const CompanyAdminDashboard = () => {
                 </div>
             </header>
 
+            {/* Sidebar Overlay for Mobile */}
+            {showSidebar && (
+                <div
+                    className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
+                    onClick={() => setShowSidebar(false)}
+                />
+            )}
+
             {/* Sidebar */}
             <aside className={`fixed top-16 left-0 bottom-0 w-64 bg-white shadow-lg transform transition-transform z-30 ${showSidebar ? 'translate-x-0' : '-translate-x-full'}`}>
                 <nav className="p-4 space-y-2">
-                    <button onClick={() => setActiveTab('dashboard')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg ${activeTab === 'dashboard' ? 'bg-blue-600 text-white' : 'hover:bg-gray-100 text-gray-700'}`}>
+                    <button onClick={() => { setActiveTab('dashboard'); setShowSidebar(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg ${activeTab === 'dashboard' ? 'bg-blue-600 text-white' : 'hover:bg-gray-100 text-gray-700'}`}>
                         <FaTachometerAlt /> Dashboard
                     </button>
-                    <button onClick={() => setActiveTab('users')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg ${activeTab === 'users' ? 'bg-blue-600 text-white' : 'hover:bg-gray-100 text-gray-700'}`}>
+                    <button onClick={() => { setActiveTab('users'); setShowSidebar(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg ${activeTab === 'users' ? 'bg-blue-600 text-white' : 'hover:bg-gray-100 text-gray-700'}`}>
                         <FaUserFriends /> Users
                         {logic.stats.pending_users > 0 && <span className="ml-auto bg-yellow-500 text-white text-xs px-2 py-0.5 rounded-full">{logic.stats.pending_users}</span>}
                     </button>
@@ -149,7 +157,7 @@ const CompanyAdminDashboard = () => {
             </aside>
 
             {/* Main Content */}
-            <main className={`pt-20 pb-8 px-4 sm:px-6 transition-all ${showSidebar ? 'ml-64' : 'ml-0'}`}>
+            <main className={`pt-20 pb-8 px-4 sm:px-6 transition-all ${showSidebar ? 'md:ml-64' : 'ml-0'}`}>
                 {/* Alerts */}
                 {logic.error && (
                     <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded flex items-center gap-3 text-red-700">

@@ -70,7 +70,7 @@ const LabInputField = React.memo(({
 
     return (
         <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-xs md:text-sm font-medium text-gray-700">
                 {label}
                 {normalRange && (
                     <span className="text-xs text-gray-500 ml-1">({normalRange})</span>
@@ -83,22 +83,22 @@ const LabInputField = React.memo(({
                         step={type === "number" ? "0.01" : undefined}
                         value={value || ''}
                         onChange={handleInputChange}
-                        className="flex-1 border border-gray-300 rounded-l-lg p-3 text-sm"
+                        className="flex-1 border border-gray-300 rounded-l-lg p-2 md:p-3 text-sm"
                         placeholder={placeholder}
                         readOnly={readOnly}
                     />
-                    <div className="w-16 bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg p-3 text-center text-sm text-gray-700">
+                    <div className="w-12 md:w-16 bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg p-2 md:p-3 text-center text-xs md:text-sm text-gray-700">
                         {unit}
                     </div>
                 </div>
             ) : (
                 <div className="flex items-center">
-                    <div className="flex-1 bg-blue-50 border border-blue-200 rounded-l-lg p-3 text-sm">
+                    <div className="flex-1 bg-blue-50 border border-blue-200 rounded-l-lg p-2 md:p-3 text-sm">
                         <span className="font-medium text-gray-800">
                             {value || '--'}
                         </span>
                     </div>
-                    <div className="w-16 bg-blue-100 border border-l-0 border-blue-200 rounded-r-lg p-3 text-center text-sm text-gray-700">
+                    <div className="w-12 md:w-16 bg-blue-100 border border-l-0 border-blue-200 rounded-r-lg p-2 md:p-3 text-center text-xs md:text-sm text-gray-700">
                         {unit}
                     </div>
                 </div>
@@ -3974,14 +3974,14 @@ const PatientDetails = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+        <div className="min-h-screen bg-gray-50 p-2 sm:p-4 md:p-6">
             {/* Connection Status Banner */}
             {(!isOnline || backendStatus === 'offline') && (
-                <div className="mb-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-lg shadow">
+                <div className="mb-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-3 md:p-4 rounded-lg shadow">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center">
-                            <FaWifi className="mr-2" />
-                            <p className="font-medium">
+                            <FaWifi className="mr-2 flex-shrink-0" />
+                            <p className="font-medium text-sm md:text-base">
                                 {!isOnline ? 'You are offline. ' : ''}
                                 {backendStatus === 'offline' ? 'Cannot connect to server. ' : ''}
                                 Some features may be unavailable.
@@ -3990,7 +3990,7 @@ const PatientDetails = () => {
                         {backendStatus === 'offline' && retryCount < 3 && (
                             <button
                                 onClick={handleRetry}
-                                className="ml-4 text-sm bg-yellow-600 text-white px-3 py-1 rounded flex items-center gap-1"
+                                className="ml-4 text-xs md:text-sm bg-yellow-600 text-white px-2 md:px-3 py-1 rounded flex items-center gap-1"
                             >
                                 <FaSync /> Retry
                             </button>
@@ -4004,15 +4004,15 @@ const PatientDetails = () => {
 
                 {/* Error Display */}
                 {error && (
-                    <div className="mb-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg">
+                    <div className="mb-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-3 md:p-4 rounded-lg">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center">
-                                <FaExclamationTriangle className="mr-2" />
-                                <p>{error}</p>
+                                <FaExclamationTriangle className="mr-2 flex-shrink-0" />
+                                <p className="text-sm md:text-base">{error}</p>
                             </div>
                             <button
                                 onClick={handleRetry}
-                                className="ml-4 text-sm bg-red-600 text-white px-3 py-1 rounded flex items-center gap-1"
+                                className="ml-4 text-xs md:text-sm bg-red-600 text-white px-2 md:px-3 py-1 rounded flex items-center gap-1"
                             >
                                 <FaSync /> Retry
                             </button>
@@ -4020,22 +4020,22 @@ const PatientDetails = () => {
                     </div>
                 )}
 
-                <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+                <div className="bg-white rounded-xl shadow-lg p-3 md:p-6 mb-4 md:mb-6">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
                             <button
                                 onClick={() => navigate('/patients')}
-                                className="text-gray-600 hover:text-gray-800 p-2 hover:bg-gray-100 rounded-lg"
+                                className="text-gray-600 hover:text-gray-800 p-2 hover:bg-gray-100 rounded-lg flex-shrink-0"
                                 title="Back to Patients"
                             >
-                                <FaArrowLeft className="text-xl" />
+                                <FaArrowLeft className="text-lg md:text-xl" />
                             </button>
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-800">
+                            <div className="min-w-0 flex-1">
+                                <h1 className="text-xl md:text-2xl font-bold text-gray-800 truncate">
                                     {isNewPatient ? 'New Patient' : `Patient: ${getCurrentPatientCode()}`}
                                 </h1>
                                 {formData.full_name && (
-                                    <p className="text-gray-600 mt-1">
+                                    <p className="text-gray-600 mt-1 text-xs md:text-base truncate">
                                         {formData.full_name} • {formatAgeDisplay(formData.age_in_days, formData.date_of_birth)} • {formData.gender || 'Gender not specified'}
                                         {formData.is_pregnant && ` • Pregnancy: ${formData.pregnancy_weeks} weeks`}
                                     </p>
@@ -4047,66 +4047,66 @@ const PatientDetails = () => {
                                 onClick={() => {
                                     testBackendConnection();
                                 }}
-                                className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg flex items-center gap-2"
+                                className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
                             >
-                                <FaWifi /> Test Connection
+                                <FaWifi /> <span className="hidden sm:inline">Test</span>
                             </button>
                             <button
                                 onClick={() => window.print()}
-                                className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg flex items-center gap-2"
+                                className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
                             >
-                                <FaPrint /> Print
+                                <FaPrint /> <span className="hidden sm:inline">Print</span>
                             </button>
                             <button
                                 onClick={() => setIsEditing(!isEditing)}
-                                className={`px-4 py-2 rounded-lg flex items-center gap-2 ${isEditing
+                                className={`px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm ${isEditing
                                     ? 'bg-gray-300 hover:bg-gray-400 text-gray-800'
                                     : 'bg-yellow-500 hover:bg-yellow-600 text-white'
                                     }`}
                             >
-                                <FaEdit /> {isEditing ? 'Cancel Edit' : 'Edit'}
+                                <FaEdit /> <span className="hidden sm:inline">{isEditing ? 'Cancel' : 'Edit'}</span>
                             </button>
                             {isEditing && (
                                 <button
                                     onClick={handleSaveAll}
-                                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                                    className="bg-green-600 hover:bg-green-700 text-white px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
                                 >
-                                    <FaSave /> {isNewPatient ? 'Create Patient' : 'Save Patient'}
+                                    <FaSave /> <span className="hidden sm:inline">{isNewPatient ? 'Create' : 'Save'}</span>
                                 </button>
                             )}
                             {!isNewPatient && (
                                 <button
                                     onClick={handleDelete}
-                                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                                    className="bg-red-500 hover:bg-red-600 text-white px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
                                 >
-                                    <FaTrash /> Delete
+                                    <FaTrash /> <span className="hidden sm:inline">Delete</span>
                                 </button>
                             )}
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-lg p-4 mb-6">
-                    <nav className="flex space-x-1 overflow-x-auto">
+                <div className="bg-white rounded-xl shadow-lg p-2 md:p-4 mb-4 md:mb-6">
+                    <nav className="flex space-x-1 overflow-x-auto scrollbar-hide">
                         {tabs.map((tab) => {
                             const Icon = tab.icon;
                             return (
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
-                                    className={`py-2 px-4 rounded-lg font-medium text-sm flex items-center gap-2 whitespace-nowrap ${activeTab === tab.id
+                                    className={`py-2 px-3 md:px-4 rounded-lg font-medium text-xs md:text-sm flex items-center gap-2 whitespace-nowrap ${activeTab === tab.id
                                         ? 'bg-blue-500 text-white'
                                         : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
                                         }`}
                                 >
-                                    <Icon /> {tab.label}
+                                    <Icon className="text-sm md:text-base" /> <span className="hidden sm:inline">{tab.label}</span>
                                 </button>
                             );
                         })}
                     </nav>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-lg p-6">
+                <div className="bg-white rounded-xl shadow-lg p-3 md:p-6">
                     {renderTabContent()}
                 </div>
 

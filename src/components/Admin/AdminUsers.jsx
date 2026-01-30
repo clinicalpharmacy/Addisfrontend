@@ -85,7 +85,8 @@ export const AdminUsers = ({
                 </div>
             </div>
 
-            <div className="overflow-x-auto">
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                     <thead>
                         <tr className="bg-gray-50 border-b">
@@ -141,6 +142,58 @@ export const AdminUsers = ({
                         )}
                     </tbody>
                 </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden">
+                {loading ? (
+                    <div className="p-8 text-center">
+                        <FaSpinner className="animate-spin text-3xl text-blue-500 mx-auto" />
+                        <p className="mt-2 text-gray-500">Loading users...</p>
+                    </div>
+                ) : filteredUsers.length > 0 ? (
+                    <div className="divide-y divide-gray-100">
+                        {filteredUsers.map((user) => (
+                            <div key={user.id} className="p-4 bg-white hover:bg-gray-50 transition-colors">
+                                <div className="flex justify-between items-start mb-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="bg-blue-100 p-2 rounded-full">
+                                            <FaUserCircle className="text-blue-600 text-lg" />
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-gray-900">{user.full_name}</p>
+                                            <p className="text-xs text-gray-500">{user.email}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col items-end gap-1">
+                                        {getStatusBadge(user.approved, user.role)}
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-gray-500">Role:</span>
+                                        <span>{getRoleBadge(user.role)}</span>
+                                    </div>
+                                    {user.institution && (
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-gray-500">Institution:</span>
+                                            <span className="text-gray-700">{user.institution}</span>
+                                        </div>
+                                    )}
+                                    <div className="flex justify-between items-center text-xs text-gray-400 mt-2 pt-2 border-t border-dashed">
+                                        <span>Joined</span>
+                                        <span>{formatDate(user.created_at)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="p-8 text-center text-gray-500">
+                        No users found matching your filters.
+                    </div>
+                )}
             </div>
         </div>
     );

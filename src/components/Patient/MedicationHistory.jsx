@@ -541,18 +541,18 @@ const MedicationHistory = ({ patientCode }) => {
     const stats = getStats();
 
     return (
-        <div className="bg-white rounded-xl shadow-lg p-6">
+        <div className="bg-white rounded-xl shadow-lg p-3 md:p-6 overflow-x-hidden max-w-full">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
-                <div className="flex items-center gap-3">
-                    <div className="bg-blue-100 p-3 rounded-full">
-                        <FaPrescription className="text-blue-600 text-xl" />
+            <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 md:mb-6 gap-4">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="bg-blue-100 p-2 md:p-3 rounded-full flex-shrink-0">
+                        <FaPrescription className="text-blue-600 text-lg md:text-xl" />
                     </div>
-                    <div>
-                        <h2 className="text-2xl font-bold text-gray-800">Medication History</h2>
-                        <p className="text-gray-600 flex items-center gap-2">
+                    <div className="min-w-0 flex-1">
+                        <h2 className="text-xl md:text-2xl font-bold text-gray-800 truncate">Medication History</h2>
+                        <p className="text-xs md:text-base text-gray-600 flex items-center gap-2 truncate">
                             <span>Patient:</span>
-                            <span className="font-semibold bg-blue-50 px-2 py-1 rounded">{patientCode}</span>
+                            <span className="font-semibold bg-blue-50 px-2 py-1 rounded text-xs md:text-sm">{patientCode}</span>
                         </p>
                     </div>
                 </div>
@@ -561,41 +561,41 @@ const MedicationHistory = ({ patientCode }) => {
                         fetchMedications();
                         fetchReconciliations();
                     }}
-                    className="text-blue-600 hover:text-blue-800 flex items-center gap-2 px-4 py-2 border border-blue-200 rounded-lg hover:bg-blue-50 transition"
+                    className="text-blue-600 hover:text-blue-800 flex items-center gap-2 px-3 md:px-4 py-2 border border-blue-200 rounded-lg hover:bg-blue-50 transition text-sm flex-shrink-0"
                 >
                     <FaSync className={`${loading || reconLoading ? 'animate-spin' : ''}`} />
-                    Refresh
+                    <span className="hidden sm:inline">Refresh</span>
                 </button>
             </div>
 
             {/* Quick Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-                <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
-                    <div className="text-sm text-blue-700">Total Medications</div>
-                    <div className="text-xl font-bold text-blue-800">{stats.total}</div>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-3 mb-4 md:mb-6">
+                <div className="bg-blue-50 p-2 md:p-3 rounded-lg border border-blue-100">
+                    <div className="text-xs md:text-sm text-blue-700">Total Meds</div>
+                    <div className="text-lg md:text-xl font-bold text-blue-800">{stats.total}</div>
                 </div>
-                <div className="bg-green-50 p-3 rounded-lg border border-green-100">
-                    <div className="text-sm text-green-700">Active</div>
-                    <div className="text-xl font-bold text-green-800">{stats.active}</div>
+                <div className="bg-green-50 p-2 md:p-3 rounded-lg border border-green-100">
+                    <div className="text-xs md:text-sm text-green-700">Active</div>
+                    <div className="text-lg md:text-xl font-bold text-green-800">{stats.active}</div>
                 </div>
-                <div className="bg-purple-50 p-3 rounded-lg border border-purple-100">
-                    <div className="text-sm text-purple-700">Oral</div>
-                    <div className="text-xl font-bold text-purple-800">{stats.oral}</div>
+                <div className="bg-purple-50 p-2 md:p-3 rounded-lg border border-purple-100">
+                    <div className="text-xs md:text-sm text-purple-700">Oral</div>
+                    <div className="text-lg md:text-xl font-bold text-purple-800">{stats.oral}</div>
                 </div>
-                <div className="bg-indigo-50 p-3 rounded-lg border border-indigo-100">
-                    <div className="text-sm text-indigo-700">Classes</div>
-                    <div className="text-xl font-bold text-indigo-800">{stats.classes}</div>
+                <div className="bg-indigo-50 p-2 md:p-3 rounded-lg border border-indigo-100">
+                    <div className="text-xs md:text-sm text-indigo-700">Classes</div>
+                    <div className="text-lg md:text-xl font-bold text-indigo-800">{stats.classes}</div>
                 </div>
                 {isCompanyUser && (
-                    <div className="bg-teal-50 p-3 rounded-lg border border-teal-100">
-                        <div className="text-sm text-teal-700">Reconciliations</div>
-                        <div className="text-xl font-bold text-teal-800">{stats.reconciliations}</div>
+                    <div className="bg-teal-50 p-2 md:p-3 rounded-lg border border-teal-100">
+                        <div className="text-xs md:text-sm text-teal-700">Recon</div>
+                        <div className="text-lg md:text-xl font-bold text-teal-800">{stats.reconciliations}</div>
                     </div>
                 )}
             </div>
 
             {/* Medication Registration Form */}
-            <div className="bg-gray-50 rounded-lg p-6 mb-8 border border-gray-200">
+            <div className="bg-gray-50 rounded-lg p-3 md:p-6 mb-4 md:mb-8 border border-gray-200">
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
                         <FaPrescription />
@@ -629,7 +629,7 @@ const MedicationHistory = ({ patientCode }) => {
                                 name="drug_name"
                                 value={formData.drug_name}
                                 onChange={handleInputChange}
-                                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                className="w-full border border-gray-300 rounded-lg p-2 md:p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 placeholder="e.g., Metformin"
                                 required
                             />
@@ -999,72 +999,72 @@ const MedicationHistory = ({ patientCode }) => {
                         <table className="w-full">
                             <thead className="bg-gray-100">
                                 <tr>
-                                    <th className="p-4 text-left font-medium text-gray-700">Drug Name</th>
-                                    <th className="p-4 text-left font-medium text-gray-700">Dose & Route</th>
-                                    <th className="p-4 text-left font-medium text-gray-700">Frequency</th>
-                                    <th className="p-4 text-left font-medium text-gray-700">Dates</th>
-                                    <th className="p-4 text-left font-medium text-gray-700">Indication</th>
-                                    <th className="p-4 text-left font-medium text-gray-700">Status</th>
-                                    <th className="p-4 text-left font-medium text-gray-700">Actions</th>
+                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Drug Name</th>
+                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Dose & Route</th>
+                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden md:table-cell">Frequency</th>
+                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Dates</th>
+                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Indication</th>
+                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Status</th>
+                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {filteredMedications.map((med) => (
                                     <tr key={med.id} className="border-t hover:bg-gray-50 group">
-                                        <td className="p-4">
-                                            <div className="font-medium text-gray-800">{med.drug_name}</div>
-                                            <div className="text-xs text-gray-400 mt-1">{med.drug_class}</div>
+                                        <td className="p-2 md:p-4">
+                                            <div className="font-medium text-gray-800 text-xs md:text-sm break-words max-w-[150px] md:max-w-none">{med.drug_name}</div>
+                                            <div className="text-xs text-gray-400 mt-1 break-words">{med.drug_class}</div>
                                         </td>
-                                        <td className="p-4">
-                                            <div className="text-gray-700">{med.dose} {med.unit}</div>
-                                            <div className="text-sm text-gray-500 uppercase">{med.roa}</div>
+                                        <td className="p-2 md:p-4">
+                                            <div className="text-gray-700 text-xs md:text-sm break-words">{med.dose} {med.unit}</div>
+                                            <div className="text-xs text-gray-500 uppercase">{med.roa}</div>
                                         </td>
-                                        <td className="p-4">
-                                            <div className="text-gray-700">{med.frequency}</div>
+                                        <td className="p-2 md:p-4 hidden md:table-cell">
+                                            <div className="text-gray-700 text-xs md:text-sm break-words">{med.frequency}</div>
                                         </td>
-                                        <td className="p-4">
+                                        <td className="p-2 md:p-4 hidden lg:table-cell">
                                             <div className="space-y-1">
-                                                <div className="flex items-center gap-2 text-sm">
-                                                    <FaCalendar className="text-gray-400 text-xs" />
-                                                    <span>Start: {med.start_date}</span>
+                                                <div className="flex items-center gap-2 text-xs md:text-sm">
+                                                    <FaCalendar className="text-gray-400 text-xs flex-shrink-0" />
+                                                    <span className="break-words">Start: {med.start_date}</span>
                                                 </div>
                                                 {med.stop_date && (
-                                                    <div className="flex items-center gap-2 text-sm">
-                                                        <FaCalendar className="text-gray-400 text-xs" />
-                                                        <span>Stop: {med.stop_date}</span>
+                                                    <div className="flex items-center gap-2 text-xs md:text-sm">
+                                                        <FaCalendar className="text-gray-400 text-xs flex-shrink-0" />
+                                                        <span className="break-words">Stop: {med.stop_date}</span>
                                                     </div>
                                                 )}
                                                 {med.duration && (
                                                     <div className="flex items-center gap-2 text-xs text-gray-500">
-                                                        <FaClock className="text-gray-400" />
-                                                        <span>{med.duration}</span>
+                                                        <FaClock className="text-gray-400 flex-shrink-0" />
+                                                        <span className="break-words">{med.duration}</span>
                                                     </div>
                                                 )}
                                             </div>
                                         </td>
-                                        <td className="p-4">
-                                            <div className="text-gray-700">{med.indication || '—'}</div>
+                                        <td className="p-2 md:p-4 hidden lg:table-cell">
+                                            <div className="text-gray-700 text-xs md:text-sm break-words">{med.indication || '—'}</div>
                                         </td>
-                                        <td className="p-4">
-                                            <span className={`px-3 py-1 text-xs rounded-full border ${getStatusColor(med.status)}`}>
+                                        <td className="p-2 md:p-4">
+                                            <span className={`px-2 md:px-3 py-1 text-xs rounded-full border ${getStatusColor(med.status)}`}>
                                                 {med.status}
                                             </span>
                                         </td>
-                                        <td className="p-4">
-                                            <div className="flex gap-2">
+                                        <td className="p-2 md:p-4">
+                                            <div className="flex gap-1 md:gap-2">
                                                 <button
                                                     onClick={() => handleEdit(med)}
-                                                    className="text-blue-500 hover:text-blue-700 p-2 hover:bg-blue-50 rounded transition"
+                                                    className="text-blue-500 hover:text-blue-700 p-1 md:p-2 hover:bg-blue-50 rounded transition"
                                                     title="Edit medication"
                                                 >
-                                                    <FaEdit />
+                                                    <FaEdit className="text-sm" />
                                                 </button>
                                                 <button
                                                     onClick={() => handleDelete(med.id)}
-                                                    className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded transition"
+                                                    className="text-red-500 hover:text-red-700 p-1 md:p-2 hover:bg-red-50 rounded transition"
                                                     title="Delete medication"
                                                 >
-                                                    <FaTrash />
+                                                    <FaTrash className="text-sm" />
                                                 </button>
                                             </div>
                                         </td>

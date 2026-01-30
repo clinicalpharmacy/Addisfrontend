@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     FaPills, FaSearch, FaPlus, FaHospital,
     FaCalendarAlt, FaTrash, FaCheckCircle, FaExclamationCircle,
-    FaUserMd, FaMapMarkerAlt, FaCommentMedical, FaPaperPlane, FaTimes, FaEdit
+    FaUserMd, FaMapMarkerAlt, FaCommentMedical, FaPaperPlane, FaTimes, FaEdit, FaArrowLeft
 } from 'react-icons/fa';
 import api from '../utils/api';
 
@@ -256,9 +256,9 @@ const MedicationAvailability = () => {
                 </button>
             </div>
 
-            <div className="flex flex-1 gap-6 overflow-hidden">
+            <div className="flex flex-col md:flex-row flex-1 gap-6 overflow-hidden">
                 {/* Left Side: Posts List */}
-                <div className="flex-1 overflow-y-auto pr-2 space-y-4">
+                <div className={`flex-1 overflow-y-auto pr-2 space-y-4 ${selectedPost ? 'hidden md:block' : ''}`}>
                     {/* Search */}
                     <div className="relative mb-4 sticky top-0 z-10">
                         <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -371,10 +371,16 @@ const MedicationAvailability = () => {
                 </div>
 
                 {/* Right Side: Chat Sidebar */}
-                <div className="w-full md:w-96 flex flex-col bg-gray-50 rounded-3xl overflow-hidden border border-gray-200">
+                <div className={`w-full md:w-96 flex flex-col bg-gray-50 rounded-3xl overflow-hidden border border-gray-200 ${!selectedPost ? 'hidden md:flex' : 'flex'}`}>
                     {selectedPost ? (
                         <>
                             <div className="p-4 bg-white border-b flex justify-between items-center">
+                                <button
+                                    onClick={() => setSelectedPost(null)}
+                                    className="mr-3 md:hidden text-gray-500 p-2 hover:bg-gray-100 rounded-full"
+                                >
+                                    <FaArrowLeft />
+                                </button>
                                 <div className="flex-1 min-w-0">
                                     <h4 className="font-bold text-gray-800 truncate">{selectedPost.medication_name}</h4>
                                     <p className="text-xs text-blue-600 font-bold truncate">
