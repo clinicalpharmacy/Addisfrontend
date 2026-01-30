@@ -193,14 +193,22 @@ const Login = () => {
                                 <label className="block text-sm font-medium text-gray-700">
                                     Password
                                 </label>
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="text-sm text-blue-600 hover:text-blue-800"
-                                    disabled={loading}
-                                >
-                                    {showPassword ? 'Hide' : 'Show'}
-                                </button>
+                                <div className="flex items-center gap-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="text-sm text-gray-500 hover:text-blue-600 transition"
+                                        disabled={loading}
+                                    >
+                                        {showPassword ? 'Hide' : 'Show'}
+                                    </button>
+                                    <Link
+                                        to="/forgot-password"
+                                        className="text-sm text-blue-600 hover:text-blue-800 font-medium transition"
+                                    >
+                                        Forgot Password?
+                                    </Link>
+                                </div>
                             </div>
                             <div className="relative">
                                 <input

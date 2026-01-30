@@ -22,6 +22,8 @@ import CompanyPerformanceReport from './pages/CompanyPerformanceReport';
 import AdminUsefulLinks from './pages/AdminUsefulLinks';
 import UsefulLinks from './pages/UsefulLinks';
 import MedicationAvailability from './pages/MedicationAvailability';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 // Subscription Pages
 import SubscriptionPlans from "./pages/SubscriptionPlans";
@@ -945,6 +947,28 @@ function App() {
                         <PublicRoute>
                             <SimpleLayout>
                                 <Signup />
+                            </SimpleLayout>
+                        </PublicRoute>
+                    }
+                />
+
+                <Route
+                    path="/forgot-password"
+                    element={
+                        <PublicRoute>
+                            <SimpleLayout>
+                                <ForgotPassword />
+                            </SimpleLayout>
+                        </PublicRoute>
+                    }
+                />
+
+                <Route
+                    path="/reset-password"
+                    element={
+                        <PublicRoute>
+                            <SimpleLayout>
+                                <ResetPassword />
                             </SimpleLayout>
                         </PublicRoute>
                     }

@@ -10,6 +10,7 @@ import {
 
 const MedicationHistory = ({ patientCode }) => {
     const [medications, setMedications] = useState([]);
+    const [currentUser, setCurrentUser] = useState(null);
     const [filteredMedications, setFilteredMedications] = useState([]);
     const [formData, setFormData] = useState({
         // Required Information
@@ -136,11 +137,29 @@ const MedicationHistory = ({ patientCode }) => {
     ];
 
     useEffect(() => {
+        const userData = localStorage.getItem('user');
+        if (userData) {
+            try {
+                setCurrentUser(JSON.parse(userData));
+            } catch (error) {
+                console.error('Error parsing user data:', error);
+            }
+        }
+    }, []);
+
+    useEffect(() => {
         if (patientCode) {
             fetchMedications();
             fetchReconciliations();
         }
     }, [patientCode]);
+
+    const isCompanyUser = currentUser && (
+        !!currentUser.company_id ||
+        currentUser.account_type === 'company' ||
+        ['company_admin', 'company_user'].includes(currentUser.role) ||
+        currentUser.role === 'admin'
+    );
 
     const fetchReconciliations = async () => {
         try {
@@ -567,10 +586,12 @@ const MedicationHistory = ({ patientCode }) => {
                     <div className="text-sm text-indigo-700">Classes</div>
                     <div className="text-xl font-bold text-indigo-800">{stats.classes}</div>
                 </div>
-                <div className="bg-teal-50 p-3 rounded-lg border border-teal-100">
-                    <div className="text-sm text-teal-700">Reconciliations</div>
-                    <div className="text-xl font-bold text-teal-800">{stats.reconciliations}</div>
-                </div>
+                {isCompanyUser && (
+                    <div className="bg-teal-50 p-3 rounded-lg border border-teal-100">
+                        <div className="text-sm text-teal-700">Reconciliations</div>
+                        <div className="text-xl font-bold text-teal-800">{stats.reconciliations}</div>
+                    </div>
+                )}
             </div>
 
             {/* Medication Registration Form */}
@@ -1056,109 +1077,111 @@ const MedicationHistory = ({ patientCode }) => {
             </div>
 
             {/* Medication Reconciliation Section */}
-            <div className="bg-gradient-to-r from-teal-50 to-blue-50 rounded-lg p-6 mb-8 border border-teal-200">
-                <div className="flex items-center gap-3 mb-6">
-                    <div className="bg-teal-100 p-3 rounded-full">
-                        <FaCheckCircle className="text-teal-600 text-xl" />
-                    </div>
-                    <div>
-                        <h3 className="text-xl font-semibold text-gray-800">Medication Reconciliation</h3>
-                        <p className="text-gray-600 text-sm">Document medication reconciliation findings and decisions</p>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                    {/* Reconciliation Site */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Reconciliation Site *
-                        </label>
-                        <select
-                            name="site"
-                            value={reconciliationData.site}
-                            onChange={handleReconciliationChange}
-                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-teal-500"
-                        >
-                            <option value="">Select reconciliation site</option>
-                            {reconciliationSites.map(site => (
-                                <option key={site} value={site}>{site}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* Date */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Date *
-                        </label>
-                        <input
-                            type="date"
-                            name="date"
-                            value={reconciliationData.date}
-                            onChange={handleReconciliationChange}
-                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-teal-500"
-                        />
-                    </div>
-                </div>
-
-                {/* Findings and Decision */}
-                <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Findings and Decision *
-                    </label>
-                    <textarea
-                        name="findings"
-                        value={reconciliationData.findings}
-                        onChange={handleReconciliationChange}
-                        rows="4"
-                        className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-teal-500"
-                        placeholder="Document findings, discrepancies, and decisions made during medication reconciliation..."
-                    />
-                </div>
-
-                {/* Save Button */}
-                <div className="flex justify-end">
-                    <button
-                        onClick={handleSaveReconciliation}
-                        disabled={reconLoading}
-                        className="bg-teal-500 hover:bg-teal-600 text-white px-6 py-3 rounded-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                    >
-                        {reconLoading ? (
-                            <>
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                Saving...
-                            </>
-                        ) : (
-                            <>
-                                <FaSave /> Save Reconciliation
-                            </>
-                        )}
-                    </button>
-                </div>
-
-                {/* Previous Reconciliations */}
-                {reconciliations.length > 0 && (
-                    <div className="mt-8 pt-6 border-t border-teal-200">
-                        <h4 className="font-medium text-gray-700 mb-4">Previous Reconciliations ({reconciliations.length})</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {reconciliations.map((recon) => (
-                                <div key={recon.id} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-                                    <div className="flex justify-between items-start mb-2">
-                                        <div className="font-semibold text-gray-800 flex items-center gap-2">
-                                            <FaHospital className="text-teal-500 text-xs" />
-                                            {recon.site}
-                                        </div>
-                                        <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
-                                            {new Date(recon.date).toLocaleDateString()}
-                                        </div>
-                                    </div>
-                                    <p className="text-gray-600 text-sm italic">{recon.findings}</p>
-                                </div>
-                            ))}
+            {isCompanyUser && (
+                <div className="bg-gradient-to-r from-teal-50 to-blue-50 rounded-lg p-6 mb-8 border border-teal-200">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="bg-teal-100 p-3 rounded-full">
+                            <FaCheckCircle className="text-teal-600 text-xl" />
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-semibold text-gray-800">Medication Reconciliation</h3>
+                            <p className="text-gray-600 text-sm">Document medication reconciliation findings and decisions</p>
                         </div>
                     </div>
-                )}
-            </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                        {/* Reconciliation Site */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Reconciliation Site *
+                            </label>
+                            <select
+                                name="site"
+                                value={reconciliationData.site}
+                                onChange={handleReconciliationChange}
+                                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-teal-500"
+                            >
+                                <option value="">Select reconciliation site</option>
+                                {reconciliationSites.map(site => (
+                                    <option key={site} value={site}>{site}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Date */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Date *
+                            </label>
+                            <input
+                                type="date"
+                                name="date"
+                                value={reconciliationData.date}
+                                onChange={handleReconciliationChange}
+                                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-teal-500"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Findings and Decision */}
+                    <div className="mb-6">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Findings and Decision *
+                        </label>
+                        <textarea
+                            name="findings"
+                            value={reconciliationData.findings}
+                            onChange={handleReconciliationChange}
+                            rows="4"
+                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-teal-500"
+                            placeholder="Document findings, discrepancies, and decisions made during medication reconciliation..."
+                        />
+                    </div>
+
+                    {/* Save Button */}
+                    <div className="flex justify-end">
+                        <button
+                            onClick={handleSaveReconciliation}
+                            disabled={reconLoading}
+                            className="bg-teal-500 hover:bg-teal-600 text-white px-6 py-3 rounded-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                        >
+                            {reconLoading ? (
+                                <>
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                    Saving...
+                                </>
+                            ) : (
+                                <>
+                                    <FaSave /> Save Reconciliation
+                                </>
+                            )}
+                        </button>
+                    </div>
+
+                    {/* Previous Reconciliations */}
+                    {reconciliations.length > 0 && (
+                        <div className="mt-8 pt-6 border-t border-teal-200">
+                            <h4 className="font-medium text-gray-700 mb-4">Previous Reconciliations ({reconciliations.length})</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {reconciliations.map((recon) => (
+                                    <div key={recon.id} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div className="font-semibold text-gray-800 flex items-center gap-2">
+                                                <FaHospital className="text-teal-500 text-xs" />
+                                                {recon.site}
+                                            </div>
+                                            <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
+                                                {new Date(recon.date).toLocaleDateString()}
+                                            </div>
+                                        </div>
+                                        <p className="text-gray-600 text-sm italic">{recon.findings}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Export/Print Options */}
             {filteredMedications.length > 0 && (

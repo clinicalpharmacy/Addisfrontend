@@ -112,7 +112,10 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                 <span className="font-semibold">{patientData.full_name || patientData.patient_code}</span>
                                 {patientFacts?.age_in_days > 0 && (
                                     <span className="flex items-center gap-1">
-                                        <FaCalendarDay className="text-blue-400" /> {patientFacts.age_in_days} days
+                                        <FaCalendarDay className="text-blue-400" />
+                                        {patientFacts.age_in_days >= 365
+                                            ? `${Math.floor(patientFacts.age_in_days / 365)} yrs`
+                                            : `${patientFacts.age_in_days} days`}
                                     </span>
                                 )}
                                 {patientFacts?.patient_type && (
@@ -213,11 +216,18 @@ const CDSSDisplay = ({ patientData, onBack }) => {
             <div className="mb-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
                 <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
                     <div className="text-sm text-blue-700 mb-1 flex items-center gap-1">
-                        <FaCalendarDay /> Age in Days
+                        <FaCalendarDay /> Age
                     </div>
                     <div className="text-xl font-bold text-blue-800">
-                        {patientFacts?.age_in_days || 'N/A'}
+                        {patientFacts?.age_in_days ? (
+                            patientFacts.age_in_days >= 365
+                                ? `${Math.floor(patientFacts.age_in_days / 365)} Years`
+                                : `${patientFacts.age_in_days} Days`
+                        ) : 'N/A'}
                     </div>
+                    {patientFacts?.age_in_days >= 365 && (
+                        <div className="text-xs text-blue-600">({patientFacts.age_in_days} days)</div>
+                    )}
                 </div>
 
                 <div className="bg-indigo-50 p-3 rounded-lg border border-indigo-200">

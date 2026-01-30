@@ -36,7 +36,8 @@ const Sidebar = ({ onClose }) => {
         patients: false,
         knowledge: false,
         cdss: false,
-        links: false
+        links: false,
+        settings: false
     });
     const [usefulLinks, setUsefulLinks] = useState([]);
     const [loadingLinks, setLoadingLinks] = useState(false);
@@ -197,19 +198,53 @@ const Sidebar = ({ onClose }) => {
                             </NavLink>
                         </li>
                         <li>
-                            <NavLink
-                                to="/settings"
-                                onClick={onClose}
-                                className={({ isActive }) =>
-                                    `flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${isActive
+                            <button
+                                onClick={() => toggleSection('settings')}
+                                className={`flex items-center justify-between w-full p-3 rounded-lg transition-all duration-200 ${location.pathname.startsWith('/settings')
                                         ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600 shadow-sm'
-                                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800 hover:shadow-sm'
-                                    }`
-                                }
+                                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
+                                    }`}
                             >
-                                <FaCogs className="text-lg" />
-                                <span className="font-medium">Settings</span>
-                            </NavLink>
+                                <div className="flex items-center gap-3">
+                                    <FaCogs className="text-lg" />
+                                    <span className="font-medium">Settings</span>
+                                </div>
+                                {expandedSections.settings ? <FaChevronDown className="text-gray-400 text-xs" /> : <FaChevronRight className="text-gray-400 text-xs" />}
+                            </button>
+
+                            {expandedSections.settings && (
+                                <div className="ml-6 mt-1 space-y-1 animate-fadeIn">
+                                    <NavLink
+                                        to="/settings"
+                                        onClick={onClose}
+                                        className={({ isActive }) =>
+                                            `flex items-center gap-3 px-4 py-2 text-sm rounded-lg transition-all duration-200 ${isActive && !location.hash
+                                                ? 'text-blue-600 bg-blue-50 font-medium'
+                                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
+                                            }`
+                                        }
+                                    >
+                                        <FaUserCircle className="text-xs" />
+                                        Profile Settings
+                                    </NavLink>
+                                    <NavLink
+                                        to="/settings#security"
+                                        onClick={(e) => {
+                                            // Handle hash navigation if needed, but for now just navigate
+                                            onClose();
+                                        }}
+                                        className={({ isActive }) =>
+                                            `flex items-center gap-3 px-4 py-2 text-sm rounded-lg transition-all duration-200 ${location.hash === '#security'
+                                                ? 'text-blue-600 bg-blue-50 font-medium'
+                                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
+                                            }`
+                                        }
+                                    >
+                                        <FaLock className="text-xs" />
+                                        Change Password
+                                    </NavLink>
+                                </div>
+                            )}
                         </li>
                         {isCompanyAdmin && (
                             <li className="mt-2 border-t pt-2">

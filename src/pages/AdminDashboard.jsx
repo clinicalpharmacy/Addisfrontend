@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
     FaUserCircle, FaSignOutAlt, FaHome, FaBookMedical, FaDownload,
     FaSync, FaSpinner, FaCheckCircle, FaExclamationTriangle,
-    FaUserCheck, FaUsers, FaHospital, FaPills, FaUserInjured, FaFlask
+    FaUserCheck, FaUsers, FaHospital, FaPills, FaUserInjured, FaFlask, FaComments
 } from 'react-icons/fa';
 
 // Hooks
@@ -26,6 +26,7 @@ import { AdminCompanies } from '../components/Admin/AdminCompanies';
 import { AdminUsers } from '../components/Admin/AdminUsers';
 import { AdminMedications } from '../components/Admin/AdminMedications';
 import { AdminPatients } from '../components/Admin/AdminPatients';
+import { AdminChats } from '../components/Admin/AdminChats';
 import LabSettings from '../components/LabManagement/LabSettings';
 import api from '../utils/api';
 
@@ -200,6 +201,7 @@ const AdminDashboard = () => {
                             { id: 'approvals', label: 'Approvals', icon: FaUserCheck, count: usersManager.pendingUsers.length, color: 'bg-red-500' },
                             { id: 'users', label: 'Users', icon: FaUsers },
                             { id: 'companies', label: 'Companies', icon: FaHospital, count: companiesManager.companies.length, color: 'bg-purple-500' },
+                            { id: 'chats', label: 'Chats', icon: FaComments },
                             { id: 'labs', label: 'Global Labs', icon: FaFlask }
                         ].map(tab => (
                             <button
@@ -289,7 +291,9 @@ const AdminDashboard = () => {
                     />
                 )}
 
-
+                {selectedTab === 'chats' && (
+                    <AdminChats />
+                )}
 
                 {selectedTab === 'labs' && (
                     <LabSettings />
