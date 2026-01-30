@@ -12,6 +12,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import AdminDashboard from "./pages/AdminDashboard";
 import CompanyDashboard from "./pages/CompanyAdminDashboard";
+import CompanyUsers from "./pages/CompanyUsers";
 import PatientList from "./pages/PatientList";
 import PatientDetails from "./pages/PatientDetails";
 import Reports from "./pages/Reports";
@@ -1017,6 +1018,16 @@ function App() {
                     element={
                         <ProtectedRoute companyAdminOnly={true} requireSubscription={false}>
                             <CompanyDashboard />
+                        </ProtectedRoute>
+                    }
+                />
+
+                {/* Company Users Route */}
+                <Route
+                    path="/company/users"
+                    element={
+                        <ProtectedRoute companyAdminOnly={true} requireSubscription={false}>
+                            <CompanyUsers />
                         </ProtectedRoute>
                     }
                 />

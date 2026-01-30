@@ -115,7 +115,7 @@ const Sidebar = ({ onClose }) => {
                     <div className="bg-blue-600 p-2 rounded-lg">
                         <FaHospital className="text-white text-lg" />
                     </div>
-                    <span className="font-bold text-gray-800">PharmaCare</span>
+                    <span className="font-bold text-gray-800">AddisMed</span>
                 </div>
                 <button
                     onClick={onClose}
@@ -201,8 +201,8 @@ const Sidebar = ({ onClose }) => {
                             <button
                                 onClick={() => toggleSection('settings')}
                                 className={`flex items-center justify-between w-full p-3 rounded-lg transition-all duration-200 ${location.pathname.startsWith('/settings')
-                                        ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600 shadow-sm'
-                                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
+                                    ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600 shadow-sm'
+                                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
                                     }`}
                             >
                                 <div className="flex items-center gap-3">
