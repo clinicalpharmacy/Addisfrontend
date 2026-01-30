@@ -166,7 +166,7 @@ const CompanyPerformanceReport = () => {
     const sortedUsers = sortUsers(report.user_performance);
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
+        <div className="min-h-screen bg-gray-50 p-4 md:p-6">
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
                 <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
@@ -314,7 +314,59 @@ const CompanyPerformanceReport = () => {
                         User Performance Details
                     </h2>
 
-                    <div className="overflow-x-auto">
+                    {/* Mobile Card View */}
+                    <div className="md:hidden space-y-4">
+                        {sortedUsers.map((user) => (
+                            <div key={user.user_id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h3 className="font-bold text-gray-800 text-lg">{user.full_name}</h3>
+                                        <p className="text-sm text-gray-500">{user.email}</p>
+                                    </div>
+                                    <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded capitalize">
+                                        {user.role}
+                                    </span>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4 mb-4 bg-gray-50 p-3 rounded-lg">
+                                    <div className="text-center">
+                                        <p className="text-xs text-gray-500 uppercase font-semibold">Patients</p>
+                                        <p className="text-xl font-bold text-gray-800">{user.total_patients}</p>
+                                    </div>
+                                    <div className="text-center">
+                                        <p className="text-xs text-gray-500 uppercase font-semibold">Meds</p>
+                                        <p className="text-xl font-bold text-gray-800">{user.total_medications}</p>
+                                    </div>
+                                    <div className="text-center">
+                                        <p className="text-xs text-gray-500 uppercase font-semibold">Assessments</p>
+                                        <p className="text-xl font-bold text-gray-800">{user.total_assessments}</p>
+                                    </div>
+                                    <div className="text-center">
+                                        <p className="text-xs text-gray-500 uppercase font-semibold">Cost</p>
+                                        <p className="text-xl font-bold text-green-600">{formatCurrency(user.total_cost_managed)}</p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2 text-sm text-gray-600 border-t border-gray-100 pt-3">
+                                    <div className="flex justify-between items-center">
+                                        <span className="font-medium text-gray-500">Recent Activity (30d):</span>
+                                        <span>{user.recent_activity.patients} pts, {user.recent_activity.medications} meds</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="font-medium text-gray-500">Rate:</span>
+                                        <span>{user.patients_per_day} pts/day</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="font-medium text-gray-500">Active For:</span>
+                                        <span>{user.days_active} days</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Desktop Table View */}
+                    <div className="hidden md:block overflow-x-auto">
                         <table className="w-full">
                             <thead className="bg-gray-100 border-b-2 border-gray-200">
                                 <tr>

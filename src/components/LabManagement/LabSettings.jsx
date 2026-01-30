@@ -170,7 +170,7 @@ const LabSettings = ({ onUpdate }) => {
 
     return (
         <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
-            <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-white flex justify-between items-center">
+            <div className="p-4 md:p-6 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h2 className="text-xl font-bold text-indigo-900 flex items-center gap-2">
                         <FaFlask className="text-indigo-600" /> Global Lab Definitions
@@ -185,7 +185,7 @@ const LabSettings = ({ onUpdate }) => {
                         setFormData({ name: '', unit: '', category: 'General', is_active: true, reference_range: '', description: '' });
                         setShowAddForm(true);
                     }}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-md active:scale-95"
+                    className="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-all shadow-md active:scale-95"
                 >
                     <FaPlus /> New Lab Test Definition
                 </button>
@@ -206,7 +206,7 @@ const LabSettings = ({ onUpdate }) => {
                 </div>
             )}
 
-            <div className="p-6">
+            <div className="p-4 md:p-6">
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-12">
                         <FaSpinner className="animate-spin text-4xl text-indigo-500 mb-4" />
@@ -221,61 +221,115 @@ const LabSettings = ({ onUpdate }) => {
                         </p>
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="bg-gray-50 text-gray-600 text-xs uppercase font-bold tracking-wider">
-                                    <th className="px-6 py-4">Status</th>
-                                    <th className="px-6 py-4">Lab Name</th>
-                                    <th className="px-6 py-4">Unit</th>
-                                    <th className="px-6 py-4">Category</th>
-                                    <th className="px-6 py-4 text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {labs.map((lab) => (
-                                    <tr key={lab.id} className="hover:bg-indigo-50/30 transition-colors group">
-                                        <td className="px-6 py-4">
+                    <>
+                        {/* Mobile Card View */}
+                        <div className="md:hidden space-y-4">
+                            {labs.map((lab) => (
+                                <div key={lab.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 relative">
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div className="flex items-center gap-2">
                                             <button
                                                 onClick={() => toggleStatus(lab)}
                                                 className={`text-2xl transition-colors ${lab.is_active ? 'text-green-500' : 'text-gray-300'}`}
                                             >
                                                 {lab.is_active ? <FaToggleOn /> : <FaToggleOff />}
                                             </button>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="font-bold text-gray-800">{lab.name}</div>
-                                            {lab.description && <div className="text-xs text-gray-500 truncate max-w-xs">{lab.description}</div>}
-                                        </td>
-                                        <td className="px-6 py-4 text-gray-600 font-medium">{lab.unit || '-'}</td>
-                                        <td className="px-6 py-4">
-                                            <span className="px-2 py-1 rounded-full bg-gray-100 text-gray-600 text-[10px] font-bold uppercase">
-                                                {lab.category}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button
-                                                    onClick={() => handleEdit(lab)}
-                                                    className="p-2 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-colors"
-                                                    title="Edit Definition"
-                                                >
-                                                    <FaEdit />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(lab.id)}
-                                                    className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
-                                                    title="Delete Definition"
-                                                >
-                                                    <FaTrash />
-                                                </button>
+                                            <div>
+                                                <h3 className="font-bold text-gray-800 text-lg">{lab.name}</h3>
+                                                {lab.description && <p className="text-xs text-gray-500 line-clamp-1">{lab.description}</p>}
                                             </div>
-                                        </td>
+                                        </div>
+                                        <span className="px-2 py-1 rounded-full bg-gray-100 text-gray-600 text-[10px] font-bold uppercase">
+                                            {lab.category}
+                                        </span>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-4 bg-gray-50 p-3 rounded-lg">
+                                        <div>
+                                            <span className="block text-xs font-bold text-gray-400 uppercase">Unit</span>
+                                            <span className="font-medium text-gray-800">{lab.unit || '-'}</span>
+                                        </div>
+                                        <div>
+                                            <span className="block text-xs font-bold text-gray-400 uppercase">Ref Range</span>
+                                            <span className="font-medium text-gray-800">{lab.reference_range || '-'}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
+                                        <button
+                                            onClick={() => handleEdit(lab)}
+                                            className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-indigo-100"
+                                        >
+                                            <FaEdit /> Edit
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(lab.id)}
+                                            className="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-red-100"
+                                        >
+                                            <FaTrash /> Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Desktop Table View */}
+                        <div className="hidden md:block overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-gray-50 text-gray-600 text-xs uppercase font-bold tracking-wider">
+                                        <th className="px-6 py-4">Status</th>
+                                        <th className="px-6 py-4">Lab Name</th>
+                                        <th className="px-6 py-4">Unit</th>
+                                        <th className="px-6 py-4">Category</th>
+                                        <th className="px-6 py-4 text-right">Actions</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {labs.map((lab) => (
+                                        <tr key={lab.id} className="hover:bg-indigo-50/30 transition-colors group">
+                                            <td className="px-6 py-4">
+                                                <button
+                                                    onClick={() => toggleStatus(lab)}
+                                                    className={`text-2xl transition-colors ${lab.is_active ? 'text-green-500' : 'text-gray-300'}`}
+                                                >
+                                                    {lab.is_active ? <FaToggleOn /> : <FaToggleOff />}
+                                                </button>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="font-bold text-gray-800">{lab.name}</div>
+                                                {lab.description && <div className="text-xs text-gray-500 truncate max-w-xs">{lab.description}</div>}
+                                            </td>
+                                            <td className="px-6 py-4 text-gray-600 font-medium">{lab.unit || '-'}</td>
+                                            <td className="px-6 py-4">
+                                                <span className="px-2 py-1 rounded-full bg-gray-100 text-gray-600 text-[10px] font-bold uppercase">
+                                                    {lab.category}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button
+                                                        onClick={() => handleEdit(lab)}
+                                                        className="p-2 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-colors"
+                                                        title="Edit Definition"
+                                                    >
+                                                        <FaEdit />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(lab.id)}
+                                                        className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                                                        title="Delete Definition"
+                                                    >
+                                                        <FaTrash />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
                 )}
             </div>
 
@@ -305,7 +359,7 @@ const LabSettings = ({ onUpdate }) => {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                                         Unit

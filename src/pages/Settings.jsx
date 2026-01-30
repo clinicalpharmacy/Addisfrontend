@@ -83,8 +83,8 @@ const Settings = () => {
                     <button
                         onClick={() => setActiveTab('profile')}
                         className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all duration-200 ${activeTab === 'profile'
-                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-200'
-                                : 'text-gray-600 hover:bg-gray-100'
+                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-200'
+                            : 'text-gray-600 hover:bg-gray-100'
                             }`}
                     >
                         <FaUser className={activeTab === 'profile' ? 'text-white' : 'text-blue-500'} />
@@ -93,8 +93,8 @@ const Settings = () => {
                     <button
                         onClick={() => setActiveTab('security')}
                         className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all duration-200 ${activeTab === 'security'
-                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-200'
-                                : 'text-gray-600 hover:bg-gray-100'
+                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-200'
+                            : 'text-gray-600 hover:bg-gray-100'
                             }`}
                     >
                         <FaShieldAlt className={activeTab === 'security' ? 'text-white' : 'text-purple-500'} />
@@ -150,6 +150,23 @@ const Settings = () => {
                                                 {user?.created_at ? new Date(user.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long' }) : 'N/A'}
                                             </p>
                                         </div>
+                                        <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                                            <p className="text-xs font-bold text-gray-400 uppercase mb-1">Subscription</p>
+                                            <div className="flex flex-col">
+                                                <p className="font-semibold text-gray-800 capitalize">
+                                                    {user?.role === 'admin' ? 'Unlimited (Admin)' : (user?.subscription_status || 'Inactive')}
+                                                </p>
+                                                {user?.role !== 'admin' && user?.subscription_end_date && (
+                                                    <p className={`text-xs font-medium mt-1 ${new Date(user.subscription_end_date) > new Date() ? 'text-green-600' : 'text-red-500'}`}>
+                                                        {(() => {
+                                                            const diff = new Date(user.subscription_end_date) - new Date();
+                                                            const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+                                                            return days > 0 ? `${days} days remaining` : 'Expired';
+                                                        })()}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -179,8 +196,8 @@ const Settings = () => {
 
                                 {status.message && (
                                     <div className={`mb-8 p-4 rounded-2xl flex items-center gap-3 transform animate-bounce-subtle ${status.type === 'success'
-                                            ? 'bg-green-50 text-green-700 border border-green-100 shadow-sm shadow-green-100'
-                                            : 'bg-red-50 text-red-700 border border-red-100 shadow-sm shadow-red-100'
+                                        ? 'bg-green-50 text-green-700 border border-green-100 shadow-sm shadow-green-100'
+                                        : 'bg-red-50 text-red-700 border border-red-100 shadow-sm shadow-red-100'
                                         }`}>
                                         {status.type === 'success' ? <FaCheckCircle className="text-xl" /> : <FaExclamationTriangle className="text-xl" />}
                                         <p className="text-sm font-semibold">{status.message}</p>
@@ -243,8 +260,8 @@ const Settings = () => {
                                             type="submit"
                                             disabled={loading}
                                             className={`w-full md:w-auto flex items-center justify-center gap-3 px-10 py-4 rounded-2xl font-bold text-white transition-all duration-300 shadow-xl hover:shadow-2xl hover:-translate-y-1 active:translate-y-0 ${loading
-                                                    ? 'bg-gray-400 cursor-not-allowed'
-                                                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
+                                                ? 'bg-gray-400 cursor-not-allowed'
+                                                : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
                                                 }`}
                                         >
                                             {loading ? <FaSpinner className="animate-spin" /> : <FaSave />}

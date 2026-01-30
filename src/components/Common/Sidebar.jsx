@@ -626,6 +626,16 @@ const Sidebar = ({ onClose }) => {
                                 </span>
                             )}
                         </p>
+                        {!isAdmin && user?.subscription_end_date && (
+                            <p className={`text-[10px] font-medium mt-0.5 ${new Date(user.subscription_end_date) > new Date() ? 'text-green-600' : 'text-red-500'
+                                }`}>
+                                {(() => {
+                                    const diff = new Date(user.subscription_end_date) - new Date();
+                                    const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+                                    return days > 0 ? `${days} Days Left` : 'Expired';
+                                })()}
+                            </p>
+                        )}
                     </div>
                 </div>
                 <button

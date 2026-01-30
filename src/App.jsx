@@ -655,7 +655,7 @@ const Dashboard = () => {
                             </div>
                             <div>
                                 <p className="text-sm text-gray-600">Subscription Status</p>
-                                <div className="flex items-center gap-2">
+                                <div className="flex flex-col items-start gap-2">
                                     <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${hasValidSubscription(user)
                                         ? 'bg-green-100 text-green-800'
                                         : 'bg-red-100 text-red-800 font-bold'
@@ -667,7 +667,7 @@ const Dashboard = () => {
                                                 : (user.account_type === 'company_user' ? '❌ Inactive (Contact Admin)' : '❌ Inactive'))
                                         }
                                     </div>
-                                    {user?.account_type !== 'company_user' && (
+                                    {user?.account_type !== 'company_user' && !hasValidSubscription(user) && (
                                         <button
                                             onClick={handleGetSubscription}
                                             className="text-blue-600 hover:text-blue-800 text-sm font-semibold underline transition"

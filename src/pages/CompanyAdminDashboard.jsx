@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    FaBars, FaBuilding, FaSync, FaTimes, FaExclamationTriangle, FaCheckCircle
+    FaExclamationTriangle, FaCheckCircle
 } from 'react-icons/fa';
-
-import Sidebar from '../components/Common/Sidebar';
 import { useCompanyAdminLogic } from '../hooks/useCompanyAdminLogic';
 import { CompanyDashboardOverview } from '../components/CompanyAdmin/CompanyDashboardOverview';
 import { CompanyUserManagement } from '../components/CompanyAdmin/CompanyUserManagement';
@@ -65,7 +63,6 @@ const UserModalInternal = ({ show, isEdit, isSubmitting, data, onClose, onSubmit
 const CompanyAdminDashboard = () => {
     const navigate = useNavigate();
     const [currentUser, setCurrentUser] = useState(null);
-    const [showSidebar, setShowSidebar] = useState(window.innerWidth >= 768);
 
     // Use Custom Hook
     const logic = useCompanyAdminLogic(currentUser);
@@ -105,72 +102,28 @@ const CompanyAdminDashboard = () => {
     );
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            {/* Header */}
-            <header className="fixed top-0 inset-x-0 bg-white shadow z-40 h-16 px-4 flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                    <button onClick={() => setShowSidebar(!showSidebar)} className="p-2 hover:bg-gray-100 rounded">
-                        {showSidebar ? <FaTimes /> : <FaBars />}
-                    </button>
-                    <div className="flex items-center gap-2">
-                        <div className="bg-blue-600 p-2 rounded text-white"><FaBuilding /></div>
-                        <div>
-                            <h1 className="font-bold text-gray-800 hidden sm:block">Company Portal</h1>
-                            <p className="text-xs text-gray-500">{logic.companyInfo?.company_name}</p>
-                        </div>
-                    </div>
+        <div className="space-y-6">
+            {/* Alerts */}
+            {logic.error && (
+                <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded flex items-center gap-3 text-red-700">
+                    <FaExclamationTriangle /> <p>{logic.error}</p>
                 </div>
-                <div className="flex items-center gap-4">
-                    <button onClick={() => logic.loadDashboardData(currentUser?.company_id)} className="p-2 hover:bg-gray-100 rounded text-gray-600"><FaSync /></button>
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
-                            {currentUser?.full_name?.charAt(0)}
-                        </div>
-                        <span className="text-sm font-medium hidden sm:block">{currentUser?.full_name}</span>
-                    </div>
+            )}
+            {logic.success && (
+                <div className="mb-6 bg-green-50 border-l-4 border-green-500 p-4 rounded flex items-center gap-3 text-green-700">
+                    <FaCheckCircle /> <p>{logic.success}</p>
                 </div>
-            </header>
-
-            {/* Sidebar Overlay for Mobile */}
-            {showSidebar && (
-                <div
-                    className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden top-16"
-                    onClick={() => setShowSidebar(false)}
-                />
             )}
 
-            {/* Flex Container for Sidebar and Main Content */}
-            <div className="flex flex-1 pt-16">
-                {/* Sidebar - Full Featured */}
-                <div className={`fixed inset-y-0 left-0 top-16 z-50 w-64 bg-white transform transition-transform duration-300 ease-in-out ${showSidebar ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0 md:top-0 border-r border-gray-200 shadow-lg`}>
-                    <Sidebar onClose={() => setShowSidebar(false)} />
-                </div>
-
-                {/* Main Content */}
-                <main className="flex-1 p-4 md:p-6 min-h-screen">
-                    {/* Alerts */}
-                    {logic.error && (
-                        <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded flex items-center gap-3 text-red-700">
-                            <FaExclamationTriangle /> <p>{logic.error}</p>
-                        </div>
-                    )}
-                    {logic.success && (
-                        <div className="mb-6 bg-green-50 border-l-4 border-green-500 p-4 rounded flex items-center gap-3 text-green-700">
-                            <FaCheckCircle /> <p>{logic.success}</p>
-                        </div>
-                    )}
-
-                    {/* Company Admin Dashboard Content */}
-                    <CompanyDashboardOverview
-                        companyInfo={logic.companyInfo}
-                        currentUser={currentUser}
-                        stats={logic.stats}
-                        recentActivities={logic.recentActivities}
-                        onNavigateUsers={() => navigate('/company/users')}
-                        onOpenAddUser={() => logic.setShowAddUserModal(true)}
-                    />
-                </main>
-            </div>
+            {/* Company Admin Dashboard Content */}
+            <CompanyDashboardOverview
+                companyInfo={logic.companyInfo}
+                currentUser={currentUser}
+                stats={logic.stats}
+                recentActivities={logic.recentActivities}
+                onNavigateUsers={() => navigate('/company/users')}
+                onOpenAddUser={() => logic.setShowAddUserModal(true)}
+            />
 
             {/* Modals */}
             <UserModalInternal

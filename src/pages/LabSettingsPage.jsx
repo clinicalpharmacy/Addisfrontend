@@ -12,16 +12,16 @@ const LabSettingsPage = () => {
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => navigate(-1)}
-                        className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-600"
+                        className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-600 flex-shrink-0"
                         title="Go Back"
                     >
                         <FaArrowLeft className="text-xl" />
                     </button>
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-2 md:gap-3">
                             <FaFlask className="text-indigo-600" /> Lab Configuration
                         </h1>
-                        <p className="text-gray-500 mt-1">Manage global laboratory test definitions and categories</p>
+                        <p className="text-gray-500 mt-1 text-sm md:text-base">Manage global laboratory test definitions and categories</p>
                     </div>
                 </div>
             </div>

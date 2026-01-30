@@ -13,7 +13,7 @@ import {
     FaArrowLeft,
     FaEdit,
     FaTrash,
-    FaPrint,
+
     FaHeartbeat,
     FaVenusMars,
     FaPhone,
@@ -33,7 +33,7 @@ import {
     FaCapsules,
     FaProcedures,
     FaPrescriptionBottleAlt,
-    FaWifi,
+
     FaSync,
     FaBrain,
     FaHistory
@@ -4043,20 +4043,7 @@ const PatientDetails = () => {
                             </div>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                            <button
-                                onClick={() => {
-                                    testBackendConnection();
-                                }}
-                                className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
-                            >
-                                <FaWifi /> <span className="hidden sm:inline">Test</span>
-                            </button>
-                            <button
-                                onClick={() => window.print()}
-                                className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
-                            >
-                                <FaPrint /> <span className="hidden sm:inline">Print</span>
-                            </button>
+
                             <button
                                 onClick={() => setIsEditing(!isEditing)}
                                 className={`px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm ${isEditing
