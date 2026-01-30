@@ -165,8 +165,8 @@ const RootRedirector = () => {
         }
     }
 
-    // Not authenticated, go to signup
-    return <Navigate to="/signup" replace />;
+    // Not authenticated, go to login
+    return <Navigate to="/login" replace />;
 };
 
 // Public Route Component - Allows access without authentication
