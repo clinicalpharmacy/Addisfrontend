@@ -1,22 +1,21 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    FaUserCircle, FaSignOutAlt, FaHome, FaBookMedical, FaDownload,
+    FaUserCircle, FaSignOutAlt, FaHome, FaBookMedical,
     FaSync, FaSpinner, FaCheckCircle, FaExclamationTriangle,
-    FaUserCheck, FaUsers, FaHospital, FaPills, FaUserInjured, FaFlask, FaComments
+    FaUserCheck, FaUsers, FaHospital, FaPills, FaComments, FaCreditCard,
+    FaChartLine, FaBuilding
 } from 'react-icons/fa';
 
 // Hooks
 import {
     useAdminDashboardData, useAdminUsers, useAdminCompanies,
-    useAdminMedications, useAdminPatients
+    useAdminMedications, useAdminPatients, useAdminSubscriptions
 } from '../hooks/adminHooks';
 
 // Utilities
 import {
-    formatDate, getActivityIcon, getStatusBadge, getRoleBadge,
-    getPatientStatusBadge, getGenderBadge, getMedicationClassColor,
-    getPregnancyCategoryColor
+    formatDate, getActivityIcon, getStatusBadge, getRoleBadge
 } from '../utils/adminUtils';
 
 // Components
@@ -24,10 +23,8 @@ import { AdminOverview } from '../components/Admin/AdminOverview';
 import { AdminApprovals } from '../components/Admin/AdminApprovals';
 import { AdminCompanies } from '../components/Admin/AdminCompanies';
 import { AdminUsers } from '../components/Admin/AdminUsers';
-import { AdminMedications } from '../components/Admin/AdminMedications';
-import { AdminPatients } from '../components/Admin/AdminPatients';
 import { AdminChats } from '../components/Admin/AdminChats';
-import LabSettings from '../components/LabManagement/LabSettings';
+import { AdminSubscriptions } from '../components/Admin/AdminSubscriptions';
 import api from '../utils/api';
 
 const AdminDashboard = () => {
@@ -42,8 +39,7 @@ const AdminDashboard = () => {
     const dashboardData = useAdminDashboardData(currentUser);
     const usersManager = useAdminUsers(currentUser);
     const companiesManager = useAdminCompanies();
-    const medicationsManager = useAdminMedications(currentUser);
-    const patientsManager = useAdminPatients(currentUser);
+    const subscriptionsManager = useAdminSubscriptions();
 
     // Initial Auth Check
     useEffect(() => {
@@ -70,10 +66,15 @@ const AdminDashboard = () => {
             if (selectedTab === 'overview') {
                 await dashboardData.loadDashboardData();
             } else if (selectedTab === 'approvals' || selectedTab === 'users') {
-                // Both might use user data
                 await usersManager.loadUsers();
             } else if (selectedTab === 'companies') {
                 await companiesManager.loadCompanies();
+            } else if (selectedTab === 'subscriptions') {
+                await Promise.all([
+                    subscriptionsManager.loadSubscriptions(),
+                    usersManager.loadUsers(),
+                    companiesManager.loadCompanies()
+                ]);
             }
         };
 
@@ -87,12 +88,22 @@ const AdminDashboard = () => {
             await Promise.all([
                 dashboardData.loadDashboardData(),
                 usersManager.loadUsers(),
-                companiesManager.loadCompanies()
+                companiesManager.loadCompanies(),
+                subscriptionsManager.loadSubscriptions()
             ]);
         } finally {
             setRefreshing(false);
         }
     };
+
+    const navigationTabs = [
+        { id: 'overview', label: 'Overview', icon: FaChartLine },
+        { id: 'approvals', label: 'Approvals', icon: FaUserCheck, count: dashboardData.stats.pending_approvals, color: 'bg-red-500' },
+        { id: 'users', label: 'Users', icon: FaUsers },
+        { id: 'companies', label: 'Companies', icon: FaBuilding },
+        { id: 'subscriptions', label: 'Subscriptions', icon: FaCreditCard },
+        { id: 'chats', label: 'Support Chats', icon: FaComments }
+    ];
 
     // Logout
     const handleLogout = () => {
@@ -102,54 +113,24 @@ const AdminDashboard = () => {
         }
     };
 
-    // Report Download
-    const downloadReport = async () => {
-        try {
-            setRefreshing(true);
-            // Ensure we have latest data
-            await handleRefresh();
 
-            const report = {
-                generated: new Date().toISOString(),
-                generated_by: currentUser?.email,
-                stats: dashboardData.stats,
-                pending_users: usersManager.pendingUsers,
-                all_users: usersManager.users,
-                companies: companiesManager.companies,
-                medications: medicationsManager.medications,
-                patients: patientsManager.patients,
-                activities: dashboardData.recentActivities
-            };
 
-            const content = JSON.stringify(report, null, 2);
-            const blob = new Blob([content], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `Admin_Report_${new Date().toLocaleDateString().replace(/\//g, '-')}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            setSuccessMessage('Report downloaded successfully!');
-            setTimeout(() => setSuccessMessage(''), 3000);
-        } catch (err) {
-            setGeneralError('Failed to generate report');
-        } finally {
-            setRefreshing(false);
-        }
-    };
-
-    if (!currentUser) return null; // Or loading spinner
+    if (!currentUser) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <FaSpinner className="text-4xl text-blue-600 animate-spin" />
+            </div>
+        );
+    }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-            {/* Global Success/Error Messages */}
+        <div className="min-h-screen bg-gray-50 font-sans">
+            {/* Success/Error Alerts */}
             {successMessage && (
-                <div className="fixed top-4 right-4 z-50 bg-green-50 border-l-4 border-green-500 p-4 rounded shadow-lg flex items-center gap-2 animate-slideIn">
-                    <FaCheckCircle className="text-green-500" />
-                    <span className="text-green-700">{successMessage}</span>
+                <div className="fixed top-20 right-4 bg-green-500 text-white px-6 py-3 rounded-xl shadow-2xl z-50 animate-bounce">
+                    <div className="flex items-center gap-2">
+                        <FaCheckCircle /> {successMessage}
+                    </div>
                 </div>
             )}
             {generalError && (
@@ -178,9 +159,7 @@ const AdminDashboard = () => {
                             <button onClick={() => navigate('/home')} className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg flex items-center gap-2">
                                 <FaHome /> Main
                             </button>
-                            <button onClick={downloadReport} className="bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-2 rounded-lg flex items-center gap-2">
-                                <FaDownload /> Report
-                            </button>
+
                             <button onClick={handleRefresh} disabled={refreshing} className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg flex items-center gap-2">
                                 <FaSync className={refreshing ? 'animate-spin' : ''} /> Refresh
                             </button>
@@ -196,14 +175,7 @@ const AdminDashboard = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
                 <div className="bg-white rounded-xl shadow-sm p-1 overflow-x-auto">
                     <nav className="flex space-x-1 min-w-max">
-                        {[
-                            { id: 'overview', label: 'Overview', icon: FaChartLine },
-                            { id: 'approvals', label: 'Approvals', icon: FaUserCheck, count: usersManager.pendingUsers.length, color: 'bg-red-500' },
-                            { id: 'users', label: 'Users', icon: FaUsers },
-                            { id: 'companies', label: 'Companies', icon: FaHospital, count: companiesManager.companies.length, color: 'bg-purple-500' },
-                            { id: 'chats', label: 'Chats', icon: FaComments },
-                            { id: 'labs', label: 'Global Labs', icon: FaFlask }
-                        ].map(tab => (
+                        {navigationTabs.map(tab => (
                             <button
                                 key={tab.id}
                                 onClick={() => setSelectedTab(tab.id)}
@@ -231,41 +203,36 @@ const AdminDashboard = () => {
                     <AdminOverview
                         stats={dashboardData.stats}
                         usersCount={usersManager.users.length}
-                        medicationsCount={medicationsManager.medications.length}
-                        patientsCount={patientsManager.patients.length}
                         companiesCount={companiesManager.companies.length}
-                        pendingApprovalsCount={usersManager.pendingUsers.length}
+                        pendingApprovalsCount={dashboardData.stats.pending_approvals}
                         recentActivities={dashboardData.recentActivities}
                         onTabChange={setSelectedTab}
                         getActivityIcon={getActivityIcon}
                         formatDate={formatDate}
-                        downloadReport={downloadReport}
                     />
                 )}
 
                 {selectedTab === 'approvals' && (
                     <AdminApprovals
                         pendingUsers={usersManager.pendingUsers}
+                        loading={usersManager.loading}
+                        error={usersManager.error}
                         processingApproval={usersManager.processingId}
                         handleApproveUser={async (id, email) => {
                             const success = await usersManager.approveUser(id, email);
                             if (success) {
                                 setSuccessMessage(`User approved: ${email}`);
                                 setTimeout(() => setSuccessMessage(''), 3000);
-                                // Refresh stats in background
                                 dashboardData.loadDashboardData();
                             }
                         }}
                         handleRejectUser={async (id, email) => {
-                            if (window.confirm(`Reject access for ${email}?`)) {
-                                const success = await usersManager.rejectUser(id, email);
-                                if (success) {
-                                    setSuccessMessage(`User rejected: ${email}`);
-                                    setTimeout(() => setSuccessMessage(''), 3000);
-                                }
+                            if (window.confirm(`Reject ${email}?`)) {
+                                await usersManager.rejectUser(id, email);
+                                dashboardData.loadDashboardData();
                             }
                         }}
-                        onRefresh={usersManager.loadUsers}
+                        onRefresh={handleRefresh}
                         formatDate={formatDate}
                     />
                 )}
@@ -274,7 +241,7 @@ const AdminDashboard = () => {
                     <AdminUsers
                         users={usersManager.users}
                         loading={usersManager.loading}
-                        onRefresh={usersManager.loadUsers}
+                        onRefresh={handleRefresh}
                         formatDate={formatDate}
                         getStatusBadge={getStatusBadge}
                         getRoleBadge={getRoleBadge}
@@ -286,24 +253,28 @@ const AdminDashboard = () => {
                         companies={companiesManager.companies}
                         loading={companiesManager.loading}
                         error={companiesManager.error}
-                        onRefresh={companiesManager.loadCompanies}
+                        onRefresh={handleRefresh}
                         formatDate={formatDate}
+                    />
+                )}
+
+
+                {selectedTab === 'subscriptions' && (
+                    <AdminSubscriptions
+                        subscriptions={subscriptionsManager.subscriptions}
+                        users={usersManager.users}
+                        companies={companiesManager.companies}
+                        loading={subscriptionsManager.loading || usersManager.loading || companiesManager.loading}
+                        onRefresh={handleRefresh}
                     />
                 )}
 
                 {selectedTab === 'chats' && (
                     <AdminChats />
                 )}
-
-                {selectedTab === 'labs' && (
-                    <LabSettings />
-                )}
             </main>
         </div>
     );
 };
-
-// Start icon need to be imported manually as it was used in map variable
-import { FaChartLine } from 'react-icons/fa';
 
 export default AdminDashboard;

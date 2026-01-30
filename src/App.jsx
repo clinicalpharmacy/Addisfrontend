@@ -15,7 +15,7 @@ import CompanyDashboard from "./pages/CompanyAdminDashboard";
 import CompanyUsers from "./pages/CompanyUsers";
 import PatientList from "./pages/PatientList";
 import PatientDetails from "./pages/PatientDetails";
-import Reports from "./pages/Reports";
+
 import Settings from "./pages/Settings";
 import CDSSAnalysisPage from './pages/CDSSAnalysisPage';
 import LabSettingsPage from './pages/LabSettingsPage';
@@ -368,12 +368,12 @@ const SubscriptionLayout = ({ children }) => (
     </div>
 );
 
-// Admin Layout - Updated to match your AdminDashboard
+// Admin Layout - Updated to show sidebar and navbar for consistency
 const AdminLayout = ({ children }) => {
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+        <MainLayout>
             {children}
-        </div>
+        </MainLayout>
     );
 };
 
@@ -1185,15 +1185,7 @@ function App() {
                     }
                 />
 
-                {/* Other Routes - NO subscription requirement */}
-                <Route
-                    path="/reports"
-                    element={
-                        <ProtectedRoute requireSubscription={true}>
-                            <Reports />
-                        </ProtectedRoute>
-                    }
-                />
+
 
                 <Route
                     path="/useful-links"

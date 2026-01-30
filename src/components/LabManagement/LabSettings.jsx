@@ -12,7 +12,9 @@ import {
     FaSpinner,
     FaToggleOn,
     FaToggleOff,
-    FaInfoCircle
+    FaInfoCircle,
+    FaSearch,
+    FaVial
 } from 'react-icons/fa';
 
 const LabSettings = ({ onUpdate }) => {
@@ -23,13 +25,14 @@ const LabSettings = ({ onUpdate }) => {
     const [showAddForm, setShowAddForm] = useState(false);
     const [editingLab, setEditingLab] = useState(null);
     const [saving, setSaving] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterCategory, setFilterCategory] = useState('All');
 
     const [formData, setFormData] = useState({
         name: '',
         unit: '',
         category: 'General',
         is_active: true,
-        reference_range: '',
         description: ''
     });
 
@@ -54,13 +57,11 @@ const LabSettings = ({ onUpdate }) => {
             const { data, error } = await supabase
                 .from('lab_tests')
                 .select('*')
+                .order('category', { ascending: true })
                 .order('name', { ascending: true });
 
             if (error) {
-                // If table doesn't exist, we might get an error. 
-                // In a real app, we'd handle migration.
                 if (error.code === 'PGRST116' || error.message.includes('not found')) {
-                    console.log('lab_tests table likely not created yet');
                     setLabs([]);
                 } else {
                     throw error;
@@ -88,15 +89,13 @@ const LabSettings = ({ onUpdate }) => {
                     .update(formData)
                     .eq('id', editingLab.id);
                 if (error) throw error;
-                setSuccess('Lab updated successfully!');
-                if (onUpdate) onUpdate();
+                setSuccess('Lab definition updated!');
             } else {
                 const { error } = await supabase
                     .from('lab_tests')
                     .insert([formData]);
                 if (error) throw error;
-                setSuccess('Lab created successfully!');
-                if (onUpdate) onUpdate();
+                setSuccess('New lab definition created!');
             }
 
             setFormData({
@@ -104,16 +103,16 @@ const LabSettings = ({ onUpdate }) => {
                 unit: '',
                 category: 'General',
                 is_active: true,
-                reference_range: '',
                 description: ''
             });
             setShowAddForm(false);
             setEditingLab(null);
             fetchLabs();
+            if (onUpdate) onUpdate();
             setTimeout(() => setSuccess(''), 3000);
         } catch (err) {
             console.error('Error saving lab:', err);
-            setError(`Error: ${err.message}. Make sure the 'lab_tests' table exists in your database.`);
+            setError(err.message);
         } finally {
             setSaving(false);
         }
@@ -126,14 +125,13 @@ const LabSettings = ({ onUpdate }) => {
             unit: lab.unit || '',
             category: lab.category || 'General',
             is_active: lab.is_active,
-            reference_range: lab.reference_range || '',
             description: lab.description || ''
         });
         setShowAddForm(true);
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this lab definition? This will NOT remove historic data from patients but will hide the field for new input.')) {
+        if (!window.confirm('Delete this definition? This affects future entries but preserves historical data.')) {
             return;
         }
 
@@ -144,7 +142,7 @@ const LabSettings = ({ onUpdate }) => {
                 .eq('id', id);
 
             if (error) throw error;
-            setSuccess('Lab deleted successfully');
+            setSuccess('Definition removed');
             fetchLabs();
             if (onUpdate) onUpdate();
             setTimeout(() => setSuccess(''), 3000);
@@ -168,260 +166,256 @@ const LabSettings = ({ onUpdate }) => {
         }
     };
 
+    const filteredLabs = labs.filter(lab => {
+        const matchesSearch = lab.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesCategory = filterCategory === 'All' || lab.category === filterCategory;
+        return matchesSearch && matchesCategory;
+    });
+
+    const getCategoryStyles = (category) => {
+        switch (category) {
+            case 'Hematology': return 'bg-red-50 text-red-600 border-red-100';
+            case 'Biochemistry': return 'bg-blue-50 text-blue-600 border-blue-100';
+            case 'Electrolytes': return 'bg-amber-50 text-amber-600 border-amber-100';
+            case 'Endocrine': return 'bg-purple-50 text-purple-600 border-purple-100';
+            case 'Infectious Disease': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
+            case 'Urinalysis': return 'bg-indigo-50 text-indigo-600 border-indigo-100';
+            default: return 'bg-gray-50 text-gray-600 border-gray-100';
+        }
+    };
+
     return (
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
-            <div className="p-4 md:p-6 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h2 className="text-xl font-bold text-indigo-900 flex items-center gap-2">
-                        <FaFlask className="text-indigo-600" /> Global Lab Definitions
-                    </h2>
-                    <p className="text-sm text-gray-600 mt-1">
-                        Define lab tests that should appear for all users to input across all patients.
-                    </p>
+        <div className="space-y-6 animate-fadeIn pb-10">
+            {/* Header Controls */}
+            <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <div className="flex-1 w-full md:max-w-md relative">
+                    <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <input
+                        type="text"
+                        placeholder="Search laboratory tests..."
+                        className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
                 </div>
-                <button
-                    onClick={() => {
-                        setEditingLab(null);
-                        setFormData({ name: '', unit: '', category: 'General', is_active: true, reference_range: '', description: '' });
-                        setShowAddForm(true);
-                    }}
-                    className="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-all shadow-md active:scale-95"
-                >
-                    <FaPlus /> New Lab Test Definition
-                </button>
+
+                <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
+                    <select
+                        value={filterCategory}
+                        onChange={(e) => setFilterCategory(e.target.value)}
+                        className="w-full md:w-48 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 font-bold cursor-pointer transition-all"
+                    >
+                        <option value="All">All Categories</option>
+                        {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+
+                    <button
+                        onClick={() => {
+                            setEditingLab(null);
+                            setFormData({ name: '', unit: '', category: 'General', is_active: true, reference_range: '', description: '' });
+                            setShowAddForm(true);
+                        }}
+                        className="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md font-bold text-sm active:scale-95"
+                    >
+                        <FaPlus /> Add Definition
+                    </button>
+                </div>
+            </div>
+
+            {/* Stats Summary */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Total Tests</div>
+                    <div className="text-2xl font-black text-gray-800">{labs.length}</div>
+                </div>
+                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-green-500 mb-1">Active Now</div>
+                    <div className="text-2xl font-black text-gray-800">{labs.filter(l => l.is_active).length}</div>
+                </div>
+                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-1">Categories</div>
+                    <div className="text-2xl font-black text-gray-800">{new Set(labs.map(l => l.category)).size}</div>
+                </div>
+                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-amber-500 mb-1">Status</div>
+                    <div className="text-2xl font-black text-gray-800">Live</div>
+                </div>
             </div>
 
             {error && (
-                <div className="m-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 flex items-center gap-3 animate-shake">
+                <div className="p-4 bg-red-50 border border-red-100 rounded-xl text-red-700 flex items-center gap-3 animate-shake">
                     <FaExclamationCircle className="flex-shrink-0" />
-                    <p className="text-sm">{error}</p>
+                    <p className="text-sm font-medium">{error}</p>
                     <button onClick={() => setError('')} className="ml-auto"><FaTimes /></button>
                 </div>
             )}
 
             {success && (
-                <div className="m-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 flex items-center gap-3">
+                <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-xl text-emerald-700 flex items-center gap-3 animate-slideIn">
                     <FaCheckCircle className="flex-shrink-0" />
-                    <p className="text-sm font-medium">{success}</p>
+                    <p className="text-sm font-bold">{success}</p>
                 </div>
             )}
 
-            <div className="p-4 md:p-6">
-                {loading ? (
-                    <div className="flex flex-col items-center justify-center py-12">
-                        <FaSpinner className="animate-spin text-4xl text-indigo-500 mb-4" />
-                        <p className="text-gray-500">Loading lab definitions...</p>
+            {loading ? (
+                <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-gray-100 shadow-sm">
+                    <div className="relative">
+                        <FaSpinner className="animate-spin text-5xl text-indigo-600 mb-4" />
+                        <FaFlask className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xl text-indigo-400 opacity-50" />
                     </div>
-                ) : labs.length === 0 ? (
-                    <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
-                        <FaFlask className="text-5xl text-gray-300 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold text-gray-700">No Global Labs Defined</h3>
-                        <p className="text-gray-500 max-w-sm mx-auto mt-2">
-                            Add lab tests here and they will automatically appear in the patient details page for all users to fill in.
-                        </p>
+                    <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Loading Lab Framework...</p>
+                </div>
+            ) : filteredLabs.length === 0 ? (
+                <div className="bg-white rounded-3xl border-2 border-dashed border-gray-200 p-20 text-center">
+                    <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <FaFlask className="text-4xl text-gray-300" />
                     </div>
-                ) : (
-                    <>
-                        {/* Mobile Card View */}
-                        <div className="md:hidden space-y-4">
-                            {labs.map((lab) => (
-                                <div key={lab.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 relative">
-                                    <div className="flex justify-between items-start mb-3">
-                                        <div className="flex items-center gap-2">
-                                            <button
-                                                onClick={() => toggleStatus(lab)}
-                                                className={`text-2xl transition-colors ${lab.is_active ? 'text-green-500' : 'text-gray-300'}`}
-                                            >
-                                                {lab.is_active ? <FaToggleOn /> : <FaToggleOff />}
-                                            </button>
-                                            <div>
-                                                <h3 className="font-bold text-gray-800 text-lg">{lab.name}</h3>
-                                                {lab.description && <p className="text-xs text-gray-500 line-clamp-1">{lab.description}</p>}
-                                            </div>
-                                        </div>
-                                        <span className="px-2 py-1 rounded-full bg-gray-100 text-gray-600 text-[10px] font-bold uppercase">
-                                            {lab.category}
-                                        </span>
+                    <h3 className="text-xl font-black text-gray-800 mb-2">No Definitions Found</h3>
+                    <p className="text-gray-500 max-w-sm mx-auto text-sm">
+                        {searchTerm ? "Your search criteria didn't match any records." : "Get started by defining your first laboratory test for the clinical platform."}
+                    </p>
+                    {searchTerm && (
+                        <button onClick={() => setSearchTerm('')} className="mt-4 text-indigo-600 font-black text-sm hover:underline">
+                            Clear Search
+                        </button>
+                    )}
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredLabs.map((lab) => (
+                        <div key={lab.id} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden group flex flex-col">
+                            <div className="p-6 flex-1">
+                                <div className="flex justify-between items-start mb-6">
+                                    <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${getCategoryStyles(lab.category)}`}>
+                                        {lab.category}
                                     </div>
-
-                                    <div className="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-4 bg-gray-50 p-3 rounded-lg">
-                                        <div>
-                                            <span className="block text-xs font-bold text-gray-400 uppercase">Unit</span>
-                                            <span className="font-medium text-gray-800">{lab.unit || '-'}</span>
-                                        </div>
-                                        <div>
-                                            <span className="block text-xs font-bold text-gray-400 uppercase">Ref Range</span>
-                                            <span className="font-medium text-gray-800">{lab.reference_range || '-'}</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
-                                        <button
-                                            onClick={() => handleEdit(lab)}
-                                            className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-indigo-100"
-                                        >
-                                            <FaEdit /> Edit
-                                        </button>
-                                        <button
-                                            onClick={() => handleDelete(lab.id)}
-                                            className="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-red-100"
-                                        >
-                                            <FaTrash /> Delete
-                                        </button>
-                                    </div>
+                                    <button
+                                        onClick={() => toggleStatus(lab)}
+                                        className={`transition-all duration-300 transform active:scale-90 ${lab.is_active ? 'text-green-500' : 'text-gray-300'}`}
+                                        title={lab.is_active ? 'Disable Test' : 'Enable Test'}
+                                    >
+                                        {lab.is_active ? <FaToggleOn size={32} /> : <FaToggleOff size={32} />}
+                                    </button>
                                 </div>
-                            ))}
-                        </div>
 
-                        {/* Desktop Table View */}
-                        <div className="hidden md:block overflow-x-auto">
-                            <table className="w-full text-left border-collapse">
-                                <thead>
-                                    <tr className="bg-gray-50 text-gray-600 text-xs uppercase font-bold tracking-wider">
-                                        <th className="px-6 py-4">Status</th>
-                                        <th className="px-6 py-4">Lab Name</th>
-                                        <th className="px-6 py-4">Unit</th>
-                                        <th className="px-6 py-4">Category</th>
-                                        <th className="px-6 py-4 text-right">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100">
-                                    {labs.map((lab) => (
-                                        <tr key={lab.id} className="hover:bg-indigo-50/30 transition-colors group">
-                                            <td className="px-6 py-4">
-                                                <button
-                                                    onClick={() => toggleStatus(lab)}
-                                                    className={`text-2xl transition-colors ${lab.is_active ? 'text-green-500' : 'text-gray-300'}`}
-                                                >
-                                                    {lab.is_active ? <FaToggleOn /> : <FaToggleOff />}
-                                                </button>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="font-bold text-gray-800">{lab.name}</div>
-                                                {lab.description && <div className="text-xs text-gray-500 truncate max-w-xs">{lab.description}</div>}
-                                            </td>
-                                            <td className="px-6 py-4 text-gray-600 font-medium">{lab.unit || '-'}</td>
-                                            <td className="px-6 py-4">
-                                                <span className="px-2 py-1 rounded-full bg-gray-100 text-gray-600 text-[10px] font-bold uppercase">
-                                                    {lab.category}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button
-                                                        onClick={() => handleEdit(lab)}
-                                                        className="p-2 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-colors"
-                                                        title="Edit Definition"
-                                                    >
-                                                        <FaEdit />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDelete(lab.id)}
-                                                        className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
-                                                        title="Delete Definition"
-                                                    >
-                                                        <FaTrash />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </>
-                )}
-            </div>
+                                <div className="mb-6">
+                                    <h3 className="text-xl font-black text-gray-900 leading-tight mb-2 flex items-center gap-2">
+                                        {lab.name}
+                                        {!lab.is_active && <span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-black uppercase">Inactive</span>}
+                                    </h3>
+                                    <p className="text-sm text-gray-500 line-clamp-2 min-h-[40px] italic">
+                                        {lab.description || "No detailed description provided for this definition."}
+                                    </p>
+                                </div>
 
+                                <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 group-hover:bg-indigo-50/30 transition-colors">
+                                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Measurement Unit</div>
+                                    <div className="text-sm font-bold text-gray-800">{lab.unit || "N/A"}</div>
+                                </div>
+                            </div>
+
+                            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <button
+                                    onClick={() => handleEdit(lab)}
+                                    className="text-indigo-600 hover:text-indigo-800 text-xs font-black uppercase tracking-wider flex items-center gap-1.5"
+                                >
+                                    <FaEdit /> Edit Setup
+                                </button>
+                                <button
+                                    onClick={() => handleDelete(lab.id)}
+                                    className="text-red-500 hover:text-red-700 text-xs font-black uppercase tracking-wider flex items-center gap-1.5"
+                                >
+                                    <FaTrash /> Remove
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Modal */}
             {showAddForm && (
-                <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[60] animate-fadeIn">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-slideUp">
-                        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
-                            <h3 className="text-xl font-bold flex items-center gap-2">
-                                <FaFlask /> {editingLab ? 'Edit Lab Definition' : 'Add New Lab Definition'}
-                            </h3>
-                            <button onClick={() => setShowAddForm(false)} className="hover:rotate-90 transition-transform">
+                <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-md flex items-center justify-center p-4 z-[60] animate-fadeIn">
+                    <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-lg overflow-hidden animate-slideUp border border-indigo-100">
+                        <div className="p-8 pb-4 flex justify-between items-center">
+                            <div>
+                                <h3 className="text-2xl font-black text-gray-900">
+                                    {editingLab ? 'Edit Setup' : 'New Definition'}
+                                </h3>
+                                <p className="text-sm text-gray-500">Global laboratory test configuration.</p>
+                            </div>
+                            <button onClick={() => setShowAddForm(false)} className="p-3 bg-gray-100 hover:bg-red-50 hover:text-red-500 rounded-2xl transition-all">
                                 <FaTimes className="text-xl" />
                             </button>
                         </div>
-                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                                    Lab Test Name *
-                                </label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    placeholder="e.g. Vitamin D, CRP, Fasting Blood Sugar"
-                                    className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                                />
-                            </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <form onSubmit={handleSubmit} className="p-8 pt-4 space-y-6">
+                            <div className="space-y-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                                        Unit
+                                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
+                                        Lab Test Identity
                                     </label>
                                     <input
                                         type="text"
-                                        value={formData.unit}
-                                        onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                                        placeholder="e.g. mg/dL, mmol/L"
-                                        className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                                        required
+                                        value={formData.name}
+                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                        placeholder="e.g. Hemoglobin A1c"
+                                        className="w-full border-2 border-gray-100 rounded-2xl px-5 py-3.5 focus:ring-0 focus:border-indigo-500 outline-none transition-all font-bold"
                                     />
                                 </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
+                                            Unit (SI)
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={formData.unit}
+                                            onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                                            placeholder="mg/dL"
+                                            className="w-full border-2 border-gray-100 rounded-2xl px-5 py-3.5 focus:ring-0 focus:border-indigo-500 outline-none transition-all font-bold"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
+                                            Category
+                                        </label>
+                                        <select
+                                            value={formData.category}
+                                            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                            className="w-full border-2 border-gray-100 rounded-2xl px-5 py-3.5 focus:ring-0 focus:border-indigo-500 outline-none transition-all appearance-none bg-gray-50 font-bold"
+                                        >
+                                            {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+
+
+
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                                        Category
+                                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
+                                        Description
                                     </label>
-                                    <select
-                                        value={formData.category}
-                                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                        className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all appearance-none bg-white"
-                                    >
-                                        {categories.map(c => <option key={c} value={c}>{c}</option>)}
-                                    </select>
+                                    <textarea
+                                        value={formData.description}
+                                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                        placeholder="Clinical significance..."
+                                        rows="3"
+                                        className="w-full border-2 border-gray-100 rounded-3xl px-5 py-3.5 focus:ring-0 focus:border-indigo-500 outline-none transition-all resize-none font-medium h-24"
+                                    />
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                                    Reference Range
-                                </label>
-                                <input
-                                    type="text"
-                                    value={formData.reference_range}
-                                    onChange={(e) => setFormData({ ...formData, reference_range: e.target.value })}
-                                    placeholder="e.g. 70 - 110 mg/dL"
-                                    className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                                    Description (Optional)
-                                </label>
-                                <textarea
-                                    value={formData.description}
-                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    placeholder="Brief explanation for users..."
-                                    rows="2"
-                                    className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all resize-none"
-                                />
-                            </div>
-
-                            <div className="pt-2">
-                                <button
-                                    type="submit"
-                                    disabled={saving}
-                                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50"
-                                >
-                                    {saving ? <FaSpinner className="animate-spin" /> : <FaSave />}
-                                    {editingLab ? 'Update Definition' : 'Create Definition'}
-                                </button>
-                            </div>
+                            <button
+                                type="submit"
+                                disabled={saving}
+                                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-3xl transition-all shadow-xl shadow-indigo-200 active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-50 mt-4"
+                            >
+                                {saving ? <FaSpinner className="animate-spin" /> : <FaSave />}
+                                {editingLab ? 'Save Changes' : 'Confirm Definition'}
+                            </button>
                         </form>
                     </div>
                 </div>

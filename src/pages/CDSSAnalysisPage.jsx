@@ -60,26 +60,27 @@ const CDSSAnalysisPage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
+        <div className="min-h-screen bg-gray-50 p-4 md:p-6">
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-8">
-                    <div className="flex items-center gap-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 md:mb-8">
+                    <div className="flex items-start md:items-center gap-4">
                         <button
                             onClick={() => selectedPatient ? setSelectedPatient(null) : navigate(-1)}
-                            className="bg-white px-4 py-2 rounded-lg shadow-sm hover:bg-gray-100 transition-colors flex items-center gap-2 text-sm font-medium text-gray-600 border border-gray-100"
+                            className="bg-white p-3 md:px-4 md:py-2 rounded-lg shadow-sm hover:bg-gray-100 transition-colors flex items-center gap-2 text-sm font-medium text-gray-600 border border-gray-100 shrink-0"
+                            title={selectedPatient ? 'Back to Patient List' : 'Back to Dashboard'}
                         >
                             <FaArrowLeft />
-                            <span>{selectedPatient ? 'Back to Patient List' : 'Back to Dashboard'}</span>
+                            <span className="hidden md:inline">{selectedPatient ? 'Back to Patient List' : 'Back to Dashboard'}</span>
                         </button>
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-                                <FaBrain className="text-purple-600" />
-                                Clinical Decision Support (CDSS)
+                            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 flex items-center gap-3">
+                                <FaBrain className="text-purple-600 shrink-0" />
+                                <span className="truncate">Clinical Decision Support</span>
                             </h1>
-                            <p className="text-gray-600">
+                            <p className="text-sm md:text-base text-gray-600 mt-1">
                                 {selectedPatient
-                                    ? `Analyzing: ${selectedPatient.full_name} (${selectedPatient.patient_code})`
+                                    ? `Analyzing: ${selectedPatient.full_name}`
                                     : 'Select a patient to perform clinical analysis'
                                 }
                             </p>

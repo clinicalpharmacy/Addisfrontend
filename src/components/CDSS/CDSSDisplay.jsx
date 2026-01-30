@@ -12,10 +12,9 @@ import {
 } from 'react-icons/fa';
 
 const CDSSDisplay = ({ patientData, onBack }) => {
-    const [showDebug, setShowDebug] = useState(false);
 
     const {
-        alerts, filteredAlerts, loading, debugInfo, analysisStats,
+        alerts, filteredAlerts, loading, analysisStats,
         clinicalRules, medications, analysisError, testResults,
         severityFilter, setSeverityFilter,
         fetchClinicalRules, testSampleRules, analyzePatient,
@@ -98,91 +97,55 @@ const CDSSDisplay = ({ patientData, onBack }) => {
     const AgeCategoryIcon = getAgeCategoryIcon(patientFacts);
 
     return (
-        <div className="bg-white rounded-xl shadow-lg p-6">
+        <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                 <div className="flex items-center gap-3">
-                    <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 rounded-full">
+                    <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 rounded-full shrink-0">
                         <FaBell className="text-white text-xl" />
                     </div>
                     <div>
-                        <h2 className="text-2xl font-bold text-gray-800">Clinical Decision Support System</h2>
+                        <h2 className="text-xl md:text-2xl font-bold text-gray-800">CDSS Analysis</h2>
                         {patientData ? (
-                            <div className="text-sm text-gray-600 flex flex-wrap items-center gap-2">
-                                <span className="font-semibold">{patientData.full_name || patientData.patient_code}</span>
+                            <div className="text-sm text-gray-600 flex flex-wrap items-center gap-2 mt-1">
+                                <span className="font-semibold">{patientData.full_name}</span>
                                 {patientFacts?.age_in_days > 0 && (
-                                    <span className="flex items-center gap-1">
+                                    <span className="flex items-center gap-1 bg-gray-100 px-2 py-0.5 rounded-full text-xs">
                                         <FaCalendarDay className="text-blue-400" />
                                         {patientFacts.age_in_days >= 365
-                                            ? `${Math.floor(patientFacts.age_in_days / 365)} yrs`
-                                            : `${patientFacts.age_in_days} days`}
+                                            ? `${Math.floor(patientFacts.age_in_days / 365)}y`
+                                            : `${patientFacts.age_in_days}d`}
                                     </span>
                                 )}
                                 {patientFacts?.patient_type && (
-                                    <span className="flex items-center gap-1">
+                                    <span className="flex items-center gap-1 bg-gray-100 px-2 py-0.5 rounded-full text-xs">
                                         <AgeCategoryIcon className="text-indigo-400" /> {getAgeCategoryLabel(patientFacts)}
-                                    </span>
-                                )}
-                                {patientFacts?.gender && (
-                                    <span className="flex items-center gap-1">
-                                        <FaUserTag className="text-gray-400" /> {patientFacts.gender}
-                                    </span>
-                                )}
-                                {medications.length > 0 && (
-                                    <span className="flex items-center gap-1">
-                                        <FaCapsules className="text-purple-400" /> {medications.length} meds
-                                    </span>
-                                )}
-                                {clinicalRules.length === 0 && (
-                                    <span className="flex items-center gap-1 bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs">
-                                        <FaExclamationTriangle /> Using Test Rules
                                     </span>
                                 )}
                             </div>
                         ) : (
-                            <p className="text-sm text-gray-600">Select a patient to begin analysis</p>
+                            <p className="text-sm text-gray-600">Select a patient</p>
                         )}
                     </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                    {clinicalRules.length === 0 && patientData && (
-                        <button
-                            onClick={testSampleRules}
-                            disabled={loading || !patientData}
-                            className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm disabled:opacity-50"
-                        >
-                            <FaVial /> Test Age-in-Days Rules
-                        </button>
-                    )}
-                    <button
-                        onClick={() => setShowDebug(!showDebug)}
-                        className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
-                    >
-                        {showDebug ? <FaEyeSlash /> : <FaEye />}
-                        {showDebug ? 'Hide Logs' : 'Show Logs'}
-                    </button>
+                <div className="flex flex-wrap gap-2 w-full md:w-auto">
                     <button
                         onClick={fetchClinicalRules}
-                        className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
+                        className="bg-purple-100 hover:bg-purple-200 text-purple-700 px-3 py-2 rounded-lg flex items-center justify-center gap-2 text-sm flex-1 md:flex-initial"
+                        title="Refresh Rules"
                     >
-                        <FaRedo /> Refresh Rules
+                        <FaRedo /> <span className="hidden sm:inline">Refresh Rules</span>
                     </button>
-                    <button
-                        onClick={analyzePatient}
-                        disabled={loading || !patientData}
-                        className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <FaSync className={loading ? 'animate-spin' : ''} />
-                        {loading ? 'Analyzing...' : 'Run Analysis'}
-                    </button>
+
                     {alerts.length > 0 && (
                         <button
                             onClick={downloadReport}
-                            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
+                            className="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg flex items-center justify-center gap-2 text-sm flex-1 md:flex-initial"
+                            title="Export Report"
                         >
                             <FaDownload />
-                            Export Report
+                            <span className="hidden sm:inline">Export</span>
                         </button>
                     )}
                 </div>
@@ -272,33 +235,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                 </div>
             </div>
 
-            {/* Debug Panel */}
-            {showDebug && (
-                <div className="mb-6">
-                    <div className="flex justify-between items-center mb-2">
-                        <h3 className="font-semibold text-gray-700 flex items-center gap-2">
-                            <FaDatabase /> Analysis Log
-                        </h3>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => navigator.clipboard.writeText(debugInfo)}
-                                className="text-sm text-blue-600 hover:text-blue-800"
-                            >
-                                Copy Log
-                            </button>
-                            <button
-                                onClick={() => setDebugInfo('')}
-                                className="text-sm text-red-600 hover:text-red-800"
-                            >
-                                Clear Log
-                            </button>
-                        </div>
-                    </div>
-                    <div className="p-4 bg-gray-900 text-green-400 rounded-lg font-mono text-xs overflow-auto max-h-64">
-                        <pre className="whitespace-pre-wrap">{debugInfo || 'No debug information yet. Run analysis to see logs.'}</pre>
-                    </div>
-                </div>
-            )}
+
 
             {/* Error Display */}
             {analysisError && (
@@ -420,81 +357,78 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                         className={`border rounded-xl overflow-hidden transition-all duration-200 ${severityColor} ${alert.acknowledged ? 'opacity-60' : ''}`}
                                     >
                                         <div className="p-5">
-                                            <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
-                                                <div className="flex items-start gap-3 flex-1">
-                                                    <div className={`p-3 rounded-full ${severityBgColor}`}>
-                                                        <SeverityIcon className="text-white text-lg" />
+                                            <div className="flex flex-col md:flex-row md:items-start gap-3 md:gap-4">
+                                                <div className={`p-2 md:p-3 rounded-full ${severityBgColor} shrink-0 self-start mt-1`}>
+                                                    <SeverityIcon className="text-white text-base md:text-lg" />
+                                                </div>
+
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                                                        <h3 className="font-bold text-base md:text-lg text-gray-800 break-words">{alert.rule_name}</h3>
+                                                        <span className={`px-2 py-0.5 rounded-full text-[10px] md:text-xs font-medium ${ruleTypeInfo.color} flex items-center gap-1 shrink-0`}>
+                                                            <TypeIcon className="text-[10px]" />
+                                                            {ruleTypeInfo.label}
+                                                        </span>
+                                                        <span className="text-[10px] md:text-xs text-gray-500 flex items-center gap-1 shrink-0">
+                                                            <FaClock />
+                                                            {getTimeAgo(alert.timestamp)}
+                                                        </span>
+                                                        {alert.acknowledged && (
+                                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-800 text-[10px] rounded shrink-0">
+                                                                <FaCheckCircle /> Reviewed
+                                                            </span>
+                                                        )}
                                                     </div>
 
-                                                    <div className="flex-1">
-                                                        <div className="flex flex-wrap items-center gap-2 mb-2">
-                                                            <h3 className="font-bold text-lg text-gray-800">{alert.rule_name}</h3>
-                                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${ruleTypeInfo.color} flex items-center gap-1`}>
-                                                                <TypeIcon className="text-xs" />
-                                                                {ruleTypeInfo.label}
-                                                            </span>
-                                                            <span className="text-xs text-gray-500 flex items-center gap-1">
-                                                                <FaClock />
-                                                                {getTimeAgo(alert.timestamp)}
-                                                            </span>
-                                                            {alert.acknowledged && (
-                                                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
-                                                                    <FaCheckCircle /> Reviewed
-                                                                </span>
-                                                            )}
-                                                        </div>
+                                                    <div className="mb-3 p-3 bg-white bg-opacity-70 rounded-lg border border-opacity-30">
+                                                        <p className="text-gray-700 text-sm md:text-base leading-relaxed">{alert.message}</p>
+                                                    </div>
 
+                                                    {alert.details && (
                                                         <div className="mb-3 p-3 bg-white bg-opacity-70 rounded-lg border border-opacity-30">
-                                                            <h4 className="font-semibold text-gray-800 mb-2">Alert:</h4>
-                                                            <p className="text-gray-700">{alert.message}</p>
+                                                            <h4 className="font-bold text-xs text-gray-500 uppercase mb-1 flex items-center gap-1">
+                                                                <FaUserMd /> Recommendation
+                                                            </h4>
+                                                            <p className="text-gray-600 text-sm whitespace-pre-line">{alert.details}</p>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-4 pt-3 border-t border-opacity-30 gap-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-bold uppercase tracking-wide ${alert.severity === 'critical' ? 'text-red-700 bg-red-100/50' :
+                                                                alert.severity === 'high' ? 'text-orange-700 bg-orange-100/50' :
+                                                                    alert.severity === 'moderate' ? 'text-yellow-700 bg-yellow-100/50' :
+                                                                        'text-blue-700 bg-blue-100/50'
+                                                                }`}>
+                                                                <SeverityIcon size={12} />
+                                                                {alert.severity}
+                                                            </span>
                                                         </div>
 
-                                                        {alert.details && (
-                                                            <div className="mb-3 p-3 bg-white bg-opacity-70 rounded-lg border border-opacity-30">
-                                                                <h4 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
-                                                                    <FaUserMd /> Recommendation:
-                                                                </h4>
-                                                                <p className="text-gray-600 whitespace-pre-line">{alert.details}</p>
-                                                            </div>
-                                                        )}
-
-                                                        <div className="flex justify-between items-center mt-4 pt-3 border-t border-opacity-30">
-                                                            <div className="flex items-center gap-2">
-                                                                <span className={`inline-flex items-center gap-2 px-2 py-1 rounded ${alert.severity === 'critical' ? 'text-red-600 bg-red-50' :
-                                                                    alert.severity === 'high' ? 'text-orange-600 bg-orange-50' :
-                                                                        alert.severity === 'moderate' ? 'text-yellow-600 bg-yellow-50' :
-                                                                            'text-blue-600 bg-blue-50'
-                                                                    }`}>
-                                                                    <SeverityIcon />
-                                                                    {alert.severity.toUpperCase()}
-                                                                </span>
-                                                            </div>
-
-                                                            <div className="flex items-center gap-2">
-                                                                <button
-                                                                    onClick={() => toggleExpandAlert(alert.id)}
-                                                                    className="text-gray-600 hover:text-gray-800 text-sm font-medium flex items-center gap-1"
-                                                                >
-                                                                    {isExpanded ? (
-                                                                        <>
-                                                                            <FaChevronUp /> Show Less
-                                                                        </>
-                                                                    ) : (
-                                                                        <>
-                                                                            <FaChevronDown /> Show Details
-                                                                        </>
-                                                                    )}
-                                                                </button>
-
-                                                                {!alert.acknowledged && (
-                                                                    <button
-                                                                        onClick={() => acknowledgeAlert(alert.id)}
-                                                                        className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
-                                                                    >
-                                                                        <FaCheckCircle /> Mark Reviewed
-                                                                    </button>
+                                                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                                                            <button
+                                                                onClick={() => toggleExpandAlert(alert.id)}
+                                                                className="flex-1 sm:flex-initial justify-center text-gray-600 hover:text-gray-800 text-sm font-medium flex items-center gap-1 py-1.5 px-3 bg-white/50 rounded-lg hover:bg-white transition-colors"
+                                                            >
+                                                                {isExpanded ? (
+                                                                    <>
+                                                                        <FaChevronUp /> <span className="sm:hidden">Less</span><span className="hidden sm:inline">Show Less</span>
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <FaChevronDown /> <span className="sm:hidden">Details</span><span className="hidden sm:inline">Show Details</span>
+                                                                    </>
                                                                 )}
-                                                            </div>
+                                                            </button>
+
+                                                            {!alert.acknowledged && (
+                                                                <button
+                                                                    onClick={() => acknowledgeAlert(alert.id)}
+                                                                    className="flex-1 sm:flex-initial justify-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium flex items-center gap-1 py-1.5 px-3 rounded-lg shadow-sm transition-all"
+                                                                >
+                                                                    <FaCheckCircle /> <span className="sm:hidden">Ack</span><span className="hidden sm:inline">Mark Reviewed</span>
+                                                                </button>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>

@@ -3945,7 +3945,7 @@ const PatientDetails = () => {
             case 'medications':
                 return <MedicationHistory patientCode={getCurrentPatientCode()} />;
             case 'analysis':
-                return <CDSSDisplay patientData={patient} />;
+                return <CDSSDisplay patientData={formData} />;
             case 'drn':
                 return <DRNAssessment patientCode={getCurrentPatientCode()} />;
             case 'plan':

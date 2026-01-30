@@ -67,9 +67,15 @@ export const useCDSSLogic = (patientData) => {
     }, []);
 
     const fetchPatientMedications = useCallback(async () => {
+        // Initialize with patientData medications if available (fallback)
+        let fallbackMedications = [];
+        if (patientData?.medication_history && Array.isArray(patientData.medication_history)) {
+            fallbackMedications = patientData.medication_history;
+        }
+
         if (!patientData?.patient_code) {
-            console.log('⚠️ No patient code provided for medication fetch');
-            setMedications([]);
+            console.log('⚠️ No patient code provided for medication fetch, using fallback if available');
+            setMedications(fallbackMedications);
             return;
         }
 
@@ -84,22 +90,36 @@ export const useCDSSLogic = (patientData) => {
                 console.error('❌ Error fetching medications:', result.error);
                 debugText += `❌ Error fetching medications: ${result.error || 'Unknown error'}\n`;
                 setDebugInfo(prev => prev + debugText);
-                setMedications([]);
+                setMedications(fallbackMedications);
                 return;
             }
 
             const data = result.medications || [];
-            console.log(`✅ Loaded ${data.length} medications`);
-            debugText += `✅ Loaded ${data.length} medications\n`;
+            console.log(`✅ Loaded ${data.length} medications from API`);
+            debugText += `✅ Loaded ${data.length} medications from API\n`;
+
+            // Use API data if available, otherwise fallback
+            if (data.length > 0) {
+                setMedications(data);
+            } else {
+                console.log('⚠️ No medications in history table, checking patient record...');
+                debugText += '⚠️ No medications in history table, checking patient record...\n';
+                if (fallbackMedications.length > 0) {
+                    console.log(`✅ Found ${fallbackMedications.length} medications in patient record`);
+                    debugText += `✅ Found ${fallbackMedications.length} medications in patient record\n`;
+                    setMedications(fallbackMedications);
+                } else {
+                    setMedications([]);
+                }
+            }
 
             setDebugInfo(prev => prev + debugText);
-            setMedications(data);
         } catch (error) {
             console.error('❌ Error in fetchPatientMedications:', error);
             setDebugInfo(prev => prev + `❌ Exception fetching medications: ${error.message}\n`);
-            setMedications([]);
+            setMedications(fallbackMedications);
         }
-    }, [patientData?.patient_code]);
+    }, [patientData?.patient_code, patientData?.medication_history]);
 
     const analyzePatient = useCallback(async () => {
         if (!patientData?.patient_code) {
@@ -373,13 +393,17 @@ export const useCDSSLogic = (patientData) => {
         }
     }, [patientData, isInitialLoad, fetchClinicalRules, fetchPatientMedications]);
 
-    // Auto-analyze when data is ready
+    // Auto-analyze when data is ready or updates
     useEffect(() => {
-        if (patientData && clinicalRules.length > 0 && !lastAnalysisTime && !loading) {
-            console.log('🔄 Auto-triggering clinical analysis...');
-            analyzePatient();
+        if (patientData && clinicalRules.length > 0 && !loading) {
+            // We use a timeout to debounce slightly and allow states to settle
+            const timer = setTimeout(() => {
+                console.log('🔄 Data updated, triggering clinical analysis...');
+                analyzePatient();
+            }, 500);
+            return () => clearTimeout(timer);
         }
-    }, [patientData, clinicalRules, medications, analyzePatient, lastAnalysisTime, loading]);
+    }, [analyzePatient, loading, patientData, clinicalRules.length]);
 
     const handleFilterChange = useCallback((severity) => {
         setSeverityFilter(severity);

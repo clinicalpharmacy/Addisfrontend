@@ -1,22 +1,19 @@
 import React from 'react';
 import {
-    FaUsers, FaHospital, FaPills, FaUserInjured, FaClock,
-    FaHistory, FaCog, FaUserCheck, FaDownload, FaFlask, FaBriefcase
+    FaUsers, FaHospital, FaClock,
+    FaHistory, FaCog, FaUserCheck, FaFlask, FaBriefcase, FaUserMd
 } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
 export const AdminOverview = ({
     stats,
     usersCount,
-    medicationsCount,
-    patientsCount,
     companiesCount,
     recentActivities,
     pendingApprovalsCount,
     onTabChange,
     getActivityIcon,
-    formatDate,
-    downloadReport
+    formatDate
 }) => {
     return (
         <div className="space-y-6">
@@ -55,7 +52,7 @@ export const AdminOverview = ({
                             <p className="text-xs text-gray-500 mt-1">Registered Doctors</p>
                         </div>
                         <div className="p-3 bg-green-100 rounded-full">
-                            <FaPills className="text-green-600 text-xl" />
+                            <FaUserMd className="text-green-600 text-xl" />
                         </div>
                     </div>
                 </div>
@@ -197,12 +194,7 @@ export const AdminOverview = ({
                                 )}
                             </button>
 
-                            <button
-                                onClick={downloadReport}
-                                className="w-full bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-lg flex items-center gap-2 transition"
-                            >
-                                <FaDownload /> Export System Report
-                            </button>
+
                         </div>
                     </div>
                 </div>

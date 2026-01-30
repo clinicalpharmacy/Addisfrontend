@@ -179,24 +179,7 @@ const Sidebar = ({ onClose }) => {
                                 </NavLink>
                             </li>
                         )}
-                        <li>
-                            <NavLink
-                                to={isSubscribed ? "/reports" : "/subscription/plans"}
-                                onClick={onClose}
-                                className={({ isActive }) =>
-                                    `flex items-center justify-between p-3 rounded-lg transition-all duration-200 ${isActive
-                                        ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600 shadow-sm'
-                                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800 hover:shadow-sm'
-                                    } ${!isSubscribed && !isAdmin ? 'opacity-70' : ''}`
-                                }
-                            >
-                                <div className="flex items-center gap-3">
-                                    <FaChartLine className="text-lg" />
-                                    <span className="font-medium">Reports</span>
-                                </div>
-                                {!isSubscribed && !isAdmin && <FaLock className="text-xs text-gray-400" />}
-                            </NavLink>
-                        </li>
+
                         <li>
                             <button
                                 onClick={() => toggleSection('settings')}

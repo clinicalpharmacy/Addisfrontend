@@ -269,3 +269,28 @@ export const useAdminPatients = (currentUser) => {
         addPatient, updatePatient, deletePatient
     };
 };
+
+// Hook for Subscriptions
+export const useAdminSubscriptions = () => {
+    const [subscriptions, setSubscriptions] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+
+    const loadSubscriptions = useCallback(async () => {
+        try {
+            setLoading(true);
+            const data = await api.get('/admin/subscriptions');
+            if (data.success) {
+                setSubscriptions(data.subscriptions || []);
+            } else {
+                setError(data.error || 'Failed to load subscriptions');
+            }
+        } catch (err) {
+            setError('Network error while loading subscriptions');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    return { subscriptions, loading, error, loadSubscriptions };
+};
