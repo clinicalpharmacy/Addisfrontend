@@ -48,22 +48,6 @@ const MedicationInfo = () => {
         storage: ''
     });
 
-    const drugClasses = [
-        'All Classes',
-        'Antibiotic',
-        'Antidiabetic',
-        'Cardiovascular',
-        'Antihypertensive',
-        'Analgesic',
-        'Psychotropic',
-        'Gastrointestinal',
-        'Respiratory',
-        'Endocrine',
-        'Immunosuppressant',
-        'Chemotherapeutic',
-        'Other'
-    ];
-
     // Protection functions - users CAN SEE but CANNOT COPY
     const disableCopyPaste = (e) => {
         if (protectionEnabled && !isAdmin) {
@@ -636,19 +620,6 @@ const MedicationInfo = () => {
                             />
                         </div>
 
-                        <div>
-                            <select
-                                value={selectedDrugClass}
-                                onChange={handleDrugClassChange}
-                                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                            >
-                                {drugClasses.map(cls => (
-                                    <option key={cls} value={cls === 'All Classes' ? 'all' : cls}>
-                                        {cls}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
 
                         {/* Admin-only add button */}
                         {isAdmin && (

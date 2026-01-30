@@ -130,8 +130,8 @@ const Login = () => {
                     <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl mb-4">
                         <FaUserMd className="text-white text-2xl" />
                     </div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Addis Med CDSS</h1>
-                    <p className="text-gray-600">Clinical Decision Support System</p>
+                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Addis Med</h1>
+                    <p className="text-gray-600 italic">Enhance Patient Safety & Optimize Medicines Use</p>
                 </div>
 
                 {/* Status Indicator */}

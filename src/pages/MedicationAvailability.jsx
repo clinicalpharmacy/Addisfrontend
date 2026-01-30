@@ -25,7 +25,7 @@ const MedicationAvailability = () => {
     const [formData, setFormData] = useState({
         medication_name: '',
         quantity: '',
-        expiry_date: new Date().toISOString().split('T')[0],
+        expiry_date: '',
         notes: '',
         status: 'available'
     });
@@ -166,7 +166,7 @@ const MedicationAvailability = () => {
                     setFormData({
                         medication_name: '',
                         quantity: '',
-                        expiry_date: new Date().toISOString().split('T')[0],
+                        expiry_date: '',
                         notes: '',
                         status: 'available'
                     });
@@ -179,7 +179,7 @@ const MedicationAvailability = () => {
                     setShowAddForm(false);
                     setFormData({
                         medication_name: '',
-                        quantity: '',
+                        waiting_time: '',
                         expiry_date: '',
                         notes: '',
                         status: 'available'
@@ -198,7 +198,7 @@ const MedicationAvailability = () => {
         setFormData({
             medication_name: post.medication_name,
             quantity: post.quantity || '',
-            expiry_date: post.expiry_date || new Date().toISOString().split('T')[0],
+            expiry_date: post.expiry_date || '',
             notes: post.notes || '',
             status: post.status || 'available'
         });
@@ -247,7 +247,7 @@ const MedicationAvailability = () => {
                         setShowAddForm(!showAddForm);
                         if (isEditing) {
                             setIsEditing(false);
-                            setFormData({ medication_name: '', quantity: '', expiry_date: new Date().toISOString().split('T')[0], notes: '', status: 'available' });
+                            setFormData({ medication_name: '', quantity: '', expiry_date: '', notes: '', status: 'available' });
                         }
                     }}
                     className={`${showAddForm ? 'bg-gray-500' : 'bg-blue-600'} text-white px-6 py-3 rounded-xl flex items-center gap-2 hover:opacity-90 transition shadow-lg font-bold`}
@@ -288,8 +288,8 @@ const MedicationAvailability = () => {
                                 </div>
                                 <input
                                     type="text"
-                                    value={formData.quantity}
-                                    onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                                    value={formData.waiting_time}
+                                    onChange={(e) => setFormData({ ...formData, waiting_time: e.target.value })}
                                     className="border border-gray-200 rounded-xl p-3"
                                     placeholder="የጊዜ ገደብ"
                                 />
@@ -313,7 +313,7 @@ const MedicationAvailability = () => {
                                     />
                                 </div>
                                 <button type="submit" className="md:col-span-2 bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700">
-                                    {isEditing ? 'Update medication' : 'መድሃኒቱን ይለጥፉ'}
+                                    {isEditing ? 'Update medication' : 'Post Available medication'}
                                 </button>
                             </form>
                         </div>
@@ -363,7 +363,7 @@ const MedicationAvailability = () => {
                                 </div>
                                 <div className="mt-3 flex gap-2">
                                     {post.quantity && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-bold">Qty: {post.quantity}</span>}
-                                    {post.expiry_date && <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-bold">Posted: {post.expiry_date}</span>}
+                                    {post.expiry_date && <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-bold">Exp: {post.expiry_date}</span>}
                                 </div>
                             </div>
                         ))

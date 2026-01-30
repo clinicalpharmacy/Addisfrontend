@@ -23,10 +23,10 @@ const Home = () => {
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
                     <div>
                         <h1 className="text-2xl font-bold">
-                            {getGreeting()}, Pharmacist!
+                            {getGreeting()}.
                         </h1>
                         <p className="text-blue-100 mt-1">
-                            Addismed Clinical Decision Support
+                            AddisMed Digital Health
                         </p>
                     </div>
                     <div className="mt-4 md:mt-0 text-right">
