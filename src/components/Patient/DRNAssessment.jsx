@@ -855,6 +855,10 @@ const DRNAssessment = ({ patientCode }) => {
                                                                         DTP: {finding.dtpType}
                                                                     </span>
                                                                 )}
+                                                            </div>
+                                                            <p className="text-sm text-gray-600 mb-2">{finding.message}</p>
+                                                            <div className="flex flex-wrap items-center gap-3 mt-2">
+                                                            </div>
                                                         </div>
                                                         <button
                                                             onClick={() => handleReviewFinding(finding)}
