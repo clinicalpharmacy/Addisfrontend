@@ -252,7 +252,7 @@ const PatientDetails = () => {
             { id: 'medications', label: 'Medications', icon: FaPills },
             { id: 'analysis', label: 'Clinical Analysis', icon: FaBrain },
             { id: 'drn', label: 'DRN Assessment', icon: FaBrain },
-            { id: 'plan', label: 'PharmAssist Plan', icon: FaFileMedical },
+            { id: 'plan', label: 'Ph-Asst & Plan', icon: FaFileMedical },
             { id: 'outcome', label: 'Outcome', icon: FaChartLine },
             { id: 'cost', label: 'Cost', icon: FaMoneyBillWave }
         ];
