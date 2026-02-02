@@ -424,7 +424,6 @@ const DRNAssessment = ({ patientCode }) => {
                             message: message,
                             recommendation: recommendation,
                             severity: severity,
-                            confidence: 95,
                             medications: facts.medications?.filter(med =>
                                 message.toLowerCase().includes(med.toLowerCase()) ||
                                 recommendation.toLowerCase().includes(med.toLowerCase())
@@ -856,13 +855,6 @@ const DRNAssessment = ({ patientCode }) => {
                                                                         DTP: {finding.dtpType}
                                                                     </span>
                                                                 )}
-                                                            </div>
-                                                            <p className="text-sm text-gray-600 mb-2">{finding.message}</p>
-                                                            <div className="flex flex-wrap items-center gap-3 mt-2">
-                                                                <span className="text-xs text-gray-500">
-                                                                    Confidence: 95%
-                                                                </span>
-                                                            </div>
                                                         </div>
                                                         <button
                                                             onClick={() => handleReviewFinding(finding)}
