@@ -293,6 +293,23 @@ const Login = () => {
                         </div>
                     </div>
 
+                    {/* Help Text */}
+                    <div className="mt-6 text-center">
+                        <p className="text-xs text-gray-500">
+                            Having trouble?{' '}
+                            <button
+                                onClick={() => {
+                                    checkBackendStatus();
+                                    console.log('Current API URL:', API_URL);
+                                }}
+                                className="text-blue-600 hover:text-blue-800 underline"
+                            >
+                                Check connection
+                            </button>
+                        </p>
+                    </div>
+                </div>
+
                 {/* Footer */}
                 <div className="mt-6 text-center">
                     <p className="text-xs text-gray-500">
