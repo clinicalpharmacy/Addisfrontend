@@ -294,13 +294,13 @@ const MedicationAvailability = () => {
                                     placeholder="የጊዜ ገደብ"
                                 />
                                 <div className="flex flex-col gap-1 w-full">
-                                    <label className="text-xs text-gray-500 ml-1">Posted Date</label>
+                                    <label className="text-xs text-gray-500 ml-1">እስከ መች ይፈለግ</label>
                                     <input
                                         type="date"
                                         value={formData.expiry_date}
                                         onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
                                         className="border border-gray-200 rounded-xl p-3 w-full"
-                                        placeholder="Posted Date"
+                                        placeholder="እስከ መች ይፈለግ"
                                     />
                                 </div>
                                 <div className="md:col-span-2">
