@@ -783,10 +783,6 @@ const DRNAssessment = ({ patientCode }) => {
                 </div>
                 <div>
                     <h2 className="text-2xl font-bold text-gray-800">DRN Assessment - 9 Categories</h2>
-                    <p className="text-gray-600">Powered by Clinical Decision Support System (CDSS)</p>
-                    <div className="text-sm text-gray-500 mt-1">
-                        Patient: {patientCode} | User ID: {userId?.substring(0, 8)}...
-                    </div>
                 </div>
             </div>
 
