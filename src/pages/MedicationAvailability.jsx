@@ -353,7 +353,7 @@ const MedicationAvailability = () => {
                                 </div>
                                 <div className="mt-3 flex gap-2">
                                     {post.quantity && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-bold">Qty: {post.quantity}</span>}
-                                    {post.expiry_date && <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-bold">Until/እስከዚህ ቀን {post.expiry_date}</span>}
+                                    {post.expiry_date && <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-bold">እስከዚህ ቀን {post.expiry_date}</span>}
                                 </div>
                             </div>
                         ))
