@@ -226,7 +226,6 @@ export const useCDSSLogic = (patientData) => {
                             },
                             timestamp: new Date().toISOString(),
                             acknowledged: false,
-                            confidence: 95,
                             patient_code: patientData.patient_code,
                             patient_name: currentPatient.full_name,
                             patient_age_in_days: facts.age_in_days,
