@@ -351,19 +351,9 @@ const MedicationAvailability = () => {
                                         </div>
                                     )}
                                 </div>
-                                <div className="space-y-1 text-sm text-gray-600">
-                                    <div className="flex items-center gap-2">
-                                        <FaHospital className="text-blue-500" />
-                                        <span className="font-semibold">{post.user?.institution || 'Pharmacy/Clinic'}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <FaMapMarkerAlt className="text-red-400" />
-                                        <span className="underline">{post.user?.location || 'Contact for location'}</span>
-                                    </div>
-                                </div>
                                 <div className="mt-3 flex gap-2">
                                     {post.quantity && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-bold">Qty: {post.quantity}</span>}
-                                    {post.expiry_date && <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-bold">Exp: {post.expiry_date}</span>}
+                                    {post.expiry_date && <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-bold">Until/እስከዚህ ቀን {post.expiry_date}</span>}
                                 </div>
                             </div>
                         ))
