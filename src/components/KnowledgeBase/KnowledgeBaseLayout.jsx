@@ -15,7 +15,7 @@ const KnowledgeBaseLayout = () => {
         { path: 'medications', label: 'Medications', icon: <FaPills /> },
         { path: 'remedies', label: 'Home Remedies', icon: <FaFlask /> },
         { path: 'illnesses', label: 'Minor Illnesses', icon: <FaStethoscope /> },
-        { path: 'compounding', label: 'Compounding', icon: <FaMortarPestle /> },
+        { path: 'compounding', label: 'Compounding & Reconstitution', icon: <FaMortarPestle /> },
     ];
 
     return (
