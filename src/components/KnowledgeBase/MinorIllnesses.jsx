@@ -699,32 +699,6 @@ const MinorIllnesses = () => {
                             </form>
                         </div>
                     </div>
-                )}
-
-                {/* Sample Data Section */}
-                <div className="mt-8 bg-white rounded-xl shadow-lg p-6">
-                    <h3 className="text-lg font-bold text-gray-800 mb-4">Common Minor Illnesses</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="p-4 bg-red-50 rounded-lg">
-                            <h4 className="font-semibold text-red-800 mb-2">Common Cold</h4>
-                            <p className="text-sm text-red-700">
-                                Viral infection with runny nose, sneezing, sore throat. Self-limiting.
-                            </p>
-                        </div>
-                        <div className="p-4 bg-blue-50 rounded-lg">
-                            <h4 className="font-semibold text-blue-800 mb-2">Gastroenteritis</h4>
-                            <p className="text-sm text-blue-700">
-                                Stomach flu with diarrhea, vomiting. Focus on hydration.
-                            </p>
-                        </div>
-                        <div className="p-4 bg-green-50 rounded-lg">
-                            <h4 className="font-semibold text-green-800 mb-2">Headache</h4>
-                            <p className="text-sm text-green-700">
-                                Tension or migraine. Rest, hydration, OTC pain relievers.
-                            </p>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     );
