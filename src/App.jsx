@@ -198,7 +198,7 @@ const PublicRoute = ({ children }) => {
 };
 
 // Protected Route Component - UPDATED: Removed automatic subscription redirect
-const ProtectedRoute = ({ children, adminOnly = false, companyAdminOnly = false, requireSubscription = false, showLayout = true }) => {
+const ProtectedRoute = ({ children, adminOnly = false, companyAdminOnly = false, requireSubscription = false, allowAdmin = true, showLayout = true }) => {
     const [loading, setLoading] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [user, setUser] = useState(null);
@@ -304,6 +304,11 @@ const ProtectedRoute = ({ children, adminOnly = false, companyAdminOnly = false,
             redirectTo: location.pathname,
             message: 'Please login to access this page'
         }} replace />;
+    }
+
+    // FIXED: Block admin if allowAdmin is false
+    if (user?.role === 'admin' && !allowAdmin) {
+        return <Navigate to="/admin/dashboard" replace />;
     }
 
     // FIXED: Check role-based access with clearer logic
@@ -1135,7 +1140,7 @@ function App() {
                 <Route
                     path="/patients"
                     element={
-                        <ProtectedRoute requireSubscription={true}>
+                        <ProtectedRoute requireSubscription={true} allowAdmin={false}>
                             <PatientList />
                         </ProtectedRoute>
                     }
@@ -1144,7 +1149,7 @@ function App() {
                 <Route
                     path="/patients/new"
                     element={
-                        <ProtectedRoute requireSubscription={true}>
+                        <ProtectedRoute requireSubscription={true} allowAdmin={false}>
                             <PatientDetails />
                         </ProtectedRoute>
                     }
@@ -1153,7 +1158,7 @@ function App() {
                 <Route
                     path="/patients/:patientCode"
                     element={
-                        <ProtectedRoute requireSubscription={true}>
+                        <ProtectedRoute requireSubscription={true} allowAdmin={false}>
                             <PatientDetails />
                         </ProtectedRoute>
                     }

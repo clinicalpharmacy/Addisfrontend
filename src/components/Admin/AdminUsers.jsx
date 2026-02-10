@@ -9,7 +9,8 @@ export const AdminUsers = ({
     onRefresh,
     formatDate,
     getStatusBadge,
-    getRoleBadge
+    getRoleBadge,
+    onToggleBlock
 }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterRole, setFilterRole] = useState('all');
@@ -24,8 +25,9 @@ export const AdminUsers = ({
         const matchesRole = filterRole === 'all' || user.role === filterRole;
 
         const matchesStatus = filterStatus === 'all' ||
-            (filterStatus === 'approved' && user.approved) ||
-            (filterStatus === 'pending' && !user.approved);
+            (filterStatus === 'approved' && user.approved && !user.is_blocked) ||
+            (filterStatus === 'pending' && !user.approved) ||
+            (filterStatus === 'blocked' && user.is_blocked);
 
         return matchesSearch && matchesRole && matchesStatus;
     });
@@ -85,6 +87,7 @@ export const AdminUsers = ({
                             <option value="all">All Statuses</option>
                             <option value="approved">Approved Only</option>
                             <option value="pending">Pending Only</option>
+                            <option value="blocked">Blocked Only</option>
                         </select>
                     </div>
                 </div>
@@ -105,7 +108,7 @@ export const AdminUsers = ({
                                         <FaUserCircle className="text-blue-500 text-2xl" />
                                     </div>
                                     <div className="flex flex-col items-end gap-1">
-                                        {getStatusBadge(user.approved, user.role)}
+                                        {getStatusBadge(user.approved, user.role, user.is_blocked)}
                                         {getRoleBadge(user.role)}
                                     </div>
                                 </div>
@@ -139,12 +142,25 @@ export const AdminUsers = ({
 
                             <div className="bg-gray-50 px-5 py-3 border-t flex justify-between items-center">
                                 <span className="text-[10px] text-gray-400 font-medium">ID: ...{user.id.slice(-8)}</span>
-                                <button
-                                    className="text-blue-600 hover:text-blue-800 text-xs font-bold transition-colors"
-                                    onClick={() => {/* View Details */ }}
-                                >
-                                    View Profile
-                                </button>
+                                <div className="flex gap-2">
+                                    {user.role !== 'admin' && (
+                                        <button
+                                            onClick={() => onToggleBlock(user.id)}
+                                            className={`text-xs font-bold px-2 py-1 rounded transition-colors ${user.is_blocked
+                                                ? 'bg-orange-100 text-orange-700 hover:bg-orange-200'
+                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                }`}
+                                        >
+                                            {user.is_blocked ? 'Unblock' : 'Block'}
+                                        </button>
+                                    )}
+                                    <button
+                                        className="text-blue-600 hover:text-blue-800 text-xs font-bold transition-colors"
+                                        onClick={() => {/* View Details */ }}
+                                    >
+                                        View Profile
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     ))}

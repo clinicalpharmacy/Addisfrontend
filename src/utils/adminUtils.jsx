@@ -52,22 +52,29 @@ export const getActivityIcon = (actionType) => {
 };
 
 // Status Badge Helper
-export const getStatusBadge = (approved, role) => {
+export const getStatusBadge = (approved, role, is_blocked = false) => {
+    if (is_blocked) {
+        return <span className="px-2 py-1 text-xs bg-red-600 text-white rounded font-bold">Blocked</span>;
+    }
     if (role === 'admin') {
-        return <span className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded">Admin</span>;
+        return <span className="px-2 py-1 text-xs bg-gray-800 text-white rounded font-bold">Super Admin</span>;
     }
     return approved ?
-        <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">Approved</span> :
-        <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded">Pending</span>;
+        <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded font-medium">Approved</span> :
+        <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded font-medium">Pending Approval</span>;
 };
 
 // Role Badge Helper
 export const getRoleBadge = (role) => {
     switch (role) {
-        case 'admin': return <span className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded">Admin</span>;
+        case 'admin': return <span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 border border-gray-200 rounded">Admin</span>;
         case 'pharmacist': return <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">Pharmacist</span>;
-        case 'company_admin': return <span className="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded">Company Admin</span>;
-        default: return <span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded">{role}</span>;
+        case 'doctor': return <span className="px-2 py-1 text-xs bg-teal-100 text-teal-800 rounded">Doctor</span>;
+        case 'nurse': return <span className="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded">Nurse</span>;
+        case 'laboratory': return <span className="px-2 py-1 text-xs bg-orange-100 text-orange-800 rounded">Lab</span>;
+        case 'student': return <span className="px-2 py-1 text-xs bg-emerald-100 text-emerald-800 rounded">Student</span>;
+        case 'company_admin': return <span className="px-2 py-1 text-xs bg-indigo-100 text-indigo-800 rounded">Company Admin</span>;
+        default: return <span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded capitalize">{role}</span>;
     }
 };
 

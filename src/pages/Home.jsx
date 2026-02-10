@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { 
-    FaUserInjured, 
-    FaPills, 
+import {
+    FaUserInjured,
+    FaPills,
     FaFlask,
     FaUserMd,
     FaArrowRight
@@ -31,16 +31,16 @@ const Home = () => {
                     </div>
                     <div className="mt-4 md:mt-0 text-right">
                         <p className="text-sm text-blue-200">
-                            {new Date().toLocaleDateString('en-US', { 
-                                weekday: 'short', 
-                                month: 'short', 
-                                day: 'numeric' 
+                            {new Date().toLocaleDateString('en-US', {
+                                weekday: 'short',
+                                month: 'short',
+                                day: 'numeric'
                             })}
                         </p>
                         <p className="text-2xl font-bold mt-1">
-                            {new Date().toLocaleTimeString('en-US', { 
-                                hour: '2-digit', 
-                                minute: '2-digit' 
+                            {new Date().toLocaleTimeString('en-US', {
+                                hour: '2-digit',
+                                minute: '2-digit'
                             })}
                         </p>
                     </div>
@@ -49,24 +49,25 @@ const Home = () => {
 
             {/* Quick Access Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Patients */}
-                <Link to="/patients" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="p-3 bg-blue-100 rounded-full">
-                            <FaUserInjured className="text-blue-600 text-2xl" />
+                {/* Patients - Hidden for Admin */}
+                {JSON.parse(localStorage.getItem('user'))?.role !== 'admin' && (
+                    <Link to="/patients" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className="p-3 bg-blue-100 rounded-full">
+                                <FaUserInjured className="text-blue-600 text-2xl" />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-800">Patients</h2>
+                                <p className="text-sm text-gray-500">Manage records & treatments</p>
+                            </div>
                         </div>
-                        <div>
-                            <h2 className="text-xl font-bold text-gray-800">Patients</h2>
-                            <p className="text-sm text-gray-500">Manage records & treatments</p>
+                        <div className="flex justify-end">
+                            <span className="text-blue-600 flex items-center gap-1">
+                                Open <FaArrowRight />
+                            </span>
                         </div>
-                    </div>
-                    <div className="flex justify-end">
-                        <span className="text-blue-600 flex items-center gap-1">
-                            Open <FaArrowRight />
-                        </span>
-                    </div>
-                </Link>
-
+                    </Link>
+                )}
                 {/* Home Remedies */}
                 <Link to="/knowledge/remedies" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
                     <div className="flex items-center gap-4 mb-4">

@@ -122,9 +122,30 @@ export const useAdminUsers = (currentUser) => {
         }
     };
 
+    const toggleBlockUser = async (userId) => {
+        try {
+            setProcessingId(userId);
+            const response = await api.post(`/admin/users/${userId}/toggle-block`);
+
+            if (response.success) {
+                // Optimistic update
+                setUsers(prev => prev.map(u =>
+                    u.id === userId ? { ...u, is_blocked: response.is_blocked } : u
+                ));
+                return { success: true, message: response.message };
+            }
+            return { success: false, error: response.error };
+        } catch (err) {
+            setError(`Block/Unblock failed: ${err.message}`);
+            return { success: false, error: err.message };
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
     return {
         users, pendingUsers, loading, error, processingId,
-        loadUsers, approveUser, rejectUser
+        loadUsers, approveUser, rejectUser, toggleBlockUser
     };
 };
 
@@ -151,123 +172,6 @@ export const useAdminCompanies = () => {
     }, []);
 
     return { companies, loading, error, loadCompanies };
-};
-
-// Hook for Medication Management
-export const useAdminMedications = (currentUser) => {
-    const [medications, setMedications] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-
-    const loadMedications = useCallback(async () => {
-        try {
-            setLoading(true);
-            const data = await api.get('/admin/medications');
-            setMedications(data.medications || data || []);
-        } catch (err) {
-            console.warn('Error loading medications, using empty list.');
-            setMedications([]);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    const addMedication = async (medData) => {
-        try {
-            const data = await api.post('/admin/medications', medData);
-            setMedications(prev => [data.medication || data, ...prev]);
-            return { success: true, data: data.medication || data };
-        } catch (err) {
-            return { success: false, error: err.message };
-        }
-    };
-
-    const updateMedication = async (id, medData) => {
-        try {
-            const data = await api.put(`/admin/medications/${id}`, medData);
-            setMedications(prev => prev.map(m => m.id === id ? (data.medication || data) : m));
-            return { success: true };
-        } catch (err) {
-            return { success: false, error: err.message };
-        }
-    };
-
-    const deleteMedication = async (id) => {
-        try {
-            await api.delete(`/admin/medications/${id}`);
-            setMedications(prev => prev.filter(m => m.id !== id));
-            return { success: true };
-        } catch (err) {
-            return { success: false, error: err.message };
-        }
-    };
-
-    return {
-        medications, loading, error, loadMedications,
-        addMedication, updateMedication, deleteMedication
-    };
-};
-
-// Hook for Patient Management
-export const useAdminPatients = (currentUser) => {
-    const [patients, setPatients] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-
-    const loadPatients = useCallback(async () => {
-        try {
-            setLoading(true);
-            const data = await api.get('/admin/all-patients');
-            setPatients(data.patients || []);
-        } catch (err) {
-            console.warn('Error loading patients:', err);
-            setPatients([]);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    const addPatient = async (patientData) => {
-        try {
-            // Ensure patient code is generated if missing
-            const dataToSend = {
-                ...patientData,
-                patient_code: patientData.patient_code || `PAT-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`
-            };
-
-            const data = await api.post('/patients', dataToSend);
-            const newPatient = data.patient || data;
-            setPatients(prev => [newPatient, ...prev]);
-            return { success: true, data: newPatient };
-        } catch (err) {
-            return { success: false, error: err.message };
-        }
-    };
-
-    const updatePatient = async (id, patientData) => {
-        try {
-            const data = await api.put(`/patients/${id}`, patientData);
-            setPatients(prev => prev.map(p => p.id === id ? (data.patient || data) : p));
-            return { success: true };
-        } catch (err) {
-            return { success: false, error: err.message };
-        }
-    };
-
-    const deletePatient = async (id) => {
-        try {
-            await api.delete(`/patients/${id}`);
-            setPatients(prev => prev.filter(p => p.id !== id));
-            return { success: true };
-        } catch (err) {
-            return { success: false, error: err.message };
-        }
-    };
-
-    return {
-        patients, loading, error, loadPatients,
-        addPatient, updatePatient, deletePatient
-    };
 };
 
 // Hook for Subscriptions

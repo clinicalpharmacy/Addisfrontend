@@ -10,7 +10,7 @@ import {
 // Hooks
 import {
     useAdminDashboardData, useAdminUsers, useAdminCompanies,
-    useAdminMedications, useAdminPatients, useAdminSubscriptions
+    useAdminSubscriptions
 } from '../hooks/adminHooks';
 
 // Utilities
@@ -242,6 +242,13 @@ const AdminDashboard = () => {
                         users={usersManager.users}
                         loading={usersManager.loading}
                         onRefresh={handleRefresh}
+                        onToggleBlock={async (id) => {
+                            const res = await usersManager.toggleBlockUser(id);
+                            if (res.success) {
+                                setSuccessMessage(res.message);
+                                setTimeout(() => setSuccessMessage(''), 3000);
+                            }
+                        }}
                         formatDate={formatDate}
                         getStatusBadge={getStatusBadge}
                         getRoleBadge={getRoleBadge}

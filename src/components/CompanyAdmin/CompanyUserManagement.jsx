@@ -11,7 +11,8 @@ export const CompanyUserManagement = ({
     onAddUser,
     onEditUser,
     onDeleteUser,
-    onApproveUser
+    onApproveUser,
+    onToggleBlock
 }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterRole, setFilterRole] = useState('all');
@@ -31,9 +32,12 @@ export const CompanyUserManagement = ({
         return <span className={`px-3 py-1 text-xs rounded-full font-medium ${styles[role] || styles.staff}`}>{role}</span>;
     };
 
-    const getStatusBadge = (approved) => approved ?
-        <span className="px-3 py-1 text-xs bg-green-100 text-green-800 rounded-full font-medium">Active</span> :
-        <span className="px-3 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full font-medium">Pending</span>;
+    const getStatusBadge = (user) => {
+        if (user.is_blocked) return <span className="px-3 py-1 text-xs bg-red-100 text-red-800 rounded-full font-medium">Blocked</span>;
+        return user.approved ?
+            <span className="px-3 py-1 text-xs bg-green-100 text-green-800 rounded-full font-medium">Active</span> :
+            <span className="px-3 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full font-medium">Pending</span>;
+    };
 
     const filteredUsers = users.filter(user => {
         const matchesSearch = !searchTerm ||
@@ -41,8 +45,9 @@ export const CompanyUserManagement = ({
             user.full_name?.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesRole = filterRole === 'all' || user.role === filterRole;
         const matchesStatus = filterStatus === 'all' ||
-            (filterStatus === 'active' && user.approved) ||
-            (filterStatus === 'pending' && !user.approved);
+            (filterStatus === 'active' && user.approved && !user.is_blocked) ||
+            (filterStatus === 'pending' && !user.approved) ||
+            (filterStatus === 'blocked' && user.is_blocked);
         return matchesSearch && matchesRole && matchesStatus;
     });
 
@@ -108,6 +113,7 @@ export const CompanyUserManagement = ({
                             <option value="all">All Status</option>
                             <option value="active">Active</option>
                             <option value="pending">Pending</option>
+                            <option value="blocked">Blocked</option>
                         </select>
                     </div>
                 </div>
@@ -140,14 +146,27 @@ export const CompanyUserManagement = ({
                                                 </div>
                                             </td>
                                             <td className="border-b p-4">{getRoleBadge(user.role)}</td>
-                                            <td className="border-b p-4">{getStatusBadge(user.approved)}</td>
+                                            <td className="border-b p-4">{getStatusBadge(user)}</td>
                                             <td className="border-b p-4 text-sm text-gray-600 flex items-center gap-2">
                                                 <FaCalendarAlt className="text-gray-400" /> {formatDate(user.created_at)}
                                             </td>
                                             <td className="border-b p-4">
                                                 <div className="flex gap-2">
-                                                    {!user.approved && (
+                                                    {!user.approved && !user.is_blocked && (
                                                         <button onClick={() => onApproveUser(user.id)} className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600">Approve</button>
+                                                    )}
+                                                    {user.id !== users.find(u => u.role === 'company_admin')?.id && (
+                                                        <button
+                                                            onClick={() => onToggleBlock(user.id, user.is_blocked)}
+                                                            disabled={user.is_blocked && user.blocked_by === 'superadmin'}
+                                                            className={`px-3 py-1 text-white rounded text-sm transition-all ${user.is_blocked
+                                                                ? (user.blocked_by === 'superadmin' ? 'bg-gray-400 cursor-not-allowed opacity-50' : 'bg-orange-500 hover:bg-orange-600')
+                                                                : 'bg-gray-700 hover:bg-gray-800'
+                                                                }`}
+                                                            title={user.is_blocked && user.blocked_by === 'superadmin' ? 'This user was blocked by a System Admin and cannot be unblocked here.' : ''}
+                                                        >
+                                                            {user.is_blocked ? (user.blocked_by === 'superadmin' ? 'Blocked by Admin' : 'Unblock') : 'Block'}
+                                                        </button>
                                                     )}
                                                     <button onClick={() => onEditUser(user)} className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600">Edit</button>
                                                     <button onClick={() => onDeleteUser(user.id, user.email)} className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600">Delete</button>
@@ -168,7 +187,7 @@ export const CompanyUserManagement = ({
                                             <p className="font-bold text-gray-900">{user.full_name}</p>
                                             <p className="text-sm text-gray-600">{user.email}</p>
                                         </div>
-                                        <div>{getStatusBadge(user.approved)}</div>
+                                        <div>{getStatusBadge(user)}</div>
                                     </div>
 
                                     <div className="space-y-2 text-sm mb-4">
@@ -189,12 +208,24 @@ export const CompanyUserManagement = ({
                                     </div>
 
                                     <div className="flex gap-2 pt-2 border-t border-dashed">
-                                        {!user.approved && (
+                                        {!user.approved && !user.is_blocked && (
                                             <button
                                                 onClick={() => onApproveUser(user.id)}
                                                 className="flex-1 py-2 bg-green-50 text-green-700 rounded-lg text-sm font-medium hover:bg-green-100 border border-green-200"
                                             >
                                                 Approve
+                                            </button>
+                                        )}
+                                        {user.id !== users.find(u => u.role === 'company_admin')?.id && (
+                                            <button
+                                                onClick={() => onToggleBlock(user.id, user.is_blocked)}
+                                                disabled={user.is_blocked && user.blocked_by === 'superadmin'}
+                                                className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-all ${user.is_blocked
+                                                    ? (user.blocked_by === 'superadmin' ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' : 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100')
+                                                    : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+                                                    }`}
+                                            >
+                                                {user.is_blocked ? (user.blocked_by === 'superadmin' ? 'Locked' : 'Unblock') : 'Block'}
                                             </button>
                                         )}
                                         <button

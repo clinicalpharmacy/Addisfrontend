@@ -117,6 +117,7 @@ const CompanyUsers = () => {
                 onEditUser={logic.setEditingUser}
                 onDeleteUser={logic.handleDeleteUser}
                 onApproveUser={logic.handleApproveUser}
+                onToggleBlock={logic.handleToggleBlock}
                 onRefresh={() => logic.loadDashboardData(currentUser?.company_id)}
             />
 

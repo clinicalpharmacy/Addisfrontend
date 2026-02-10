@@ -69,8 +69,9 @@ export const useCompanyAdminLogic = (currentUser) => {
     const updateStats = (users) => {
         setStats({
             total_users: users.length,
-            active_users: users.filter(u => u.approved).length,
-            pending_users: users.filter(u => !u.approved).length
+            active_users: users.filter(u => u.approved && !u.is_blocked).length,
+            pending_users: users.filter(u => !u.approved).length,
+            blocked_users: users.filter(u => u.is_blocked).length
         });
     };
 
@@ -154,12 +155,24 @@ export const useCompanyAdminLogic = (currentUser) => {
         } catch (err) { setError(err.message); }
     };
 
+    const handleToggleBlock = async (userId, currentState) => {
+        try {
+            const res = await api.post(`/company/users/${userId}/toggle-block`);
+            if (res.success) {
+                setSuccess(res.message);
+                loadDashboardData(currentUser.company_id);
+            } else {
+                setError(res.error || 'Operation failed');
+            }
+        } catch (err) { setError(err.message); }
+    };
+
     return {
         companyInfo, companyUsers, loading, stats, recentActivities, error, success,
         showAddUserModal, setShowAddUserModal,
         editingUser, setEditingUser,
         isAddingUser, newUserData, setNewUserData,
-        loadDashboardData, handleAddUser, handleUpdateUser, handleDeleteUser, handleApproveUser,
+        loadDashboardData, handleAddUser, handleUpdateUser, handleDeleteUser, handleApproveUser, handleToggleBlock,
         setError, setSuccess
     };
 };
