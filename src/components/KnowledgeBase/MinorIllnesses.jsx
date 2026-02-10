@@ -38,8 +38,8 @@ const MinorIllnesses = () => {
     const [formData, setFormData] = useState({
         name: '',
         amharic_name: '',
-        presentation: '',
-        folk_medicine: '',
+        assessment: '',
+        referral: '',
         otc_drug: '',
         for_pharmacists: ''
     });
@@ -94,7 +94,7 @@ const MinorIllnesses = () => {
             filtered = filtered.filter(illness =>
                 illness.name.toLowerCase().includes(term.toLowerCase()) ||
                 (illness.amharic_name && illness.amharic_name.toLowerCase().includes(term.toLowerCase())) ||
-                (illness.presentation && illness.presentation.toLowerCase().includes(term.toLowerCase()))
+                (illness.assessment && illness.assessment.toLowerCase().includes(term.toLowerCase()))
             );
         }
 
@@ -129,8 +129,8 @@ const MinorIllnesses = () => {
             return;
         }
 
-        if (!formData.presentation.trim()) {
-            setError('Clinical presentation is required');
+        if (!formData.assessment.trim()) {
+            setError('How to assess the illness is required');
             return;
         }
 
@@ -141,8 +141,8 @@ const MinorIllnesses = () => {
             const illnessData = {
                 name: formData.name.trim(),
                 amharic_name: formData.amharic_name.trim() || '',
-                presentation: formData.presentation.trim(),
-                folk_medicine: formData.folk_medicine.trim() || '',
+                assessment: formData.assessment.trim(),
+                referral: formData.referral.trim() || '',
                 otc_drug: formData.otc_drug.trim() || '',
                 for_pharmacists: formData.for_pharmacists.trim() || '',
                 updated_at: new Date().toISOString()
@@ -190,8 +190,8 @@ const MinorIllnesses = () => {
         setFormData({
             name: illness.name || '',
             amharic_name: illness.amharic_name || '',
-            presentation: illness.presentation || '',
-            folk_medicine: illness.folk_medicine || '',
+            assessment: illness.assessment || '',
+            referral: illness.referral || '',
             otc_drug: illness.otc_drug || '',
             for_pharmacists: illness.for_pharmacists || ''
         });
@@ -230,8 +230,8 @@ const MinorIllnesses = () => {
         setFormData({
             name: '',
             amharic_name: '',
-            presentation: '',
-            folk_medicine: '',
+            assessment: '',
+            referral: '',
             otc_drug: '',
             for_pharmacists: ''
         });
@@ -412,19 +412,19 @@ const MinorIllnesses = () => {
                                         </div>
                                     </div>
 
-                                    {illness.presentation && (
+                                    {illness.assessment && (
                                         <div className="mb-3 md:mb-4">
                                             <h4 className="font-semibold text-gray-700 mb-1.5 md:mb-2 flex items-center gap-1 text-sm md:text-base">
-                                                <FaStethoscope className="text-xs md:text-sm" /> Presentation:
+                                                <FaStethoscope className="text-xs md:text-sm" /> Assessment:
                                             </h4>
-                                            <p className="text-xs md:text-sm text-gray-600 whitespace-pre-line leading-relaxed">{illness.presentation}</p>
+                                            <p className="text-xs md:text-sm text-gray-600 whitespace-pre-line leading-relaxed">{illness.assessment}</p>
                                         </div>
                                     )}
 
-                                    {illness.folk_medicine && (
+                                    {illness.referral && (
                                         <div className="mb-3 md:mb-4 p-2 md:p-3 bg-yellow-50 border border-yellow-100 rounded">
                                             <h4 className="font-semibold text-yellow-700 mb-1 text-sm md:text-base">Folk Medicine:</h4>
-                                            <p className="text-xs md:text-sm text-yellow-800 whitespace-pre-line leading-relaxed">{illness.folk_medicine}</p>
+                                            <p className="text-xs md:text-sm text-yellow-800 whitespace-pre-line leading-relaxed">{illness.referral}</p>
                                         </div>
                                     )}
 
@@ -501,7 +501,7 @@ const MinorIllnesses = () => {
                             </div>
                             <div className="text-center">
                                 <div className="text-2xl font-bold text-green-600">
-                                    {illnesses.filter(i => i.folk_medicine).length}
+                                    {illnesses.filter(i => i.referral).length}
                                 </div>
                                 <div className="text-sm text-gray-600">With Folk Medicine</div>
                             </div>
@@ -582,8 +582,8 @@ const MinorIllnesses = () => {
                                             How to Assess  Minor Illness *
                                         </label>
                                         <textarea
-                                            value={formData.presentation}
-                                            onChange={(e) => setFormData({ ...formData, presentation: e.target.value })}
+                                            value={formData.assessment}
+                                            onChange={(e) => setFormData({ ...formData, assessment: e.target.value })}
                                             rows="4"
                                             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500"
                                             placeholder="Describe symptoms, signs, duration..."
@@ -597,8 +597,8 @@ const MinorIllnesses = () => {
                                             When to Refer
                                         </label>
                                         <textarea
-                                            value={formData.folk_medicine}
-                                            onChange={(e) => setFormData({ ...formData, folk_medicine: e.target.value })}
+                                            value={formData.referral}
+                                            onChange={(e) => setFormData({ ...formData, referral: e.target.value })}
                                             rows="3"
                                             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500"
                                             placeholder="Traditional remedies..."
