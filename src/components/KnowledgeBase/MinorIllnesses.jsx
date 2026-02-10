@@ -415,7 +415,7 @@ const MinorIllnesses = () => {
                                     {illness.assessment && (
                                         <div className="mb-3 md:mb-4">
                                             <h4 className="font-semibold text-gray-700 mb-1.5 md:mb-2 flex items-center gap-1 text-sm md:text-base">
-                                                <FaStethoscope className="text-xs md:text-sm" /> Assessment:
+                                                <FaStethoscope className="text-xs md:text-sm" /> How to Assess Minor Illnes:
                                             </h4>
                                             <p className="text-xs md:text-sm text-gray-600 whitespace-pre-line leading-relaxed">{illness.assessment}</p>
                                         </div>
@@ -431,7 +431,7 @@ const MinorIllnesses = () => {
                                     {illness.otc_drug && (
                                         <div className="mb-3 md:mb-4">
                                             <h4 className="font-semibold text-gray-700 mb-1.5 md:mb-2 flex items-center gap-1 text-sm md:text-base">
-                                                <FaCapsules className="text-xs md:text-sm" /> OTC Drugs:
+                                                <FaCapsules className="text-xs md:text-sm" /> OTC Drug Recommendations:
                                             </h4>
                                             <p className="text-xs md:text-sm text-gray-600 whitespace-pre-line leading-relaxed">{illness.otc_drug}</p>
                                         </div>
@@ -440,7 +440,7 @@ const MinorIllnesses = () => {
                                     {illness.for_pharmacists && (
                                         <div className="mb-3 md:mb-4 p-2 md:p-3 bg-blue-50 border border-blue-100 rounded">
                                             <h4 className="font-semibold text-blue-700 mb-1 flex items-center gap-1 text-sm md:text-base">
-                                                <FaUserMd className="text-xs md:text-sm" /> For Pharmacists:
+                                                <FaUserMd className="text-xs md:text-sm" /> Additional tips for the Pharmacist:
                                             </h4>
                                             <p className="text-xs md:text-sm text-blue-800 whitespace-pre-line leading-relaxed">{illness.for_pharmacists}</p>
                                         </div>
