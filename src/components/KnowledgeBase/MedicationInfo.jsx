@@ -17,7 +17,7 @@ import {
     FaSync,
     FaLock,
     FaShieldAlt,
-    FaBan
+    FaBan,
     FaEdit
 } from 'react-icons/fa';
 
