@@ -111,15 +111,26 @@ const Login = () => {
         }
     };
 
-    // Debug function to test login
-    const testLogin = async (email, password) => {
-        setFormData({ email, password });
-        console.log(`🧪 Testing login with: ${email}`);
+    const handleRegisterClick = async (e, type) => {
+        e.preventDefault();
+        setLoading(true);
+        setError('');
 
-        // Auto-submit after 1 second
-        setTimeout(() => {
-            handleSubmit(new Event('submit'));
-        }, 1000);
+        try {
+            console.log(`🔍 Checking system status before ${type} registration...`);
+            // Check health
+            await api.get('/health');
+            console.log('✅ System is online, proceeding to registration');
+
+            // Navigate to signup
+            navigate('/signup');
+        } catch (err) {
+            console.error('❌ System is offline:', err);
+            setError('Unable to proceed to registration. The system is currently offline. Please try again later.');
+            setBackendStatus('offline');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -160,7 +171,7 @@ const Login = () => {
                             <div className="flex items-start gap-3">
                                 <FaExclamationTriangle className="text-red-500 mt-0.5 flex-shrink-0" />
                                 <div>
-                                    <p className="text-red-800 font-medium text-sm">Unable to sign in</p>
+                                    <p className="text-red-800 font-medium text-sm">Unable to proceed</p>
                                     <p className="text-red-600 text-sm mt-1">{error}</p>
                                 </div>
                             </div>
@@ -238,7 +249,7 @@ const Login = () => {
                             {loading ? (
                                 <span className="flex items-center justify-center gap-2">
                                     <FaSpinner className="animate-spin" />
-                                    Signing in...
+                                    Processing...
                                 </span>
                             ) : (
                                 <span className="flex items-center justify-center gap-2">
@@ -276,20 +287,22 @@ const Login = () => {
                             Don't have an account?
                         </p>
                         <div className="grid grid-cols-2 gap-3">
-                            <Link
-                                to="/register"
-                                className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl transition text-sm font-medium"
+                            <button
+                                onClick={(e) => handleRegisterClick(e, 'individual')}
+                                disabled={loading}
+                                className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl transition text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <FaUserCheck />
                                 Individual
-                            </Link>
-                            <Link
-                                to="/register-company"
-                                className="flex items-center justify-center gap-2 px-4 py-3 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl transition text-sm font-medium"
+                            </button>
+                            <button
+                                onClick={(e) => handleRegisterClick(e, 'organization')}
+                                disabled={loading}
+                                className="flex items-center justify-center gap-2 px-4 py-3 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl transition text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <FaBuilding />
                                 Organization
-                            </Link>
+                            </button>
                         </div>
                     </div>
 

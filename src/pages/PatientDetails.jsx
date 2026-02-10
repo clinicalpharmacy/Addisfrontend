@@ -3974,7 +3974,7 @@ const PatientDetails = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-2 sm:p-4 md:p-6">
+        <div className="min-h-screen bg-gray-50 p-2 sm:p-4 md:p-6 max-w-full overflow-x-hidden">
             {/* Connection Status Banner */}
             {(!isOnline || backendStatus === 'offline') && (
                 <div className="mb-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-3 md:p-4 rounded-lg shadow">
@@ -4020,7 +4020,7 @@ const PatientDetails = () => {
                     </div>
                 )}
 
-                <div className="bg-white rounded-xl shadow-lg p-3 md:p-6 mb-4 md:mb-6">
+                <div className="bg-white rounded-xl shadow-lg p-2 md:p-6 mb-4 md:mb-6">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex items-center gap-3 min-w-0 flex-1">
                             <button
@@ -4093,7 +4093,7 @@ const PatientDetails = () => {
                     </nav>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-lg p-3 md:p-6">
+                <div className="bg-white rounded-xl shadow-lg p-2 sm:p-4 md:p-6">
                     {renderTabContent()}
                 </div>
 

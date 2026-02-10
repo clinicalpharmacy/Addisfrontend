@@ -43,7 +43,8 @@ const SubscriptionPlans = () => {
         setIsRegistered(true);
 
         // If user is a company employee, they can't manage subscriptions
-        if (parsedUser.account_type === 'company_user' || parsedUser.role === 'pharmacist' && parsedUser.company_id && parsedUser.role !== 'company_admin') {
+        // company_admin MUST be allowed to manage it
+        if (parsedUser.role !== 'company_admin' && (parsedUser.account_type === 'company_user' || (parsedUser.role === 'pharmacist' && parsedUser.company_id))) {
           setError('Subscription is managed by your company administrator.');
           setTimeout(() => navigate('/dashboard'), 3000);
         }
@@ -66,7 +67,7 @@ const SubscriptionPlans = () => {
         setIsRegistered(true);
 
         // If user is a company employee, they can't manage subscriptions
-        if (parsedRegisteredUser.account_type === 'company_user') {
+        if (parsedRegisteredUser.account_type === 'company_user' && parsedRegisteredUser.role !== 'company_admin') {
           setError('Subscription is managed by your company administrator.');
           setTimeout(() => navigate('/dashboard'), 3000);
           return;

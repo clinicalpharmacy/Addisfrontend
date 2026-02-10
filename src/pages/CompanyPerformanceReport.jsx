@@ -12,6 +12,8 @@ const CompanyPerformanceReport = () => {
     const [error, setError] = useState(null);
     const [sortBy, setSortBy] = useState('total_patients');
     const [sortOrder, setSortOrder] = useState('desc');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
     useEffect(() => {
         fetchReport();
@@ -64,6 +66,7 @@ const CompanyPerformanceReport = () => {
             setSortBy(field);
             setSortOrder('desc');
         }
+        setCurrentPage(1); // Reset to first page on sort
     };
 
     const formatCurrency = (amount) => {
@@ -164,6 +167,12 @@ const CompanyPerformanceReport = () => {
     if (!report) return null;
 
     const sortedUsers = sortUsers(report.user_performance);
+
+    // Pagination logic
+    const totalPages = Math.ceil(sortedUsers.length / itemsPerPage);
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentUsers = sortedUsers.slice(indexOfFirstItem, indexOfLastItem);
 
     return (
         <div className="min-h-screen bg-gray-50 p-4 md:p-6">
@@ -316,7 +325,7 @@ const CompanyPerformanceReport = () => {
 
                     {/* Mobile Card View */}
                     <div className="md:hidden space-y-4">
-                        {sortedUsers.map((user) => (
+                        {currentUsers.map((user) => (
                             <div key={user.user_id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
                                 <div className="flex justify-between items-start mb-4">
                                     <div>
@@ -368,7 +377,7 @@ const CompanyPerformanceReport = () => {
                     {/* Desktop Table View */}
                     <div className="hidden md:block overflow-x-auto">
                         <table className="w-full">
-                            <thead className="bg-gray-100 border-b-2 border-gray-200">
+                            <thead>
                                 <tr>
                                     <th className="p-4 text-left text-sm font-semibold text-gray-700">User</th>
                                     <th
@@ -400,7 +409,7 @@ const CompanyPerformanceReport = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {sortedUsers.map((user, index) => (
+                                {currentUsers.map((user, index) => (
                                     <tr key={user.user_id} className="border-b hover:bg-gray-50 transition">
                                         <td className="p-4">
                                             <div>
@@ -450,6 +459,51 @@ const CompanyPerformanceReport = () => {
                             </tbody>
                         </table>
                     </div>
+
+                    {/* Pagination Controls */}
+                    {sortedUsers.length > itemsPerPage && (
+                        <div className="mt-6 flex flex-col md:flex-row justify-between items-center gap-4 pt-6 border-t">
+                            <div className="text-sm text-gray-600 font-medium">
+                                Showing <span className="text-gray-900">{indexOfFirstItem + 1}</span> to <span className="text-gray-900">{Math.min(indexOfLastItem, sortedUsers.length)}</span> of <span className="text-gray-900">{sortedUsers.length}</span> users
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                    disabled={currentPage === 1}
+                                    className={`px-4 py-2 border rounded-xl text-sm font-semibold transition-all ${currentPage === 1
+                                        ? 'bg-gray-50 text-gray-400 cursor-not-allowed border-gray-200'
+                                        : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 border-gray-300'}`}
+                                >
+                                    Previous
+                                </button>
+
+                                <div className="flex items-center gap-1.5">
+                                    {[...Array(totalPages)].map((_, i) => (
+                                        <button
+                                            key={i + 1}
+                                            onClick={() => setCurrentPage(i + 1)}
+                                            className={`w-9 h-9 rounded-xl text-sm font-bold transition-all ${currentPage === i + 1
+                                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-200'
+                                                : 'bg-white text-gray-600 hover:bg-blue-50 border border-gray-200'
+                                                }`}
+                                        >
+                                            {i + 1}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                    disabled={currentPage === totalPages}
+                                    className={`px-4 py-2 border rounded-xl text-sm font-semibold transition-all ${currentPage === totalPages
+                                        ? 'bg-gray-50 text-gray-400 cursor-not-allowed border-gray-200'
+                                        : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 border-gray-300'}`}
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Footer */}

@@ -66,6 +66,17 @@ const ClinicalRulesAdmin = () => {
     const [checkingAdmin, setCheckingAdmin] = useState(true);
     const [authMethod, setAuthMethod] = useState(''); // 'supabase' or 'backend'
     const [dbConnected, setDbConnected] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage] = useState(10);
+
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
+        // Scroll to the rules table area
+        const tableElement = document.getElementById('rules-table-container');
+        if (tableElement) {
+            tableElement.scrollIntoView({ behavior: 'smooth' });
+        }
+    };
 
     // Form data matching your database schema
     const [formData, setFormData] = useState({
@@ -354,8 +365,15 @@ const ClinicalRulesAdmin = () => {
             );
         }
 
+        setCurrentPage(1); // Reset to first page on filter/search
         setFilteredRules(filtered);
     }, [filterType, searchTerm, rules]);
+
+    // Pagination calculations
+    const totalPages = Math.ceil(filteredRules.length / itemsPerPage);
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentRules = filteredRules.slice(indexOfFirstItem, indexOfLastItem);
 
     const checkDbConnection = async () => {
         try {
@@ -984,119 +1002,166 @@ const ClinicalRulesAdmin = () => {
 
             {/* Rules Table */}
             {currentUser ? (
-                <div className="overflow-x-auto rounded-lg border">
-                    <table className="w-full">
-                        <thead className="bg-gray-100">
-                            <tr>
-                                <th className="p-3 text-left font-medium text-gray-700">Status</th>
-                                <th className="p-3 text-left font-medium text-gray-700">Rule Name</th>
-                                <th className="p-3 text-left font-medium text-gray-700">Type</th>
-                                <th className="p-3 text-left font-medium text-gray-700">Severity</th>
-                                <th className="p-3 text-left font-medium text-gray-700">Last Updated</th>
-                                {isAdmin && <th className="p-3 text-left font-medium text-gray-700">Actions</th>}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredRules.length > 0 ? (
-                                filteredRules.map(rule => {
-                                    const ruleTypeInfo = getRuleTypeInfo(rule.rule_type);
-                                    const severityInfo = getSeverityInfo(rule.severity);
-                                    const Icon = ruleTypeInfo.icon;
-
-                                    return (
-                                        <tr key={rule.id} className="border-b hover:bg-gray-50">
-                                            <td className="p-3">
-                                                {isAdmin ? (
-                                                    <button
-                                                        onClick={() => toggleRuleStatus(rule.id, rule.is_active)}
-                                                        className={`flex items-center gap-2 ${rule.is_active ? 'text-green-600' : 'text-gray-400'}`}
-                                                        title={rule.is_active ? 'Active - Click to deactivate' : 'Inactive - Click to activate'}
-                                                    >
-                                                        {rule.is_active ? <FaToggleOn size={20} /> : <FaToggleOff size={20} />}
-                                                        <span className="text-xs">{rule.is_active ? 'Active' : 'Inactive'}</span>
-                                                    </button>
-                                                ) : (
-                                                    <div className="flex items-center gap-2">
-                                                        {rule.is_active ? (
-                                                            <FaToggleOn size={20} className="text-green-600" />
-                                                        ) : (
-                                                            <FaToggleOff size={20} className="text-gray-400" />
-                                                        )}
-                                                        <span className="text-xs">{rule.is_active ? 'Active' : 'Inactive'}</span>
-                                                    </div>
-                                                )}
-                                            </td>
-                                            <td className="p-3">
-                                                <div className="font-medium text-gray-800">{rule.rule_name}</div>
-                                                {rule.rule_description && (
-                                                    <div className="text-sm text-gray-500 mt-1">{rule.rule_description}</div>
-                                                )}
-                                            </td>
-                                            <td className="p-3">
-                                                <div className="flex items-center gap-2">
-                                                    <Icon className={ruleTypeInfo.color.replace('bg-', 'text-').split(' ')[0]} />
-                                                    <span className={`px-2 py-1 rounded text-xs ${ruleTypeInfo.color}`}>
-                                                        {ruleTypeInfo.label}
-                                                    </span>
-                                                </div>
-                                                {rule.dtp_category && (
-                                                    <div className="text-xs text-gray-500 mt-1">
-                                                        DTP: {dtpCategories.find(c => c.value === rule.dtp_category)?.label || rule.dtp_category}
-                                                    </div>
-                                                )}
-                                            </td>
-                                            <td className="p-3">
-                                                <span className={`px-2 py-1 rounded text-xs ${severityInfo.color}`}>
-                                                    {severityInfo.label}
-                                                </span>
-                                            </td>
-                                            <td className="p-3 text-sm text-gray-600">
-                                                {rule.updated_at ? new Date(rule.updated_at).toLocaleDateString() : 'N/A'}
-                                            </td>
-                                            {isAdmin && (
-                                                <td className="p-3">
-                                                    <div className="flex gap-2">
-                                                        <button
-                                                            onClick={() => handleEdit(rule)}
-                                                            className="text-blue-500 hover:text-blue-700 p-2 hover:bg-blue-50 rounded"
-                                                            title="Edit Rule"
-                                                        >
-                                                            <FaEdit />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDelete(rule.id)}
-                                                            className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded"
-                                                            title="Delete Rule"
-                                                        >
-                                                            <FaTrash />
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            )}
-                                        </tr>
-                                    );
-                                })
-                            ) : (
+                <>
+                    <div id="rules-table-container" className="overflow-x-auto rounded-lg border">
+                        <table className="w-full">
+                            <thead className="bg-gray-100">
                                 <tr>
-                                    <td colSpan={isAdmin ? 6 : 5} className="p-6 text-center">
-                                        <FaStethoscope className="text-4xl text-gray-300 mx-auto mb-3" />
-                                        <p className="text-gray-500">
-                                            {loading ? 'Loading rules...' : 'No rules found'}
-                                        </p>
-                                        {isAdmin && (
-                                            <button
-                                                onClick={() => setShowForm(true)}
-                                                className="mt-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-4 py-2 rounded-lg text-sm"
-                                            >
-                                                Create Your First Rule
-                                            </button>
-                                        )}
-                                    </td>
+                                    <th className="p-3 text-left font-medium text-gray-700">Status</th>
+                                    <th className="p-3 text-left font-medium text-gray-700">Rule Name</th>
+                                    <th className="p-3 text-left font-medium text-gray-700">Type</th>
+                                    <th className="p-3 text-left font-medium text-gray-700">Severity</th>
+                                    <th className="p-3 text-left font-medium text-gray-700">Last Updated</th>
+                                    {isAdmin && <th className="p-3 text-left font-medium text-gray-700">Actions</th>}
                                 </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody>
+                                {currentRules.length > 0 ? (
+                                    currentRules.map(rule => {
+                                        const ruleTypeInfo = getRuleTypeInfo(rule.rule_type);
+                                        const severityInfo = getSeverityInfo(rule.severity);
+                                        const Icon = ruleTypeInfo.icon;
+
+                                        return (
+                                            <tr key={rule.id} className="border-b hover:bg-gray-50">
+                                                <td className="p-3">
+                                                    {isAdmin ? (
+                                                        <button
+                                                            onClick={() => toggleRuleStatus(rule.id, rule.is_active)}
+                                                            className={`flex items-center gap-2 ${rule.is_active ? 'text-green-600' : 'text-gray-400'}`}
+                                                            title={rule.is_active ? 'Active - Click to deactivate' : 'Inactive - Click to activate'}
+                                                        >
+                                                            {rule.is_active ? <FaToggleOn size={20} /> : <FaToggleOff size={20} />}
+                                                            <span className="text-xs">{rule.is_active ? 'Active' : 'Inactive'}</span>
+                                                        </button>
+                                                    ) : (
+                                                        <div className="flex items-center gap-2">
+                                                            {rule.is_active ? (
+                                                                <FaToggleOn size={20} className="text-green-600" />
+                                                            ) : (
+                                                                <FaToggleOff size={20} className="text-gray-400" />
+                                                            )}
+                                                            <span className="text-xs">{rule.is_active ? 'Active' : 'Inactive'}</span>
+                                                        </div>
+                                                    )}
+                                                </td>
+                                                <td className="p-3">
+                                                    <div className="font-medium text-gray-800">{rule.rule_name}</div>
+                                                    {rule.rule_description && (
+                                                        <div className="text-sm text-gray-500 mt-1">{rule.rule_description}</div>
+                                                    )}
+                                                </td>
+                                                <td className="p-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <Icon className={ruleTypeInfo.color.replace('bg-', 'text-').split(' ')[0]} />
+                                                        <span className={`px-2 py-1 rounded text-xs ${ruleTypeInfo.color}`}>
+                                                            {ruleTypeInfo.label}
+                                                        </span>
+                                                    </div>
+                                                    {rule.dtp_category && (
+                                                        <div className="text-xs text-gray-500 mt-1">
+                                                            DTP: {dtpCategories.find(c => c.value === rule.dtp_category)?.label || rule.dtp_category}
+                                                        </div>
+                                                    )}
+                                                </td>
+                                                <td className="p-3">
+                                                    <span className={`px-2 py-1 rounded text-xs ${severityInfo.color}`}>
+                                                        {severityInfo.label}
+                                                    </span>
+                                                </td>
+                                                <td className="p-3 text-sm text-gray-600">
+                                                    {rule.updated_at ? new Date(rule.updated_at).toLocaleDateString() : 'N/A'}
+                                                </td>
+                                                {isAdmin && (
+                                                    <td className="p-3">
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                onClick={() => handleEdit(rule)}
+                                                                className="text-blue-500 hover:text-blue-700 p-2 hover:bg-blue-50 rounded"
+                                                                title="Edit Rule"
+                                                            >
+                                                                <FaEdit />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDelete(rule.id)}
+                                                                className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded"
+                                                                title="Delete Rule"
+                                                            >
+                                                                <FaTrash />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                )}
+                                            </tr>
+                                        );
+                                    })
+                                ) : (
+                                    <tr>
+                                        <td colSpan={isAdmin ? 6 : 5} className="p-6 text-center">
+                                            <FaStethoscope className="text-4xl text-gray-300 mx-auto mb-3" />
+                                            <p className="text-gray-500">
+                                                {loading ? 'Loading rules...' : 'No rules found'}
+                                            </p>
+                                            {isAdmin && (
+                                                <button
+                                                    onClick={() => setShowForm(true)}
+                                                    className="mt-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-4 py-2 rounded-lg text-sm"
+                                                >
+                                                    Create Your First Rule
+                                                </button>
+                                            )}
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Pagination Controls */}
+                    {filteredRules.length > itemsPerPage && (
+                        <div className="mt-6 flex flex-col md:flex-row justify-between items-center gap-4 py-4 px-2">
+                            <div className="text-sm text-gray-600">
+                                Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredRules.length)} of {filteredRules.length} rules
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => handlePageChange(Math.max(currentPage - 1, 1))}
+                                    disabled={currentPage === 1}
+                                    className={`px-4 py-2 border rounded-lg text-sm transition-colors ${currentPage === 1
+                                        ? 'bg-gray-50 text-gray-400 cursor-not-allowed'
+                                        : 'hover:bg-purple-50 hover:text-purple-600 text-gray-700'}`}
+                                >
+                                    Previous
+                                </button>
+
+                                <div className="flex items-center gap-1">
+                                    {[...Array(totalPages)].map((_, i) => (
+                                        <button
+                                            key={i + 1}
+                                            onClick={() => handlePageChange(i + 1)}
+                                            className={`w-8 h-8 rounded-lg text-sm font-medium transition-all ${currentPage === i + 1
+                                                ? 'bg-purple-600 text-white shadow-md'
+                                                : 'text-gray-600 hover:bg-purple-50'
+                                                }`}
+                                        >
+                                            {i + 1}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <button
+                                    onClick={() => handlePageChange(Math.min(currentPage + 1, totalPages))}
+                                    disabled={currentPage === totalPages}
+                                    className={`px-4 py-2 border rounded-lg text-sm transition-colors ${currentPage === totalPages
+                                        ? 'bg-gray-50 text-gray-400 cursor-not-allowed'
+                                        : 'hover:bg-purple-50 hover:text-purple-600 text-gray-700'}`}
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </>
             ) : (
                 <div className="p-8 text-center bg-gray-50 rounded-lg border">
                     <FaLock className="text-4xl text-gray-300 mx-auto mb-3" />

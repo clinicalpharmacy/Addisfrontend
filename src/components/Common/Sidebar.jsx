@@ -26,7 +26,8 @@ import {
     FaLock,
     FaLink,
     FaExternalLinkAlt,
-    FaBookmark
+    FaBookmark,
+    FaCreditCard
 } from 'react-icons/fa';
 
 const Sidebar = ({ onClose }) => {
@@ -106,6 +107,12 @@ const Sidebar = ({ onClose }) => {
     const isAdmin = user?.role === 'admin';
     const isCompanyAdmin = user?.role === 'company_admin';
     const isCompanyUser = !!user?.company_id || user?.account_type === 'company' || ['company_admin', 'company_user'].includes(user?.role);
+    const isIndividual = !isAdmin && !isCompanyUser;
+
+    // Check near expiry for subscription (within 7 days)
+    const diff = user?.subscription_end_date ? new Date(user.subscription_end_date) - new Date() : null;
+    const daysLeft = diff !== null ? Math.ceil(diff / (1000 * 60 * 60 * 24)) : null;
+    const isNearExpiry = daysLeft !== null && daysLeft <= 7;
 
     return (
         <aside className="w-64 bg-white h-full flex flex-col border-r border-gray-200 shadow-lg">
@@ -229,22 +236,41 @@ const Sidebar = ({ onClose }) => {
                                 </div>
                             )}
                         </li>
-                        {isCompanyAdmin && (
+                        {isIndividual && (!isSubscribed || isNearExpiry) && (
                             <li className="mt-2 border-t pt-2">
                                 <NavLink
-                                    to="/company-performance"
+                                    to="/subscription/plans"
                                     onClick={onClose}
                                     className={({ isActive }) =>
                                         `flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${isActive
-                                            ? 'bg-purple-100 text-purple-700 border-l-4 border-purple-700 shadow-sm'
-                                            : 'text-gray-600 hover:bg-purple-50 hover:text-purple-700 hover:shadow-sm'
+                                            ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-700 shadow-sm'
+                                            : 'text-gray-600 hover:bg-blue-50 hover:text-blue-700 hover:shadow-sm'
                                         }`
                                     }
                                 >
-                                    <FaChartBar className="text-lg text-purple-600" />
-                                    <span className="font-medium">Company Performance</span>
+                                    <FaCreditCard className="text-lg text-blue-600" />
+                                    <span className="font-medium">My Subscription</span>
                                 </NavLink>
                             </li>
+                        )}
+                        {isCompanyAdmin && (
+                            <>
+                                <li>
+                                    <NavLink
+                                        to="/subscription/plans"
+                                        onClick={onClose}
+                                        className={({ isActive }) =>
+                                            `flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${isActive
+                                                ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-700 shadow-sm'
+                                                : 'text-gray-600 hover:bg-blue-50 hover:text-blue-700 hover:shadow-sm'
+                                            }`
+                                        }
+                                    >
+                                        <FaCreditCard className="text-lg text-blue-600" />
+                                        <span className="font-medium">Manage Subscription</span>
+                                    </NavLink>
+                                </li>
+                            </>
                         )}
                     </ul>
                 </div>

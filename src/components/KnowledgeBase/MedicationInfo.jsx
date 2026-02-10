@@ -48,156 +48,6 @@ const MedicationInfo = () => {
         storage: ''
     });
 
-    // Protection functions - users CAN SEE but CANNOT COPY
-    const disableCopyPaste = (e) => {
-        if (protectionEnabled && !isAdmin) {
-            e.preventDefault();
-            setError('Copying content is disabled. You can view but not copy this information.');
-            setTimeout(() => setError(''), 3000);
-            return false;
-        }
-    };
-
-    const disableRightClick = (e) => {
-        if (protectionEnabled && !isAdmin) {
-            e.preventDefault();
-            setError('Right-click is disabled to prevent copying of proprietary information.');
-            setTimeout(() => setError(''), 3000);
-            return false;
-        }
-    };
-
-    const disableTextSelection = () => {
-        if (protectionEnabled && !isAdmin) {
-            return {
-                userSelect: 'none',
-                WebkitUserSelect: 'none',
-                MozUserSelect: 'none',
-                msUserSelect: 'none',
-                cursor: 'default'
-            };
-        }
-        return {};
-    };
-
-    const disableKeyboardShortcuts = (e) => {
-        if (protectionEnabled && !isAdmin) {
-            // Disable copy shortcuts only
-            const copyKeys = ['c', 'C', 'a', 'A', 'x', 'X'];
-            if ((e.ctrlKey || e.metaKey) && copyKeys.includes(e.key)) {
-                e.preventDefault();
-                setError('Copying is disabled. You can view but not copy this information.');
-                setTimeout(() => setError(''), 3000);
-                return false;
-            }
-
-            // Disable print shortcuts
-            if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
-                e.preventDefault();
-                setError('Printing is disabled. You can view but not print this information.');
-                setTimeout(() => setError(''), 3000);
-                return false;
-            }
-
-            if (e.key === 'PrintScreen' || e.key === 'F12') {
-                e.preventDefault();
-                setError('Screenshots are disabled to protect proprietary information.');
-                setTimeout(() => setError(''), 3000);
-                return false;
-            }
-        }
-    };
-
-    // Add CSS to prevent text selection while allowing visibility
-    useEffect(() => {
-        if (protectionEnabled && !isAdmin) {
-            const style = document.createElement('style');
-            style.id = 'prevent-copy-medications';
-            style.innerHTML = `
-                .medication-content {
-                    -webkit-user-select: none !important;
-                    -moz-user-select: none !important;
-                    -ms-user-select: none !important;
-                    user-select: none !important;
-                }
-                .medication-content::selection {
-                    background: transparent !important;
-                }
-                .medication-content::-moz-selection {
-                    background: transparent !important;
-                }
-            `;
-            document.head.appendChild(style);
-
-            return () => {
-                const styleEl = document.getElementById('prevent-copy-medications');
-                if (styleEl) {
-                    document.head.removeChild(styleEl);
-                }
-            };
-        }
-    }, [protectionEnabled, isAdmin]);
-
-    // Prevent printing
-    useEffect(() => {
-        if (protectionEnabled && !isAdmin) {
-            // Override window.print
-            const originalPrint = window.print;
-            window.print = () => {
-                setError('Printing of this content is disabled. You can view but not print the information.');
-                setTimeout(() => setError(''), 3000);
-                return false;
-            };
-
-            // Add beforeprint event listener
-            const handleBeforePrint = (e) => {
-                setError('Printing of this content is disabled. You can view but not print the information.');
-                setTimeout(() => setError(''), 3000);
-                e.preventDefault();
-                return false;
-            };
-
-            window.addEventListener('beforeprint', handleBeforePrint);
-
-            return () => {
-                window.removeEventListener('beforeprint', handleBeforePrint);
-                window.print = originalPrint;
-            };
-        }
-    }, [protectionEnabled, isAdmin]);
-
-    // Add global event listeners for protection
-    useEffect(() => {
-        if (protectionEnabled && !isAdmin) {
-            const handleContextMenu = (e) => disableRightClick(e);
-            const handleKeyDown = (e) => disableKeyboardShortcuts(e);
-            const handleCopy = (e) => {
-                if (!isAdmin) {
-                    e.preventDefault();
-                    return false;
-                }
-            };
-            const handleCut = (e) => {
-                if (!isAdmin) {
-                    e.preventDefault();
-                    return false;
-                }
-            };
-
-            document.addEventListener('contextmenu', handleContextMenu);
-            document.addEventListener('keydown', handleKeyDown);
-            document.addEventListener('copy', handleCopy);
-            document.addEventListener('cut', handleCut);
-
-            return () => {
-                document.removeEventListener('contextmenu', handleContextMenu);
-                document.removeEventListener('keydown', handleKeyDown);
-                document.removeEventListener('copy', handleCopy);
-                document.removeEventListener('cut', handleCut);
-            };
-        }
-    }, [protectionEnabled, isAdmin]);
-
     // Check user role on component mount
     useEffect(() => {
         const userData = localStorage.getItem('user');
@@ -503,9 +353,6 @@ const MedicationInfo = () => {
     return (
         <div
             className="bg-gray-50 min-h-full pb-8"
-            onCopy={disableCopyPaste}
-            onCut={disableCopyPaste}
-            onPaste={disableCopyPaste}
         >
             <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 md:py-8">
                 {/* Header */}
@@ -614,9 +461,6 @@ const MedicationInfo = () => {
                                 onChange={handleSearchChange}
                                 placeholder="Search medications..."
                                 className="w-full pl-10 pr-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm md:text-base"
-                                onCopy={disableCopyPaste}
-                                onCut={disableCopyPaste}
-                                onPaste={disableCopyPaste}
                             />
                         </div>
 
@@ -844,11 +688,6 @@ const MedicationInfo = () => {
                             <div
                                 key={med.id}
                                 className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition-shadow duration-200 medication-content"
-                                onCopy={disableCopyPaste}
-                                onCut={disableCopyPaste}
-                                onPaste={disableCopyPaste}
-                                onContextMenu={disableRightClick}
-                                style={disableTextSelection()}
                             >
                                 <div className="p-6">
                                     <div className="flex justify-between items-start mb-4">

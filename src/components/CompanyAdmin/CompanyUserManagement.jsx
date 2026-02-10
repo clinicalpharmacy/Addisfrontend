@@ -16,6 +16,8 @@ export const CompanyUserManagement = ({
     const [searchTerm, setSearchTerm] = useState('');
     const [filterRole, setFilterRole] = useState('all');
     const [filterStatus, setFilterStatus] = useState('all');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
     // Reuse badges logic locally or import from utils if standardized
     const getRoleBadge = (role) => {
@@ -43,6 +45,17 @@ export const CompanyUserManagement = ({
             (filterStatus === 'pending' && !user.approved);
         return matchesSearch && matchesRole && matchesStatus;
     });
+
+    // Pagination logic
+    const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentUsers = filteredUsers.slice(indexOfFirstItem, indexOfLastItem);
+
+    const handlePageChange = (newPage) => {
+        setCurrentPage(newPage);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     return (
         <div className="space-y-6">
@@ -76,11 +89,14 @@ export const CompanyUserManagement = ({
                             placeholder="Search users..."
                             className="w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                             value={searchTerm}
-                            onChange={e => setSearchTerm(e.target.value)}
+                            onChange={e => {
+                                setSearchTerm(e.target.value);
+                                setCurrentPage(1);
+                            }}
                         />
                     </div>
                     <div className="flex gap-2">
-                        <select className="border rounded-lg px-4 py-3 outline-none" value={filterRole} onChange={e => setFilterRole(e.target.value)}>
+                        <select className="border rounded-lg px-4 py-3 outline-none" value={filterRole} onChange={e => { setFilterRole(e.target.value); setCurrentPage(1); }}>
                             <option value="all">All Roles</option>
                             <option value="pharmacist">Pharmacist</option>
                             <option value="doctor">Doctor</option>
@@ -88,7 +104,7 @@ export const CompanyUserManagement = ({
                             <option value="staff">Staff</option>
                             <option value="company_admin">Admin</option>
                         </select>
-                        <select className="border rounded-lg px-4 py-3 outline-none" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+                        <select className="border rounded-lg px-4 py-3 outline-none" value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setCurrentPage(1); }}>
                             <option value="all">All Status</option>
                             <option value="active">Active</option>
                             <option value="pending">Pending</option>
@@ -114,7 +130,7 @@ export const CompanyUserManagement = ({
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filteredUsers.map(user => (
+                                    {currentUsers.map(user => (
                                         <tr key={user.id} className="hover:bg-gray-50 transition">
                                             <td className="border-b p-4">
                                                 <div>
@@ -145,7 +161,7 @@ export const CompanyUserManagement = ({
 
                         {/* Mobile Card View */}
                         <div className="md:hidden divide-y divide-gray-100">
-                            {filteredUsers.map(user => (
+                            {currentUsers.map(user => (
                                 <div key={user.id} className="p-4 bg-white hover:bg-gray-50 transition-colors">
                                     <div className="flex justify-between items-start mb-3">
                                         <div>
@@ -197,6 +213,51 @@ export const CompanyUserManagement = ({
                                 </div>
                             ))}
                         </div>
+
+                        {/* Pagination Controls */}
+                        {filteredUsers.length > itemsPerPage && (
+                            <div className="p-6 border-t bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-4">
+                                <div className="text-sm text-gray-600">
+                                    Showing <span className="font-semibold text-gray-900">{indexOfFirstItem + 1}</span> to <span className="font-semibold text-gray-900">{Math.min(indexOfLastItem, filteredUsers.length)}</span> of <span className="font-semibold text-gray-900">{filteredUsers.length}</span> users
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => handlePageChange(currentPage - 1)}
+                                        disabled={currentPage === 1}
+                                        className={`px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${currentPage === 1
+                                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
+                                            : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600 border-gray-300'}`}
+                                    >
+                                        Previous
+                                    </button>
+
+                                    <div className="flex items-center gap-1">
+                                        {[...Array(totalPages)].map((_, i) => (
+                                            <button
+                                                key={i + 1}
+                                                onClick={() => handlePageChange(i + 1)}
+                                                className={`w-9 h-9 rounded-lg text-sm font-bold transition-all ${currentPage === i + 1
+                                                    ? 'bg-blue-600 text-white shadow-md'
+                                                    : 'bg-white text-gray-600 hover:bg-blue-50 border border-gray-200'
+                                                    }`}
+                                            >
+                                                {i + 1}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    <button
+                                        onClick={() => handlePageChange(currentPage + 1)}
+                                        disabled={currentPage === totalPages}
+                                        className={`px-4 py-2 border rounded-lg text-sm font-medium transition-all ${currentPage === totalPages
+                                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
+                                            : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600 border-gray-300'}`}
+                                    >
+                                        Next
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </>
                 ) : (
                     <div className="text-center py-12">

@@ -107,5 +107,26 @@ export const sampleTestRules = [
         dtp_category: 'drug_interaction',
         is_active: true,
         applies_to: ['geriatric', 'renal_impairment']
+    },
+    {
+        id: 'RULE_ZINC_01',
+        rule_name: 'Zinc Deficiency Alert',
+        rule_type: 'lab_monitoring',
+        rule_description: 'Alert when zinc levels are below normal range (60-120 µg/dL)',
+        rule_condition: {
+            all: [
+                { fact: 'zinc', operator: '<', value: 60 },
+                { fact: 'zinc', operator: 'exists', value: true }
+            ]
+        },
+        rule_action: {
+            message: 'Clinical Alert: Low Zinc ({{zinc}} µg/dL)',
+            recommendation: 'The patient has low serum zinc levels. Consider zinc supplementation (e.g., zinc sulfate 220 mg daily) and dietary modifications.',
+            severity: 'high'
+        },
+        severity: 'high',
+        dtp_category: 'monitoring_needed',
+        is_active: true,
+        applies_to: ['all_patients']
     }
 ];

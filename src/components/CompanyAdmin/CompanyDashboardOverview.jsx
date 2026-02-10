@@ -38,7 +38,7 @@ export const CompanyDashboardOverview = ({
                                     <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${currentUser?.subscription_status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                                         {currentUser?.subscription_status === 'active' ? <><FaCheckCircle /> Active</> : <><FaExclamationTriangle /> Inactive</>}
                                     </span>
-                                    <button onClick={() => navigate('/subscription')} className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"><FaCreditCard className="text-xs" /> Manage Subscription</button>
+                                    <button onClick={() => navigate('/subscription/plans')} className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"><FaCreditCard className="text-xs" /> Manage Subscription</button>
                                 </div>
                             </div>
                         </div>

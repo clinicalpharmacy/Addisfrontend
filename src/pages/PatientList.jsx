@@ -30,6 +30,8 @@ const PatientList = () => {
     const [userRole, setUserRole] = useState('');
     const [userAccountType, setUserAccountType] = useState('');
     const [userCompanyId, setUserCompanyId] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
     useEffect(() => {
         // Get user role from token
@@ -98,6 +100,7 @@ const PatientList = () => {
         }
 
         setFilteredPatients(filtered);
+        setCurrentPage(1); // Reset to first page on search
     };
 
     const handleSort = (key) => {
@@ -115,6 +118,7 @@ const PatientList = () => {
         });
 
         setFilteredPatients(sorted);
+        setCurrentPage(1); // Reset to first page on sort
     };
 
     const handleDelete = async (id) => {
@@ -199,6 +203,12 @@ const PatientList = () => {
         // Navigate without edit mode
         navigate(`/patients/${patientCode}`);
     };
+
+    // Pagination logic
+    const totalPages = Math.ceil(filteredPatients.length / itemsPerPage);
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentPatients = filteredPatients.slice(indexOfFirstItem, indexOfLastItem);
 
     if (loading) {
         return (
@@ -321,8 +331,8 @@ const PatientList = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredPatients.length > 0 ? (
-                                filteredPatients.map((patient) => {
+                            {currentPatients.length > 0 ? (
+                                currentPatients.map((patient) => {
                                     const currentUserId = getCurrentUserId();
                                     const isIndividual = (userAccountType === 'individual' || userRole === 'individual_user' || userRole === 'pharmacist') && !userCompanyId;
                                     const isAdmin = userRole === 'admin';
@@ -410,8 +420,8 @@ const PatientList = () => {
 
             {/* Patients List (Mobile) */}
             <div className="md:hidden space-y-4">
-                {filteredPatients.length > 0 ? (
-                    filteredPatients.map((patient) => {
+                {currentPatients.length > 0 ? (
+                    currentPatients.map((patient) => {
                         const currentUserId = getCurrentUserId();
                         const isIndividual = (userAccountType === 'individual' || userRole === 'individual_user' || userRole === 'pharmacist') && !userCompanyId;
                         const isAdmin = userRole === 'admin';
@@ -491,25 +501,44 @@ const PatientList = () => {
                 )}
             </div>
 
-            {/* Pagination/Info */}
-            {filteredPatients.length > 0 && (
+            {/* Pagination Controls */}
+            {filteredPatients.length > itemsPerPage && (
                 <div className="bg-white rounded-xl shadow p-4 flex flex-col md:flex-row justify-between items-center gap-4">
                     <div className="text-sm text-gray-600">
-                        Showing {filteredPatients.length} of {patients.length} patients
+                        Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredPatients.length)} of {filteredPatients.length} patients
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex items-center gap-2">
                         <button
-                            className="px-3 py-1 border rounded text-sm hover:bg-gray-100"
-                            disabled
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                            className={`px-4 py-2 border rounded-lg text-sm transition-colors ${currentPage === 1
+                                ? 'bg-gray-50 text-gray-400 cursor-not-allowed'
+                                : 'hover:bg-gray-100 text-gray-700'}`}
                         >
                             ← Previous
                         </button>
-                        <button className="px-3 py-1 bg-blue-500 text-white rounded text-sm">
-                            1
-                        </button>
+
+                        <div className="flex items-center gap-1">
+                            {[...Array(totalPages)].map((_, i) => (
+                                <button
+                                    key={i + 1}
+                                    onClick={() => setCurrentPage(i + 1)}
+                                    className={`w-8 h-8 rounded-lg text-sm font-medium transition-all ${currentPage === i + 1
+                                        ? 'bg-blue-600 text-white shadow-md'
+                                        : 'text-gray-600 hover:bg-gray-100'
+                                        }`}
+                                >
+                                    {i + 1}
+                                </button>
+                            ))}
+                        </div>
+
                         <button
-                            className="px-3 py-1 border rounded text-sm hover:bg-gray-100"
-                            disabled
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                            className={`px-4 py-2 border rounded-lg text-sm transition-colors ${currentPage === totalPages
+                                ? 'bg-gray-50 text-gray-400 cursor-not-allowed'
+                                : 'hover:bg-gray-100 text-gray-700'}`}
                         >
                             Next →
                         </button>
