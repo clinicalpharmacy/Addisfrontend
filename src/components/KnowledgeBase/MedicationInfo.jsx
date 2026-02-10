@@ -18,6 +18,7 @@ import {
     FaLock,
     FaShieldAlt,
     FaBan
+    FaEdit
 } from 'react-icons/fa';
 
 const MedicationInfo = () => {
@@ -33,6 +34,7 @@ const MedicationInfo = () => {
     const [successMessage, setSuccessMessage] = useState('');
     const [user, setUser] = useState(null);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [editingMedId, setEditingMedId] = useState(null);
     const [protectionEnabled, setProtectionEnabled] = useState(true); // Protection ON by default
 
     const [formData, setFormData] = useState({
@@ -166,8 +168,20 @@ const MedicationInfo = () => {
         setSuccessMessage('');
 
         try {
-            console.log('Saving medication:', formData);
+             if (editingMedId) {
+                // UPDATE existing medication
+                const { data, error } = await supabase
+                    .from('medication_information')
+                    .update({ ...formData })
+                    .eq('id', editingMedId)
+                    .select();
 
+                if (error) throw error;
+
+                setSuccessMessage('Medication updated successfully!');
+        
+            } else {
+                // INSERT new medication
             const { data, error } = await supabase
                 .from('medication_information')
                 .insert([{
@@ -208,6 +222,7 @@ const MedicationInfo = () => {
                 storage: ''
             });
 
+            setEditingMedId(null);
             setShowAddForm(false);
 
             // Refresh medication list
@@ -223,48 +238,6 @@ const MedicationInfo = () => {
         }
     };
 
-    // DELETE MEDICATION FROM DATABASE - ADMIN ONLY
-    const handleDeleteMedication = async (id) => {
-        if (!isAdmin) {
-            setError('Only administrators can delete medications');
-            setTimeout(() => setError(''), 3000);
-            return;
-        }
-
-        if (!window.confirm('Are you sure you want to delete this medication?')) {
-            return;
-        }
-
-        try {
-            console.log('Deleting medication with ID:', id);
-
-            const { error } = await supabase
-                .from('medication_information')
-                .delete()
-                .eq('id', id);
-
-            if (error) {
-                console.error('Supabase delete error:', error);
-                throw error;
-            }
-
-            console.log('Medication deleted');
-
-            setSuccessMessage('Medication deleted successfully!');
-
-            // Remove from local state
-            const updatedMedications = medications.filter(med => med.id !== id);
-            setMedications(updatedMedications);
-
-            setTimeout(() => {
-                setSuccessMessage('');
-            }, 3000);
-
-        } catch (err) {
-            console.error('Error deleting medication:', err);
-            setError(`Failed to delete medication: ${err.message}`);
-        }
-    };
 
     // REMOVED: handleExportData function - No export functionality
 
@@ -349,6 +322,31 @@ const MedicationInfo = () => {
             </div>
         );
     }
+
+    const handleEditMedication = (med) => {
+    if (!isAdmin) return;
+
+    // Populate form with selected medication
+    setFormData({
+        name: med.name || '',
+        amharic_name: med.amharic_name || '',
+        usage: med.usage || '',
+        before_taking: med.before_taking || '',
+        while_taking: med.while_taking || '',
+        side_effects: med.side_effects || '',
+        serious_side_effects: med.serious_side_effects || '',
+        how_to_take: med.how_to_take || '',
+        missed_dose: med.missed_dose || '',
+        storage: med.storage || ''
+    });
+
+    // Show the add form modal
+    setShowAddForm(true);
+
+    // Save the id of the medication being edited
+    setEditingMedId(med.id);
+};
+
 
     return (
         <div
@@ -694,22 +692,22 @@ const MedicationInfo = () => {
                                         <div className="flex-1">
                                             <h3 className="text-xl font-bold text-gray-900 mb-1">{med.name}</h3>
                                             {med.amharic_name && (
-                                                <p className="text-sm text-gray-600 mb-1">በአማርኛ: {med.amharic_name}</p>
+                                                <p className="text-sm text-gray-600 mb-1"> {med.amharic_name}</p>
                                             )}
                                         </div>
-                                        {/* Only show delete button for admins */}
+                                        {/* Only show edit button for admins */}
                                         {isAdmin && (
                                             <div className="flex items-center gap-2">
                                                 <button
-                                                    onClick={() => handleDeleteMedication(med.id)}
-                                                    className="text-red-500 hover:text-red-700 p-1"
-                                                    title="Delete"
+                                                    onClick={() => handleEditMedication(med)}
+                                                    className="text-blue-500 hover:text-blue-700 p-1"
+                                                    title="Edit"
                                                 >
-                                                    <FaTrash />
+                                                    <FaEdit />
                                                 </button>
                                             </div>
                                         )}
-                                    </div>
+
 
                                     {/* Expandable Details */}
                                     <div className="border-t pt-4">
