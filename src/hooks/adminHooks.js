@@ -130,7 +130,7 @@ export const useAdminUsers = (currentUser) => {
             if (response.success) {
                 // Optimistic update
                 setUsers(prev => prev.map(u =>
-                    u.id === userId ? { ...u, is_blocked: response.is_blocked } : u
+                    u.id === userId ? { ...u, is_blocked: response.is_blocked, blocked_by: response.blocked_by } : u
                 ));
                 return { success: true, message: response.message };
             }

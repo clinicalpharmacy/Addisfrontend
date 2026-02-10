@@ -122,6 +122,19 @@ export const AdminOverview = ({
                     </div>
                 </div>
 
+                <div className="bg-white rounded-xl shadow p-6 border-l-4 border-red-500 cursor-pointer hover:bg-gray-50 transition" onClick={() => onTabChange('users')}>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm text-gray-600 font-medium">Blocked Users</p>
+                            <p className="text-3xl font-bold text-red-600">{stats.blocked_users || 0}</p>
+                            <p className="text-xs text-gray-500 mt-1">Accounts suspended</p>
+                        </div>
+                        <div className="p-3 bg-red-100 rounded-full">
+                            <FaUsers className="text-red-500 text-xl" />
+                        </div>
+                    </div>
+                </div>
+
                 <div className="bg-white rounded-xl shadow p-6">
                     <div className="flex items-center justify-between">
                         <div>
@@ -194,7 +207,19 @@ export const AdminOverview = ({
                                 )}
                             </button>
 
-
+                            <button
+                                onClick={() => onTabChange('users')}
+                                className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg flex items-center justify-between transition shadow-sm"
+                            >
+                                <div className="flex items-center gap-2">
+                                    <FaUsers /> Manage Blocked Users
+                                </div>
+                                {stats.blocked_users > 0 && (
+                                    <span className="bg-white text-red-600 text-xs px-2 py-1 rounded-full font-bold">
+                                        {stats.blocked_users} blocked
+                                    </span>
+                                )}
+                            </button>
                         </div>
                     </div>
                 </div>
