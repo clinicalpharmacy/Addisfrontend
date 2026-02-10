@@ -423,7 +423,7 @@ const MinorIllnesses = () => {
 
                                     {illness.referral && (
                                         <div className="mb-3 md:mb-4 p-2 md:p-3 bg-yellow-50 border border-yellow-100 rounded">
-                                            <h4 className="font-semibold text-yellow-700 mb-1 text-sm md:text-base">Folk Medicine:</h4>
+                                            <h4 className="font-semibold text-yellow-700 mb-1 text-sm md:text-base">When to Refer:</h4>
                                             <p className="text-xs md:text-sm text-yellow-800 whitespace-pre-line leading-relaxed">{illness.referral}</p>
                                         </div>
                                     )}
