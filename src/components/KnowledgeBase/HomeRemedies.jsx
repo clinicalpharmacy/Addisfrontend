@@ -1,22 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import supabase from '../../utils/supabase';
+import useScreenshotProtection from '../../hooks/useScreenshotProtection';
 import {
     FaHome,
     FaLeaf,
     FaSearch,
-    FaPlus,
     FaExclamationTriangle,
-    FaLemon,
-    FaTimes,
-    FaHeart,
-    FaBook,
-    FaTrash,
-    FaLock,
-    FaSpinner,
     FaCheckCircle,
-    FaShieldAlt,
+    FaTimes,
+    FaPlus,
+    FaEdit,
+    FaTrash,
+    FaSpa,
+    FaLock,
     FaBan,
-    FaExclamationCircle
+    FaShieldAlt
 } from 'react-icons/fa';
 
 const HomeRemedies = () => {
@@ -24,6 +22,7 @@ const HomeRemedies = () => {
     const [filteredRemedies, setFilteredRemedies] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [showForm, setShowForm] = useState(false);
+    const [editRemedy, setEditRemedy] = useState(null);
     const [user, setUser] = useState(null);
     const [isAdmin, setIsAdmin] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -31,6 +30,7 @@ const HomeRemedies = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [protectionEnabled, setProtectionEnabled] = useState(true); // Protection ON by default
+    const protectionMsg = useScreenshotProtection(protectionEnabled);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -92,6 +92,7 @@ const HomeRemedies = () => {
         setFilteredRemedies(filtered);
     };
 
+
     // Toggle protection (Admin only)
     const toggleProtection = () => {
         if (!isAdmin) {
@@ -100,7 +101,7 @@ const HomeRemedies = () => {
             return;
         }
         setProtectionEnabled(!protectionEnabled);
-        setSuccess(`Copy/Print Protection ${!protectionEnabled ? 'enabled' : 'disabled'}`);
+        setSuccess(`Copy / Print Protection ${!protectionEnabled ? 'enabled' : 'disabled'} `);
         setTimeout(() => setSuccess(''), 3000);
     };
 
@@ -238,16 +239,17 @@ const HomeRemedies = () => {
                             {isAdmin && (
                                 <button
                                     onClick={toggleProtection}
-                                    className={`px-3 py-2 rounded-lg flex items-center gap-2 text-sm ${protectionEnabled
-                                        ? 'bg-red-500 hover:bg-red-600 text-white'
-                                        : 'bg-green-500 hover:bg-green-600 text-white'
-                                        }`}
+                                    className={`px - 3 py - 2 rounded - lg flex items - center gap - 2 text - sm ${protectionEnabled
+                                            ? 'bg-red-500 hover:bg-red-600 text-white'
+                                            : 'bg-green-500 hover:bg-green-600 text-white'
+                                        } `}
                                     title={protectionEnabled ? 'Disable Copy/Print Protection' : 'Enable Copy/Print Protection'}
                                 >
                                     {protectionEnabled ? <FaBan /> : <FaShieldAlt />}
                                     <span className="hidden sm:inline">{protectionEnabled ? 'Allow Copy' : 'No Copy'}</span>
                                 </button>
                             )}
+
                             {/* REMOVED: Export button */}
                             {/* Only show add button for admins */}
                             {isAdmin && (
@@ -263,6 +265,14 @@ const HomeRemedies = () => {
                 </div>
 
                 {/* Messages */}
+                {protectionMsg && (
+                    <div className="mb-4 p-4 bg-red-100 text-red-800 rounded-lg flex items-center justify-between text-sm md:text-base animate-pulse">
+                        <div className="flex items-center gap-2">
+                            <FaShieldAlt className="flex-shrink-0" />
+                            <span className="font-bold">{protectionMsg}</span>
+                        </div>
+                    </div>
+                )}
                 {success && (
                     <div className="mb-4 p-4 bg-green-100 text-green-800 rounded-lg flex items-center justify-between text-sm md:text-base">
                         <div className="flex items-center gap-2">
@@ -434,7 +444,7 @@ const HomeRemedies = () => {
                         filteredRemedies.map((remedy, index) => (
                             <div
                                 key={remedy.id}
-                                className={`border rounded-xl shadow-lg overflow-hidden ${getRemedyColor(index)} remedy-content`}
+                                className={`border rounded - xl shadow - lg overflow - hidden ${getRemedyColor(index)} remedy - content`}
                             >
                                 <div className="p-3 md:p-6">
                                     <div className="flex justify-between items-start mb-3 md:mb-4">
@@ -548,7 +558,7 @@ const HomeRemedies = () => {
                         <div className="mt-4 text-center text-sm text-gray-500">
                             {isAdmin
                                 ? 'Administrator Mode - Full access'
-                                : `User Mode - View only (${protectionEnabled ? 'Copy/Print disabled' : 'Copy allowed'})`}
+                                : `User Mode - View only(${protectionEnabled ? 'Copy/Print disabled' : 'Copy allowed'})`}
                             {isAdmin && (
                                 <button
                                     onClick={toggleProtection}

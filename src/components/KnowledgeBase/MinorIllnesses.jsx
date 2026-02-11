@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import supabase from '../../utils/supabase';
+import useScreenshotProtection from '../../hooks/useScreenshotProtection';
 import {
     FaThermometerHalf,
     FaPlus,
@@ -35,6 +36,7 @@ const MinorIllnesses = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [protectionEnabled, setProtectionEnabled] = useState(true); // Protection ON by default
+    const protectionMsg = useScreenshotProtection(protectionEnabled);
     const [formData, setFormData] = useState({
         name: '',
         amharic_name: '',
@@ -100,6 +102,7 @@ const MinorIllnesses = () => {
 
         setFilteredIllnesses(filtered);
     };
+
 
     // Toggle protection (Admin only)
     const toggleProtection = () => {
@@ -254,7 +257,7 @@ const MinorIllnesses = () => {
     // Render bullet list from textarea text
     const renderBullets = (text) => {
         if (!text) return null;
-    
+
         return text
             .replace(/^•\s?/gm, '')   // remove stored bullet symbols
             .split('\n')
@@ -327,6 +330,14 @@ const MinorIllnesses = () => {
                 </div>
 
                 {/* Success/Error Messages */}
+                {protectionMsg && (
+                    <div className="mb-4 p-4 bg-red-100 text-red-800 rounded-lg flex items-center justify-between text-sm md:text-base animate-pulse">
+                        <div className="flex items-center gap-2">
+                            <FaShieldAlt className="flex-shrink-0" />
+                            <span className="font-bold">{protectionMsg}</span>
+                        </div>
+                    </div>
+                )}
                 {success && (
                     <div className="mb-4 p-4 bg-green-100 text-green-800 rounded-lg flex items-center justify-between text-sm md:text-base">
                         <div className="flex items-center gap-2">
@@ -597,19 +608,19 @@ const MinorIllnesses = () => {
                                         <textarea
                                             value={formData.assessment}
                                             onChange={(e) => {
-                                            const value = e.target.value;
-                                            // Add bullet at start if empty
-                                            let newValue = value;
-                                            if (!value.startsWith('• ')) newValue = '• ' + value;
-                                            // Replace newlines with new bullet
-                                            newValue = newValue.replace(/\n(?!• )/g, '\n• ');
-                                            setFormData({ ...formData, assessment: newValue });
-                                          }}
-                                          rows="4"
-                                          className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500"
-                                          placeholder="Describe symptoms, signs, duration..."
-                                          required
-                                          disabled={saving}
+                                                const value = e.target.value;
+                                                // Add bullet at start if empty
+                                                let newValue = value;
+                                                if (!value.startsWith('• ')) newValue = '• ' + value;
+                                                // Replace newlines with new bullet
+                                                newValue = newValue.replace(/\n(?!• )/g, '\n• ');
+                                                setFormData({ ...formData, assessment: newValue });
+                                            }}
+                                            rows="4"
+                                            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500"
+                                            placeholder="Describe symptoms, signs, duration..."
+                                            required
+                                            disabled={saving}
                                         />
                                     </div>
 
@@ -620,19 +631,19 @@ const MinorIllnesses = () => {
                                         <textarea
                                             value={formData.referral}
                                             onChange={(e) => {
-                                            const value = e.target.value;
-                                            // Add bullet at start if empty
-                                            let newValue = value;
-                                            if (!value.startsWith('• ')) newValue = '• ' + value;
-                                            // Replace newlines with new bullet
-                                            newValue = newValue.replace(/\n(?!• )/g, '\n• ');
-                                            setFormData({ ...formData, referral: newValue });
-                                          }}
-                                          rows="4"
-                                          className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500"
-                                          placeholder="Referral criterion to see a physician..."
-                                          required
-                                          disabled={saving}
+                                                const value = e.target.value;
+                                                // Add bullet at start if empty
+                                                let newValue = value;
+                                                if (!value.startsWith('• ')) newValue = '• ' + value;
+                                                // Replace newlines with new bullet
+                                                newValue = newValue.replace(/\n(?!• )/g, '\n• ');
+                                                setFormData({ ...formData, referral: newValue });
+                                            }}
+                                            rows="4"
+                                            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500"
+                                            placeholder="Referral criterion to see a physician..."
+                                            required
+                                            disabled={saving}
                                         />
                                     </div>
 
@@ -643,19 +654,19 @@ const MinorIllnesses = () => {
                                         <textarea
                                             value={formData.otc_drug}
                                             onChange={(e) => {
-                                            const value = e.target.value;
-                                            // Add bullet at start if empty
-                                            let newValue = value;
-                                            if (!value.startsWith('• ')) newValue = '• ' + value;
-                                            // Replace newlines with new bullet
-                                            newValue = newValue.replace(/\n(?!• )/g, '\n• ');
-                                            setFormData({ ...formData, otc_drug: newValue });
-                                          }}
-                                          rows="4"
-                                          className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500"
-                                          placeholder="Over-the-counter medications..."
-                                          required
-                                          disabled={saving}
+                                                const value = e.target.value;
+                                                // Add bullet at start if empty
+                                                let newValue = value;
+                                                if (!value.startsWith('• ')) newValue = '• ' + value;
+                                                // Replace newlines with new bullet
+                                                newValue = newValue.replace(/\n(?!• )/g, '\n• ');
+                                                setFormData({ ...formData, otc_drug: newValue });
+                                            }}
+                                            rows="4"
+                                            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500"
+                                            placeholder="Over-the-counter medications..."
+                                            required
+                                            disabled={saving}
                                         />
                                     </div>
 
@@ -666,19 +677,19 @@ const MinorIllnesses = () => {
                                         <textarea
                                             value={formData.for_pharmacists}
                                             onChange={(e) => {
-                                            const value = e.target.value;
-                                            // Add bullet at start if empty
-                                            let newValue = value;
-                                            if (!value.startsWith('• ')) newValue = '• ' + value;
-                                            // Replace newlines with new bullet
-                                            newValue = newValue.replace(/\n(?!• )/g, '\n• ');
-                                            setFormData({ ...formData, for_pharmacists: newValue });
-                                          }}
-                                          rows="4"
-                                          className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500"
-                                          placeholder="Professional advice for pharmacists..."
-                                          required
-                                          disabled={saving}
+                                                const value = e.target.value;
+                                                // Add bullet at start if empty
+                                                let newValue = value;
+                                                if (!value.startsWith('• ')) newValue = '• ' + value;
+                                                // Replace newlines with new bullet
+                                                newValue = newValue.replace(/\n(?!• )/g, '\n• ');
+                                                setFormData({ ...formData, for_pharmacists: newValue });
+                                            }}
+                                            rows="4"
+                                            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500"
+                                            placeholder="Professional advice for pharmacists..."
+                                            required
+                                            disabled={saving}
                                         />
                                     </div>
                                 </div>

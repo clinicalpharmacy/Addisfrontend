@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import supabase from '../../utils/supabase';
+
+import useScreenshotProtection from '../../hooks/useScreenshotProtection';
 import {
     FaFlask,
     FaPlus,
@@ -30,6 +32,7 @@ const ExtemporaneousPrep = () => {
     const [user, setUser] = useState(null);
     const [isAdmin, setIsAdmin] = useState(false);
     const [protectionEnabled, setProtectionEnabled] = useState(true); // Protection ON by default
+    const protectionMsg = useScreenshotProtection(protectionEnabled);
 
     // Form data structure
     const [formData, setFormData] = useState({
@@ -240,6 +243,8 @@ const ExtemporaneousPrep = () => {
         setTimeout(() => setSuccess(''), 3000);
     };
 
+
+
     // ADD SAMPLE DATA - ADMIN ONLY
     const initializeSampleData = async () => {
         if (!isAdmin) {
@@ -404,7 +409,18 @@ const ExtemporaneousPrep = () => {
                     {/* Protection Warning */}
 
 
+                    {/* Protection Warning */}
+                    {protectionMsg && (
+                        <div className="mb-4 p-4 bg-red-100 text-red-800 rounded-lg flex items-center justify-between text-sm md:text-base animate-pulse">
+                            <div className="flex items-center gap-2">
+                                <FaShieldAlt className="flex-shrink-0" />
+                                <span className="font-bold">{protectionMsg}</span>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Messages */}
+
                     {success && (
                         <div className="mb-4 p-4 bg-green-100 text-green-800 rounded-lg flex items-center justify-between text-sm md:text-base">
                             <div className="flex items-center gap-2">

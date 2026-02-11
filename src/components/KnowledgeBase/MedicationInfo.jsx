@@ -1,33 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import supabase from '../../utils/supabase';
+import useScreenshotProtection from '../../hooks/useScreenshotProtection';
 import {
     FaPills,
     FaSearch,
-    FaBookMedical,
-    FaExclamationTriangle,
-    FaCapsules,
     FaPlus,
-    FaTimes,
-    FaTrash,
+    FaExclamationTriangle,
     FaEdit,
-    FaEye,
-    FaEyeSlash,
-    FaDatabase,
+    FaTrash,
+    FaFileExport,
+    FaSortAlphaDown,
+    FaFilter,
     FaSpinner,
-    FaExclamationCircle,
-    FaSync,
+    FaTimes,
+    FaCheckCircle,
+    FaNotesMedical,
+    FaInfoCircle,
     FaLock,
-    FaShieldAlt,
-    FaBan
+    FaBan,
+    FaShieldAlt
 } from 'react-icons/fa';
 
 const MedicationInfo = () => {
     const [medications, setMedications] = useState([]);
     const [filteredMedications, setFilteredMedications] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [expandedMedication, setExpandedMedication] = useState(null);
-    const [showAddForm, setShowAddForm] = useState(false);
-    const [editingMedication, setEditingMedication] = useState(null);
+    const [filterType, setFilterType] = useState('all');
+    const [showForm, setShowForm] = useState(false);
+    const [editMedication, setEditMedication] = useState(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
@@ -35,6 +35,7 @@ const MedicationInfo = () => {
     const [user, setUser] = useState(null);
     const [isAdmin, setIsAdmin] = useState(false);
     const [protectionEnabled, setProtectionEnabled] = useState(true); // Protection ON by default
+    const protectionMsg = useScreenshotProtection(protectionEnabled);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -124,6 +125,7 @@ const MedicationInfo = () => {
         setSearchTerm(e.target.value);
     };
 
+
     // Toggle protection (Admin only)
     const toggleProtection = () => {
         if (!isAdmin) {
@@ -132,7 +134,7 @@ const MedicationInfo = () => {
             return;
         }
         setProtectionEnabled(!protectionEnabled);
-        setSuccessMessage(`Copy/Print Protection ${!protectionEnabled ? 'enabled' : 'disabled'}`);
+        setSuccessMessage(`Copy / Print Protection ${!protectionEnabled ? 'enabled' : 'disabled'} `);
         setTimeout(() => setSuccessMessage(''), 3000);
     };
 
@@ -197,7 +199,7 @@ const MedicationInfo = () => {
 
         } catch (err) {
             console.error('Error saving medication:', err);
-            setError(`Failed to save medication: ${err.message}`);
+            setError(`Failed to save medication: ${err.message} `);
         } finally {
             setSaving(false);
         }
@@ -286,7 +288,7 @@ const MedicationInfo = () => {
 
         } catch (err) {
             console.error('Error updating medication:', err);
-            setError(`Failed to update medication: ${err.message}`);
+            setError(`Failed to update medication: ${err.message} `);
         } finally {
             setSaving(false);
         }
@@ -393,16 +395,17 @@ const MedicationInfo = () => {
                             {isAdmin && (
                                 <button
                                     onClick={toggleProtection}
-                                    className={`px-3 py-2 rounded-lg flex items-center gap-2 text-sm ${protectionEnabled
-                                        ? 'bg-red-500 hover:bg-red-600 text-white'
-                                        : 'bg-green-500 hover:bg-green-600 text-white'
-                                        }`}
+                                    className={`px - 3 py - 2 rounded - lg flex items - center gap - 2 text - sm ${protectionEnabled
+                                            ? 'bg-red-500 hover:bg-red-600 text-white'
+                                            : 'bg-green-500 hover:bg-green-600 text-white'
+                                        } `}
                                     title={protectionEnabled ? 'Disable Copy/Print Protection' : 'Enable Copy/Print Protection'}
                                 >
                                     {protectionEnabled ? <FaBan /> : <FaShieldAlt />}
                                     <span className="hidden sm:inline">{protectionEnabled ? 'Allow Copy' : 'No Copy'}</span>
                                 </button>
                             )}
+
                             {/* REMOVED: Export button */}
                             {/* Only show admin buttons to admins */}
                             {isAdmin && (
@@ -434,6 +437,14 @@ const MedicationInfo = () => {
                 </div>
 
                 {/* Success/Error Messages */}
+                {protectionMsg && (
+                    <div className="mb-4 p-4 bg-red-100 text-red-800 rounded-lg flex items-center justify-between text-sm md:text-base animate-pulse">
+                        <div className="flex items-center gap-2">
+                            <FaShieldAlt className="flex-shrink-0" />
+                            <span className="font-bold">{protectionMsg}</span>
+                        </div>
+                    </div>
+                )}
                 {successMessage && (
                     <div className="mb-4 p-4 bg-green-100 text-green-800 rounded-lg flex items-center justify-between text-sm md:text-base">
                         <div className="flex items-center gap-2">
@@ -806,7 +817,7 @@ const MedicationInfo = () => {
                         <div className="mt-4 text-center text-sm text-gray-500">
                             {isAdmin
                                 ? 'Administrator Mode - Full access'
-                                : `User Mode - View only (${protectionEnabled ? 'Copy/Print disabled' : 'Copy allowed'})`}
+                                : `User Mode - View only(${protectionEnabled ? 'Copy/Print disabled' : 'Copy allowed'})`}
                             {isAdmin && (
                                 <button
                                     onClick={toggleProtection}
