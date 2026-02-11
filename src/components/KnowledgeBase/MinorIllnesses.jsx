@@ -251,6 +251,19 @@ const MinorIllnesses = () => {
         );
     }
 
+    // Render bullet list from textarea text
+    const renderBullets = (text) => {
+        if (!text) return null;
+    
+        return text
+            .replace(/^•\s?/gm, '')   // remove stored bullet symbols
+            .split('\n')
+            .filter(line => line.trim() !== '')
+            .map((line, index) => (
+                <li key={index}>{line}</li>
+            ));
+    };
+
     return (
         <div
             className="bg-gray-50 min-h-full pb-8"
@@ -417,14 +430,14 @@ const MinorIllnesses = () => {
                                             <h4 className="font-semibold text-gray-700 mb-1.5 md:mb-2 flex items-center gap-1 text-sm md:text-base">
                                                 <FaStethoscope className="text-xs md:text-sm" /> How to Assess Minor Illnes:
                                             </h4>
-                                            <p className="text-xs md:text-sm text-gray-600 whitespace-pre-line leading-relaxed">{illness.assessment}</p>
+                                            <ul className="list-disc pl-5 text-xs md:text-sm text-gray-600 leading-relaxed">{renderBullets(illness.assessment)}</ul>
                                         </div>
                                     )}
 
                                     {illness.referral && (
                                         <div className="mb-3 md:mb-4 p-2 md:p-3 bg-yellow-50 border border-yellow-100 rounded">
                                             <h4 className="font-semibold text-yellow-700 mb-1 text-sm md:text-base">When to Refer:</h4>
-                                            <p className="text-xs md:text-sm text-yellow-800 whitespace-pre-line leading-relaxed">{illness.referral}</p>
+                                            <ul className="list-disc pl-5 text-xs md:text-sm text-gray-600 leading-relaxed">{renderBullets(illness.referral)}</ul>
                                         </div>
                                     )}
 
@@ -433,7 +446,7 @@ const MinorIllnesses = () => {
                                             <h4 className="font-semibold text-gray-700 mb-1.5 md:mb-2 flex items-center gap-1 text-sm md:text-base">
                                                 <FaCapsules className="text-xs md:text-sm" /> OTC Drug Recommendations:
                                             </h4>
-                                            <p className="text-xs md:text-sm text-gray-600 whitespace-pre-line leading-relaxed">{illness.otc_drug}</p>
+                                            <ul className="list-disc pl-5 text-xs md:text-sm text-gray-600 leading-relaxed">{renderBullets(illness.otc_drug)}</ul>
                                         </div>
                                     )}
 
@@ -442,7 +455,7 @@ const MinorIllnesses = () => {
                                             <h4 className="font-semibold text-blue-700 mb-1 flex items-center gap-1 text-sm md:text-base">
                                                 <FaUserMd className="text-xs md:text-sm" /> Additional tips for the Pharmacist:
                                             </h4>
-                                            <p className="text-xs md:text-sm text-blue-800 whitespace-pre-line leading-relaxed">{illness.for_pharmacists}</p>
+                                            <ul className="list-disc pl-5 text-xs md:text-sm text-gray-600 leading-relaxed">{renderBullets(illness.for_pharmacists)}</ul>
                                         </div>
                                     )}
 
