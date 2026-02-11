@@ -459,9 +459,10 @@ const ExtemporaneousPrep = () => {
                                                 {prep.name || 'Unnamed'}
                                             </h3>
                                             {prep.use && (
+                                             <div>
                                                 <h4 className="font-semibold text-gray-700 mb-1 text-sm">Use:</h4>
                                                 <ul className="list-disc pl-5 text-sm text-gray-700">{renderBullets(prep.use)}</ul>
-                                        </div>
+                                            </div>
                                         )}
                                         <div className="flex items-center gap-2">
                                             {isAdmin ? (
