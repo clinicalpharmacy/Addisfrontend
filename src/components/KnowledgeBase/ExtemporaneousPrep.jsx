@@ -501,7 +501,7 @@ const ExtemporaneousPrep = () => {
                                         {prep.materials && (
                                             <div>
                                                 <h4 className="font-semibold text-gray-700 mb-1 text-sm">Materials:</h4>
-                                                <ul className="list-disc pl-5 text-sm text-gray-700">{renderBullets(prep.prep.materials)}</ul>
+                                                <ul className="list-disc pl-5 text-sm text-gray-700">{renderBullets(prep.materials)}</ul>
                                             </div>
                                         )}
 
