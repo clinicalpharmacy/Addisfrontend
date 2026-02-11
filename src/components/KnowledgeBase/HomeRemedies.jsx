@@ -6,27 +6,18 @@ import {
     FaLeaf,
     FaSearch,
     FaExclamationTriangle,
-<<<<<<< HEAD
-=======
     FaTimes,
     FaHeart,
     FaTrash,
     FaLock,
     FaSpinner,
->>>>>>> fdfa0ed23b3f4f2883a6e246d28b0bf260278dab
     FaCheckCircle,
-    FaTimes,
     FaPlus,
     FaEdit,
-    FaTrash,
-    FaSpa,
-    FaLock,
     FaBan,
-<<<<<<< HEAD
-    FaShieldAlt
-=======
-    FaLemon
->>>>>>> fdfa0ed23b3f4f2883a6e246d28b0bf260278dab
+    FaShieldAlt,
+    FaLemon,
+    FaBook
 } from 'react-icons/fa';
 
 const HomeRemedies = () => {
@@ -41,12 +32,8 @@ const HomeRemedies = () => {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-<<<<<<< HEAD
     const [protectionEnabled, setProtectionEnabled] = useState(true); // Protection ON by default
     const protectionMsg = useScreenshotProtection(protectionEnabled);
-=======
-    const [protectionEnabled, setProtectionEnabled] = useState(true);
->>>>>>> fdfa0ed23b3f4f2883a6e246d28b0bf260278dab
 
     const [formData, setFormData] = useState({
         name: '',
@@ -62,7 +49,7 @@ const HomeRemedies = () => {
             try {
                 const parsedUser = JSON.parse(userData);
                 setUser(parsedUser);
-                setIsAdmin(parsedUser.role === 'admin');
+                setIsAdmin(parsedUser.role === 'admin' || parsedUser.role === 'company_admin');
             } catch (err) {
                 console.error('Error parsing user data:', err);
             }
@@ -105,11 +92,7 @@ const HomeRemedies = () => {
         setFilteredRemedies(filtered);
     };
 
-<<<<<<< HEAD
-
     // Toggle protection (Admin only)
-=======
->>>>>>> fdfa0ed23b3f4f2883a6e246d28b0bf260278dab
     const toggleProtection = () => {
         if (!isAdmin) {
             setError('Only admins can change protection.');
@@ -134,12 +117,24 @@ const HomeRemedies = () => {
         setSaving(true);
         setError('');
         try {
-            const { error } = await supabase.from('home_remedies').insert([{
-                ...formData,
-                created_at: new Date().toISOString()
-            }]);
-            if (error) throw error;
-            setSuccess('Remedy added successfully!');
+            if (editRemedy) {
+                const { error } = await supabase
+                    .from('home_remedies')
+                    .update({
+                        ...formData,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', editRemedy.id);
+                if (error) throw error;
+                setSuccess('Remedy updated successfully!');
+            } else {
+                const { error } = await supabase.from('home_remedies').insert([{
+                    ...formData,
+                    created_at: new Date().toISOString()
+                }]);
+                if (error) throw error;
+                setSuccess('Remedy added successfully!');
+            }
             fetchRemedies();
             resetForm();
         } catch (err) {
@@ -148,6 +143,17 @@ const HomeRemedies = () => {
         } finally {
             setSaving(false);
         }
+    };
+
+    const handleEditRemedy = (remedy) => {
+        setEditRemedy(remedy);
+        setFormData({
+            name: remedy.name,
+            amharic_name: remedy.amharic_name || '',
+            home_remedies: remedy.home_remedies,
+            medical_advise: remedy.medical_advise || ''
+        });
+        setShowForm(true);
     };
 
     const handleDeleteRemedy = async (id) => {
@@ -170,11 +176,19 @@ const HomeRemedies = () => {
 
     const resetForm = () => {
         setFormData({ name: '', amharic_name: '', home_remedies: '', medical_advise: '' });
+        setEditRemedy(null);
         setShowForm(false);
     };
 
     const getRemedyColor = (index) => {
-        const colors = ['bg-green-50 border-green-200', 'bg-blue-50 border-blue-200', 'bg-yellow-50 border-yellow-200', 'bg-purple-50 border-purple-200', 'bg-pink-50 border-pink-200', 'bg-indigo-50 border-indigo-200'];
+        const colors = [
+            'bg-green-50 border-green-200',
+            'bg-blue-50 border-blue-200',
+            'bg-yellow-50 border-yellow-200',
+            'bg-purple-50 border-purple-200',
+            'bg-pink-50 border-pink-200',
+            'bg-indigo-50 border-indigo-200'
+        ];
         return colors[index % colors.length];
     };
 
@@ -196,19 +210,6 @@ const HomeRemedies = () => {
                         <div className="bg-green-100 p-3 rounded-full">
                             <FaHome className="text-green-600 text-xl md:text-2xl" />
                         </div>
-<<<<<<< HEAD
-                        <div className="flex flex-wrap gap-2">
-                            {/* Protection Toggle - Admin only */}
-                            {isAdmin && (
-                                <button
-                                    onClick={toggleProtection}
-                                    className={`px - 3 py - 2 rounded - lg flex items - center gap - 2 text - sm ${protectionEnabled
-                                            ? 'bg-red-500 hover:bg-red-600 text-white'
-                                            : 'bg-green-500 hover:bg-green-600 text-white'
-                                        } `}
-                                    title={protectionEnabled ? 'Disable Copy/Print Protection' : 'Enable Copy/Print Protection'}
-                                >
-=======
                         <div>
                             <h1 className="text-2xl md:text-3xl font-bold">Home Remedies</h1>
                             <p className="text-gray-600 mt-1 text-sm">
@@ -217,29 +218,25 @@ const HomeRemedies = () => {
                             </p>
                         </div>
                     </div>
-                    <div className="flex gap-2 mt-4 md:mt-0">
+                    <div className="flex flex-wrap gap-2 mt-4 md:mt-0">
                         {isAdmin && (
                             <>
-                                <button onClick={toggleProtection} className={`px-3 py-2 rounded-lg flex items-center gap-2 text-sm ${protectionEnabled ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-green-500 hover:bg-green-600 text-white'}`}>
->>>>>>> fdfa0ed23b3f4f2883a6e246d28b0bf260278dab
+                                <button
+                                    onClick={toggleProtection}
+                                    className={`px-3 py-2 rounded-lg flex items-center gap-2 text-sm ${protectionEnabled
+                                        ? 'bg-red-500 hover:bg-red-600 text-white'
+                                        : 'bg-green-500 hover:bg-green-600 text-white'
+                                        }`}
+                                    title={protectionEnabled ? 'Disable Copy/Print Protection' : 'Enable Copy/Print Protection'}
+                                >
                                     {protectionEnabled ? <FaBan /> : <FaShieldAlt />}
                                     <span>{protectionEnabled ? 'Allow Copy' : 'No Copy'}</span>
                                 </button>
-<<<<<<< HEAD
-                            )}
-
-                            {/* REMOVED: Export button */}
-                            {/* Only show add button for admins */}
-                            {isAdmin && (
                                 <button
                                     onClick={() => setShowForm(true)}
                                     className="bg-green-600 hover:bg-green-700 text-white px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
                                 >
                                     <FaPlus /> <span className="hidden sm:inline">Add Remedy</span><span className="sm:hidden">Add</span>
-=======
-                                <button onClick={() => setShowForm(true)} className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg flex items-center gap-2 text-sm">
-                                    <FaPlus /> Add Remedy
->>>>>>> fdfa0ed23b3f4f2883a6e246d28b0bf260278dab
                                 </button>
                             </>
                         )}
@@ -247,7 +244,6 @@ const HomeRemedies = () => {
                 </div>
 
                 {/* Messages */}
-<<<<<<< HEAD
                 {protectionMsg && (
                     <div className="mb-4 p-4 bg-red-100 text-red-800 rounded-lg flex items-center justify-between text-sm md:text-base animate-pulse">
                         <div className="flex items-center gap-2">
@@ -267,10 +263,17 @@ const HomeRemedies = () => {
                         </button>
                     </div>
                 )}
-=======
-                {success && <Message type="success" text={success} onClose={() => setSuccess('')} />}
-                {error && <Message type="error" text={error} onClose={() => setError('')} />}
->>>>>>> fdfa0ed23b3f4f2883a6e246d28b0bf260278dab
+                {error && (
+                    <div className="mb-4 p-4 bg-red-100 text-red-800 rounded-lg flex items-center justify-between text-sm md:text-base">
+                        <div className="flex items-center gap-2">
+                            <FaExclamationTriangle className="flex-shrink-0" />
+                            <span className="font-medium">{error}</span>
+                        </div>
+                        <button onClick={() => setError('')} className="text-red-800 hover:text-red-900">
+                            <FaTimes />
+                        </button>
+                    </div>
+                )}
 
                 {/* Search */}
                 <div className="bg-white rounded-xl shadow p-4 md:p-6 mb-6">
@@ -292,162 +295,59 @@ const HomeRemedies = () => {
                     </div>
                 </div>
 
-                {/* Remedies Grid (Bulletin-style) */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {filteredRemedies.length > 0 ? filteredRemedies.map((remedy, idx) => (
-                        <div key={remedy.id} className={`border rounded-xl shadow-lg overflow-hidden ${getRemedyColor(idx)} p-4 md:p-6 bulletin-item`}>
-                            <div className="flex justify-between items-start mb-2">
-                                <div>
-                                    <h3 className="text-lg md:text-xl font-bold text-gray-900">{remedy.name}</h3>
-                                    {remedy.amharic_name && <p className="text-sm text-gray-600">{remedy.amharic_name}</p>}
+                {/* Remedies Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    {filteredRemedies.length > 0 ? (
+                        filteredRemedies.map((remedy, idx) => (
+                            <div key={remedy.id} className={`border rounded-xl shadow-lg overflow-hidden ${getRemedyColor(idx)} p-4 md:p-6 remedy-content`}>
+                                <div className="flex justify-between items-start mb-2">
+                                    <div>
+                                        <h3 className="text-lg md:text-xl font-bold text-gray-900">{remedy.name}</h3>
+                                        {remedy.amharic_name && <p className="text-sm text-gray-600">{remedy.amharic_name}</p>}
+                                    </div>
+                                    <div className="flex gap-2 items-center">
+                                        <div className="p-1.5 bg-green-100 rounded-full">
+                                            <FaLeaf className="text-green-600" />
+                                        </div>
+                                        {isAdmin && (
+                                            <>
+                                                <button onClick={() => handleEditRemedy(remedy)} className="text-blue-500 hover:text-blue-700 p-1" title="Edit remedy">
+                                                    <FaEdit className="text-sm" />
+                                                </button>
+                                                <button onClick={() => handleDeleteRemedy(remedy.id)} className="text-red-500 hover:text-red-700 p-1" title="Delete remedy">
+                                                    <FaTrash className="text-sm" />
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="flex gap-2 items-center">
-                                    <FaLeaf className="text-green-600" />
-                                    {isAdmin && <button onClick={() => handleDeleteRemedy(remedy.id)} className="text-red-500 hover:text-red-700"><FaTrash /></button>}
+
+                                <div className="mb-2">
+                                    <h4 className="font-semibold text-gray-700 text-sm md:text-base">Remedy:</h4>
+                                    <p className="text-gray-700 text-sm md:text-base whitespace-pre-line leading-relaxed">{remedy.home_remedies}</p>
+                                </div>
+
+                                {remedy.medical_advise && (
+                                    <div className="mb-2 p-2 md:p-3 bg-yellow-50 border border-yellow-100 rounded">
+                                        <h4 className="font-semibold text-yellow-700 flex items-center gap-1 text-sm md:text-base"><FaExclamationTriangle /> Medical Advice</h4>
+                                        <p className="text-yellow-800 text-sm md:text-base whitespace-pre-line">{remedy.medical_advise}</p>
+                                    </div>
+                                )}
+
+                                <div className="flex justify-between items-center mt-2 border-t pt-2 text-xs text-gray-500">
+                                    <span>Added {new Date(remedy.created_at).toLocaleDateString()}</span>
+                                    <span className="flex items-center gap-1"><FaHeart className="text-red-400 text-xs" /> Traditional</span>
                                 </div>
                             </div>
-
-                            <div className="mb-2">
-                                <h4 className="font-semibold text-gray-700 text-sm md:text-base">Remedy:</h4>
-                                <p className="text-gray-700 text-sm md:text-base whitespace-pre-line">{remedy.home_remedies}</p>
-                            </div>
-
-                            {remedy.medical_advise && (
-                                <div className="mb-2 p-2 md:p-3 bg-yellow-50 border border-yellow-100 rounded">
-                                    <h4 className="font-semibold text-yellow-700 flex items-center gap-1 text-sm md:text-base"><FaExclamationTriangle /> Medical Advice</h4>
-                                    <p className="text-yellow-800 text-sm md:text-base whitespace-pre-line">{remedy.medical_advise}</p>
-                                </div>
-                            )}
-
-                            <div className="flex justify-between items-center mt-2 border-t pt-2 text-xs text-gray-500">
-                                <span>Added {new Date(remedy.created_at).toLocaleDateString()}</span>
-                                <span className="flex items-center gap-1"><FaHeart className="text-red-400 text-xs" /> Traditional</span>
-                            </div>
-                        </div>
-                    )) : (
+                        ))
+                    ) : (
                         <div className="col-span-full bg-white rounded-xl shadow p-12 text-center">
                             <FaLemon className="text-5xl text-gray-300 mx-auto mb-4" />
                             <h3 className="text-xl font-medium text-gray-800 mb-2">No Remedies Found</h3>
                             <p className="text-gray-500 mb-6">{searchTerm ? 'No matches for your search.' : 'No remedies added yet.'}</p>
                             <div className="flex gap-3 justify-center">
-                                <button onClick={() => handleSearch('')} className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg">Clear Search</button>
+                                <button onClick={() => { setSearchTerm(''); handleSearch(''); }} className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg">Clear Search</button>
                                 {isAdmin && <button onClick={() => setShowForm(true)} className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center gap-2"><FaPlus /> Add Remedy</button>}
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* Add Remedy Form Modal */}
-                {showForm && isAdmin && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                            <div className="p-6">
-                                <div className="flex justify-between items-center mb-6">
-                                    <h2 className="text-2xl font-bold text-gray-900">Add Home Remedy</h2>
-                                    <button onClick={() => setShowForm(false)} className="text-gray-500 hover:text-gray-700 text-2xl" disabled={saving}><FaTimes /></button>
-                                </div>
-
-                                <FormInputs formData={formData} setFormData={setFormData} saving={saving} />
-
-                                <div className="flex gap-3 mt-8 pt-6 border-t">
-                                    <button onClick={handleSaveRemedy} disabled={saving} className="flex-1 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                                        {saving ? <><FaSpinner className="animate-spin" /> Saving...</> : <><FaLeaf /> Save Remedy</>}
-                                    </button>
-                                    <button onClick={() => setShowForm(false)} disabled={saving} className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-lg font-medium disabled:opacity-50">Cancel</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-<<<<<<< HEAD
-
-                {/* Remedies Grid - ALL CONTENT VISIBLE but protected from copying */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
-                    {filteredRemedies.length > 0 ? (
-                        filteredRemedies.map((remedy, index) => (
-                            <div
-                                key={remedy.id}
-                                className={`border rounded - xl shadow - lg overflow - hidden ${getRemedyColor(index)} remedy - content`}
-                            >
-                                <div className="p-3 md:p-6">
-                                    <div className="flex justify-between items-start mb-3 md:mb-4">
-                                        <div className="flex-1">
-                                            <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-1">{remedy.name}</h3>
-                                            {remedy.amharic_name && (
-                                                <p className="text-xs md:text-sm text-gray-600 mb-2">{remedy.amharic_name}</p>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <div className="p-1.5 md:p-2 bg-green-100 rounded-full">
-                                                <FaLeaf className="text-green-600 text-sm md:text-base" />
-                                            </div>
-                                            {/* Only show delete button for admins */}
-                                            {isAdmin && (
-                                                <button
-                                                    onClick={() => handleDeleteRemedy(remedy.id)}
-                                                    className="text-red-500 hover:text-red-700 p-1"
-                                                    title="Delete remedy"
-                                                >
-                                                    <FaTrash className="text-sm" />
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="mb-3 md:mb-4">
-                                        <h4 className="font-semibold text-gray-700 mb-1.5 md:mb-2 text-sm md:text-base">Home Remedy:</h4>
-                                        <p className="text-gray-700 whitespace-pre-line text-sm md:text-base leading-relaxed">{remedy.home_remedies}</p>
-                                    </div>
-
-                                    {remedy.medical_advise && (
-                                        <div className="mb-3 md:mb-4 p-2 md:p-3 bg-yellow-50 border border-yellow-100 rounded">
-                                            <h4 className="font-semibold text-yellow-700 mb-1 flex items-center gap-2 text-sm md:text-base">
-                                                <FaExclamationTriangle className="text-xs md:text-sm" /> Medical Advice:
-                                            </h4>
-                                            <p className="text-xs md:text-sm text-yellow-800 whitespace-pre-line leading-relaxed">{remedy.medical_advise}</p>
-                                        </div>
-                                    )}
-
-                                    <div className="flex justify-between items-center mt-3 md:mt-6 pt-3 md:pt-4 border-t border-gray-100">
-                                        <div className="text-xs text-gray-500">
-                                            Added {new Date(remedy.created_at).toLocaleDateString()}
-                                        </div>
-                                        <div className="flex items-center gap-1.5 md:gap-2">
-                                            <FaHeart className="text-red-400 text-xs" />
-                                            <span className="text-xs text-gray-500">Traditional</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))
-                    ) : (
-                        <div className="col-span-full bg-white rounded-xl shadow-lg p-12 text-center">
-                            <FaLemon className="text-5xl text-gray-300 mx-auto mb-4" />
-                            <h3 className="text-xl font-medium text-gray-800 mb-2">No Home Remedies Found</h3>
-                            <p className="text-gray-500 max-w-md mx-auto mb-6">
-                                {searchTerm
-                                    ? 'No remedies match your search. Try a different term.'
-                                    : 'No home remedies added yet.'}
-                            </p>
-                            <div className="flex flex-wrap gap-3 justify-center">
-                                <button
-                                    onClick={() => {
-                                        setSearchTerm('');
-                                        handleSearch('');
-                                    }}
-                                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg"
-                                >
-                                    Clear Search
-                                </button>
-                                {/* Only show add button for admins */}
-                                {isAdmin && (
-                                    <button
-                                        onClick={() => setShowForm(true)}
-                                        className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center gap-2"
-                                    >
-                                        <FaPlus /> Add Remedy
-                                    </button>
-                                )}
                             </div>
                         </div>
                     )}
@@ -482,14 +382,6 @@ const HomeRemedies = () => {
                             {isAdmin
                                 ? 'Administrator Mode - Full access'
                                 : `User Mode - View only(${protectionEnabled ? 'Copy/Print disabled' : 'Copy allowed'})`}
-                            {isAdmin && (
-                                <button
-                                    onClick={toggleProtection}
-                                    className="ml-2 text-blue-600 hover:text-blue-800 text-xs"
-                                >
-                                    ({protectionEnabled ? 'No Copy Mode' : 'Copy Allowed'})
-                                </button>
-                            )}
                         </div>
                     </div>
                 )}
@@ -520,44 +412,52 @@ const HomeRemedies = () => {
                         </div>
                     </div>
                 </div>
-=======
->>>>>>> fdfa0ed23b3f4f2883a6e246d28b0bf260278dab
+
+                {/* Add/Edit Remedy Form Modal */}
+                {showForm && isAdmin && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                            <div className="p-6">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h2 className="text-2xl font-bold text-gray-900">{editRemedy ? 'Edit Home Remedy' : 'Add Home Remedy'}</h2>
+                                    <button onClick={resetForm} className="text-gray-500 hover:text-gray-700 text-2xl" disabled={saving}><FaTimes /></button>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Remedy Name *</label>
+                                        <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Ginger Tea for Cold" className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500" required disabled={saving} />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Amharic Name (Optional)</label>
+                                        <input type="text" value={formData.amharic_name} onChange={(e) => setFormData({ ...formData, amharic_name: e.target.value })} placeholder="እምቢልታ" className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500" disabled={saving} />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Home Remedies Description *</label>
+                                        <textarea value={formData.home_remedies} onChange={(e) => setFormData({ ...formData, home_remedies: e.target.value })} rows="4" placeholder="Describe remedy, ingredients, preparation..." className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500" required disabled={saving} />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Medical Advice (Optional)</label>
+                                        <textarea value={formData.medical_advise} onChange={(e) => setFormData({ ...formData, medical_advise: e.target.value })} rows="3" placeholder="Any medical advice, precautions..." className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500" disabled={saving} />
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-3 mt-8 pt-6 border-t">
+                                    <button onClick={handleSaveRemedy} disabled={saving} className="flex-1 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        {saving ? <><FaSpinner className="animate-spin" /> Saving...</> : <><FaLeaf /> {editRemedy ? 'Update Remedy' : 'Save Remedy'}</>}
+                                    </button>
+                                    <button onClick={resetForm} disabled={saving} className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-lg font-medium disabled:opacity-50">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
 };
-
-// Reusable message component
-const Message = ({ type, text, onClose }) => (
-    <div className={`mb-4 p-4 rounded-lg flex justify-between items-center ${type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-        <span className="flex items-center gap-2">{type === 'success' ? <FaCheckCircle /> : <FaExclamationTriangle />} {text}</span>
-        <button onClick={onClose}><FaTimes /></button>
-    </div>
-);
-
-// Form Inputs
-const FormInputs = ({ formData, setFormData, saving }) => (
-    <div className="space-y-4">
-        <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Remedy Name *</label>
-            <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Ginger Tea for Cold" className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500" required disabled={saving} />
-        </div>
-
-        <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Amharic Name (Optional)</label>
-            <input type="text" value={formData.amharic_name} onChange={(e) => setFormData({ ...formData, amharic_name: e.target.value })} placeholder="እምቢልታ" className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500" disabled={saving} />
-        </div>
-
-        <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Home Remedies Description *</label>
-            <textarea value={formData.home_remedies} onChange={(e) => setFormData({ ...formData, home_remedies: e.target.value })} rows="4" placeholder="Describe remedy, ingredients, preparation..." className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500" required disabled={saving} />
-        </div>
-
-        <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Medical Advice (Optional)</label>
-            <textarea value={formData.medical_advise} onChange={(e) => setFormData({ ...formData, medical_advise: e.target.value })} rows="3" placeholder="Any medical advice, precautions..." className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500" disabled={saving} />
-        </div>
-    </div>
-);
 
 export default HomeRemedies;

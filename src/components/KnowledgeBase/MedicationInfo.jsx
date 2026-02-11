@@ -395,10 +395,10 @@ const MedicationInfo = () => {
                             {isAdmin && (
                                 <button
                                     onClick={toggleProtection}
-                                    className={`px - 3 py - 2 rounded - lg flex items - center gap - 2 text - sm ${protectionEnabled
-                                            ? 'bg-red-500 hover:bg-red-600 text-white'
-                                            : 'bg-green-500 hover:bg-green-600 text-white'
-                                        } `}
+                                    className={`px-3 py-2 rounded-lg flex items-center gap-2 text-sm ${protectionEnabled
+                                        ? 'bg-red-500 hover:bg-red-600 text-white'
+                                        : 'bg-green-500 hover:bg-green-600 text-white'
+                                        }`}
                                     title={protectionEnabled ? 'Disable Copy/Print Protection' : 'Enable Copy/Print Protection'}
                                 >
                                     {protectionEnabled ? <FaBan /> : <FaShieldAlt />}
