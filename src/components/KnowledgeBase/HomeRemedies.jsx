@@ -205,6 +205,12 @@ const HomeRemedies = () => {
         );
     }
 
+    const quickTips = [
+    { title: "Use fresh herbs", description: "Always prefer fresh herbs for remedies.", color: "green" },
+    { title: "Avoid overheating", description: "Some remedies lose effect if boiled too long.", color: "blue" },
+    { title: "Consult a doctor", description: "Seek medical advice if symptoms persist.", color: "yellow" },
+    ];
+
     return (
         <div
             className="bg-gray-50 min-h-full pb-8"
@@ -478,10 +484,6 @@ const HomeRemedies = () => {
                                     <div className="flex justify-between items-center mt-3 md:mt-6 pt-3 md:pt-4 border-t border-gray-100">
                                         <div className="text-xs text-gray-500">
                                             Added {new Date(remedy.created_at).toLocaleDateString()}
-                                        </div>
-                                        <div className="flex items-center gap-1.5 md:gap-2">
-                                            <FaHeart className="text-red-400 text-xs" />
-                                            <span className="text-xs text-gray-500">Traditional</span>
                                         </div>
                                     </div>
                                 </div>
