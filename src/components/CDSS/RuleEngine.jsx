@@ -1249,9 +1249,33 @@ export const debugRuleEvaluation = (rule, facts) => {
     if (condition.all) {
         console.log('Condition type: ALL (all must be true)');
         const allResults = condition.all.map((cond, index) => {
-            const result = evaluateSingleCondition(cond, facts, true);
-            console.log(`  [${index + 1}] ${cond.fact} ${cond.operator} ${cond.value} => ${result ? '✅ PASS' : '❌ FAIL'}`);
-            return result;
+            // Check if this condition is a nested "any" or "all"
+            if (cond.any) {
+                console.log(`  [${index + 1}] Nested ANY condition:`);
+                const anyResults = cond.any.map((nestedCond, nestedIndex) => {
+                    const result = evaluateSingleCondition(nestedCond, facts, true);
+                    console.log(`    [${index + 1}.${nestedIndex + 1}] ${nestedCond.fact} ${nestedCond.operator} ${nestedCond.value} => ${result ? '✅ PASS' : '❌ FAIL'}`);
+                    return result;
+                });
+                const anyResult = anyResults.some(r => r === true);
+                console.log(`  [${index + 1}] Nested ANY result: ${anyResult ? '✅ PASS' : '❌ FAIL'}`);
+                return anyResult;
+            } else if (cond.all) {
+                console.log(`  [${index + 1}] Nested ALL condition:`);
+                const nestedAllResults = cond.all.map((nestedCond, nestedIndex) => {
+                    const result = evaluateSingleCondition(nestedCond, facts, true);
+                    console.log(`    [${index + 1}.${nestedIndex + 1}] ${nestedCond.fact} ${nestedCond.operator} ${nestedCond.value} => ${result ? '✅ PASS' : '❌ FAIL'}`);
+                    return result;
+                });
+                const allResult = nestedAllResults.every(r => r === true);
+                console.log(`  [${index + 1}] Nested ALL result: ${allResult ? '✅ PASS' : '❌ FAIL'}`);
+                return allResult;
+            } else {
+                // Single condition
+                const result = evaluateSingleCondition(cond, facts, true);
+                console.log(`  [${index + 1}] ${cond.fact} ${cond.operator} ${cond.value} => ${result ? '✅ PASS' : '❌ FAIL'}`);
+                return result;
+            }
         });
 
         const finalResult = allResults.every(r => r === true);
@@ -1262,9 +1286,33 @@ export const debugRuleEvaluation = (rule, facts) => {
     if (condition.any) {
         console.log('Condition type: ANY (any can be true)');
         const anyResults = condition.any.map((cond, index) => {
-            const result = evaluateSingleCondition(cond, facts, true);
-            console.log(`  [${index + 1}] ${cond.fact} ${cond.operator} ${cond.value} => ${result ? '✅ PASS' : '❌ FAIL'}`);
-            return result;
+            // Check if this condition is a nested "any" or "all"
+            if (cond.any) {
+                console.log(`  [${index + 1}] Nested ANY condition:`);
+                const nestedAnyResults = cond.any.map((nestedCond, nestedIndex) => {
+                    const result = evaluateSingleCondition(nestedCond, facts, true);
+                    console.log(`    [${index + 1}.${nestedIndex + 1}] ${nestedCond.fact} ${nestedCond.operator} ${nestedCond.value} => ${result ? '✅ PASS' : '❌ FAIL'}`);
+                    return result;
+                });
+                const anyResult = nestedAnyResults.some(r => r === true);
+                console.log(`  [${index + 1}] Nested ANY result: ${anyResult ? '✅ PASS' : '❌ FAIL'}`);
+                return anyResult;
+            } else if (cond.all) {
+                console.log(`  [${index + 1}] Nested ALL condition:`);
+                const nestedAllResults = cond.all.map((nestedCond, nestedIndex) => {
+                    const result = evaluateSingleCondition(nestedCond, facts, true);
+                    console.log(`    [${index + 1}.${nestedIndex + 1}] ${nestedCond.fact} ${nestedCond.operator} ${nestedCond.value} => ${result ? '✅ PASS' : '❌ FAIL'}`);
+                    return result;
+                });
+                const allResult = nestedAllResults.every(r => r === true);
+                console.log(`  [${index + 1}] Nested ALL result: ${allResult ? '✅ PASS' : '❌ FAIL'}`);
+                return allResult;
+            } else {
+                // Single condition
+                const result = evaluateSingleCondition(cond, facts, true);
+                console.log(`  [${index + 1}] ${cond.fact} ${cond.operator} ${cond.value} => ${result ? '✅ PASS' : '❌ FAIL'}`);
+                return result;
+            }
         });
 
         const finalResult = anyResults.some(r => r === true);
