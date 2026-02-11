@@ -19,7 +19,8 @@ import {
 import { useOutletContext } from 'react-router-dom';
 
 const ExtemporaneousPrep = () => {
-    const { protectionEnabled, toggleProtection } = useOutletContext();
+    const context = useOutletContext();
+    const { protectionEnabled, toggleProtection } = context || { protectionEnabled: true, toggleProtection: () => { } };
     const [preparations, setPreparations] = useState([]);
     const [filteredPreparations, setFilteredPreparations] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
