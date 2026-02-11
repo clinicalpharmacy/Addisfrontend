@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import supabase from '../../utils/supabase';
-import useScreenshotProtection from '../../hooks/useScreenshotProtection';
 import {
     FaHome,
     FaLeaf,
@@ -32,8 +31,6 @@ const HomeRemedies = () => {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-    const [protectionEnabled, setProtectionEnabled] = useState(true); // Protection ON by default
-    const protectionMsg = useScreenshotProtection(protectionEnabled);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -92,17 +89,7 @@ const HomeRemedies = () => {
         setFilteredRemedies(filtered);
     };
 
-    // Toggle protection (Admin only)
-    const toggleProtection = () => {
-        if (!isAdmin) {
-            setError('Only admins can change protection.');
-            setTimeout(() => setError(''), 3000);
-            return;
-        }
-        setProtectionEnabled(!protectionEnabled);
-        setSuccess(`Copy / Print Protection ${!protectionEnabled ? 'enabled' : 'disabled'} `);
-        setTimeout(() => setSuccess(''), 3000);
-    };
+
 
     const handleSaveRemedy = async () => {
         if (!isAdmin) {
@@ -220,38 +207,17 @@ const HomeRemedies = () => {
                     </div>
                     <div className="flex flex-wrap gap-2 mt-4 md:mt-0">
                         {isAdmin && (
-                            <>
-                                <button
-                                    onClick={toggleProtection}
-                                    className={`px-3 py-2 rounded-lg flex items-center gap-2 text-sm ${protectionEnabled
-                                        ? 'bg-red-500 hover:bg-red-600 text-white'
-                                        : 'bg-green-500 hover:bg-green-600 text-white'
-                                        }`}
-                                    title={protectionEnabled ? 'Disable Copy/Print Protection' : 'Enable Copy/Print Protection'}
-                                >
-                                    {protectionEnabled ? <FaBan /> : <FaShieldAlt />}
-                                    <span>{protectionEnabled ? 'Allow Copy' : 'No Copy'}</span>
-                                </button>
-                                <button
-                                    onClick={() => setShowForm(true)}
-                                    className="bg-green-600 hover:bg-green-700 text-white px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
-                                >
-                                    <FaPlus /> <span className="hidden sm:inline">Add Remedy</span><span className="sm:hidden">Add</span>
-                                </button>
-                            </>
+                            <button
+                                onClick={() => setShowForm(true)}
+                                className="bg-green-600 hover:bg-green-700 text-white px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
+                            >
+                                <FaPlus /> <span className="hidden sm:inline">Add Remedy</span><span className="sm:hidden">Add</span>
+                            </button>
                         )}
                     </div>
                 </div>
 
                 {/* Messages */}
-                {protectionMsg && (
-                    <div className="mb-4 p-4 bg-red-100 text-red-800 rounded-lg flex items-center justify-between text-sm md:text-base animate-pulse">
-                        <div className="flex items-center gap-2">
-                            <FaShieldAlt className="flex-shrink-0" />
-                            <span className="font-bold">{protectionMsg}</span>
-                        </div>
-                    </div>
-                )}
                 {success && (
                     <div className="mb-4 p-4 bg-green-100 text-green-800 rounded-lg flex items-center justify-between text-sm md:text-base">
                         <div className="flex items-center gap-2">

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import supabase from '../../utils/supabase';
-import useScreenshotProtection from '../../hooks/useScreenshotProtection';
 import {
     FaPills,
     FaSearch,
@@ -14,13 +13,19 @@ import {
     FaSpinner,
     FaTimes,
     FaCheckCircle,
+    FaExclamationCircle,
     FaNotesMedical,
     FaInfoCircle,
     FaBookMedical,
+    FaSync,
+    FaDatabase,
+    FaEye,
+    FaEyeSlash,
     FaLock,
     FaBan,
     FaShieldAlt
 } from 'react-icons/fa';
+
 
 const MedicationInfo = () => {
     const [medications, setMedications] = useState([]);
@@ -35,8 +40,10 @@ const MedicationInfo = () => {
     const [successMessage, setSuccessMessage] = useState('');
     const [user, setUser] = useState(null);
     const [isAdmin, setIsAdmin] = useState(false);
-    const [protectionEnabled, setProtectionEnabled] = useState(true); // Protection ON by default
-    const protectionMsg = useScreenshotProtection(protectionEnabled);
+    const [editingMedication, setEditingMedication] = useState(null);
+    const [showAddForm, setShowAddForm] = useState(false);
+    const [expandedMedication, setExpandedMedication] = useState(null);
+
 
     const [formData, setFormData] = useState({
         name: '',
@@ -127,17 +134,7 @@ const MedicationInfo = () => {
     };
 
 
-    // Toggle protection (Admin only)
-    const toggleProtection = () => {
-        if (!isAdmin) {
-            setError('Only administrators can modify protection settings.');
-            setTimeout(() => setError(''), 3000);
-            return;
-        }
-        setProtectionEnabled(!protectionEnabled);
-        setSuccessMessage(`Copy / Print Protection ${!protectionEnabled ? 'enabled' : 'disabled'} `);
-        setTimeout(() => setSuccessMessage(''), 3000);
-    };
+
 
     // ADD MEDICATION TO DATABASE - ADMIN ONLY
     const handleAddMedication = async () => {
@@ -392,20 +389,7 @@ const MedicationInfo = () => {
                             </div>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                            {/* Protection Toggle - Admin only */}
-                            {isAdmin && (
-                                <button
-                                    onClick={toggleProtection}
-                                    className={`px-3 py-2 rounded-lg flex items-center gap-2 text-sm ${protectionEnabled
-                                        ? 'bg-red-500 hover:bg-red-600 text-white'
-                                        : 'bg-green-500 hover:bg-green-600 text-white'
-                                        }`}
-                                    title={protectionEnabled ? 'Disable Copy/Print Protection' : 'Enable Copy/Print Protection'}
-                                >
-                                    {protectionEnabled ? <FaBan /> : <FaShieldAlt />}
-                                    <span className="hidden sm:inline">{protectionEnabled ? 'Allow Copy' : 'No Copy'}</span>
-                                </button>
-                            )}
+
 
                             {/* REMOVED: Export button */}
                             {/* Only show admin buttons to admins */}
@@ -438,14 +422,6 @@ const MedicationInfo = () => {
                 </div>
 
                 {/* Success/Error Messages */}
-                {protectionMsg && (
-                    <div className="mb-4 p-4 bg-red-100 text-red-800 rounded-lg flex items-center justify-between text-sm md:text-base animate-pulse">
-                        <div className="flex items-center gap-2">
-                            <FaShieldAlt className="flex-shrink-0" />
-                            <span className="font-bold">{protectionMsg}</span>
-                        </div>
-                    </div>
-                )}
                 {successMessage && (
                     <div className="mb-4 p-4 bg-green-100 text-green-800 rounded-lg flex items-center justify-between text-sm md:text-base">
                         <div className="flex items-center gap-2">
@@ -501,7 +477,7 @@ const MedicationInfo = () => {
                     <div className="mt-4 text-xs md:text-sm text-gray-500 flex flex-wrap gap-2 items-center">
                         <span>Showing {filteredMedications.length} of {medications.length} medications</span>
                         {!isAdmin && <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-600">Read-only</span>}
-                        {protectionEnabled && !isAdmin && <span className="bg-red-50 text-red-600 px-2 py-0.5 rounded flex items-center gap-1"><FaLock size={10} /> Protected</span>}
+
                     </div>
                 </div>
 

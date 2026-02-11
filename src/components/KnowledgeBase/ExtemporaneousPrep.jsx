@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import supabase from '../../utils/supabase';
-
-import useScreenshotProtection from '../../hooks/useScreenshotProtection';
 import {
     FaFlask,
     FaPlus,
@@ -31,8 +29,6 @@ const ExtemporaneousPrep = () => {
     const [success, setSuccess] = useState('');
     const [user, setUser] = useState(null);
     const [isAdmin, setIsAdmin] = useState(false);
-    const [protectionEnabled, setProtectionEnabled] = useState(true); // Protection ON by default
-    const protectionMsg = useScreenshotProtection(protectionEnabled);
 
     // Form data structure
     const [formData, setFormData] = useState({
@@ -232,16 +228,7 @@ const ExtemporaneousPrep = () => {
         }
     };
 
-    // Toggle protection (Admin only)
-    const toggleProtection = () => {
-        if (!isAdmin) {
-            alert('Only administrators can modify protection settings.');
-            return;
-        }
-        setProtectionEnabled(!protectionEnabled);
-        setSuccess(`Copy/Print Protection ${!protectionEnabled ? 'enabled' : 'disabled'}`);
-        setTimeout(() => setSuccess(''), 3000);
-    };
+
 
 
 
@@ -367,19 +354,7 @@ const ExtemporaneousPrep = () => {
                         </div>
                         <div className="flex flex-wrap gap-2">
                             {/* Protection Toggle - Admin only */}
-                            {isAdmin && (
-                                <button
-                                    onClick={toggleProtection}
-                                    className={`px-3 py-2 rounded-lg flex items-center gap-2 text-sm ${protectionEnabled
-                                        ? 'bg-red-500 hover:bg-red-600 text-white'
-                                        : 'bg-green-500 hover:bg-green-600 text-white'
-                                        }`}
-                                    title={protectionEnabled ? 'Disable Copy/Print Protection' : 'Enable Copy/Print Protection'}
-                                >
-                                    {protectionEnabled ? <FaBan /> : <FaShieldAlt />}
-                                    <span className="hidden sm:inline">{protectionEnabled ? 'Allow Copy' : 'No Copy'}</span>
-                                </button>
-                            )}
+
                             <button
                                 onClick={fetchPreparations}
                                 className="bg-gray-500 hover:bg-gray-600 text-white px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
@@ -406,18 +381,6 @@ const ExtemporaneousPrep = () => {
                         </div>
                     </div>
 
-                    {/* Protection Warning */}
-
-
-                    {/* Protection Warning */}
-                    {protectionMsg && (
-                        <div className="mb-4 p-4 bg-red-100 text-red-800 rounded-lg flex items-center justify-between text-sm md:text-base animate-pulse">
-                            <div className="flex items-center gap-2">
-                                <FaShieldAlt className="flex-shrink-0" />
-                                <span className="font-bold">{protectionMsg}</span>
-                            </div>
-                        </div>
-                    )}
 
                     {/* Messages */}
 
