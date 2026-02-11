@@ -567,24 +567,26 @@ const HomeRemedies = () => {
                         <FaBook className="text-green-600" /> Traditional Remedies Quick Tips
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="p-4 bg-green-50 rounded-lg">
-                            <h4 className="font-semibold text-green-800 mb-2">Ginger Tea</h4>
-                            <p className="text-sm text-green-700">
-                                For colds and sore throat. Boil ginger slices, add honey and lemon.
-                            </p>
-                        </div>
-                        <div className="p-4 bg-blue-50 rounded-lg">
-                            <h4 className="font-semibold text-blue-800 mb-2">Turmeric Milk</h4>
-                            <p className="text-sm text-blue-700">
-                                Anti-inflammatory. Mix turmeric in warm milk with honey.
-                            </p>
-                        </div>
-                        <div className="p-4 bg-yellow-50 rounded-lg">
-                            <h4 className="font-semibold text-yellow-800 mb-2">Honey & Cinnamon</h4>
-                            <p className="text-sm text-yellow-700">
-                                For cough and immunity. Mix honey with cinnamon powder.
-                            </p>
-                        </div>
+                        {quickTips.map((tip, index) => {
+                            const colorClasses = {
+                                green: 'bg-green-50 rounded-lg text-green-700',
+                                blue: 'bg-blue-50 rounded-lg text-blue-700',
+                                yellow: 'bg-yellow-50 rounded-lg text-yellow-700'
+                            };
+                    
+                            const titleColor = {
+                                green: 'text-green-800',
+                                blue: 'text-blue-800',
+                                yellow: 'text-yellow-800'
+                            };
+                    
+                            return (
+                                <div key={index} className={`p-4 ${colorClasses[tip.color]}`}>
+                                    <h4 className={`font-semibold ${titleColor[tip.color]} mb-2`}>{tip.title}</h4>
+                                    <p className="text-sm">{tip.description}</p>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             </div>
