@@ -16,6 +16,7 @@ import {
     FaCheckCircle,
     FaNotesMedical,
     FaInfoCircle,
+    FaBookMedical,
     FaLock,
     FaBan,
     FaShieldAlt
