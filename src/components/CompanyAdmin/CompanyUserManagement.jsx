@@ -1,0 +1,304 @@
+import React, { useState } from 'react';
+import {
+    FaSearch, FaUserPlus, FaUsers, FaPhone, FaCalendarAlt, FaUserFriends
+} from 'react-icons/fa';
+import { formatDate } from '../../utils/adminUtils'; // Reuse general admin utils where possible
+
+export const CompanyUserManagement = ({
+    users,
+    stats,
+    companyName,
+    onAddUser,
+    onEditUser,
+    onDeleteUser,
+    onApproveUser,
+    onToggleBlock
+}) => {
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterRole, setFilterRole] = useState('all');
+    const [filterStatus, setFilterStatus] = useState('all');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+
+    // Reuse badges logic locally or import from utils if standardized
+    const getRoleBadge = (role) => {
+        const styles = {
+            pharmacist: 'bg-blue-100 text-blue-800',
+            doctor: 'bg-green-100 text-green-800',
+            nurse: 'bg-purple-100 text-purple-800',
+            staff: 'bg-gray-100 text-gray-800',
+            company_admin: 'bg-red-100 text-red-800'
+        };
+        return <span className={`px-3 py-1 text-xs rounded-full font-medium ${styles[role] || styles.staff}`}>{role}</span>;
+    };
+
+    const getStatusBadge = (user) => {
+        if (user.is_blocked) return <span className="px-3 py-1 text-xs bg-red-100 text-red-800 rounded-full font-medium">Blocked</span>;
+        return user.approved ?
+            <span className="px-3 py-1 text-xs bg-green-100 text-green-800 rounded-full font-medium">Active</span> :
+            <span className="px-3 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full font-medium">Pending</span>;
+    };
+
+    const filteredUsers = users.filter(user => {
+        const matchesSearch = !searchTerm ||
+            user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.full_name?.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesRole = filterRole === 'all' || user.role === filterRole;
+        const matchesStatus = filterStatus === 'all' ||
+            (filterStatus === 'active' && user.approved && !user.is_blocked) ||
+            (filterStatus === 'pending' && !user.approved) ||
+            (filterStatus === 'blocked' && user.is_blocked);
+        return matchesSearch && matchesRole && matchesStatus;
+    });
+
+    // Pagination logic
+    const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentUsers = filteredUsers.slice(indexOfFirstItem, indexOfLastItem);
+
+    const handlePageChange = (newPage) => {
+        setCurrentPage(newPage);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="bg-white rounded-xl shadow-lg p-6">
+                <div className="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 className="text-2xl font-bold text-gray-800">User Management</h2>
+                        <p className="text-gray-600">Manage users in {companyName || 'your company'}</p>
+                        {stats.total_users > 0 && (
+                            <div className="flex items-center gap-4 mt-2 text-sm">
+                                <span className="text-gray-500">Total: {stats.total_users}</span>
+                                <span className="text-green-600">Active: {stats.active_users}</span>
+                                {stats.pending_users > 0 && <span className="text-yellow-600">Pending: {stats.pending_users}</span>}
+                            </div>
+                        )}
+                    </div>
+                    <button
+                        onClick={onAddUser}
+                        className="px-6 py-3 rounded-lg flex items-center gap-2 font-medium bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg hover:from-blue-600 hover:to-purple-700 transition"
+                    >
+                        <FaUserPlus className="text-lg" /> Add User
+                    </button>
+                </div>
+
+                {/* Filters */}
+                <div className="flex flex-col md:flex-row gap-4 mb-6">
+                    <div className="flex-1 relative">
+                        <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Search users..."
+                            className="w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            value={searchTerm}
+                            onChange={e => {
+                                setSearchTerm(e.target.value);
+                                setCurrentPage(1);
+                            }}
+                        />
+                    </div>
+                    <div className="flex gap-2">
+                        <select className="border rounded-lg px-4 py-3 outline-none" value={filterRole} onChange={e => { setFilterRole(e.target.value); setCurrentPage(1); }}>
+                            <option value="all">All Roles</option>
+                            <option value="pharmacist">Pharmacist</option>
+                            <option value="doctor">Doctor</option>
+                            <option value="nurse">Nurse</option>
+                            <option value="staff">Staff</option>
+                            <option value="company_admin">Admin</option>
+                        </select>
+                        <select className="border rounded-lg px-4 py-3 outline-none" value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setCurrentPage(1); }}>
+                            <option value="all">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="pending">Pending</option>
+                            <option value="blocked">Blocked</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            {/* Table */}
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+                {filteredUsers.length > 0 ? (
+                    <>
+                        {/* Desktop Table View */}
+                        <div className="hidden md:block overflow-x-auto">
+                            <table className="w-full border-collapse">
+                                <thead>
+                                    <tr className="bg-gray-50 text-gray-700">
+                                        <th className="border-b p-4 text-left">User</th>
+                                        <th className="border-b p-4 text-left">Role</th>
+                                        <th className="border-b p-4 text-left">Status</th>
+                                        <th className="border-b p-4 text-left">Joined</th>
+                                        <th className="border-b p-4 text-left">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {currentUsers.map(user => (
+                                        <tr key={user.id} className="hover:bg-gray-50 transition">
+                                            <td className="border-b p-4">
+                                                <div>
+                                                    <p className="font-medium text-gray-800">{user.full_name}</p>
+                                                    <p className="text-sm text-gray-600">{user.email}</p>
+                                                    {user.phone && <p className="text-xs text-gray-500 flex items-center gap-1 mt-1"><FaPhone className="text-xs" />{user.phone}</p>}
+                                                </div>
+                                            </td>
+                                            <td className="border-b p-4">{getRoleBadge(user.role)}</td>
+                                            <td className="border-b p-4">{getStatusBadge(user)}</td>
+                                            <td className="border-b p-4 text-sm text-gray-600 flex items-center gap-2">
+                                                <FaCalendarAlt className="text-gray-400" /> {formatDate(user.created_at)}
+                                            </td>
+                                            <td className="border-b p-4">
+                                                <div className="flex gap-2">
+                                                    {!user.approved && !user.is_blocked && (
+                                                        <button onClick={() => onApproveUser(user.id)} className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600">Approve</button>
+                                                    )}
+                                                    {user.id !== users.find(u => u.role === 'company_admin')?.id && (
+                                                        <button
+                                                            onClick={() => onToggleBlock(user.id, user.is_blocked)}
+                                                            disabled={user.is_blocked && user.blocked_by === 'superadmin'}
+                                                            className={`px-3 py-1 text-white rounded text-sm transition-all ${user.is_blocked
+                                                                ? (user.blocked_by === 'superadmin' ? 'bg-gray-400 cursor-not-allowed opacity-50' : 'bg-orange-500 hover:bg-orange-600')
+                                                                : 'bg-gray-700 hover:bg-gray-800'
+                                                                }`}
+                                                            title={user.is_blocked && user.blocked_by === 'superadmin' ? 'This user was blocked by a System Admin and cannot be unblocked here.' : ''}
+                                                        >
+                                                            {user.is_blocked ? (user.blocked_by === 'superadmin' ? 'Blocked by Admin' : 'Unblock') : 'Block'}
+                                                        </button>
+                                                    )}
+                                                    <button onClick={() => onEditUser(user)} className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600">Edit</button>
+                                                    <button onClick={() => onDeleteUser(user.id, user.email)} className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600">Delete</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Mobile Card View */}
+                        <div className="md:hidden divide-y divide-gray-100">
+                            {currentUsers.map(user => (
+                                <div key={user.id} className="p-4 bg-white hover:bg-gray-50 transition-colors">
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div>
+                                            <p className="font-bold text-gray-900">{user.full_name}</p>
+                                            <p className="text-sm text-gray-600">{user.email}</p>
+                                        </div>
+                                        <div>{getStatusBadge(user)}</div>
+                                    </div>
+
+                                    <div className="space-y-2 text-sm mb-4">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-gray-500">Role:</span>
+                                            <span>{getRoleBadge(user.role)}</span>
+                                        </div>
+                                        {user.phone && (
+                                            <div className="flex justify-between items-center text-gray-500">
+                                                <span className="flex items-center gap-1"><FaPhone className="text-xs" /> Phone:</span>
+                                                <span>{user.phone}</span>
+                                            </div>
+                                        )}
+                                        <div className="flex justify-between items-center text-xs text-gray-400">
+                                            <span className="flex items-center gap-1"><FaCalendarAlt /> Joined:</span>
+                                            <span>{formatDate(user.created_at)}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-2 pt-2 border-t border-dashed">
+                                        {!user.approved && !user.is_blocked && (
+                                            <button
+                                                onClick={() => onApproveUser(user.id)}
+                                                className="flex-1 py-2 bg-green-50 text-green-700 rounded-lg text-sm font-medium hover:bg-green-100 border border-green-200"
+                                            >
+                                                Approve
+                                            </button>
+                                        )}
+                                        {user.id !== users.find(u => u.role === 'company_admin')?.id && (
+                                            <button
+                                                onClick={() => onToggleBlock(user.id, user.is_blocked)}
+                                                disabled={user.is_blocked && user.blocked_by === 'superadmin'}
+                                                className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-all ${user.is_blocked
+                                                    ? (user.blocked_by === 'superadmin' ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' : 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100')
+                                                    : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+                                                    }`}
+                                            >
+                                                {user.is_blocked ? (user.blocked_by === 'superadmin' ? 'Locked' : 'Unblock') : 'Block'}
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={() => onEditUser(user)}
+                                            className="flex-1 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-100 border border-blue-200"
+                                        >
+                                            Edit
+                                        </button>
+                                        <button
+                                            onClick={() => onDeleteUser(user.id, user.email)}
+                                            className="flex-1 py-2 bg-red-50 text-red-700 rounded-lg text-sm font-medium hover:bg-red-100 border border-red-200"
+                                        >
+                                            Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Pagination Controls */}
+                        {filteredUsers.length > itemsPerPage && (
+                            <div className="p-6 border-t bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-4">
+                                <div className="text-sm text-gray-600">
+                                    Showing <span className="font-semibold text-gray-900">{indexOfFirstItem + 1}</span> to <span className="font-semibold text-gray-900">{Math.min(indexOfLastItem, filteredUsers.length)}</span> of <span className="font-semibold text-gray-900">{filteredUsers.length}</span> users
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => handlePageChange(currentPage - 1)}
+                                        disabled={currentPage === 1}
+                                        className={`px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${currentPage === 1
+                                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
+                                            : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600 border-gray-300'}`}
+                                    >
+                                        Previous
+                                    </button>
+
+                                    <div className="flex items-center gap-1">
+                                        {[...Array(totalPages)].map((_, i) => (
+                                            <button
+                                                key={i + 1}
+                                                onClick={() => handlePageChange(i + 1)}
+                                                className={`w-9 h-9 rounded-lg text-sm font-bold transition-all ${currentPage === i + 1
+                                                    ? 'bg-blue-600 text-white shadow-md'
+                                                    : 'bg-white text-gray-600 hover:bg-blue-50 border border-gray-200'
+                                                    }`}
+                                            >
+                                                {i + 1}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    <button
+                                        onClick={() => handlePageChange(currentPage + 1)}
+                                        disabled={currentPage === totalPages}
+                                        className={`px-4 py-2 border rounded-lg text-sm font-medium transition-all ${currentPage === totalPages
+                                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
+                                            : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600 border-gray-300'}`}
+                                    >
+                                        Next
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </>
+                ) : (
+                    <div className="text-center py-12">
+                        <FaUserFriends className="text-6xl text-gray-300 mx-auto mb-4" />
+                        <h3 className="text-xl font-medium text-gray-800">No Users Found</h3>
+                        <p className="text-gray-600 mb-4">Try adjusting your filters or add a new user.</p>
+                        <button onClick={onAddUser} className="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:shadow-lg">Add User</button>
+                    </div>
+                )}
+            </div>
+        </div >
+    );
+};
