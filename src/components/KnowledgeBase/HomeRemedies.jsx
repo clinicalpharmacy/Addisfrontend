@@ -8,7 +8,6 @@ import {
     FaExclamationTriangle,
     FaTimes,
     FaHeart,
-    FaBook,
     FaTrash,
     FaLock,
     FaSpinner,
@@ -214,7 +213,6 @@ const HomeRemedies = () => {
                                 className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
                             />
                         </div>
-                        {isAdmin && <button onClick={() => setShowForm(true)} className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg flex items-center gap-2"><FaPlus /> Add New Remedy</button>}
                     </div>
                     <div className="mt-4 text-xs text-gray-500 flex gap-2 items-center">
                         <span>{filteredRemedies.length} remedies</span>
@@ -222,32 +220,36 @@ const HomeRemedies = () => {
                     </div>
                 </div>
 
-                {/* Remedies Grid */}
+                {/* Remedies Grid (Bulletin-style) */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {filteredRemedies.length > 0 ? filteredRemedies.map((remedy, idx) => (
-                        <div key={remedy.id} className={`border rounded-xl shadow-lg overflow-hidden ${getRemedyColor(idx)}`}>
-                            <div className="p-4 md:p-6">
-                                <div className="flex justify-between mb-3">
-                                    <div>
-                                        <h3 className="font-bold text-gray-900">{remedy.name}</h3>
-                                        {remedy.amharic_name && <p className="text-gray-600">{remedy.amharic_name}</p>}
-                                    </div>
-                                    <div className="flex gap-2 items-center">
-                                        <FaLeaf className="text-green-600" />
-                                        {isAdmin && <button onClick={() => handleDeleteRemedy(remedy.id)} className="text-red-500 hover:text-red-700"><FaTrash /></button>}
-                                    </div>
+                        <div key={remedy.id} className={`border rounded-xl shadow-lg overflow-hidden ${getRemedyColor(idx)} p-4 md:p-6 bulletin-item`}>
+                            <div className="flex justify-between items-start mb-2">
+                                <div>
+                                    <h3 className="text-lg md:text-xl font-bold text-gray-900">{remedy.name}</h3>
+                                    {remedy.amharic_name && <p className="text-sm text-gray-600">{remedy.amharic_name}</p>}
                                 </div>
-                                <p className="text-gray-700 whitespace-pre-line">{remedy.home_remedies}</p>
-                                {remedy.medical_advise && (
-                                    <div className="mt-2 p-2 bg-yellow-50 border border-yellow-100 rounded">
-                                        <h4 className="font-semibold text-yellow-700 flex items-center gap-1"><FaExclamationTriangle /> Medical Advice</h4>
-                                        <p className="text-yellow-800 text-sm whitespace-pre-line">{remedy.medical_advise}</p>
-                                    </div>
-                                )}
-                                <div className="flex justify-between mt-3 border-t pt-2 text-xs text-gray-500">
-                                    <span>Added {new Date(remedy.created_at).toLocaleDateString()}</span>
-                                    <span className="flex items-center gap-1"><FaHeart className="text-red-400" /> Traditional</span>
+                                <div className="flex gap-2 items-center">
+                                    <FaLeaf className="text-green-600" />
+                                    {isAdmin && <button onClick={() => handleDeleteRemedy(remedy.id)} className="text-red-500 hover:text-red-700"><FaTrash /></button>}
                                 </div>
+                            </div>
+
+                            <div className="mb-2">
+                                <h4 className="font-semibold text-gray-700 text-sm md:text-base">Remedy:</h4>
+                                <p className="text-gray-700 text-sm md:text-base whitespace-pre-line">{remedy.home_remedies}</p>
+                            </div>
+
+                            {remedy.medical_advise && (
+                                <div className="mb-2 p-2 md:p-3 bg-yellow-50 border border-yellow-100 rounded">
+                                    <h4 className="font-semibold text-yellow-700 flex items-center gap-1 text-sm md:text-base"><FaExclamationTriangle /> Medical Advice</h4>
+                                    <p className="text-yellow-800 text-sm md:text-base whitespace-pre-line">{remedy.medical_advise}</p>
+                                </div>
+                            )}
+
+                            <div className="flex justify-between items-center mt-2 border-t pt-2 text-xs text-gray-500">
+                                <span>Added {new Date(remedy.created_at).toLocaleDateString()}</span>
+                                <span className="flex items-center gap-1"><FaHeart className="text-red-400 text-xs" /> Traditional</span>
                             </div>
                         </div>
                     )) : (
@@ -263,8 +265,28 @@ const HomeRemedies = () => {
                     )}
                 </div>
 
-                {/* Quick Tips */}
-                <QuickTips />
+                {/* Add Remedy Form Modal */}
+                {showForm && isAdmin && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                            <div className="p-6">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h2 className="text-2xl font-bold text-gray-900">Add Home Remedy</h2>
+                                    <button onClick={() => setShowForm(false)} className="text-gray-500 hover:text-gray-700 text-2xl" disabled={saving}><FaTimes /></button>
+                                </div>
+
+                                <FormInputs formData={formData} setFormData={setFormData} saving={saving} />
+
+                                <div className="flex gap-3 mt-8 pt-6 border-t">
+                                    <button onClick={handleSaveRemedy} disabled={saving} className="flex-1 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        {saving ? <><FaSpinner className="animate-spin" /> Saving...</> : <><FaLeaf /> Save Remedy</>}
+                                    </button>
+                                    <button onClick={() => setShowForm(false)} disabled={saving} className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-lg font-medium disabled:opacity-50">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -278,23 +300,27 @@ const Message = ({ type, text, onClose }) => (
     </div>
 );
 
-// Quick Tips Component
-const QuickTips = () => (
-    <div className="mt-8 bg-white rounded-xl shadow-lg p-6">
-        <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2"><FaBook className="text-green-600" /> Quick Tips</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 bg-green-50 rounded-lg">
-                <h4 className="font-semibold text-green-800 mb-2">Ginger Tea</h4>
-                <p className="text-sm text-green-700">For colds and sore throat. Boil ginger slices, add honey and lemon.</p>
-            </div>
-            <div className="p-4 bg-blue-50 rounded-lg">
-                <h4 className="font-semibold text-blue-800 mb-2">Turmeric Milk</h4>
-                <p className="text-sm text-blue-700">Anti-inflammatory. Mix turmeric in warm milk with honey.</p>
-            </div>
-            <div className="p-4 bg-yellow-50 rounded-lg">
-                <h4 className="font-semibold text-yellow-800 mb-2">Honey & Cinnamon</h4>
-                <p className="text-sm text-yellow-700">For cough and immunity. Mix honey with cinnamon powder.</p>
-            </div>
+// Form Inputs
+const FormInputs = ({ formData, setFormData, saving }) => (
+    <div className="space-y-4">
+        <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Remedy Name *</label>
+            <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Ginger Tea for Cold" className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500" required disabled={saving} />
+        </div>
+
+        <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Amharic Name (Optional)</label>
+            <input type="text" value={formData.amharic_name} onChange={(e) => setFormData({ ...formData, amharic_name: e.target.value })} placeholder="እምቢልታ" className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500" disabled={saving} />
+        </div>
+
+        <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Home Remedies Description *</label>
+            <textarea value={formData.home_remedies} onChange={(e) => setFormData({ ...formData, home_remedies: e.target.value })} rows="4" placeholder="Describe remedy, ingredients, preparation..." className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500" required disabled={saving} />
+        </div>
+
+        <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Medical Advice (Optional)</label>
+            <textarea value={formData.medical_advise} onChange={(e) => setFormData({ ...formData, medical_advise: e.target.value })} rows="3" placeholder="Any medical advice, precautions..." className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500" disabled={saving} />
         </div>
     </div>
 );
