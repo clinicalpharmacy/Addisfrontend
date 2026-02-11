@@ -19,6 +19,7 @@ import './KnowledgeBase.css';
 const KnowledgeBaseLayout = () => {
     const [user, setUser] = useState(null);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [isSuperAdmin, setIsSuperAdmin] = useState(false);
     const [protectionEnabled, setProtectionEnabled] = useState(true);
     const protectionMsg = useScreenshotProtection(protectionEnabled);
     const [success, setSuccess] = useState('');
@@ -30,6 +31,7 @@ const KnowledgeBaseLayout = () => {
                 const parsedUser = JSON.parse(userData);
                 setUser(parsedUser);
                 setIsAdmin(parsedUser.role === 'admin' || parsedUser.role === 'company_admin');
+                setIsSuperAdmin(parsedUser.role === 'admin');
             } catch (err) {
                 console.error('Error parsing user data:', err);
             }
@@ -37,7 +39,7 @@ const KnowledgeBaseLayout = () => {
     }, []);
 
     const toggleProtection = () => {
-        if (!isAdmin) return;
+        if (!isSuperAdmin) return;
         setProtectionEnabled(!protectionEnabled);
         setSuccess(`Protection ${!protectionEnabled ? 'enabled' : 'disabled'}`);
         setTimeout(() => setSuccess(''), 3000);
@@ -85,7 +87,7 @@ const KnowledgeBaseLayout = () => {
                             <p className="text-gray-600 text-sm md:text-base">Access comprehensive information about medications, treatments, and patient care.</p>
                         </div>
 
-                        {isAdmin && (
+                        {isSuperAdmin && (
                             <button
                                 onClick={toggleProtection}
                                 className={`px-3 py-2 rounded-lg flex items-center gap-2 text-sm transition-all shadow-sm flex-shrink-0 ${protectionEnabled
@@ -128,7 +130,7 @@ const KnowledgeBaseLayout = () => {
 
             {/* Content Area - The actual protected content */}
             <div className="min-h-[500px] transition-all duration-300">
-                <Outlet context={{ protectionEnabled, toggleProtection, isAdmin, user }} />
+                <Outlet context={{ protectionEnabled, toggleProtection, isAdmin, isSuperAdmin, user }} />
             </div>
         </div>
     );
