@@ -313,6 +313,19 @@ const ExtemporaneousPrep = () => {
         );
     }
 
+    // Convert textarea text into bullet list
+    const renderBullets = (text) => {
+        if (!text) return null;
+    
+        return text
+            .replace(/^•\s?/gm, '') // remove stored bullet if present
+            .split('\n')
+            .filter(line => line.trim() !== '')
+            .map((line, index) => (
+                <li key={index}>{line}</li>
+            ));
+    };
+
     return (
         <div
             className="bg-gray-50 min-h-full pb-8"
@@ -446,9 +459,7 @@ const ExtemporaneousPrep = () => {
                                                 {prep.name || 'Unnamed'}
                                             </h3>
                                             {prep.use && (
-                                                <p className="text-sm text-gray-600 line-clamp-2">
-                                                    {prep.use}
-                                                </p>
+                                                <ul className="list-disc pl-5 text-sm text-gray-700">{renderBullets(prep.use)}</ul>
                                             )}
                                         </div>
                                         <div className="flex items-center gap-2">
@@ -482,9 +493,7 @@ const ExtemporaneousPrep = () => {
                                             <div>
                                                 <h4 className="font-semibold text-gray-700 mb-1 text-sm">Formula:</h4>
                                                 <div className="p-2 bg-gray-50 rounded">
-                                                    <p className="text-sm text-gray-600 whitespace-pre-wrap">
-                                                        {prep.formula}
-                                                    </p>
+                                                    <ul className="list-disc pl-5 text-sm text-gray-700">{renderBullets(prep.formula)}</ul>
                                                 </div>
                                             </div>
                                         )}
@@ -492,27 +501,21 @@ const ExtemporaneousPrep = () => {
                                         {prep.materials && (
                                             <div>
                                                 <h4 className="font-semibold text-gray-700 mb-1 text-sm">Materials:</h4>
-                                                <p className="text-sm text-gray-600 line-clamp-3">
-                                                    {prep.materials}
-                                                </p>
+                                                <ul className="list-disc pl-5 text-sm text-gray-700">{renderBullets(prep.prep.materials)}</ul>
                                             </div>
                                         )}
 
                                         <div>
                                             <h4 className="font-semibold text-gray-700 mb-1 text-sm">Method:</h4>
                                             <div className="p-2 bg-gray-50 rounded">
-                                                <p className="text-sm text-gray-600 whitespace-pre-wrap">
-                                                    {prep.preparation}
-                                                </p>
+                                                <ul className="list-disc pl-5 text-sm text-gray-700">{renderBullets(prep.preparation)}</ul>
                                             </div>
                                         </div>
 
                                         {prep.label && (
                                             <div>
                                                 <h4 className="font-semibold text-gray-700 mb-1 text-sm">Label:</h4>
-                                                <p className="text-sm text-gray-600 line-clamp-2">
-                                                    {prep.label}
-                                                </p>
+                                                 <ul className="list-disc pl-5 text-sm text-gray-700">{renderBullets(prep.label)}</ul>
                                             </div>
                                         )}
                                     </div>
