@@ -648,7 +648,7 @@ const MedicationInfo = () => {
 
                                                 {med.side_effects && (
                                                     <div>
-                                                        <h4 className="font-semibold text-orange-700 mb-2 text-sm">የዚህ መድሃኒት አንዳንድ የጎንዮሽ ጉዳቶች ምንድናቸው?:</h4>
+                                                        <h4 className="font-semibold text-orange-700 mb-2 text-sm">የጎንዮሽ ጉዳቶች:</h4>
                                                         <ul className="list-disc pl-5 text-sm text-gray-600">{renderBullets(med.side_effects)}</ul>
                                                     </div>
                                                 )}
