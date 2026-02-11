@@ -9,6 +9,7 @@ import {
     FaPlus,
     FaTimes,
     FaTrash,
+    FaEdit,
     FaEye,
     FaEyeSlash,
     FaDatabase,
@@ -26,6 +27,7 @@ const MedicationInfo = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [expandedMedication, setExpandedMedication] = useState(null);
     const [showAddForm, setShowAddForm] = useState(false);
+    const [editingMedication, setEditingMedication] = useState(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
@@ -201,46 +203,92 @@ const MedicationInfo = () => {
         }
     };
 
-    // DELETE MEDICATION FROM DATABASE - ADMIN ONLY
-    const handleDeleteMedication = async (id) => {
+    // EDIT MEDICATION - ADMIN ONLY
+    const handleEditMedication = (medication) => {
         if (!isAdmin) {
-            setError('Only administrators can delete medications');
+            setError('Only administrators can edit medications');
             setTimeout(() => setError(''), 3000);
             return;
         }
 
-        if (!window.confirm('Are you sure you want to delete this medication?')) {
+        setEditingMedication(medication);
+        setFormData({
+            name: medication.name || '',
+            amharic_name: medication.amharic_name || '',
+            usage: medication.usage || '',
+            administration_and_cautions: medication.administration_and_cautions || '',
+            side_effects: medication.side_effects || '',
+            storage: medication.storage || ''
+        });
+        setShowAddForm(true);
+    };
+
+    // UPDATE MEDICATION IN DATABASE - ADMIN ONLY
+    const handleUpdateMedication = async () => {
+        if (!isAdmin) {
+            setError('Only administrators can update medications');
+            setTimeout(() => setError(''), 3000);
             return;
         }
 
-        try {
-            console.log('Deleting medication with ID:', id);
+        if (!formData.name.trim()) {
+            setError('Please enter a medication name');
+            return;
+        }
 
-            const { error } = await supabase
+        setSaving(true);
+        setError('');
+        setSuccessMessage('');
+
+        try {
+            console.log('Updating medication:', editingMedication.id, formData);
+
+            const { data, error } = await supabase
                 .from('medication_information')
-                .delete()
-                .eq('id', id);
+                .update({
+                    name: formData.name,
+                    amharic_name: formData.amharic_name,
+                    usage: formData.usage,
+                    administration_and_cautions: formData.administration_and_cautions,
+                    side_effects: formData.side_effects,
+                    storage: formData.storage,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', editingMedication.id)
+                .select();
 
             if (error) {
-                console.error('Supabase delete error:', error);
+                console.error('Supabase update error:', error);
                 throw error;
             }
 
-            console.log('Medication deleted');
+            console.log('Medication updated:', data);
 
-            setSuccessMessage('Medication deleted successfully!');
+            setSuccessMessage('Medication updated successfully!');
 
-            // Remove from local state
-            const updatedMedications = medications.filter(med => med.id !== id);
-            setMedications(updatedMedications);
+            // Reset form
+            setFormData({
+                name: '',
+                amharic_name: '',
+                usage: '',
+                administration_and_cautions: '',
+                side_effects: '',
+                storage: ''
+            });
 
+            setShowAddForm(false);
+            setEditingMedication(null);
+
+            // Refresh medication list
             setTimeout(() => {
-                setSuccessMessage('');
-            }, 3000);
+                fetchMedications();
+            }, 1000);
 
         } catch (err) {
-            console.error('Error deleting medication:', err);
-            setError(`Failed to delete medication: ${err.message}`);
+            console.error('Error updating medication:', err);
+            setError(`Failed to update medication: ${err.message}`);
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -303,7 +351,7 @@ const MedicationInfo = () => {
     // Convert textarea text to bullet list
     const renderBullets = (text) => {
         if (!text) return null;
-    
+
         return text
             .split('\n')
             .filter(line => line.trim() !== '')
@@ -451,9 +499,22 @@ const MedicationInfo = () => {
                         <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
                             <div className="p-6">
                                 <div className="flex justify-between items-center mb-6">
-                                    <h2 className="text-2xl font-bold text-gray-900">Add New Medication</h2>
+                                    <h2 className="text-2xl font-bold text-gray-900">
+                                        {editingMedication ? 'Edit Medication' : 'Add New Medication'}
+                                    </h2>
                                     <button
-                                        onClick={() => setShowAddForm(false)}
+                                        onClick={() => {
+                                            setShowAddForm(false);
+                                            setEditingMedication(null);
+                                            setFormData({
+                                                name: '',
+                                                amharic_name: '',
+                                                usage: '',
+                                                administration_and_cautions: '',
+                                                side_effects: '',
+                                                storage: ''
+                                            });
+                                        }}
                                         className="text-gray-500 hover:text-gray-700 text-2xl"
                                         disabled={saving}
                                     >
@@ -540,40 +601,52 @@ const MedicationInfo = () => {
                                         </div>
                                     </div>
 
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Storage Instructions
-                                            </label>
-                                            <textarea
-                                                value={formData.storage}
-                                                onChange={(e) => setFormData({ ...formData, storage: e.target.value })}
-                                                rows="2"
-                                                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500"
-                                                placeholder="How to store the medication..."
-                                                disabled={saving}
-                                            />
-                                        </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Storage Instructions
+                                        </label>
+                                        <textarea
+                                            value={formData.storage}
+                                            onChange={(e) => setFormData({ ...formData, storage: e.target.value })}
+                                            rows="2"
+                                            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500"
+                                            placeholder="How to store the medication..."
+                                            disabled={saving}
+                                        />
                                     </div>
+                                </div>
 
                                 <div className="flex gap-3 mt-8 pt-6 border-t">
                                     <button
-                                        onClick={handleAddMedication}
+                                        onClick={editingMedication ? handleUpdateMedication : handleAddMedication}
                                         disabled={saving}
                                         className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                     >
                                         {saving ? (
                                             <>
                                                 <FaSpinner className="animate-spin" />
-                                                Saving...
+                                                {editingMedication ? 'Updating...' : 'Saving...'}
                                             </>
                                         ) : (
                                             <>
-                                                <FaPlus /> Add Medication
+                                                {editingMedication ? <FaEdit /> : <FaPlus />}
+                                                {editingMedication ? 'Update Medication' : 'Add Medication'}
                                             </>
                                         )}
                                     </button>
                                     <button
-                                        onClick={() => setShowAddForm(false)}
+                                        onClick={() => {
+                                            setShowAddForm(false);
+                                            setEditingMedication(null);
+                                            setFormData({
+                                                name: '',
+                                                amharic_name: '',
+                                                usage: '',
+                                                administration_and_cautions: '',
+                                                side_effects: '',
+                                                storage: ''
+                                            });
+                                        }}
                                         disabled={saving}
                                         className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-lg font-medium disabled:opacity-50"
                                     >
@@ -601,15 +674,15 @@ const MedicationInfo = () => {
                                                 <p className="text-sm text-gray-600 mb-1">{med.amharic_name}</p>
                                             )}
                                         </div>
-                                        {/* Only show delete button for admins */}
+                                        {/* Only show edit button for admins */}
                                         {isAdmin && (
                                             <div className="flex items-center gap-2">
                                                 <button
-                                                    onClick={() => handleDeleteMedication(med.id)}
-                                                    className="text-red-500 hover:text-red-700 p-1"
-                                                    title="Delete"
+                                                    onClick={() => handleEditMedication(med)}
+                                                    className="text-indigo-600 hover:text-indigo-800 p-1"
+                                                    title="Edit"
                                                 >
-                                                    <FaTrash />
+                                                    <FaEdit />
                                                 </button>
                                             </div>
                                         )}
