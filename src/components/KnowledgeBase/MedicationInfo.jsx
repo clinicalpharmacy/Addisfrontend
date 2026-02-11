@@ -515,7 +515,7 @@ const MedicationInfo = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Common Side Effects
+                                                Side Effects
                                             </label>
                                             <textarea
                                                 value={formData.side_effects}
@@ -542,7 +542,6 @@ const MedicationInfo = () => {
                                             />
                                         </div>
                                     </div>
-                                </div>
 
                                 <div className="flex gap-3 mt-8 pt-6 border-t">
                                     <button
@@ -660,7 +659,7 @@ const MedicationInfo = () => {
                         <FaPills className="text-5xl text-gray-300 mx-auto mb-4" />
                         <h3 className="text-xl font-medium text-gray-800 mb-2">No Medications Found</h3>
                         <p className="text-gray-500 max-w-md mx-auto mb-6">
-                            {searchTerm || selectedDrugClass !== 'all'
+                            {searchTerm
                                 ? 'No medications match your search criteria. Try a different search or filter.'
                                 : 'No medications found in the database.'}
                         </p>
