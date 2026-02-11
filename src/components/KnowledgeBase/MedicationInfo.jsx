@@ -300,6 +300,18 @@ const MedicationInfo = () => {
         );
     }
 
+    // Convert textarea text to bullet list
+    const renderBullets = (text) => {
+        if (!text) return null;
+    
+        return text
+            .split('\n')
+            .filter(line => line.trim() !== '')
+            .map((line, index) => (
+                <li key={index}>{line}</li>
+            ));
+    };
+
     return (
         <div
             className="bg-gray-50 min-h-full pb-8"
@@ -624,27 +636,27 @@ const MedicationInfo = () => {
                                             <div className="mt-4 space-y-4">
                                                 <div>
                                                     <h4 className="font-semibold text-gray-700 mb-2 text-sm">የመድሃኒቱ ጥቅም:</h4>
-                                                    <ul className="list-disc pl-5 text-sm text-gray-600 whitespace-pre-line">{med.usage}</ul>
+                                                    <ul className="list-disc pl-5 text-sm text-gray-600">{renderBullets(med.usage)}</ul>
                                                 </div>
 
                                                 {med.administration_and_cautions && (
                                                     <div>
                                                         <h4 className="font-semibold text-gray-700 mb-2 text-sm">አወሳሰድ እና ጥንቃቄዎች:</h4>
-                                                        <ul className="list-disc pl-5 text-sm text-gray-600 whitespace-pre-line">{med.administration_and_cautions}</ul>
+                                                        <ul className="list-disc pl-5 text-sm text-gray-600">{renderBullets(med.administration_and_cautions)}</ul>
                                                     </div>
                                                 )}
 
                                                 {med.side_effects && (
                                                     <div>
                                                         <h4 className="font-semibold text-orange-700 mb-2 text-sm">የዚህ መድሃኒት አንዳንድ የጎንዮሽ ጉዳቶች ምንድናቸው?:</h4>
-                                                        <ul className="list-disc pl-5 text-sm text-gray-600 whitespace-pre-line">{med.side_effects}</ul>
+                                                        <ul className="list-disc pl-5 text-sm text-gray-600">{renderBullets(med.side_effects)}</ul>
                                                     </div>
                                                 )}
 
                                                 {med.storage && (
                                                     <div>
                                                         <h4 className="font-semibold text-green-700 mb-2 text-sm">አቀማመጥ:</h4>
-                                                        <ul className="list-disc pl-5 text-sm text-gray-600 whitespace-pre-line">{med.storage}</ul>
+                                                        <ul className="list-disc pl-5 text-sm text-gray-600">{renderBullets(med.storage)}</ul>
                                                     </div>
                                                 )}
                                             </div>
