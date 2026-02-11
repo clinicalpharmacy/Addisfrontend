@@ -24,7 +24,6 @@ const MedicationInfo = () => {
     const [medications, setMedications] = useState([]);
     const [filteredMedications, setFilteredMedications] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedDrugClass, setSelectedDrugClass] = useState('all');
     const [expandedMedication, setExpandedMedication] = useState(null);
     const [showAddForm, setShowAddForm] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -39,12 +38,8 @@ const MedicationInfo = () => {
         name: '',
         amharic_name: '',
         usage: '',
-        before_taking: '',
-        while_taking: '',
+        administration_and_cautions: '',
         side_effects: '',
-        serious_side_effects: '',
-        how_to_take: '',
-        missed_dose: '',
         storage: ''
     });
 
@@ -105,7 +100,7 @@ const MedicationInfo = () => {
 
     useEffect(() => {
         handleSearchAndFilter();
-    }, [medications, searchTerm, selectedDrugClass]);
+    }, [medications, searchTerm]);
 
     const handleSearchAndFilter = () => {
         let filtered = medications;
@@ -120,20 +115,11 @@ const MedicationInfo = () => {
             );
         }
 
-        // Apply drug class filter
-        if (selectedDrugClass !== 'all') {
-            filtered = filtered.filter(med => med.category === selectedDrugClass);
-        }
-
         setFilteredMedications(filtered);
     };
 
     const handleSearchChange = (e) => {
         setSearchTerm(e.target.value);
-    };
-
-    const handleDrugClassChange = (e) => {
-        setSelectedDrugClass(e.target.value);
     };
 
     // Toggle protection (Admin only)
@@ -174,12 +160,8 @@ const MedicationInfo = () => {
                     name: formData.name,
                     amharic_name: formData.amharic_name,
                     usage: formData.usage,
-                    before_taking: formData.before_taking,
-                    while_taking: formData.while_taking,
+                    administration_and_cautions: formData.administration_and_cautions,
                     side_effects: formData.side_effects,
-                    serious_side_effects: formData.serious_side_effects,
-                    how_to_take: formData.how_to_take,
-                    missed_dose: formData.missed_dose,
                     storage: formData.storage,
                     created_at: new Date().toISOString()
                 }])
@@ -199,12 +181,8 @@ const MedicationInfo = () => {
                 name: '',
                 amharic_name: '',
                 usage: '',
-                before_taking: '',
-                while_taking: '',
+                administration_and_cautions: '',
                 side_effects: '',
-                serious_side_effects: '',
-                how_to_take: '',
-                missed_dose: '',
                 storage: ''
             });
 
@@ -284,39 +262,11 @@ const MedicationInfo = () => {
         try {
             const sampleMedications = [
                 {
-                    name: 'Paracetamol',
-                    amharic_name: 'ፓራሲታሞል',
-                    usage: 'For pain and fever relief',
-                    before_taking: 'Tell your doctor if you have liver problems',
-                    while_taking: 'Do not exceed recommended dose',
-                    side_effects: 'Nausea, stomach pain',
-                    serious_side_effects: 'Liver damage with overdose',
-                    how_to_take: 'Take with water',
-                    missed_dose: 'Take as soon as you remember',
-                    storage: 'Store at room temperature'
-                },
-                {
-                    name: 'Metformin',
-                    amharic_name: 'ሜትፎርሚን',
-                    usage: 'For type 2 diabetes',
-                    before_taking: 'Check kidney function before starting',
-                    while_taking: 'Monitor blood sugar levels',
-                    side_effects: 'Nausea, diarrhea',
-                    serious_side_effects: 'Lactic acidosis',
-                    how_to_take: 'Take with meals',
-                    missed_dose: 'Take as soon as remembered',
-                    storage: 'Store at room temperature'
-                },
-                {
                     name: 'Amoxicillin',
                     amharic_name: 'አሞክሲሲሊን',
                     usage: 'Bacterial infections: otitis media, pneumonia, UTIs',
-                    before_taking: 'Hypersensitivity to penicillins',
-                    while_taking: 'Complete full course',
+                    administration_and_cautions: 'Taken orally',
                     side_effects: 'Diarrhea, nausea, rash',
-                    serious_side_effects: 'Allergic reactions',
-                    how_to_take: 'Take with food',
-                    missed_dose: 'Take as soon as you remember',
                     storage: 'Store at room temperature'
                 }
             ];
@@ -349,6 +299,18 @@ const MedicationInfo = () => {
             </div>
         );
     }
+
+    // Convert textarea text to bullet list
+    const renderBullets = (text) => {
+        if (!text) return null;
+    
+        return text
+            .split('\n')
+            .filter(line => line.trim() !== '')
+            .map((line, index) => (
+                <li key={index}>{line}</li>
+            ));
+    };
 
     return (
         <div
@@ -549,28 +511,14 @@ const MedicationInfo = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Before Taking
+                                                Administration and Cautions
                                             </label>
                                             <textarea
-                                                value={formData.before_taking}
-                                                onChange={(e) => setFormData({ ...formData, before_taking: e.target.value })}
+                                                value={formData.administration_and_cautions}
+                                                onChange={(e) => setFormData({ ...formData, administration_and_cautions: e.target.value })}
                                                 rows="3"
                                                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500"
-                                                placeholder="Precautions before taking..."
-                                                disabled={saving}
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                While Taking
-                                            </label>
-                                            <textarea
-                                                value={formData.while_taking}
-                                                onChange={(e) => setFormData({ ...formData, while_taking: e.target.value })}
-                                                rows="3"
-                                                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500"
-                                                placeholder="Precautions during treatment..."
+                                                placeholder="Administration and precautions..."
                                                 disabled={saving}
                                             />
                                         </div>
@@ -579,61 +527,18 @@ const MedicationInfo = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Common Side Effects
+                                                Side Effects
                                             </label>
                                             <textarea
                                                 value={formData.side_effects}
                                                 onChange={(e) => setFormData({ ...formData, side_effects: e.target.value })}
                                                 rows="3"
                                                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500"
-                                                placeholder="Common side effects..."
-                                                disabled={saving}
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Serious Side Effects
-                                            </label>
-                                            <textarea
-                                                value={formData.serious_side_effects}
-                                                onChange={(e) => setFormData({ ...formData, serious_side_effects: e.target.value })}
-                                                rows="3"
-                                                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500"
-                                                placeholder="Serious side effects requiring medical attention..."
+                                                placeholder="side effects..."
                                                 disabled={saving}
                                             />
                                         </div>
                                     </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            How to Take
-                                        </label>
-                                        <textarea
-                                            value={formData.how_to_take}
-                                            onChange={(e) => setFormData({ ...formData, how_to_take: e.target.value })}
-                                            rows="2"
-                                            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500"
-                                            placeholder="Instructions for taking the medication..."
-                                            disabled={saving}
-                                        />
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Missed Dose Instructions
-                                            </label>
-                                            <textarea
-                                                value={formData.missed_dose}
-                                                onChange={(e) => setFormData({ ...formData, missed_dose: e.target.value })}
-                                                rows="2"
-                                                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500"
-                                                placeholder="What to do if a dose is missed..."
-                                                disabled={saving}
-                                            />
-                                        </div>
 
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -649,7 +554,6 @@ const MedicationInfo = () => {
                                             />
                                         </div>
                                     </div>
-                                </div>
 
                                 <div className="flex gap-3 mt-8 pt-6 border-t">
                                     <button
@@ -694,7 +598,7 @@ const MedicationInfo = () => {
                                         <div className="flex-1">
                                             <h3 className="text-xl font-bold text-gray-900 mb-1">{med.name}</h3>
                                             {med.amharic_name && (
-                                                <p className="text-sm text-gray-600 mb-1">በአማርኛ: {med.amharic_name}</p>
+                                                <p className="text-sm text-gray-600 mb-1">{med.amharic_name}</p>
                                             )}
                                         </div>
                                         {/* Only show delete button for admins */}
@@ -709,23 +613,6 @@ const MedicationInfo = () => {
                                                 </button>
                                             </div>
                                         )}
-                                    </div>
-
-                                    <div className="mb-4">
-                                        <p className="text-gray-700 text-sm line-clamp-2">
-                                            <span className="font-medium">Usage:</span> {med.usage || 'No usage information'}
-                                        </p>
-                                    </div>
-
-                                    <div className="flex items-center justify-between mb-4">
-                                        <div className="text-sm text-gray-500">
-                                            {med.storage && (
-                                                <span className="flex items-center gap-1">
-                                                    Storage: {med.storage}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <FaCapsules className="text-gray-400" />
                                     </div>
 
                                     {/* Expandable Details */}
@@ -748,56 +635,28 @@ const MedicationInfo = () => {
                                         {expandedMedication === med.id && (
                                             <div className="mt-4 space-y-4">
                                                 <div>
-                                                    <h4 className="font-semibold text-gray-700 mb-2 text-sm">ይህ መድሃኒት ለምን ጥቅም ላይ ይውላል?:</h4>
-                                                    <p className="text-sm text-gray-600">{med.usage}</p>
+                                                    <h4 className="font-semibold text-gray-700 mb-2 text-sm">የመድሃኒቱ ጥቅም:</h4>
+                                                    <ul className="list-disc pl-5 text-sm text-gray-600">{renderBullets(med.usage)}</ul>
                                                 </div>
 
-                                                {med.before_taking && (
+                                                {med.administration_and_cautions && (
                                                     <div>
-                                                        <h4 className="font-semibold text-gray-700 mb-2 text-sm">ይህንን መድሃኒት ከመውሰዴ በፊት ለዶክተሬ ምን መንገር አለብኝ?:</h4>
-                                                        <p className="text-sm text-gray-600">{med.before_taking}</p>
-                                                    </div>
-                                                )}
-
-                                                {med.while_taking && (
-                                                    <div>
-                                                        <h4 className="font-semibold text-gray-700 mb-2 text-sm">ይህን መድሃኒት በምወስድበት ጊዜ ማወቅ ወይም ማድረግ ያለብኝ አንዳንድ ነገሮች ምንድን ናቸው?:</h4>
-                                                        <p className="text-sm text-gray-600">{med.while_taking}</p>
+                                                        <h4 className="font-semibold text-gray-700 mb-2 text-sm">አወሳሰድ እና ጥንቃቄዎች:</h4>
+                                                        <ul className="list-disc pl-5 text-sm text-gray-600">{renderBullets(med.administration_and_cautions)}</ul>
                                                     </div>
                                                 )}
 
                                                 {med.side_effects && (
                                                     <div>
-                                                        <h4 className="font-semibold text-orange-700 mb-2 text-sm">የዚህ መድሃኒት አንዳንድ የጎንዮሽ ጉዳቶች ምንድናቸው?:</h4>
-                                                        <p className="text-sm text-gray-600">{med.side_effects}</p>
-                                                    </div>
-                                                )}
-
-                                                {med.serious_side_effects && (
-                                                    <div>
-                                                        <h4 className="font-semibold text-red-700 mb-2 text-sm">ወዲያውኑ ለሐኪሜ ማሳወቅ ያለብኝ አንዳንድ የጎንዮሽ ጉዳቶች ምንድን ናቸው?:</h4>
-                                                        <p className="text-sm text-gray-600">{med.serious_side_effects}</p>
-                                                    </div>
-                                                )}
-
-                                                {med.how_to_take && (
-                                                    <div>
-                                                        <h4 className="font-semibold text-blue-700 mb-2 text-sm">ይህ መድሃኒት እንዴት ይወሰዳል?:</h4>
-                                                        <p className="text-sm text-gray-600">{med.how_to_take}</p>
-                                                    </div>
-                                                )}
-
-                                                {med.missed_dose && (
-                                                    <div>
-                                                        <h4 className="font-semibold text-purple-700 mb-2 text-sm">መድሃኒቱን ሳልወሰድ ሰዓቱ ካለፈ ምን ማድረግ አለብኝ?:</h4>
-                                                        <p className="text-sm text-gray-600">{med.missed_dose}</p>
+                                                        <h4 className="font-semibold text-orange-700 mb-2 text-sm">የጎንዮሽ ጉዳቶች:</h4>
+                                                        <ul className="list-disc pl-5 text-sm text-gray-600">{renderBullets(med.side_effects)}</ul>
                                                     </div>
                                                 )}
 
                                                 {med.storage && (
                                                     <div>
-                                                        <h4 className="font-semibold text-green-700 mb-2 text-sm">ይህንን መድሃኒት እንዴት ማስቀመጥ እችላለሁ?:</h4>
-                                                        <p className="text-sm text-gray-600">{med.storage}</p>
+                                                        <h4 className="font-semibold text-green-700 mb-2 text-sm">አቀማመጥ:</h4>
+                                                        <ul className="list-disc pl-5 text-sm text-gray-600">{renderBullets(med.storage)}</ul>
                                                     </div>
                                                 )}
                                             </div>
@@ -812,7 +671,7 @@ const MedicationInfo = () => {
                         <FaPills className="text-5xl text-gray-300 mx-auto mb-4" />
                         <h3 className="text-xl font-medium text-gray-800 mb-2">No Medications Found</h3>
                         <p className="text-gray-500 max-w-md mx-auto mb-6">
-                            {searchTerm || selectedDrugClass !== 'all'
+                            {searchTerm
                                 ? 'No medications match your search criteria. Try a different search or filter.'
                                 : 'No medications found in the database.'}
                         </p>
@@ -820,7 +679,6 @@ const MedicationInfo = () => {
                             <button
                                 onClick={() => {
                                     setSearchTerm('');
-                                    setSelectedDrugClass('all');
                                 }}
                                 className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg"
                             >
