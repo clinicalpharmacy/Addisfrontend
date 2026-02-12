@@ -410,7 +410,7 @@ const MinorIllnesses = () => {
                                     {illness.assessment && (
                                         <div className="mb-3 md:mb-4">
                                             <h4 className="font-semibold text-gray-700 mb-1.5 md:mb-2 flex items-center gap-1 text-sm md:text-base">
-                                                <FaStethoscope className="text-xs md:text-sm" /> How to Assess Minor Illnes:
+                                                <FaStethoscope className="text-xs md:text-sm" /> Minor Illnes Assessment:
                                             </h4>
                                             <ul className="list-disc pl-5 text-xs md:text-sm text-gray-600 leading-relaxed">{renderBullets(illness.assessment)}</ul>
                                         </div>
