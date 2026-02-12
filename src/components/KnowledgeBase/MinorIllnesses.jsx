@@ -435,7 +435,7 @@ const MinorIllnesses = () => {
                                     {illness.for_pharmacists && (
                                         <div className="mb-3 md:mb-4 p-2 md:p-3 bg-blue-50 border border-blue-100 rounded">
                                             <h4 className="font-semibold text-blue-700 mb-1 flex items-center gap-1 text-sm md:text-base">
-                                                <FaUserMd className="text-xs md:text-sm" /> Additional tips for the Pharmacist:
+                                                <FaUserMd className="text-xs md:text-sm" /> Additional information:
                                             </h4>
                                             <ul className="list-disc pl-5 text-xs md:text-sm text-gray-600 leading-relaxed">{renderBullets(illness.for_pharmacists)}</ul>
                                         </div>
