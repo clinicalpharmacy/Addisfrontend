@@ -25,7 +25,8 @@ import { useOutletContext } from 'react-router-dom';
 
 const MinorIllnesses = () => {
     const context = useOutletContext();
-    const { protectionEnabled, toggleProtection } = context || { protectionEnabled: true, toggleProtection: () => { } };
+    const protectionEnabled = context?.protectionEnabled ?? true;
+    const toggleProtection = context?.toggleProtection ?? (() => { });
     const [illnesses, setIllnesses] = useState([]);
     const [filteredIllnesses, setFilteredIllnesses] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');

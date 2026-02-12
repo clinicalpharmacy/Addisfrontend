@@ -30,7 +30,9 @@ import { useOutletContext } from 'react-router-dom';
 
 const MedicationInfo = () => {
     const context = useOutletContext();
-    const { protectionEnabled, toggleProtection } = context || { protectionEnabled: true, toggleProtection: () => { } };
+    // Default to true (protected) if used outside of layout context
+    const protectionEnabled = context?.protectionEnabled ?? true;
+    const toggleProtection = context?.toggleProtection ?? (() => { });
     const [medications, setMedications] = useState([]);
     const [filteredMedications, setFilteredMedications] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');

@@ -22,7 +22,8 @@ import { useOutletContext } from 'react-router-dom';
 
 const HomeRemedies = () => {
     const context = useOutletContext();
-    const { protectionEnabled, toggleProtection } = context || { protectionEnabled: true, toggleProtection: () => { } };
+    const protectionEnabled = context?.protectionEnabled ?? true;
+    const toggleProtection = context?.toggleProtection ?? (() => { });
     const [remedies, setRemedies] = useState([]);
     const [filteredRemedies, setFilteredRemedies] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
