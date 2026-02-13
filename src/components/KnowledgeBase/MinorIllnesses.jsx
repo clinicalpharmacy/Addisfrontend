@@ -9,7 +9,6 @@ import {
     FaExclamationTriangle,
     FaUserMd,
     FaEdit,
-    FaTrash,
     FaBookMedical,
     FaTimes,
     FaSync,
@@ -203,34 +202,6 @@ const MinorIllnesses = () => {
         setShowForm(true);
     };
 
-    // DELETE ILLNESS - ADMIN ONLY
-    const handleDelete = async (id) => {
-        if (!isAdmin) {
-            setError('Only administrators can delete illnesses');
-            setTimeout(() => setError(''), 3000);
-            return;
-        }
-
-        if (!window.confirm('Are you sure you want to delete this illness entry?')) return;
-
-        try {
-            const { error } = await supabase
-                .from('minor_illnesses')
-                .delete()
-                .eq('id', id);
-
-            if (error) throw error;
-
-            setSuccess('Illness deleted successfully!');
-            fetchIllnesses();
-
-            setTimeout(() => setSuccess(''), 3000);
-        } catch (err) {
-            console.error('Error deleting illness:', err);
-            setError('Error: ' + err.message);
-        }
-    };
-
     const resetForm = () => {
         setFormData({
             name: '',
@@ -415,13 +386,6 @@ const MinorIllnesses = () => {
                                                         title="Edit"
                                                     >
                                                         <FaEdit className="text-sm" />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDelete(illness.id)}
-                                                        className="text-red-500 hover:text-red-700 p-1"
-                                                        title="Delete"
-                                                    >
-                                                        <FaTrash className="text-sm" />
                                                     </button>
                                                 </>
                                             )}
