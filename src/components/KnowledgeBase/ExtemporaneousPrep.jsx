@@ -6,7 +6,6 @@ import {
     FaSearch,
     FaExclamationTriangle,
     FaEdit,
-    FaTrash,
     FaSpinner,
     FaCheckCircle,
     FaTimes,
@@ -14,7 +13,9 @@ import {
     FaLock,
     FaBan,
     FaEyeSlash,
-    FaShieldAlt
+    FaShieldAlt,
+    FaChevronDown,
+    FaChevronUp
 } from 'react-icons/fa';
 import { useOutletContext } from 'react-router-dom';
 
@@ -33,6 +34,7 @@ const ExtemporaneousPrep = () => {
     const [success, setSuccess] = useState('');
     const [user, setUser] = useState(null);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [expandedCards, setExpandedCards] = useState({});
 
     // Form data structure
     const [formData, setFormData] = useState({
@@ -106,6 +108,14 @@ const ExtemporaneousPrep = () => {
 
     const handleSearchChange = (e) => {
         setSearchTerm(e.target.value);
+    };
+
+    // Toggle card expansion when clicking on name
+    const toggleCard = (prepId) => {
+        setExpandedCards(prev => ({
+            ...prev,
+            [prepId]: !prev[prepId]
+        }));
     };
 
     // SAVE PREPARATION - ADMIN ONLY
@@ -201,40 +211,6 @@ const ExtemporaneousPrep = () => {
         });
         setShowForm(true);
     };
-
-    // DELETE PREPARATION - ADMIN ONLY
-    const handleDelete = async (id) => {
-        if (!isAdmin) {
-            alert('Only administrators can delete preparations');
-            return;
-        }
-
-        if (!window.confirm('Are you sure you want to delete this preparation?')) return;
-
-        try {
-            const { error } = await supabase
-                .from('extemporaneous_preparations')
-                .delete()
-                .eq('id', id);
-
-            if (error) throw error;
-
-            setSuccess('Preparation deleted successfully!');
-
-            const updatedPreparations = preparations.filter(prep => prep.id !== id);
-            setPreparations(updatedPreparations);
-
-            setTimeout(() => setSuccess(''), 3000);
-
-        } catch (err) {
-            console.error('Error deleting preparation:', err);
-            setError(`Delete failed: ${err.message}`);
-        }
-    };
-
-
-
-
 
     // ADD SAMPLE DATA - ADMIN ONLY
     const initializeSampleData = async () => {
@@ -437,35 +413,30 @@ const ExtemporaneousPrep = () => {
                                     className="border border-gray-200 rounded-xl p-5 bg-white hover:shadow-lg transition-shadow duration-200 prep-content"
                                 >
                                     <div className="flex justify-between items-start mb-4">
-                                        <div className="flex-1">
-                                            <h3 className="font-bold text-lg text-gray-800 mb-1">
-                                                {prep.name || 'Unnamed'}
-                                            </h3>
-                                            {prep.use && (
-                                                <>
-                                                    <h4 className="font-semibold text-gray-700 mb-1 text-sm">Use:</h4>
-                                                    <ul className="list-disc pl-5 text-sm text-gray-700">{renderBullets(prep.use)}</ul>
-                                                </>
-                                            )}
+                                        {/* Clickable name section */}
+                                        <div 
+                                            className="flex-1 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors"
+                                            onClick={() => toggleCard(prep.id)}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <h3 className="font-bold text-lg text-gray-800 mb-1">
+                                                    {prep.name || 'Unnamed'}
+                                                </h3>
+                                                {expandedCards[prep.id] ? 
+                                                    <FaChevronUp className="text-gray-500 text-sm" /> : 
+                                                    <FaChevronDown className="text-gray-500 text-sm" />
+                                                }
+                                            </div>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             {isAdmin ? (
-                                                <>
-                                                    <button
-                                                        onClick={() => handleEdit(prep)}
-                                                        className="text-blue-500 hover:text-blue-700 p-1.5 rounded hover:bg-blue-50"
-                                                        title="Edit"
-                                                    >
-                                                        <FaEdit />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDelete(prep.id)}
-                                                        className="text-red-500 hover:text-red-700 p-1.5 rounded hover:bg-red-50"
-                                                        title="Delete"
-                                                    >
-                                                        <FaTrash />
-                                                    </button>
-                                                </>
+                                                <button
+                                                    onClick={() => handleEdit(prep)}
+                                                    className="text-blue-500 hover:text-blue-700 p-1.5 rounded hover:bg-blue-50"
+                                                    title="Edit"
+                                                >
+                                                    <FaEdit />
+                                                </button>
                                             ) : (
                                                 <span className="text-xs text-gray-500">
                                                     <FaLock className="inline mr-1" /> View Only
@@ -474,45 +445,57 @@ const ExtemporaneousPrep = () => {
                                         </div>
                                     </div>
 
-                                    <div className="space-y-3 mb-4">
-                                        {prep.formula && (
-                                            <div>
-                                                <h4 className="font-semibold text-gray-700 mb-1 text-sm">Formula:</h4>
-                                                <div className="p-2 bg-gray-50 rounded">
-                                                    <ul className="list-disc pl-5 text-sm text-gray-700">{renderBullets(prep.formula)}</ul>
+                                    {/* All content sections - only shown when card is expanded */}
+                                    {expandedCards[prep.id] && (
+                                        <>
+                                            {prep.use && (
+                                                <>
+                                                    <h4 className="font-semibold text-gray-700 mb-1 text-sm">Use:</h4>
+                                                    <ul className="list-disc pl-5 text-sm text-gray-700 mb-3">{renderBullets(prep.use)}</ul>
+                                                </>
+                                            )}
+
+                                            <div className="space-y-3 mb-4">
+                                                {prep.formula && (
+                                                    <div>
+                                                        <h4 className="font-semibold text-gray-700 mb-1 text-sm">Formula:</h4>
+                                                        <div className="p-2 bg-gray-50 rounded">
+                                                            <ul className="list-disc pl-5 text-sm text-gray-700">{renderBullets(prep.formula)}</ul>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {prep.materials && (
+                                                    <div>
+                                                        <h4 className="font-semibold text-gray-700 mb-1 text-sm">Materials:</h4>
+                                                        <ul className="list-disc pl-5 text-sm text-gray-700">{renderBullets(prep.materials)}</ul>
+                                                    </div>
+                                                )}
+
+                                                <div>
+                                                    <h4 className="font-semibold text-gray-700 mb-1 text-sm">Method:</h4>
+                                                    <div className="p-2 bg-gray-50 rounded">
+                                                        <ul className="list-disc pl-5 text-sm text-gray-700">{renderBullets(prep.preparation)}</ul>
+                                                    </div>
+                                                </div>
+
+                                                {prep.label && (
+                                                    <div>
+                                                        <h4 className="font-semibold text-gray-700 mb-1 text-sm">Label:</h4>
+                                                        <ul className="list-disc pl-5 text-sm text-gray-700">{renderBullets(prep.label)}</ul>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="pt-4 border-t border-gray-100">
+                                                <div className="text-xs text-gray-500">
+                                                    {prep.created_at && (
+                                                        <span>Added: {new Date(prep.created_at).toLocaleDateString()}</span>
+                                                    )}
                                                 </div>
                                             </div>
-                                        )}
-
-                                        {prep.materials && (
-                                            <div>
-                                                <h4 className="font-semibold text-gray-700 mb-1 text-sm">Materials:</h4>
-                                                <ul className="list-disc pl-5 text-sm text-gray-700">{renderBullets(prep.materials)}</ul>
-                                            </div>
-                                        )}
-
-                                        <div>
-                                            <h4 className="font-semibold text-gray-700 mb-1 text-sm">Method:</h4>
-                                            <div className="p-2 bg-gray-50 rounded">
-                                                <ul className="list-disc pl-5 text-sm text-gray-700">{renderBullets(prep.preparation)}</ul>
-                                            </div>
-                                        </div>
-
-                                        {prep.label && (
-                                            <div>
-                                                <h4 className="font-semibold text-gray-700 mb-1 text-sm">Label:</h4>
-                                                <ul className="list-disc pl-5 text-sm text-gray-700">{renderBullets(prep.label)}</ul>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="pt-4 border-t border-gray-100">
-                                        <div className="text-xs text-gray-500">
-                                            {prep.created_at && (
-                                                <span>Added: {new Date(prep.created_at).toLocaleDateString()}</span>
-                                            )}
-                                        </div>
-                                    </div>
+                                        </>
+                                    )}
                                 </div>
                             ))}
                         </div>
