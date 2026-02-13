@@ -40,7 +40,7 @@ const MinorIllnesses = () => {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-    const [expandedSections, setExpandedSections] = useState({});
+    const [expandedCards, setExpandedCards] = useState({});
     const [formData, setFormData] = useState({
         name: '',
         amharic_name: '',
@@ -49,6 +49,7 @@ const MinorIllnesses = () => {
         otc_drug: '',
         for_pharmacists: ''
     });
+
 
     // Check user role on component mount
     useEffect(() => {
@@ -106,13 +107,16 @@ const MinorIllnesses = () => {
         setFilteredIllnesses(filtered);
     };
 
-    // Toggle section visibility
-    const toggleSection = (illnessId, section) => {
-        setExpandedSections(prev => ({
+    // Toggle card expansion when clicking on name/amharic name
+    const toggleCard = (illnessId) => {
+        setExpandedCards(prev => ({
             ...prev,
-            [`${illnessId}-${section}`]: !prev[`${illnessId}-${section}`]
+            [illnessId]: !prev[illnessId]
         }));
     };
+
+
+
 
     // ADD/EDIT ILLNESS - ADMIN ONLY
     const handleSubmit = async (e) => {
@@ -375,7 +379,7 @@ const MinorIllnesses = () => {
                 </div>
 
 
-                {/* Illnesses Grid - Name and Amharic name always visible, other sections toggle */}
+                {/* Illnesses Grid - ALL CONTENT VISIBLE but protected from copying */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
                     {filteredIllnesses.length > 0 ? (
                         filteredIllnesses.map((illness) => (
@@ -385,8 +389,18 @@ const MinorIllnesses = () => {
                             >
                                 <div className="p-3 md:p-6">
                                     <div className="flex justify-between items-start mb-3 md:mb-4">
-                                        <div className="flex-1">
-                                            <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-1">{illness.name}</h3>
+                                        {/* Clickable name/amharic name section */}
+                                        <div 
+                                            className="flex-1 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors"
+                                            onClick={() => toggleCard(illness.id)}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-1">{illness.name}</h3>
+                                                {expandedCards[illness.id] ? 
+                                                    <FaChevronUp className="text-gray-500 text-sm" /> : 
+                                                    <FaChevronDown className="text-gray-500 text-sm" />
+                                                }
+                                            </div>
                                             {illness.amharic_name && (
                                                 <p className="text-xs md:text-sm text-gray-600 mb-2">{illness.amharic_name}</p>
                                             )}
@@ -414,75 +428,48 @@ const MinorIllnesses = () => {
                                         </div>
                                     </div>
 
-                                    {illness.assessment && (
-                                        <div className="mb-3 md:mb-4">
-                                            <button
-                                                onClick={() => toggleSection(illness.id, 'assessment')}
-                                                className="w-full flex items-center justify-between text-left font-semibold text-gray-700 mb-1.5 md:mb-2 text-sm md:text-base hover:bg-gray-50 p-2 rounded"
-                                            >
-                                                <div className="flex items-center gap-1">
-                                                    <FaStethoscope className="text-xs md:text-sm" /> Minor Illness Assessment:
+                                    {/* All content sections - only shown when card is expanded */}
+                                    {expandedCards[illness.id] && (
+                                        <>
+                                            {illness.assessment && (
+                                                <div className="mb-3 md:mb-4">
+                                                    <h4 className="font-semibold text-gray-700 mb-1.5 md:mb-2 flex items-center gap-1 text-sm md:text-base">
+                                                        <FaStethoscope className="text-xs md:text-sm" /> Minor Illness Assessment:
+                                                    </h4>
+                                                    <ul className="list-disc pl-5 text-xs md:text-sm text-gray-600 leading-relaxed">{renderBullets(illness.assessment)}</ul>
                                                 </div>
-                                                {expandedSections[`${illness.id}-assessment`] ? <FaChevronUp /> : <FaChevronDown />}
-                                            </button>
-                                            {expandedSections[`${illness.id}-assessment`] && (
-                                                <ul className="list-disc pl-5 text-xs md:text-sm text-gray-600 leading-relaxed">{renderBullets(illness.assessment)}</ul>
                                             )}
-                                        </div>
-                                    )}
 
-                                    {illness.referral && (
-                                        <div className="mb-3 md:mb-4 p-2 md:p-3 bg-yellow-50 border border-yellow-100 rounded">
-                                            <button
-                                                onClick={() => toggleSection(illness.id, 'referral')}
-                                                className="w-full flex items-center justify-between text-left font-semibold text-yellow-700 mb-1 text-sm md:text-base hover:bg-yellow-100 p-2 rounded"
-                                            >
-                                                When to Refer:
-                                                {expandedSections[`${illness.id}-referral`] ? <FaChevronUp /> : <FaChevronDown />}
-                                            </button>
-                                            {expandedSections[`${illness.id}-referral`] && (
-                                                <ul className="list-disc pl-5 text-xs md:text-sm text-gray-600 leading-relaxed">{renderBullets(illness.referral)}</ul>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {illness.otc_drug && (
-                                        <div className="mb-3 md:mb-4">
-                                            <button
-                                                onClick={() => toggleSection(illness.id, 'otc')}
-                                                className="w-full flex items-center justify-between text-left font-semibold text-gray-700 mb-1.5 md:mb-2 text-sm md:text-base hover:bg-gray-50 p-2 rounded"
-                                            >
-                                                <div className="flex items-center gap-1">
-                                                    <FaCapsules className="text-xs md:text-sm" /> OTC Drug Recommendations:
+                                            {illness.referral && (
+                                                <div className="mb-3 md:mb-4 p-2 md:p-3 bg-yellow-50 border border-yellow-100 rounded">
+                                                    <h4 className="font-semibold text-yellow-700 mb-1 text-sm md:text-base">When to Refer:</h4>
+                                                    <ul className="list-disc pl-5 text-xs md:text-sm text-gray-600 leading-relaxed">{renderBullets(illness.referral)}</ul>
                                                 </div>
-                                                {expandedSections[`${illness.id}-otc`] ? <FaChevronUp /> : <FaChevronDown />}
-                                            </button>
-                                            {expandedSections[`${illness.id}-otc`] && (
-                                                <ul className="list-disc pl-5 text-xs md:text-sm text-gray-600 leading-relaxed">{renderBullets(illness.otc_drug)}</ul>
                                             )}
-                                        </div>
-                                    )}
 
-                                    {illness.for_pharmacists && (
-                                        <div className="mb-3 md:mb-4 p-2 md:p-3 bg-blue-50 border border-blue-100 rounded">
-                                            <button
-                                                onClick={() => toggleSection(illness.id, 'pharmacist')}
-                                                className="w-full flex items-center justify-between text-left font-semibold text-blue-700 mb-1 text-sm md:text-base hover:bg-blue-100 p-2 rounded"
-                                            >
-                                                <div className="flex items-center gap-1">
-                                                    <FaUserMd className="text-xs md:text-sm" /> Additional information:
+                                            {illness.otc_drug && (
+                                                <div className="mb-3 md:mb-4">
+                                                    <h4 className="font-semibold text-gray-700 mb-1.5 md:mb-2 flex items-center gap-1 text-sm md:text-base">
+                                                        <FaCapsules className="text-xs md:text-sm" /> OTC Drug Recommendations:
+                                                    </h4>
+                                                    <ul className="list-disc pl-5 text-xs md:text-sm text-gray-600 leading-relaxed">{renderBullets(illness.otc_drug)}</ul>
                                                 </div>
-                                                {expandedSections[`${illness.id}-pharmacist`] ? <FaChevronUp /> : <FaChevronDown />}
-                                            </button>
-                                            {expandedSections[`${illness.id}-pharmacist`] && (
-                                                <ul className="list-disc pl-5 text-xs md:text-sm text-gray-600 leading-relaxed">{renderBullets(illness.for_pharmacists)}</ul>
                                             )}
-                                        </div>
-                                    )}
 
-                                    <div className="text-xs text-gray-500 mt-3 md:mt-4 pt-2 md:pt-3 border-t border-gray-100">
-                                        Last updated: {new Date(illness.created_at).toLocaleDateString()}
-                                    </div>
+                                            {illness.for_pharmacists && (
+                                                <div className="mb-3 md:mb-4 p-2 md:p-3 bg-blue-50 border border-blue-100 rounded">
+                                                    <h4 className="font-semibold text-blue-700 mb-1 flex items-center gap-1 text-sm md:text-base">
+                                                        <FaUserMd className="text-xs md:text-sm" /> Additional information:
+                                                    </h4>
+                                                    <ul className="list-disc pl-5 text-xs md:text-sm text-gray-600 leading-relaxed">{renderBullets(illness.for_pharmacists)}</ul>
+                                                </div>
+                                            )}
+
+                                            <div className="text-xs text-gray-500 mt-3 md:mt-4 pt-2 md:pt-3 border-t border-gray-100">
+                                                Last updated: {new Date(illness.created_at).toLocaleDateString()}
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         ))
@@ -613,7 +600,7 @@ const MinorIllnesses = () => {
 
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            How to Assess Minor Illness *
+                                            How to Assess  Minor Illness *
                                         </label>
                                         <textarea
                                             value={formData.assessment}
