@@ -382,7 +382,7 @@ const HomeRemedies = () => {
                                             {remedy.home_remedy && (
                                                 <div className="mb-3 md:mb-4 p-3 bg-green-50 border border-green-100 rounded">
                                                     <h4 className="font-semibold text-green-700 mb-1.5 md:mb-2 flex items-center gap-1 text-sm md:text-base">
-                                                        <FaMortarPestle className="text-xs md:text-sm" /> Home Remedy:
+                                                        <FaMortarPestle className="text-xs md:text-sm" /> አዘገጃጀት:
                                                     </h4>
                                                     <ul className="list-disc pl-5 text-xs md:text-sm text-gray-600 leading-relaxed">{renderBullets(remedy.home_remedy)}</ul>
                                                 </div>
@@ -391,7 +391,7 @@ const HomeRemedies = () => {
                                             {remedy.uses && (
                                                 <div className="mb-3 md:mb-4">
                                                     <h4 className="font-semibold text-gray-700 mb-1.5 md:mb-2 flex items-center gap-1 text-sm md:text-base">
-                                                        <FaPrescriptionBottleAlt className="text-xs md:text-sm" /> Common Uses:
+                                                        <FaPrescriptionBottleAlt className="text-xs md:text-sm" /> ጥቅሞቹ:
                                                     </h4>
                                                     <ul className="list-disc pl-5 text-xs md:text-sm text-gray-600 leading-relaxed">{renderBullets(remedy.uses)}</ul>
                                                 </div>
@@ -400,7 +400,7 @@ const HomeRemedies = () => {
                                             {remedy.medical_advise && (
                                                 <div className="mb-3 md:mb-4 p-3 bg-yellow-50 border border-yellow-100 rounded">
                                                     <h4 className="font-semibold text-yellow-700 mb-1 flex items-center gap-1 text-sm md:text-base">
-                                                        <FaInfoCircle className="text-xs md:text-sm" /> Medical advise:
+                                                        <FaInfoCircle className="text-xs md:text-sm" /> የጥንቃቄ መልዕክት:
                                                     </h4>
                                                     <ul className="list-disc pl-5 text-xs md:text-sm text-gray-600 leading-relaxed">{renderBullets(remedy.medical_advise)}</ul>
                                                 </div>
@@ -541,7 +541,7 @@ const HomeRemedies = () => {
 
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Home Remedy Preparation/Instructions *
+                                            አዘገጃጀት *
                                         </label>
                                         <textarea
                                             value={formData.home_remedy}
@@ -564,7 +564,7 @@ const HomeRemedies = () => {
 
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Common Uses
+                                            ጥቅሞቹ
                                         </label>
                                         <textarea
                                             value={formData.uses}
@@ -587,7 +587,7 @@ const HomeRemedies = () => {
 
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Medical advise / Precautions
+                                            የጥንቃቄ መልዕክት
                                         </label>
                                         <textarea
                                             value={formData.medical_advise}
