@@ -400,7 +400,7 @@ const HomeRemedies = () => {
                                             {remedy.medical_advise && (
                                                 <div className="mb-3 md:mb-4 p-3 bg-yellow-50 border border-yellow-100 rounded">
                                                     <h4 className="font-semibold text-yellow-700 mb-1 flex items-center gap-1 text-sm md:text-base">
-                                                        <FaInfoCircle className="text-xs md:text-sm" /> የጥንቃቄ መልዕክት:
+                                                        <FaInfoCircle className="text-xs md:text-sm" /> የጤና ባለሙያ ምክር/ጥንቃቄዎች:
                                                     </h4>
                                                     <ul className="list-disc pl-5 text-xs md:text-sm text-gray-600 leading-relaxed">{renderBullets(remedy.medical_advise)}</ul>
                                                 </div>
@@ -587,7 +587,7 @@ const HomeRemedies = () => {
 
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            የጥንቃቄ መልዕክት
+                                            የጤና ባለሙያ ምክር/ጥንቃቄዎች
                                         </label>
                                         <textarea
                                             value={formData.medical_advise}
