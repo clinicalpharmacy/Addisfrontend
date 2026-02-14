@@ -42,7 +42,7 @@ const HomeRemedies = () => {
         amharic_name: '',
         home_remedy: '',
         uses: '',
-        medical_advice: ''
+        medical_advise: ''
     });
 
     // Check user role on component mount
@@ -139,7 +139,7 @@ const HomeRemedies = () => {
                 amharic_name: formData.amharic_name.trim() || '',
                 home_remedy: formData.home_remedy.trim(),
                 uses: formData.uses.trim() || '',
-                medical_advice: formData.medical_advice.trim() || '',
+                medical_advise: formData.medical_advise.trim() || '',
                 updated_at: new Date().toISOString()
             };
 
@@ -187,7 +187,7 @@ const HomeRemedies = () => {
             amharic_name: remedy.amharic_name || '',
             home_remedy: remedy.home_remedy || '',
             uses: remedy.uses || '',
-            medical_advice: remedy.medical_advice || ''
+            medical_advise: remedy.medical_advise || ''
         });
         setShowForm(true);
     };
@@ -198,7 +198,7 @@ const HomeRemedies = () => {
             amharic_name: '',
             home_remedy: '',
             uses: '',
-            medical_advice: ''
+            medical_advise: ''
         });
         setEditRemedy(null);
         setShowForm(false);
@@ -397,12 +397,12 @@ const HomeRemedies = () => {
                                                 </div>
                                             )}
 
-                                            {remedy.medical_advice && (
+                                            {remedy.medical_advise && (
                                                 <div className="mb-3 md:mb-4 p-3 bg-yellow-50 border border-yellow-100 rounded">
                                                     <h4 className="font-semibold text-yellow-700 mb-1 flex items-center gap-1 text-sm md:text-base">
-                                                        <FaInfoCircle className="text-xs md:text-sm" /> Medical Advice:
+                                                        <FaInfoCircle className="text-xs md:text-sm" /> Medical advise:
                                                     </h4>
-                                                    <ul className="list-disc pl-5 text-xs md:text-sm text-gray-600 leading-relaxed">{renderBullets(remedy.medical_advice)}</ul>
+                                                    <ul className="list-disc pl-5 text-xs md:text-sm text-gray-600 leading-relaxed">{renderBullets(remedy.medical_advise)}</ul>
                                                 </div>
                                             )}
 
@@ -463,9 +463,9 @@ const HomeRemedies = () => {
                             </div>
                             <div className="text-center">
                                 <div className="text-2xl font-bold text-purple-600">
-                                    {remedies.filter(r => r.medical_advice).length}
+                                    {remedies.filter(r => r.medical_advise).length}
                                 </div>
-                                <div className="text-sm text-gray-600">With Medical Advice</div>
+                                <div className="text-sm text-gray-600">With Medical advise</div>
                             </div>
                             <div className="text-center">
                                 <div className="text-2xl font-bold text-orange-600">{filteredRemedies.length}</div>
@@ -587,10 +587,10 @@ const HomeRemedies = () => {
 
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Medical Advice / Precautions
+                                            Medical advise / Precautions
                                         </label>
                                         <textarea
-                                            value={formData.medical_advice}
+                                            value={formData.medical_advise}
                                             onChange={(e) => {
                                                 const value = e.target.value;
                                                 // Add bullet at start if empty
@@ -598,7 +598,7 @@ const HomeRemedies = () => {
                                                 if (!value.startsWith('• ')) newValue = '• ' + value;
                                                 // Replace newlines with new bullet
                                                 newValue = newValue.replace(/\n(?!• )/g, '\n• ');
-                                                setFormData({ ...formData, medical_advice: newValue });
+                                                setFormData({ ...formData, medical_advise: newValue });
                                             }}
                                             rows="4"
                                             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500"
