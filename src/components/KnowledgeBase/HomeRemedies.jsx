@@ -532,7 +532,7 @@ const HomeRemedies = () => {
 
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Amharic Name (Optional)
+                                                Amharic Name*
                                             </label>
                                             <input
                                                 type="text"
