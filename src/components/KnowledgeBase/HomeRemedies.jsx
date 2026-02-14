@@ -397,7 +397,7 @@ const HomeRemedies = () => {
                                             {remedy.uses && (
                                                 <div className="mb-3 md:mb-4">
                                                     <h4 className="font-semibold text-gray-700 mb-1.5 md:mb-2 flex items-center gap-1 text-sm md:text-base">
-                                                        <FaPrescriptionBottleAlt className="text-xs md:text-sm" /> ጥቅሞቹ:
+                                                        <FaPrescriptionBottleAlt className="text-xs md:text-sm" /> አወሳሰድና ጥቅሞቹ:
                                                     </h4>
                                                     <ul className="list-disc pl-5 text-xs md:text-sm text-gray-600 leading-relaxed">{renderBullets(remedy.uses)}</ul>
                                                 </div>
@@ -570,7 +570,7 @@ const HomeRemedies = () => {
 
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            ጥቅሞቹ
+                                            አወሳሰድና ጥቅሞቹ
                                         </label>
                                         <textarea
                                             value={formData.uses}
