@@ -39,9 +39,9 @@ const HomeRemedies = () => {
     const [expandedCards, setExpandedCards] = useState({});
     const [formData, setFormData] = useState({
         name: '',
-        amharic_name: '',
-        home_remedy: '',
         uses: '',
+        home_remedy: '',
+        administration: '',
         medical_advise: ''
     });
 
@@ -93,15 +93,15 @@ const HomeRemedies = () => {
         if (term) {
             filtered = filtered.filter(remedy =>
                 remedy.name.toLowerCase().includes(term.toLowerCase()) ||
-                (remedy.amharic_name && remedy.amharic_name.toLowerCase().includes(term.toLowerCase())) ||
-                (remedy.uses && remedy.uses.toLowerCase().includes(term.toLowerCase()))
+                (remedy.uses && remedy.uses.toLowerCase().includes(term.toLowerCase())) ||
+                (remedy.administration && remedy.administration.toLowerCase().includes(term.toLowerCase()))
             );
         }
 
         setFilteredRemedies(filtered);
     };
 
-    // Toggle card expansion when clicking on name/amharic name
+    // Toggle card expansion when clicking on name/uses
     const toggleCard = (remedyId) => {
         setExpandedCards(prev => ({
             ...prev,
@@ -126,8 +126,8 @@ const HomeRemedies = () => {
         }
 
                 // Basic validation
-        if (!formData.amharic_name.trim()) {
-            setError('Amharic name is required');
+        if (!formData.uses.trim()) {
+            setError('Uses is required');
             return;
         }
 
@@ -142,9 +142,9 @@ const HomeRemedies = () => {
         try {
             const remedyData = {
                 name: formData.name.trim(),
-                amharic_name: formData.amharic_name.trim() || '',
-                home_remedy: formData.home_remedy.trim(),
                 uses: formData.uses.trim() || '',
+                home_remedy: formData.home_remedy.trim(),
+                administration: formData.administration.trim() || '',
                 medical_advise: formData.medical_advise.trim() || '',
                 updated_at: new Date().toISOString()
             };
@@ -190,9 +190,9 @@ const HomeRemedies = () => {
         setEditRemedy(remedy);
         setFormData({
             name: remedy.name || '',
-            amharic_name: remedy.amharic_name || '',
-            home_remedy: remedy.home_remedy || '',
             uses: remedy.uses || '',
+            home_remedy: remedy.home_remedy || '',
+            administration: remedy.administration || '',
             medical_advise: remedy.medical_advise || ''
         });
         setShowForm(true);
@@ -201,9 +201,9 @@ const HomeRemedies = () => {
     const resetForm = () => {
         setFormData({
             name: '',
-            amharic_name: '',
-            home_remedy: '',
             uses: '',
+            home_remedy: '',
+            administration: '',
             medical_advise: ''
         });
         setEditRemedy(null);
@@ -315,7 +315,7 @@ const HomeRemedies = () => {
                                 type="text"
                                 value={searchTerm}
                                 onChange={(e) => handleSearch(e.target.value)}
-                                placeholder="Search remedies by name, Amharic name, or uses..."
+                                placeholder="Search remedies by name, Uses, or administration..."
                                 className="w-full pl-10 pr-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm md:text-base"
                             />
                         </div>
@@ -348,7 +348,7 @@ const HomeRemedies = () => {
                             >
                                 <div className="p-3 md:p-6">
                                     <div className="flex justify-between items-start mb-3 md:mb-4">
-                                        {/* Clickable name/amharic name section */}
+                                        {/* Clickable name/uses section */}
                                         <div 
                                             className="flex-1 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors"
                                             onClick={() => toggleCard(remedy.id)}
@@ -360,9 +360,9 @@ const HomeRemedies = () => {
                                                     <FaChevronDown className="text-gray-500 text-sm" />
                                                 }
                                             </div>
-                                            {remedy.amharic_name && (
+                                            {remedy.uses && (
                                                 <p className="text-xs md:text-sm text-gray-600 mb-2 flex items-center gap-1">
-                                                    <FaLanguage className="text-xs" /> {remedy.amharic_name}
+                                                    <FaLanguage className="text-xs" /> {remedy.uses}
                                                 </p>
                                             )}
                                         </div>
@@ -394,12 +394,12 @@ const HomeRemedies = () => {
                                                 </div>
                                             )}
 
-                                            {remedy.uses && (
+                                            {remedy.administration && (
                                                 <div className="mb-3 md:mb-4">
                                                     <h4 className="font-semibold text-gray-700 mb-1.5 md:mb-2 flex items-center gap-1 text-sm md:text-base">
-                                                        <FaPrescriptionBottleAlt className="text-xs md:text-sm" /> አወሳሰድና ጥቅሞቹ:
+                                                        <FaPrescriptionBottleAlt className="text-xs md:text-sm" /> አወሳሰድ:
                                                     </h4>
-                                                    <ul className="list-disc pl-5 text-xs md:text-sm text-gray-600 leading-relaxed">{renderBullets(remedy.uses)}</ul>
+                                                    <ul className="list-disc pl-5 text-xs md:text-sm text-gray-600 leading-relaxed">{renderBullets(remedy.administration)}</ul>
                                                 </div>
                                             )}
 
@@ -463,9 +463,9 @@ const HomeRemedies = () => {
                             </div>
                             <div className="text-center">
                                 <div className="text-2xl font-bold text-blue-600">
-                                    {remedies.filter(r => r.amharic_name).length}
+                                    {remedies.filter(r => r.uses).length}
                                 </div>
-                                <div className="text-sm text-gray-600">With Amharic Names</div>
+                                <div className="text-sm text-gray-600">With Uses</div>
                             </div>
                             <div className="text-center">
                                 <div className="text-2xl font-bold text-purple-600">
@@ -532,12 +532,12 @@ const HomeRemedies = () => {
 
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Amharic Name*
+                                                ጥቅሙ *
                                             </label>
                                             <input
                                                 type="text"
-                                                value={formData.amharic_name}
-                                                onChange={(e) => setFormData({ ...formData, amharic_name: e.target.value })}
+                                                value={formData.uses}
+                                                onChange={(e) => setFormData({ ...formData, uses: e.target.value })}
                                                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500"
                                                 placeholder="ማር እና ሎሚ"
                                                 disabled={saving}
@@ -570,10 +570,10 @@ const HomeRemedies = () => {
 
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            አወሳሰድና ጥቅሞቹ
+                                            አወሳሰድ
                                         </label>
                                         <textarea
-                                            value={formData.uses}
+                                            value={formData.administration}
                                             onChange={(e) => {
                                                 const value = e.target.value;
                                                 // Add bullet at start if empty
@@ -581,7 +581,7 @@ const HomeRemedies = () => {
                                                 if (!value.startsWith('• ')) newValue = '• ' + value;
                                                 // Replace newlines with new bullet
                                                 newValue = newValue.replace(/\n(?!• )/g, '\n• ');
-                                                setFormData({ ...formData, uses: newValue });
+                                                setFormData({ ...formData, administration: newValue });
                                             }}
                                             rows="4"
                                             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500"
