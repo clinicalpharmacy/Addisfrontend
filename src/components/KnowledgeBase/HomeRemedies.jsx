@@ -125,6 +125,12 @@ const HomeRemedies = () => {
             return;
         }
 
+                // Basic validation
+        if (!formData.amharic_name.trim()) {
+            setError('Amharic name is required');
+            return;
+        }
+
         if (!formData.home_remedy.trim()) {
             setError('Home remedy description is required');
             return;
