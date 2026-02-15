@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-    FaPills, FaSearch, FaPlus, FaHospital,
     FaCalendarAlt, FaTrash, FaCheckCircle, FaExclamationCircle,
     FaUserMd, FaMapMarkerAlt, FaCommentMedical, FaPaperPlane, FaTimes, FaEdit, FaArrowLeft
 } from 'react-icons/fa';
@@ -9,7 +8,6 @@ import api from '../utils/api';
 const MedicationAvailability = () => {
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
     const [showAddForm, setShowAddForm] = useState(false);
     const [currentUser, setCurrentUser] = useState(null);
     const [selectedPost, setSelectedPost] = useState(null);
