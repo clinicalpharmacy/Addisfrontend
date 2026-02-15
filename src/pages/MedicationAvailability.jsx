@@ -207,55 +207,56 @@ const MedicationAvailability = () => {
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
-        
-        // Validate required fields
-        if (!formData.medication_needed.trim()) {
-            alert('Medication name is required');
-            return;
-        }
+    e.preventDefault();
     
-        try {
-            const response = await api.post('/medication-availability', formData);
-            
-            // Check if response exists and has success property
-            if (response && response.success) {
-                setShowAddForm(false);
-                setFormData({
-                    medication_needed: '',
-                    search_date: '',
-                    notes: '',
-                });
-                await fetchPosts();
-            } else {
-                // If response doesn't have success property, check for error message
-                const errorMsg = response?.error || response?.message || 'Failed to create post';
-                alert('Operation failed: ' + errorMsg);
-            }
-        } catch (error) {
-            // Better error handling to extract the actual error message
-            console.error('Full error object:', error);
-            
-            // Try to extract the error message from different possible locations
-            let errorMsg = 'Unknown error occurred';
-            
-            if (error.response?.data?.error) {
-                // If error comes from axios with response data
-                errorMsg = error.response.data.error;
-            } else if (error.error) {
-                // If error has error property
-                errorMsg = error.error;
-            } else if (error.message) {
-                // If error has message property
-                errorMsg = error.message;
-            } else if (typeof error === 'string') {
-                // If error is a string
-                errorMsg = error;
-            }
-            
+    // Validate required fields
+    if (!formData.medication_needed.trim()) {
+        alert('Medication name is required');
+        return;
+    }
+
+    // Log what we're about to send
+    console.log('Submitting form data:', formData);
+    console.log('medication_needed value:', formData.medication_needed);
+    console.log('medication_needed type:', typeof formData.medication_needed);
+    console.log('medication_needed length:', formData.medication_needed.length);
+
+    try {
+        // Try sending with the exact field name
+        const response = await api.post('/medication-availability', formData);
+        console.log('Response:', response);
+        
+        if (response && response.success) {
+            setShowAddForm(false);
+            setFormData({
+                medication_needed: '',
+                search_date: '',
+                notes: '',
+            });
+            await fetchPosts();
+        } else {
+            const errorMsg = response?.error || response?.message || 'Failed to create post';
             alert('Operation failed: ' + errorMsg);
         }
-    };
+    } catch (error) {
+        console.error('Full error:', error);
+        console.error('Error response:', error.response?.data);
+        
+        let errorMsg = 'Unknown error occurred';
+        
+        if (error.response?.data?.error) {
+            errorMsg = error.response.data.error;
+        } else if (error.error) {
+            errorMsg = error.error;
+        } else if (error.message) {
+            errorMsg = error.message;
+        } else if (typeof error === 'string') {
+            errorMsg = error;
+        }
+        
+        alert('Operation failed: ' + errorMsg);
+    }
+};
 
     const handleEdit = (post) => {
         setFormData({
