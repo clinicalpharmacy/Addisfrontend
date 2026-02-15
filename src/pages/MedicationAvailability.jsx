@@ -23,7 +23,7 @@ const MedicationAvailability = () => {
     const [editPostId, setEditPostId] = useState(null);
 
     const [formData, setFormData] = useState({
-        medication_name: '',
+        med_name: '',
         search_date: '',
         notes: '',
     });
@@ -36,21 +36,15 @@ const MedicationAvailability = () => {
     // Auto-delete posts when search_date has passed
     useEffect(() => {
         const checkAndDeleteExpiredPosts = async () => {
-            if (!posts.length) return;
-            
-            const today = new Date().toISOString().split('T')[0];
+            const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
             const expiredPosts = posts.filter(post => 
                 post.search_date && post.search_date < today
             );
             
             for (const post of expiredPosts) {
                 try {
-                    // Check if user is authorized (poster or admin)
-                    const isAuthorized = currentUser?.id === post.user_id || currentUser?.role === 'admin';
-                    if (isAuthorized) {
-                        await api.delete(`/medication-availability/${post.id}`);
-                        console.log(`Auto-deleted expired post: ${post.id}`);
-                    }
+                    await api.delete(`/medication-availability/${post.id}`);
+                    console.log(`Auto-deleted expired post: ${post.id}`);
                 } catch (error) {
                     console.error(`Failed to auto-delete post ${post.id}:`, error);
                 }
@@ -69,12 +63,13 @@ const MedicationAvailability = () => {
         checkAndDeleteExpiredPosts();
 
         return () => clearInterval(interval);
-    }, [posts, currentUser]);
+    }, [posts]);
 
     // Polling for live chat
     useEffect(() => {
         let interval;
         if (selectedPost) {
+            // Initial fetch or when chat user changes
             if (isPoster) {
                 if (selectedChatUser) fetchComments(selectedPost.id, selectedChatUser.id);
             } else {
@@ -182,6 +177,7 @@ const MedicationAvailability = () => {
             if (data && data.success) {
                 setComments(prevComments => [...prevComments, data.comment]);
                 setNewComment('');
+                // If this was a new conversation, refresh the list
                 if (isPoster && !conversations.find(c => c.id === selectedChatUser?.id)) {
                     fetchConversations(selectedPost.id);
                 }
@@ -213,27 +209,20 @@ const MedicationAvailability = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        if (!formData.medication_name.trim()) {
+        // Validate required fields
+        if (!formData.med_name.trim()) {
             alert('Medication name is required');
             return;
         }
 
-        // Prepare data according to your table structure
-        const postData = {
-            medication_name: formData.medication_name,
-            notes: formData.notes || null,
-            search_date: formData.search_date || null,
-            user_id: currentUser?.id // Make sure this is included
-        };
-
         try {
             if (isEditing) {
-                const response = await api.put(`/medication-availability/${editPostId}`, postData);
+                const response = await api.put(`/medication-availability/${editPostId}`, formData);
                 if (response && response.success) {
                     setIsEditing(false);
                     setEditPostId(null);
                     setFormData({
-                        medication_name: '',
+                        med_name: '',
                         search_date: '',
                         notes: '',
                     });
@@ -241,11 +230,11 @@ const MedicationAvailability = () => {
                     await fetchPosts();
                 }
             } else {
-                const response = await api.post('/medication-availability', postData);
+                const response = await api.post('/medication-availability', formData);
                 if (response && response.success) {
                     setShowAddForm(false);
                     setFormData({
-                        medication_name: '',
+                        med_name: '',
                         search_date: '',
                         notes: '',
                     });
@@ -253,7 +242,6 @@ const MedicationAvailability = () => {
                 }
             }
         } catch (error) {
-            console.error('Submit error:', error);
             const errorMsg = error?.error || error?.message || (typeof error === 'string' ? error : 'Operation failed');
             alert('Operation failed: ' + errorMsg);
         }
@@ -261,18 +249,21 @@ const MedicationAvailability = () => {
 
     const handleEdit = (post) => {
         setFormData({
-            medication_name: post.medication_name || '',
+            med_name: post.med_name || '',
             search_date: post.search_date || '',
             notes: post.notes || '',
         });
         setEditPostId(post.id);
         setIsEditing(true);
         setShowAddForm(true);
+        // Scroll to form
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handleDelete = async (id) => {
         if (!window.confirm('Are you sure you want to delete this post?')) return;
         
+        // Check if user is authorized to delete (poster or admin)
         const post = posts.find(p => p.id === id);
         if (!post) return;
         
@@ -298,12 +289,13 @@ const MedicationAvailability = () => {
         }
     };
 
+    // Filter posts
     const filteredPosts = Array.isArray(posts) ? posts.filter(post => {
-        if (!post || !post.medication_name) return false;
+        if (!post || !post.med_name) return false;
         const term = searchTerm.toLowerCase().trim();
         if (!term) return true;
         
-        const medName = (post.medication_name || '').toLowerCase();
+        const medName = (post.med_name || '').toLowerCase();
         const institution = (post.user?.institution || '').toLowerCase();
         const location = (post.user?.location || '').toLowerCase();
 
@@ -326,6 +318,7 @@ const MedicationAvailability = () => {
         }
     };
 
+    // Check if search date has passed
     const isDatePassed = (dateString) => {
         if (!dateString) return false;
         const today = new Date().toISOString().split('T')[0];
@@ -348,7 +341,7 @@ const MedicationAvailability = () => {
                         setShowAddForm(!showAddForm);
                         if (isEditing) {
                             setIsEditing(false);
-                            setFormData({ medication_name: '', search_date: '', notes: '' });
+                            setFormData({ med_name: '', search_date: '', notes: '' });
                         }
                     }}
                     className={`${showAddForm ? 'bg-gray-500' : 'bg-blue-600'} text-white px-6 py-3 rounded-xl flex items-center gap-2 hover:opacity-90 transition shadow-lg font-bold`}
@@ -381,8 +374,8 @@ const MedicationAvailability = () => {
                                     <input
                                         type="text"
                                         required
-                                        value={formData.medication_name}
-                                        onChange={(e) => setFormData({ ...formData, medication_name: e.target.value })}
+                                        value={formData.med_name}
+                                        onChange={(e) => setFormData({ ...formData, med_name: e.target.value })}
                                         className="w-full border border-gray-200 rounded-xl p-3 focus:border-blue-500"
                                         placeholder="የመድሃኒቱ ስም"
                                     />
@@ -396,7 +389,7 @@ const MedicationAvailability = () => {
                                         onChange={(e) => setFormData({ ...formData, search_date: e.target.value })}
                                         className="border border-gray-200 rounded-xl p-3 w-full"
                                         placeholder="እስከ መች ይፈለግ"
-                                        min={new Date().toISOString().split('T')[0]}
+                                        min={new Date().toISOString().split('T')[0]} // Can't select past dates
                                     />
                                 </div>
                                 <div className="md:col-span-2">
@@ -436,7 +429,7 @@ const MedicationAvailability = () => {
                                         {/* LEFT: medication name */}
                                         <div>
                                             <h3 className="text-lg font-bold text-gray-800">
-                                                {post.medication_name}
+                                                {post.med_name}
                                                 {searchDatePassed && (
                                                     <span className="ml-2 text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full">
                                                         Expired
@@ -448,9 +441,9 @@ const MedicationAvailability = () => {
                                         {/* RIGHT: date + edit/delete */}
                                         <div className="flex flex-col items-end gap-1">
                                     
-                                            {/* created at date - only showing date now */}
+                                            {/* created at date */}
                                             <span className="text-[11px] text-gray-400 font-medium">
-                                                {formatDate(post.created_at)}
+                                                Posted: {formatDate(post.created_at)}
                                             </span>
                                     
                                             {/* edit/delete if owner or admin */}
@@ -480,7 +473,7 @@ const MedicationAvailability = () => {
                     )}
                 </div>
 
-                {/* Right Side: Chat Sidebar - same as before */}
+                {/* Right Side: Chat Sidebar */}
                 <div className={`w-full md:w-96 flex flex-col bg-gray-50 rounded-3xl overflow-hidden border border-gray-200 ${!selectedPost ? 'hidden md:flex' : 'flex'}`}>
                     {selectedPost ? (
                         <>
@@ -492,7 +485,7 @@ const MedicationAvailability = () => {
                                     <FaArrowLeft />
                                 </button>
                                 <div className="flex-1 min-w-0">
-                                    <h4 className="font-bold text-gray-800 truncate">{selectedPost.medication_name}</h4>
+                                    <h4 className="font-bold text-gray-800 truncate">{selectedPost.med_name}</h4>
                                     <p className="text-xs text-blue-600 font-bold truncate">
                                         {isPoster
                                             ? (selectedChatUser ? `Chatting with: ${selectedChatUser.full_name}` : 'Select a conversation')
