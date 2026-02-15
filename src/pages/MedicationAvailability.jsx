@@ -197,7 +197,7 @@ const MedicationAvailability = () => {
         setSelectedChatUser(null);
         setComments([]);
 
-        if (amIPoster) {
+        if (amIPoster || isAdmin) {
             fetchConversations(post.id);
         }
     };
