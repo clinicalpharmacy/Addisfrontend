@@ -25,7 +25,7 @@ const MedicationAvailability = () => {
     const [formErrors, setFormErrors] = useState({});
 
     const [formData, setFormData] = useState({
-        medication_name: '',
+        name_medication: '',
         search_date: '',
         notes: '',
     });
@@ -212,8 +212,8 @@ const MedicationAvailability = () => {
     const validateForm = () => {
         const errors = {};
         
-        if (!formData.medication_name || !formData.medication_name.trim()) {
-            errors.medication_name = 'የመድሃኒት ስም ማስገባት አስፈላጊ ነው / Medication name is required';
+        if (!formData.name_medication || !formData.name_medication.trim()) {
+            errors.name_medication = 'የመድሃኒት ስም ማስገባት አስፈላጊ ነው / Medication name is required';
         }
         
         setFormErrors(errors);
@@ -251,7 +251,7 @@ const MedicationAvailability = () => {
             // Reset form on success
             if (response && response.success) {
                 setFormData({
-                    medication_name: '',
+                    name_medication: '',
                     search_date: '',
                     notes: '',
                 });
@@ -284,7 +284,7 @@ const MedicationAvailability = () => {
 
     const handleEdit = (post) => {
         setFormData({
-            medication_name: post.medication_name || '',
+            name_medication: post.name_medication || '',
             search_date: post.search_date || '',
             notes: post.notes || '',
         });
@@ -330,7 +330,7 @@ const MedicationAvailability = () => {
         setShowAddForm(false);
         setIsEditing(false);
         setFormData({
-            medication_name: '',
+            name_medication: '',
             search_date: '',
             notes: '',
         });
@@ -339,11 +339,11 @@ const MedicationAvailability = () => {
 
     // Filter posts
     const filteredPosts = Array.isArray(posts) ? posts.filter(post => {
-        if (!post || !post.medication_name) return false;
+        if (!post || !post.name_medication) return false;
         const term = searchTerm.toLowerCase().trim();
         if (!term) return true;
         
-        const medName = (post.medication_name || '').toLowerCase();
+        const medName = (post.name_medication || '').toLowerCase();
         const institution = (post.user?.institution || '').toLowerCase();
         const location = (post.user?.location || '').toLowerCase();
 
@@ -424,18 +424,18 @@ const MedicationAvailability = () => {
                                     <input
                                         type="text"
                                         required
-                                        value={formData.medication_name}
+                                        value={formData.name_medication}
                                         onChange={(e) => {
-                                            setFormData({ ...formData, medication_name: e.target.value });
-                                            if (formErrors.medication_name) {
-                                                setFormErrors({ ...formErrors, medication_name: null });
+                                            setFormData({ ...formData, name_medication: e.target.value });
+                                            if (formErrors.name_medication) {
+                                                setFormErrors({ ...formErrors, name_medication: null });
                                             }
                                         }}
-                                        className={`w-full border ${formErrors.medication_name ? 'border-red-500' : 'border-gray-200'} rounded-xl p-3 focus:border-blue-500`}
+                                        className={`w-full border ${formErrors.name_medication ? 'border-red-500' : 'border-gray-200'} rounded-xl p-3 focus:border-blue-500`}
                                         placeholder="የመድሃኒቱ ስም / Medication name *"
                                     />
-                                    {formErrors.medication_name && (
-                                        <p className="text-red-500 text-xs mt-1">{formErrors.medication_name}</p>
+                                    {formErrors.name_medication && (
+                                        <p className="text-red-500 text-xs mt-1">{formErrors.name_medication}</p>
                                     )}
                                 </div>
                                 
@@ -515,7 +515,7 @@ const MedicationAvailability = () => {
                                         {/* LEFT: medication name */}
                                         <div>
                                             <h3 className="text-lg font-bold text-gray-800">
-                                                {post.medication_name}
+                                                {post.name_medication}
                                                 {searchDatePassed && (
                                                     <span className="ml-2 text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full">
                                                         ጊዜው አለፈ / Expired
@@ -589,7 +589,7 @@ const MedicationAvailability = () => {
                                     <FaArrowLeft />
                                 </button>
                                 <div className="flex-1 min-w-0">
-                                    <h4 className="font-bold text-gray-800 truncate">{selectedPost.medication_name}</h4>
+                                    <h4 className="font-bold text-gray-800 truncate">{selectedPost.name_medication}</h4>
                                     <p className="text-xs text-blue-600 font-bold truncate">
                                         {isPoster
                                             ? (selectedChatUser ? `ከሚከተለው ጋር በመወያየት ላይ / Chatting with: ${selectedChatUser.full_name}` : 'ውይይት ይምረጡ / Select a conversation')
