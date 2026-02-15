@@ -9,7 +9,6 @@ import api from '../utils/api';
 const MedicationAvailability = () => {
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [submitting, setSubmitting] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [showAddForm, setShowAddForm] = useState(false);
     const [currentUser, setCurrentUser] = useState(null);
@@ -22,7 +21,6 @@ const MedicationAvailability = () => {
     const [isPoster, setIsPoster] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editPostId, setEditPostId] = useState(null);
-    const [formErrors, setFormErrors] = useState({});
 
     const [formData, setFormData] = useState({
         medication_needed: '',
@@ -93,8 +91,7 @@ const MedicationAvailability = () => {
         const userData = localStorage.getItem('user');
         if (userData) {
             try {
-                const user = JSON.parse(userData);
-                setCurrentUser(user);
+                setCurrentUser(JSON.parse(userData));
             } catch (error) {
                 console.error('Error parsing user data:', error);
             }
@@ -160,7 +157,7 @@ const MedicationAvailability = () => {
     const handlePostComment = async (e) => {
         e.preventDefault();
         if (!newComment.trim()) {
-            alert('እባክዎ መልዕክት ያስገቡ / Please enter a message');
+            alert('Please enter a message');
             return;
         }
 
@@ -168,7 +165,7 @@ const MedicationAvailability = () => {
             const recipient_id = isPoster ? selectedChatUser?.id : selectedPost?.user_id;
 
             if (!recipient_id) {
-                alert('ተቀባይን ማወቅ አልተቻለም / Cannot determine recipient');
+                alert('Cannot determine recipient');
                 return;
             }
 
@@ -185,11 +182,11 @@ const MedicationAvailability = () => {
                     fetchConversations(selectedPost.id);
                 }
             } else {
-                alert('መልዕክት መላክ አልተሳካም / Message failed to send. Please try again.');
+                alert('Message failed to send. Please try again.');
             }
         } catch (error) {
-            const serverError = error?.error || error?.message || (typeof error === 'string' ? error : 'ያልታወቀ ስህተት / Unknown connection error');
-            alert(`መልዕክት መላክ አልተሳካም / Message Failed!\n\nምክንያት / Reason: ${serverError}`);
+            const serverError = error?.error || error?.message || (typeof error === 'string' ? error : 'Unknown connection error');
+            alert(`Message Failed!\n\nReason: ${serverError}`);
         }
     };
 
@@ -209,76 +206,44 @@ const MedicationAvailability = () => {
         setSelectedChatUser(user);
     };
 
-    const validateForm = () => {
-        const errors = {};
-        
-        if (!formData.medication_needed || !formData.medication_needed.trim()) {
-            errors.medication_needed = 'የመድሃኒት ስም ማስገባት አስፈላጊ ነው / Medication name is required';
-        }
-        
-        setFormErrors(errors);
-        return Object.keys(errors).length === 0;
-    };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        // Validate form
-        if (!validateForm()) {
+        // Validate required fields
+        if (!formData.medication_needed.trim()) {
+            alert('Medication name is required');
             return;
         }
 
-        setSubmitting(true);
-        setFormErrors({});
-
         try {
-            let response;
-            
             if (isEditing) {
-                response = await api.put(`/medication-availability/${editPostId}`, formData);
+                const response = await api.put(`/medication-availability/${editPostId}`, formData);
                 if (response && response.success) {
-                    alert('መድሃኒት በተሳካ ሁኔታ ተሻሽሏል / Medication updated successfully');
                     setIsEditing(false);
                     setEditPostId(null);
+                    setFormData({
+                        medication_needed: '',
+                        search_date: '',
+                        notes: '',
+                    });
+                    setShowAddForm(false);
+                    await fetchPosts();
                 }
             } else {
-                response = await api.post('/medication-availability', formData);
+                const response = await api.post('/medication-availability', formData);
                 if (response && response.success) {
-                    alert('መድሃኒት በተሳካ ሁኔታ ተመዝግቧል / Medication posted successfully');
+                    setShowAddForm(false);
+                    setFormData({
+                        medication_needed: '',
+                        search_date: '',
+                        notes: '',
+                    });
+                    await fetchPosts();
                 }
-            }
-
-            // Reset form on success
-            if (response && response.success) {
-                setFormData({
-                    medication_needed: '',
-                    search_date: '',
-                    notes: '',
-                });
-                setShowAddForm(false);
-                await fetchPosts();
-            } else {
-                alert(response?.message || 'እንደገና ይሞክሩ / Operation failed');
             }
         } catch (error) {
-            console.error('Submit error:', error);
-            
-            // Handle different types of errors
-            let errorMessage = 'እንደገና ይሞክሩ / Operation failed';
-            
-            if (error?.response?.data?.message) {
-                errorMessage = error.response.data.message;
-            } else if (error?.error) {
-                errorMessage = error.error;
-            } else if (error?.message) {
-                errorMessage = error.message;
-            } else if (typeof error === 'string') {
-                errorMessage = error;
-            }
-            
-            alert(`የተሳሳተ ነገር ተከስቷል / Operation failed: ${errorMessage}`);
-        } finally {
-            setSubmitting(false);
+            const errorMsg = error?.error || error?.message || (typeof error === 'string' ? error : 'Operation failed');
+            alert('Operation failed: ' + errorMsg);
         }
     };
 
@@ -291,13 +256,12 @@ const MedicationAvailability = () => {
         setEditPostId(post.id);
         setIsEditing(true);
         setShowAddForm(true);
-        setFormErrors({});
         // Scroll to form
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('እርግጠኛ ነዎት ይህን ልጥፍ መሰረዝ ይፈልጋሉ? / Are you sure you want to delete this post?')) return;
+        if (!window.confirm('Are you sure you want to delete this post?')) return;
         
         // Check if user is authorized to delete (poster or admin)
         const post = posts.find(p => p.id === id);
@@ -306,7 +270,7 @@ const MedicationAvailability = () => {
         const isAuthorized = currentUser?.id === post.user_id || currentUser?.role === 'admin';
         
         if (!isAuthorized) {
-            alert('ይህን ልጥፍ የመሰረዝ ፈቃድ የለዎትም / You are not authorized to delete this post');
+            alert('You are not authorized to delete this post');
             return;
         }
         
@@ -318,23 +282,11 @@ const MedicationAvailability = () => {
                     setSelectedPost(null);
                     setSelectedChatUser(null);
                 }
-                alert('ልጥፍ በተሳካ ሁኔታ ተሰርዟል / Post deleted successfully');
             }
         } catch (error) {
-            const errorMsg = error?.error || error?.message || 'ልጥፍ መሰረዝ አልተሳካም / Error deleting post';
+            const errorMsg = error?.error || error?.message || 'Error deleting post';
             alert(errorMsg);
         }
-    };
-
-    const handleCancelForm = () => {
-        setShowAddForm(false);
-        setIsEditing(false);
-        setFormData({
-            medication_needed: '',
-            search_date: '',
-            notes: '',
-        });
-        setFormErrors({});
     };
 
     // Filter posts
@@ -386,15 +338,15 @@ const MedicationAvailability = () => {
                 </div>
                 <button
                     onClick={() => {
-                        if (showAddForm) {
-                            handleCancelForm();
-                        } else {
-                            setShowAddForm(true);
+                        setShowAddForm(!showAddForm);
+                        if (isEditing) {
+                            setIsEditing(false);
+                            setFormData({ medication_needed: '', search_date: '', notes: '' });
                         }
                     }}
                     className={`${showAddForm ? 'bg-gray-500' : 'bg-blue-600'} text-white px-6 py-3 rounded-xl flex items-center gap-2 hover:opacity-90 transition shadow-lg font-bold`}
                 >
-                    {showAddForm ? <><FaTimes /> ሰርዝ / Cancel</> : <><FaPlus /> መድሃኒቱን ያጋሩ</>}
+                    {showAddForm ? 'Cancel' : <><FaPlus /> መድሃኒቱን ያጋሩ</>}
                 </button>
             </div>
 
@@ -416,33 +368,21 @@ const MedicationAvailability = () => {
                     {/* Add/Edit Form (In-list) */}
                     {showAddForm && (
                         <div className="bg-white p-6 rounded-2xl shadow-lg border-2 border-blue-100 mb-6">
-                            <h2 className="text-lg font-bold mb-4 text-gray-800">
-                                {isEditing ? 'መድሃኒት አርትዕ / Edit Medication' : 'የሚፈልጉትን መድሃኒት ይጻፉ / Post Medication'}
-                            </h2>
+                            <h2 className="text-lg font-bold mb-4 text-gray-800">{isEditing ? 'Edit Medication' : 'የሚፈልጉትን መድሃኒት ይጻፉ'}</h2>
                             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="md:col-span-2">
                                     <input
                                         type="text"
                                         required
                                         value={formData.medication_needed}
-                                        onChange={(e) => {
-                                            setFormData({ ...formData, medication_needed: e.target.value });
-                                            if (formErrors.medication_needed) {
-                                                setFormErrors({ ...formErrors, medication_needed: null });
-                                            }
-                                        }}
-                                        className={`w-full border ${formErrors.medication_needed ? 'border-red-500' : 'border-gray-200'} rounded-xl p-3 focus:border-blue-500`}
-                                        placeholder="የመድሃኒቱ ስም / Medication name *"
+                                        onChange={(e) => setFormData({ ...formData, medication_needed: e.target.value })}
+                                        className="w-full border border-gray-200 rounded-xl p-3 focus:border-blue-500"
+                                        placeholder="የመድሃኒቱ ስም"
                                     />
-                                    {formErrors.medication_needed && (
-                                        <p className="text-red-500 text-xs mt-1">{formErrors.medication_needed}</p>
-                                    )}
                                 </div>
                                 
                                 <div className="flex flex-col gap-1 w-full">
-                                    <label className="text-xs text-gray-500 ml-1">
-                                        እስከ መች ይፈለግ / Search until
-                                    </label>
+                                    <label className="text-xs text-gray-500 ml-1">እስከ መች ይፈለግ</label>
                                     <input
                                         type="date"
                                         value={formData.search_date}
@@ -457,47 +397,21 @@ const MedicationAvailability = () => {
                                         value={formData.notes}
                                         onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                                         className="w-full border border-gray-200 rounded-xl p-3"
-                                        placeholder="ተጨማሪ መረጃ (ካስፈለገ) / Additional notes (optional)"
+                                        placeholder="ተጨማሪ መረጃ (ካስፈለገ)"
                                         rows="2"
                                     />
                                 </div>
-                                <div className="md:col-span-2 flex gap-2">
-                                    <button 
-                                        type="submit" 
-                                        className="flex-1 bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                                        disabled={submitting}
-                                    >
-                                        {submitting ? (
-                                            <span className="flex items-center justify-center gap-2">
-                                                <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
-                                                {isEditing ? 'በማዘመን ላይ... / Updating...' : 'በመለጠፍ ላይ... / Posting...'}
-                                            </span>
-                                        ) : (
-                                            isEditing ? 'መድሃኒት አዘምን / Update' : 'መድሃኒት ለጥፍ / Post'
-                                        )}
-                                    </button>
-                                    <button 
-                                        type="button"
-                                        onClick={handleCancelForm}
-                                        className="px-6 bg-gray-500 text-white font-bold py-3 rounded-xl hover:bg-gray-600 transition"
-                                    >
-                                        ሰርዝ / Cancel
-                                    </button>
-                                </div>
+                                <button type="submit" className="md:col-span-2 bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700">
+                                    {isEditing ? 'Update medication' : 'Post medication'}
+                                </button>
                             </form>
                         </div>
                     )}
 
                     {loading ? (
-                        <div className="py-10 text-center flex items-center justify-center">
-                            <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
-                            <span className="ml-3">በማምጣት ላይ... / Loading posts...</span>
-                        </div>
+                        <div className="py-10 text-center">Loading posts...</div>
                     ) : filteredPosts.length === 0 ? (
-                        <div className="py-20 text-center text-gray-400">
-                            <FaPills className="text-6xl mx-auto mb-4 opacity-20" />
-                            <p>ምንም ልጥፎች አልተገኙም / No postings found.</p>
-                        </div>
+                        <div className="py-20 text-center text-gray-400">No postings found.</div>
                     ) : (
                         filteredPosts.map(post => {
                             const searchDatePassed = isDatePassed(post.search_date);
@@ -518,7 +432,7 @@ const MedicationAvailability = () => {
                                                 {post.medication_needed}
                                                 {searchDatePassed && (
                                                     <span className="ml-2 text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full">
-                                                        ጊዜው አለፈ / Expired
+                                                        Expired
                                                     </span>
                                                 )}
                                             </h3>
@@ -529,7 +443,7 @@ const MedicationAvailability = () => {
                                     
                                             {/* created at date */}
                                             <span className="text-[11px] text-gray-400 font-medium">
-                                                {formatDate(post.created_at)}
+                                                Posted: {formatDate(post.created_at)}
                                             </span>
                                     
                                             {/* edit/delete if owner or admin */}
@@ -553,24 +467,6 @@ const MedicationAvailability = () => {
                                             )}
                                         </div>
                                     </div>
-                                    
-                                    {/* Additional info */}
-                                    {(post.notes || post.user) && (
-                                        <div className="mt-2 text-sm text-gray-600 border-t pt-2">
-                                            {post.notes && (
-                                                <p className="flex items-start gap-2 mb-1">
-                                                    <FaCommentMedical className="text-blue-400 mt-1 flex-shrink-0" />
-                                                    <span className="text-xs line-clamp-2">{post.notes}</span>
-                                                </p>
-                                            )}
-                                            {post.user && (
-                                                <p className="flex items-center gap-2 text-xs">
-                                                    <FaHospital className="text-gray-400" />
-                                                    <span>{post.user.institution || 'Pharmacy'} • {post.user.location || 'Location not specified'}</span>
-                                                </p>
-                                            )}
-                                        </div>
-                                    )}
                                 </div>
                             );
                         })
@@ -592,8 +488,8 @@ const MedicationAvailability = () => {
                                     <h4 className="font-bold text-gray-800 truncate">{selectedPost.medication_needed}</h4>
                                     <p className="text-xs text-blue-600 font-bold truncate">
                                         {isPoster
-                                            ? (selectedChatUser ? `ከሚከተለው ጋር በመወያየት ላይ / Chatting with: ${selectedChatUser.full_name}` : 'ውይይት ይምረጡ / Select a conversation')
-                                            : `የሚገናኙት / Contacting: ${selectedPost.user?.institution || 'Pharmacy'}`
+                                            ? (selectedChatUser ? `Chatting with: ${selectedChatUser.full_name}` : 'Select a conversation')
+                                            : `Contacting: ${selectedPost.user?.institution || 'Pharmacy'}`
                                         }
                                     </p>
                                 </div>
@@ -602,11 +498,11 @@ const MedicationAvailability = () => {
 
                             {isPoster && !selectedChatUser ? (
                                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                                    <h5 className="text-xs font-bold text-gray-400 uppercase tracking-widest px-2">መጠይቆች / Inquiries</h5>
+                                    <h5 className="text-xs font-bold text-gray-400 uppercase tracking-widest px-2">Inquiries</h5>
                                     {conversations.length === 0 ? (
                                         <div className="text-center py-20 text-gray-400">
                                             <FaCommentMedical className="text-4xl mx-auto mb-4 opacity-20" />
-                                            <p className="text-sm px-4">ስለዚህ ልጥፍ እስካሁን ማንም መልዕክት አልላከም / No one has messaged about this post yet.</p>
+                                            <p className="text-sm px-4">No one has messaged about this post yet.</p>
                                         </div>
                                     ) : (
                                         conversations.map(user => (
@@ -635,26 +531,21 @@ const MedicationAvailability = () => {
                                                 onClick={() => setSelectedChatUser(null)}
                                                 className="self-start text-[10px] font-bold text-blue-600 hover:underline mb-2 flex items-center gap-1"
                                             >
-                                                ← ወደ ሁሉም መጠይቆች ተመለስ / Back to all inquiries
+                                                ← Back to all inquiries
                                             </button>
                                         )}
 
                                         <div className="bg-blue-50 p-3 rounded-xl text-xs text-blue-800 border border-blue-100 italic">
-                                            <span className="font-bold block mb-1">ማስታወሻ / Notes:</span>
-                                            {selectedPost.notes || "ምንም ተጨማሪ ማስታወሻ የለም / No additional notes provided."}
+                                            {selectedPost.notes || "No additional notes provided."}
                                         </div>
 
                                         {loadingComments ? (
                                             <div className="flex flex-col items-center justify-center py-10">
                                                 <div className="animate-spin h-6 w-6 border-2 border-blue-500 border-t-transparent rounded-full mb-2"></div>
-                                                <p className="text-xs text-gray-400">ውይይት በማምጣት ላይ... / Loading conversation...</p>
+                                                <p className="text-xs text-gray-400">Loading conversation...</p>
                                             </div>
                                         ) : comments.length === 0 ? (
-                                            <div className="text-center py-10 text-gray-400 text-sm">
-                                                <FaCommentMedical className="text-4xl mx-auto mb-4 opacity-20" />
-                                                እስካሁን ምንም መልዕክት የለም / No messages yet. 
-                                                {!isPoster && ' ስለዚህ መድሃኒት ውይይት ይጀምሩ / Start a conversation about this medication.'}
-                                            </div>
+                                            <div className="text-center py-10 text-gray-400 text-sm">No messages yet. Start a conversation about this medication.</div>
                                         ) : (
                                             comments.map(comment => {
                                                 const userObj = JSON.parse(localStorage.getItem('user') || '{}');
@@ -686,7 +577,7 @@ const MedicationAvailability = () => {
                                                         </div>
                                                         <div className={`flex items-center gap-2 mt-1.5 px-1 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
                                                             <span className={`text-[10px] font-bold uppercase tracking-wider ${style.label}`}>
-                                                                {isMe ? 'እርስዎ / You' : comment.user?.full_name || 'Pharmacist'}
+                                                                {isMe ? 'You' : comment.user?.full_name || 'Pharmacist'}
                                                             </span>
                                                             <span className="text-[9px] text-gray-400 font-medium ml-2">
                                                                 {new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -701,16 +592,12 @@ const MedicationAvailability = () => {
                                     <form onSubmit={handlePostComment} className="p-4 bg-white border-t flex gap-2">
                                         <input
                                             type="text"
-                                            placeholder="ሚስጥራዊ መልዕክት ይጻፉ / Type a secret message..."
+                                            placeholder="Type a secrete message..."
                                             className="flex-1 border border-gray-200 rounded-xl px-4 py-2 outline-none focus:ring-1 focus:ring-blue-500"
                                             value={newComment}
                                             onChange={(e) => setNewComment(e.target.value)}
                                         />
-                                        <button 
-                                            type="submit" 
-                                            className="bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                                            disabled={!newComment.trim()}
-                                        >
+                                        <button type="submit" className="bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-700 transition">
                                             <FaPaperPlane />
                                         </button>
                                     </form>
@@ -720,7 +607,7 @@ const MedicationAvailability = () => {
                     ) : (
                         <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-gray-400">
                             <FaCommentMedical className="text-5xl mb-4 text-gray-200" />
-                            <p className="font-medium">የመድሃኒት ልጥፍ ይምረጡ ዝርዝሮችን ለማየት እና ሚስጥራዊ ውይይት ለመጀመር / Select a medication posting to view details and start a private conversation.</p>
+                            <p className="font-medium">Select a medication posting to view details and start a private (secrete) conversation.</p>
                         </div>
                     )}
                 </div>
