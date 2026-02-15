@@ -214,35 +214,45 @@ const MedicationAvailability = () => {
             alert('Medication name is required');
             return;
         }
-
+    
         try {
-            if (isEditing) {
-                const response = await api.put(`/medication-availability/${editPostId}`, formData);
-                if (response && response.success) {
-                    setIsEditing(false);
-                    setEditPostId(null);
-                    setFormData({
-                        medication_needed: '',
-                        search_date: '',
-                        notes: '',
-                    });
-                    setShowAddForm(false);
-                    await fetchPosts();
-                }
+            const response = await api.post('/medication-availability', formData);
+            
+            // Check if response exists and has success property
+            if (response && response.success) {
+                setShowAddForm(false);
+                setFormData({
+                    medication_needed: '',
+                    search_date: '',
+                    notes: '',
+                });
+                await fetchPosts();
             } else {
-                const response = await api.post('/medication-availability', formData);
-                if (response && response.success) {
-                    setShowAddForm(false);
-                    setFormData({
-                        medication_needed: '',
-                        search_date: '',
-                        notes: '',
-                    });
-                    await fetchPosts();
-                }
+                // If response doesn't have success property, check for error message
+                const errorMsg = response?.error || response?.message || 'Failed to create post';
+                alert('Operation failed: ' + errorMsg);
             }
         } catch (error) {
-            const errorMsg = error?.error || error?.message || (typeof error === 'string' ? error : 'Operation failed');
+            // Better error handling to extract the actual error message
+            console.error('Full error object:', error);
+            
+            // Try to extract the error message from different possible locations
+            let errorMsg = 'Unknown error occurred';
+            
+            if (error.response?.data?.error) {
+                // If error comes from axios with response data
+                errorMsg = error.response.data.error;
+            } else if (error.error) {
+                // If error has error property
+                errorMsg = error.error;
+            } else if (error.message) {
+                // If error has message property
+                errorMsg = error.message;
+            } else if (typeof error === 'string') {
+                // If error is a string
+                errorMsg = error;
+            }
+            
             alert('Operation failed: ' + errorMsg);
         }
     };
