@@ -207,56 +207,45 @@ const MedicationAvailability = () => {
     };
 
     const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    // Validate required fields
-    if (!formData.medication_needed.trim()) {
-        alert('Medication name is required');
-        return;
-    }
-
-    // Log what we're about to send
-    console.log('Submitting form data:', formData);
-    console.log('medication_needed value:', formData.medication_needed);
-    console.log('medication_needed type:', typeof formData.medication_needed);
-    console.log('medication_needed length:', formData.medication_needed.length);
-
-    try {
-        // Try sending with the exact field name
-        const response = await api.post('/medication-availability', formData);
-        console.log('Response:', response);
+        e.preventDefault();
         
-        if (response && response.success) {
-            setShowAddForm(false);
-            setFormData({
-                medication_needed: '',
-                search_date: '',
-                notes: '',
-            });
-            await fetchPosts();
-        } else {
-            const errorMsg = response?.error || response?.message || 'Failed to create post';
+        // Validate required fields
+        if (!formData.medication_needed.trim()) {
+            alert('Medication name is required');
+            return;
+        }
+
+        try {
+            if (isEditing) {
+                const response = await api.put(`/medication-availability/${editPostId}`, formData);
+                if (response && response.success) {
+                    setIsEditing(false);
+                    setEditPostId(null);
+                    setFormData({
+                        medication_needed: '',
+                        search_date: '',
+                        notes: '',
+                    });
+                    setShowAddForm(false);
+                    await fetchPosts();
+                }
+            } else {
+                const response = await api.post('/medication-availability', formData);
+                if (response && response.success) {
+                    setShowAddForm(false);
+                    setFormData({
+                        medication_needed: '',
+                        search_date: '',
+                        notes: '',
+                    });
+                    await fetchPosts();
+                }
+            }
+        } catch (error) {
+            const errorMsg = error?.error || error?.message || (typeof error === 'string' ? error : 'Operation failed');
             alert('Operation failed: ' + errorMsg);
         }
-    } catch (error) {
-        console.error('Full error:', error);
-        console.error('Error response:', error.response?.data);
-        
-        let errorMsg = 'Unknown error occurred';
-        
-        if (error.response?.data?.error) {
-            errorMsg = error.response.data.error;
-        } else if (error.error) {
-            errorMsg = error.error;
-        } else if (error.message) {
-            errorMsg = error.message;
-        } else if (typeof error === 'string') {
-            errorMsg = error;
-        }
-        
-        alert('Operation failed: ' + errorMsg);
-    }
-};
+    };
 
     const handleEdit = (post) => {
         setFormData({
