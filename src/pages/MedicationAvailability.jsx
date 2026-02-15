@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
+    FaPills, FaSearch, FaPlus, FaHospital,
     FaCalendarAlt, FaTrash, FaCheckCircle, FaExclamationCircle,
     FaUserMd, FaMapMarkerAlt, FaCommentMedical, FaPaperPlane, FaTimes, FaEdit, FaArrowLeft
 } from 'react-icons/fa';
@@ -8,6 +9,7 @@ import api from '../utils/api';
 const MedicationAvailability = () => {
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
     const [showAddForm, setShowAddForm] = useState(false);
     const [currentUser, setCurrentUser] = useState(null);
     const [selectedPost, setSelectedPost] = useState(null);
@@ -347,6 +349,21 @@ const MedicationAvailability = () => {
                     {showAddForm ? 'Cancel' : <><FaPlus /> መድሃኒቱን ያጋሩ</>}
                 </button>
             </div>
+
+            <div className="flex flex-col md:flex-row flex-1 gap-6 overflow-hidden">
+                {/* Left Side: Posts List */}
+                <div className={`flex-1 overflow-y-auto pr-2 space-y-4 ${selectedPost ? 'hidden md:block' : ''}`}>
+                    {/* Search */}
+                    <div className="relative mb-4 sticky top-0 z-10 bg-gray-50 pt-2 pb-2">
+                        <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Search medication"
+                            className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl shadow-sm focus:ring-2 focus:ring-blue-500 outline-none transition"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
 
                     {/* Add/Edit Form (In-list) */}
                     {showAddForm && (
