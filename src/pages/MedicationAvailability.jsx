@@ -21,6 +21,7 @@ const MedicationAvailability = () => {
     const [isPoster, setIsPoster] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editPostId, setEditPostId] = useState(null);
+    const isAdmin = currentUser?.role === 'admin';
 
     const [formData, setFormData] = useState({
         medication_needed: '',
@@ -142,7 +143,8 @@ const MedicationAvailability = () => {
 
     const fetchConversations = async (postId) => {
         try {
-            const data = await api.get(`/medication-availability/${postId}/conversations`);
+            const params = currentUser?.role === 'admin' ? '?admin=true' : '';
+            const data = await api.get(`/medication-availability/${postId}/conversations${params}`);
             if (data && data.success) {
                 setConversations(Array.isArray(data.conversations) ? data.conversations : []);
             } else {
@@ -198,7 +200,7 @@ const MedicationAvailability = () => {
         setComments([]);
 
         if (amIPoster || isAdmin) {
-            fetchConversations(post.id);
+            fetchConversations(post.id); // Admin can see all conversations
         }
     };
 
