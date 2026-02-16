@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import {
     FaPills,
-    FaFlask,
+    FaVial,
     FaStethoscope,
     FaMortarPestle,
     FaBookMedical,
@@ -47,7 +47,7 @@ const KnowledgeBaseLayout = () => {
 
     const tabs = [
         { path: 'medications', label: 'Medications', icon: <FaPills /> },
-        { path: 'remedies', label: 'Home Remedies', icon: <FaFlask /> },
+        { path: 'remedies', label: 'Home Remedies', icon: <FaVial /> },
         { path: 'illnesses', label: 'Minor Illnesses', icon: <FaStethoscope /> },
         { path: 'compounding', label: 'Compounding', icon: <FaMortarPestle /> },
     ];

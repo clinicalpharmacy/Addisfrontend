@@ -1,7 +1,7 @@
 import React from 'react';
 import {
     FaUsers, FaHospital, FaClock,
-    FaHistory, FaCog, FaUserCheck, FaUserMd, FaBuilding
+    FaHistory, FaCog, FaUserCheck, FaUserMd, FaBuilding, FaVial
 } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
@@ -98,7 +98,7 @@ export const AdminOverview = ({
                             <p className="text-xl md:text-3xl font-black text-red-600 leading-tight">{stats.laboratory_count || 0}</p>
                         </div>
                         <div className="p-2 md:p-3 bg-red-50 rounded-lg flex-shrink-0">
-                            <FaFlask className="text-red-600 text-sm md:text-xl" />
+                            <FaVial className="text-red-600 text-sm md:text-xl" />
                         </div>
                     </div>
                 </div>

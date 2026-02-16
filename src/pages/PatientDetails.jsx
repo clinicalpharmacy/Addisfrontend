@@ -1831,7 +1831,7 @@ const PatientDetails = () => {
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
                         <div className="bg-blue-100 p-3 rounded-full">
-                            <FaFlask className="text-blue-600 text-xl" />
+                            <FaVial className="text-blue-600 text-xl" />
                         </div>
                         <div>
                             <h2 className="text-xl font-bold text-gray-800">Laboratory Results</h2>
@@ -1860,7 +1860,7 @@ const PatientDetails = () => {
                         return (
                             <div key={cat} className="bg-white p-6 rounded-xl shadow-sm border border-indigo-100 mb-6">
                                 <h3 className="text-lg font-bold text-indigo-900 mb-4 flex items-center gap-2 border-b border-indigo-50 pb-2">
-                                    <FaFlask className="text-indigo-400" /> {cat}
+                                    <FaVial className="text-indigo-400" /> {cat}
                                     <span className="text-[10px] bg-indigo-50 text-indigo-500 px-2 py-0.5 rounded-full uppercase ml-2 tracking-wider">System Tests</span>
                                 </h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -2889,7 +2889,7 @@ const PatientDetails = () => {
                     {customLabs.filter(l => !l.isGlobal).length > 0 && (
                         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-6 mt-6">
                             <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2 border-b pb-2">
-                                <FaFlask className="text-gray-500" /> Additional Tests
+                                <FaVial className="text-gray-500" /> Additional Tests
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                                 {customLabs.filter(l => !l.isGlobal).map((lab) => {
@@ -3720,7 +3720,7 @@ const PatientDetails = () => {
                                     })()}
                                 </p>
                             </div>
-                            <FaFlask className="text-green-400 text-xl" />
+                            <FaVial className="text-green-400 text-xl" />
                         </div>
                         <p className="text-xs text-gray-500 mt-2">Completed tests</p>
                     </div>
@@ -3838,10 +3838,10 @@ const PatientDetails = () => {
                     return (
                         <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200 p-6 shadow-sm overflow-hidden relative">
                             <div className="absolute top-0 right-0 p-4 opacity-10">
-                                <FaFlask className="text-6xl text-green-600" />
+                                <FaVial className="text-6xl text-green-600" />
                             </div>
                             <h3 className="text-lg font-bold text-green-800 mb-4 flex items-center gap-2">
-                                <FaFlask className="text-green-500" /> Key Laboratory Findings
+                                <FaVial className="text-green-500" /> Key Laboratory Findings
                             </h3>
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 relative z-10">
                                 {results.slice(0, 12).map((lab, idx) => (

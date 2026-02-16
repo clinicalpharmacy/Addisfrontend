@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaDatabase, FaCalendarDay, FaPills, FaFlask } from 'react-icons/fa';
+import { FaDatabase, FaCalendarDay, FaPills, FaVial } from 'react-icons/fa';
 
 export const AlertDetails = ({ alert }) => {
     return (
@@ -57,7 +57,7 @@ export const AlertDetails = ({ alert }) => {
                     {alert.evidence.labs && Object.keys(alert.evidence.labs).length > 0 && (
                         <div>
                             <h5 className="font-medium text-gray-600 mb-2 flex items-center gap-2">
-                                <FaFlask className="text-green-500" /> Lab Values
+                                <FaVial className="text-green-500" /> Lab Values
                             </h5>
                             <div className="space-y-1">
                                 {Object.entries(alert.evidence.labs).slice(0, 5).map(([key, value]) => (
