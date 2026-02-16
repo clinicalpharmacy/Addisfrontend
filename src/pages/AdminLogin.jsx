@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import supabase from '../utils/supabase';
+import api from '../utils/api';
 import { FaUserShield, FaLock, FaEnvelope, FaExclamationTriangle } from 'react-icons/fa';
 
 const AdminLogin = () => {
@@ -11,6 +12,25 @@ const AdminLogin = () => {
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [systemOnline, setSystemOnline] = useState(null);
+    const [isCheckingHealth, setIsCheckingHealth] = useState(true);
+
+    useEffect(() => {
+        const checkHealth = async () => {
+            try {
+                setIsCheckingHealth(true);
+                const health = await api.get('/health');
+                setSystemOnline(health.success && health.status === 'healthy');
+            } catch (err) {
+                console.error('Admin System Health Check Failed:', err);
+                setSystemOnline(false);
+            } finally {
+                setIsCheckingHealth(false);
+            }
+        };
+
+        checkHealth();
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -39,7 +59,7 @@ const AdminLogin = () => {
 
             // Redirect to admin dashboard
             navigate('/admin/dashboard');
-            
+
         } catch (err) {
             setError(err.message || 'Invalid credentials');
         } finally {
@@ -53,7 +73,13 @@ const AdminLogin = () => {
                 {/* Card */}
                 <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
                     {/* Header */}
-                    <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-8 text-center">
+                    <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-8 text-center relative overflow-hidden">
+                        <div className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/20">
+                            <div className={`w-1.5 h-1.5 rounded-full ${isCheckingHealth ? 'bg-blue-300 animate-pulse' : systemOnline ? 'bg-green-400 animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.5)]' : 'bg-red-400'}`}></div>
+                            <span className="text-[9px] font-black uppercase tracking-widest text-white/90">
+                                {isCheckingHealth ? 'Sync' : systemOnline ? 'Core: ON' : 'Core: OFF'}
+                            </span>
+                        </div>
                         <div className="inline-flex items-center justify-center w-16 h-16 bg-white bg-opacity-20 rounded-full mb-4">
                             <FaUserShield className="text-white text-2xl" />
                         </div>
@@ -85,7 +111,7 @@ const AdminLogin = () => {
                                     <input
                                         type="email"
                                         value={formData.email}
-                                        onChange={(e) => setFormData({...formData, email: e.target.value})}
+                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                         className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                         placeholder="admin@example.com"
                                         required
@@ -104,7 +130,7 @@ const AdminLogin = () => {
                                     <input
                                         type="password"
                                         value={formData.password}
-                                        onChange={(e) => setFormData({...formData, password: e.target.value})}
+                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                         className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                         placeholder="••••••••"
                                         required
@@ -160,11 +186,13 @@ const AdminLogin = () => {
                     </div>
 
                     {/* Footer */}
-                    <div className="bg-gray-50 px-8 py-4 border-t">
-                        <div className="flex items-center justify-between text-xs text-gray-500">
-                            <span>v1.0.0</span>
-                            <span>Secure Admin Portal</span>
-                            <span>© {new Date().getFullYear()}</span>
+                    <div className="bg-gray-50 px-8 py-5 border-t">
+                        <div className="flex items-center justify-between text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                            <div className="flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500/20"></span>
+                                <span>v{import.meta.env.VITE_APP_VERSION || '2.0.1'}</span>
+                            </div>
+                            <span>© {new Date().getFullYear()} AddisMed</span>
                         </div>
                     </div>
                 </div>

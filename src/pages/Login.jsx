@@ -21,6 +21,8 @@ const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [systemOnline, setSystemOnline] = useState(null);
+    const [isCheckingHealth, setIsCheckingHealth] = useState(true);
 
     useEffect(() => {
         // Check if user is already logged in
@@ -35,6 +37,22 @@ const Login = () => {
                 navigate('/dashboard');
             }
         }
+
+        // Check Backend Health
+        const checkHealth = async () => {
+            try {
+                setIsCheckingHealth(true);
+                const health = await api.get('/health');
+                setSystemOnline(health.success && health.status === 'healthy');
+            } catch (err) {
+                console.error('System Health Check Failed:', err);
+                setSystemOnline(false);
+            } finally {
+                setIsCheckingHealth(false);
+            }
+        };
+
+        checkHealth();
     }, [navigate]);
 
     const handleSubmit = async (e) => {
@@ -141,9 +159,18 @@ const Login = () => {
 
                 {/* Login Card */}
                 <div className="bg-white rounded-2xl shadow-xl p-8">
-                    <div className="mb-8">
-                        <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome Back</h2>
-                        <p className="text-gray-600">Sign in to your account</p>
+                    <div className="flex justify-between items-center mb-6">
+                        <div className="flex flex-col">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-1">Welcome Back</h2>
+                            <p className="text-gray-500 text-sm">Sign in to your account</p>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                            <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all duration-500 ${isCheckingHealth ? 'bg-blue-50 border-blue-100 text-blue-500' : systemOnline ? 'bg-green-50 border-green-100 text-green-600 shadow-sm shadow-green-100' : 'bg-red-50 border-red-100 text-red-600'}`}>
+                                <div className={`w-1.5 h-1.5 rounded-full ${isCheckingHealth ? 'bg-blue-400 animate-pulse' : systemOnline ? 'bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500'}`}></div>
+                                {isCheckingHealth ? 'Syncing...' : systemOnline ? 'Online' : 'Offline'}
+                            </div>
+                            <span className="text-[10px] font-bold text-gray-400 mr-2">v{import.meta.env.VITE_APP_VERSION || '2.0.1'}</span>
+                        </div>
                     </div>
 
                     {/* Error Message */}
@@ -297,9 +324,9 @@ const Login = () => {
                 </div>
 
                 {/* Footer */}
-                <div className="mt-6 text-center">
-                    <p className="text-xs text-gray-500">
-                        © {new Date().getFullYear()} AddisMed. All rights reserved.
+                <div className="mt-8 text-center">
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em]">
+                        © {new Date().getFullYear()} AddisMed • Clinical Intelligence Center
                     </p>
                 </div>
             </div>
