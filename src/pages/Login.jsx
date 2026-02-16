@@ -159,19 +159,35 @@ const Login = () => {
 
                 {/* Login Card */}
                 <div className="bg-white rounded-2xl shadow-xl p-8">
-                    <div className="flex justify-between items-center mb-6">
-                        <div className="flex flex-col">
-                            <h2 className="text-2xl font-bold text-gray-900 mb-1">Welcome Back</h2>
-                            <p className="text-gray-500 text-sm">Sign in to your account</p>
-                        </div>
-                        <div className="flex flex-col items-end gap-1">
-                            <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all duration-500 ${isCheckingHealth ? 'bg-blue-50 border-blue-100 text-blue-500' : systemOnline ? 'bg-green-50 border-green-100 text-green-600 shadow-sm shadow-green-100' : 'bg-red-50 border-red-100 text-red-600'}`}>
-                                <div className={`w-1.5 h-1.5 rounded-full ${isCheckingHealth ? 'bg-blue-400 animate-pulse' : systemOnline ? 'bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500'}`}></div>
-                                {isCheckingHealth ? 'Syncing...' : systemOnline ? 'Online' : 'Offline'}
-                            </div>
-                            <span className="text-[10px] font-bold text-gray-400 mr-2">v{import.meta.env.VITE_APP_VERSION || '2.0.1'}</span>
-                        </div>
+                    <div className="mb-8">
+                        <h2 className="text-2xl font-bold text-gray-900 mb-1">Welcome Back</h2>
+                        <p className="text-gray-500 text-sm">Sign in to your account</p>
                     </div>
+
+                    {/* System Status Banner */}
+                    {!isCheckingHealth && (
+                        <div className={`mb-6 p-4 rounded-xl border-l-4 flex items-center justify-between shadow-sm transition-all duration-500 ${systemOnline
+                                ? 'bg-green-50 border-green-500 text-green-800'
+                                : 'bg-red-50 border-red-500 text-red-800'
+                            }`}>
+                            <div className="flex items-center gap-3">
+                                {systemOnline ? (
+                                    <FaUserCheck className="text-green-600" />
+                                ) : (
+                                    <FaExclamationTriangle className="text-red-600 animate-pulse" />
+                                )}
+                                <div>
+                                    <p className="font-black text-xs uppercase tracking-[0.15em]">
+                                        {systemOnline ? 'SYSTEM ONLINE' : 'SYSTEM OFFLINE'}
+                                    </p>
+                                    <p className="text-[10px] opacity-80 font-medium">
+                                        {systemOnline ? 'Secure connection established' : 'Server is unreachable at this moment'}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className={`w-2 h-2 rounded-full ${systemOnline ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)] animate-pulse'}`}></div>
+                        </div>
+                    )}
 
                     {/* Error Message */}
                     {error && (
