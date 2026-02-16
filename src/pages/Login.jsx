@@ -160,34 +160,9 @@ const Login = () => {
                 {/* Login Card */}
                 <div className="bg-white rounded-2xl shadow-xl p-8">
                     <div className="mb-8">
-                        <h2 className="text-2xl font-bold text-gray-900 mb-1">Welcome Back</h2>
-                        <p className="text-gray-500 text-sm">Sign in to your account</p>
+                        <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome Back</h2>
+                        <p className="text-gray-600">Sign in to your account</p>
                     </div>
-
-                    {/* System Status Banner */}
-                    {!isCheckingHealth && (
-                        <div className={`mb-6 p-4 rounded-xl border-l-4 flex items-center justify-between shadow-sm transition-all duration-500 ${systemOnline
-                                ? 'bg-green-50 border-green-500 text-green-800'
-                                : 'bg-red-50 border-red-500 text-red-800'
-                            }`}>
-                            <div className="flex items-center gap-3">
-                                {systemOnline ? (
-                                    <FaUserCheck className="text-green-600" />
-                                ) : (
-                                    <FaExclamationTriangle className="text-red-600 animate-pulse" />
-                                )}
-                                <div>
-                                    <p className="font-black text-xs uppercase tracking-[0.15em]">
-                                        {systemOnline ? 'SYSTEM ONLINE' : 'SYSTEM OFFLINE'}
-                                    </p>
-                                    <p className="text-[10px] opacity-80 font-medium">
-                                        {systemOnline ? 'Secure connection established' : 'Server is unreachable at this moment'}
-                                    </p>
-                                </div>
-                            </div>
-                            <div className={`w-2 h-2 rounded-full ${systemOnline ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)] animate-pulse'}`}></div>
-                        </div>
-                    )}
 
                     {/* Error Message */}
                     {error && (
@@ -339,11 +314,16 @@ const Login = () => {
                     </div>
                 </div>
 
-                {/* Footer */}
-                <div className="mt-8 text-center">
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em]">
-                        © {new Date().getFullYear()} AddisMed • Clinical Intelligence Center
-                    </p>
+                {/* Footer status indicator */}
+                <div className="mt-8 flex flex-col items-center gap-4">
+                    <div className="flex items-center gap-3 px-4 py-2 bg-white rounded-full shadow-sm border border-gray-100 transition-all hover:shadow-md">
+                        <div className={`w-2 h-2 rounded-full ${isCheckingHealth ? 'bg-blue-400 animate-pulse' : systemOnline ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500'}`}></div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">
+                            {isCheckingHealth ? 'Checking System...' : systemOnline ? 'System Online' : 'System Offline'}
+                        </span>
+                        <div className="w-px h-3 bg-gray-200 mx-1"></div>
+                        <span className="text-[10px] font-bold text-gray-400">v{import.meta.env.VITE_APP_VERSION || '2.0.1'}</span>
+                    </div>
                 </div>
             </div>
         </div>
