@@ -75,8 +75,8 @@ const AdminLogin = () => {
                     {/* Header */}
                     <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-8 text-center relative overflow-hidden">
                         <div className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/20">
-                            <div className={`w-1.5 h-1.5 rounded-full ${isCheckingHealth ? 'bg-blue-300 animate-pulse' : systemOnline ? 'bg-green-400 animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.5)]' : 'bg-red-400'}`}></div>
-                            <span className="text-[9px] font-black uppercase tracking-widest text-white/90">
+                            <div className={`w-1.5 h-1.5 rounded-full ${isCheckingHealth ? 'bg-blue-300 animate-pulse' : systemOnline ? 'bg-green-400 animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.5)]' : 'bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.5)] animate-pulse'}`}></div>
+                            <span className={`text-[9px] font-black uppercase tracking-widest transition-colors duration-300 ${isCheckingHealth ? 'text-white/70' : systemOnline ? 'text-green-400' : 'text-red-400'}`}>
                                 {isCheckingHealth ? 'Sync' : systemOnline ? 'Core: ON' : 'Core: OFF'}
                             </span>
                         </div>
