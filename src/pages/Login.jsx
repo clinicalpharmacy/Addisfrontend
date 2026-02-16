@@ -21,6 +21,7 @@ const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+
     useEffect(() => {
         // Check if user is already logged in
         const token = localStorage.getItem('token');
@@ -88,33 +89,43 @@ const Login = () => {
 
         } catch (err) {
             console.error('❌ Login error:', err);
-            setError(err.error || err.message || 'Login failed. Please check your credentials and try again.');
+
+            // Special handling for email verification
+            if (err.email_verification_required) {
+                setError(
+                    <div className="flex flex-col gap-3">
+                        <p>{err.error || 'Please verify your email address before logging in.'}</p>
+                        <button
+                            onClick={async () => {
+                                try {
+                                    setLoading(true);
+                                    const res = await api.post('/auth/resend-verification', { email: formData.email });
+                                    if (res.success) {
+                                        setError(''); // Clear error on success
+                                        alert('Verification email sent! Please check your inbox.');
+                                    } else {
+                                        setError(res.error || 'Failed to resend verification email');
+                                    }
+                                } catch (e) {
+                                    setError(e.error || e.message || 'Failed to resend verification email');
+                                } finally {
+                                    setLoading(false);
+                                }
+                            }}
+                            className="bg-blue-600 text-white text-xs font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition w-fit"
+                        >
+                            Resend Verification Email
+                        </button>
+                    </div>
+                );
+            } else {
+                setError(err.error || err.message || 'Login failed. Please check your credentials and try again.');
+            }
         } finally {
             setLoading(false);
         }
     };
 
-    const handleRegisterClick = async (e, type) => {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
-
-        try {
-            console.log(`🔍 Checking system status before ${type} registration...`);
-            // Check health
-            await api.get('/health');
-            console.log('✅ System is online, proceeding to registration');
-
-            // Navigate to signup
-            navigate('/signup');
-        } catch (err) {
-            console.error('❌ System is offline:', err);
-            setError('Unable to proceed to registration. The system is currently offline. Please try again later.');
-            setBackendStatus('offline');
-        } finally {
-            setLoading(false);
-        }
-    };
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
@@ -234,7 +245,7 @@ const Login = () => {
                     {process.env.NODE_ENV === 'development' && (
                         <div className="mt-6 p-4 bg-gray-50 rounded-xl">
                             <p className="text-sm text-gray-600 mb-2">Quick Test (Dev Only):</p>
-                            <div className="flex wrap gap-2">
+                            <div className="flex flex-wrap gap-2">
                                 <button
                                     onClick={() => testLogin('admin@pharmacare.com', 'Admin@123')}
                                     className="px-3 py-1 text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 rounded"
@@ -257,20 +268,6 @@ const Login = () => {
                             Don't have an account?
                         </p>
                         <div className="grid grid-cols-2 gap-3">
-<<<<<<< HEAD
-                            <button
-                                onClick={(e) => handleRegisterClick(e, 'individual')}
-                                disabled={loading}
-                                className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl transition text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <FaUserCheck />
-                                Individual
-                            </button>
-                            <button
-                                onClick={(e) => handleRegisterClick(e, 'organization')}
-                                disabled={loading}
-                                className="flex items-center justify-center gap-2 px-4 py-3 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl transition text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-=======
                             <Link
                                 to="/signup?type=individual"
                                 className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl transition text-sm font-medium"
@@ -281,11 +278,10 @@ const Login = () => {
                             <Link
                                 to="/signup?type=organization"
                                 className="flex items-center justify-center gap-2 px-4 py-3 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl transition text-sm font-medium"
->>>>>>> ceb1624 (email verification)
                             >
                                 <FaBuilding />
                                 Organization
-                            </button>
+                            </Link>
                         </div>
                     </div>
 
@@ -293,21 +289,9 @@ const Login = () => {
                     <div className="mt-6 text-center">
                         <p className="text-xs text-gray-500">
                             Having trouble?{' '}
-<<<<<<< HEAD
-                            <button
-                                onClick={() => {
-                                    checkBackendStatus();
-                                    console.log('Current API URL:', API_URL);
-                                }}
-                                className="text-blue-600 hover:text-blue-800 underline"
-                            >
-                                Check connection
-                            </button>
-=======
                             <Link to="/forgot-password" title="Forgot Password" className="text-blue-600 hover:text-blue-800 underline">
                                 Reset your password
                             </Link>
->>>>>>> ceb1624 (email verification)
                         </p>
                     </div>
                 </div>
