@@ -337,12 +337,12 @@ const MedicationAvailability = () => {
                         ያጡትን መድሃኒት ማፈላለጊያ
                     </h1>
 
-                    {/* 🔵 ADDED BULLETIN TEXT (TOP-LEFT) */}
-                <div className="mt-2 flex flex-wrap gap-3 text-xs font-semibold text-gray-500">
-                    <span className="bg-gray-100 px-3 py-1 rounded-full">• Anonymous</span>
-                    <span className="bg-gray-100 px-3 py-1 rounded-full">• Private chat</span>
-                    <span className="bg-gray-100 px-3 py-1 rounded-full">• Deletes if expired</span>
-                </div>
+                    {/* 🔵 ADDED BULLETIN TEXT (LEFT-TOP) */}
+                    <div className="mt-2 flex flex-wrap gap-3 text-xs font-semibold text-gray-500">
+                        <span className="bg-gray-100 px-3 py-1 rounded-full">• Anonymous post</span>
+                        <span className="bg-gray-100 px-3 py-1 rounded-full">• Private chat</span>
+                        <span className="bg-gray-100 px-3 py-1 rounded-full">• Deletes if expired</span>
+                    </div>
                     
                     <p className="text-gray-600 mt-1">Found a shortage? See who has it or post what you can share.</p>
                 </div>
