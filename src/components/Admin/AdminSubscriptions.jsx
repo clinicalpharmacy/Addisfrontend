@@ -124,151 +124,163 @@ export const AdminSubscriptions = ({ subscriptions, loading, onRefresh, users, c
     }
 
     return (
-        <div className="space-y-6 animate-fadeIn pb-10">
-            {/* Header Controls */}
-            <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <div className="space-y-4 sm:space-y-6 animate-fadeIn pb-12">
+            {/* Subscription Control Center */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center bg-white p-5 sm:p-6 rounded-[24px] shadow-sm border border-gray-100">
                 <div className="flex-1 w-full">
-                    <h2 className="text-xl font-bold text-gray-800 mb-1">Subscription Overview</h2>
-                    <p className="text-sm text-gray-500">Monitor active accounts across all user types.</p>
+                    <div className="flex items-center gap-3">
+                        <div className="p-3 bg-indigo-50 rounded-2xl">
+                            <FaClock className="text-indigo-600 text-xl" />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-black text-gray-900 leading-tight">Revenue Governance</h2>
+                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Active account oversight.</p>
+                        </div>
+                    </div>
                 </div>
 
-                <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
-                    <div className="relative w-full md:w-64">
-                        <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <div className="flex flex-col xs:flex-row items-center gap-2.5 w-full sm:w-auto">
+                    <div className="relative w-full sm:w-56 group">
+                        <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-500 transition-colors text-[10px]" />
                         <input
                             type="text"
-                            placeholder="Search..."
-                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm"
+                            placeholder="Filter by name, email..."
+                            className="w-full pl-9 pr-4 py-2.5 bg-gray-50/50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all text-xs font-medium"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
 
-                    <select
-                        value={filterStatus}
-                        onChange={(e) => setFilterStatus(e.target.value)}
-                        className="w-full md:w-auto border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium cursor-pointer"
-                    >
-                        <option value="all">All Status</option>
-                        <option value="active">Active Only</option>
-                        <option value="inactive">Expired Only</option>
-                    </select>
+                    <div className="flex items-center gap-2 w-full xs:w-auto">
+                        <div className="relative flex-1 xs:flex-none">
+                            <select
+                                value={filterStatus}
+                                onChange={(e) => setFilterStatus(e.target.value)}
+                                className="w-full pl-3 pr-8 py-2.5 bg-gray-50/50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-xs font-black appearance-none cursor-pointer uppercase tracking-tighter"
+                            >
+                                <option value="all">Every Status</option>
+                                <option value="active">Active Only</option>
+                                <option value="inactive">Expired Only</option>
+                            </select>
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-[10px]">▼</div>
+                        </div>
 
-                    <button
-                        onClick={onRefresh}
-                        className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition shadow-sm font-bold text-sm"
-                    >
-                        <FaRedo className={loading ? 'animate-spin' : ''} /> Refresh
-                    </button>
+                        <button
+                            onClick={onRefresh}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white p-2.5 rounded-xl flex items-center justify-center transition-all shadow-lg shadow-indigo-100 active:scale-95"
+                            title="Refresh Ledger"
+                        >
+                            <FaRedo className={loading ? 'animate-spin' : ''} />
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            {/* Stats Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between group hover:border-blue-200 transition-colors">
-                    <div>
-                        <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Active Accounts</div>
-                        <div className="text-3xl font-black text-gray-800">
+            {/* Performance Stats */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+                <div className="bg-white p-5 rounded-[24px] shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-md transition-all hover:-translate-y-1">
+                    <div className="min-w-0">
+                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 truncate">Active Nodes</p>
+                        <p className="text-2xl sm:text-4xl font-black text-gray-900 leading-none">
                             {subscriptionData.filter(i => i.status === 'active').length}
-                        </div>
+                        </p>
                     </div>
-                    <div className="p-4 bg-blue-50 text-blue-600 rounded-2xl group-hover:scale-110 transition-transform">
-                        <FaCheckCircle size={24} />
+                    <div className="p-3.5 bg-green-50 text-green-600 rounded-2xl group-hover:scale-110 transition-transform shadow-inner">
+                        <FaCheckCircle className="text-lg" />
                     </div>
                 </div>
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between group hover:border-orange-200 transition-colors">
-                    <div>
-                        <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Company Subs</div>
-                        <div className="text-3xl font-black text-gray-800">
+                <div className="bg-white p-5 rounded-[24px] shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-md transition-all hover:-translate-y-1">
+                    <div className="min-w-0">
+                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 truncate">Enterprise</p>
+                        <p className="text-2xl sm:text-4xl font-black text-gray-900 leading-none">
                             {subscriptionData.filter(i => i.type === 'Company').length}
-                        </div>
+                        </p>
                     </div>
-                    <div className="p-4 bg-orange-50 text-orange-600 rounded-2xl group-hover:scale-110 transition-transform">
-                        <FaBuilding size={24} />
+                    <div className="p-3.5 bg-purple-50 text-purple-600 rounded-2xl group-hover:scale-110 transition-transform shadow-inner">
+                        <FaBuilding className="text-lg" />
                     </div>
                 </div>
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between group hover:border-purple-200 transition-colors">
-                    <div>
-                        <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Total Records</div>
-                        <div className="text-3xl font-black text-gray-800">{subscriptionData.length}</div>
+                <div className="bg-white p-5 rounded-[24px] shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-md transition-all hover:-translate-y-1 col-span-2 sm:col-span-1">
+                    <div className="min-w-0">
+                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 truncate">Total History</p>
+                        <p className="text-2xl sm:text-4xl font-black text-gray-900 leading-none">{subscriptionData.length}</p>
                     </div>
-                    <div className="p-4 bg-purple-50 text-purple-600 rounded-2xl group-hover:scale-110 transition-transform">
-                        <FaUser size={24} />
+                    <div className="p-3.5 bg-blue-50 text-blue-600 rounded-2xl group-hover:scale-110 transition-transform shadow-inner">
+                        <FaUser className="text-lg" />
                     </div>
                 </div>
             </div>
 
             {/* Subscriptions Grid */}
             {filteredData.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                     {filteredData.map((item) => {
                         const daysRemaining = calculateDaysRemaining(item.expiry);
                         const isExpiringSoon = daysRemaining !== null && daysRemaining > 0 && daysRemaining <= 7;
 
                         return (
-                            <div key={item.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col group hover:shadow-md transition-all">
-                                <div className="p-5 flex-1">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div className={`p-3 rounded-xl ${item.type === 'Company' ? 'bg-indigo-50 text-indigo-600' : 'bg-amber-50 text-amber-600'}`}>
+                            <div key={item.id} className="group bg-white rounded-[28px] shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden flex flex-col hover:-translate-y-1">
+                                <div className="p-5 sm:p-6 flex-1">
+                                    <div className="flex justify-between items-start mb-6">
+                                        <div className={`p-4 rounded-2xl shadow-inner transition-transform group-hover:scale-110 ${item.type === 'Company' ? 'bg-indigo-50 text-indigo-600' : 'bg-amber-50 text-amber-600'}`}>
                                             {item.type === 'Company' ? <FaBuilding size={20} /> : <FaUser size={20} />}
                                         </div>
                                         <div className="flex flex-col items-end gap-1.5">
-                                            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${getStatusColor(item.status)} shadow-sm`}>
-                                                {item.status === 'active' ? 'Active' : 'Expired'}
+                                            <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${item.status === 'active' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
+                                                {item.status === 'active' ? 'Operational' : 'Terminated'}
                                             </span>
-                                            <span className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded font-bold uppercase tracking-wider">
+                                            <span className="text-[9px] bg-gray-50 text-gray-400 px-2 py-0.5 rounded-lg font-black uppercase tracking-widest border border-gray-100">
                                                 {item.type}
                                             </span>
                                         </div>
                                     </div>
 
-                                    <div className="mb-4">
-                                        <h4 className="font-bold text-gray-900 leading-tight mb-1 truncate" title={item.name}>
+                                    <div className="mb-6 min-w-0">
+                                        <h4 className="font-black text-gray-900 text-base leading-tight truncate mb-1" title={item.name}>
                                             {item.name}
                                         </h4>
-                                        <p className="text-xs text-gray-500 truncate" title={item.email}>
+                                        <p className="text-xs text-gray-500 font-medium truncate" title={item.email}>
                                             {item.email}
                                         </p>
                                     </div>
 
-                                    <div className="bg-gray-50 rounded-xl p-3 mb-4 border border-gray-100">
-                                        <div className="flex justify-between items-end mb-1">
-                                            <span className="text-[10px] text-gray-400 font-bold uppercase">Plan Validity</span>
-                                            <span className={`text-xs font-black ${daysRemaining <= 0 ? 'text-red-600' : isExpiringSoon ? 'text-orange-600' : 'text-blue-600'}`}>
+                                    <div className="bg-gray-50/50 rounded-2xl p-4 mb-6 border border-gray-50 group-hover:bg-white transition-colors">
+                                        <div className="flex justify-between items-end mb-2">
+                                            <span className="text-[9px] text-gray-400 font-black uppercase tracking-widest">Plan Integrity</span>
+                                            <span className={`text-[11px] font-black ${daysRemaining <= 0 ? 'text-red-600' : isExpiringSoon ? 'text-orange-600' : 'text-blue-600'}`}>
                                                 {daysRemaining !== null ? (
-                                                    daysRemaining <= 0 ? 'Expired' : `${daysRemaining} Days Left`
-                                                ) : 'N/A'}
+                                                    daysRemaining <= 0 ? 'Expired' : `${daysRemaining} Days`
+                                                ) : 'Infinite'}
                                             </span>
                                         </div>
-                                        {/* Simple Progress Bar */}
-                                        <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
+                                        <div className="h-2 w-full bg-gray-200/50 rounded-full overflow-hidden shadow-inner">
                                             <div
-                                                className={`h-full transition-all duration-500 ${daysRemaining <= 0 ? 'bg-red-500 w-full' : isExpiringSoon ? 'bg-orange-500' : 'bg-blue-500'}`}
-                                                style={{ width: daysRemaining !== null ? `${Math.min(100, Math.max(0, (daysRemaining / 365) * 100))}%` : '0%' }}
+                                                className={`h-full transition-all duration-1000 ${daysRemaining <= 0 ? 'bg-red-500 w-full' : isExpiringSoon ? 'bg-gradient-to-r from-orange-400 to-orange-500' : 'bg-gradient-to-r from-blue-500 to-indigo-500'}`}
+                                                style={{ width: daysRemaining !== null ? `${Math.min(100, Math.max(5, (daysRemaining / 365) * 100))}%` : '100%' }}
                                             />
                                         </div>
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <div className="flex justify-between items-center text-xs">
-                                            <span className="text-gray-400 italic">Current Plan</span>
-                                            <span className="text-gray-700 font-bold">{item.plan}</span>
+                                    <div className="space-y-2.5">
+                                        <div className="flex justify-between items-center text-[11px]">
+                                            <span className="text-gray-400 font-black uppercase tracking-tighter">Current Plan</span>
+                                            <span className="text-gray-900 font-black px-2 py-0.5 bg-gray-100 rounded-lg">{item.plan}</span>
                                         </div>
-                                        <div className="flex justify-between items-center text-xs">
-                                            <span className="text-gray-400 italic">Expiry Date</span>
-                                            <span className="text-gray-700 font-medium">
-                                                {item.expiry ? new Date(item.expiry).toLocaleDateString() : 'N/A'}
+                                        <div className="flex justify-between items-center text-[11px]">
+                                            <span className="text-gray-400 font-black uppercase tracking-tighter">Expiration</span>
+                                            <span className="text-gray-700 font-bold">
+                                                {item.expiry ? new Date(item.expiry).toLocaleDateString() : 'Continuous'}
                                             </span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="px-5 py-3 bg-gray-50/50 border-t border-gray-100 flex justify-between items-center">
-                                    <span className="text-[10px] text-gray-400 font-medium">
-                                        ID: ...{item.id.toString().slice(-6)}
+                                <div className="px-5 sm:px-6 py-4 bg-gray-50/30 border-t border-gray-100 flex justify-between items-center">
+                                    <span className="text-[9px] text-gray-400 font-black uppercase tracking-widest">
+                                        REF: {item.id.toString().slice(-8).toUpperCase()}
                                     </span>
-                                    <div className="text-[10px] text-gray-400 font-medium flex items-center gap-1">
-                                        <FaClock size={8} />
+                                    <div className="text-[9px] text-gray-400 font-bold flex items-center gap-1.5 uppercase tracking-tighter">
+                                        <FaClock className="text-[8px] opacity-50" />
                                         {item.created_at ? new Date(item.created_at).toLocaleDateString() : 'N/A'}
                                     </div>
                                 </div>
@@ -277,13 +289,13 @@ export const AdminSubscriptions = ({ subscriptions, loading, onRefresh, users, c
                     })}
                 </div>
             ) : (
-                <div className="bg-white rounded-2xl shadow-sm p-24 text-center border border-dashed border-gray-200">
-                    <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <FaClock size={36} className="text-gray-300" />
+                <div className="bg-white rounded-[40px] shadow-sm p-16 sm:p-24 text-center border-2 border-dashed border-gray-100">
+                    <div className="w-24 h-24 bg-gray-50 rounded-[32px] flex items-center justify-center mx-auto mb-6 transform -rotate-3">
+                        <FaClock size={40} className="text-gray-200" />
                     </div>
-                    <h3 className="text-2xl font-bold text-gray-800 mb-2">No Records Found</h3>
-                    <p className="text-gray-500 max-w-sm mx-auto">
-                        We couldn't find any subscriptions matching your criteria. Try adjusting your filters.
+                    <h3 className="text-2xl font-black text-gray-900 mb-2">Ledger Vacuum</h3>
+                    <p className="text-gray-500 max-w-xs mx-auto text-sm font-medium leading-relaxed">
+                        No subscription nodes detected within the selected parameters. All systems monitoring.
                     </p>
                 </div>
             )}

@@ -1000,8 +1000,9 @@ const ClinicalRulesAdmin = () => {
                 </>
             )}
 
-            {/* Rules Table */}
+            {/* Rules Container */}
             {currentUser ? (
+<<<<<<< HEAD
                 <>
                     <div id="rules-table-container" className="overflow-x-auto rounded-lg border">
                         <table className="w-full">
@@ -1018,11 +1019,31 @@ const ClinicalRulesAdmin = () => {
                             <tbody>
                                 {currentRules.length > 0 ? (
                                     currentRules.map(rule => {
+=======
+                <div className="space-y-4">
+                    {/* Desktop View Table */}
+                    <div className="hidden lg:block overflow-x-auto rounded-xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
+                        <table className="w-full text-left">
+                            <thead className="bg-gray-50/50 border-b border-gray-100">
+                                <tr>
+                                    <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
+                                    <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Protocol Designation</th>
+                                    <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Taxonomy</th>
+                                    <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Severity</th>
+                                    <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Calibration</th>
+                                    {isAdmin && <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Operations</th>}
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-50">
+                                {filteredRules.length > 0 ? (
+                                    filteredRules.map(rule => {
+>>>>>>> ceb1624 (email verification)
                                         const ruleTypeInfo = getRuleTypeInfo(rule.rule_type);
                                         const severityInfo = getSeverityInfo(rule.severity);
                                         const Icon = ruleTypeInfo.icon;
 
                                         return (
+<<<<<<< HEAD
                                             <tr key={rule.id} className="border-b hover:bg-gray-50">
                                                 <td className="p-3">
                                                     {isAdmin ? (
@@ -1088,6 +1109,69 @@ const ClinicalRulesAdmin = () => {
                                                                 title="Delete Rule"
                                                             >
                                                                 <FaTrash />
+=======
+                                            <tr key={rule.id} className="group hover:bg-gray-50/80 transition-all duration-200">
+                                                <td className="p-4 whitespace-nowrap">
+                                                    {isAdmin ? (
+                                                        <button
+                                                            onClick={() => toggleRuleStatus(rule.id, rule.is_active)}
+                                                            className={`flex items-center gap-2 p-1.5 rounded-lg transition-all active:scale-90 ${rule.is_active ? 'text-green-600 bg-green-50' : 'text-gray-400 bg-gray-50'}`}
+                                                            title={rule.is_active ? 'Active - Click to deactivate' : 'Inactive - Click to activate'}
+                                                        >
+                                                            {rule.is_active ? <FaToggleOn size={22} /> : <FaToggleOff size={22} />}
+                                                            <span className="text-[10px] font-black uppercase tracking-tighter">{rule.is_active ? 'Active' : 'Offline'}</span>
+                                                        </button>
+                                                    ) : (
+                                                        <div className="flex items-center gap-2 text-gray-400">
+                                                            {rule.is_active ? <FaToggleOn size={22} className="text-green-600" /> : <FaToggleOff size={22} />}
+                                                            <span className="text-[10px] font-black uppercase tracking-tighter">{rule.is_active ? 'Active' : 'Offline'}</span>
+                                                        </div>
+                                                    )}
+                                                </td>
+                                                <td className="p-4">
+                                                    <div className="font-black text-gray-900 text-sm mb-0.5 leading-tight group-hover:text-purple-600 transition-colors">{rule.rule_name}</div>
+                                                    {rule.rule_description && (
+                                                        <div className="text-[11px] font-medium text-gray-500 line-clamp-1 italic">{rule.rule_description}</div>
+                                                    )}
+                                                </td>
+                                                <td className="p-4 whitespace-nowrap">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className={`p-1.5 rounded-lg ${ruleTypeInfo.color}`}>
+                                                            <Icon className="text-xs" />
+                                                        </div>
+                                                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-700">
+                                                            {ruleTypeInfo.label}
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td className="p-4 whitespace-nowrap">
+                                                    <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border ${severityInfo.color}`}>
+                                                        {severityInfo.label}
+                                                    </span>
+                                                </td>
+                                                <td className="p-4 whitespace-nowrap">
+                                                    <div className="text-[10px] font-black text-gray-800 uppercase tracking-tighter">
+                                                        {rule.updated_at ? new Date(rule.updated_at).toLocaleDateString() : 'Initial'}
+                                                    </div>
+                                                    <div className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Calibration Date</div>
+                                                </td>
+                                                {isAdmin && (
+                                                    <td className="p-4 text-right">
+                                                        <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
+                                                            <button
+                                                                onClick={() => handleEdit(rule)}
+                                                                className="text-blue-500 hover:text-blue-700 p-2 hover:bg-white hover:shadow-sm rounded-xl border border-transparent hover:border-blue-100 transition-all active:scale-95"
+                                                                title="Edit Rule"
+                                                            >
+                                                                <FaEdit size={14} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDelete(rule.id)}
+                                                                className="text-red-400 hover:text-red-600 p-2 hover:bg-white hover:shadow-sm rounded-xl border border-transparent hover:border-red-100 transition-all active:scale-95"
+                                                                title="Delete Rule"
+                                                            >
+                                                                <FaTrash size={14} />
+>>>>>>> ceb1624 (email verification)
                                                             </button>
                                                         </div>
                                                     </td>
@@ -1097,6 +1181,7 @@ const ClinicalRulesAdmin = () => {
                                     })
                                 ) : (
                                     <tr>
+<<<<<<< HEAD
                                         <td colSpan={isAdmin ? 6 : 5} className="p-6 text-center">
                                             <FaStethoscope className="text-4xl text-gray-300 mx-auto mb-3" />
                                             <p className="text-gray-500">
@@ -1110,6 +1195,15 @@ const ClinicalRulesAdmin = () => {
                                                     Create Your First Rule
                                                 </button>
                                             )}
+=======
+                                        <td colSpan={isAdmin ? 6 : 5} className="p-20 text-center">
+                                            <div className="flex flex-col items-center justify-center opacity-40">
+                                                <FaStethoscope className="text-6xl text-gray-200 mb-4 animate-pulse" />
+                                                <p className="text-sm font-black text-gray-400 uppercase tracking-widest">
+                                                    {loading ? 'Decrypting protocols...' : 'No logic signatures found'}
+                                                </p>
+                                            </div>
+>>>>>>> ceb1624 (email verification)
                                         </td>
                                     </tr>
                                 )}
@@ -1117,6 +1211,7 @@ const ClinicalRulesAdmin = () => {
                         </table>
                     </div>
 
+<<<<<<< HEAD
                     {/* Pagination Controls */}
                     {filteredRules.length > itemsPerPage && (
                         <div className="mt-6 flex flex-col md:flex-row justify-between items-center gap-4 py-4 px-2">
@@ -1162,6 +1257,83 @@ const ClinicalRulesAdmin = () => {
                         </div>
                     )}
                 </>
+=======
+                    {/* Mobile View Card Grid */}
+                    <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {filteredRules.length > 0 ? (
+                            filteredRules.map(rule => {
+                                const ruleTypeInfo = getRuleTypeInfo(rule.rule_type);
+                                const severityInfo = getSeverityInfo(rule.severity);
+                                const Icon = ruleTypeInfo.icon;
+
+                                return (
+                                    <div key={rule.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 hover:shadow-md transition-all group">
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`p-2.5 rounded-xl ${ruleTypeInfo.color}`}>
+                                                    <Icon className="text-sm" />
+                                                </div>
+                                                <div>
+                                                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">Protocol</span>
+                                                    <span className="text-[10px] font-black text-gray-800 uppercase tracking-tighter">{ruleTypeInfo.label}</span>
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-col items-end gap-2">
+                                                {isAdmin ? (
+                                                    <button
+                                                        onClick={() => toggleRuleStatus(rule.id, rule.is_active)}
+                                                        className={`p-1 rounded-lg transition-transform active:scale-90 ${rule.is_active ? 'text-green-500' : 'text-gray-200'}`}
+                                                    >
+                                                        {rule.is_active ? <FaToggleOn size={32} /> : <FaToggleOff size={32} />}
+                                                    </button>
+                                                ) : (
+                                                    <div className={rule.is_active ? 'text-green-500' : 'text-gray-200'}>
+                                                        {rule.is_active ? <FaToggleOn size={32} /> : <FaToggleOff size={32} />}
+                                                    </div>
+                                                )}
+                                                <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border ${severityInfo.color}`}>
+                                                    {severityInfo.label}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="mb-4">
+                                            <h4 className="font-black text-gray-900 text-sm leading-tight mb-1 group-hover:text-purple-600 transition-colors uppercase tracking-tight">
+                                                {rule.rule_name}
+                                            </h4>
+                                            <p className="text-[11px] text-gray-500 font-medium italic line-clamp-2 leading-relaxed">
+                                                {rule.rule_description || "System logical clinical framework."}
+                                            </p>
+                                        </div>
+
+                                        <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between gap-4">
+                                            <div className="text-[10px]">
+                                                <span className="block text-gray-400 font-black uppercase tracking-tighter leading-none mb-1">Calibration</span>
+                                                <span className="font-bold text-gray-700">{rule.updated_at ? new Date(rule.updated_at).toLocaleDateString() : 'INITIAL'}</span>
+                                            </div>
+                                            {isAdmin && (
+                                                <div className="flex gap-2">
+                                                    <button onClick={() => handleEdit(rule)} className="bg-blue-50 text-blue-600 p-2.5 rounded-xl border border-blue-100 flex items-center justify-center active:scale-95 transition-transform">
+                                                        <FaEdit size={14} />
+                                                    </button>
+                                                    <button onClick={() => handleDelete(rule.id)} className="bg-red-50 text-red-500 p-2.5 rounded-xl border border-red-100 flex items-center justify-center active:scale-95 transition-transform">
+                                                        <FaTrash size={14} />
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        ) : (
+                            <div className="col-span-full bg-white rounded-3xl border-2 border-dashed border-gray-100 p-12 text-center">
+                                <FaStethoscope className="text-4xl text-gray-200 mx-auto mb-3" />
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest italic">Node signatures missing from buffer.</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+>>>>>>> ceb1624 (email verification)
             ) : (
                 <div className="p-8 text-center bg-gray-50 rounded-lg border">
                     <FaLock className="text-4xl text-gray-300 mx-auto mb-3" />

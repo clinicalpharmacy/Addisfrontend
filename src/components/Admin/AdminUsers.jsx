@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-    FaSync, FaSearch, FaFilter, FaUserCircle, FaSpinner
+    FaSync, FaSearch, FaFilter, FaUserCircle, FaSpinner, FaUsers
 } from 'react-icons/fa';
 
 export const AdminUsers = ({
@@ -33,33 +33,40 @@ export const AdminUsers = ({
     });
 
     return (
-        <div className="space-y-6">
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-                    <div>
-                        <h2 className="text-xl font-bold text-gray-800">User Management</h2>
-                        <p className="text-sm text-gray-500">Manage and monitor all application users.</p>
+        <div className="space-y-4 sm:space-y-6 animate-fadeIn">
+            {/* Control Center */}
+            <div className="bg-white p-5 sm:p-6 rounded-[24px] shadow-sm border border-gray-100">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <div className="flex items-center gap-3">
+                        <div className="p-3 bg-blue-50 rounded-2xl">
+                            <FaUsers className="text-blue-600 text-xl" />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-black text-gray-900 leading-tight">Member Directory</h2>
+                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Global platform governance.</p>
+                        </div>
                     </div>
                     <button
                         onClick={onRefresh}
-                        className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition shadow-sm"
+                        className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-100 text-xs font-black active:scale-95"
                     >
-                        <FaSync className={loading ? 'animate-spin' : ''} /> Refresh Users
+                        <FaSync className={loading ? 'animate-spin' : ''} /> <span>Refresh Database</span>
                     </button>
                 </div>
 
-                {/* Filters */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="relative">
-                        <FaSearch className="absolute left-3 top-3 text-gray-400" />
+                {/* Intelligent Filters */}
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                    <div className="relative group">
+                        <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-500 transition-colors text-xs" />
                         <input
                             type="text"
-                            placeholder="Search by name, email, or institution..."
+                            placeholder="Filter by name, email, institution..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                            className="w-full pl-9 pr-4 py-3 bg-gray-50/50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all text-xs font-medium"
                         />
                     </div>
+<<<<<<< HEAD
                     <div className="relative">
                         <FaFilter className="absolute left-3 top-3 text-gray-400" />
                         <select
@@ -89,57 +96,107 @@ export const AdminUsers = ({
                             <option value="pending">Pending Only</option>
                             <option value="blocked">Blocked Only</option>
                         </select>
+=======
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="relative">
+                            <select
+                                value={filterRole}
+                                onChange={(e) => setFilterRole(e.target.value)}
+                                className="w-full pl-3 pr-8 py-3 bg-gray-50/50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-xs font-black appearance-none cursor-pointer uppercase tracking-tighter"
+                            >
+                                <option value="all">Every Role</option>
+                                <option value="admin">Administrators</option>
+                                <option value="pharmacist">Pharmacists</option>
+                                <option value="doctor">Medical Doctors</option>
+                                <option value="nurse">Nurse Pros</option>
+                                <option value="laboratory">Lab Techs</option>
+                                <option value="student">Health Students</option>
+                                <option value="company_admin">Org Admins</option>
+                            </select>
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-[10px]">▼</div>
+                        </div>
+                        <div className="relative">
+                            <select
+                                value={filterStatus}
+                                onChange={(e) => setFilterStatus(e.target.value)}
+                                className="w-full pl-3 pr-8 py-3 bg-gray-50/50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-xs font-black appearance-none cursor-pointer uppercase tracking-tighter"
+                            >
+                                <option value="all">All Status</option>
+                                <option value="approved">Clearance</option>
+                                <option value="pending">Awaiting</option>
+                            </select>
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-[10px]">▼</div>
+                        </div>
+>>>>>>> ceb1624 (email verification)
                     </div>
                 </div>
             </div>
 
             {loading && users.length === 0 ? (
-                <div className="py-20 text-center">
-                    <FaSpinner className="animate-spin text-4xl text-blue-500 mx-auto mb-4" />
-                    <p className="text-gray-500 font-medium">Fetching users...</p>
+                <div className="py-24 text-center bg-white rounded-[32px] border border-gray-100 shadow-sm">
+                    <div className="relative inline-block mb-4">
+                        <FaSpinner className="animate-spin text-5xl text-indigo-500/20" />
+                        <FaUserCircle className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl text-indigo-500" />
+                    </div>
+                    <p className="text-gray-400 font-black uppercase tracking-[0.2em] text-[10px]">Syncing User Cluster...</p>
                 </div>
             ) : filteredUsers.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {filteredUsers.map((user) => (
-                        <div key={user.id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col overflow-hidden group">
+                        <div key={user.id} className="group bg-white rounded-[24px] shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col overflow-hidden hover:-translate-y-1">
                             <div className="p-5 flex-1">
                                 <div className="flex items-start justify-between mb-4">
-                                    <div className="bg-blue-50 p-3 rounded-full group-hover:bg-blue-100 transition-colors">
-                                        <FaUserCircle className="text-blue-500 text-2xl" />
+                                    <div className="w-12 h-12 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-[16px] flex items-center justify-center transition-transform group-hover:scale-110">
+                                        <FaUserCircle className="text-indigo-400 text-2xl" />
                                     </div>
+<<<<<<< HEAD
                                     <div className="flex flex-col items-end gap-1">
                                         {getStatusBadge(user.approved, user.role, user.is_blocked)}
                                         {getRoleBadge(user.role)}
+=======
+                                    <div className="flex flex-col items-end gap-1.5 shrink-0">
+                                        <div className="scale-90 origin-right">
+                                            {getStatusBadge ? getStatusBadge(user.approved, user.role) : (
+                                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter ${user.approved ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                                                    {user.approved ? 'Verified' : 'Pending'}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="scale-90 origin-right">
+                                            {getRoleBadge ? getRoleBadge(user.role) : (
+                                                <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter bg-gray-100 text-gray-600">
+                                                    {user.role}
+                                                </span>
+                                            )}
+                                        </div>
+>>>>>>> ceb1624 (email verification)
                                     </div>
                                 </div>
 
-                                <div className="mb-4 min-w-0">
-                                    <h4 className="font-bold text-gray-800 text-lg truncate" title={user.full_name}>
+                                <div className="mb-5 min-w-0">
+                                    <h4 className="font-black text-gray-900 text-base leading-tight truncate mb-1" title={user.full_name}>
                                         {user.full_name}
                                     </h4>
-                                    <p className="text-sm text-gray-500 truncate" title={user.email}>
+                                    <p className="text-xs text-gray-500 font-medium truncate" title={user.email}>
                                         {user.email}
                                     </p>
                                 </div>
 
-                                <div className="space-y-2 pt-4 border-t border-gray-50">
-                                    <div className="flex justify-between items-center text-xs">
-                                        <span className="text-gray-400 uppercase tracking-wider font-semibold">Institution</span>
-                                        <span className="text-gray-700 font-medium truncate ml-4">
-                                            {user.institution || '-'}
+                                <div className="space-y-2 mt-auto">
+                                    <div className="flex justify-between items-center p-2.5 rounded-xl bg-gray-50/50 group-hover:bg-white transition-colors border border-transparent group-hover:border-gray-100">
+                                        <span className="text-[9px] text-gray-400 font-black uppercase tracking-widest shrink-0">Institution</span>
+                                        <span className="text-gray-700 font-bold text-[11px] truncate ml-3 max-w-[120px]">
+                                            {user.institution || 'Independent'}
                                         </span>
                                     </div>
-                                    <div className="flex justify-between items-center text-xs">
-                                        <span className="text-gray-400 uppercase tracking-wider font-semibold">Account Type</span>
-                                        <span className="text-gray-600 capitalize">{user.account_type || 'individual'}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-xs">
-                                        <span className="text-gray-400 uppercase tracking-wider font-semibold">Joined</span>
-                                        <span className="text-gray-600">{formatDate(user.created_at)}</span>
+                                    <div className="flex justify-between items-center p-2.5 rounded-xl bg-gray-50/50 group-hover:bg-white transition-colors border border-transparent group-hover:border-gray-100">
+                                        <span className="text-[9px] text-gray-400 font-black uppercase tracking-widest shrink-0">Joined On</span>
+                                        <span className="text-gray-500 font-bold text-[11px]">{formatDate(user.created_at)}</span>
                                     </div>
                                 </div>
                             </div>
 
+<<<<<<< HEAD
                             <div className="bg-gray-50 px-5 py-3 border-t flex justify-between items-center">
                                 <span className="text-[10px] text-gray-400 font-medium">ID: ...{user.id.slice(-8)}</span>
                                 <div className="flex gap-2">
@@ -161,15 +218,29 @@ export const AdminUsers = ({
                                         View Profile
                                     </button>
                                 </div>
+=======
+                            <div className="bg-gray-50/30 px-5 py-3 border-t border-gray-100 flex justify-between items-center">
+                                <span className="text-[9px] text-gray-400 font-black tracking-widest uppercase">ID: ...{user.id.slice(-6)}</span>
+                                <button
+                                    className="text-indigo-600 hover:text-indigo-800 text-[10px] font-black uppercase tracking-[0.1em] transition-all hover:gap-1 flex items-center gap-0.5"
+                                    onClick={() => {/* View Details */ }}
+                                >
+                                    Governance Center
+                                </button>
+>>>>>>> ceb1624 (email verification)
                             </div>
                         </div>
                     ))}
                 </div>
             ) : (
-                <div className="bg-white rounded-xl shadow-sm p-20 text-center border border-dashed border-gray-300">
-                    <div className="text-6xl mb-4">🔍</div>
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">No users found</h3>
-                    <p className="text-gray-500">Try adjusting your filters or search terms.</p>
+                <div className="bg-white rounded-[32px] shadow-sm p-20 text-center border-2 border-dashed border-gray-100">
+                    <div className="w-20 h-20 bg-gray-50 rounded-[28px] flex items-center justify-center mx-auto mb-6 transform -rotate-6">
+                        <FaSearch className="text-3xl text-gray-300" />
+                    </div>
+                    <h3 className="text-2xl font-black text-gray-900 mb-2">No Records Found</h3>
+                    <p className="text-gray-500 max-w-xs mx-auto text-sm font-medium">
+                        Your search didn't match any system members. Try broad search criteria.
+                    </p>
                 </div>
             )}
         </div>

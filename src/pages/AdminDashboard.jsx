@@ -124,47 +124,50 @@ const AdminDashboard = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 font-sans">
-            {/* Success/Error Alerts */}
-            {successMessage && (
-                <div className="fixed top-20 right-4 bg-green-500 text-white px-6 py-3 rounded-xl shadow-2xl z-50 animate-bounce">
-                    <div className="flex items-center gap-2">
-                        <FaCheckCircle /> {successMessage}
-                    </div>
-                </div>
-            )}
-            {generalError && (
-                <div className="fixed top-4 right-4 z-50 bg-red-50 border-l-4 border-red-500 p-4 rounded shadow-lg flex items-center gap-2 animate-slideIn">
-                    <FaExclamationTriangle className="text-red-500" />
-                    <span className="text-red-700">{generalError}</span>
+        <div className="min-h-screen bg-gray-50/50 font-sans overflow-x-hidden relative w-full">
+            {/* Alerts */}
+            {(successMessage || generalError) && (
+                <div className="fixed top-20 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md z-[100] space-y-2 pointer-events-none">
+                    {successMessage && (
+                        <div className="bg-green-600 text-white px-4 py-3 rounded-xl shadow-lg flex items-center justify-center gap-2 pointer-events-auto">
+                            <FaCheckCircle className="shrink-0" />
+                            <span className="text-xs font-bold">{successMessage}</span>
+                        </div>
+                    )}
+                    {generalError && (
+                        <div className="bg-red-600 text-white px-4 py-3 rounded-xl shadow-lg flex items-center justify-center gap-2 pointer-events-auto">
+                            <FaExclamationTriangle className="shrink-0" />
+                            <span className="text-xs font-bold">{generalError}</span>
+                        </div>
+                    )}
                 </div>
             )}
 
             {/* Header */}
-            <header className="bg-white shadow-lg mb-6 sticky top-0 z-40">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                        <div className="flex items-center gap-3">
-                            <div className="bg-blue-100 p-2 rounded-full">
-                                <FaUserCircle className="text-blue-600 text-2xl" />
+            <header className="bg-white border-b border-gray-100 mb-4 sticky top-0 z-40 w-full overflow-hidden">
+                <div className="max-w-7xl mx-auto px-4 py-3">
+                    <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
+                        <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                            <div className="bg-blue-600/10 p-2 rounded-xl">
+                                <FaUserCircle className="text-blue-600 text-xl" />
                             </div>
-                            <div>
-                                <h1 className="text-xl font-bold text-gray-800">Admin Dashboard</h1>
-                                <p className="text-xs text-gray-500">
-                                    {currentUser.full_name} <span className="text-blue-600">({currentUser.role})</span>
+                            <div className="min-w-0 font-sans">
+                                <h1 className="text-base font-black text-gray-900 leading-tight">Admin Dashboard</h1>
+                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                                    {currentUser.full_name.split(' ')[0]} <span className="text-blue-600">({currentUser.role})</span>
                                 </p>
                             </div>
                         </div>
-                        <div className="flex flex-wrap gap-2 text-sm">
-                            <button onClick={() => navigate('/home')} className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg flex items-center gap-2">
-                                <FaHome /> Main
-                            </button>
 
-                            <button onClick={handleRefresh} disabled={refreshing} className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto scrollbar-hide pb-0.5 sm:pb-0 touch-pan-x no-scrollbar">
+                            <button onClick={() => navigate('/home')} className="flex-1 sm:flex-none bg-gray-50 hover:bg-gray-100 text-gray-600 py-1.5 px-3 rounded-lg transition-all flex items-center justify-center gap-2 font-bold text-[11px] whitespace-nowrap shadow-sm border border-gray-200/50">
+                                <FaHome /> Home
+                            </button>
+                            <button onClick={handleRefresh} disabled={refreshing} className="flex-1 sm:flex-none bg-gray-50 hover:bg-gray-100 text-gray-600 py-1.5 px-3 rounded-lg transition-all flex items-center justify-center gap-2 font-bold text-[11px] whitespace-nowrap shadow-sm border border-gray-200/50">
                                 <FaSync className={refreshing ? 'animate-spin' : ''} /> Refresh
                             </button>
-                            <button onClick={handleLogout} className="bg-red-100 hover:bg-red-200 text-red-700 px-3 py-2 rounded-lg flex items-center gap-2">
-                                <FaSignOutAlt /> Logout
+                            <button onClick={handleLogout} className="flex-1 sm:flex-none bg-red-50 hover:bg-red-100 text-red-600 py-1.5 px-3 rounded-lg transition-all flex items-center justify-center gap-2 font-bold text-[11px] whitespace-nowrap shadow-sm border border-red-100/50">
+                                <FaSignOutAlt /> Exit
                             </button>
                         </div>
                     </div>
@@ -172,22 +175,22 @@ const AdminDashboard = () => {
             </header>
 
             {/* Navigation Tabs */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
-                <div className="bg-white rounded-xl shadow-sm p-1 overflow-x-auto">
+            <div className="max-w-7xl mx-auto px-4 mb-4 md:mb-6">
+                <div className="bg-white rounded-xl shadow-sm p-1 overflow-x-auto scrollbar-hide no-scrollbar">
                     <nav className="flex space-x-1 min-w-max">
                         {navigationTabs.map(tab => (
                             <button
                                 key={tab.id}
                                 onClick={() => setSelectedTab(tab.id)}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-all ${selectedTab === tab.id
-                                    ? 'bg-blue-600 text-white shadow-md'
-                                    : 'text-gray-600 hover:bg-gray-50'
+                                className={`px-4 py-2 rounded-lg text-xs md:text-sm font-bold flex items-center gap-2 transition-all shrink-0 ${selectedTab === tab.id
+                                    ? 'bg-blue-600 text-white shadow-sm'
+                                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
                                     }`}
                             >
-                                {tab.icon && <tab.icon />}
+                                <tab.icon className={selectedTab === tab.id ? 'scale-110' : 'opacity-70'} />
                                 {tab.label}
                                 {tab.count > 0 && (
-                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full text-white ${tab.color || 'bg-gray-500'}`}>
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full text-white font-black ${tab.color || 'bg-gray-500'}`}>
                                         {tab.count}
                                     </span>
                                 )}
@@ -198,7 +201,7 @@ const AdminDashboard = () => {
             </div>
 
             {/* Main Content Area */}
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
+            <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pb-10">
                 {selectedTab === 'overview' && (
                     <AdminOverview
                         stats={dashboardData.stats}

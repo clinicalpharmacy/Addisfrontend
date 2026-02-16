@@ -21,11 +21,7 @@ const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [backendStatus, setBackendStatus] = useState('checking');
-
     useEffect(() => {
-        checkBackendStatus();
-
         // Check if user is already logged in
         const token = localStorage.getItem('token');
         const userRole = localStorage.getItem('userRole');
@@ -39,19 +35,6 @@ const Login = () => {
             }
         }
     }, [navigate]);
-
-    const checkBackendStatus = async () => {
-        try {
-            console.log('🔍 Checking backend connection...');
-            // Using api utility
-            await api.get('/health');
-            setBackendStatus('online');
-            console.log('✅ Backend is online');
-        } catch (error) {
-            console.error('❌ Error checking backend:', error);
-            setBackendStatus('offline');
-        }
-    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -145,19 +128,6 @@ const Login = () => {
                     <p className="text-gray-600 italic">Enhance Patient Safety & Optimize Medicines Use</p>
                 </div>
 
-                {/* Status Indicator */}
-                <div className={`mb-6 flex items-center justify-center gap-2 px-4 py-2 rounded-full ${backendStatus === 'online' ? 'bg-green-100 text-green-800' :
-                    backendStatus === 'offline' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                    <div className={`w-2 h-2 rounded-full ${backendStatus === 'online' ? 'bg-green-500' :
-                        backendStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-500'
-                        } ${backendStatus === 'checking' ? 'animate-pulse' : ''}`}></div>
-                    <span className="text-sm font-medium">
-                        {backendStatus === 'online' ? 'System Online' :
-                            backendStatus === 'offline' ? 'System Offline' : 'Checking System...'}
-                    </span>
-                </div>
-
                 {/* Login Card */}
                 <div className="bg-white rounded-2xl shadow-xl p-8">
                     <div className="mb-8">
@@ -240,8 +210,8 @@ const Login = () => {
                         {/* Submit Button */}
                         <button
                             type="submit"
-                            disabled={loading || backendStatus === 'offline'}
-                            className={`w-full py-3 px-4 rounded-xl font-medium transition ${loading || backendStatus === 'offline'
+                            disabled={loading}
+                            className={`w-full py-3 px-4 rounded-xl font-medium transition ${loading
                                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                 : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl'
                                 }`}
@@ -264,7 +234,7 @@ const Login = () => {
                     {process.env.NODE_ENV === 'development' && (
                         <div className="mt-6 p-4 bg-gray-50 rounded-xl">
                             <p className="text-sm text-gray-600 mb-2">Quick Test (Dev Only):</p>
-                            <div className="flex flex-wrap gap-2">
+                            <div className="flex wrap gap-2">
                                 <button
                                     onClick={() => testLogin('admin@pharmacare.com', 'Admin@123')}
                                     className="px-3 py-1 text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 rounded"
@@ -287,6 +257,7 @@ const Login = () => {
                             Don't have an account?
                         </p>
                         <div className="grid grid-cols-2 gap-3">
+<<<<<<< HEAD
                             <button
                                 onClick={(e) => handleRegisterClick(e, 'individual')}
                                 disabled={loading}
@@ -299,6 +270,18 @@ const Login = () => {
                                 onClick={(e) => handleRegisterClick(e, 'organization')}
                                 disabled={loading}
                                 className="flex items-center justify-center gap-2 px-4 py-3 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl transition text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+=======
+                            <Link
+                                to="/signup?type=individual"
+                                className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl transition text-sm font-medium"
+                            >
+                                <FaUserCheck />
+                                Individual
+                            </Link>
+                            <Link
+                                to="/signup?type=organization"
+                                className="flex items-center justify-center gap-2 px-4 py-3 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl transition text-sm font-medium"
+>>>>>>> ceb1624 (email verification)
                             >
                                 <FaBuilding />
                                 Organization
@@ -310,6 +293,7 @@ const Login = () => {
                     <div className="mt-6 text-center">
                         <p className="text-xs text-gray-500">
                             Having trouble?{' '}
+<<<<<<< HEAD
                             <button
                                 onClick={() => {
                                     checkBackendStatus();
@@ -319,6 +303,11 @@ const Login = () => {
                             >
                                 Check connection
                             </button>
+=======
+                            <Link to="/forgot-password" title="Forgot Password" className="text-blue-600 hover:text-blue-800 underline">
+                                Reset your password
+                            </Link>
+>>>>>>> ceb1624 (email verification)
                         </p>
                     </div>
                 </div>

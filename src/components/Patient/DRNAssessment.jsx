@@ -776,6 +776,7 @@ const DRNAssessment = ({ patientCode }) => {
     }
 
     return (
+<<<<<<< HEAD
         <div className="w-full max-w-full overflow-x-hidden">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
                 <div className="bg-gradient-to-br from-purple-600 to-blue-600 p-3 rounded-full w-fit">
@@ -827,14 +828,81 @@ const DRNAssessment = ({ patientCode }) => {
                                             >
                                                 <FaSync /> Re-run
                                             </button>
+=======
+        <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 p-4 sm:p-6 md:p-8 border border-gray-100">
+            {/* Header Section */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
+                <div className="bg-gradient-to-br from-indigo-600 to-purple-700 p-4 rounded-2xl shadow-lg shadow-indigo-100 self-start sm:self-center">
+                    <FaStethoscope className="text-white text-2xl" />
+                </div>
+                <div className="min-w-0">
+                    <h2 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight">DRN Clinical Intelligence</h2>
+                    <p className="text-xs md:text-sm text-gray-500 font-bold uppercase tracking-widest mt-0.5">Decision Review Network • CDSS Core</p>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2">
+                        <span className="text-[11px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full uppercase tracking-tighter">ID: {patientCode}</span>
+                        <span className="text-[11px] font-black text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full uppercase tracking-tighter">REF: {userId?.substring(0, 8)}</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* CDSS Analysis Section - PREMIUM REVAMP */}
+            <div className="mb-10 relative group">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
+                <div className="relative bg-white rounded-2xl p-5 sm:p-8 border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="absolute top-0 right-0 p-8 bg-blue-500/5 rounded-bl-full pointer-events-none" />
+
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-lg md:text-xl font-black text-gray-900 flex items-center gap-3">
+                            <div className="p-2 bg-blue-600 rounded-lg shadow-md shadow-blue-100">
+                                <FaDatabase className="text-white text-sm" />
+                            </div>
+                            Clinical Analysis
+                        </h3>
+                        <button
+                            onClick={() => setShowAnalysis(!showAnalysis)}
+                            className="bg-gray-50 p-2 rounded-xl text-gray-400 hover:text-gray-900 transition-all hover:bg-gray-100 active:scale-90"
+                        >
+                            {showAnalysis ? <FaChevronUp /> : <FaChevronDown />}
+                        </button>
+                    </div>
+
+                    {showAnalysis && (
+                        <div className="space-y-6">
+                            {isAnalyzing ? (
+                                <div className="text-center py-12 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
+                                    <div className="relative inline-block mb-6">
+                                        <div className="absolute inset-0 bg-blue-500/20 blur-xl animate-pulse rounded-full"></div>
+                                        <FaSpinner className="animate-spin text-5xl text-blue-600 relative z-10" />
+                                    </div>
+                                    <p className="text-sm font-black text-gray-400 uppercase tracking-[0.2em]">Executing Diagnostics...</p>
+                                </div>
+                            ) : analysisResults ? (
+                                <div className="animate-fadeIn">
+                                    <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8 p-6 bg-blue-50/50 rounded-2xl border border-blue-100/50">
+                                        <div className="min-w-0">
+                                            <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">Analysis Status</p>
+                                            <h4 className={`text-xl font-black tracking-tight ${analysisResults.totalFindings > 0 ? 'text-gray-900' : 'text-green-600'}`}>
+                                                {analysisResults.summary}
+                                            </h4>
+>>>>>>> ceb1624 (email verification)
                                         </div>
+                                        <button
+                                            onClick={runCdssAnalysis}
+                                            className="w-full lg:w-auto px-6 py-3 bg-white text-blue-600 hover:bg-blue-600 hover:text-white border border-blue-200 rounded-xl font-black text-sm transition-all shadow-sm flex items-center justify-center gap-3 active:scale-95 group"
+                                        >
+                                            <FaSync className="text-xs group-hover:rotate-180 transition-transform duration-500" /> RE-RUN SCAN
+                                        </button>
                                     </div>
 
+<<<<<<< HEAD
 
                                     {/* Findings display */}
+=======
+>>>>>>> ceb1624 (email verification)
                                     {filteredFindings.length > 0 ? (
-                                        <div className="space-y-3">
+                                        <div className="grid gap-4">
                                             {filteredFindings.map((finding, idx) => (
+<<<<<<< HEAD
                                                 <div key={idx} className="p-3 sm:p-4 border rounded-lg hover:shadow-md transition bg-gray-50/30">
                                                     <div className="flex flex-col gap-3">
                                                         <div className="flex-1">
@@ -848,11 +916,41 @@ const DRNAssessment = ({ patientCode }) => {
                                                             </div>
                                                             <p className="text-sm text-gray-600 mb-2 leading-relaxed break-words">{finding.message}</p>
                                                         </div>
+=======
+                                                <div key={idx} className="p-5 sm:p-6 bg-white border border-gray-100 rounded-2xl hover:border-blue-300 hover:shadow-xl hover:shadow-blue-500/5 transition-all group relative">
+                                                    <div className="flex flex-col md:flex-row justify-between items-start gap-6">
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex flex-wrap items-center gap-2 mb-3">
+                                                                <span className="font-black text-gray-900 text-lg tracking-tight">{finding.cause}</span>
+                                                                <span className={`px-2.5 py-1 ${getSeverityColor(finding.severity)} text-[10px] font-black uppercase tracking-wider rounded-lg shadow-sm`}>
+                                                                    {finding.severity}
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-gray-600 text-sm md:text-base leading-relaxed mb-4">{finding.message}</p>
+                                                            <div className="flex flex-wrap items-center gap-3">
+                                                                <span className={`px-2.5 py-1 ${getCategoryColor(finding.category)} text-[10px] font-black rounded-lg border border-current/10 truncate`}>
+                                                                    {finding.category}
+                                                                </span>
+                                                                {finding.dtpType && (
+                                                                    <span className={`px-2.5 py-1 ${getDTPTypeColor(finding.dtpType)} text-[10px] font-black rounded-lg border border-current/10 truncate`}>
+                                                                        DTP: {finding.dtpType}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => handleReviewFinding(finding)}
+                                                            className="w-full md:w-auto px-5 py-3 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-100 hover:shadow-blue-200 transition-all flex items-center justify-center gap-2 lg:opacity-0 lg:group-hover:opacity-100 active:scale-95"
+                                                        >
+                                                            <FaEdit className="text-xs" /> ADD TO LOG
+                                                        </button>
+>>>>>>> ceb1624 (email verification)
                                                     </div>
                                                 </div>
                                             ))}
                                         </div>
                                     ) : (
+<<<<<<< HEAD
                                         <div className="text-center py-8">
                                             <FaCheckCircle className="text-3xl sm:text-4xl text-green-500 mx-auto mb-3" />
                                             <p className="text-gray-600 text-sm sm:text-base">No issues found matching current filter</p>
@@ -880,11 +978,49 @@ const DRNAssessment = ({ patientCode }) => {
             <div className="mb-8" id="assessment-form">
                 <h3 className="text-lg font-semibold mb-4 text-gray-800">1. Select DRN Category</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+=======
+                                        <div className="text-center py-16 bg-green-50/30 rounded-2xl border border-dashed border-green-200">
+                                            <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                <FaCheckCircle className="text-2xl text-green-600" />
+                                            </div>
+                                            <p className="text-green-800 font-black uppercase tracking-widest text-sm">System Clearance: No Issues Detected</p>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="text-center py-16">
+                                    <div className="bg-blue-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                                        <FaDatabase className="text-3xl text-blue-400" />
+                                    </div>
+                                    <h4 className="text-xl font-black text-gray-900 mb-2">Deep Diagnosis Required</h4>
+                                    <p className="text-gray-500 text-sm mb-8 max-w-md mx-auto">Initialize CDSS heuristics to identify potential drug-related problems and clinical inconsistencies.</p>
+                                    <button
+                                        onClick={runCdssAnalysis}
+                                        className="bg-blue-600 text-white px-10 py-4 rounded-2xl font-black text-sm uppercase tracking-[0.15em] shadow-xl shadow-blue-200 hover:scale-105 transition-all active:scale-95 flex items-center gap-3 mx-auto"
+                                    >
+                                        <FaDatabase className="text-xs" /> INITIALIZE CORE SCAN
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* 9 Category Selection Grid */}
+            <div className="mb-12" id="assessment-form">
+                <div className="px-1 mb-6">
+                    <h3 className="text-xl font-black text-gray-900 tracking-tight">Intelligence Matrix</h3>
+                    <p className="text-xs text-gray-400 font-bold uppercase tracking-[0.2em] mt-1">Select logic category for deep profiling</p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+>>>>>>> ceb1624 (email verification)
                     {Object.entries(drnCategories).map(([category, catData]) => {
                         const Icon = catData.icon;
                         const ruleCount = catData.ruleTypes.reduce((count, ruleType) => {
                             return count + (activeRules[ruleType]?.length || 0);
                         }, 0);
+                        const isSelected = selectedCategory === category;
 
                         return (
                             <button
@@ -895,6 +1031,7 @@ const DRNAssessment = ({ patientCode }) => {
                                     setWriteUps({});
                                     setEditId(null);
                                 }}
+<<<<<<< HEAD
                                 className={`group p-2.5 sm:p-4 rounded-2xl text-left transition-all duration-300 border h-full flex flex-col justify-between ${selectedCategory === category
                                     ? 'border-blue-500 bg-blue-50/50 text-blue-800 shadow-lg ring-2 ring-blue-100 transform sm:scale-[1.02]'
                                     : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50/5 text-gray-700 hover:shadow-md'
@@ -909,6 +1046,28 @@ const DRNAssessment = ({ patientCode }) => {
                                         <div className="text-[10px] sm:text-xs text-gray-500 mt-1.5 flex items-center gap-1.5">
                                             <span className="inline-block w-1 h-1 rounded-full bg-gray-300"></span>
                                             {ruleCount} Rules
+=======
+                                className={`group p-5 rounded-2xl text-left transition-all duration-300 border relative overflow-hidden ${isSelected
+                                    ? 'border-indigo-600 bg-indigo-600 text-white shadow-xl shadow-indigo-100 ring-4 ring-indigo-50'
+                                    : 'border-gray-100 bg-white hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-500/5 text-gray-700'
+                                    }`}
+                            >
+                                {!isSelected && (
+                                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-125 transition-transform">
+                                        <Icon className="text-4xl" />
+                                    </div>
+                                )}
+                                <div className="flex items-center gap-4 relative z-10">
+                                    <div className={`p-3 rounded-xl transition-colors duration-300 ${isSelected ? 'bg-white/20' : 'bg-gray-50 group-hover:bg-indigo-50'}`}>
+                                        <Icon className={`text-xl ${isSelected ? 'text-white' : 'text-indigo-600'}`} />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <div className={`font-black text-sm tracking-tight leading-tight ${isSelected ? 'text-white' : 'text-gray-900'} truncate`}>
+                                            {category}
+                                        </div>
+                                        <div className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${isSelected ? 'text-white/60' : 'text-gray-400'}`}>
+                                            {ruleCount} RULES • {menuItemsData[category]?.length || 0} CAUSES
+>>>>>>> ceb1624 (email verification)
                                         </div>
                                     </div>
                                 </div>
@@ -920,17 +1079,31 @@ const DRNAssessment = ({ patientCode }) => {
 
             {/* Cause Selection and Form */}
             {selectedCategory && (
+<<<<<<< HEAD
                 <div className="mb-8 p-3 sm:p-6 border rounded-2xl bg-gray-50/50 max-w-full overflow-hidden">
                     <h3 className="text-lg font-semibold mb-6 text-gray-800">
                         2. Select Causes for <span className="text-blue-600">{selectedCategory}</span>
                     </h3>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
+=======
+                <div className="mb-12 p-5 sm:p-8 border border-gray-100 rounded-3xl bg-gray-50/50 animate-fadeIn">
+                    <div className="flex items-center gap-3 mb-8">
+                        <div className={`p-2 rounded-lg ${getCategoryColor(selectedCategory)}`}>
+                            {React.createElement(drnCategories[selectedCategory]?.icon || FaStethoscope, { className: 'text-sm' })}
+                        </div>
+                        <h3 className="text-lg font-black text-gray-900 tracking-tight">
+                            {selectedCategory} <span className="text-gray-400 mx-2 text-sm">//</span> Causes
+                        </h3>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-10">
+>>>>>>> ceb1624 (email verification)
                         {menuItemsData[selectedCategory]?.map(cause => {
-                            const ruleCount = activeRules?.[cause.ruleType]?.length || 0;
                             const isSelected = selectedCauses.includes(cause.name);
 
                             return (
+<<<<<<< HEAD
                                 <label
                                     key={cause.name}
                                     className={`flex items-start gap-3 p-3 sm:p-4 border rounded-xl bg-white cursor-pointer transition-all ${isSelected
@@ -965,16 +1138,37 @@ const DRNAssessment = ({ patientCode }) => {
                                         </div>
                                     </div>
                                 </label>
+=======
+                                <button
+                                    key={cause.name}
+                                    onClick={() => handleCauseSelection(cause.name)}
+                                    className={`flex items-start gap-3 p-4 border rounded-xl transition-all duration-300 ${isSelected
+                                        ? 'bg-white border-indigo-600 shadow-lg shadow-indigo-100'
+                                        : 'bg-white/50 border-gray-100 hover:border-gray-300 opacity-70 hover:opacity-100'
+                                        }`}
+                                >
+                                    <div className={`mt-0.5 w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${isSelected ? 'bg-indigo-600 border-indigo-600' : 'bg-gray-100 border-gray-200'}`}>
+                                        {isSelected && <FaCheckCircle className="text-white text-[10px]" />}
+                                    </div>
+                                    <div className="text-left min-w-0">
+                                        <p className={`font-black tracking-tight text-sm ${isSelected ? 'text-gray-900' : 'text-gray-500'}`}>{cause.name}</p>
+                                        {isSelected && cause.dtpType && (
+                                            <span className={`inline-block mt-2 px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter rounded-md ${getDTPTypeColor(cause.dtpType)}`}>
+                                                {cause.dtpType}
+                                            </span>
+                                        )}
+                                    </div>
+                                </button>
+>>>>>>> ceb1624 (email verification)
                             );
                         })}
                     </div>
 
                     {selectedCauses.map(causeName => {
-                        const causeDetails = menuItemsData[selectedCategory]?.find(
-                            c => c.name === causeName
-                        );
+                        const causeDetails = menuItemsData[selectedCategory]?.find(c => c.name === causeName);
 
                         return (
+<<<<<<< HEAD
                             <div
                                 key={causeName}
                                 className="mb-6 p-4 sm:p-6 border rounded-2xl bg-white shadow-md border-blue-100 max-w-full overflow-hidden"
@@ -987,10 +1181,22 @@ const DRNAssessment = ({ patientCode }) => {
                                     {causeDetails?.dtpType && (
                                         <span className={`w-fit px-3 py-1 text-xs sm:text-sm rounded-full font-medium ${getDTPTypeColor(causeDetails.dtpType)}`}>
                                             DTP Type: {causeDetails.dtpType}
+=======
+                            <div key={causeName} className="mb-6 p-6 sm:p-8 bg-white border border-gray-100 rounded-3xl shadow-xl shadow-gray-200/20 animate-slideIn">
+                                <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-8">
+                                    <div className="min-w-0">
+                                        <h4 className="font-black text-xl text-gray-900 tracking-tight">{causeName}</h4>
+                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Assessment Documentation</p>
+                                    </div>
+                                    {causeDetails?.dtpType && (
+                                        <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg shadow-sm ${getDTPTypeColor(causeDetails.dtpType)}`}>
+                                            DTP: {causeDetails.dtpType}
+>>>>>>> ceb1624 (email verification)
                                         </span>
                                     )}
                                 </div>
 
+<<<<<<< HEAD
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -1049,32 +1255,75 @@ const DRNAssessment = ({ patientCode }) => {
                                             className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
                                             placeholder="e.g., Enalapril 10mg"
                                             required
+=======
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Specific Case</label>
+                                        <input
+                                            type="text"
+                                            value={writeUps[causeName]?.specificCase || ''}
+                                            onChange={e => handleWriteUpChange(causeName, 'specificCase', e.target.value)}
+                                            className="w-full bg-gray-50 border-none rounded-2xl p-4 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-indigo-500/20 transition-all placeholder:text-gray-300"
+                                            placeholder="Environmental factors/Patient history..."
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Medical Condition</label>
+                                        <input
+                                            type="text"
+                                            value={writeUps[causeName]?.medicalCondition || ''}
+                                            onChange={e => handleWriteUpChange(causeName, 'medicalCondition', e.target.value)}
+                                            className="w-full bg-gray-50 border-none rounded-2xl p-4 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-indigo-500/20 transition-all placeholder:text-gray-300"
+                                            placeholder="Primary Diagnosis..."
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Active Medication</label>
+                                        <input
+                                            type="text"
+                                            value={writeUps[causeName]?.medication || ''}
+                                            onChange={e => handleWriteUpChange(causeName, 'medication', e.target.value)}
+                                            className="w-full bg-gray-50 border-none rounded-2xl p-4 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-indigo-500/20 transition-all placeholder:text-gray-300"
+                                            placeholder="Drug name & dosage..."
+>>>>>>> ceb1624 (email verification)
                                         />
                                     </div>
                                 </div>
 
+<<<<<<< HEAD
                                 <div className="flex flex-col sm:flex-row gap-3 mt-8">
                                     <button
                                         onClick={() => saveAssessment(causeName)}
                                         className="w-fit sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-xl font-bold shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2"
                                     >
                                         <FaClipboardCheck /> {editId !== null ? 'Update Assessment' : 'Save Assessment'}
+=======
+                                <div className="flex flex-col sm:flex-row gap-3 mt-10">
+                                    <button
+                                        onClick={() => saveAssessment(causeName)}
+                                        className="flex-1 px-8 py-4 bg-gray-900 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-gray-200 hover:bg-indigo-600 transition-all active:scale-[0.98]"
+                                    >
+                                        {editId !== null ? 'UPDATE LOG' : 'COMMIT ASSESSMENT'}
+>>>>>>> ceb1624 (email verification)
                                     </button>
-
                                     <button
                                         onClick={() => {
-                                            setSelectedCauses(prev =>
-                                                prev.filter(c => c !== causeName)
-                                            );
+                                            setSelectedCauses(prev => prev.filter(c => c !== causeName));
                                             setWriteUps(prev => {
                                                 const newWriteUps = { ...prev };
                                                 delete newWriteUps[causeName];
                                                 return newWriteUps;
                                             });
                                         }}
+<<<<<<< HEAD
                                         className="w-fit sm:w-auto px-8 py-3 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 flex items-center justify-center gap-2"
+=======
+                                        className="px-8 py-4 bg-gray-50 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all"
+>>>>>>> ceb1624 (email verification)
                                     >
-                                        Cancel
+                                        DISCARD
                                     </button>
                                 </div>
                             </div>
@@ -1083,6 +1332,7 @@ const DRNAssessment = ({ patientCode }) => {
                 </div>
             )}
 
+<<<<<<< HEAD
             {/* Saved Assessments Section */}
             <div className="mt-8 border-t pt-8">
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6">
@@ -1175,6 +1425,84 @@ const DRNAssessment = ({ patientCode }) => {
                                                     >
                                                         <FaTrash className="text-sm" />
                                                     </button>
+=======
+            {/* Saved Assessments - MOBILE OPTIMIZED CARDS */}
+            <div className="mt-16">
+                <div className="flex justify-between items-center mb-10 px-1">
+                    <div>
+                        <h3 className="text-2xl font-black text-gray-900 tracking-tight">Analysis Archive</h3>
+                        <p className="text-xs text-gray-400 font-bold uppercase tracking-[0.2em] mt-1">Historical decision log ({assessments.length})</p>
+                    </div>
+                    {assessments.length > 0 && (
+                        <button
+                            onClick={() => fetchAssessments()}
+                            className="bg-white p-3 rounded-2xl border border-gray-100 shadow-sm text-gray-400 hover:text-indigo-600 transition-all active:rotate-180 duration-500"
+                        >
+                            <FaSync className={isLoading ? 'animate-spin' : ''} />
+                        </button>
+                    )}
+                </div>
+
+                {isLoading ? (
+                    <div className="text-center py-20 bg-gray-50/50 rounded-3xl border border-dashed border-gray-200">
+                        <FaSpinner className="animate-spin text-4xl text-gray-300 mx-auto mb-4" />
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Retrieving Secure Records...</p>
+                    </div>
+                ) : assessments.length === 0 ? (
+                    <div className="text-center py-24 bg-gray-50/30 rounded-3xl border border-dashed border-gray-100">
+                        <div className="bg-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-gray-50">
+                            <FaFileAlt className="text-3xl text-gray-100" />
+                        </div>
+                        <p className="text-gray-300 font-black uppercase tracking-widest text-xs">No entries in the archive</p>
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        {/* Tablet/Desktop Table View - Hidden on Mobile */}
+                        <div className="hidden md:block overflow-hidden rounded-3xl border border-gray-100 bg-white">
+                            <table className="w-full text-left">
+                                <thead>
+                                    <tr className="bg-gray-50 border-b border-gray-100">
+                                        <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Focus Area</th>
+                                        <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Diagnosis/DTP</th>
+                                        <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Case Details</th>
+                                        <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Security Status</th>
+                                        <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {assessments.map((assessment) => (
+                                        <tr key={assessment.id} className="hover:bg-gray-50/50 transition-colors group">
+                                            <td className="px-6 py-5">
+                                                <div className="flex flex-col">
+                                                    <span className="font-black text-gray-900 text-sm tracking-tight">{assessment.category}</span>
+                                                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">{assessment.cause_name}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-5">
+                                                <div className="flex flex-col gap-1.5">
+                                                    <span className={`inline-flex px-2 py-0.5 text-[9px] font-black uppercase tracking-tighter rounded-md w-fit bg-gray-100 text-gray-500`}>{assessment.dtp_type || 'STANDARD'}</span>
+                                                    <span className="text-xs font-bold text-gray-600 truncate max-w-[150px]">{assessment.medical_condition}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-5">
+                                                <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed max-w-[200px] font-medium">{assessment.specific_case}</p>
+                                            </td>
+                                            <td className="px-6 py-5">
+                                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-full ${assessment.status === 'active' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
+                                                        assessment.status === 'resolved' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
+                                                            'bg-blue-50 text-blue-600 border border-blue-100'
+                                                    }`}>
+                                                    <div className={`w-1 h-1 rounded-full animate-pulse ${assessment.status === 'active' ? 'bg-amber-600' :
+                                                            assessment.status === 'resolved' ? 'bg-emerald-600' : 'bg-blue-600'
+                                                        }`} />
+                                                    {assessment.status}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-5 text-right">
+                                                <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                                                    <button onClick={() => handleEdit(assessment)} className="p-2.5 bg-white shadow-sm border border-gray-100 text-indigo-600 rounded-xl hover:bg-indigo-600 hover:text-white transition-all"><FaEdit className="text-sm" /></button>
+                                                    <button onClick={() => handleDeleteAssessment(assessment.id)} className="p-2.5 bg-white shadow-sm border border-gray-100 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"><FaTrash className="text-sm" /></button>
+>>>>>>> ceb1624 (email verification)
                                                 </div>
                                             </td>
                                         </tr>
@@ -1183,6 +1511,7 @@ const DRNAssessment = ({ patientCode }) => {
                             </table>
                         </div>
 
+<<<<<<< HEAD
                         {/* Mobile Card View */}
                         <div className="lg:hidden space-y-4 max-w-full">
                             {assessments.map((assessment) => (
@@ -1197,10 +1526,23 @@ const DRNAssessment = ({ patientCode }) => {
                                         <span className={`px-2.5 py-1 text-[10px] uppercase font-bold rounded-full ${assessment.status === 'active' ? 'bg-yellow-100 text-yellow-800' :
                                             assessment.status === 'resolved' ? 'bg-green-100 text-green-800' :
                                                 'bg-blue-100 text-blue-800'
+=======
+                        {/* Mobile Card View - Hidden on Desktop */}
+                        <div className="grid grid-cols-1 gap-4 md:hidden">
+                            {assessments.map((assessment) => (
+                                <div key={assessment.id} className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm active:scale-[0.98] transition-transform">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="min-w-0">
+                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">{assessment.category}</span>
+                                            <h4 className="font-black text-gray-900 tracking-tight truncate">{assessment.cause_name}</h4>
+                                        </div>
+                                        <span className={`px-2.5 py-1 text-[9px] font-black uppercase tracking-widest rounded-full ${assessment.status === 'active' ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600'
+>>>>>>> ceb1624 (email verification)
                                             }`}>
                                             {assessment.status}
                                         </span>
                                     </div>
+<<<<<<< HEAD
 
                                     <div className="bg-gray-50 rounded-xl p-3 mb-4">
                                         <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Specific Case</p>
@@ -1229,12 +1571,26 @@ const DRNAssessment = ({ patientCode }) => {
                                             >
                                                 <FaTrash />
                                             </button>
+=======
+                                    <div className="bg-gray-50 p-3 rounded-xl mb-4">
+                                        <p className="text-[11px] text-gray-600 line-clamp-2 font-bold leading-tight italic">"{assessment.specific_case}"</p>
+                                    </div>
+                                    <div className="flex justify-between items-center gap-3 pt-4 border-t border-gray-50">
+                                        <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg uppercase tracking-tight">{assessment.dtp_type || 'STANDARD'}</span>
+                                        <div className="flex gap-2">
+                                            <button onClick={() => handleEdit(assessment)} className="p-2.5 bg-gray-50 text-indigo-600 rounded-xl active:bg-indigo-100"><FaEdit /></button>
+                                            <button onClick={() => handleDeleteAssessment(assessment.id)} className="p-2.5 bg-gray-50 text-red-500 rounded-xl active:bg-red-100"><FaTrash /></button>
+>>>>>>> ceb1624 (email verification)
                                         </div>
                                     </div>
                                 </div>
                             ))}
                         </div>
+<<<<<<< HEAD
                     </>
+=======
+                    </div>
+>>>>>>> ceb1624 (email verification)
                 )}
             </div>
         </div>
