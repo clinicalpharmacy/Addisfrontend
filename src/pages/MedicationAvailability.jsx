@@ -378,7 +378,7 @@ const MedicationAvailability = () => {
                     {/* Add/Edit Form (In-list) */}
                     {showAddForm && (
                         <div className="bg-white p-6 rounded-2xl shadow-lg border-2 border-blue-100 mb-6">
-                            <h2 className="text-lg font-bold mb-4 text-gray-800">{isEditing ? 'Edit Medication' : 'የሚፈልጉትን መድሃኒት ይጻፉ'}</h2>
+                            <h2 className="text-lg font-bold mb-4 text-gray-800">{isEditing ? 'Edit Medication' : 'የሚፈለገውን መድሃኒት ይጻፉ'}</h2>
                             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="md:col-span-2">
                                     <input
