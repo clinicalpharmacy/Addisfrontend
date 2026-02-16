@@ -73,78 +73,44 @@ export const AdminOverview = ({
                             <p className="text-[10px] md:text-sm text-purple-500 font-bold uppercase tracking-tight truncate">Companies</p>
                             <p className="text-xl md:text-3xl font-black text-purple-600 leading-tight">{companiesCount || 0}</p>
                         </div>
-<<<<<<< HEAD
-                        <div className="p-3 bg-indigo-100 rounded-full">
-                            <FaHospital className="text-indigo-600 text-xl" />
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-white rounded-xl shadow p-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm text-gray-600">Students</p>
-                            <p className="text-3xl font-bold text-blue-500">{stats.student_count || 0}</p>
-                            <p className="text-xs text-gray-500 mt-1">Medical Students</p>
-                        </div>
-                        <div className="p-3 bg-blue-100 rounded-full">
-                            <FaUsers className="text-blue-500 text-xl" />
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-white rounded-xl shadow p-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm text-gray-600">Laboratory</p>
-                            <p className="text-3xl font-bold text-red-600">{stats.laboratory_count || 0}</p>
-                            <p className="text-xs text-gray-500 mt-1">Lab Professionals</p>
-                        </div>
-                        <div className="p-3 bg-red-100 rounded-full">
-                            <FaFlask className="text-red-600 text-xl" />
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-white rounded-xl shadow p-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm text-gray-600">Other Pros</p>
-                            <p className="text-3xl font-bold text-gray-600">{stats.others_count || 0}</p>
-                            <p className="text-xs text-gray-500 mt-1">Health Officers/Other</p>
-                        </div>
-                        <div className="p-3 bg-gray-100 rounded-full">
-                            <FaBriefcase className="text-gray-600 text-xl" />
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-white rounded-xl shadow p-6 border-l-4 border-red-500 cursor-pointer hover:bg-gray-50 transition" onClick={() => onTabChange('users')}>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm text-gray-600 font-medium">Blocked Users</p>
-                            <p className="text-3xl font-bold text-red-600">{stats.blocked_users || 0}</p>
-                            <p className="text-xs text-gray-500 mt-1">Accounts suspended</p>
-                        </div>
-                        <div className="p-3 bg-red-100 rounded-full">
-                            <FaUsers className="text-red-500 text-xl" />
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-white rounded-xl shadow p-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm text-gray-600">Companies</p>
-                            <p className="text-3xl font-bold text-purple-600">{companiesCount || 0}</p>
-                            <p className="text-xs text-gray-500 mt-1">Registered Institutions</p>
-                        </div>
-                        <div className="p-3 bg-purple-100 rounded-full">
-                            <FaHospital className="text-purple-600 text-xl" />
-=======
                         <div className="p-2 md:p-3 bg-purple-50 rounded-lg flex-shrink-0">
                             <FaBuilding className="text-purple-600 text-sm md:text-xl" />
->>>>>>> ceb1624 (email verification)
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md">
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                            <p className="text-[10px] md:text-sm text-blue-500 font-bold uppercase tracking-tight truncate">Students</p>
+                            <p className="text-xl md:text-3xl font-black text-blue-600 leading-tight">{stats.student_count || 0}</p>
+                        </div>
+                        <div className="p-2 md:p-3 bg-blue-50 rounded-lg flex-shrink-0">
+                            <FaUsers className="text-blue-500 text-sm md:text-xl" />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md">
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                            <p className="text-[10px] md:text-sm text-red-500 font-bold uppercase tracking-tight truncate">Laboratory</p>
+                            <p className="text-xl md:text-3xl font-black text-red-600 leading-tight">{stats.laboratory_count || 0}</p>
+                        </div>
+                        <div className="p-2 md:p-3 bg-red-50 rounded-lg flex-shrink-0">
+                            <FaFlask className="text-red-600 text-sm md:text-xl" />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md border-l-4 border-red-500 cursor-pointer" onClick={() => onTabChange('users')}>
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                            <p className="text-[10px] md:text-sm text-red-600 font-bold uppercase tracking-tight truncate">Blocked Users</p>
+                            <p className="text-xl md:text-3xl font-black text-red-600 leading-tight">{stats.blocked_users || 0}</p>
+                        </div>
+                        <div className="p-2 md:p-3 bg-red-50 rounded-lg flex-shrink-0">
+                            <FaUsers className="text-red-600 text-sm md:text-xl" />
                         </div>
                     </div>
                 </div>
@@ -193,7 +159,7 @@ export const AdminOverview = ({
                         </h2>
                     </div>
                     <div className="p-6">
-                        <div className="grid grid-cols-1 gap-3">
+                        <div className="grid grid-cols-1 gap-4">
                             <button
                                 onClick={() => onTabChange('approvals')}
                                 className="w-full bg-amber-500 hover:bg-amber-600 text-white px-4 py-4 rounded-xl flex items-center justify-between transition-all shadow-md active:scale-[0.98]"
@@ -212,38 +178,27 @@ export const AdminOverview = ({
                                 )}
                             </button>
 
-<<<<<<< HEAD
-                            <button
-                                onClick={() => onTabChange('users')}
-                                className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg flex items-center justify-between transition shadow-sm"
-                            >
-                                <div className="flex items-center gap-2">
-                                    <FaUsers /> Manage Blocked Users
-                                </div>
-                                {stats.blocked_users > 0 && (
-                                    <span className="bg-white text-red-600 text-xs px-2 py-1 rounded-full font-bold">
-                                        {stats.blocked_users} blocked
-                                    </span>
-                                )}
-                            </button>
-=======
                             <div className="grid grid-cols-2 gap-3">
                                 <button
                                     onClick={() => onTabChange('users')}
-                                    className="bg-white hover:bg-gray-50 border border-gray-100 p-4 rounded-xl transition-all flex flex-col items-center gap-2 font-bold"
+                                    className="bg-white hover:bg-gray-50 border border-gray-100 p-4 rounded-xl transition-all flex flex-col items-center gap-2 font-bold group shadow-sm"
                                 >
-                                    <FaUsers className="text-blue-500" />
+                                    <FaUsers className="text-blue-500 group-hover:scale-110 transition-transform" />
                                     <span className="text-[10px] uppercase text-gray-400">Users</span>
+                                    {stats.blocked_users > 0 && (
+                                        <span className="bg-red-100 text-red-600 text-[9px] px-1.5 py-0.5 rounded-full mt-1">
+                                            {stats.blocked_users} blocked
+                                        </span>
+                                    )}
                                 </button>
                                 <button
                                     onClick={() => onTabChange('companies')}
-                                    className="bg-white hover:bg-gray-50 border border-gray-100 p-4 rounded-xl transition-all flex flex-col items-center gap-2 font-bold"
+                                    className="bg-white hover:bg-gray-50 border border-gray-100 p-4 rounded-xl transition-all flex flex-col items-center gap-2 font-bold group shadow-sm"
                                 >
-                                    <FaBuilding className="text-purple-500" />
+                                    <FaBuilding className="text-purple-500 group-hover:scale-110 transition-transform" />
                                     <span className="text-[10px] uppercase text-gray-400">Companies</span>
                                 </button>
                             </div>
->>>>>>> ceb1624 (email verification)
                         </div>
                     </div>
                 </div>

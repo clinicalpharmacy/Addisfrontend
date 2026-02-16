@@ -66,37 +66,6 @@ export const AdminUsers = ({
                             className="w-full pl-9 pr-4 py-3 bg-gray-50/50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all text-xs font-medium"
                         />
                     </div>
-<<<<<<< HEAD
-                    <div className="relative">
-                        <FaFilter className="absolute left-3 top-3 text-gray-400" />
-                        <select
-                            value={filterRole}
-                            onChange={(e) => setFilterRole(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none appearance-none cursor-pointer"
-                        >
-                            <option value="all">All Roles</option>
-                            <option value="admin">Admins</option>
-                            <option value="pharmacist">Pharmacists</option>
-                            <option value="doctor">Doctors</option>
-                            <option value="nurse">Nurses</option>
-                            <option value="laboratory">Laboratory</option>
-                            <option value="student">Students</option>
-                            <option value="company_admin">Company Admins</option>
-                        </select>
-                    </div>
-                    <div className="relative">
-                        <FaFilter className="absolute left-3 top-3 text-gray-400" />
-                        <select
-                            value={filterStatus}
-                            onChange={(e) => setFilterStatus(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none appearance-none cursor-pointer"
-                        >
-                            <option value="all">All Statuses</option>
-                            <option value="approved">Approved Only</option>
-                            <option value="pending">Pending Only</option>
-                            <option value="blocked">Blocked Only</option>
-                        </select>
-=======
                     <div className="grid grid-cols-2 gap-3">
                         <div className="relative">
                             <select
@@ -121,13 +90,13 @@ export const AdminUsers = ({
                                 onChange={(e) => setFilterStatus(e.target.value)}
                                 className="w-full pl-3 pr-8 py-3 bg-gray-50/50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-xs font-black appearance-none cursor-pointer uppercase tracking-tighter"
                             >
-                                <option value="all">All Status</option>
-                                <option value="approved">Clearance</option>
+                                <option value="all">Every Status</option>
+                                <option value="approved">Verified</option>
                                 <option value="pending">Awaiting</option>
+                                <option value="blocked">Blocked</option>
                             </select>
                             <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-[10px]">▼</div>
                         </div>
->>>>>>> ceb1624 (email verification)
                     </div>
                 </div>
             </div>
@@ -149,16 +118,11 @@ export const AdminUsers = ({
                                     <div className="w-12 h-12 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-[16px] flex items-center justify-center transition-transform group-hover:scale-110">
                                         <FaUserCircle className="text-indigo-400 text-2xl" />
                                     </div>
-<<<<<<< HEAD
-                                    <div className="flex flex-col items-end gap-1">
-                                        {getStatusBadge(user.approved, user.role, user.is_blocked)}
-                                        {getRoleBadge(user.role)}
-=======
                                     <div className="flex flex-col items-end gap-1.5 shrink-0">
                                         <div className="scale-90 origin-right">
-                                            {getStatusBadge ? getStatusBadge(user.approved, user.role) : (
-                                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter ${user.approved ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                                                    {user.approved ? 'Verified' : 'Pending'}
+                                            {getStatusBadge ? getStatusBadge(user.approved, user.role, user.is_blocked) : (
+                                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter ${user.is_blocked ? 'bg-red-100 text-red-700' : user.approved ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                                                    {user.is_blocked ? 'Blocked' : user.approved ? 'Verified' : 'Pending'}
                                                 </span>
                                             )}
                                         </div>
@@ -169,7 +133,6 @@ export const AdminUsers = ({
                                                 </span>
                                             )}
                                         </div>
->>>>>>> ceb1624 (email verification)
                                     </div>
                                 </div>
 
@@ -196,38 +159,27 @@ export const AdminUsers = ({
                                 </div>
                             </div>
 
-<<<<<<< HEAD
-                            <div className="bg-gray-50 px-5 py-3 border-t flex justify-between items-center">
-                                <span className="text-[10px] text-gray-400 font-medium">ID: ...{user.id.slice(-8)}</span>
-                                <div className="flex gap-2">
+                            <div className="bg-gray-50/30 px-5 py-3 border-t border-gray-100 flex justify-between items-center">
+                                <div className="flex flex-col">
+                                    <span className="text-[9px] text-gray-400 font-black tracking-widest uppercase">ID: ...{user.id.slice(-6)}</span>
                                     {user.role !== 'admin' && (
                                         <button
                                             onClick={() => onToggleBlock(user.id)}
-                                            className={`text-xs font-bold px-2 py-1 rounded transition-colors ${user.is_blocked
-                                                ? 'bg-orange-100 text-orange-700 hover:bg-orange-200'
-                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                            className={`text-[9px] font-black uppercase tracking-tighter mt-1 transition-colors ${user.is_blocked
+                                                ? 'text-orange-600 hover:text-orange-700'
+                                                : 'text-gray-400 hover:text-red-500'
                                                 }`}
                                         >
-                                            {user.is_blocked ? 'Unblock' : 'Block'}
+                                            {user.is_blocked ? 'Emergency Unblock' : 'Restrict Access'}
                                         </button>
                                     )}
-                                    <button
-                                        className="text-blue-600 hover:text-blue-800 text-xs font-bold transition-colors"
-                                        onClick={() => {/* View Details */ }}
-                                    >
-                                        View Profile
-                                    </button>
                                 </div>
-=======
-                            <div className="bg-gray-50/30 px-5 py-3 border-t border-gray-100 flex justify-between items-center">
-                                <span className="text-[9px] text-gray-400 font-black tracking-widest uppercase">ID: ...{user.id.slice(-6)}</span>
                                 <button
                                     className="text-indigo-600 hover:text-indigo-800 text-[10px] font-black uppercase tracking-[0.1em] transition-all hover:gap-1 flex items-center gap-0.5"
                                     onClick={() => {/* View Details */ }}
                                 >
                                     Governance Center
                                 </button>
->>>>>>> ceb1624 (email verification)
                             </div>
                         </div>
                     ))}

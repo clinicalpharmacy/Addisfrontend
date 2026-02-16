@@ -234,18 +234,12 @@ const Sidebar = ({ onClose }) => {
                                 </div>
                             )}
                         </li>
-<<<<<<< HEAD
                         {isIndividual && (!isSubscribed || isNearExpiry) && (
                             <li className="mt-2 border-t pt-2">
-=======
-                        {isCompanyAdmin && (
-                            <li className="mt-4 border-t border-gray-50 pt-4">
->>>>>>> ceb1624 (email verification)
                                 <NavLink
                                     to="/subscription/plans"
                                     onClick={onClose}
                                     className={({ isActive }) =>
-<<<<<<< HEAD
                                         `flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${isActive
                                             ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-700 shadow-sm'
                                             : 'text-gray-600 hover:bg-blue-50 hover:text-blue-700 hover:shadow-sm'
@@ -254,7 +248,15 @@ const Sidebar = ({ onClose }) => {
                                 >
                                     <FaCreditCard className="text-lg text-blue-600" />
                                     <span className="font-medium">My Subscription</span>
-=======
+                                </NavLink>
+                            </li>
+                        )}
+                        {isCompanyAdmin && (
+                            <li className="mt-4 border-t border-gray-50 pt-4">
+                                <NavLink
+                                    to="/company-performance"
+                                    onClick={onClose}
+                                    className={({ isActive }) =>
                                         `flex items-center gap-3.5 p-3 rounded-xl transition-all duration-300 group ${isActive
                                             ? 'bg-purple-600 text-white shadow-lg shadow-purple-100 font-black'
                                             : 'text-gray-500 hover:bg-purple-50 hover:text-purple-700 font-bold'
@@ -263,7 +265,6 @@ const Sidebar = ({ onClose }) => {
                                 >
                                     <FaChartBar className="text-lg group-hover:scale-110 transition-transform" />
                                     <span className="text-sm">Org Performance</span>
->>>>>>> ceb1624 (email verification)
                                 </NavLink>
                             </li>
                         )}

@@ -1002,27 +1002,9 @@ const ClinicalRulesAdmin = () => {
 
             {/* Rules Container */}
             {currentUser ? (
-<<<<<<< HEAD
-                <>
-                    <div id="rules-table-container" className="overflow-x-auto rounded-lg border">
-                        <table className="w-full">
-                            <thead className="bg-gray-100">
-                                <tr>
-                                    <th className="p-3 text-left font-medium text-gray-700">Status</th>
-                                    <th className="p-3 text-left font-medium text-gray-700">Rule Name</th>
-                                    <th className="p-3 text-left font-medium text-gray-700">Type</th>
-                                    <th className="p-3 text-left font-medium text-gray-700">Severity</th>
-                                    <th className="p-3 text-left font-medium text-gray-700">Last Updated</th>
-                                    {isAdmin && <th className="p-3 text-left font-medium text-gray-700">Actions</th>}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {currentRules.length > 0 ? (
-                                    currentRules.map(rule => {
-=======
-                <div className="space-y-4">
+                <div className="space-y-6">
                     {/* Desktop View Table */}
-                    <div className="hidden lg:block overflow-x-auto rounded-xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
+                    <div id="rules-table-container" className="hidden lg:block overflow-x-auto rounded-xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
                         <table className="w-full text-left">
                             <thead className="bg-gray-50/50 border-b border-gray-100">
                                 <tr>
@@ -1035,81 +1017,13 @@ const ClinicalRulesAdmin = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
-                                {filteredRules.length > 0 ? (
-                                    filteredRules.map(rule => {
->>>>>>> ceb1624 (email verification)
+                                {currentRules.length > 0 ? (
+                                    currentRules.map(rule => {
                                         const ruleTypeInfo = getRuleTypeInfo(rule.rule_type);
                                         const severityInfo = getSeverityInfo(rule.severity);
                                         const Icon = ruleTypeInfo.icon;
 
                                         return (
-<<<<<<< HEAD
-                                            <tr key={rule.id} className="border-b hover:bg-gray-50">
-                                                <td className="p-3">
-                                                    {isAdmin ? (
-                                                        <button
-                                                            onClick={() => toggleRuleStatus(rule.id, rule.is_active)}
-                                                            className={`flex items-center gap-2 ${rule.is_active ? 'text-green-600' : 'text-gray-400'}`}
-                                                            title={rule.is_active ? 'Active - Click to deactivate' : 'Inactive - Click to activate'}
-                                                        >
-                                                            {rule.is_active ? <FaToggleOn size={20} /> : <FaToggleOff size={20} />}
-                                                            <span className="text-xs">{rule.is_active ? 'Active' : 'Inactive'}</span>
-                                                        </button>
-                                                    ) : (
-                                                        <div className="flex items-center gap-2">
-                                                            {rule.is_active ? (
-                                                                <FaToggleOn size={20} className="text-green-600" />
-                                                            ) : (
-                                                                <FaToggleOff size={20} className="text-gray-400" />
-                                                            )}
-                                                            <span className="text-xs">{rule.is_active ? 'Active' : 'Inactive'}</span>
-                                                        </div>
-                                                    )}
-                                                </td>
-                                                <td className="p-3">
-                                                    <div className="font-medium text-gray-800">{rule.rule_name}</div>
-                                                    {rule.rule_description && (
-                                                        <div className="text-sm text-gray-500 mt-1">{rule.rule_description}</div>
-                                                    )}
-                                                </td>
-                                                <td className="p-3">
-                                                    <div className="flex items-center gap-2">
-                                                        <Icon className={ruleTypeInfo.color.replace('bg-', 'text-').split(' ')[0]} />
-                                                        <span className={`px-2 py-1 rounded text-xs ${ruleTypeInfo.color}`}>
-                                                            {ruleTypeInfo.label}
-                                                        </span>
-                                                    </div>
-                                                    {rule.dtp_category && (
-                                                        <div className="text-xs text-gray-500 mt-1">
-                                                            DTP: {dtpCategories.find(c => c.value === rule.dtp_category)?.label || rule.dtp_category}
-                                                        </div>
-                                                    )}
-                                                </td>
-                                                <td className="p-3">
-                                                    <span className={`px-2 py-1 rounded text-xs ${severityInfo.color}`}>
-                                                        {severityInfo.label}
-                                                    </span>
-                                                </td>
-                                                <td className="p-3 text-sm text-gray-600">
-                                                    {rule.updated_at ? new Date(rule.updated_at).toLocaleDateString() : 'N/A'}
-                                                </td>
-                                                {isAdmin && (
-                                                    <td className="p-3">
-                                                        <div className="flex gap-2">
-                                                            <button
-                                                                onClick={() => handleEdit(rule)}
-                                                                className="text-blue-500 hover:text-blue-700 p-2 hover:bg-blue-50 rounded"
-                                                                title="Edit Rule"
-                                                            >
-                                                                <FaEdit />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleDelete(rule.id)}
-                                                                className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded"
-                                                                title="Delete Rule"
-                                                            >
-                                                                <FaTrash />
-=======
                                             <tr key={rule.id} className="group hover:bg-gray-50/80 transition-all duration-200">
                                                 <td className="p-4 whitespace-nowrap">
                                                     {isAdmin ? (
@@ -1129,7 +1043,7 @@ const ClinicalRulesAdmin = () => {
                                                     )}
                                                 </td>
                                                 <td className="p-4">
-                                                    <div className="font-black text-gray-900 text-sm mb-0.5 leading-tight group-hover:text-purple-600 transition-colors">{rule.rule_name}</div>
+                                                    <div className="font-black text-gray-900 text-sm mb-0.5 leading-tight group-hover:text-purple-600 transition-colors uppercase tracking-tight">{rule.rule_name}</div>
                                                     {rule.rule_description && (
                                                         <div className="text-[11px] font-medium text-gray-500 line-clamp-1 italic">{rule.rule_description}</div>
                                                     )}
@@ -1171,7 +1085,6 @@ const ClinicalRulesAdmin = () => {
                                                                 title="Delete Rule"
                                                             >
                                                                 <FaTrash size={14} />
->>>>>>> ceb1624 (email verification)
                                                             </button>
                                                         </div>
                                                     </td>
@@ -1181,21 +1094,6 @@ const ClinicalRulesAdmin = () => {
                                     })
                                 ) : (
                                     <tr>
-<<<<<<< HEAD
-                                        <td colSpan={isAdmin ? 6 : 5} className="p-6 text-center">
-                                            <FaStethoscope className="text-4xl text-gray-300 mx-auto mb-3" />
-                                            <p className="text-gray-500">
-                                                {loading ? 'Loading rules...' : 'No rules found'}
-                                            </p>
-                                            {isAdmin && (
-                                                <button
-                                                    onClick={() => setShowForm(true)}
-                                                    className="mt-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-4 py-2 rounded-lg text-sm"
-                                                >
-                                                    Create Your First Rule
-                                                </button>
-                                            )}
-=======
                                         <td colSpan={isAdmin ? 6 : 5} className="p-20 text-center">
                                             <div className="flex flex-col items-center justify-center opacity-40">
                                                 <FaStethoscope className="text-6xl text-gray-200 mb-4 animate-pulse" />
@@ -1203,7 +1101,6 @@ const ClinicalRulesAdmin = () => {
                                                     {loading ? 'Decrypting protocols...' : 'No logic signatures found'}
                                                 </p>
                                             </div>
->>>>>>> ceb1624 (email verification)
                                         </td>
                                     </tr>
                                 )}
@@ -1211,57 +1108,10 @@ const ClinicalRulesAdmin = () => {
                         </table>
                     </div>
 
-<<<<<<< HEAD
-                    {/* Pagination Controls */}
-                    {filteredRules.length > itemsPerPage && (
-                        <div className="mt-6 flex flex-col md:flex-row justify-between items-center gap-4 py-4 px-2">
-                            <div className="text-sm text-gray-600">
-                                Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredRules.length)} of {filteredRules.length} rules
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => handlePageChange(Math.max(currentPage - 1, 1))}
-                                    disabled={currentPage === 1}
-                                    className={`px-4 py-2 border rounded-lg text-sm transition-colors ${currentPage === 1
-                                        ? 'bg-gray-50 text-gray-400 cursor-not-allowed'
-                                        : 'hover:bg-purple-50 hover:text-purple-600 text-gray-700'}`}
-                                >
-                                    Previous
-                                </button>
-
-                                <div className="flex items-center gap-1">
-                                    {[...Array(totalPages)].map((_, i) => (
-                                        <button
-                                            key={i + 1}
-                                            onClick={() => handlePageChange(i + 1)}
-                                            className={`w-8 h-8 rounded-lg text-sm font-medium transition-all ${currentPage === i + 1
-                                                ? 'bg-purple-600 text-white shadow-md'
-                                                : 'text-gray-600 hover:bg-purple-50'
-                                                }`}
-                                        >
-                                            {i + 1}
-                                        </button>
-                                    ))}
-                                </div>
-
-                                <button
-                                    onClick={() => handlePageChange(Math.min(currentPage + 1, totalPages))}
-                                    disabled={currentPage === totalPages}
-                                    className={`px-4 py-2 border rounded-lg text-sm transition-colors ${currentPage === totalPages
-                                        ? 'bg-gray-50 text-gray-400 cursor-not-allowed'
-                                        : 'hover:bg-purple-50 hover:text-purple-600 text-gray-700'}`}
-                                >
-                                    Next
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </>
-=======
                     {/* Mobile View Card Grid */}
                     <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {filteredRules.length > 0 ? (
-                            filteredRules.map(rule => {
+                        {currentRules.length > 0 ? (
+                            currentRules.map(rule => {
                                 const ruleTypeInfo = getRuleTypeInfo(rule.rule_type);
                                 const severityInfo = getSeverityInfo(rule.severity);
                                 const Icon = ruleTypeInfo.icon;
@@ -1332,18 +1182,64 @@ const ClinicalRulesAdmin = () => {
                             </div>
                         )}
                     </div>
+
+                    {/* Pagination Controls */}
+                    {filteredRules.length > itemsPerPage && (
+                        <div className="mt-6 flex flex-col md:flex-row justify-between items-center gap-4 py-4 px-2">
+                            <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                DISCOVERY: {indexOfFirstItem + 1} - {Math.min(indexOfLastItem, filteredRules.length)} / {filteredRules.length} SIGNATURES
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => handlePageChange(Math.max(currentPage - 1, 1))}
+                                    disabled={currentPage === 1}
+                                    className={`px-4 py-2 border rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${currentPage === 1
+                                        ? 'bg-gray-50 text-gray-300 border-gray-50 cursor-not-allowed'
+                                        : 'hover:bg-purple-50 hover:text-purple-600 text-gray-600 border-gray-100 shadow-sm active:scale-95'}`}
+                                >
+                                    BACKWARD
+                                </button>
+
+                                <div className="flex items-center gap-1">
+                                    {[...Array(totalPages)].map((_, i) => (
+                                        <button
+                                            key={i + 1}
+                                            onClick={() => handlePageChange(i + 1)}
+                                            className={`w-8 h-8 rounded-lg text-xs font-black transition-all ${currentPage === i + 1
+                                                ? 'bg-purple-600 text-white shadow-lg shadow-purple-100'
+                                                : 'text-gray-400 hover:bg-purple-50 hover:text-purple-600'
+                                                }`}
+                                        >
+                                            {i + 1}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <button
+                                    onClick={() => handlePageChange(Math.min(currentPage + 1, totalPages))}
+                                    disabled={currentPage === totalPages}
+                                    className={`px-4 py-2 border rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${currentPage === totalPages
+                                        ? 'bg-gray-50 text-gray-300 border-gray-50 cursor-not-allowed'
+                                        : 'hover:bg-purple-50 hover:text-purple-600 text-gray-600 border-gray-100 shadow-sm active:scale-95'}`}
+                                >
+                                    FORWARD
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
->>>>>>> ceb1624 (email verification)
             ) : (
-                <div className="p-8 text-center bg-gray-50 rounded-lg border">
-                    <FaLock className="text-4xl text-gray-300 mx-auto mb-3" />
-                    <h3 className="text-lg font-medium text-gray-700 mb-2">Authentication Required</h3>
-                    <p className="text-gray-600 mb-4">Please log in to access the Clinical Rules Administration</p>
+                <div className="p-16 text-center bg-gray-50/50 rounded-3xl border border-dashed border-gray-200">
+                    <div className="bg-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-gray-50">
+                        <FaLock className="text-3xl text-gray-100" />
+                    </div>
+                    <h3 className="text-xl font-black text-gray-900 mb-2 uppercase tracking-tight">Access Restricted</h3>
+                    <p className="text-gray-400 mb-8 max-w-xs mx-auto text-xs font-bold uppercase tracking-widest">Initial authentication bypass required for protocol management.</p>
                     <a
                         href="/login"
-                        className="inline-block bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-2 rounded-lg"
+                        className="inline-block bg-gray-900 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-gray-200 transition-all hover:bg-purple-600 active:scale-95"
                     >
-                        Go to Login
+                        INITIALIZE SESSION
                     </a>
                 </div>
             )}
