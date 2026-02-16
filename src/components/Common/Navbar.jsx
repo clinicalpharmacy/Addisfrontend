@@ -5,7 +5,7 @@ import {
     FaHome,
     FaPills,
     FaBookMedical,
-    FaFlask,
+
     FaCogs,
     FaBell,
     FaUserCircle,

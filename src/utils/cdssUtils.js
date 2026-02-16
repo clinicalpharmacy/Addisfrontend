@@ -1,5 +1,5 @@
 import {
-    FaPills, FaPrescription, FaFlask, FaExclamationTriangle, FaClipboardCheck,
+    FaPills, FaPrescription, FaVial, FaExclamationTriangle, FaClipboardCheck,
     FaStethoscope, FaUser, FaChartLine, FaChartBar, FaCheckCircle,
     FaHeartbeat, FaCogs, FaBaby, FaChild, FaUserClock
 } from 'react-icons/fa';
@@ -8,7 +8,7 @@ export const getRuleTypeInfo = (type) => {
     const types = {
         'drug_interaction': { label: 'Drug Interaction', color: 'bg-red-100 text-red-800', icon: FaPills },
         'dose_check': { label: 'Dose Check', color: 'bg-blue-100 text-blue-800', icon: FaPrescription },
-        'lab_monitoring': { label: 'Lab Monitoring', color: 'bg-green-100 text-green-800', icon: FaFlask },
+        'lab_monitoring': { label: 'Lab Monitoring', color: 'bg-green-100 text-green-800', icon: FaVial },
         'contraindication': { label: 'Contraindication', color: 'bg-purple-100 text-purple-800', icon: FaExclamationTriangle },
         'allergy_check': { label: 'Allergy Check', color: 'bg-orange-100 text-orange-800', icon: FaExclamationTriangle },
         'duplicate_therapy': { label: 'Duplicate Therapy', color: 'bg-yellow-100 text-yellow-800', icon: FaClipboardCheck },

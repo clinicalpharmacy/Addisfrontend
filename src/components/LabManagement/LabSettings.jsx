@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import supabase from '../../utils/supabase';
 import {
-    FaFlask,
+
     FaPlus,
     FaTrash,
     FaEdit,
@@ -257,14 +257,14 @@ const LabSettings = ({ onUpdate }) => {
                 <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-gray-100 shadow-sm">
                     <div className="relative">
                         <FaSpinner className="animate-spin text-5xl text-indigo-600 mb-4" />
-                        <FaFlask className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xl text-indigo-400 opacity-50" />
+                        <FaVial className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xl text-indigo-400 opacity-50" />
                     </div>
                     <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Loading Lab Framework...</p>
                 </div>
             ) : filteredLabs.length === 0 ? (
                 <div className="bg-white rounded-3xl border-2 border-dashed border-gray-200 p-20 text-center">
                     <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <FaFlask className="text-4xl text-gray-300" />
+                        <FaVial className="text-4xl text-gray-300" />
                     </div>
                     <h3 className="text-xl font-black text-gray-800 mb-2">No Definitions Found</h3>
                     <p className="text-gray-500 max-w-sm mx-auto text-sm">

@@ -3,7 +3,7 @@ import supabase from '../../utils/supabase';
 import { mapPatientToFacts, evaluateRule } from '../CDSS/RuleEngine';
 import {
     FaStethoscope, FaEdit, FaDatabase, FaChevronUp, FaChevronDown,
-    FaPills, FaFlask, FaUserMd, FaChartLine, FaDownload, FaSync,
+    FaPills, FaUserMd, FaChartLine, FaDownload, FaSync,
     FaExclamationTriangle, FaCheckCircle, FaSpinner, FaSearch,
     FaHeartbeat, FaClipboardCheck, FaShieldAlt, FaUserCheck,
     FaMoneyBillWave, FaCapsules, FaTrash, FaPlus, FaFilter,

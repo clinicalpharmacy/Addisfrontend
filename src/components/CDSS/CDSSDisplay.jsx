@@ -5,7 +5,7 @@ import { getRuleTypeInfo, getTimeAgo, getAgeCategoryIcon, getAgeCategoryLabel } 
 import {
     FaBell, FaExclamationTriangle, FaCheckCircle, FaInfoCircle,
     FaUserMd, FaFilter, FaSync, FaDownload,
-    FaFlask, FaDatabase, FaEye, FaEyeSlash,
+    FaDatabase, FaEye, FaEyeSlash,
     FaClock, FaUser, FaCapsules, FaRedo, FaRocket,
     FaCalendarDay, FaUserTag, FaVial, FaBaby, FaChevronDown, FaChevronUp,
     FaExclamationCircle, FaHeartbeat

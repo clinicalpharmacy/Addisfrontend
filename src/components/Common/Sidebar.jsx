@@ -7,7 +7,7 @@ import {
     FaPills,
     FaBookMedical,
     FaCogs,
-    FaFlask,
+    FaVial,
     FaChartBar,
     FaChevronDown,
     FaChevronRight,
@@ -415,7 +415,7 @@ const Sidebar = ({ onClose }) => {
                                         }`
                                     }
                                 >
-                                    <FaFlask className="text-[10px] opacity-40" /> Remedies
+                                    <FaVial className="text-[10px] opacity-40" /> Remedies
                                 </NavLink>
                                 <NavLink
                                     to="/knowledge/illnesses"
@@ -504,7 +504,7 @@ const Sidebar = ({ onClose }) => {
                                         }`
                                     }
                                 >
-                                    <FaFlask className="text-lg" />
+                                    <FaVial className="text-lg" />
                                     <span className="font-medium">Lab Definitions</span>
                                 </NavLink>
                             </div>

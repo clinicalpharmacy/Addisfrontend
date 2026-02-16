@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
     FaUser,
     FaStethoscope,
-    FaFlask,
+
     FaSave,
     FaPills,
     FaChartLine,
@@ -248,7 +248,7 @@ const PatientDetails = () => {
             { id: 'overview', label: 'Overview', icon: FaUser },
             { id: 'demographics', label: 'Demographics', icon: FaUser },
             { id: 'vitals', label: 'Vitals', icon: FaHeartbeat },
-            { id: 'labs', label: 'Labs', icon: FaFlask },
+            { id: 'labs', label: 'Labs', icon: FaVial },
             { id: 'medications', label: 'Medications', icon: FaPills },
             { id: 'analysis', label: 'Clinical Analysis', icon: FaBrain },
             { id: 'drn', label: 'DRN Assessment', icon: FaBrain },

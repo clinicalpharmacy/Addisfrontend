@@ -1,6 +1,6 @@
 import React from 'react';
 import LabSettings from '../components/LabManagement/LabSettings';
-import { FaFlask, FaArrowLeft } from 'react-icons/fa';
+import { FaVial, FaArrowLeft } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
 const LabSettingsPage = () => {
@@ -21,7 +21,7 @@ const LabSettingsPage = () => {
                         <div>
                             <div className="flex items-center gap-2 mb-0.5">
                                 <div className="bg-indigo-600 p-1.5 rounded-lg">
-                                    <FaFlask className="text-white text-base" />
+                                    <FaVial className="text-white text-base" />
                                 </div>
                                 <h1 className="text-2xl font-black text-gray-900 tracking-tight">
                                     Lab Configuration

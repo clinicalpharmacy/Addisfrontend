@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import supabase from '../../utils/supabase';
 import {
-    FaFlask,
+    FaVial,
     FaPlus,
     FaSearch,
     FaExclamationTriangle,
@@ -308,7 +308,7 @@ const ExtemporaneousPrep = () => {
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                         <div className="flex items-center gap-3 min-w-0 flex-1">
                             <div className="bg-indigo-100 p-3 rounded-full flex-shrink-0">
-                                <FaFlask className="text-indigo-600 text-xl md:text-2xl" />
+                                <FaVial className="text-indigo-600 text-xl md:text-2xl" />
                             </div>
                             <div className="min-w-0 flex-1">
                                 <h1 className="text-2xl md:text-3xl font-bold text-gray-800 truncate">Compounding</h1>
@@ -414,7 +414,7 @@ const ExtemporaneousPrep = () => {
                                 >
                                     <div className="flex justify-between items-start mb-4">
                                         {/* Clickable name section */}
-                                        <div 
+                                        <div
                                             className="flex-1 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors"
                                             onClick={() => toggleCard(prep.id)}
                                         >
@@ -422,8 +422,8 @@ const ExtemporaneousPrep = () => {
                                                 <h3 className="font-bold text-lg text-gray-800 mb-1">
                                                     {prep.name || 'Unnamed'}
                                                 </h3>
-                                                {expandedCards[prep.id] ? 
-                                                    <FaChevronUp className="text-gray-500 text-sm" /> : 
+                                                {expandedCards[prep.id] ?
+                                                    <FaChevronUp className="text-gray-500 text-sm" /> :
                                                     <FaChevronDown className="text-gray-500 text-sm" />
                                                 }
                                             </div>
@@ -541,7 +541,7 @@ const ExtemporaneousPrep = () => {
                     </>
                 ) : (
                     <div className="text-center py-12">
-                        <FaFlask className="text-5xl text-gray-300 mx-auto mb-4" />
+                        <FaVial className="text-5xl text-gray-300 mx-auto mb-4" />
                         <h3 className="text-xl font-medium text-gray-800 mb-2">No Preparations Found</h3>
                         <p className="text-gray-500 max-w-md mx-auto mb-6">
                             {searchTerm
@@ -699,7 +699,7 @@ const ExtemporaneousPrep = () => {
                                             </>
                                         ) : (
                                             <>
-                                                <FaFlask />
+                                                <FaVial />
                                                 {editPrep ? 'Update Preparation' : 'Save Preparation'}
                                             </>
                                         )}

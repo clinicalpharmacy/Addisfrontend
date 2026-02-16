@@ -5,7 +5,7 @@ import {
     FaFilter, FaSync, FaPrescription, FaUserMd, FaHospital,
     FaCalendarCheck, FaNotesMedical, FaCapsules, FaTint,
     FaExclamationTriangle, FaInfoCircle, FaCalculator,
-    FaFilePrescription, FaStethoscope, FaFlask, FaCheckCircle
+    FaFilePrescription, FaStethoscope, FaCheckCircle
 } from 'react-icons/fa';
 
 const MedicationHistory = ({ patientCode }) => {
