@@ -9,7 +9,6 @@ import {
     FaExclamationTriangle,
     FaUserMd,
     FaEdit,
-    FaTrash,
     FaBookMedical,
     FaTimes,
     FaSync,
@@ -19,7 +18,9 @@ import {
     FaShieldAlt,
     FaCheckCircle,
     FaExclamationCircle,
-    FaSpinner
+    FaSpinner,
+    FaChevronDown,
+    FaChevronUp
 } from 'react-icons/fa';
 import { useOutletContext } from 'react-router-dom';
 import useScreenshotProtection from '../../hooks/useScreenshotProtection';
@@ -40,6 +41,7 @@ const MinorIllnesses = () => {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [expandedCards, setExpandedCards] = useState({});
     const [formData, setFormData] = useState({
         name: '',
         amharic_name: '',
@@ -104,6 +106,14 @@ const MinorIllnesses = () => {
         }
 
         setFilteredIllnesses(filtered);
+    };
+
+    // Toggle card expansion when clicking on name/amharic name
+    const toggleCard = (illnessId) => {
+        setExpandedCards(prev => ({
+            ...prev,
+            [illnessId]: !prev[illnessId]
+        }));
     };
 
 
@@ -192,34 +202,6 @@ const MinorIllnesses = () => {
             for_pharmacists: illness.for_pharmacists || ''
         });
         setShowForm(true);
-    };
-
-    // DELETE ILLNESS - ADMIN ONLY
-    const handleDelete = async (id) => {
-        if (!isAdmin) {
-            setError('Only administrators can delete illnesses');
-            setTimeout(() => setError(''), 3000);
-            return;
-        }
-
-        if (!window.confirm('Are you sure you want to delete this illness entry?')) return;
-
-        try {
-            const { error } = await supabase
-                .from('minor_illnesses')
-                .delete()
-                .eq('id', id);
-
-            if (error) throw error;
-
-            setSuccess('Illness deleted successfully!');
-            fetchIllnesses();
-
-            setTimeout(() => setSuccess(''), 3000);
-        } catch (err) {
-            console.error('Error deleting illness:', err);
-            setError('Error: ' + err.message);
-        }
     };
 
     const resetForm = () => {
@@ -388,8 +370,18 @@ const MinorIllnesses = () => {
                             >
                                 <div className="p-3 md:p-6">
                                     <div className="flex justify-between items-start mb-3 md:mb-4">
-                                        <div className="flex-1">
-                                            <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-1">{illness.name}</h3>
+                                        {/* Clickable name/amharic name section */}
+                                        <div 
+                                            className="flex-1 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors"
+                                            onClick={() => toggleCard(illness.id)}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-1">{illness.name}</h3>
+                                                {expandedCards[illness.id] ? 
+                                                    <FaChevronUp className="text-gray-500 text-sm" /> : 
+                                                    <FaChevronDown className="text-gray-500 text-sm" />
+                                                }
+                                            </div>
                                             {illness.amharic_name && (
                                                 <p className="text-xs md:text-sm text-gray-600 mb-2">{illness.amharic_name}</p>
                                             )}
@@ -405,55 +397,53 @@ const MinorIllnesses = () => {
                                                     >
                                                         <FaEdit className="text-sm" />
                                                     </button>
-                                                    <button
-                                                        onClick={() => handleDelete(illness.id)}
-                                                        className="text-red-500 hover:text-red-700 p-1"
-                                                        title="Delete"
-                                                    >
-                                                        <FaTrash className="text-sm" />
-                                                    </button>
                                                 </>
                                             )}
                                         </div>
                                     </div>
 
-                                    {illness.assessment && (
-                                        <div className="mb-3 md:mb-4">
-                                            <h4 className="font-semibold text-gray-700 mb-1.5 md:mb-2 flex items-center gap-1 text-sm md:text-base">
-                                                <FaStethoscope className="text-xs md:text-sm" /> How to Assess Minor Illnes:
-                                            </h4>
-                                            <ul className="list-disc pl-5 text-xs md:text-sm text-gray-600 leading-relaxed">{renderBullets(illness.assessment)}</ul>
-                                        </div>
-                                    )}
+                                    {/* All content sections - only shown when card is expanded */}
+                                    {expandedCards[illness.id] && (
+                                        <>
+                                            {illness.assessment && (
+                                                <div className="mb-3 md:mb-4">
+                                                    <h4 className="font-semibold text-gray-700 mb-1.5 md:mb-2 flex items-center gap-1 text-sm md:text-base">
+                                                        <FaStethoscope className="text-xs md:text-sm" /> Minor Illness Assessment:
+                                                    </h4>
+                                                    <ul className="list-disc pl-5 text-xs md:text-sm text-gray-600 leading-relaxed">{renderBullets(illness.assessment)}</ul>
+                                                </div>
+                                            )}
 
-                                    {illness.referral && (
-                                        <div className="mb-3 md:mb-4 p-2 md:p-3 bg-yellow-50 border border-yellow-100 rounded">
-                                            <h4 className="font-semibold text-yellow-700 mb-1 text-sm md:text-base">When to Refer:</h4>
-                                            <ul className="list-disc pl-5 text-xs md:text-sm text-gray-600 leading-relaxed">{renderBullets(illness.referral)}</ul>
-                                        </div>
-                                    )}
+                                            {illness.referral && (
+                                                <div className="mb-3 md:mb-4 p-2 md:p-3 bg-yellow-50 border border-yellow-100 rounded">
+                                                    <h4 className="font-semibold text-yellow-700 mb-1 text-sm md:text-base">When to Refer:</h4>
+                                                    <ul className="list-disc pl-5 text-xs md:text-sm text-gray-600 leading-relaxed">{renderBullets(illness.referral)}</ul>
+                                                </div>
+                                            )}
 
-                                    {illness.otc_drug && (
-                                        <div className="mb-3 md:mb-4">
-                                            <h4 className="font-semibold text-gray-700 mb-1.5 md:mb-2 flex items-center gap-1 text-sm md:text-base">
-                                                <FaCapsules className="text-xs md:text-sm" /> OTC Drug Recommendations:
-                                            </h4>
-                                            <ul className="list-disc pl-5 text-xs md:text-sm text-gray-600 leading-relaxed">{renderBullets(illness.otc_drug)}</ul>
-                                        </div>
-                                    )}
+                                            {illness.otc_drug && (
+                                                <div className="mb-3 md:mb-4">
+                                                    <h4 className="font-semibold text-gray-700 mb-1.5 md:mb-2 flex items-center gap-1 text-sm md:text-base">
+                                                        <FaCapsules className="text-xs md:text-sm" /> OTC Drug Recommendations:
+                                                    </h4>
+                                                    <ul className="list-disc pl-5 text-xs md:text-sm text-gray-600 leading-relaxed">{renderBullets(illness.otc_drug)}</ul>
+                                                </div>
+                                            )}
 
-                                    {illness.for_pharmacists && (
-                                        <div className="mb-3 md:mb-4 p-2 md:p-3 bg-blue-50 border border-blue-100 rounded">
-                                            <h4 className="font-semibold text-blue-700 mb-1 flex items-center gap-1 text-sm md:text-base">
-                                                <FaUserMd className="text-xs md:text-sm" /> Additional tips for the Pharmacist:
-                                            </h4>
-                                            <ul className="list-disc pl-5 text-xs md:text-sm text-gray-600 leading-relaxed">{renderBullets(illness.for_pharmacists)}</ul>
-                                        </div>
-                                    )}
+                                            {illness.for_pharmacists && (
+                                                <div className="mb-3 md:mb-4 p-2 md:p-3 bg-blue-50 border border-blue-100 rounded">
+                                                    <h4 className="font-semibold text-blue-700 mb-1 flex items-center gap-1 text-sm md:text-base">
+                                                        <FaUserMd className="text-xs md:text-sm" /> Additional information:
+                                                    </h4>
+                                                    <ul className="list-disc pl-5 text-xs md:text-sm text-gray-600 leading-relaxed">{renderBullets(illness.for_pharmacists)}</ul>
+                                                </div>
+                                            )}
 
-                                    <div className="text-xs text-gray-500 mt-3 md:mt-4 pt-2 md:pt-3 border-t border-gray-100">
-                                        Last updated: {new Date(illness.created_at).toLocaleDateString()}
-                                    </div>
+                                            <div className="text-xs text-gray-500 mt-3 md:mt-4 pt-2 md:pt-3 border-t border-gray-100">
+                                                Last updated: {new Date(illness.created_at).toLocaleDateString()}
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         ))

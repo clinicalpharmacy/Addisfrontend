@@ -108,6 +108,7 @@ const Login = () => {
         } catch (err) {
             console.error('❌ Login error:', err);
 
+<<<<<<< HEAD
             // Special handling for email verification AND/OR approval
             if (err.email_verification_required && err.approval_required) {
                 setError(
@@ -140,6 +141,10 @@ const Login = () => {
                     </div>
                 );
             } else if (err.email_verification_required) {
+=======
+            // Special handling for email verification
+            if (err.email_verification_required) {
+>>>>>>> 415f9b105bed49b3b7c510ce2944e4e48dec2342
                 setError(
                     <div className="flex flex-col gap-3">
                         <p>{err.error || 'Please verify your email address before logging in.'}</p>
@@ -166,6 +171,7 @@ const Login = () => {
                         </button>
                     </div>
                 );
+<<<<<<< HEAD
             } else if (err.approval_required) {
                 setError(
                     <div className="flex flex-col gap-2">
@@ -173,6 +179,8 @@ const Login = () => {
                         <p className="text-sm">{err.error || 'Your account is waiting for administrator approval.'}</p>
                     </div>
                 );
+=======
+>>>>>>> 415f9b105bed49b3b7c510ce2944e4e48dec2342
             } else {
                 setError(err.error || err.message || 'Login failed. Please check your credentials and try again.');
             }
@@ -331,7 +339,11 @@ const Login = () => {
                                 Individual
                             </Link>
                             <Link
+<<<<<<< HEAD
                                 to="/signup?type=company"
+=======
+                                to="/signup?type=organization"
+>>>>>>> 415f9b105bed49b3b7c510ce2944e4e48dec2342
                                 className="flex items-center justify-center gap-2 px-4 py-3 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl transition text-sm font-medium"
                             >
                                 <FaBuilding />

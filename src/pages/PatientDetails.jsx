@@ -3,6 +3,10 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
     FaUser,
     FaStethoscope,
+<<<<<<< HEAD
+=======
+
+>>>>>>> 415f9b105bed49b3b7c510ce2944e4e48dec2342
     FaSave,
     FaPills,
     FaChartLine,

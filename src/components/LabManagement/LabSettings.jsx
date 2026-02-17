@@ -277,7 +277,7 @@ const LabSettings = ({ onUpdate }) => {
                     )}
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {filteredLabs.map((lab) => (
                         <div key={lab.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group flex flex-col">
                             <div className="p-4 flex-1">
@@ -331,39 +331,38 @@ const LabSettings = ({ onUpdate }) => {
 
             {/* Modal */}
             {showAddForm && (
-                <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-md flex items-center justify-center p-4 z-[60] animate-fadeIn">
-                    <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-lg overflow-hidden animate-slideUp border border-indigo-100">
-                        <div className="p-8 pb-4 flex justify-between items-center">
+                <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 z-[60] animate-fadeIn transition-all">
+                    <div className="bg-white rounded-t-[32px] sm:rounded-[32px] shadow-2xl w-full max-w-lg overflow-hidden animate-slideUp border border-indigo-100 h-[90vh] sm:h-auto flex flex-col">
+                        <div className="p-6 sm:p-8 pb-4 flex justify-between items-center border-b sm:border-b-0 border-gray-100">
                             <div>
-                                <h3 className="text-2xl font-black text-gray-900">
+                                <h3 className="text-xl sm:text-2xl font-black text-gray-900">
                                     {editingLab ? 'Edit Setup' : 'New Definition'}
                                 </h3>
-                                <p className="text-sm text-gray-500">Global laboratory test configuration.</p>
+                                <p className="text-xs sm:text-sm text-gray-500">Global laboratory test configuration.</p>
                             </div>
                             <button onClick={() => setShowAddForm(false)} className="p-3 bg-gray-100 hover:bg-red-50 hover:text-red-500 rounded-2xl transition-all">
-                                <FaTimes className="text-xl" />
+                                <FaTimes className="text-lg" />
                             </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="p-8 pt-4 space-y-6">
+                        <form onSubmit={handleSubmit} className="p-6 sm:p-8 pt-4 space-y-6 overflow-y-auto flex-1 scrollbar-hide">
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
-                                        Lab Test Identity
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
+                                        Lab Test Identity *
                                     </label>
                                     <input
-                                        type="text"
-                                        required
+                                        type="text" required
                                         value={formData.name}
                                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                         placeholder="e.g. Hemoglobin A1c"
-                                        className="w-full border-2 border-gray-100 rounded-2xl px-5 py-3.5 focus:ring-0 focus:border-indigo-500 outline-none transition-all font-bold"
+                                        className="w-full border-2 border-gray-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-indigo-500 bg-gray-50/30 outline-none transition-all font-bold"
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
                                             Unit (SI)
                                         </label>
                                         <input
@@ -371,47 +370,47 @@ const LabSettings = ({ onUpdate }) => {
                                             value={formData.unit}
                                             onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
                                             placeholder="mg/dL"
-                                            className="w-full border-2 border-gray-100 rounded-2xl px-5 py-3.5 focus:ring-0 focus:border-indigo-500 outline-none transition-all font-bold"
+                                            className="w-full border-2 border-gray-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-indigo-500 bg-gray-50/30 outline-none transition-all font-bold"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
                                             Category
                                         </label>
                                         <select
                                             value={formData.category}
                                             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                            className="w-full border-2 border-gray-100 rounded-2xl px-5 py-3.5 focus:ring-0 focus:border-indigo-500 outline-none transition-all appearance-none bg-gray-50 font-bold"
+                                            className="w-full border-2 border-gray-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all appearance-none bg-gray-50/50 font-black cursor-pointer"
                                         >
                                             {categories.map(c => <option key={c} value={c}>{c}</option>)}
                                         </select>
                                     </div>
                                 </div>
 
-
-
                                 <div>
-                                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
-                                        Description
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
+                                        Intelligence Summary
                                     </label>
                                     <textarea
                                         value={formData.description}
                                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                        placeholder="Clinical significance..."
+                                        placeholder="Clinical significance and utility index..."
                                         rows="3"
-                                        className="w-full border-2 border-gray-100 rounded-3xl px-5 py-3.5 focus:ring-0 focus:border-indigo-500 outline-none transition-all resize-none font-medium h-24"
+                                        className="w-full border-2 border-gray-100 rounded-3xl px-5 py-3.5 focus:ring-2 focus:ring-indigo-500 bg-gray-50/30 outline-none transition-all resize-none font-medium h-24"
                                     />
                                 </div>
                             </div>
 
-                            <button
-                                type="submit"
-                                disabled={saving}
-                                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-3xl transition-all shadow-xl shadow-indigo-200 active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-50 mt-4"
-                            >
-                                {saving ? <FaSpinner className="animate-spin" /> : <FaSave />}
-                                {editingLab ? 'Save Changes' : 'Confirm Definition'}
-                            </button>
+                            <div className="sticky bottom-0 bg-white pt-4 pb-2 border-t sm:border-t-0 mt-6">
+                                <button
+                                    type="submit"
+                                    disabled={saving}
+                                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-3xl transition-all shadow-xl shadow-indigo-200 active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-50"
+                                >
+                                    {saving ? <div className="animate-spin w-5 h-5 border-2 border-white/20 border-t-white rounded-full"></div> : <FaSave />}
+                                    {editingLab ? 'Commit Evolution' : 'Initialize Protocol'}
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </div>

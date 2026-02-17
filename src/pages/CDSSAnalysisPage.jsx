@@ -67,11 +67,11 @@ const CDSSAnalysisPage = () => {
                     <div className="flex items-start md:items-center gap-4">
                         <button
                             onClick={() => selectedPatient ? setSelectedPatient(null) : navigate(-1)}
-                            className="bg-white p-3 md:px-4 md:py-2 rounded-lg shadow-sm hover:bg-gray-100 transition-colors flex items-center gap-2 text-sm font-medium text-gray-600 border border-gray-100 shrink-0"
+                            className="bg-white p-2.5 rounded-lg shadow-sm hover:bg-gray-100 transition-colors flex items-center gap-2 text-sm font-medium text-gray-600 border border-gray-100 shrink-0"
                             title={selectedPatient ? 'Back to Patient List' : 'Back to Dashboard'}
                         >
                             <FaArrowLeft />
-                            <span className="hidden md:inline">{selectedPatient ? 'Back to Patient List' : 'Back to Dashboard'}</span>
+                            <span className="hidden sm:inline">{selectedPatient ? 'Back' : 'Dashboard'}</span>
                         </button>
                         <div>
                             <h1 className="text-2xl md:text-3xl font-bold text-gray-800 flex items-center gap-3">
@@ -98,7 +98,7 @@ const CDSSAnalysisPage = () => {
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 placeholder="Search patients by name, code or diagnosis..."
-                                className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
+                                className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all text-sm md:text-base"
                             />
                         </div>
 
@@ -108,7 +108,7 @@ const CDSSAnalysisPage = () => {
                                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                                 {filteredPatients.length > 0 ? (
                                     filteredPatients.map(patient => (
                                         <div
@@ -120,8 +120,8 @@ const CDSSAnalysisPage = () => {
                                                 <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-600 transition-colors">
                                                     <FaUserInjured className="text-purple-600 group-hover:text-white text-xl" />
                                                 </div>
-                                                <div>
-                                                    <h3 className="font-bold text-gray-800 group-hover:text-purple-700 transition-colors">
+                                                <div className="min-w-0">
+                                                    <h3 className="font-bold text-gray-800 group-hover:text-purple-700 transition-colors truncate">
                                                         {patient.full_name}
                                                     </h3>
                                                     <p className="text-sm text-gray-500">{patient.patient_code}</p>
@@ -135,7 +135,7 @@ const CDSSAnalysisPage = () => {
                                                 </div>
                                                 <div className="flex justify-between text-sm">
                                                     <span className="text-gray-500">Diagnosis:</span>
-                                                    <span className="text-gray-700 font-medium truncate max-w-[150px]" title={patient.diagnosis}>
+                                                    <span className="text-gray-700 font-medium truncate" title={patient.diagnosis}>
                                                         {patient.diagnosis || 'None'}
                                                     </span>
                                                 </div>
@@ -147,7 +147,7 @@ const CDSSAnalysisPage = () => {
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="col-span-full py-20 text-center bg-white rounded-xl">
+                                    <div className="col-span-full py-20 text-center bg-white rounded-xl border-2 border-dashed border-gray-100">
                                         <p className="text-gray-500">No patients found.</p>
                                     </div>
                                 )}

@@ -24,18 +24,16 @@ const SUBSCRIPTION_PLANS = [
         price: 300,
         currency: 'ETB',
         interval: 'month',
-        description: 'For healthcare professionals & students',
+        description: 'For healthcare clients, health professionals & students',
         user_limit: 1,
         icon: FaUserMd,
         color: 'from-blue-500 to-blue-600',
         badge: 'Popular',
         features: [
-            'Full medication knowledge base',
-            'Patient management system',
-            'Clinical decision support',
-            'Drug interaction checking',
-            'Basic analytics',
-            'Email support'
+            'Medication information',
+            'Home remedies',
+            'Clinical alerts',
+            'Medication availability checks'
         ],
         limitations: ['Single user only'],
         account_type: 'individual'
@@ -56,9 +54,8 @@ const SUBSCRIPTION_PLANS = [
         features: [
             'Everything in Monthly plan',
             'Priority support',
-            'Advanced analytics',
-            'Custom reports',
-            'API access',
+            'Minor illness management for pharmacy professionals/students',
+            'Compounding for pharmacy professionals/students',
             'Early access to new features'
         ],
         popular: true,
@@ -70,7 +67,7 @@ const SUBSCRIPTION_PLANS = [
         price: 3000,
         currency: 'ETB',
         interval: 'month',
-        description: 'For small healthcare facilities',
+        description: 'For a single pharmacy and small healthcare facilities',
         user_limit: 5,
         icon: FaBuilding,
         color: 'from-green-500 to-green-600',
@@ -78,7 +75,7 @@ const SUBSCRIPTION_PLANS = [
         features: [
             'Everything in Individual plan',
             'Up to 5 users',
-            'Centralized patient database',
+            'Comprehensive medication management database',
             'Team management',
             'Company dashboard',
             'Multi-user access',
@@ -93,7 +90,7 @@ const SUBSCRIPTION_PLANS = [
         price: 25000,
         currency: 'ETB',
         interval: 'year',
-        description: 'For medium to large organizations',
+        description: 'For chain pharmacies and medium to large healthcare facilities',
         user_limit: 20,
         icon: FaRocket,
         color: 'from-orange-500 to-orange-600',
