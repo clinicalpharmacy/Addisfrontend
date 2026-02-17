@@ -534,7 +534,7 @@ const SubscriptionPlans = () => {
                     {/* Payment Process Info */}
                     <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                       <p className="text-sm text-blue-700">
-                        <strong>Process:</strong> Payment → Success Page → Admin Approval → Login
+                        <strong>Process:</strong> Payment → Verification Email → Success Page → Login
                       </p>
                     </div>
 
@@ -633,14 +633,14 @@ const SubscriptionPlans = () => {
           </div>
 
           <div className="bg-white rounded-xl p-6 shadow text-center">
-            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <span className="font-bold text-gray-400">3</span>
+            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <span className="font-bold text-blue-600">3</span>
             </div>
-            <h4 className="font-bold text-gray-800 mb-2">Admin Approval</h4>
-            <p className="text-sm text-gray-600">Wait for admin to approve account</p>
+            <h4 className="font-bold text-gray-800 mb-2">Verification</h4>
+            <p className="text-sm text-gray-600">Verify email received after payment</p>
           </div>
 
-          <div className="bg-white rounded-xl p-6 shadow text-center">
+          <div className="bg-white rounded-xl p-6 shadow text-center border-2 border-dashed border-gray-100">
             <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
               <span className="font-bold text-gray-400">4</span>
             </div>

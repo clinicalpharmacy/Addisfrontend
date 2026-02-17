@@ -332,21 +332,21 @@ Support: support@addismed.com
                             What happens next?
                         </h3>
                         <ul className="space-y-2 text-sm text-green-700">
-                            <li className="flex items-start gap-2">
-                                <span className="text-green-600 mt-0.5">✓</span>
-                                <span>We'll process your payment within 24 hours</span>
+                            <li className="flex items-start gap-2 text-blue-800 font-bold bg-blue-50 p-2 rounded border border-blue-200">
+                                <span className="text-blue-600 mt-0.5"><FaEnvelope /></span>
+                                <span>Check your email! We've sent a verification link.</span>
                             </li>
                             <li className="flex items-start gap-2">
                                 <span className="text-green-600 mt-0.5">✓</span>
-                                <span>You'll receive an account activation email</span>
+                                <span>Click the link in the email to verify your identity</span>
                             </li>
                             <li className="flex items-start gap-2">
                                 <span className="text-green-600 mt-0.5">✓</span>
-                                <span>Use "Forgot Password" for your first login</span>
+                                <span>Your account will be activated immediately after verification</span>
                             </li>
                             <li className="flex items-start gap-2">
                                 <span className="text-green-600 mt-0.5">✓</span>
-                                <span>Contact support if you need assistance</span>
+                                <span>Logged in? Your dashboard will update automatically.</span>
                             </li>
                         </ul>
                     </div>
