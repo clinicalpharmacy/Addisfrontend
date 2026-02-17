@@ -149,6 +149,36 @@ Support: support@addismed.com
         });
     };
 
+    const [resending, setResending] = useState(false);
+    const [resendStatus, setResendStatus] = useState(null);
+
+    const resendVerification = async () => {
+        try {
+            setResending(true);
+            setResendStatus(null);
+
+            // Get email from payment data or local storage
+            const email = paymentData?.user_email ||
+                JSON.parse(localStorage.getItem('registered_user') || '{}')?.email;
+
+            if (!email) {
+                setResendStatus({ type: 'error', message: 'User email not found. Please contact support.' });
+                return;
+            }
+
+            const response = await api.post('/auth/resend-verification', { email });
+            if (response.success) {
+                setResendStatus({ type: 'success', message: 'Verification email resent! Please check your inbox.' });
+            } else {
+                setResendStatus({ type: 'error', message: response.error || 'Failed to resend email.' });
+            }
+        } catch (err) {
+            setResendStatus({ type: 'error', message: 'An error occurred. Please try again later.' });
+        } finally {
+            setResending(false);
+        }
+    };
+
     const contactSupport = () => {
         const subject = `Payment Support - ${tx_ref}`;
         const body = `Hello Addismed Support,\n\nI need assistance with my payment.\n\nTransaction ID: ${tx_ref}\nDate: ${new Date().toLocaleDateString()}\n\nIssue: Please check my payment status and account activation.\n\nThank you.`;
@@ -332,9 +362,26 @@ Support: support@addismed.com
                             What happens next?
                         </h3>
                         <ul className="space-y-2 text-sm text-green-700">
-                            <li className="flex items-start gap-2 text-blue-800 font-bold bg-blue-50 p-2 rounded border border-blue-200">
-                                <span className="text-blue-600 mt-0.5"><FaEnvelope /></span>
-                                <span>Check your email! We've sent a verification link.</span>
+                            <li className="flex flex-col gap-2 p-3 bg-blue-50 rounded-xl border border-blue-100">
+                                <div className="flex items-start gap-2 text-blue-800 font-bold">
+                                    <span className="text-blue-600 mt-0.5"><FaEnvelope /></span>
+                                    <span>Check your email! We've sent a verification link.</span>
+                                </div>
+                                <div className="ml-7">
+                                    <button
+                                        onClick={resendVerification}
+                                        disabled={resending}
+                                        className="text-xs text-blue-600 hover:text-blue-800 underline font-medium flex items-center gap-1"
+                                    >
+                                        {resending ? <FaSpinner className="animate-spin" /> : null}
+                                        Didn't receive it? Click here to resend
+                                    </button>
+                                    {resendStatus && (
+                                        <p className={`text-xs mt-1 font-medium ${resendStatus.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>
+                                            {resendStatus.message}
+                                        </p>
+                                    )}
+                                </div>
                             </li>
                             <li className="flex items-start gap-2">
                                 <span className="text-green-600 mt-0.5">✓</span>
