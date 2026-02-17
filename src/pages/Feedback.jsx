@@ -49,8 +49,10 @@ const Feedback = () => {
                 setStatus({ type: 'error', message: response.error || 'Failed to send feedback' });
             }
         } catch (error) {
-            console.error('Feedback error:', error);
-            setStatus({ type: 'error', message: error.message || 'An error occurred while sending feedback' });
+            console.error('Feedback submission error:', error);
+            // Show details if available from backend, otherwise generic message
+            const serverError = error.error || error.details || error.message || 'An error occurred while sending feedback';
+            setStatus({ type: 'error', message: serverError });
         } finally {
             setLoading(false);
         }
@@ -107,8 +109,8 @@ const Feedback = () => {
                     <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 border border-gray-100">
                         {status.message && (
                             <div className={`mb-6 p-4 rounded-xl flex items-start gap-3 ${status.type === 'success'
-                                    ? 'bg-green-50 text-green-700 border border-green-200'
-                                    : 'bg-red-50 text-red-700 border border-red-200'
+                                ? 'bg-green-50 text-green-700 border border-green-200'
+                                : 'bg-red-50 text-red-700 border border-red-200'
                                 }`}>
                                 {status.type === 'success' ? (
                                     <FaCheckCircle className="mt-1 flex-shrink-0" />
@@ -163,8 +165,8 @@ const Feedback = () => {
                                 type="submit"
                                 disabled={loading}
                                 className={`w-full py-4 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-xl transform active:scale-95 ${loading
-                                        ? 'bg-gray-400 cursor-not-allowed'
-                                        : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
+                                    ? 'bg-gray-400 cursor-not-allowed'
+                                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
                                     }`}
                             >
                                 {loading ? (
