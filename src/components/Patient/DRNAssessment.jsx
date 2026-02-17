@@ -797,20 +797,48 @@ const DRNAssessment = ({ patientCode }) => {
                 )}
             </div>
 
-            {/* Categories Selection */}
+            {/* Categories Selection - Visual Cards */}
             <div className="mb-6">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Select Category</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                    {Object.entries(drnCategories).map(([cat, data]) => (
-                        <button
-                            key={cat}
-                            onClick={() => { setSelectedCategory(cat); setSelectedCauses([]); setWriteUps({}); setEditId(null); }}
-                            className={`p-4 rounded-lg border text-center transition-all group flex flex-col items-center justify-center gap-2 ${selectedCategory === cat ? 'bg-blue-50 border-blue-500 shadow-md' : 'bg-white border-gray-200 hover:bg-gray-50 hover:border-blue-300'}`}
-                        >
-                            <data.icon className={`text-2xl transition-transform group-hover:scale-110 ${selectedCategory === cat ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-500'}`} />
-                            <span className={`text-xs font-semibold ${selectedCategory === cat ? 'text-blue-800' : 'text-gray-600'}`}>{cat}</span>
-                        </button>
-                    ))}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    {Object.entries(drnCategories).map(([cat, data]) => {
+                        const isSelected = selectedCategory === cat;
+                        const colorClasses = {
+                            blue: isSelected ? 'bg-blue-500 border-blue-600' : 'bg-blue-50 border-blue-200 hover:bg-blue-100',
+                            teal: isSelected ? 'bg-teal-500 border-teal-600' : 'bg-teal-50 border-teal-200 hover:bg-teal-100',
+                            yellow: isSelected ? 'bg-yellow-500 border-yellow-600' : 'bg-yellow-50 border-yellow-200 hover:bg-yellow-100',
+                            red: isSelected ? 'bg-red-500 border-red-600' : 'bg-red-50 border-red-200 hover:bg-red-100',
+                            orange: isSelected ? 'bg-orange-500 border-orange-600' : 'bg-orange-50 border-orange-200 hover:bg-orange-100',
+                            purple: isSelected ? 'bg-purple-500 border-purple-600' : 'bg-purple-50 border-purple-200 hover:bg-purple-100',
+                            pink: isSelected ? 'bg-pink-500 border-pink-600' : 'bg-pink-50 border-pink-200 hover:bg-pink-100',
+                            indigo: isSelected ? 'bg-indigo-500 border-indigo-600' : 'bg-indigo-50 border-indigo-200 hover:bg-indigo-100',
+                            green: isSelected ? 'bg-green-500 border-green-600' : 'bg-green-50 border-green-200 hover:bg-green-100',
+                        };
+                        const iconColorClasses = {
+                            blue: isSelected ? 'text-white' : 'text-blue-600',
+                            teal: isSelected ? 'text-white' : 'text-teal-600',
+                            yellow: isSelected ? 'text-white' : 'text-yellow-600',
+                            red: isSelected ? 'text-white' : 'text-red-600',
+                            orange: isSelected ? 'text-white' : 'text-orange-600',
+                            purple: isSelected ? 'text-white' : 'text-purple-600',
+                            pink: isSelected ? 'text-white' : 'text-pink-600',
+                            indigo: isSelected ? 'text-white' : 'text-indigo-600',
+                            green: isSelected ? 'text-white' : 'text-green-600',
+                        };
+
+                        return (
+                            <button
+                                key={cat}
+                                onClick={() => { setSelectedCategory(cat); setSelectedCauses([]); setWriteUps({}); setEditId(null); }}
+                                className={`p-5 rounded-xl border-2 text-center transition-all duration-300 group flex flex-col items-center justify-center gap-3 ${colorClasses[data.color] || colorClasses.blue} ${isSelected ? 'shadow-lg transform scale-105' : 'shadow-sm hover:shadow-md'}`}
+                            >
+                                <div className={`p-3 rounded-full ${isSelected ? 'bg-white/20' : 'bg-white'} transition-all group-hover:scale-110`}>
+                                    <data.icon className={`text-3xl ${iconColorClasses[data.color] || iconColorClasses.blue} transition-transform`} />
+                                </div>
+                                <span className={`text-xs font-bold leading-tight ${isSelected ? 'text-white' : 'text-gray-700'}`}>{cat}</span>
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
 
