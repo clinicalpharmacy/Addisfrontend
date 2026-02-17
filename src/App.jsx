@@ -10,6 +10,7 @@ import Sidebar from "./components/Common/Sidebar";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import Feedback from "./pages/Feedback";
 import AdminDashboard from "./pages/AdminDashboard";
 import CompanyDashboard from "./pages/CompanyAdminDashboard";
 import CompanyUsers from "./pages/CompanyUsers";
@@ -1241,6 +1242,15 @@ function App() {
                     element={
                         <ProtectedRoute requireSubscription={true}>
                             <MedicationAvailability />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/feedback"
+                    element={
+                        <ProtectedRoute requireSubscription={false}>
+                            <Feedback />
                         </ProtectedRoute>
                     }
                 />

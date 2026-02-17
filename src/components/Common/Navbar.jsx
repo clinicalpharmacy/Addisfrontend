@@ -158,7 +158,7 @@ const Navbar = ({ onMenuClick }) => {
                                                 {user?.role || 'Pharmacist'}
                                             </p>
                                             <p className="text-xs text-gray-500">
-                                                {user?.institution || 'PharmaCare System'}
+                                                {user?.institution || 'AddisMed'}
                                             </p>
                                         </div>
 

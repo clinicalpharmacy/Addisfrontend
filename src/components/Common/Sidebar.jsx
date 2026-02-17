@@ -27,7 +27,9 @@ import {
     FaLink,
     FaExternalLinkAlt,
     FaBookmark,
-    FaCreditCard
+    FaCreditCard,
+    FaComments,
+    FaEnvelope
 } from 'react-icons/fa';
 
 // Force rebuild - ensuring all icons are properly bundled
@@ -90,6 +92,7 @@ const Sidebar = ({ onClose }) => {
     };
 
     const isSubscribed = hasValidSubscription();
+    const isVerified = user?.email_verified === true || user?.email_verified === 'true';
 
     const handleLogout = () => {
         if (window.confirm('Are you sure you want to logout?')) {
@@ -158,19 +161,41 @@ const Sidebar = ({ onClose }) => {
                     <ul className="space-y-1.5">
                         <li>
                             <NavLink
-                                to="/home"
+                                to={isSubscribed ? "/home" : "/subscription/plans"}
                                 onClick={onClose}
                                 className={({ isActive }) =>
-                                    `flex items-center gap-3.5 p-3 rounded-xl transition-all duration-300 group ${isActive
+                                    `flex items-center gap-3.5 p-3 rounded-xl transition-all duration-300 group ${isActive && isSubscribed
                                         ? 'bg-blue-600 text-white shadow-lg shadow-blue-100 font-black'
                                         : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 font-bold'
-                                    }`
+                                    } ${!isSubscribed ? 'opacity-60' : ''}`
                                 }
                             >
-                                <FaHome className="text-xl group-hover:scale-110 transition-transform" />
-                                <span className="text-base">Dashboard</span>
+                                <div className="flex items-center gap-3.5 w-full">
+                                    <FaHome className="text-xl group-hover:scale-110 transition-transform" />
+                                    <span className="text-base">Dashboard</span>
+                                    {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
+                                </div>
                             </NavLink>
                         </li>
+                        {!isVerified && (
+                            <li>
+                                <NavLink
+                                    to="/settings#security"
+                                    onClick={onClose}
+                                    className={({ isActive }) =>
+                                        `flex items-center gap-3.5 p-3 rounded-xl transition-all duration-300 group ${isActive
+                                            ? 'bg-yellow-500 text-white shadow-lg shadow-yellow-100 font-black'
+                                            : 'text-yellow-600 bg-yellow-50 hover:bg-yellow-100 font-bold'
+                                        }`
+                                    }
+                                >
+                                    <div className="flex items-center gap-3.5 w-full">
+                                        <FaEnvelope className="text-xl group-hover:scale-110 transition-transform" />
+                                        <span className="text-base">Verify Email</span>
+                                    </div>
+                                </NavLink>
+                            </li>
+                        )}
                         {!isAdmin && (
                             <li>
                                 <NavLink
@@ -289,6 +314,24 @@ const Sidebar = ({ onClose }) => {
                                 </li>
                             </>
                         )}
+                        <li>
+                            <NavLink
+                                to={isSubscribed ? "/feedback" : "/subscription/plans"}
+                                onClick={onClose}
+                                className={({ isActive }) =>
+                                    `flex items-center gap-3.5 p-3 rounded-xl transition-all duration-300 group ${isActive && isSubscribed
+                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-100 font-black'
+                                        : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 font-bold'
+                                    } ${!isSubscribed ? 'opacity-60' : ''}`
+                                }
+                            >
+                                <div className="flex items-center gap-3.5 w-full">
+                                    <FaComments className="text-xl group-hover:scale-110 transition-transform" />
+                                    <span className="text-base">Feedback</span>
+                                    {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
+                                </div>
+                            </NavLink>
+                        </li>
                     </ul>
                 </div>
 
@@ -380,14 +423,15 @@ const Sidebar = ({ onClose }) => {
                     {/* Knowledge Base Section */}
                     <div className="mb-2">
                         <button
-                            onClick={() => toggleSection('knowledge')}
-                            className="flex items-center justify-between w-full p-3 rounded-xl text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-300 font-bold group"
+                            onClick={() => isSubscribed ? toggleSection('knowledge') : navigate('/subscription/plans')}
+                            className={`flex items-center justify-between w-full p-3 rounded-xl text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-300 font-bold group ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`}
                         >
                             <div className="flex items-center gap-3.5">
                                 <FaBookMedical className="text-2xl group-hover:scale-110 transition-transform" />
                                 <span className="text-lg">Knowledge Base</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm">
+                                {!isSubscribed && <FaLock className="opacity-50" />}
                                 {expandedSections.knowledge ? <FaChevronDown /> : <FaChevronRight />}
                             </div>
                         </button>
@@ -539,33 +583,39 @@ const Sidebar = ({ onClose }) => {
                         <>
                             <div className="mb-2">
                                 <NavLink
-                                    to="/company/dashboard"
+                                    to={isSubscribed ? "/company/dashboard" : "/subscription/plans"}
                                     onClick={onClose}
                                     className={({ isActive }) =>
-                                        `flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${isActive
+                                        `flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${isActive && isSubscribed
                                             ? 'bg-purple-50 text-purple-600 border-l-4 border-purple-600 shadow-sm'
                                             : 'text-gray-600 hover:bg-purple-50 hover:text-purple-600 hover:shadow-sm'
-                                        }`
+                                        } ${!isSubscribed ? 'opacity-60' : ''}`
                                     }
                                 >
-                                    <FaChartBar className="text-lg" />
-                                    <span className="font-medium">Company Dashboard</span>
+                                    <div className="flex items-center gap-3 w-full">
+                                        <FaChartBar className="text-lg" />
+                                        <span className="font-medium">Company Dashboard</span>
+                                        {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
+                                    </div>
                                 </NavLink>
                             </div>
 
                             <div className="mb-2">
                                 <NavLink
-                                    to="/company-performance"
+                                    to={isSubscribed ? "/company-performance" : "/subscription/plans"}
                                     onClick={onClose}
                                     className={({ isActive }) =>
-                                        `flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${isActive
+                                        `flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${isActive && isSubscribed
                                             ? 'bg-green-50 text-green-600 border-l-4 border-green-600 shadow-sm'
                                             : 'text-gray-600 hover:bg-green-50 hover:text-green-600 hover:shadow-sm'
-                                        }`
+                                        } ${!isSubscribed ? 'opacity-60' : ''}`
                                     }
                                 >
-                                    <FaChartLine className="text-lg" />
-                                    <span className="font-medium">Performance Report</span>
+                                    <div className="flex items-center gap-3 w-full">
+                                        <FaChartLine className="text-lg" />
+                                        <span className="font-medium">Performance Report</span>
+                                        {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
+                                    </div>
                                 </NavLink>
                             </div>
                         </>
@@ -578,34 +628,40 @@ const Sidebar = ({ onClose }) => {
                         {/* Public Useful Links Page */}
                         <div className="mb-2">
                             <NavLink
-                                to="/useful-links"
+                                to={isSubscribed ? "/useful-links" : "/subscription/plans"}
                                 onClick={onClose}
                                 className={({ isActive }) =>
-                                    `flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${isActive
+                                    `flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${isActive && isSubscribed
                                         ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600 shadow-sm'
                                         : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm'
-                                    }`
+                                    } ${!isSubscribed ? 'opacity-60' : ''}`
                                 }
                             >
-                                <FaBookmark className="text-xl" />
-                                <span className="font-medium text-base">Useful Links</span>
+                                <div className="flex items-center gap-3 w-full">
+                                    <FaBookmark className="text-xl" />
+                                    <span className="font-medium text-base">Useful Links</span>
+                                    {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
+                                </div>
                             </NavLink>
                         </div>
 
                         {/* Medication Availability Link */}
                         <div className="mb-2">
                             <NavLink
-                                to="/medication-availability"
+                                to={isSubscribed ? "/medication-availability" : "/subscription/plans"}
                                 onClick={onClose}
                                 className={({ isActive }) =>
-                                    `flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${isActive
+                                    `flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${isActive && isSubscribed
                                         ? 'bg-green-50 text-green-600 border-l-4 border-green-600 shadow-sm'
                                         : 'text-gray-600 hover:bg-green-50 hover:text-green-600 hover:shadow-sm'
-                                    }`
+                                    } ${!isSubscribed ? 'opacity-60' : ''}`
                                 }
                             >
-                                <FaPills className="text-xl" />
-                                <span className="font-medium text-base">Med Availability</span>
+                                <div className="flex items-center gap-3 w-full">
+                                    <FaPills className="text-xl" />
+                                    <span className="font-medium text-base">Med Availability</span>
+                                    {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
+                                </div>
                             </NavLink>
                         </div>
 

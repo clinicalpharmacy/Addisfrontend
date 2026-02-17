@@ -269,7 +269,8 @@ const Signup = () => {
                     license_number: formData.license_number?.trim() || '',
                     role: formData.role, // Use selected role
                     account_type: 'individual',
-                    selected_plan: selectedPlan
+                    selected_plan: selectedPlan,
+                    skip_verification_email: true
                 };
             } else {
                 endpoint = '/auth/register-company';
@@ -289,7 +290,8 @@ const Signup = () => {
                     admin_full_name: formData.admin_full_name.trim(),
                     admin_phone: formData.admin_phone.trim(),
                     admin_license_number: formData.admin_license_number?.trim() || '',
-                    selected_plan: selectedPlan
+                    selected_plan: selectedPlan,
+                    skip_verification_email: true
                 };
             }
 
@@ -378,9 +380,9 @@ const Signup = () => {
 
             setStep(3);
             if (formData.account_type === 'individual') {
-                setSuccess(`✅ Registration successful! We've sent a verification email to ${userEmail}. Please verify your email to log in. You can proceed to payment now.`);
+                setSuccess(`✅ Registration successful! Please proceed to payment. Note: Your verification email will be sent ONLY after a successful payment.`);
             } else {
-                setSuccess(`✅ Company Registration successful! We've sent a verification email to ${userEmail}. Please verify your email. NOTE: Your account also requires approval from a Super Administrator before you can log in. You can proceed to payment now.`);
+                setSuccess(`✅ Company Registration successful! Please proceed to payment. Note: Verification email and admin approval will be processed after payment.`);
             }
 
         } catch (err) {

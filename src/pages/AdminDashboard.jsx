@@ -25,6 +25,7 @@ import { AdminCompanies } from '../components/Admin/AdminCompanies';
 import { AdminUsers } from '../components/Admin/AdminUsers';
 import { AdminChats } from '../components/Admin/AdminChats';
 import { AdminSubscriptions } from '../components/Admin/AdminSubscriptions';
+import { AdminFeedback } from '../components/Admin/AdminFeedback';
 import api from '../utils/api';
 
 const AdminDashboard = () => {
@@ -102,6 +103,7 @@ const AdminDashboard = () => {
         { id: 'users', label: 'Users', icon: FaUsers },
         { id: 'companies', label: 'Companies', icon: FaBuilding },
         { id: 'subscriptions', label: 'Subscriptions', icon: FaCreditCard },
+        { id: 'feedback', label: 'User Feedback', icon: FaComments },
         { id: 'chats', label: 'Support Chats', icon: FaComments }
     ];
 
@@ -277,6 +279,10 @@ const AdminDashboard = () => {
                         loading={subscriptionsManager.loading || usersManager.loading || companiesManager.loading}
                         onRefresh={handleRefresh}
                     />
+                )}
+
+                {selectedTab === 'feedback' && (
+                    <AdminFeedback />
                 )}
 
                 {selectedTab === 'chats' && (
