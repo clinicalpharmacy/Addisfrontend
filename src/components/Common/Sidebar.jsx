@@ -417,12 +417,7 @@ const Sidebar = ({ onClose }) => {
                                         }`
                                     }
                                 >
-<<<<<<< HEAD
-                                    <FaVial className="text-sm" />
-                                    Home Remedies
-=======
-                                    <FaVial className="text-[10px] opacity-40" /> Remedies
->>>>>>> 415f9b105bed49b3b7c510ce2944e4e48dec2342
+                                    <FaVial className="text-[10px] opacity-40" /> Home Remedies
                                 </NavLink>
                                 <NavLink
                                     to="/knowledge/illnesses"
@@ -446,12 +441,7 @@ const Sidebar = ({ onClose }) => {
                                         }`
                                     }
                                 >
-<<<<<<< HEAD
-                                    <FaVial className="text-sm" />
-                                    Compounding
-=======
                                     <FaVial className="text-[10px] opacity-40" /> Compounding
->>>>>>> 415f9b105bed49b3b7c510ce2944e4e48dec2342
                                 </NavLink>
                             </div>
                         )}

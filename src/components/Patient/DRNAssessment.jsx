@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import api from '../../utils/api';
 import supabase from '../../utils/supabase'; // Kept for auth fallback if needed
 import { mapPatientToFacts, evaluateRule } from '../CDSS/RuleEngine';
@@ -11,7 +11,7 @@ import {
     FaSortAmountDown, FaFileMedical, FaClipboardList, FaRegCopy,
     FaCog, FaBell, FaFileAlt, FaVial, FaBalanceScale, FaSyringe,
     FaTint, FaUserInjured, FaHistory, FaNotesMedical, FaPrescription,
-    FaMicroscope, FaBox, FaClock, FaProcedures, FaUser, FaExclamationCircle, FaSave
+    FaMicroscope, FaBox, FaClock, FaProcedures, FaUser, FaExclamationCircle, FaSave, FaLock
 } from 'react-icons/fa';
 
 const DRNAssessment = ({ patientCode }) => {
@@ -151,6 +151,13 @@ const DRNAssessment = ({ patientCode }) => {
             { name: 'Product Quality Defect', ruleType: 'product_quality_defect', dtpType: 'Product Quality Defect', drn: 'Product Quality' },
         ]
     };
+
+    // Derived filtered findings
+    const filteredFindings = useMemo(() => {
+        return (analysisResults?.findings || []).filter(f =>
+            filterSeverity === 'all' || f.severity?.toLowerCase() === filterSeverity.toLowerCase()
+        );
+    }, [analysisResults, filterSeverity]);
 
     // DTP Type colors for styling
     const getDTPTypeColor = (dtpType) => {
@@ -550,7 +557,7 @@ const DRNAssessment = ({ patientCode }) => {
             // Map UI status to DB status
             let dbStatus = 'active';
             if (writeUp.status === 'Resolved') dbStatus = 'resolved';
-            else if (writeUp.status === 'Identified' || writeUp.status === 'Unresolved') dbStatus = 'active';
+            else if (writeUp.status === 'Identified' || writeUp.status === 'Unresolved' || writeUp.status === 'Pending') dbStatus = 'active';
 
             const assessmentData = {
                 patient_id: patientId,
@@ -640,7 +647,8 @@ const DRNAssessment = ({ patientCode }) => {
             [finding.cause]: {
                 specificCase: `CDSS Rule: ${finding.original_rule_name || finding.rule_name}`,
                 medicalCondition: patientData?.diagnosis || 'To be specified',
-                medication: finding.medications?.join(', ') || 'To be specified'
+                medication: finding.medications?.join(', ') || 'To be specified',
+                status: 'Identified'
             }
         });
 
@@ -655,7 +663,7 @@ const DRNAssessment = ({ patientCode }) => {
     };
 
     const getSeverityColor = (severity) => {
-        switch (severity) {
+        switch (severity?.toLowerCase()) {
             case 'critical': return 'bg-red-500 text-white';
             case 'high': return 'bg-orange-500 text-white';
             case 'moderate': return 'bg-yellow-500 text-white';
@@ -677,55 +685,6 @@ const DRNAssessment = ({ patientCode }) => {
             'Product Quality': 'bg-green-100 text-green-800 border-green-200'
         };
         return colors[category] || 'bg-gray-100 text-gray-800 border-gray-200';
-    };
-
-    const getRuleTypeColor = (ruleType) => {
-        const colors = {
-            'duplicate_therapy': 'bg-blue-50 text-blue-700',
-            'no_medical_indication': 'bg-blue-50 text-blue-700',
-            'nondrug_therapy_appropriate': 'bg-blue-50 text-blue-700',
-            'addiction_or_recreational_medicine_use': 'bg-blue-50 text-blue-700',
-            'treating_avoidable_ade': 'bg-blue-50 text-blue-700',
-            'prophylaxis_needed': 'bg-blue-50 text-blue-700',
-            'untreated_condition': 'bg-blue-50 text-blue-700',
-            'synergistic_therapy_needed': 'bg-teal-50 text-teal-700',
-            'low_dose': 'bg-teal-50 text-teal-700',
-            'less_frequent': 'bg-teal-50 text-teal-700',
-            'short_duration': 'bg-teal-50 text-teal-700',
-            'improper_storage': 'bg-teal-50 text-teal-700',
-            'high_dose': 'bg-teal-50 text-teal-700',
-            'high_frequent': 'bg-yellow-50 text-yellow-700',
-            'longer_duration': 'bg-yellow-50 text-yellow-700',
-            'dose_titration_slow_or_fast': 'bg-yellow-50 text-yellow-700',
-            'more_effective_drug_available': 'bg-yellow-50 text-yellow-700',
-            'condition_refractory_to_drug': 'bg-red-50 text-red-700',
-            'dosage_form_inappropriate': 'bg-red-50 text-red-700',
-            'undesirable_effect_ade_or_se': 'bg-red-50 text-red-700',
-            'unsafe_drug_contraindication_or_caution': 'bg-red-50 text-red-700',
-            'allergic_reaction': 'bg-orange-50 text-orange-700',
-            'di_increase_dose': 'bg-orange-50 text-orange-700',
-            'di_decrease_dose': 'bg-orange-50 text-orange-700',
-            'di_linked_to_ade': 'bg-orange-50 text-orange-700',
-            'incorrect_administration_decrease_dose_or_efficacy': 'bg-purple-50 text-purple-700',
-            'incorrect_administration_linked_to_ade': 'bg-purple-50 text-purple-700',
-            'patient_does_not_understand_instructions': 'bg-purple-50 text-purple-700',
-            'cannot_swallow_or_administer_drug': 'bg-pink-50 text-pink-700',
-            'need_monitoring_to_rule_out_effectiveness': 'bg-pink-50 text-pink-700',
-            'need_monitoring_to_rule_out_safety': 'bg-pink-50 text-pink-700',
-            'patient_prefers_not_to_take_drug': 'bg-indigo-50 text-indigo-700',
-            'patient_forgets_to_take_drug': 'bg-indigo-50 text-indigo-700',
-            'drug_not_available': 'bg-indigo-50 text-indigo-700',
-            'more_cost_effective_drug_available': 'bg-indigo-50 text-indigo-700',
-            'cannot_afford_drug': 'bg-green-50 text-green-700',
-            'product_quality_defect': 'bg-green-50 text-green-700'
-        };
-        return colors[ruleType] || 'bg-gray-50 text-gray-700';
-    };
-
-    const getSeverityClass = (sev) => {
-        if (sev === 'critical') return 'bg-red-500';
-        if (sev === 'high') return 'bg-orange-500';
-        return 'bg-yellow-500';
     };
 
     const getDisplayStatus = (status) => {
@@ -755,85 +714,6 @@ const DRNAssessment = ({ patientCode }) => {
     }
 
     return (
-<<<<<<< HEAD
-        <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
-            {/* Header */}
-            <div className="flex items-center gap-4 mb-8 pb-6 border-b">
-                <div className="bg-blue-100 p-3 rounded-full">
-                    <FaStethoscope className="text-blue-600 text-3xl" />
-                </div>
-                <div>
-                    <h2 className="text-2xl font-bold text-gray-800">Drug-Related Needs Assessment</h2>
-                    <p className="text-sm text-gray-500 font-medium"> Clinical Decision Support System</p>
-                </div>
-            </div>
-
-            {/* Analysis */}
-            <div className="mb-10">
-                <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-xl font-bold text-gray-800 flex items-center gap-3">
-                        <FaDatabase className="text-blue-500" /> Clinical Analysis
-                    </h3>
-                    <button onClick={() => setShowAnalysis(!showAnalysis)} className="text-gray-400 hover:text-gray-600 p-2">
-                        {showAnalysis ? <FaChevronUp className="text-xl" /> : <FaChevronDown className="text-xl" />}
-                    </button>
-                </div>
-
-                {showAnalysis && (
-                    <div className="bg-gray-50 border rounded-xl p-6 transition-all duration-300">
-                        {isAnalyzing ? (
-                            <div className="text-center py-8">
-                                <FaSpinner className="animate-spin text-3xl text-blue-500 mx-auto mb-3" />
-                                <p className="text-base text-gray-600">Running analysis...</p>
-                            </div>
-                        ) : analysisResults ? (
-                            <div className="space-y-6">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-base font-semibold text-gray-700">{analysisResults.totalFindings} problems identified</span>
-                                    <button onClick={runCdssAnalysis} className="text-sm text-blue-600 font-bold flex items-center gap-2 hover:underline"><FaSync /> Re-run Analysis</button>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {analysisResults.findings.map((f, i) => (
-                                        <div key={i} className="bg-white p-4 border rounded-lg border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-shadow">
-                                            <div className="flex justify-between items-start mb-2">
-                                                <h4 className="font-bold text-base text-gray-800">{f.cause}</h4>
-                                                <span className={`text-xs font-bold px-2 py-1 rounded text-white uppercase ${getSeverityClass(f.severity)}`}>{f.severity}</span>
-                                            </div>
-                                            <p className="text-sm text-gray-600 mb-3 leading-relaxed">{f.message}</p>
-                                            <button onClick={() => handleReviewFinding(f)} className="text-sm text-blue-600 font-bold flex items-center gap-1 hover:underline">
-                                                <FaEdit /> Add to Log
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="text-center py-8">
-                                <p className="text-gray-500 mb-4 text-base">No analysis results yet.</p>
-                                <button onClick={runCdssAnalysis} className="bg-blue-600 text-white px-8 py-3 rounded-lg font-bold text-base shadow hover:bg-blue-700 transition flex items-center gap-2 mx-auto">
-                                    <FaDatabase /> Run CDSS Analysis
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                )}
-            </div>
-
-            {/* Selection Grid */}
-            <div id="assessment-form" className="mb-10">
-                <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2"><FaStethoscope className="text-gray-400" /> DRN Categories</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-                    {Object.entries(drnCategories).map(([cat, data]) => (
-                        <button
-                            key={cat}
-                            onClick={() => { setSelectedCategory(cat); setSelectedCauses([]); setWriteUps({}); setEditId(null); }}
-                            className={`p-4 rounded-xl border text-center transition-all duration-200 group ${selectedCategory === cat ? 'bg-blue-50 border-blue-500 shadow-md ring-2 ring-blue-100' : 'bg-white border-gray-200 hover:bg-gray-50 hover:border-blue-300'}`}
-                        >
-                            <data.icon className={`mx-auto mb-3 text-3xl group-hover:scale-110 transition-transform ${selectedCategory === cat ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-500'}`} />
-                            <span className={`text-sm font-bold block leading-tight ${selectedCategory === cat ? 'text-blue-800' : 'text-gray-600'}`}>{cat}</span>
-                        </button>
-                    ))}
-=======
         <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 p-4 sm:p-6 md:p-8 border border-gray-100">
             {/* Header Section */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
@@ -1010,7 +890,6 @@ const DRNAssessment = ({ patientCode }) => {
                             </button>
                         );
                     })}
->>>>>>> 415f9b105bed49b3b7c510ce2944e4e48dec2342
                 </div>
                 {/* Cause Selection and Form */}
                 {selectedCategory && (
@@ -1024,31 +903,6 @@ const DRNAssessment = ({ patientCode }) => {
                             </h3>
                         </div>
 
-<<<<<<< HEAD
-            {/* Causes and Form */}
-            {selectedCategory && (
-                <div className="bg-gray-50 p-6 sm:p-8 rounded-xl border border-gray-200 mb-10 animate-fadeIn shadow-inner">
-                    <h4 className="font-bold text-xl text-gray-800 mb-6 flex items-center gap-2">
-                        <span className="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm">{menuItemsData[selectedCategory]?.length}</span>
-                        {selectedCategory} Causes
-                    </h4>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
-                        {menuItemsData[selectedCategory]?.map(c => (
-                            <button
-                                key={c.name}
-                                onClick={() => handleCauseSelection(c.name)}
-                                className={`p-4 text-left border rounded-lg text-base transition-all ${selectedCauses.includes(c.name) ? 'bg-white border-blue-500 font-bold shadow-md text-blue-800 ring-1 ring-blue-200' : 'bg-white/60 border-gray-200 hover:border-blue-300 hover:bg-white text-gray-700'}`}
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className={`w-5 h-5 rounded border flex items-center justify-center ${selectedCauses.includes(c.name) ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-300'}`}>
-                                        {selectedCauses.includes(c.name) && <FaCheckCircle className="text-white text-xs" />}
-                                    </div>
-                                    {c.name}
-                                </div>
-                            </button>
-                        ))}
-=======
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-10">
                             {menuItemsData[selectedCategory]?.map(cause => {
                                 const isSelected = selectedCauses.includes(cause.name);
@@ -1163,249 +1017,122 @@ const DRNAssessment = ({ patientCode }) => {
                                 </div>
                             );
                         })}
->>>>>>> 415f9b105bed49b3b7c510ce2944e4e48dec2342
                     </div>
                 )}
+            </div>
 
-<<<<<<< HEAD
-                    {selectedCauses.map(cause => (
-                        <div key={cause} className="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-gray-200 mb-6 relative overflow-hidden">
-                            <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
-                            <h5 className="font-bold text-lg text-gray-900 mb-6 pb-2 border-b flex justify-between items-center">
-                                <span>{cause} Details</span>
-                                <span className="text-xs font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded">Assessment Form</span>
-                            </h5>
-
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide mb-2">Medical Condition <span className="text-red-500">*</span></label>
-                                    <textarea
-                                        value={writeUps[cause]?.medicalCondition || ''}
-                                        onChange={e => handleWriteUpChange(cause, 'medicalCondition', e.target.value)}
-                                        className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-base h-32 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow resize-none"
-                                        placeholder="Describe condition..."
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide mb-2">Medication <span className="text-red-500">*</span></label>
-                                    <textarea
-                                        value={writeUps[cause]?.medication || ''}
-                                        onChange={e => handleWriteUpChange(cause, 'medication', e.target.value)}
-                                        className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-base h-32 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow resize-none"
-                                        placeholder="List medications..."
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide mb-2">Specific Case <span className="text-red-500">*</span></label>
-                                    <textarea
-                                        value={writeUps[cause]?.specificCase || ''}
-                                        onChange={e => handleWriteUpChange(cause, 'specificCase', e.target.value)}
-                                        className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-base h-32 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow resize-none"
-                                        placeholder="Details of the finding..."
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-gray-50 p-4 rounded-lg">
-                                <div className="flex gap-2 w-full sm:w-auto">
-                                    {['Identified', 'Resolved', 'Unresolved'].map(status => (
-                                        <button
-                                            key={status}
-                                            onClick={() => handleWriteUpChange(cause, 'status', status)}
-                                            className={`flex-1 sm:flex-none px-4 py-2 text-xs font-bold uppercase rounded-lg border transition-all ${writeUps[cause]?.status === status ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-white text-gray-500 border-gray-300 hover:bg-gray-100'}`}
-                                        >
-                                            {status}
-                                        </button>
-                                    ))}
-                                </div>
-                                <button
-                                    onClick={() => saveAssessment(cause)}
-                                    className="w-full sm:w-auto px-8 py-3 bg-blue-600 text-white rounded-lg font-bold text-base hover:bg-blue-700 transition shadow-md hover:shadow-lg flex items-center justify-center gap-2"
-                                >
-                                    <FaSave /> Save Assessment
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            {/* History */}
-            <div className="mt-12">
-                <h3 className="text-2xl font-bold text-gray-800 flex items-center gap-3 mb-6 pb-4 border-b">
-                    <FaHistory className="text-blue-600" /> Assessment History
-                </h3>
-                {isLoading ? (
-                    <div className="text-center py-12"><FaSpinner className="animate-spin text-4xl text-blue-500 mx-auto" /></div>
-                ) : assessments.length === 0 ? (
-                    <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 text-gray-400 font-medium">
-                        <FaClipboardList className="text-4xl mx-auto mb-3 opacity-20" />
-                        <p className="text-lg">No archived assessments found.</p>
+            {/* Analysis Archive Section */}
+            <div className="mt-16">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 px-1 gap-4">
+                    <div>
+                        <h3 className="text-2xl font-black text-gray-900 tracking-tight">Analysis Archive</h3>
+                        <p className="text-xs text-gray-400 font-bold uppercase tracking-[0.2em] mt-1">Historical decision log ({assessments.length})</p>
                     </div>
-                ) : (
-                    <div className="space-y-4">
-                        {assessments.map(ass => (
-                            <div key={ass.id} className="p-5 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md hover:border-blue-300 transition-all flex flex-col md:flex-row justify-between items-start md:items-center group gap-4">
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-3 mb-2 flex-wrap">
-                                        <span className="font-bold text-lg text-gray-900">{ass.cause_name}</span>
-                                        <span className={`px-3 py-1 text-xs font-bold uppercase rounded-full text-white ${ass.status === 'Resolved' || ass.status === 'resolved' ? 'bg-green-500' : 'bg-blue-500'}`}>{getDisplayStatus(ass.status)}</span>
-                                        <span className="text-xs text-gray-400 font-medium bg-gray-100 px-2 py-1 rounded">{ass.category}</span>
-                                    </div>
-                                    <div className="text-sm text-gray-700 font-medium flex flex-wrap gap-x-6 gap-y-1">
-                                        <span className="flex items-center gap-1"><FaNotesMedical className="text-gray-400" /> <span className="font-bold">Condition:</span> {ass.medical_condition}</span>
-                                        <span className="flex items-center gap-1"><FaPills className="text-gray-400" /> <span className="font-bold">Medication:</span> {ass.medication}</span>
-                                    </div>
-                                    <p className="text-sm text-gray-500 mt-2 italic border-l-2 border-gray-200 pl-3 line-clamp-2">{ass.specific_case}</p>
-                                </div>
-                                <div className="flex gap-2 self-end md:self-center shrink-0">
-                                    <button
-                                        onClick={() => {
-                                            setEditId(ass.id);
-                                            setSelectedCategory(ass.category);
-                                            setSelectedCauses([ass.cause_name]);
-                                            setWriteUps({
-                                                [ass.cause_name]: {
-                                                    specificCase: ass.specific_case,
-                                                    medicalCondition: ass.medical_condition,
-                                                    medication: ass.medication,
-                                                    status: ass.status
-                                                }
-                                            });
-                                            window.scrollTo({ top: document.getElementById('assessment-form')?.offsetTop - 100, behavior: 'smooth' });
-                                        }}
-                                        className="p-3 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100"
-                                        title="Edit Assessment"
-                                    >
-                                        <FaEdit className="text-lg" />
-                                    </button>
-                                    <button
-                                        onClick={async () => { if (window.confirm('Delete?')) { await api.delete(`/assessments/drn/${ass.id}`); fetchAssessments(); } }}
-                                        className="p-3 text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
-                                        title="Delete Assessment"
-                                    >
-                                        <FaTrash className="text-lg" />
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-=======
-                {/* Analysis Archive Section */}
-                <div className="mt-16">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 px-1 gap-4">
-                        <div>
-                            <h3 className="text-2xl font-black text-gray-900 tracking-tight">Analysis Archive</h3>
-                            <p className="text-xs text-gray-400 font-bold uppercase tracking-[0.2em] mt-1">Historical decision log ({assessments.length})</p>
-                        </div>
-                        {assessments.length > 0 && (
-                            <button
-                                onClick={() => fetchAssessments()}
-                                className="bg-white p-3 rounded-2xl border border-gray-100 shadow-sm text-gray-400 hover:text-indigo-600 transition-all active:rotate-180 duration-500 flex items-center gap-2 text-xs font-black"
-                            >
-                                <FaSync className={isLoading ? 'animate-spin' : ''} /> REFRESH
-                            </button>
-                        )}
-                    </div>
-
-                    {isLoading ? (
-                        <div className="text-center py-20 bg-gray-50/50 rounded-3xl border border-dashed border-gray-200">
-                            <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto mb-4" />
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Retrieving Secure Records...</p>
-                        </div>
-                    ) : assessments.length === 0 ? (
-                        <div className="text-center py-24 bg-gray-50/30 rounded-3xl border border-dashed border-gray-100">
-                            <div className="bg-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-gray-50">
-                                <FaFileAlt className="text-3xl text-gray-200" />
-                            </div>
-                            <p className="text-gray-400 font-black uppercase tracking-widest text-xs">No entries in the archive</p>
-                        </div>
-                    ) : (
-                        <div className="space-y-6">
-                            {/* Desktop Table View */}
-                            <div className="hidden lg:block overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm">
-                                <table className="w-full text-left">
-                                    <thead>
-                                        <tr className="bg-gray-50/80 border-b border-gray-100">
-                                            <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Focus Area</th>
-                                            <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Condition & Meds</th>
-                                            <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Case Details</th>
-                                            <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
-                                            <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-50">
-                                        {assessments.map((assessment) => (
-                                            <tr key={assessment.id} className="hover:bg-gray-50/50 transition-colors group">
-                                                <td className="px-6 py-5">
-                                                    <div className="flex flex-col">
-                                                        <span className="font-black text-gray-900 text-sm tracking-tight">{assessment.category}</span>
-                                                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">{assessment.cause_name}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-5">
-                                                    <div className="flex flex-col gap-1.5">
-                                                        <span className={`inline-flex px-2 py-0.5 text-[9px] font-black uppercase tracking-tighter rounded-md w-fit ${getDTPTypeColor(assessment.dtp_type)}`}>{assessment.dtp_type || 'STANDARD'}</span>
-                                                        <span className="text-xs font-bold text-gray-600 truncate max-w-[150px]">{assessment.medical_condition}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-5">
-                                                    <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed max-w-[200px] font-medium">{assessment.specific_case}</p>
-                                                </td>
-                                                <td className="px-6 py-5">
-                                                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-full ${assessment.status === 'Resolved' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
-                                                        assessment.status === 'Identified' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
-                                                            'bg-blue-50 text-blue-600 border border-blue-100'
-                                                        }`}>
-                                                        <div className={`w-1 h-1 rounded-full animate-pulse ${assessment.status === 'Resolved' ? 'bg-emerald-600' :
-                                                            assessment.status === 'Identified' ? 'bg-amber-600' : 'bg-blue-600'
-                                                            }`} />
-                                                        {assessment.status || 'Active'}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-5 text-right">
-                                                    <div className="flex justify-end gap-2 lg:opacity-0 lg:group-hover:opacity-100 transition-all">
-                                                        <button onClick={() => handleEdit(assessment)} className="p-2.5 bg-white shadow-sm border border-gray-100 text-indigo-600 rounded-xl hover:bg-indigo-600 hover:text-white transition-all"><FaEdit className="text-sm" /></button>
-                                                        <button onClick={() => handleDeleteAssessment(assessment.id)} className="p-2.5 bg-white shadow-sm border border-gray-100 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"><FaTrash className="text-sm" /></button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            {/* Mobile Card View */}
-                            <div className="grid grid-cols-1 gap-4 lg:hidden">
-                                {assessments.map((assessment) => (
-                                    <div key={assessment.id} className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm active:scale-[0.98] transition-transform">
-                                        <div className="flex justify-between items-start mb-4">
-                                            <div className="min-w-0">
-                                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">{assessment.category}</span>
-                                                <h4 className="font-black text-gray-900 tracking-tight truncate">{assessment.cause_name}</h4>
-                                            </div>
-                                            <span className={`px-2.5 py-1 text-[9px] font-black uppercase tracking-widest rounded-full ${assessment.status === 'Resolved' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
-                                                {assessment.status || 'Active'}
-                                            </span>
-                                        </div>
-                                        <div className="bg-gray-50/80 p-3 rounded-xl mb-4 border border-gray-100">
-                                            <p className="text-xs text-gray-600 font-bold leading-tight italic line-clamp-3">"{assessment.specific_case}"</p>
-                                        </div>
-                                        <div className="flex justify-between items-center gap-3 pt-4 border-t border-gray-50">
-                                            <span className={`text-[9px] font-black px-2 py-1 rounded-lg uppercase tracking-tight ${getDTPTypeColor(assessment.dtp_type)}`}>{assessment.dtp_type || 'STANDARD'}</span>
-                                            <div className="flex gap-2">
-                                                <button onClick={() => handleEdit(assessment)} className="p-2.5 bg-white border border-gray-100 text-indigo-600 rounded-xl active:bg-indigo-50"><FaEdit className="text-xs" /></button>
-                                                <button onClick={() => handleDeleteAssessment(assessment.id)} className="p-2.5 bg-white border border-gray-100 text-red-500 rounded-xl active:bg-red-50"><FaTrash className="text-xs" /></button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
+                    {assessments.length > 0 && (
+                        <button
+                            onClick={() => fetchAssessments()}
+                            className="bg-white p-3 rounded-2xl border border-gray-100 shadow-sm text-gray-400 hover:text-indigo-600 transition-all active:rotate-180 duration-500 flex items-center gap-2 text-xs font-black"
+                        >
+                            <FaSync className={isLoading ? 'animate-spin' : ''} /> REFRESH
+                        </button>
                     )}
                 </div>
->>>>>>> 415f9b105bed49b3b7c510ce2944e4e48dec2342
+
+                {isLoading ? (
+                    <div className="text-center py-20 bg-gray-50/50 rounded-3xl border border-dashed border-gray-200">
+                        <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto mb-4" />
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Retrieving Secure Records...</p>
+                    </div>
+                ) : assessments.length === 0 ? (
+                    <div className="text-center py-24 bg-gray-50/30 rounded-3xl border border-dashed border-gray-100">
+                        <div className="bg-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-gray-50">
+                            <FaFileAlt className="text-3xl text-gray-200" />
+                        </div>
+                        <p className="text-gray-400 font-black uppercase tracking-widest text-xs">No entries in the archive</p>
+                    </div>
+                ) : (
+                    <div className="space-y-6">
+                        {/* Desktop Table View */}
+                        <div className="hidden lg:block overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm">
+                            <table className="w-full text-left">
+                                <thead>
+                                    <tr className="bg-gray-50/80 border-b border-gray-100">
+                                        <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Focus Area</th>
+                                        <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Condition & Meds</th>
+                                        <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Case Details</th>
+                                        <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
+                                        <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {assessments.map((assessment) => (
+                                        <tr key={assessment.id} className="hover:bg-gray-50/50 transition-colors group">
+                                            <td className="px-6 py-5">
+                                                <div className="flex flex-col">
+                                                    <span className="font-black text-gray-900 text-sm tracking-tight">{assessment.category}</span>
+                                                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">{assessment.cause_name}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-5">
+                                                <div className="flex flex-col gap-1.5">
+                                                    <span className={`inline-flex px-2 py-0.5 text-[9px] font-black uppercase tracking-tighter rounded-md w-fit ${getDTPTypeColor(assessment.dtp_type)}`}>{assessment.dtp_type || 'STANDARD'}</span>
+                                                    <span className="text-xs font-bold text-gray-600 truncate max-w-[150px]">{assessment.medical_condition}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-5">
+                                                <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed max-w-[200px] font-medium">{assessment.specific_case}</p>
+                                            </td>
+                                            <td className="px-6 py-5">
+                                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-full ${assessment.status === 'Resolved' || assessment.status === 'resolved' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
+                                                    assessment.status === 'Identified' || assessment.status === 'active' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
+                                                        'bg-blue-50 text-blue-600 border border-blue-100'
+                                                    }`}>
+                                                    <div className={`w-1 h-1 rounded-full animate-pulse ${assessment.status === 'Resolved' || assessment.status === 'resolved' ? 'bg-emerald-600' :
+                                                        assessment.status === 'Identified' || assessment.status === 'active' ? 'bg-amber-600' : 'bg-blue-600'
+                                                        }`} />
+                                                    {getDisplayStatus(assessment.status) || 'Active'}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-5 text-right">
+                                                <div className="flex justify-end gap-2 lg:opacity-0 lg:group-hover:opacity-100 transition-all">
+                                                    <button onClick={() => handleEdit(assessment)} className="p-2.5 bg-white shadow-sm border border-gray-100 text-indigo-600 rounded-xl hover:bg-indigo-600 hover:text-white transition-all"><FaEdit className="text-sm" /></button>
+                                                    <button onClick={() => handleDeleteAssessment(assessment.id)} className="p-2.5 bg-white shadow-sm border border-gray-100 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"><FaTrash className="text-sm" /></button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Mobile Card View */}
+                        <div className="grid grid-cols-1 gap-4 lg:hidden">
+                            {assessments.map((assessment) => (
+                                <div key={assessment.id} className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm active:scale-[0.98] transition-transform">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="min-w-0">
+                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">{assessment.category}</span>
+                                            <h4 className="font-black text-gray-900 tracking-tight truncate">{assessment.cause_name}</h4>
+                                        </div>
+                                        <span className={`px-2.5 py-1 text-[9px] font-black uppercase tracking-widest rounded-full ${assessment.status === 'Resolved' || assessment.status === 'resolved' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
+                                            {getDisplayStatus(assessment.status) || 'Active'}
+                                        </span>
+                                    </div>
+                                    <div className="bg-gray-50/80 p-3 rounded-xl mb-4 border border-gray-100">
+                                        <p className="text-xs text-gray-600 font-bold leading-tight italic line-clamp-3">"{assessment.specific_case}"</p>
+                                    </div>
+                                    <div className="flex justify-between items-center gap-3 pt-4 border-t border-gray-50">
+                                        <span className={`text-[9px] font-black px-2 py-1 rounded-lg uppercase tracking-tight ${getDTPTypeColor(assessment.dtp_type)}`}>{assessment.dtp_type || 'STANDARD'}</span>
+                                        <div className="flex gap-2">
+                                            <button onClick={() => handleEdit(assessment)} className="p-2.5 bg-white border border-gray-100 text-indigo-600 rounded-xl active:bg-indigo-50"><FaEdit className="text-xs" /></button>
+                                            <button onClick={() => handleDeleteAssessment(assessment.id)} className="p-2.5 bg-white border border-gray-100 text-red-500 rounded-xl active:bg-red-50"><FaTrash className="text-xs" /></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

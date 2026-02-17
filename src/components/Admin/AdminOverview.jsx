@@ -1,11 +1,7 @@
 import React from 'react';
 import {
     FaUsers, FaHospital, FaClock,
-<<<<<<< HEAD
-    FaHistory, FaCog, FaUserCheck, FaVial, FaBriefcase, FaUserMd
-=======
-    FaHistory, FaCog, FaUserCheck, FaUserMd, FaBuilding, FaVial
->>>>>>> 415f9b105bed49b3b7c510ce2944e4e48dec2342
+    FaHistory, FaCog, FaUserCheck, FaUserMd, FaBuilding, FaVial, FaBriefcase
 } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
@@ -101,13 +97,8 @@ export const AdminOverview = ({
                             <p className="text-[10px] md:text-sm text-red-500 font-bold uppercase tracking-tight truncate">Laboratory</p>
                             <p className="text-xl md:text-3xl font-black text-red-600 leading-tight">{stats.laboratory_count || 0}</p>
                         </div>
-<<<<<<< HEAD
-                        <div className="p-3 bg-red-100 rounded-full">
-                            <FaVial className="text-red-600 text-xl" />
-=======
                         <div className="p-2 md:p-3 bg-red-50 rounded-lg flex-shrink-0">
                             <FaVial className="text-red-600 text-sm md:text-xl" />
->>>>>>> 415f9b105bed49b3b7c510ce2944e4e48dec2342
                         </div>
                     </div>
                 </div>

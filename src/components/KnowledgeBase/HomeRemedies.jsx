@@ -127,7 +127,7 @@ const HomeRemedies = () => {
             return;
         }
 
-                // Basic validation
+        // Basic validation
         if (!formData.uses.trim()) {
             setError('Uses is required');
             return;
@@ -175,13 +175,8 @@ const HomeRemedies = () => {
             resetForm();
 
         } catch (err) {
-<<<<<<< HEAD
             console.error('❌ Error saving remedy (Full Detail):', JSON.stringify(err, null, 2));
             setError('Error saving remedy: ' + err.message);
-=======
-            console.error('Error saving remedy:', err);
-            setError('Error: ' + err.message);
->>>>>>> 415f9b105bed49b3b7c510ce2944e4e48dec2342
         } finally {
             setSaving(false);
         }
@@ -244,19 +239,15 @@ const HomeRemedies = () => {
 
     return (
         <div className="bg-gray-50 min-h-full pb-8">
-<<<<<<< HEAD
-            <div className="max-w-7xl mx-auto px-4 py-6">
+            <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 md:py-8">
                 {protectionMsg && (
-                    <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[100] w-full max-w-md px-4">
+                    <div className="fixed top-24 left-1/2 transform -translate-x-1/2 z-[100] w-full max-w-md px-4 pointer-events-none">
                         <div className="bg-red-600/90 text-white p-3 rounded-lg shadow-2xl flex items-center justify-center gap-3 animate-pulse border border-red-400 backdrop-blur-sm">
-                            <FaShieldAlt className="text-xl" />
+                            <FaLock className="text-xl" />
                             <span className="font-bold text-sm md:text-base">{protectionMsg}</span>
                         </div>
                     </div>
                 )}
-=======
-            <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 md:py-8">
->>>>>>> 415f9b105bed49b3b7c510ce2944e4e48dec2342
                 {/* Header */}
                 <div className="mb-6 md:mb-8">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
@@ -368,14 +359,14 @@ const HomeRemedies = () => {
                                 <div className="p-3 md:p-6">
                                     <div className="flex justify-between items-start mb-3 md:mb-4">
                                         {/* Clickable name/uses section */}
-                                        <div 
+                                        <div
                                             className="flex-1 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors"
                                             onClick={() => toggleCard(remedy.id)}
                                         >
                                             <div className="flex items-center gap-2">
                                                 <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-1">{remedy.name}</h3>
-                                                {expandedCards[remedy.id] ? 
-                                                    <FaChevronUp className="text-gray-500 text-sm" /> : 
+                                                {expandedCards[remedy.id] ?
+                                                    <FaChevronUp className="text-gray-500 text-sm" /> :
                                                     <FaChevronDown className="text-gray-500 text-sm" />
                                                 }
                                             </div>
