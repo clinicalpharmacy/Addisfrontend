@@ -28,8 +28,7 @@ import {
     FaExternalLinkAlt,
     FaBookmark,
     FaCreditCard,
-    FaComments,
-    FaEnvelope
+    FaComments
 } from 'react-icons/fa';
 
 // Force rebuild - ensuring all icons are properly bundled
@@ -92,7 +91,6 @@ const Sidebar = ({ onClose }) => {
     };
 
     const isSubscribed = hasValidSubscription();
-    const isVerified = user?.email_verified === true || user?.email_verified === 'true';
 
     const handleLogout = () => {
         if (window.confirm('Are you sure you want to logout?')) {
@@ -177,25 +175,6 @@ const Sidebar = ({ onClose }) => {
                                 </div>
                             </NavLink>
                         </li>
-                        {!isVerified && (
-                            <li>
-                                <NavLink
-                                    to="/settings#security"
-                                    onClick={onClose}
-                                    className={({ isActive }) =>
-                                        `flex items-center gap-3.5 p-3 rounded-xl transition-all duration-300 group ${isActive
-                                            ? 'bg-yellow-500 text-white shadow-lg shadow-yellow-100 font-black'
-                                            : 'text-yellow-600 bg-yellow-50 hover:bg-yellow-100 font-bold'
-                                        }`
-                                    }
-                                >
-                                    <div className="flex items-center gap-3.5 w-full">
-                                        <FaEnvelope className="text-xl group-hover:scale-110 transition-transform" />
-                                        <span className="text-base">Verify Email</span>
-                                    </div>
-                                </NavLink>
-                            </li>
-                        )}
                         {!isAdmin && (
                             <li>
                                 <NavLink
@@ -278,23 +257,7 @@ const Sidebar = ({ onClose }) => {
                                 </NavLink>
                             </li>
                         )}
-                        {isCompanyAdmin && (
-                            <li className="mt-4 border-t border-gray-50 pt-4">
-                                <NavLink
-                                    to="/company-performance"
-                                    onClick={onClose}
-                                    className={({ isActive }) =>
-                                        `flex items-center gap-3.5 p-3 rounded-xl transition-all duration-300 group ${isActive
-                                            ? 'bg-purple-600 text-white shadow-lg shadow-purple-100 font-black'
-                                            : 'text-gray-500 hover:bg-purple-50 hover:text-purple-700 font-bold'
-                                        }`
-                                    }
-                                >
-                                    <FaChartBar className="text-xl group-hover:scale-110 transition-transform" />
-                                    <span className="text-base">Org Performance</span>
-                                </NavLink>
-                            </li>
-                        )}
+
                         {isCompanyAdmin && (
                             <>
                                 <li>
