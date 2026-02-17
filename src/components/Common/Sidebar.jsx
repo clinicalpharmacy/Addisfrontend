@@ -356,7 +356,7 @@ const Sidebar = ({ onClose }) => {
                                         }
                                     >
                                         <span className="w-1.5 h-1.5 rounded-full bg-current opacity-40" />
-                                        Directory
+                                        Patient Lists
                                     </NavLink>
                                     <NavLink
                                         to="/patients/new"
@@ -369,7 +369,7 @@ const Sidebar = ({ onClose }) => {
                                         }
                                     >
                                         <span className="w-1.5 h-1.5 rounded-full bg-current opacity-40" />
-                                        Registration
+                                        New Patient
                                     </NavLink>
                                 </div>
                             )}
