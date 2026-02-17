@@ -44,11 +44,20 @@ const KnowledgeBaseLayout = () => {
         setTimeout(() => setSuccess(''), 3000);
     };
 
+    const hasFullAccess =
+        user?.role === 'admin' ||
+        user?.role === 'company_admin' ||
+        user?.account_type === 'company_user' ||
+        user?.role === 'pharmacist' ||
+        user?.role === 'pharmacy_student';
+
     const tabs = [
         { path: 'medications', label: 'Medications', icon: <FaPills /> },
         { path: 'remedies', label: 'Home Remedies', icon: <FaVial /> },
-        { path: 'illnesses', label: 'Minor Illnesses', icon: <FaStethoscope /> },
-        { path: 'compounding', label: 'Compounding', icon: <FaMortarPestle /> },
+        ...(hasFullAccess ? [
+            { path: 'illnesses', label: 'Minor Illnesses', icon: <FaStethoscope /> },
+            { path: 'compounding', label: 'Compounding', icon: <FaMortarPestle /> }
+        ] : []),
     ];
 
     return (

@@ -21,7 +21,8 @@ import {
     FaTag,
     FaChevronDown,
     FaChevronUp,
-    FaInfoCircle
+    FaInfoCircle,
+    FaLink
 } from 'react-icons/fa';
 import { useOutletContext } from 'react-router-dom';
 import useScreenshotProtection from '../../hooks/useScreenshotProtection';
@@ -61,7 +62,8 @@ const ExtemporaneousPrep = () => {
             try {
                 const parsedUser = JSON.parse(userData);
                 setUser(parsedUser);
-                setIsAdmin(parsedUser.role === 'admin' || parsedUser.role === 'company_admin');
+                // STRICT CHECK: Only 'admin' role gets full access. 'company_admin' does NOT.
+                setIsAdmin(parsedUser.role === 'admin');
             } catch (err) {
                 console.error('Error parsing user data:', err);
             }
@@ -169,6 +171,7 @@ const ExtemporaneousPrep = () => {
     };
 
     const handleEdit = (prep) => {
+        if (!isAdmin) return;
         setEditPrep(prep);
         setFormData({
             formula_name: prep.formula_name || '',
@@ -268,7 +271,7 @@ const ExtemporaneousPrep = () => {
     if (loading) return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
             <div className="text-center">
-                <FaSpinner className="animate-spin text-4xl text-purple-600 mx-auto mb-4" />
+                <FaSpinner className="animate-spin text-4xl text-indigo-600 mx-auto mb-4" />
                 <p className="text-gray-600">Loading compounding formulas...</p>
             </div>
         </div>
@@ -287,23 +290,18 @@ const ExtemporaneousPrep = () => {
                 )}
 
                 {/* Header */}
-                <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 mb-6">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                <div className="mb-6 md:mb-8">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                            <div className="bg-purple-100 p-3 rounded-full flex-shrink-0">
-                                <FaMortarPestle className="text-purple-600 text-xl md:text-2xl" />
+                            <div className="bg-indigo-100 p-3 rounded-full flex-shrink-0">
+                                <FaMortarPestle className="text-indigo-600 text-xl md:text-2xl" />
                             </div>
                             <div className="min-w-0 flex-1">
-                                <h1 className="text-2xl md:text-3xl font-bold text-gray-800 truncate">Compounding</h1>
-                                <p className="text-gray-600 text-sm md:text-base mt-1">
-                                    {preparations.length} formulas • {filteredPreparations.length} visible
-                                    {isAdmin && (
-                                        <span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium inline-flex items-center">
-                                            Admin
-                                        </span>
-                                    )}
+                                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 truncate">Compounding</h1>
+                                <p className="text-gray-600 mt-1 text-sm md:text-base">
+                                    Compounding formulas database with {preparations.length} entries
                                     {!isAdmin && (
-                                        <span className="ml-2 bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full font-medium inline-flex items-center">
+                                        <span className="ml-2 text-xs md:text-sm bg-gray-100 text-gray-800 px-2 py-1 rounded inline-flex items-center">
                                             <FaLock className="mr-1" /> View Only
                                         </span>
                                     )}
@@ -313,7 +311,7 @@ const ExtemporaneousPrep = () => {
                         <div className="flex flex-wrap gap-2">
                             <button
                                 onClick={fetchPreparations}
-                                className="bg-gray-500 hover:bg-gray-600 text-white px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition shadow-sm"
+                                className="bg-gray-600 hover:bg-gray-700 text-white px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition shadow-sm"
                             >
                                 <FaSync /> <span className="hidden sm:inline">Refresh</span>
                             </button>
@@ -321,13 +319,13 @@ const ExtemporaneousPrep = () => {
                                 <>
                                     <button
                                         onClick={initializeSampleData}
-                                        className="bg-green-500 hover:bg-green-600 text-white px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition shadow-sm"
+                                        className="bg-green-600 hover:bg-green-700 text-white px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition shadow-sm"
                                     >
                                         <FaPlus /> <span className="hidden sm:inline">Samples</span>
                                     </button>
                                     <button
                                         onClick={() => setShowForm(true)}
-                                        className="bg-purple-600 hover:bg-purple-700 text-white px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition shadow-sm"
+                                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition shadow-sm"
                                     >
                                         <FaPlus /> <span className="hidden sm:inline">New Formula</span><span className="sm:hidden">Add</span>
                                     </button>
@@ -336,30 +334,42 @@ const ExtemporaneousPrep = () => {
                         </div>
                     </div>
 
-                    {/* Search */}
-                    <div className="relative">
-                        <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                        <input
-                            type="text"
-                            value={searchTerm}
-                            onChange={(e) => handleSearch(e.target.value)}
-                            placeholder="Search by formula name, materials or steps..."
-                            className="w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition shadow-sm"
-                        />
+                    {/* Search Bar - Matched styling */}
+                    <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 mb-6 md:mb-8">
+                        <div className="relative">
+                            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                            <input
+                                type="text"
+                                value={searchTerm}
+                                onChange={(e) => handleSearch(e.target.value)}
+                                placeholder="Search by formula name, materials or steps..."
+                                className="w-full pl-10 pr-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm md:text-base outline-none transition"
+                            />
+                        </div>
+                        <div className="mt-4 text-xs md:text-sm text-gray-500 flex flex-wrap gap-2 items-center">
+                            <span>Showing {filteredPreparations.length} of {preparations.length} formulas</span>
+                            {!isAdmin && <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-600">Read-only</span>}
+                        </div>
                     </div>
                 </div>
 
                 {/* Messages */}
                 {success && (
-                    <div className="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg flex items-center justify-between shadow-sm">
-                        <div className="flex items-center gap-2"><FaCheckCircle /> {success}</div>
-                        <button onClick={() => setSuccess('')}><FaTimes /></button>
+                    <div className="mb-4 p-4 bg-green-100 text-green-800 rounded-lg flex items-center justify-between text-sm md:text-base shadow-sm">
+                        <div className="flex items-center gap-2">
+                            <FaCheckCircle className="flex-shrink-0" />
+                            <span>{success}</span>
+                        </div>
+                        <button onClick={() => setSuccess('')} className="text-green-800"><FaTimes /></button>
                     </div>
                 )}
                 {error && (
-                    <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg flex items-center justify-between shadow-sm">
-                        <div className="flex items-center gap-2"><FaExclamationTriangle /> {error}</div>
-                        <button onClick={() => setError('')}><FaTimes /></button>
+                    <div className="mb-4 p-4 bg-red-100 text-red-800 rounded-lg flex items-center justify-between text-sm md:text-base shadow-sm">
+                        <div className="flex items-center gap-2">
+                            <FaExclamationTriangle className="flex-shrink-0" />
+                            <span>{error}</span>
+                        </div>
+                        <button onClick={() => setError('')} className="text-red-800"><FaTimes /></button>
                     </div>
                 )}
 
@@ -369,108 +379,103 @@ const ExtemporaneousPrep = () => {
                         {filteredPreparations.map((prep) => (
                             <div
                                 key={prep.id}
-                                className="bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col"
+                                className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition-shadow duration-200 flex flex-col"
                             >
-                                <div className="p-5 flex-1">
+                                <div className="p-6 flex-1">
                                     <div className="flex justify-between items-start mb-4">
                                         <div
                                             className="flex-1 cursor-pointer group"
                                             onClick={() => toggleCard(prep.id)}
                                         >
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center group-hover:bg-purple-100 transition-colors">
-                                                    <FaPrescriptionBottle className="text-purple-600 text-lg" />
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center group-hover:bg-indigo-100 transition-colors flex-shrink-0">
+                                                    <FaPrescriptionBottle className="text-indigo-600 text-lg" />
                                                 </div>
                                                 <div className="min-w-0">
-                                                    <h3 className="text-lg font-bold text-gray-900 truncate group-hover:text-purple-700 transition-colors">
+                                                    <h3 className="text-lg font-bold text-gray-900 truncate group-hover:text-indigo-700 transition-colors">
                                                         {prep.formula_name}
                                                     </h3>
                                                     {prep.use_indication && (
-                                                        <p className="text-xs text-gray-500 truncate">{prep.use_indication}</p>
+                                                        <p className="text-sm text-gray-600 truncate">{prep.use_indication}</p>
                                                     )}
                                                 </div>
                                             </div>
                                         </div>
+                                        {/* Actions limited to Super Admin */}
                                         <div className="flex gap-1">
                                             {isAdmin && (
                                                 <>
-                                                    <button onClick={() => handleEdit(prep)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition" title="Edit"><FaEdit /></button>
+                                                    <button onClick={() => handleEdit(prep)} className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="Edit"><FaEdit /></button>
                                                     <button onClick={() => handleDelete(prep.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition" title="Delete"><FaTrash /></button>
                                                 </>
                                             )}
-                                            <button
-                                                onClick={() => toggleCard(prep.id)}
-                                                className="p-2 text-gray-400 hover:bg-gray-50 rounded-lg transition"
-                                            >
-                                                {expandedCards[prep.id] ? <FaChevronUp /> : <FaChevronDown />}
-                                            </button>
                                         </div>
                                     </div>
 
-                                    {/* Expanded Content */}
-                                    {expandedCards[prep.id] && (
-                                        <div className="mt-4 space-y-4 animate-fadeIn">
-                                            {/* Materials */}
-                                            <div>
-                                                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1">
-                                                    <FaVial /> Materials
-                                                </h4>
-                                                <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                                                    <ul className="text-sm text-gray-700 list-disc pl-4 space-y-1">
-                                                        {renderBullets(prep.materials)}
-                                                    </ul>
-                                                </div>
-                                            </div>
+                                    <div className="border-t pt-4">
+                                        <button
+                                            onClick={() => toggleCard(prep.id)}
+                                            className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center gap-2"
+                                        >
+                                            {expandedCards[prep.id] ? <><FaChevronUp /> Hide Details</> : <><FaChevronDown /> Show Details</>}
+                                        </button>
 
-                                            {/* Method */}
-                                            <div>
-                                                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1">
-                                                    <FaBookOpen /> Preparation Method
-                                                </h4>
-                                                <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
-                                                    {prep.preparation_steps}
-                                                </div>
-                                            </div>
-
-                                            {/* Label */}
-                                            {prep.label_instructions && (
-                                                <div className="pt-4 border-t border-gray-100">
-                                                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1">
-                                                        <FaTag /> Label Instructions
+                                        {expandedCards[prep.id] && (
+                                            <div className="mt-4 space-y-4 animate-fadeIn">
+                                                {/* Materials */}
+                                                <div>
+                                                    <h4 className="font-semibold text-gray-700 mb-2 text-sm flex items-center gap-2">
+                                                        <FaVial className="text-gray-400" /> Materials
                                                     </h4>
-                                                    <div className="bg-purple-50 p-3 rounded-xl flex items-start gap-2 border border-purple-100">
-                                                        <FaInfoCircle className="text-purple-600 mt-0.5" />
-                                                        <p className="text-sm text-purple-800 font-medium italic">
-                                                            {prep.label_instructions}
-                                                        </p>
+                                                    <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                                        <ul className="text-sm text-gray-700 list-disc pl-4 space-y-1">
+                                                            {renderBullets(prep.materials)}
+                                                        </ul>
                                                     </div>
                                                 </div>
-                                            )}
-                                        </div>
-                                    )}
+
+                                                {/* Method */}
+                                                <div>
+                                                    <h4 className="font-semibold text-gray-700 mb-2 text-sm flex items-center gap-2">
+                                                        <FaBookOpen className="text-gray-400" /> Preparation Method
+                                                    </h4>
+                                                    <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                                                        {prep.preparation_steps}
+                                                    </div>
+                                                </div>
+
+                                                {/* Label */}
+                                                {prep.label_instructions && (
+                                                    <div className="pt-2">
+                                                        <h4 className="font-semibold text-gray-700 mb-2 text-sm flex items-center gap-2">
+                                                            <FaTag className="text-gray-400" /> Label Instructions
+                                                        </h4>
+                                                        <div className="bg-blue-50 p-3 rounded-lg flex items-start gap-2 border border-blue-100">
+                                                            <FaInfoCircle className="text-blue-600 mt-0.5 flex-shrink-0" />
+                                                            <p className="text-sm text-blue-800 font-medium italic">
+                                                                {prep.label_instructions}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {/* Footer Stats */}
-                                <div className="bg-gray-50 px-5 py-3 flex items-center justify-between border-t border-gray-100">
-                                    <div className="flex items-center gap-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                        <div className="flex items-center gap-1"><FaTemperatureLow className="text-blue-400" /> {prep.storage_info || 'N/A'}</div>
-                                        <div className="flex items-center gap-1"><FaClock className="text-orange-400" /> {prep.stability_info || 'N/A'}</div>
+                                <div className="bg-gray-50 px-6 py-3 flex items-center justify-between border-t border-gray-100">
+                                    <div className="flex items-center gap-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                        <div className="flex items-center gap-1"><FaTemperatureLow className="text-blue-500" /> {prep.storage_info || 'N/A'}</div>
+                                        <div className="flex items-center gap-1"><FaClock className="text-orange-500" /> {prep.stability_info || 'N/A'}</div>
                                     </div>
-                                    {!expandedCards[prep.id] && (
-                                        <button
-                                            onClick={() => toggleCard(prep.id)}
-                                            className="text-[10px] font-bold text-purple-600 hover:text-purple-800 uppercase tracking-widest"
-                                        >
-                                            View Details
-                                        </button>
-                                    )}
                                 </div>
                             </div>
                         ))}
                     </div>
                 ) : (
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 py-20 text-center">
-                        <FaMortarPestle className="text-6xl text-gray-200 mx-auto mb-4" />
+                    <div className="bg-white rounded-xl shadow-lg border border-gray-200 py-16 text-center">
+                        <FaMortarPestle className="text-6xl text-gray-300 mx-auto mb-4" />
                         <h3 className="text-xl font-bold text-gray-800 mb-2">No Formulas Found</h3>
                         <p className="text-gray-500 max-w-md mx-auto mb-8">
                             {searchTerm ? 'No results match your search criteria.' : 'Start adding your compounding formulas to the repository.'}
@@ -478,7 +483,7 @@ const ExtemporaneousPrep = () => {
                         {isAdmin && !searchTerm && (
                             <button
                                 onClick={initializeSampleData}
-                                className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-xl font-bold shadow-lg transition"
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg font-bold shadow-md transition"
                             >
                                 Load Sample Data
                             </button>
@@ -487,20 +492,20 @@ const ExtemporaneousPrep = () => {
                 )}
 
                 {/* Form Modal */}
-                {showForm && (
-                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
-                        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-                            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-purple-600 text-white">
-                                <h2 className="text-xl font-bold flex items-center gap-2">
-                                    <FaMortarPestle /> {editPrep ? 'Edit Formula' : 'Add New Formula'}
+                {showForm && isAdmin && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+                            <div className="p-6 border-b border-gray-200 flex justify-between items-center bg-white">
+                                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                                    {editPrep ? 'Edit Formula' : 'Add New Formula'}
                                 </h2>
-                                <button onClick={resetForm} className="hover:bg-white/20 p-2 rounded-xl transition"><FaTimes size={20} /></button>
+                                <button onClick={resetForm} className="text-gray-400 hover:text-gray-600 transition"><FaTimes size={24} /></button>
                             </div>
 
                             <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="md:col-span-2">
-                                        <label className="block text-sm font-bold text-gray-700 mb-1">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
                                             Formula Name <span className="text-red-500">*</span>
                                         </label>
                                         <input
@@ -508,12 +513,12 @@ const ExtemporaneousPrep = () => {
                                             value={formData.formula_name}
                                             onChange={(e) => setFormData({ ...formData, formula_name: e.target.value })}
                                             placeholder="e.g. Salicylic Acid Ointment 5%"
-                                            className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition"
+                                            className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"
                                             required
                                         />
                                     </div>
                                     <div className="md:col-span-2">
-                                        <label className="block text-sm font-bold text-gray-700 mb-1">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
                                             Clinical Indication / Use
                                         </label>
                                         <input
@@ -521,13 +526,13 @@ const ExtemporaneousPrep = () => {
                                             value={formData.use_indication}
                                             onChange={(e) => setFormData({ ...formData, use_indication: e.target.value })}
                                             placeholder="e.g. Keratolytic, Psoriasis treatment"
-                                            className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition"
+                                            className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"
                                         />
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-1">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
                                         Materials & Composition <span className="text-red-500">*</span>
                                     </label>
                                     <textarea
@@ -535,13 +540,13 @@ const ExtemporaneousPrep = () => {
                                         onChange={(e) => setFormData({ ...formData, materials: e.target.value })}
                                         placeholder="List ingredients and their quantities (one per line)..."
                                         rows="4"
-                                        className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition"
+                                        className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"
                                         required
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-1">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
                                         Preparation Steps <span className="text-red-500">*</span>
                                     </label>
                                     <textarea
@@ -549,13 +554,13 @@ const ExtemporaneousPrep = () => {
                                         onChange={(e) => setFormData({ ...formData, preparation_steps: e.target.value })}
                                         placeholder="Detailed step-by-step compounding procedure..."
                                         rows="6"
-                                        className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition"
+                                        className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"
                                         required
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-1">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
                                         Auxiliary Labeling
                                     </label>
                                     <textarea
@@ -563,29 +568,29 @@ const ExtemporaneousPrep = () => {
                                         onChange={(e) => setFormData({ ...formData, label_instructions: e.target.value })}
                                         placeholder="Specific labels (e.g. Shake well, For external use only)..."
                                         rows="2"
-                                        className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition"
+                                        className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"
                                     />
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-bold text-gray-700 mb-1">Storage Conditions</label>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Storage Conditions</label>
                                         <input
                                             type="text"
                                             value={formData.storage_info}
                                             onChange={(e) => setFormData({ ...formData, storage_info: e.target.value })}
                                             placeholder="e.g. Protect from light, 2-8°C"
-                                            className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none"
+                                            className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-bold text-gray-700 mb-1">Beyond Use Date (BUD)</label>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Beyond Use Date (BUD)</label>
                                         <input
                                             type="text"
                                             value={formData.stability_info}
                                             onChange={(e) => setFormData({ ...formData, stability_info: e.target.value })}
                                             placeholder="e.g. 14 days, 6 months"
-                                            className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none"
+                                            className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                                         />
                                     </div>
                                 </div>
@@ -594,16 +599,16 @@ const ExtemporaneousPrep = () => {
                                     <button
                                         type="submit"
                                         disabled={saving}
-                                        className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-4 rounded-2xl font-bold transition shadow-lg flex items-center justify-center gap-2 group disabled:opacity-50"
+                                        className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg font-bold transition shadow-sm flex items-center justify-center gap-2 group disabled:opacity-50"
                                     >
-                                        {saving ? <FaSpinner className="animate-spin" /> : <FaCheckCircle className="group-hover:scale-110 transition-transform" />}
-                                        {editPrep ? 'Update Formula' : 'Save Compounding Formula'}
+                                        {saving ? <FaSpinner className="animate-spin" /> : (editPrep ? <FaEdit /> : <FaPlus />)}
+                                        {editPrep ? 'Update Formula' : 'Save Formula'}
                                     </button>
                                     <button
                                         type="button"
                                         onClick={resetForm}
                                         disabled={saving}
-                                        className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-8 py-4 rounded-2xl font-bold transition"
+                                        className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium transition"
                                     >
                                         Cancel
                                     </button>

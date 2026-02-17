@@ -377,7 +377,11 @@ const Signup = () => {
             setRegistrationComplete(true);
 
             setStep(3);
-            setSuccess(`✅ Registration successful! We've sent a verification email to ${userEmail}. Please verify your account before logging in. You can proceed to payment now.`);
+            if (formData.account_type === 'individual') {
+                setSuccess(`✅ Registration successful! We've sent a verification email to ${userEmail}. Please verify your email to log in. You can proceed to payment now.`);
+            } else {
+                setSuccess(`✅ Company Registration successful! We've sent a verification email to ${userEmail}. Please verify your email. NOTE: Your account also requires approval from a Super Administrator before you can log in. You can proceed to payment now.`);
+            }
 
         } catch (err) {
 

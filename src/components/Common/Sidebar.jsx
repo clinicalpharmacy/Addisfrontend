@@ -117,7 +117,7 @@ const Sidebar = ({ onClose }) => {
     const isNearExpiry = daysLeft !== null && daysLeft <= 7;
 
     return (
-        <aside className="w-64 bg-white h-full flex flex-col border-r border-gray-100 shadow-xl z-[60] relative overflow-hidden">
+        <aside className="w-72 bg-white h-full flex flex-col border-r border-gray-100 shadow-xl z-[60] relative overflow-hidden">
             {/* Design Element: Subtle Gradient Overlay */}
             <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-blue-50/20 to-transparent pointer-events-none" />
 
@@ -154,7 +154,7 @@ const Sidebar = ({ onClose }) => {
             <nav className="flex-1 p-4 sm:p-5 overflow-y-auto no-scrollbar relative z-10">
                 {/* Main Menu */}
                 <div className="mb-8">
-                    <h3 className="text-[10px] uppercase text-gray-400 font-black mb-4 tracking-[0.2em] px-3">Main Menu</h3>
+                    <h3 className="text-xs uppercase text-gray-400 font-black mb-4 tracking-[0.2em] px-3">Main Menu</h3>
                     <ul className="space-y-1.5">
                         <li>
                             <NavLink
@@ -167,8 +167,8 @@ const Sidebar = ({ onClose }) => {
                                     }`
                                 }
                             >
-                                <FaHome className="text-lg group-hover:scale-110 transition-transform" />
-                                <span className="text-sm">Dashboard</span>
+                                <FaHome className="text-xl group-hover:scale-110 transition-transform" />
+                                <span className="text-base">Dashboard</span>
                             </NavLink>
                         </li>
                         {!isAdmin && (
@@ -184,10 +184,10 @@ const Sidebar = ({ onClose }) => {
                                     }
                                 >
                                     <div className="flex items-center gap-3.5">
-                                        <FaBrain className="text-lg group-hover:scale-110 transition-transform" />
-                                        <span className="text-sm">Clinical Analysis</span>
+                                        <FaBrain className="text-xl group-hover:scale-110 transition-transform" />
+                                        <span className="text-base">Clinical Analysis</span>
                                     </div>
-                                    {!isSubscribed && <FaLock className="text-[10px] opacity-50" />}
+                                    {!isSubscribed && <FaLock className="text-xs opacity-50" />}
                                 </NavLink>
                             </li>
                         )}
@@ -201,10 +201,10 @@ const Sidebar = ({ onClose }) => {
                                     }`}
                             >
                                 <div className="flex items-center gap-3.5">
-                                    <FaCogs className="text-lg group-hover:rotate-45 transition-transform" />
-                                    <span className="text-sm">Settings</span>
+                                    <FaCogs className="text-xl group-hover:rotate-45 transition-transform" />
+                                    <span className="text-base">Settings</span>
                                 </div>
-                                {expandedSections.settings ? <FaChevronDown className="text-current text-[10px]" /> : <FaChevronRight className="text-current text-[10px]" />}
+                                {expandedSections.settings ? <FaChevronDown className="text-current text-xs" /> : <FaChevronRight className="text-current text-xs" />}
                             </button>
 
                             {expandedSections.settings && (
@@ -213,25 +213,25 @@ const Sidebar = ({ onClose }) => {
                                         to="/settings"
                                         onClick={onClose}
                                         className={({ isActive }) =>
-                                            `flex items-center gap-3 px-4 py-2 text-[13px] rounded-lg transition-all ${isActive && !location.hash
+                                            `flex items-center gap-3 px-4 py-2 text-sm rounded-lg transition-all ${isActive && !location.hash
                                                 ? 'text-blue-600 font-black'
                                                 : 'text-gray-400 hover:text-gray-700'
                                             }`
                                         }
                                     >
-                                        <FaUserCircle className="text-[10px]" /> Profile info
+                                        <FaUserCircle className="text-xs" /> Profile info
                                     </NavLink>
                                     <NavLink
                                         to="/settings#security"
                                         onClick={onClose}
                                         className={({ isActive }) =>
-                                            `flex items-center gap-3 px-4 py-2 text-[13px] rounded-lg transition-all ${location.hash === '#security'
+                                            `flex items-center gap-3 px-4 py-2 text-sm rounded-lg transition-all ${location.hash === '#security'
                                                 ? 'text-blue-600 font-black'
                                                 : 'text-gray-400 hover:text-gray-700'
                                             }`
                                         }
                                     >
-                                        <FaLock className="text-[10px]" /> Security Access
+                                        <FaLock className="text-xs" /> Security Access
                                     </NavLink>
                                 </div>
                             )}
@@ -248,8 +248,8 @@ const Sidebar = ({ onClose }) => {
                                         }`
                                     }
                                 >
-                                    <FaCreditCard className="text-lg text-blue-600" />
-                                    <span className="font-medium">My Subscription</span>
+                                    <FaCreditCard className="text-xl text-blue-600" />
+                                    <span className="font-medium text-base">My Subscription</span>
                                 </NavLink>
                             </li>
                         )}
@@ -265,8 +265,8 @@ const Sidebar = ({ onClose }) => {
                                         }`
                                     }
                                 >
-                                    <FaChartBar className="text-lg group-hover:scale-110 transition-transform" />
-                                    <span className="text-sm">Org Performance</span>
+                                    <FaChartBar className="text-xl group-hover:scale-110 transition-transform" />
+                                    <span className="text-base">Org Performance</span>
                                 </NavLink>
                             </li>
                         )}
@@ -283,8 +283,8 @@ const Sidebar = ({ onClose }) => {
                                             }`
                                         }
                                     >
-                                        <FaCreditCard className="text-lg text-blue-600" />
-                                        <span className="font-medium">Manage Subscription</span>
+                                        <FaCreditCard className="text-xl text-blue-600" />
+                                        <span className="font-medium text-base">Manage Subscription</span>
                                     </NavLink>
                                 </li>
                             </>
@@ -294,9 +294,9 @@ const Sidebar = ({ onClose }) => {
 
                 {/* Quick Actions */}
                 <div className="mb-8">
-                    <h3 className="text-[10px] uppercase text-gray-400 font-black mb-4 tracking-[0.2em] px-3">Quick Actions</h3>
+                    <h3 className="text-xs uppercase text-gray-400 font-black mb-4 tracking-[0.2em] px-3">Quick Actions</h3>
                     <ul className="space-y-2">
-                        {!isAdmin && (
+                        {!isAdmin && user?.role !== 'health_care_client' && (
                             <li>
                                 <button
                                     onClick={() => {
@@ -311,11 +311,11 @@ const Sidebar = ({ onClose }) => {
                                 >
                                     <div className="flex items-center gap-3.5">
                                         <div className="p-2 bg-gray-50 text-gray-400 group-hover:bg-blue-100 group-hover:text-blue-600 rounded-lg transition-colors">
-                                            <FaUserInjured className="text-sm" />
+                                            <FaUserInjured className="text-base" />
                                         </div>
-                                        <span className="text-sm">New Patient</span>
+                                        <span className="text-base">New Patient</span>
                                     </div>
-                                    {!isSubscribed && <FaLock className="text-[10px] opacity-50" />}
+                                    {!isSubscribed && <FaLock className="text-xs opacity-50" />}
                                 </button>
                             </li>
                         )}
@@ -324,20 +324,20 @@ const Sidebar = ({ onClose }) => {
 
                 {/* Advanced Navigation */}
                 <div className="mb-8">
-                    <h3 className="text-[10px] uppercase text-gray-400 font-black mb-4 tracking-[0.2em] px-3">Resource Grid</h3>
+                    <h3 className="text-xs uppercase text-gray-400 font-black mb-4 tracking-[0.2em] px-3">Resource Grid</h3>
 
                     {/* Patients Section */}
-                    {!isAdmin && (
+                    {!isAdmin && user?.role !== 'health_care_client' && (
                         <div className="mb-2">
                             <button
                                 onClick={() => isSubscribed ? toggleSection('patients') : navigate('/subscription/plans')}
                                 className={`flex items-center justify-between w-full p-3 rounded-xl text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-300 font-bold group ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`}
                             >
                                 <div className="flex items-center gap-3.5">
-                                    <FaUserInjured className="text-lg group-hover:scale-110 transition-transform" />
-                                    <span className="text-sm">Patients</span>
+                                    <FaUserInjured className="text-2xl group-hover:scale-110 transition-transform" />
+                                    <span className="text-lg">Patients</span>
                                 </div>
-                                <div className="flex items-center gap-2 text-[10px]">
+                                <div className="flex items-center gap-2 text-sm">
                                     {!isSubscribed && <FaLock className="opacity-50" />}
                                     {expandedSections.patients ? <FaChevronDown /> : <FaChevronRight />}
                                 </div>
@@ -349,26 +349,26 @@ const Sidebar = ({ onClose }) => {
                                         to="/patients"
                                         onClick={onClose}
                                         className={({ isActive }) =>
-                                            `flex items-center gap-3 px-4 py-2 text-[13px] rounded-lg transition-all ${isActive
+                                            `flex items-center gap-3 px-4 py-3 text-base rounded-lg transition-all ${isActive
                                                 ? 'text-blue-600 font-black'
                                                 : 'text-gray-400 hover:text-gray-700'
                                             }`
                                         }
                                     >
-                                        <span className="w-1.5 h-1.5 rounded-full bg-current opacity-40" />
+                                        <span className="w-2 h-2 rounded-full bg-current opacity-40" />
                                         Patient Lists
                                     </NavLink>
                                     <NavLink
                                         to="/patients/new"
                                         onClick={onClose}
                                         className={({ isActive }) =>
-                                            `flex items-center gap-3 px-4 py-2 text-[13px] rounded-lg transition-all ${isActive
+                                            `flex items-center gap-3 px-4 py-3 text-base rounded-lg transition-all ${isActive
                                                 ? 'text-blue-600 font-black'
                                                 : 'text-gray-400 hover:text-gray-700'
                                             }`
                                         }
                                     >
-                                        <span className="w-1.5 h-1.5 rounded-full bg-current opacity-40" />
+                                        <span className="w-2 h-2 rounded-full bg-current opacity-40" />
                                         New Patient
                                     </NavLink>
                                 </div>
@@ -377,17 +377,17 @@ const Sidebar = ({ onClose }) => {
                     )}
 
                     {/* Knowledge Base Section */}
+                    {/* Knowledge Base Section */}
                     <div className="mb-2">
                         <button
-                            onClick={() => (isSubscribed || isAdmin) ? toggleSection('knowledge') : navigate('/subscription/plans')}
-                            className={`flex items-center justify-between w-full p-3 rounded-xl text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-300 font-bold group ${!isSubscribed && !isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
+                            onClick={() => toggleSection('knowledge')}
+                            className="flex items-center justify-between w-full p-3 rounded-xl text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-300 font-bold group"
                         >
                             <div className="flex items-center gap-3.5">
-                                <FaBookMedical className="text-lg group-hover:scale-110 transition-transform" />
-                                <span className="text-sm">Knowledge Base</span>
+                                <FaBookMedical className="text-2xl group-hover:scale-110 transition-transform" />
+                                <span className="text-lg">Knowledge Base</span>
                             </div>
-                            <div className="flex items-center gap-2 text-[10px]">
-                                {!isSubscribed && !isAdmin && <FaLock className="opacity-50" />}
+                            <div className="flex items-center gap-2 text-sm">
                                 {expandedSections.knowledge ? <FaChevronDown /> : <FaChevronRight />}
                             </div>
                         </button>
@@ -399,50 +399,54 @@ const Sidebar = ({ onClose }) => {
                                     onClick={onClose}
                                     end
                                     className={({ isActive }) =>
-                                        `flex items-center gap-3 px-4 py-2 text-[13px] rounded-lg transition-all ${isActive
+                                        `flex items-center gap-3 px-4 py-3 text-lg rounded-lg transition-all ${isActive
                                             ? 'text-indigo-600 font-black'
                                             : 'text-gray-400 hover:text-gray-700'
                                         }`
                                     }
                                 >
-                                    <FaCapsules className="text-[10px] opacity-40" /> Medications
+                                    <FaCapsules className="text-base opacity-40" /> Medications
                                 </NavLink>
                                 <NavLink
                                     to="/knowledge/remedies"
                                     onClick={onClose}
                                     className={({ isActive }) =>
-                                        `flex items-center gap-3 px-4 py-2 text-[13px] rounded-lg transition-all ${isActive
+                                        `flex items-center gap-3 px-4 py-3 text-lg rounded-lg transition-all ${isActive
                                             ? 'text-indigo-600 font-black'
                                             : 'text-gray-400 hover:text-gray-700'
                                         }`
                                     }
                                 >
-                                    <FaVial className="text-[10px] opacity-40" /> Home Remedies
+                                    <FaVial className="text-base opacity-40" /> Home Remedies
                                 </NavLink>
-                                <NavLink
-                                    to="/knowledge/illnesses"
-                                    onClick={onClose}
-                                    className={({ isActive }) =>
-                                        `flex items-center gap-3 px-4 py-2 text-[13px] rounded-lg transition-all ${isActive
-                                            ? 'text-indigo-600 font-black'
-                                            : 'text-gray-400 hover:text-gray-700'
-                                        }`
-                                    }
-                                >
-                                    <FaStethoscope className="text-[10px] opacity-40" /> Illnesses
-                                </NavLink>
-                                <NavLink
-                                    to="/knowledge/compounding"
-                                    onClick={onClose}
-                                    className={({ isActive }) =>
-                                        `flex items-center gap-3 px-4 py-2 text-[13px] rounded-lg transition-all ${isActive
-                                            ? 'text-indigo-600 font-black'
-                                            : 'text-gray-400 hover:text-gray-700'
-                                        }`
-                                    }
-                                >
-                                    <FaVial className="text-[10px] opacity-40" /> Compounding
-                                </NavLink>
+                                {(!isIndividual || ['pharmacist', 'pharmacy_student'].includes(user?.role)) && (
+                                    <>
+                                        <NavLink
+                                            to="/knowledge/illnesses"
+                                            onClick={onClose}
+                                            className={({ isActive }) =>
+                                                `flex items-center gap-3 px-4 py-3 text-lg rounded-lg transition-all ${isActive
+                                                    ? 'text-indigo-600 font-black'
+                                                    : 'text-gray-400 hover:text-gray-700'
+                                                }`
+                                            }
+                                        >
+                                            <FaStethoscope className="text-base opacity-40" /> Illnesses
+                                        </NavLink>
+                                        <NavLink
+                                            to="/knowledge/compounding"
+                                            onClick={onClose}
+                                            className={({ isActive }) =>
+                                                `flex items-center gap-3 px-4 py-3 text-lg rounded-lg transition-all ${isActive
+                                                    ? 'text-indigo-600 font-black'
+                                                    : 'text-gray-400 hover:text-gray-700'
+                                                }`
+                                            }
+                                        >
+                                            <FaVial className="text-base opacity-40" /> Compounding
+                                        </NavLink>
+                                    </>
+                                )}
                             </div>
                         )}
                     </div>
@@ -583,8 +587,8 @@ const Sidebar = ({ onClose }) => {
                                     }`
                                 }
                             >
-                                <FaBookmark className="text-lg" />
-                                <span className="font-medium">Useful Links</span>
+                                <FaBookmark className="text-xl" />
+                                <span className="font-medium text-base">Useful Links</span>
                             </NavLink>
                         </div>
 
@@ -600,8 +604,8 @@ const Sidebar = ({ onClose }) => {
                                     }`
                                 }
                             >
-                                <FaPills className="text-lg" />
-                                <span className="font-medium">Med Availability</span>
+                                <FaPills className="text-xl" />
+                                <span className="font-medium text-base">Med Availability</span>
                             </NavLink>
                         </div>
 
@@ -618,8 +622,8 @@ const Sidebar = ({ onClose }) => {
                                         }`
                                     }
                                 >
-                                    <FaLink className="text-lg" />
-                                    <span className="font-medium">Manage Links</span>
+                                    <FaLink className="text-xl" />
+                                    <span className="font-medium text-base">Manage Links</span>
                                 </NavLink>
                             </div>
                         )}

@@ -1718,124 +1718,9 @@ const PatientDetails = () => {
                     </div>
                 </div>
 
-                {/* Pregnancy Status (Females Only) */}
-                {(formData.gender && formData.gender.toLowerCase() === 'female') && (
-                    <div className="space-y-6">
-                        {/* Pregnancy Status */}
-                        <div className="bg-white rounded-xl shadow-lg p-6 mt-6 border border-pink-100">
-                            <div className="flex justify-between items-center mb-6 border-b border-pink-100 pb-2">
-                                <h3 className="text-lg font-bold text-pink-700 flex items-center gap-2">
-                                    <FaBaby className="text-pink-500" /> Pregnancy Status
-                                </h3>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div className="bg-pink-50 p-3 rounded-lg border border-pink-100">
-                                    <label className="block text-xs font-bold text-pink-600 uppercase mb-2">Is Pregnant?</label>
-                                    {isEditing ? (
-                                        <div className="flex bg-white rounded-lg p-1 border border-pink-200">
-                                            <button
-                                                type="button"
-                                                onClick={() => handleInputChange('is_pregnant', false)}
-                                                className={`flex-1 py-2 px-4 rounded-md text-sm font-bold transition-all ${!formData.is_pregnant ? 'bg-gray-100 text-gray-700 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-                                            >
-                                                No
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleInputChange('is_pregnant', true)}
-                                                className={`flex-1 py-2 px-4 rounded-md text-sm font-bold transition-all ${formData.is_pregnant ? 'bg-pink-500 text-white shadow-md' : 'text-gray-400 hover:text-pink-400'}`}
-                                            >
-                                                Yes
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <div className={`p-2 font-bold rounded-md text-center ${formData.is_pregnant ? 'bg-pink-500 text-white' : 'bg-gray-100 text-gray-700'}`}>
-                                            {formData.is_pregnant ? 'PREGNANT' : 'NOT PREGNANT'}
-                                        </div>
-                                    )}
-                                </div>
-                                {formData.is_pregnant && (
-                                    <>
-                                        <div className="bg-pink-50 p-3 rounded-lg border border-pink-100">
-                                            <label className="block text-xs font-bold text-pink-600 uppercase mb-2">Weeks</label>
-                                            {isEditing ? (
-                                                <input
-                                                    type="number"
-                                                    placeholder="e.g. 12"
-                                                    value={formData.pregnancy_weeks || ''}
-                                                    onChange={e => handleInputChange('pregnancy_weeks', e.target.value)}
-                                                    className="w-full px-3 py-2 border border-pink-200 rounded-md outline-none focus:ring-2 focus:ring-pink-500 transition bg-white font-bold text-pink-700"
-                                                />
-                                            ) : (
-                                                <div className="p-2 font-bold text-pink-800 bg-white rounded-md text-center border border-pink-100">
-                                                    {formData.pregnancy_weeks || '--'} Weeks
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="bg-pink-50 p-3 rounded-lg border border-pink-100">
-                                            <label className="block text-xs font-bold text-pink-600 uppercase mb-2">Trimester</label>
-                                            <div className="p-2 font-black text-pink-900 bg-pink-200 rounded-md text-center shadow-inner tracking-wider">
-                                                {formData.pregnancy_trimester || 'SELECT WEEKS'}
-                                            </div>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        </div>
 
-                        {/* Lactation Status */}
-                        <div className="bg-white rounded-xl shadow-lg p-6 border border-blue-100">
-                            <div className="flex justify-between items-center mb-6 border-b border-blue-100 pb-2">
-                                <h3 className="text-lg font-bold text-blue-700 flex items-center gap-2">
-                                    <FaBabyCarriage className="text-blue-500" /> Lactation Status
-                                </h3>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
-                                    <label className="block text-xs font-bold text-blue-600 uppercase mb-2">Is Lactating/Breastfeeding?</label>
-                                    {isEditing ? (
-                                        <div className="flex bg-white rounded-lg p-1 border border-blue-200">
-                                            <button
-                                                type="button"
-                                                onClick={() => handleInputChange('is_lactating', false)}
-                                                className={`flex-1 py-2 px-4 rounded-md text-sm font-bold transition-all ${!formData.is_lactating ? 'bg-gray-100 text-gray-700 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-                                            >
-                                                No
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleInputChange('is_lactating', true)}
-                                                className={`flex-1 py-2 px-4 rounded-md text-sm font-bold transition-all ${formData.is_lactating ? 'bg-blue-600 text-white shadow-md' : 'text-gray-400 hover:text-blue-400'}`}
-                                            >
-                                                Yes
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <div className={`p-2 font-bold rounded-md text-center ${formData.is_lactating ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}>
-                                            {formData.is_lactating ? 'LACTATING' : 'NOT LACTATING'}
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
-                                    <label className="block text-xs font-bold text-blue-600 uppercase mb-2">Lactation Notes</label>
-                                    {isEditing ? (
-                                        <input
-                                            type="text"
-                                            placeholder="e.g. Exclusive breastfeeding"
-                                            value={formData.lactation_notes || ''}
-                                            onChange={e => handleInputChange('lactation_notes', e.target.value)}
-                                            className="w-full px-3 py-2 border border-blue-200 rounded-md outline-none focus:ring-2 focus:ring-blue-500 transition bg-white font-bold text-blue-700"
-                                        />
-                                    ) : (
-                                        <div className="p-2 font-bold text-blue-800 bg-white rounded-md border border-blue-100">
-                                            {formData.lactation_notes || '--'}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
+
+
 
                 {/* Vitals History Table */}
                 {!isNewPatient && vitalsHistory.length > 0 && (
@@ -3416,91 +3301,113 @@ const PatientDetails = () => {
                         </div>
                     </div>
 
-                    {/* Pregnancy Section */}
-                    {formData.gender === 'Female' && (
-                        <div className="space-y-2 md:col-span-2">
-                            <label className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    checked={formData.is_pregnant}
-                                    onChange={(e) => handleInputChange('is_pregnant', e.target.checked)}
-                                    className="w-4 h-4 text-blue-600"
-                                    disabled={!isEditing}
-                                />
-                                <span className="text-sm font-medium text-gray-700 flex items-center gap-1">
-                                    <FaBaby className="text-pink-500" /> Pregnant
-                                </span>
-                            </label>
-
-                            {formData.is_pregnant && (
-                                <div className="mt-3 p-4 bg-pink-50 rounded-lg border border-pink-200">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                Pregnancy Weeks
-                                            </label>
+                    {/* Pregnancy Status (Females Only) - Moved from Vitals */}
+                    {(formData.gender && formData.gender.toLowerCase() === 'female') && (
+                        <div className="bg-white rounded-xl shadow-lg p-6 mt-6 border border-pink-100 md:col-span-2">
+                            <div className="flex justify-between items-center mb-6 border-b border-pink-100 pb-2">
+                                <h3 className="text-lg font-bold text-pink-700 flex items-center gap-2">
+                                    <FaBaby className="text-pink-500" /> Pregnancy Status
+                                </h3>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div className="bg-pink-50 p-3 rounded-lg border border-pink-100">
+                                    <label className="block text-xs font-bold text-pink-600 uppercase mb-2">Is Pregnant?</label>
+                                    {isEditing ? (
+                                        <div className="flex bg-white rounded-lg p-1 border border-pink-200">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleInputChange('is_pregnant', false)}
+                                                className={`flex-1 py-2 px-4 rounded-md text-sm font-bold transition-all ${!formData.is_pregnant ? 'bg-gray-100 text-gray-700 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                                            >
+                                                No
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleInputChange('is_pregnant', true)}
+                                                className={`flex-1 py-2 px-4 rounded-md text-sm font-bold transition-all ${formData.is_pregnant ? 'bg-pink-500 text-white shadow-md' : 'text-gray-400 hover:text-pink-400'}`}
+                                            >
+                                                Yes
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className={`p-2 font-bold rounded-md text-center ${formData.is_pregnant ? 'bg-pink-500 text-white' : 'bg-gray-100 text-gray-700'}`}>
+                                            {formData.is_pregnant ? 'PREGNANT' : 'NOT PREGNANT'}
+                                        </div>
+                                    )}
+                                </div>
+                                {formData.is_pregnant && (
+                                    <>
+                                        <div className="bg-pink-50 p-3 rounded-lg border border-pink-100">
+                                            <label className="block text-xs font-bold text-pink-600 uppercase mb-2">Weeks</label>
                                             {isEditing ? (
                                                 <input
                                                     type="number"
+                                                    placeholder="e.g. 12"
                                                     value={formData.pregnancy_weeks || ''}
-                                                    onChange={(e) => handleInputChange('pregnancy_weeks', e.target.value)}
-                                                    className="w-full border border-gray-300 rounded-lg p-2"
-                                                    placeholder="e.g., 24"
-                                                    min="1"
-                                                    max="42"
+                                                    onChange={e => handleInputChange('pregnancy_weeks', e.target.value)}
+                                                    className="w-full px-3 py-2 border border-pink-200 rounded-md outline-none focus:ring-2 focus:ring-pink-500 transition bg-white font-bold text-pink-700"
                                                 />
                                             ) : (
-                                                <div className="p-2 bg-white rounded border">
-                                                    {formData.pregnancy_weeks || '--'} weeks
+                                                <div className="p-2 font-bold text-pink-800 bg-white rounded-md text-center border border-pink-100">
+                                                    {formData.pregnancy_weeks || '--'} Weeks
                                                 </div>
                                             )}
                                         </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                Trimester
-                                            </label>
-                                            <div className="p-2 bg-white rounded border">
-                                                {formData.pregnancy_trimester || '--'}
+                                        <div className="bg-pink-50 p-3 rounded-lg border border-pink-100">
+                                            <label className="block text-xs font-bold text-pink-600 uppercase mb-2">Trimester</label>
+                                            <div className="p-2 font-black text-pink-900 bg-pink-200 rounded-md text-center shadow-inner tracking-wider">
+                                                {formData.pregnancy_trimester || 'SELECT WEEKS'}
                                             </div>
                                         </div>
-                                        <div className="md:col-span-2">
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                Estimated Due Date
-                                            </label>
-                                            {isEditing ? (
-                                                <input
-                                                    type="date"
-                                                    value={formData.edd || ''}
-                                                    onChange={(e) => handleInputChange('edd', e.target.value)}
-                                                    className="w-full border border-gray-300 rounded-lg p-2"
-                                                />
-                                            ) : (
-                                                <div className="p-2 bg-white rounded border">
-                                                    {formData.edd ? new Date(formData.edd).toLocaleDateString() : '--'}
-                                                </div>
-                                            )}
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Lactation Status (Females Only) - Moved from Vitals */}
+                    {(formData.gender && formData.gender.toLowerCase() === 'female') && (
+                        <div className="bg-white rounded-xl shadow-lg p-6 mt-6 border border-blue-100 md:col-span-2">
+                            <div className="flex justify-between items-center mb-6 border-b border-blue-100 pb-2">
+                                <h3 className="text-lg font-bold text-blue-700 flex items-center gap-2">
+                                    <FaBabyCarriage className="text-blue-500" /> Lactation Status
+                                </h3>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                                    <label className="block text-xs font-bold text-blue-600 uppercase mb-2">Is Lactating/Breastfeeding?</label>
+                                    {isEditing ? (
+                                        <select
+                                            value={formData.is_lactating ? 'true' : 'false'}
+                                            onChange={(e) => handleInputChange('is_lactating', e.target.value === 'true')}
+                                            className="w-full px-3 py-2 border border-blue-200 rounded-md outline-none focus:ring-2 focus:ring-blue-500 transition bg-white font-bold text-blue-700 cursor-pointer"
+                                        >
+                                            <option value="false">No</option>
+                                            <option value="true">Yes</option>
+                                        </select>
+                                    ) : (
+                                        <div className={`p-2 font-bold rounded-md text-center ${formData.is_lactating ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}>
+                                            {formData.is_lactating ? 'LACTATING' : 'NOT LACTATING'}
                                         </div>
-                                        <div className="md:col-span-2">
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                Pregnancy Notes
-                                            </label>
-                                            {isEditing ? (
-                                                <textarea
-                                                    value={formData.pregnancy_notes || ''}
-                                                    onChange={(e) => handleInputChange('pregnancy_notes', e.target.value)}
-                                                    rows="2"
-                                                    className="w-full border border-gray-300 rounded-lg p-2"
-                                                    placeholder="Any pregnancy-related notes"
-                                                />
-                                            ) : (
-                                                <div className="p-2 bg-white rounded border min-h-[60px]">
-                                                    {formData.pregnancy_notes || 'No notes'}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
+                                    )}
                                 </div>
-                            )}
+                                <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                                    <label className="block text-xs font-bold text-blue-600 uppercase mb-2">Lactation Notes</label>
+                                    {isEditing ? (
+                                        <input
+                                            type="text"
+                                            placeholder="e.g. Exclusive breastfeeding"
+                                            value={formData.lactation_notes || ''}
+                                            onChange={e => handleInputChange('lactation_notes', e.target.value)}
+                                            className="w-full px-3 py-2 border border-blue-200 rounded-md outline-none focus:ring-2 focus:ring-blue-500 transition bg-white font-bold text-blue-700"
+                                        />
+                                    ) : (
+                                        <div className="p-2 font-bold text-blue-800 bg-white rounded-md border border-blue-100">
+                                            {formData.lactation_notes || '--'}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     )}
 

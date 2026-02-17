@@ -198,8 +198,8 @@ const PublicRoute = ({ children }) => {
     return children;
 };
 
-// Protected Route Component - UPDATED: Removed automatic subscription redirect
-const ProtectedRoute = ({ children, adminOnly = false, companyAdminOnly = false, allowedRoles = null, requireSubscription = false, allowAdmin = true, showLayout = true }) => {
+// Protected Route Component - UPDATED: Added allowCompanyUsers prop
+const ProtectedRoute = ({ children, adminOnly = false, companyAdminOnly = false, allowedRoles = null, requireSubscription = false, allowAdmin = true, showLayout = true, allowCompanyUsers = false }) => {
     const [loading, setLoading] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [user, setUser] = useState(null);
@@ -308,7 +308,11 @@ const ProtectedRoute = ({ children, adminOnly = false, companyAdminOnly = false,
     }
 
     // Role check
-    if (allowedRoles && !allowedRoles.includes(user?.role) && user?.role !== 'admin') {
+    const isCompanyUser = user?.role === 'company_admin' || user?.account_type === 'company_user' || user?.organization_id;
+    // Bypass role check if company users are allowed and the user is one
+    const shouldBypassRoleCheck = allowCompanyUsers && isCompanyUser;
+
+    if (allowedRoles && !allowedRoles.includes(user?.role) && user?.role !== 'admin' && !shouldBypassRoleCheck) {
         return <Navigate to="/dashboard" state={{ message: 'Access denied. This section is only for specific roles.' }} replace />;
     }
 
@@ -1196,7 +1200,7 @@ function App() {
                     <Route
                         path="illnesses"
                         element={
-                            <ProtectedRoute allowedRoles={['pharmacist', 'pharmacy_student']} showLayout={false}>
+                            <ProtectedRoute allowedRoles={['pharmacist', 'pharmacy_student']} allowCompanyUsers={true} showLayout={false}>
                                 <MinorIllnesses />
                             </ProtectedRoute>
                         }
@@ -1204,7 +1208,7 @@ function App() {
                     <Route
                         path="compounding"
                         element={
-                            <ProtectedRoute allowedRoles={['pharmacist', 'pharmacy_student']} showLayout={false}>
+                            <ProtectedRoute allowedRoles={['pharmacist', 'pharmacy_student']} allowCompanyUsers={true} showLayout={false}>
                                 <ExtemporaneousPrep />
                             </ProtectedRoute>
                         }
