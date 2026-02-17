@@ -21,11 +21,10 @@ const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [backendStatus, setBackendStatus] = useState('checking');
+    const [systemOnline, setSystemOnline] = useState(null);
+    const [isCheckingHealth, setIsCheckingHealth] = useState(true);
 
     useEffect(() => {
-        checkBackendStatus();
-
         // Check if user is already logged in
         const token = localStorage.getItem('token');
         const userRole = localStorage.getItem('userRole');
@@ -38,20 +37,23 @@ const Login = () => {
                 navigate('/dashboard');
             }
         }
-    }, [navigate]);
 
-    const checkBackendStatus = async () => {
-        try {
-            console.log('🔍 Checking backend connection...');
-            // Using api utility
-            await api.get('/health');
-            setBackendStatus('online');
-            console.log('✅ Backend is online');
-        } catch (error) {
-            console.error('❌ Error checking backend:', error);
-            setBackendStatus('offline');
-        }
-    };
+        // Check Backend Health
+        const checkHealth = async () => {
+            try {
+                setIsCheckingHealth(true);
+                const health = await api.get('/health');
+                setSystemOnline(health.success && health.status === 'healthy');
+            } catch (err) {
+                console.error('System Health Check Failed:', err);
+                setSystemOnline(false);
+            } finally {
+                setIsCheckingHealth(false);
+            }
+        };
+
+        checkHealth();
+    }, [navigate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -105,33 +107,80 @@ const Login = () => {
 
         } catch (err) {
             console.error('❌ Login error:', err);
-            setError(err.error || err.message || 'Login failed. Please check your credentials and try again.');
+
+            // Special handling for email verification AND/OR approval
+            if (err.email_verification_required && err.approval_required) {
+                setError(
+                    <div className="flex flex-col gap-3">
+                        <p className="font-bold text-red-700">Action Required:</p>
+                        <ul className="list-disc ml-5 text-sm space-y-1">
+                            <li>Verify your email address</li>
+                            <li>Wait for admin approval</li>
+                        </ul>
+                        <button
+                            onClick={async () => {
+                                try {
+                                    setLoading(true);
+                                    const res = await api.post('/auth/resend-verification', { email: formData.email });
+                                    if (res.success) {
+                                        alert('Verification email sent! Please check your inbox.');
+                                    } else {
+                                        alert(res.error || 'Failed to resend verification email');
+                                    }
+                                } catch (e) {
+                                    alert(e.error || e.message || 'Failed to resend verification email');
+                                } finally {
+                                    setLoading(false);
+                                }
+                            }}
+                            className="bg-blue-600 text-white text-xs font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition w-fit mt-2"
+                        >
+                            Resend Verification Email
+                        </button>
+                    </div>
+                );
+            } else if (err.email_verification_required) {
+                setError(
+                    <div className="flex flex-col gap-3">
+                        <p>{err.error || 'Please verify your email address before logging in.'}</p>
+                        <button
+                            onClick={async () => {
+                                try {
+                                    setLoading(true);
+                                    const res = await api.post('/auth/resend-verification', { email: formData.email });
+                                    if (res.success) {
+                                        setError(''); // Clear error on success
+                                        alert('Verification email sent! Please check your inbox.');
+                                    } else {
+                                        setError(res.error || 'Failed to resend verification email');
+                                    }
+                                } catch (e) {
+                                    setError(e.error || e.message || 'Failed to resend verification email');
+                                } finally {
+                                    setLoading(false);
+                                }
+                            }}
+                            className="bg-blue-600 text-white text-xs font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition w-fit"
+                        >
+                            Resend Verification Email
+                        </button>
+                    </div>
+                );
+            } else if (err.approval_required) {
+                setError(
+                    <div className="flex flex-col gap-2">
+                        <p className="font-bold">Account Pending Approval</p>
+                        <p className="text-sm">{err.error || 'Your account is waiting for administrator approval.'}</p>
+                    </div>
+                );
+            } else {
+                setError(err.error || err.message || 'Login failed. Please check your credentials and try again.');
+            }
         } finally {
             setLoading(false);
         }
     };
 
-    const handleRegisterClick = async (e, type) => {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
-
-        try {
-            console.log(`🔍 Checking system status before ${type} registration...`);
-            // Check health
-            await api.get('/health');
-            console.log('✅ System is online, proceeding to registration');
-
-            // Navigate to signup
-            navigate('/signup');
-        } catch (err) {
-            console.error('❌ System is offline:', err);
-            setError('Unable to proceed to registration. The system is currently offline. Please try again later.');
-            setBackendStatus('offline');
-        } finally {
-            setLoading(false);
-        }
-    };
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
@@ -143,19 +192,6 @@ const Login = () => {
                     </div>
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">Addis Med</h1>
                     <p className="text-gray-600 italic">Enhance Patient Safety & Optimize Medicines Use</p>
-                </div>
-
-                {/* Status Indicator */}
-                <div className={`mb-6 flex items-center justify-center gap-2 px-4 py-2 rounded-full ${backendStatus === 'online' ? 'bg-green-100 text-green-800' :
-                    backendStatus === 'offline' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                    <div className={`w-2 h-2 rounded-full ${backendStatus === 'online' ? 'bg-green-500' :
-                        backendStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-500'
-                        } ${backendStatus === 'checking' ? 'animate-pulse' : ''}`}></div>
-                    <span className="text-sm font-medium">
-                        {backendStatus === 'online' ? 'System Online' :
-                            backendStatus === 'offline' ? 'System Offline' : 'Checking System...'}
-                    </span>
                 </div>
 
                 {/* Login Card */}
@@ -170,9 +206,9 @@ const Login = () => {
                         <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl">
                             <div className="flex items-start gap-3">
                                 <FaExclamationTriangle className="text-red-500 mt-0.5 flex-shrink-0" />
-                                <div>
-                                    <p className="text-red-800 font-medium text-sm">Unable to proceed</p>
-                                    <p className="text-red-600 text-sm mt-1">{error}</p>
+                                <div className="flex-1 min-w-0">
+                                    <div className="text-red-800 font-bold text-sm mb-1 uppercase tracking-wider">Error Encountered</div>
+                                    <div className="text-red-600 text-sm leading-relaxed">{error}</div>
                                 </div>
                             </div>
                         </div>
@@ -240,8 +276,8 @@ const Login = () => {
                         {/* Submit Button */}
                         <button
                             type="submit"
-                            disabled={loading || backendStatus === 'offline'}
-                            className={`w-full py-3 px-4 rounded-xl font-medium transition ${loading || backendStatus === 'offline'
+                            disabled={loading}
+                            className={`w-full py-3 px-4 rounded-xl font-medium transition ${loading
                                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                 : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl'
                                 }`}
@@ -287,22 +323,20 @@ const Login = () => {
                             Don't have an account?
                         </p>
                         <div className="grid grid-cols-2 gap-3">
-                            <button
-                                onClick={(e) => handleRegisterClick(e, 'individual')}
-                                disabled={loading}
-                                className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl transition text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                            <Link
+                                to="/signup?type=individual"
+                                className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl transition text-sm font-medium"
                             >
                                 <FaUserCheck />
                                 Individual
-                            </button>
-                            <button
-                                onClick={(e) => handleRegisterClick(e, 'organization')}
-                                disabled={loading}
-                                className="flex items-center justify-center gap-2 px-4 py-3 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl transition text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                            </Link>
+                            <Link
+                                to="/signup?type=company"
+                                className="flex items-center justify-center gap-2 px-4 py-3 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl transition text-sm font-medium"
                             >
                                 <FaBuilding />
                                 Organization
-                            </button>
+                            </Link>
                         </div>
                     </div>
 
@@ -310,24 +344,23 @@ const Login = () => {
                     <div className="mt-6 text-center">
                         <p className="text-xs text-gray-500">
                             Having trouble?{' '}
-                            <button
-                                onClick={() => {
-                                    checkBackendStatus();
-                                    console.log('Current API URL:', API_URL);
-                                }}
-                                className="text-blue-600 hover:text-blue-800 underline"
-                            >
-                                Check connection
-                            </button>
+                            <Link to="/forgot-password" title="Forgot Password" className="text-blue-600 hover:text-blue-800 underline">
+                                Reset your password
+                            </Link>
                         </p>
                     </div>
                 </div>
 
-                {/* Footer */}
-                <div className="mt-6 text-center">
-                    <p className="text-xs text-gray-500">
-                        © {new Date().getFullYear()} AddisMed. All rights reserved.
-                    </p>
+                {/* Footer status indicator */}
+                <div className="mt-8 flex flex-col items-center gap-4">
+                    <div className="flex items-center gap-3 px-4 py-2 bg-white rounded-full shadow-sm border border-gray-100 transition-all hover:shadow-md">
+                        <div className={`w-2 h-2 rounded-full ${isCheckingHealth ? 'bg-blue-400 animate-pulse' : systemOnline ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)] animate-pulse'}`}></div>
+                        <span className={`text-[10px] font-black uppercase tracking-widest transition-colors duration-300 ${isCheckingHealth ? 'text-gray-400' : systemOnline ? 'text-green-600' : 'text-red-600'}`}>
+                            {isCheckingHealth ? 'Verifying System...' : systemOnline ? 'System Online' : 'System Offline'}
+                        </span>
+                        <div className="w-px h-3 bg-gray-200 mx-1"></div>
+                        <span className="text-[10px] font-bold text-gray-400">v{import.meta.env.VITE_APP_VERSION || '2.0.1'}</span>
+                    </div>
                 </div>
             </div>
         </div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaFlask, FaFilter, FaSearch, FaExclamationTriangle } from 'react-icons/fa';
+import { FaFilter, FaSearch, FaExclamationTriangle } from 'react-icons/fa';
 import LabInputField from '../LabInputField'; // Assuming it's in parent dir relative to Forms, checking path below
 // Actually LabInputField is in ../LabInputField from Forms (src/components/Patient/LabInputField)
 

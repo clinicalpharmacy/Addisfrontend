@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../utils/api';
+import supabase from '../utils/supabase';
 import { mapPatientToFacts, evaluateRule, formatAlertMessage } from '../components/CDSS/RuleEngine';
 import { sampleTestRules } from '../constants/cdssRules';
 
@@ -390,6 +391,24 @@ export const useCDSSLogic = (patientData) => {
                 setIsInitialLoad(false);
             }
         }
+
+        // ✅ REAL-TIME RULES INTEGRATION:
+        // Automatically trigger rules refresh when admin changes rules
+        const rulesSubscription = supabase
+            .channel('clinical_rules_changes')
+            .on('postgres_changes', {
+                event: '*', // Listen to all changes (INSERT, UPDATE, DELETE)
+                schema: 'public',
+                table: 'clinical_rules'
+            }, (payload) => {
+                console.log('🔔 Clinical rules changed in real-time, refreshing...', payload);
+                fetchClinicalRules();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(rulesSubscription);
+        };
     }, [patientData, isInitialLoad, fetchClinicalRules, fetchPatientMedications]);
 
     // Auto-analyze when data is ready or updates

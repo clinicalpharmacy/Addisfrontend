@@ -22,11 +22,13 @@ import {
     FaSpinner
 } from 'react-icons/fa';
 import { useOutletContext } from 'react-router-dom';
+import useScreenshotProtection from '../../hooks/useScreenshotProtection';
 
 const MinorIllnesses = () => {
     const context = useOutletContext();
     const protectionEnabled = context?.protectionEnabled ?? true;
     const toggleProtection = context?.toggleProtection ?? (() => { });
+    const protectionMsg = useScreenshotProtection(protectionEnabled);
     const [illnesses, setIllnesses] = useState([]);
     const [filteredIllnesses, setFilteredIllnesses] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -262,6 +264,14 @@ const MinorIllnesses = () => {
         <div
             className="bg-gray-50 min-h-full pb-8"
         >
+            {protectionMsg && (
+                <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[100] w-full max-w-md px-4">
+                    <div className="bg-red-600/90 text-white p-3 rounded-lg shadow-2xl flex items-center justify-center gap-3 animate-pulse border border-red-400 backdrop-blur-sm">
+                        <FaShieldAlt className="text-xl" />
+                        <span className="font-bold text-sm md:text-base">{protectionMsg}</span>
+                    </div>
+                </div>
+            )}
             <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 md:py-8">
                 {/* Header */}
                 <div className="mb-6 md:mb-8">

@@ -335,6 +335,32 @@ const ClinicalRulesAdmin = () => {
 }`,
             severity: 'high',
             dtp_category: 'age_restriction'
+        },
+        'Lactation Safety Check': {
+            rule_name: 'Lactation Safety Check',
+            rule_type: 'contraindication',
+            rule_description: 'Identify medications that require caution or are contraindicated during breastfeeding',
+            rule_condition: `{
+  "all": [
+    {
+      "fact": "is_lactating",
+      "operator": "equals",
+      "value": true
+    },
+    {
+      "fact": "medications",
+      "operator": "contains",
+      "value": "metronidazole"
+    }
+  ]
+}`,
+            rule_action: `{
+  "message": "Metronidazole caution in breastfeeding",
+  "recommendation": "Metronidazole is excreted in breast milk. Consider withholding breastfeeding for 12-24 hours after a single large dose, or use alternative antibiotic if possible.",
+  "severity": "high"
+}`,
+            severity: 'high',
+            dtp_category: 'contraindication'
         }
     };
 

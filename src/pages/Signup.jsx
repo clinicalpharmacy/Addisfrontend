@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
     FaUserMd, FaLock, FaEnvelope, FaUser, FaPhone,
     FaBuilding, FaMapMarker, FaFileInvoiceDollar,
-    FaArrowRight, FaCheck, FaCreditCard, FaShieldAlt,
+    FaArrowRight, FaArrowLeft, FaCheck, FaCreditCard, FaShieldAlt,
     FaUserTie, FaUsers, FaStore, FaBriefcase, FaIdCard,
     FaExclamationTriangle, FaInfoCircle, FaEye, FaEyeSlash,
     FaCalendarAlt, FaChartLine, FaDatabase, FaCapsules,
@@ -117,6 +117,7 @@ const SUBSCRIPTION_PLANS = [
 
 const Signup = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -161,8 +162,15 @@ const Signup = () => {
     const [chapaPaymentUrl, setChapaPaymentUrl] = useState('');
     const [chapaTxRef, setChapaTxRef] = useState('');
     const [selectedPlanDetails, setSelectedPlanDetails] = useState(null);
+    const [accountTypeSelection, setAccountTypeSelection] = useState(null); // 'individual' or 'company'
 
     useEffect(() => {
+        // Handle URL params for account type
+        const typeParam = searchParams.get('type');
+        if (typeParam === 'individual' || typeParam === 'company') {
+            setAccountTypeSelection(typeParam);
+        }
+
         // Clear form data on component mount
         setFormData({
             email: '',
@@ -188,7 +196,7 @@ const Signup = () => {
             admin_phone: '',
             user_capacity: 5
         });
-    }, []);
+    }, [searchParams]);
 
     const checkPasswordStrength = (password) => {
         if (!password) return '';
@@ -372,7 +380,7 @@ const Signup = () => {
             setRegistrationComplete(true);
 
             setStep(3);
-            setSuccess(`✅ Registration successful! Please proceed to payment.`);
+            setSuccess(`✅ Registration successful! We've sent a verification email to ${userEmail}. Please verify your account before logging in. You can proceed to payment now.`);
 
         } catch (err) {
 
@@ -470,188 +478,174 @@ const Signup = () => {
         navigate('/login');
     };
 
-    // Step 1: Plan Selection FIRST
+    // Step 1: Account Type Selection followed by filtered Plan Selection
     if (step === 1) {
+        if (!accountTypeSelection) {
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
+                    <div className="w-full max-w-4xl">
+                        <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-12">
+                            <div className="text-center mb-12">
+                                <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl mb-6 shadow-lg">
+                                    <FaRocket className="text-white text-3xl" />
+                                </div>
+                                <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Welcome to Addis Clinical Pharmacy</h1>
+                                <p className="text-gray-600 md:text-lg">Please select your account type to get started</p>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                {/* Individual Selection */}
+                                <div
+                                    onClick={() => setAccountTypeSelection('individual')}
+                                    className="group relative bg-white border-2 border-gray-100 rounded-3xl p-8 cursor-pointer hover:border-blue-500 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
+                                >
+                                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white">
+                                            <FaArrowRight className="text-sm" />
+                                        </div>
+                                    </div>
+                                    <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                                        <FaUserTie className="text-blue-600 text-3xl" />
+                                    </div>
+                                    <h2 className="text-2xl font-bold text-gray-800 mb-3">Individual</h2>
+                                    <p className="text-gray-600 leading-relaxed">
+                                        For healthcare professionals, pharmacists, and students looking for personal clinical decision support tools.
+                                    </p>
+                                    <div className="mt-8 flex items-center text-blue-600 font-bold group-hover:translate-x-2 transition-transform">
+                                        View Individual Plans <FaArrowRight className="ml-2" />
+                                    </div>
+                                </div>
+
+                                {/* Organization Selection */}
+                                <div
+                                    onClick={() => setAccountTypeSelection('company')}
+                                    className="group relative bg-white border-2 border-gray-100 rounded-3xl p-8 cursor-pointer hover:border-green-500 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
+                                >
+                                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white">
+                                            <FaArrowRight className="text-sm" />
+                                        </div>
+                                    </div>
+                                    <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                                        <FaBuilding className="text-green-600 text-3xl" />
+                                    </div>
+                                    <h2 className="text-2xl font-bold text-gray-800 mb-3">Organization</h2>
+                                    <p className="text-gray-600 leading-relaxed">
+                                        For pharmacies, hospitals, and clinics managing teams with clinical decision support and performance analytics.
+                                    </p>
+                                    <div className="mt-8 flex items-center text-green-600 font-bold group-hover:translate-x-2 transition-transform">
+                                        View Company Plans <FaArrowRight className="ml-2" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-12 text-center border-t border-gray-100 pt-8">
+                                <p className="text-gray-600">
+                                    Already have an account?
+                                    <Link to="/login" className="ml-2 text-blue-600 font-bold hover:underline">
+                                        Log in here
+                                    </Link>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const filteredPlans = SUBSCRIPTION_PLANS.filter(plan => plan.account_type === accountTypeSelection);
+        const isIndividual = accountTypeSelection === 'individual';
+
         return (
             <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
-                <div className="w-full max-w-7xl">
+                <div className="w-full max-w-6xl">
+                    <div className="mb-8">
+                        <button
+                            onClick={() => setAccountTypeSelection(null)}
+                            className="flex items-center text-gray-600 hover:text-blue-600 font-bold transition-colors"
+                        >
+                            <FaArrowLeft className="mr-2" /> Back to Account Selection
+                        </button>
+                    </div>
+
                     <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-10">
-                        <div className="text-center mb-8 md:mb-10">
-                            <div className="inline-flex items-center justify-center w-20 h-20 md:w-24 md:h-24 bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl mb-4 md:mb-6 shadow-lg">
-                                <FaUserMd className="text-white text-3xl md:text-4xl" />
+                        <div className="text-center mb-10">
+                            <div className={`inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r ${isIndividual ? 'from-blue-600 to-blue-500' : 'from-green-600 to-green-500'} rounded-3xl mb-6 shadow-lg`}>
+                                {isIndividual ? <FaUserTie className="text-white text-3xl" /> : <FaBuilding className="text-white text-3xl" />}
                             </div>
-                            <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-2 md:mb-3">Choose Your Subscription Plan</h1>
-                            <p className="text-gray-600 md:text-lg max-w-2xl mx-auto px-4">
-                                Select the perfect plan for your needs. Registration will follow.
+                            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
+                                Choose Your {isIndividual ? 'Individual' : 'Company'} Plan
+                            </h1>
+                            <p className="text-gray-600">
+                                {isIndividual
+                                    ? 'High-performance clinical tools for independent professionals.'
+                                    : 'Enterprise-grade solutions for healthcare organizations.'}
                             </p>
                         </div>
 
-                        {/* Individual Plans Section */}
-                        <div className="mb-12">
-                            <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-2xl md:text-3xl font-bold text-gray-800 flex items-center gap-3">
-                                    <FaUserTie className="text-blue-600" />
-                                    Individual Plans
-                                </h2>
-                                <span className="text-sm text-gray-500 bg-blue-50 px-3 py-1 rounded-full">
-                                    For healthcare professionals
-                                </span>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {SUBSCRIPTION_PLANS.filter(plan => plan.account_type === 'individual').map((plan) => {
-                                    const PlanIcon = plan.icon;
-                                    return (
-                                        <div
-                                            key={plan.id}
-                                            className={`border-3 rounded-2xl p-6 md:p-8 cursor-pointer transition-all duration-300 transform hover:scale-[1.02] ${selectedPlan === plan.id
-                                                ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-blue-100 shadow-2xl'
-                                                : 'border-gray-200 hover:border-blue-300 hover:shadow-xl bg-white'
-                                                }`}
-                                            onClick={() => handlePlanSelect(plan)}
-                                        >
-                                            <div className="flex items-center justify-between mb-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="p-3 bg-blue-100 rounded-xl">
-                                                        <PlanIcon className="text-blue-600 text-xl" />
-                                                    </div>
-                                                    <div>
-                                                        <h3 className="text-xl font-bold text-gray-800">{plan.name}</h3>
-                                                        <p className="text-gray-600 text-sm">{plan.description}</p>
-                                                    </div>
-                                                </div>
-                                                {plan.badge && (
-                                                    <span className="text-xs font-bold px-2 py-1 rounded-full bg-blue-100 text-blue-800">
-                                                        {plan.badge}
-                                                    </span>
-                                                )}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-center">
+                            {filteredPlans.map((plan) => {
+                                const PlanIcon = plan.icon;
+                                return (
+                                    <div
+                                        key={plan.id}
+                                        className={`flex flex-col border-3 rounded-2xl p-6 md:p-8 cursor-pointer transition-all duration-300 transform hover:scale-[1.03] ${selectedPlan === plan.id
+                                            ? `${isIndividual ? 'border-blue-500 bg-blue-50/30' : 'border-green-500 bg-green-50/30'} shadow-2xl`
+                                            : 'border-gray-100 hover:border-gray-300 bg-white'
+                                            }`}
+                                        onClick={() => handlePlanSelect(plan)}
+                                    >
+                                        <div className="flex items-center justify-between mb-6">
+                                            <div className={`p-3 ${isIndividual ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'} rounded-xl`}>
+                                                <PlanIcon className="text-2xl" />
                                             </div>
-
-                                            <div className="mb-4">
-                                                <div className="text-2xl font-bold text-gray-800 mb-1">
-                                                    {plan.price} <span className="text-base font-normal text-gray-600">{plan.currency}</span>
-                                                </div>
-                                                <div className="text-gray-600">
-                                                    per {plan.interval}
-                                                    {plan.originalPrice && (
-                                                        <div className="mt-1">
-                                                            <span className="text-base line-through text-gray-500 mr-2">
-                                                                {plan.originalPrice} {plan.currency}
-                                                            </span>
-                                                            <span className="text-base font-bold text-green-600">
-                                                                {plan.discount}
-                                                            </span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            <ul className="space-y-2 mb-6">
-                                                {plan.features.slice(0, 4).map((feature, index) => (
-                                                    <li key={index} className="flex items-start gap-2">
-                                                        <FaCheck className="text-green-500 mt-1 flex-shrink-0" />
-                                                        <span className="text-gray-700 text-sm">{feature}</span>
-                                                    </li>
-                                                ))}
-                                            </ul>
-
-                                            <button
-                                                className={`w-full py-3 rounded-xl font-semibold transition-all duration-300 ${selectedPlan === plan.id
-                                                    ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg'
-                                                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                                                    }`}
-                                            >
-                                                {selectedPlan === plan.id ? 'Selected ✓' : 'Select This Plan'}
-                                            </button>
+                                            {plan.badge && (
+                                                <span className={`text-xs font-bold px-3 py-1 rounded-full ${isIndividual ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
+                                                    {plan.badge}
+                                                </span>
+                                            )}
                                         </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
 
-                        {/* Company Plans Section */}
-                        <div className="mb-12">
-                            <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-2xl md:text-3xl font-bold text-gray-800 flex items-center gap-3">
-                                    <FaBuilding className="text-green-600" />
-                                    Company Plans
-                                </h2>
-                                <span className="text-sm text-gray-500 bg-green-50 px-3 py-1 rounded-full">
-                                    For healthcare organizations
-                                </span>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {SUBSCRIPTION_PLANS.filter(plan => plan.account_type === 'company').map((plan) => {
-                                    const PlanIcon = plan.icon;
-                                    return (
-                                        <div
-                                            key={plan.id}
-                                            className={`border-3 rounded-2xl p-6 md:p-8 cursor-pointer transition-all duration-300 transform hover:scale-[1.02] ${selectedPlan === plan.id
-                                                ? 'border-green-500 bg-gradient-to-br from-green-50 to-green-100 shadow-2xl'
-                                                : 'border-gray-200 hover:border-green-300 hover:shadow-xl bg-white'
-                                                }`}
-                                            onClick={() => handlePlanSelect(plan)}
-                                        >
-                                            <div className="flex items-center justify-between mb-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="p-3 bg-green-100 rounded-xl">
-                                                        <PlanIcon className="text-green-600 text-xl" />
-                                                    </div>
-                                                    <div>
-                                                        <h3 className="text-xl font-bold text-gray-800">{plan.name}</h3>
-                                                        <p className="text-gray-600 text-sm">{plan.description}</p>
-                                                    </div>
-                                                </div>
-                                                {plan.badge && (
-                                                    <span className="text-xs font-bold px-2 py-1 rounded-full bg-green-100 text-green-800">
-                                                        {plan.badge}
-                                                    </span>
-                                                )}
+                                        <h3 className="text-xl font-bold text-gray-800 mb-2">{plan.name}</h3>
+                                        <p className="text-gray-600 text-sm mb-6 flex-grow">{plan.description}</p>
+
+                                        <div className="mb-6">
+                                            <div className="text-3xl font-bold text-gray-800">
+                                                {plan.price} <span className="text-base font-normal text-gray-500">{plan.currency}</span>
                                             </div>
-
-                                            <div className="mb-4">
-                                                <div className="text-2xl font-bold text-gray-800 mb-1">
-                                                    {plan.price} <span className="text-base font-normal text-gray-600">{plan.currency}</span>
+                                            <p className="text-gray-500 text-sm">per {plan.interval}</p>
+                                            {plan.originalPrice && (
+                                                <div className="mt-2 inline-flex items-center gap-2">
+                                                    <span className="line-through text-gray-400 text-sm">{plan.originalPrice}</span>
+                                                    <span className="text-green-600 font-bold text-sm">-{plan.discount}</span>
                                                 </div>
-                                                <div className="text-gray-600">
-                                                    per {plan.interval}
-                                                    {plan.originalPrice && (
-                                                        <div className="mt-1">
-                                                            <span className="text-base line-through text-gray-500 mr-2">
-                                                                {plan.originalPrice} {plan.currency}
-                                                            </span>
-                                                            <span className="text-base font-bold text-green-600">
-                                                                {plan.discount}
-                                                            </span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            <ul className="space-y-2 mb-6">
-                                                {plan.features.slice(0, 4).map((feature, index) => (
-                                                    <li key={index} className="flex items-start gap-2">
-                                                        <FaCheck className="text-green-500 mt-1 flex-shrink-0" />
-                                                        <span className="text-gray-700 text-sm">{feature}</span>
-                                                    </li>
-                                                ))}
-                                            </ul>
-
-                                            <button
-                                                className={`w-full py-3 rounded-xl font-semibold transition-all duration-300 ${selectedPlan === plan.id
-                                                    ? 'bg-gradient-to-r from-green-600 to-green-500 text-white shadow-lg'
-                                                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                                                    }`}
-                                            >
-                                                {selectedPlan === plan.id ? 'Selected ✓' : 'Select This Plan'}
-                                            </button>
+                                            )}
                                         </div>
-                                    );
-                                })}
-                            </div>
+
+                                        <div className="space-y-3 mb-8">
+                                            {plan.features.slice(0, 5).map((feature, index) => (
+                                                <div key={index} className="flex items-start gap-3 text-sm text-gray-600">
+                                                    <FaCheck className={`mt-1 flex-shrink-0 ${isIndividual ? 'text-blue-500' : 'text-green-500'}`} />
+                                                    <span>{feature}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <button
+                                            className={`w-full py-4 rounded-xl font-bold transition-all duration-300 ${selectedPlan === plan.id
+                                                ? `${isIndividual ? 'bg-blue-600 shadow-blue-200' : 'bg-green-600 shadow-green-200'} text-white shadow-xl`
+                                                : 'bg-gray-50 text-gray-800 hover:bg-gray-100'
+                                                }`}
+                                        >
+                                            {selectedPlan === plan.id ? 'Selected' : 'Choose Plan'}
+                                        </button>
+                                    </div>
+                                );
+                            })}
                         </div>
 
                         {/* Navigation */}
-                        <div className="flex flex-col md:flex-row gap-4 md:gap-6">
+                        <div className="flex flex-col md:flex-row gap-4 md:gap-6 mt-10">
                             <Link
                                 to="/login"
                                 className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 md:py-4 px-4 md:px-6 rounded-xl transition-all duration-300 text-center shadow-md hover:shadow-lg"
@@ -823,7 +817,7 @@ const Signup = () => {
                                             <option value="nurse">Nurse</option>
                                             <option value="other_health_professional">Other Health Professional</option>
                                             <option value="pharmacy_student">Pharmacy Student</option>
-                                            <option value= "other_health_science_student">Other Health Science Student</option>
+                                            <option value="other_health_science_student">Other Health Science Student</option>
                                             <option value="health_care_client">Health Care Client</option>
                                         </select>
                                     </div>

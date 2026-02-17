@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import supabase from '../../utils/supabase';
+import api from '../../utils/api';
+import supabase from '../../utils/supabase'; // Kept for auth fallback if needed
 import { mapPatientToFacts, evaluateRule } from '../CDSS/RuleEngine';
 import {
     FaStethoscope, FaEdit, FaDatabase, FaChevronUp, FaChevronDown,
-    FaPills, FaFlask, FaUserMd, FaChartLine, FaDownload, FaSync,
+    FaPills, FaUserMd, FaChartLine, FaDownload, FaSync,
     FaExclamationTriangle, FaCheckCircle, FaSpinner, FaSearch,
     FaHeartbeat, FaClipboardCheck, FaShieldAlt, FaUserCheck,
     FaMoneyBillWave, FaCapsules, FaTrash, FaPlus, FaFilter,
     FaSortAmountDown, FaFileMedical, FaClipboardList, FaRegCopy,
     FaCog, FaBell, FaFileAlt, FaVial, FaBalanceScale, FaSyringe,
     FaTint, FaUserInjured, FaHistory, FaNotesMedical, FaPrescription,
-    FaMicroscope, FaBox, FaClock, FaProcedures, FaUser, FaExclamationCircle
+    FaMicroscope, FaBox, FaClock, FaProcedures, FaUser, FaExclamationCircle, FaSave
 } from 'react-icons/fa';
 
 const DRNAssessment = ({ patientCode }) => {
@@ -278,29 +279,20 @@ const DRNAssessment = ({ patientCode }) => {
 
     const loadPatientData = async () => {
         try {
-            const { data: patient, error } = await supabase
-                .from('patients')
-                .select('*')
-                .eq('patient_code', patientCode)
-                .single();
+            const res = await api.get(`/patients/code/${patientCode}`);
 
-            if (error) {
+            if (res.success && res.patient) {
+                setPatientData(res.patient);
+                setPatientId(res.patient.id);
+                if (res.patient.labs) setLabs(res.patient.labs);
+
+                // Fetch Medications
+                const mRes = await api.get(`/medication-history/patient/${patientCode}`);
+                setMedications(mRes.success ? mRes.medications : (res.patient.medication_history || []));
+            } else {
                 setAuthError(`Patient not found: ${patientCode}`);
                 return;
             }
-
-            setPatientData(patient);
-            setPatientId(patient.id);
-
-            const { data: medicationsData } = await supabase
-                .from('medication_history')
-                .select('*')
-                .eq('patient_code', patientCode)
-                .eq('is_active', true);
-
-            setMedications(medicationsData || patient.medication_history || []);
-
-            if (patient.labs) setLabs(patient.labs);
         } catch (error) {
             console.error('Error loading patient:', error);
             setAuthError('Failed to load patient data.');
@@ -309,46 +301,32 @@ const DRNAssessment = ({ patientCode }) => {
 
     const fetchClinicalRules = async () => {
         try {
-            const { data, error } = await supabase
-                .from('clinical_rules')
-                .select('*')
-                .eq('is_active', true)
-                .order('rule_type', { ascending: true });
-
-            if (error) return;
-
-            setClinicalRules(data || []);
-
-            const rulesByType = {};
-            data.forEach(rule => {
-                if (!rulesByType[rule.rule_type]) rulesByType[rule.rule_type] = [];
-                rulesByType[rule.rule_type].push(rule);
-            });
-            setActiveRules(rulesByType);
+            const res = await api.get('/clinical-rules');
+            if (res.success && res.rules) {
+                setClinicalRules(res.rules);
+                const rulesByType = {};
+                res.rules.forEach(rule => {
+                    if (!rulesByType[rule.rule_type]) rulesByType[rule.rule_type] = [];
+                    rulesByType[rule.rule_type].push(rule);
+                });
+                setActiveRules(rulesByType);
+            }
         } catch (error) {
             console.error('Error fetching rules:', error);
         }
     };
 
     const fetchAssessments = async () => {
-        if (!patientId || !userId) return;
+        if (!patientCode || !userId) return;
 
         setIsLoading(true);
         try {
-            const { data, error } = await supabase
-                .from('drn_assessments')
-                .select('*')
-                .eq('patient_code', patientCode)
-                .eq('user_id', userId)
-                .order('created_at', { ascending: false });
-
-            if (error) {
-                console.error('Error fetching assessments:', error);
+            const res = await api.get(`/assessments/patient/${patientCode}`);
+            if (res.success) {
+                setAssessments(res.assessments || []);
+            } else {
                 setAssessments([]);
-                return;
             }
-
-            setAssessments(data || []);
         } catch (error) {
             console.error('Error fetching assessments:', error);
             setAssessments([]);
@@ -543,8 +521,9 @@ const DRNAssessment = ({ patientCode }) => {
     };
 
     const saveAssessment = async (causeName) => {
-        if (!userId || !patientData) {
-            alert('User ID or patient data not available');
+        if (!userId || !patientData || !patientId) {
+            console.error('Missing context:', { userId, patientData: !!patientData, patientId });
+            alert('User or Patient data not fully loaded. Please refresh the page.');
             return;
         }
 
@@ -556,63 +535,60 @@ const DRNAssessment = ({ patientCode }) => {
         const causeDetails = menuItemsData[selectedCategory]?.find(c => c.name === causeName);
         const writeUp = writeUps[causeName];
 
+        if (!causeDetails) {
+            console.error('Missing cause details for:', causeName);
+            alert('Internal Error: Could not retrieve cause details.');
+            return;
+        }
+
         if (!writeUp?.specificCase || !writeUp?.medicalCondition || !writeUp?.medication) {
             alert('Please fill all required fields: Specific Case, Medical Condition, and Medication');
             return;
         }
 
         try {
+            // Map UI status to DB status
+            let dbStatus = 'active';
+            if (writeUp.status === 'Resolved') dbStatus = 'resolved';
+            else if (writeUp.status === 'Identified' || writeUp.status === 'Unresolved') dbStatus = 'active';
+
             const assessmentData = {
-                patient_id: patientData.id,
+                patient_id: patientId,
                 patient_code: patientCode,
                 user_id: userId,
                 category: selectedCategory,
                 cause_name: causeName,
-                rule_type: causeDetails?.ruleType,
-                dtp_type: causeDetails?.dtpType,
+                rule_type: causeDetails.ruleType,
+                dtp_type: causeDetails.dtpType,
                 specific_case: writeUp.specificCase,
                 medical_condition: writeUp.medicalCondition,
                 medication: writeUp.medication,
-                drn: causeDetails?.drn,
-                status: 'active',
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
+                drn: causeDetails.drn,
+                status: dbStatus
             };
 
             let result;
 
             if (editId !== null) {
-                const { data, error } = await supabase
-                    .from('drn_assessments')
-                    .update({
-                        ...assessmentData,
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq('id', editId)
-                    .eq('user_id', userId)
-                    .select();
-
-                if (error) throw error;
-                result = data[0];
+                result = await api.put(`/assessments/drn/${editId}`, assessmentData);
             } else {
-                const { data, error } = await supabase
-                    .from('drn_assessments')
-                    .insert([assessmentData])
-                    .select();
-
-                if (error) throw error;
-                result = data[0];
+                result = await api.post('/assessments/drn', assessmentData);
             }
 
-            await fetchAssessments();
-            setSelectedCauses([]);
-            setWriteUps({});
-            setEditId(null);
-            alert(`Assessment ${editId !== null ? 'updated' : 'saved'} successfully!`);
+            if (result.success) {
+                await fetchAssessments();
+                setSelectedCauses([]);
+                setWriteUps({});
+                setEditId(null);
+                alert(`Assessment ${editId !== null ? 'updated' : 'saved'} successfully!`);
+            } else {
+                throw new Error(result.error || 'Failed to save');
+            }
 
         } catch (error) {
             console.error('Error saving assessment:', error);
-            alert(`Error ${editId !== null ? 'updating' : 'saving'} assessment: ${error.message}`);
+            const errorMessage = error.error || error.response?.data?.error || error.message || JSON.stringify(error);
+            alert(`Error ${editId !== null ? 'updating' : 'saving'} assessment: ${errorMessage}`);
         }
     };
 
@@ -621,11 +597,17 @@ const DRNAssessment = ({ patientCode }) => {
         setSelectedCategory(assessment.category);
         setSelectedCauses([assessment.cause_name]);
 
+        // Map DB status back to UI status
+        let uiStatus = 'Identified';
+        if (assessment.status === 'resolved' || assessment.status === 'Resolved') uiStatus = 'Resolved';
+        else if (assessment.status === 'active' || assessment.status === 'Active') uiStatus = 'Identified';
+
         setWriteUps({
             [assessment.cause_name]: {
                 specificCase: assessment.specific_case,
                 medicalCondition: assessment.medical_condition,
-                medication: assessment.medication
+                medication: assessment.medication,
+                status: uiStatus
             }
         });
 
@@ -636,15 +618,14 @@ const DRNAssessment = ({ patientCode }) => {
         if (!window.confirm('Are you sure you want to delete this assessment?')) return;
 
         try {
-            const { error } = await supabase
-                .from('drn_assessments')
-                .delete()
-                .eq('id', id);
+            const result = await api.delete(`/assessments/drn/${id}`);
 
-            if (error) throw error;
-
-            setAssessments(assessments.filter(ass => ass.id !== id));
-            alert('Assessment deleted successfully!');
+            if (result.success) {
+                setAssessments(assessments.filter(ass => ass.id !== id));
+                alert('Assessment deleted successfully!');
+            } else {
+                throw new Error(result.error || 'Failed to delete');
+            }
         } catch (error) {
             console.error('Error deleting assessment:', error);
             alert('Error deleting assessment: ' + error.message);
@@ -741,24 +722,24 @@ const DRNAssessment = ({ patientCode }) => {
         return colors[ruleType] || 'bg-gray-50 text-gray-700';
     };
 
-    const filteredFindings = analysisResults?.findings?.filter(finding => {
-        if (filterSeverity === 'all') return true;
-        return finding.severity === filterSeverity;
-    }) || [];
+    const getSeverityClass = (sev) => {
+        if (sev === 'critical') return 'bg-red-500';
+        if (sev === 'high') return 'bg-orange-500';
+        return 'bg-yellow-500';
+    };
+
+    const getDisplayStatus = (status) => {
+        if (!status) return 'Active';
+        return status.charAt(0).toUpperCase() + status.slice(1);
+    };
 
     if (authError) {
         return (
-            <div className="bg-white rounded-xl shadow-lg p-6">
-                <div className="text-center py-12">
-                    <FaExclamationCircle className="text-4xl text-yellow-500 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-800 mb-2">Authentication Required</h3>
-                    <p className="text-gray-600 mb-4">{authError}</p>
-                    <button
-                        onClick={() => window.location.reload()}
-                        className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg"
-                    >
-                        Refresh Page
-                    </button>
+            <div className="bg-white p-6 rounded-lg shadow border border-red-200">
+                <div className="text-center text-red-600">
+                    <h3 className="text-xl font-bold mb-2">Authentication Error</h3>
+                    <p className="text-base">{authError}</p>
+                    <button onClick={() => window.location.reload()} className="mt-4 px-6 py-2 bg-blue-600 text-white rounded text-base">Retry</button>
                 </div>
             </div>
         );
@@ -766,475 +747,241 @@ const DRNAssessment = ({ patientCode }) => {
 
     if (!patientId || !userId) {
         return (
-            <div className="bg-white rounded-xl shadow-lg p-6">
-                <div className="text-center py-12">
-                    <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto mb-4" />
-                    <p className="text-gray-600">Initializing DRN Assessment...</p>
-                </div>
+            <div className="bg-white p-8 rounded-lg shadow text-center">
+                <FaSpinner className="animate-spin text-3xl text-blue-600 mx-auto mb-4" />
+                <p className="text-lg text-gray-600">Loading patient data...</p>
             </div>
         );
     }
 
     return (
-        <div className="w-full max-w-full overflow-x-hidden">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
-                <div className="bg-gradient-to-br from-purple-600 to-blue-600 p-3 rounded-full w-fit">
-                    <FaStethoscope className="text-white text-lg sm:text-xl" />
+        <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+            {/* Header */}
+            <div className="flex items-center gap-4 mb-8 pb-6 border-b">
+                <div className="bg-blue-100 p-3 rounded-full">
+                    <FaStethoscope className="text-blue-600 text-3xl" />
                 </div>
                 <div>
-                    <h2 className="text-xl sm:text-2xl font-bold text-gray-800">DRN Assessment</h2>
-                    <p className="text-sm text-gray-500">9 Categories Drug Related Needs Assessment</p>
+                    <h2 className="text-2xl font-bold text-gray-800">Drug-Related Needs Assessment</h2>
+                    <p className="text-sm text-gray-500 font-medium"> Clinical Decision Support System</p>
                 </div>
             </div>
 
-            {/* CDSS Analysis Section - RESTORED */}
-            <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-3 sm:p-6 border border-blue-200 max-w-full overflow-hidden">
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg sm:text-xl font-semibold text-blue-800 flex items-center gap-2">
-                        <FaDatabase className="flex-shrink-0" /> CDSS Clinical Analysis
+            {/* Analysis */}
+            <div className="mb-10">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xl font-bold text-gray-800 flex items-center gap-3">
+                        <FaDatabase className="text-blue-500" /> Clinical Analysis
                     </h3>
-                    <button
-                        onClick={() => setShowAnalysis(!showAnalysis)}
-                        className="text-blue-600 hover:text-blue-800 p-2"
-                    >
-                        {showAnalysis ? <FaChevronUp /> : <FaChevronDown />}
+                    <button onClick={() => setShowAnalysis(!showAnalysis)} className="text-gray-400 hover:text-gray-600 p-2">
+                        {showAnalysis ? <FaChevronUp className="text-xl" /> : <FaChevronDown className="text-xl" />}
                     </button>
                 </div>
 
                 {showAnalysis && (
-                    <>
+                    <div className="bg-gray-50 border rounded-xl p-6 transition-all duration-300">
                         {isAnalyzing ? (
                             <div className="text-center py-8">
-                                <FaSpinner className="animate-spin text-3xl sm:text-4xl text-blue-600 mx-auto mb-4" />
-                                <p className="text-gray-600 text-sm sm:text-base">Running CDSS analysis...</p>
+                                <FaSpinner className="animate-spin text-3xl text-blue-500 mx-auto mb-3" />
+                                <p className="text-base text-gray-600">Running analysis...</p>
                             </div>
                         ) : analysisResults ? (
-                            <div className="space-y-4">
-                                <div className="bg-white rounded-lg p-3 sm:p-4 border shadow-sm">
-                                    <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-4">
-                                        <div>
-                                            <h4 className="font-semibold text-gray-800 text-base sm:text-lg">Analysis Results</h4>
-                                            <p className="text-sm sm:text-base font-medium mt-1 text-gray-700">
-                                                {analysisResults.totalFindings > 0
-                                                    ? `Clinical alerts discovered (${analysisResults.totalFindings})`
-                                                    : 'No clinical alerts found'}
-                                            </p>
-                                        </div>
-                                        <div className="w-full sm:w-auto">
-                                            <button
-                                                onClick={runCdssAnalysis}
-                                                className="w-fit sm:w-auto px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm flex items-center justify-center gap-2"
-                                            >
-                                                <FaSync /> Re-run
+                            <div className="space-y-6">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-base font-semibold text-gray-700">{analysisResults.totalFindings} problems identified</span>
+                                    <button onClick={runCdssAnalysis} className="text-sm text-blue-600 font-bold flex items-center gap-2 hover:underline"><FaSync /> Re-run Analysis</button>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {analysisResults.findings.map((f, i) => (
+                                        <div key={i} className="bg-white p-4 border rounded-lg border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-shadow">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <h4 className="font-bold text-base text-gray-800">{f.cause}</h4>
+                                                <span className={`text-xs font-bold px-2 py-1 rounded text-white uppercase ${getSeverityClass(f.severity)}`}>{f.severity}</span>
+                                            </div>
+                                            <p className="text-sm text-gray-600 mb-3 leading-relaxed">{f.message}</p>
+                                            <button onClick={() => handleReviewFinding(f)} className="text-sm text-blue-600 font-bold flex items-center gap-1 hover:underline">
+                                                <FaEdit /> Add to Log
                                             </button>
                                         </div>
-                                    </div>
-
-
-                                    {/* Findings display */}
-                                    {filteredFindings.length > 0 ? (
-                                        <div className="space-y-3">
-                                            {filteredFindings.map((finding, idx) => (
-                                                <div key={idx} className="p-3 sm:p-4 border rounded-lg hover:shadow-md transition bg-gray-50/30">
-                                                    <div className="flex flex-col gap-3">
-                                                        <div className="flex-1">
-                                                            <div className="flex flex-wrap items-center gap-2 mb-2">
-                                                                <span className="font-bold text-gray-800 text-sm sm:text-base break-words flex-1">
-                                                                    {finding.cause}
-                                                                </span>
-                                                                <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">
-                                                                    Just now
-                                                                </span>
-                                                            </div>
-                                                            <p className="text-sm text-gray-600 mb-2 leading-relaxed break-words">{finding.message}</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="text-center py-8">
-                                            <FaCheckCircle className="text-3xl sm:text-4xl text-green-500 mx-auto mb-3" />
-                                            <p className="text-gray-600 text-sm sm:text-base">No issues found matching current filter</p>
-                                        </div>
-                                    )}
+                                    ))}
                                 </div>
                             </div>
                         ) : (
-                            <div className="text-center py-6">
-                                <FaDatabase className="text-3xl sm:text-4xl text-blue-400 mx-auto mb-4" />
-                                <p className="text-gray-600 text-sm sm:text-base mb-4">Run CDSS clinical analysis to detect drug-related problems</p>
-                                <button
-                                    onClick={runCdssAnalysis}
-                                    className="w-fit sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-lg font-medium shadow-md flex items-center justify-center gap-2 mx-auto"
-                                >
-                                    <FaDatabase /> Run Analysis
+                            <div className="text-center py-8">
+                                <p className="text-gray-500 mb-4 text-base">No analysis results yet.</p>
+                                <button onClick={runCdssAnalysis} className="bg-blue-600 text-white px-8 py-3 rounded-lg font-bold text-base shadow hover:bg-blue-700 transition flex items-center gap-2 mx-auto">
+                                    <FaDatabase /> Run CDSS Analysis
                                 </button>
                             </div>
                         )}
-                    </>
+                    </div>
                 )}
             </div>
 
-            {/* 9 Category Selection */}
-            <div className="mb-8" id="assessment-form">
-                <h3 className="text-lg font-semibold mb-4 text-gray-800">1. Select DRN Category</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {Object.entries(drnCategories).map(([category, catData]) => {
-                        const Icon = catData.icon;
-                        const ruleCount = catData.ruleTypes.reduce((count, ruleType) => {
-                            return count + (activeRules[ruleType]?.length || 0);
-                        }, 0);
-
-                        return (
-                            <button
-                                key={category}
-                                onClick={() => {
-                                    setSelectedCategory(category);
-                                    setSelectedCauses([]);
-                                    setWriteUps({});
-                                    setEditId(null);
-                                }}
-                                className={`group p-2.5 sm:p-4 rounded-2xl text-left transition-all duration-300 border h-full flex flex-col justify-between ${selectedCategory === category
-                                    ? 'border-blue-500 bg-blue-50/50 text-blue-800 shadow-lg ring-2 ring-blue-100 transform sm:scale-[1.02]'
-                                    : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50/5 text-gray-700 hover:shadow-md'
-                                    }`}
-                            >
-                                <div className="flex items-start gap-3">
-                                    <div className={`p-3 rounded-xl flex-shrink-0 transition-transform duration-300 group-hover:scale-110 ${getCategoryColor(category)}`}>
-                                        <Icon className="text-current text-lg sm:text-xl" />
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                        <div className="font-bold text-sm sm:text-base leading-tight text-gray-800 break-words [overflow-wrap:anywhere]">{category}</div>
-                                        <div className="text-[10px] sm:text-xs text-gray-500 mt-1.5 flex items-center gap-1.5">
-                                            <span className="inline-block w-1 h-1 rounded-full bg-gray-300"></span>
-                                            {ruleCount} Rules
-                                        </div>
-                                    </div>
-                                </div>
-                            </button>
-                        );
-                    })}
+            {/* Selection Grid */}
+            <div id="assessment-form" className="mb-10">
+                <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2"><FaStethoscope className="text-gray-400" /> DRN Categories</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                    {Object.entries(drnCategories).map(([cat, data]) => (
+                        <button
+                            key={cat}
+                            onClick={() => { setSelectedCategory(cat); setSelectedCauses([]); setWriteUps({}); setEditId(null); }}
+                            className={`p-4 rounded-xl border text-center transition-all duration-200 group ${selectedCategory === cat ? 'bg-blue-50 border-blue-500 shadow-md ring-2 ring-blue-100' : 'bg-white border-gray-200 hover:bg-gray-50 hover:border-blue-300'}`}
+                        >
+                            <data.icon className={`mx-auto mb-3 text-3xl group-hover:scale-110 transition-transform ${selectedCategory === cat ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-500'}`} />
+                            <span className={`text-sm font-bold block leading-tight ${selectedCategory === cat ? 'text-blue-800' : 'text-gray-600'}`}>{cat}</span>
+                        </button>
+                    ))}
                 </div>
             </div>
 
-            {/* Cause Selection and Form */}
+            {/* Causes and Form */}
             {selectedCategory && (
-                <div className="mb-8 p-3 sm:p-6 border rounded-2xl bg-gray-50/50 max-w-full overflow-hidden">
-                    <h3 className="text-lg font-semibold mb-6 text-gray-800">
-                        2. Select Causes for <span className="text-blue-600">{selectedCategory}</span>
-                    </h3>
+                <div className="bg-gray-50 p-6 sm:p-8 rounded-xl border border-gray-200 mb-10 animate-fadeIn shadow-inner">
+                    <h4 className="font-bold text-xl text-gray-800 mb-6 flex items-center gap-2">
+                        <span className="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm">{menuItemsData[selectedCategory]?.length}</span>
+                        {selectedCategory} Causes
+                    </h4>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
-                        {menuItemsData[selectedCategory]?.map(cause => {
-                            const ruleCount = activeRules?.[cause.ruleType]?.length || 0;
-                            const isSelected = selectedCauses.includes(cause.name);
-
-                            return (
-                                <label
-                                    key={cause.name}
-                                    className={`flex items-start gap-3 p-3 sm:p-4 border rounded-xl bg-white cursor-pointer transition-all ${isSelected
-                                        ? 'border-blue-500 ring-2 ring-blue-100 shadow-sm'
-                                        : 'border-gray-200 hover:border-gray-300'
-                                        }`}
-                                >
-                                    <div className="pt-0.5">
-                                        <input
-                                            type="checkbox"
-                                            checked={isSelected}
-                                            onChange={() => handleCauseSelection(cause.name)}
-                                            className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                                        />
+                        {menuItemsData[selectedCategory]?.map(c => (
+                            <button
+                                key={c.name}
+                                onClick={() => handleCauseSelection(c.name)}
+                                className={`p-4 text-left border rounded-lg text-base transition-all ${selectedCauses.includes(c.name) ? 'bg-white border-blue-500 font-bold shadow-md text-blue-800 ring-1 ring-blue-200' : 'bg-white/60 border-gray-200 hover:border-blue-300 hover:bg-white text-gray-700'}`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-5 h-5 rounded border flex items-center justify-center ${selectedCauses.includes(c.name) ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-300'}`}>
+                                        {selectedCauses.includes(c.name) && <FaCheckCircle className="text-white text-xs" />}
                                     </div>
-
-                                    <div className="flex-1 min-w-0 overflow-hidden">
-                                        <p className="font-bold text-gray-800 text-sm sm:text-base break-words">{cause.name}</p>
-
-                                        <div className="flex flex-wrap gap-2 mt-2">
-                                            {isSelected && cause.dtpType && (
-                                                <span className={`px-2 py-0.5 text-[10px] sm:text-xs rounded font-medium ${getDTPTypeColor(cause.dtpType)}`}>
-                                                    {cause.dtpType}
-                                                </span>
-                                            )}
-
-                                            {ruleCount > 0 && (
-                                                <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] sm:text-xs rounded font-medium">
-                                                    {ruleCount} rules
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                </label>
-                            );
-                        })}
+                                    {c.name}
+                                </div>
+                            </button>
+                        ))}
                     </div>
 
-                    {selectedCauses.map(causeName => {
-                        const causeDetails = menuItemsData[selectedCategory]?.find(
-                            c => c.name === causeName
-                        );
+                    {selectedCauses.map(cause => (
+                        <div key={cause} className="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-gray-200 mb-6 relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+                            <h5 className="font-bold text-lg text-gray-900 mb-6 pb-2 border-b flex justify-between items-center">
+                                <span>{cause} Details</span>
+                                <span className="text-xs font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded">Assessment Form</span>
+                            </h5>
 
-                        return (
-                            <div
-                                key={causeName}
-                                className="mb-6 p-4 sm:p-6 border rounded-2xl bg-white shadow-md border-blue-100 max-w-full overflow-hidden"
-                            >
-                                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-6">
-                                    <h4 className="font-bold text-base sm:text-lg text-gray-800 break-words flex-1">
-                                        {causeName}
-                                    </h4>
-
-                                    {causeDetails?.dtpType && (
-                                        <span className={`w-fit px-3 py-1 text-xs sm:text-sm rounded-full font-medium ${getDTPTypeColor(causeDetails.dtpType)}`}>
-                                            DTP Type: {causeDetails.dtpType}
-                                        </span>
-                                    )}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide mb-2">Medical Condition <span className="text-red-500">*</span></label>
+                                    <textarea
+                                        value={writeUps[cause]?.medicalCondition || ''}
+                                        onChange={e => handleWriteUpChange(cause, 'medicalCondition', e.target.value)}
+                                        className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-base h-32 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow resize-none"
+                                        placeholder="Describe condition..."
+                                    />
                                 </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                            Specific Case *
-                                        </label>
-                                        <textarea
-                                            value={writeUps[causeName]?.specificCase || ''}
-                                            onChange={e =>
-                                                handleWriteUpChange(
-                                                    causeName,
-                                                    'specificCase',
-                                                    e.target.value
-                                                )
-                                            }
-                                            rows="2"
-                                            className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
-                                            placeholder="Describe the specific case..."
-                                            required
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                            Medical Condition *
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={writeUps[causeName]?.medicalCondition || ''}
-                                            onChange={e =>
-                                                handleWriteUpChange(
-                                                    causeName,
-                                                    'medicalCondition',
-                                                    e.target.value
-                                                )
-                                            }
-                                            className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
-                                            placeholder="e.g., Hypertension"
-                                            required
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                            Medication *
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={writeUps[causeName]?.medication || ''}
-                                            onChange={e =>
-                                                handleWriteUpChange(
-                                                    causeName,
-                                                    'medication',
-                                                    e.target.value
-                                                )
-                                            }
-                                            className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
-                                            placeholder="e.g., Enalapril 10mg"
-                                            required
-                                        />
-                                    </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide mb-2">Medication <span className="text-red-500">*</span></label>
+                                    <textarea
+                                        value={writeUps[cause]?.medication || ''}
+                                        onChange={e => handleWriteUpChange(cause, 'medication', e.target.value)}
+                                        className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-base h-32 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow resize-none"
+                                        placeholder="List medications..."
+                                    />
                                 </div>
-
-                                <div className="flex flex-col sm:flex-row gap-3 mt-8">
-                                    <button
-                                        onClick={() => saveAssessment(causeName)}
-                                        className="w-fit sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-xl font-bold shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2"
-                                    >
-                                        <FaClipboardCheck /> {editId !== null ? 'Update Assessment' : 'Save Assessment'}
-                                    </button>
-
-                                    <button
-                                        onClick={() => {
-                                            setSelectedCauses(prev =>
-                                                prev.filter(c => c !== causeName)
-                                            );
-                                            setWriteUps(prev => {
-                                                const newWriteUps = { ...prev };
-                                                delete newWriteUps[causeName];
-                                                return newWriteUps;
-                                            });
-                                        }}
-                                        className="w-fit sm:w-auto px-8 py-3 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 flex items-center justify-center gap-2"
-                                    >
-                                        Cancel
-                                    </button>
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide mb-2">Specific Case <span className="text-red-500">*</span></label>
+                                    <textarea
+                                        value={writeUps[cause]?.specificCase || ''}
+                                        onChange={e => handleWriteUpChange(cause, 'specificCase', e.target.value)}
+                                        className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-base h-32 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow resize-none"
+                                        placeholder="Details of the finding..."
+                                    />
                                 </div>
                             </div>
-                        );
-                    })}
+
+                            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-gray-50 p-4 rounded-lg">
+                                <div className="flex gap-2 w-full sm:w-auto">
+                                    {['Identified', 'Resolved', 'Unresolved'].map(status => (
+                                        <button
+                                            key={status}
+                                            onClick={() => handleWriteUpChange(cause, 'status', status)}
+                                            className={`flex-1 sm:flex-none px-4 py-2 text-xs font-bold uppercase rounded-lg border transition-all ${writeUps[cause]?.status === status ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-white text-gray-500 border-gray-300 hover:bg-gray-100'}`}
+                                        >
+                                            {status}
+                                        </button>
+                                    ))}
+                                </div>
+                                <button
+                                    onClick={() => saveAssessment(cause)}
+                                    className="w-full sm:w-auto px-8 py-3 bg-blue-600 text-white rounded-lg font-bold text-base hover:bg-blue-700 transition shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                                >
+                                    <FaSave /> Save Assessment
+                                </button>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             )}
 
-            {/* Saved Assessments Section */}
-            <div className="mt-8 border-t pt-8">
-                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6">
-                    <h3 className="text-xl font-bold text-gray-800">
-                        Saved Assessments <span className="text-gray-400 font-normal ml-1">({assessments.length})</span>
-                    </h3>
-                    <div className="flex items-center gap-4">
-                        {assessments.length > 0 && (
-                            <button
-                                onClick={() => fetchAssessments()}
-                                className="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-lg transition-all"
-                            >
-                                <FaSync className={isLoading ? 'animate-spin' : ''} /> Refresh List
-                            </button>
-                        )}
-                    </div>
-                </div>
-
+            {/* History */}
+            <div className="mt-12">
+                <h3 className="text-2xl font-bold text-gray-800 flex items-center gap-3 mb-6 pb-4 border-b">
+                    <FaHistory className="text-blue-600" /> Assessment History
+                </h3>
                 {isLoading ? (
-                    <div className="text-center py-12">
-                        <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto mb-4" />
-                        <p className="text-gray-500 font-medium">Loading your assessments...</p>
-                    </div>
+                    <div className="text-center py-12"><FaSpinner className="animate-spin text-4xl text-blue-500 mx-auto" /></div>
                 ) : assessments.length === 0 ? (
-                    <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/30">
-                        <div className="bg-gray-100 p-4 rounded-full w-fit mx-auto mb-4">
-                            <FaNotesMedical className="text-3xl text-gray-400" />
-                        </div>
-                        <p className="text-gray-500 font-medium tracking-tight">No assessments saved for this patient yet.</p>
-                        <p className="text-sm text-gray-400 mt-1">Select a category above to start an assessment.</p>
+                    <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 text-gray-400 font-medium">
+                        <FaClipboardList className="text-4xl mx-auto mb-3 opacity-20" />
+                        <p className="text-lg">No archived assessments found.</p>
                     </div>
                 ) : (
-                    <>
-                        {/* Desktop Table View */}
-                        <div className="hidden lg:block overflow-x-auto rounded-xl border border-gray-100 shadow-sm">
-                            <table className="w-full">
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th className="p-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Category</th>
-                                        <th className="p-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Cause & DTP Type</th>
-                                        <th className="p-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Specific Case</th>
-                                        <th className="p-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
-                                        <th className="p-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Date</th>
-                                        <th className="p-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100">
-                                    {assessments.map((assessment) => (
-                                        <tr key={assessment.id} className="hover:bg-blue-50/30 transition-colors">
-                                            <td className="p-4 whitespace-nowrap">
-                                                <span className={`px-2.5 py-1 text-xs font-bold rounded-full ${getCategoryColor(assessment.category)}`}>
-                                                    {assessment.category}
-                                                </span>
-                                            </td>
-                                            <td className="p-4">
-                                                <div className="font-semibold text-gray-800 text-sm">{assessment.cause_name}</div>
-                                                <div className="mt-1">
-                                                    <span className={`px-2 py-0.5 text-[10px] rounded font-medium ${getDTPTypeColor(assessment.dtp_type)}`}>
-                                                        {assessment.dtp_type || 'N/A'}
-                                                    </span>
-                                                </div>
-                                            </td>
-                                            <td className="p-4 max-w-xs">
-                                                <p className="text-sm text-gray-600 line-clamp-2">{assessment.specific_case}</p>
-                                            </td>
-                                            <td className="p-4 whitespace-nowrap">
-                                                <span className={`px-2.5 py-1 text-[10px] uppercase font-bold rounded-full ${assessment.status === 'active' ? 'bg-yellow-100 text-yellow-800' :
-                                                    assessment.status === 'resolved' ? 'bg-green-100 text-green-800' :
-                                                        'bg-blue-100 text-blue-800'
-                                                    }`}>
-                                                    {assessment.status}
-                                                </span>
-                                            </td>
-                                            <td className="p-4 whitespace-nowrap text-xs text-gray-500 font-medium">
-                                                {new Date(assessment.created_at).toLocaleDateString()}
-                                            </td>
-                                            <td className="p-4 whitespace-nowrap text-right">
-                                                <div className="flex justify-end gap-1">
-                                                    <button
-                                                        onClick={() => handleEdit(assessment)}
-                                                        className="p-2 text-blue-500 hover:bg-blue-100 rounded-lg transition-all"
-                                                        title="Edit"
-                                                    >
-                                                        <FaEdit className="text-sm" />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDeleteAssessment(assessment.id)}
-                                                        className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-all"
-                                                        title="Delete"
-                                                    >
-                                                        <FaTrash className="text-sm" />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        {/* Mobile Card View */}
-                        <div className="lg:hidden space-y-4 max-w-full">
-                            {assessments.map((assessment) => (
-                                <div key={assessment.id} className="bg-white border border-gray-100 rounded-2xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all">
-                                    <div className="flex justify-between items-start mb-3">
-                                        <div className="flex flex-col gap-2">
-                                            <span className={`w-fit px-2 py-0.5 text-[9px] font-bold rounded-full ${getCategoryColor(assessment.category)}`}>
-                                                {assessment.category}
-                                            </span>
-                                            <h4 className="font-bold text-gray-800 leading-tight break-words [overflow-wrap:anywhere] text-sm sm:text-base">{assessment.cause_name}</h4>
-                                        </div>
-                                        <span className={`px-2.5 py-1 text-[10px] uppercase font-bold rounded-full ${assessment.status === 'active' ? 'bg-yellow-100 text-yellow-800' :
-                                            assessment.status === 'resolved' ? 'bg-green-100 text-green-800' :
-                                                'bg-blue-100 text-blue-800'
-                                            }`}>
-                                            {assessment.status}
-                                        </span>
+                    <div className="space-y-4">
+                        {assessments.map(ass => (
+                            <div key={ass.id} className="p-5 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md hover:border-blue-300 transition-all flex flex-col md:flex-row justify-between items-start md:items-center group gap-4">
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-3 mb-2 flex-wrap">
+                                        <span className="font-bold text-lg text-gray-900">{ass.cause_name}</span>
+                                        <span className={`px-3 py-1 text-xs font-bold uppercase rounded-full text-white ${ass.status === 'Resolved' || ass.status === 'resolved' ? 'bg-green-500' : 'bg-blue-500'}`}>{getDisplayStatus(ass.status)}</span>
+                                        <span className="text-xs text-gray-400 font-medium bg-gray-100 px-2 py-1 rounded">{ass.category}</span>
                                     </div>
-
-                                    <div className="bg-gray-50 rounded-xl p-3 mb-4">
-                                        <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Specific Case</p>
-                                        <p className="text-sm text-gray-600 leading-relaxed break-words">{assessment.specific_case}</p>
+                                    <div className="text-sm text-gray-700 font-medium flex flex-wrap gap-x-6 gap-y-1">
+                                        <span className="flex items-center gap-1"><FaNotesMedical className="text-gray-400" /> <span className="font-bold">Condition:</span> {ass.medical_condition}</span>
+                                        <span className="flex items-center gap-1"><FaPills className="text-gray-400" /> <span className="font-bold">Medication:</span> {ass.medication}</span>
                                     </div>
-
-                                    <div className="flex items-center justify-between pt-3 border-t border-gray-50">
-                                        <div className="flex flex-col">
-                                            <span className={`w-fit px-2 py-0.5 text-[10px] rounded font-medium ${getDTPTypeColor(assessment.dtp_type)}`}>
-                                                {assessment.dtp_type || 'N/A'}
-                                            </span>
-                                            <span className="text-[10px] text-gray-400 mt-1.5 font-medium">
-                                                {new Date(assessment.created_at).toLocaleDateString()}
-                                            </span>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <button
-                                                onClick={() => handleEdit(assessment)}
-                                                className="flex items-center gap-2 px-3 py-2 bg-blue-50 text-blue-600 rounded-xl text-xs font-bold active:scale-95 transition-all"
-                                            >
-                                                <FaEdit /> Edit
-                                            </button>
-                                            <button
-                                                onClick={() => handleDeleteAssessment(assessment.id)}
-                                                className="p-2 bg-red-50 text-red-500 rounded-xl active:scale-95 transition-all"
-                                            >
-                                                <FaTrash />
-                                            </button>
-                                        </div>
-                                    </div>
+                                    <p className="text-sm text-gray-500 mt-2 italic border-l-2 border-gray-200 pl-3 line-clamp-2">{ass.specific_case}</p>
                                 </div>
-                            ))}
-                        </div>
-                    </>
+                                <div className="flex gap-2 self-end md:self-center shrink-0">
+                                    <button
+                                        onClick={() => {
+                                            setEditId(ass.id);
+                                            setSelectedCategory(ass.category);
+                                            setSelectedCauses([ass.cause_name]);
+                                            setWriteUps({
+                                                [ass.cause_name]: {
+                                                    specificCase: ass.specific_case,
+                                                    medicalCondition: ass.medical_condition,
+                                                    medication: ass.medication,
+                                                    status: ass.status
+                                                }
+                                            });
+                                            window.scrollTo({ top: document.getElementById('assessment-form')?.offsetTop - 100, behavior: 'smooth' });
+                                        }}
+                                        className="p-3 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100"
+                                        title="Edit Assessment"
+                                    >
+                                        <FaEdit className="text-lg" />
+                                    </button>
+                                    <button
+                                        onClick={async () => { if (window.confirm('Delete?')) { await api.delete(`/assessments/drn/${ass.id}`); fetchAssessments(); } }}
+                                        className="p-3 text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
+                                        title="Delete Assessment"
+                                    >
+                                        <FaTrash className="text-lg" />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 )}
             </div>
         </div>
@@ -1242,5 +989,3 @@ const DRNAssessment = ({ patientCode }) => {
 };
 
 export default DRNAssessment;
-
-

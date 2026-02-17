@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import {
     FaUserInjured,
     FaPills,
-    FaFlask,
+    FaVial,
     FaUserMd,
     FaArrowRight
 } from 'react-icons/fa';
@@ -72,7 +72,7 @@ const Home = () => {
                 <Link to="/knowledge/remedies" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
                     <div className="flex items-center gap-4 mb-4">
                         <div className="p-3 bg-green-100 rounded-full">
-                            <FaFlask className="text-green-600 text-2xl" />
+                            <FaVial className="text-green-600 text-2xl" />
                         </div>
                         <div>
                             <h2 className="text-xl font-bold text-gray-800">Home Remedies</h2>

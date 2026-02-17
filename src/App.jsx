@@ -25,6 +25,7 @@ import UsefulLinks from './pages/UsefulLinks';
 import MedicationAvailability from './pages/MedicationAvailability';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import VerifyEmail from './pages/VerifyEmail';
 
 // Subscription Pages
 import SubscriptionPlans from "./pages/SubscriptionPlans";
@@ -198,7 +199,7 @@ const PublicRoute = ({ children }) => {
 };
 
 // Protected Route Component - UPDATED: Removed automatic subscription redirect
-const ProtectedRoute = ({ children, adminOnly = false, companyAdminOnly = false, requireSubscription = false, allowAdmin = true, showLayout = true }) => {
+const ProtectedRoute = ({ children, adminOnly = false, companyAdminOnly = false, allowedRoles = null, requireSubscription = false, allowAdmin = true, showLayout = true }) => {
     const [loading, setLoading] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [user, setUser] = useState(null);
@@ -304,6 +305,11 @@ const ProtectedRoute = ({ children, adminOnly = false, companyAdminOnly = false,
             redirectTo: location.pathname,
             message: 'Please login to access this page'
         }} replace />;
+    }
+
+    // Role check
+    if (allowedRoles && !allowedRoles.includes(user?.role) && user?.role !== 'admin') {
+        return <Navigate to="/dashboard" state={{ message: 'Access denied. This section is only for specific roles.' }} replace />;
     }
 
     // FIXED: Block admin if allowAdmin is false
@@ -980,6 +986,17 @@ function App() {
                     }
                 />
 
+                <Route
+                    path="/verify-email"
+                    element={
+                        <PublicRoute>
+                            <SimpleLayout>
+                                <VerifyEmail />
+                            </SimpleLayout>
+                        </PublicRoute>
+                    }
+                />
+
                 {/* Subscription Routes - PUBLIC ACCESS */}
                 <Route
                     path="/subscription/plans"
@@ -1176,8 +1193,22 @@ function App() {
                     <Route index element={<Navigate to="medications" replace />} />
                     <Route path="medications" element={<MedicationInfo />} />
                     <Route path="remedies" element={<HomeRemedies />} />
-                    <Route path="illnesses" element={<MinorIllnesses />} />
-                    <Route path="compounding" element={<ExtemporaneousPrep />} />
+                    <Route
+                        path="illnesses"
+                        element={
+                            <ProtectedRoute allowedRoles={['pharmacist', 'pharmacy_student']} showLayout={false}>
+                                <MinorIllnesses />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="compounding"
+                        element={
+                            <ProtectedRoute allowedRoles={['pharmacist', 'pharmacy_student']} showLayout={false}>
+                                <ExtemporaneousPrep />
+                            </ProtectedRoute>
+                        }
+                    />
                 </Route>
 
                 {/* Company Performance Report - Company Admin Only */}

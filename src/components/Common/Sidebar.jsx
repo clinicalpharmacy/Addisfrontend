@@ -7,7 +7,7 @@ import {
     FaPills,
     FaBookMedical,
     FaCogs,
-    FaFlask,
+    FaVial,
     FaChartBar,
     FaChevronDown,
     FaChevronRight,
@@ -29,6 +29,8 @@ import {
     FaBookmark,
     FaCreditCard
 } from 'react-icons/fa';
+
+// Force rebuild - ensuring all icons are properly bundled
 
 const Sidebar = ({ onClose }) => {
     const navigate = useNavigate();
@@ -399,7 +401,7 @@ const Sidebar = ({ onClose }) => {
                                         }`
                                     }
                                 >
-                                    <FaFlask className="text-sm" />
+                                    <FaVial className="text-sm" />
                                     Home Remedies
                                 </NavLink>
                                 <NavLink
@@ -425,7 +427,7 @@ const Sidebar = ({ onClose }) => {
                                         }`
                                     }
                                 >
-                                    <FaFlask className="text-sm" />
+                                    <FaVial className="text-sm" />
                                     Compounding
                                 </NavLink>
                             </div>
@@ -491,7 +493,7 @@ const Sidebar = ({ onClose }) => {
                                         }`
                                     }
                                 >
-                                    <FaFlask className="text-lg" />
+                                    <FaVial className="text-lg" />
                                     <span className="font-medium">Lab Definitions</span>
                                 </NavLink>
                             </div>

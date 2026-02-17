@@ -30,13 +30,15 @@ api.interceptors.response.use(
         if (error.response) {
             const { status } = error.response;
             if (status === 401) {
-                // Token expired or invalid
-                console.warn('Unauthorized request. Clearing local storage and redirecting to login.');
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-                // We're in a utility file, so we can't use useNavigate
-                // But we can redirect using window.location if absolutely necessary
-                // Or let the component handle the error
+                // Special handling: Don't clear storage if we're already trying to login
+                // as 401 here just means "Invalid credentials"
+                const isLoginReq = error.config && error.config.url && error.config.url.includes('/auth/login');
+
+                if (!isLoginReq) {
+                    console.warn('Unauthorized request. Clearing local storage and redirecting to login.');
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                }
             }
             return Promise.reject(error.response.data);
         }

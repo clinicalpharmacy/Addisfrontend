@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import {
     FaPills,
-    FaFlask,
+    FaVial,
     FaStethoscope,
     FaMortarPestle,
     FaBookMedical,
@@ -13,7 +13,6 @@ import {
     FaTimes,
     FaCheckCircle
 } from 'react-icons/fa';
-import useScreenshotProtection from '../../hooks/useScreenshotProtection';
 import './KnowledgeBase.css';
 
 const KnowledgeBaseLayout = () => {
@@ -21,7 +20,7 @@ const KnowledgeBaseLayout = () => {
     const [isAdmin, setIsAdmin] = useState(false);
     const [isSuperAdmin, setIsSuperAdmin] = useState(false);
     const [protectionEnabled, setProtectionEnabled] = useState(true);
-    const protectionMsg = useScreenshotProtection(protectionEnabled);
+    // const protectionMsg = useScreenshotProtection(protectionEnabled); // Moved to individual components
     const [success, setSuccess] = useState('');
 
     useEffect(() => {
@@ -47,22 +46,14 @@ const KnowledgeBaseLayout = () => {
 
     const tabs = [
         { path: 'medications', label: 'Medications', icon: <FaPills /> },
-        { path: 'remedies', label: 'Home Remedies', icon: <FaFlask /> },
+        { path: 'remedies', label: 'Home Remedies', icon: <FaVial /> },
         { path: 'illnesses', label: 'Minor Illnesses', icon: <FaStethoscope /> },
         { path: 'compounding', label: 'Compounding', icon: <FaMortarPestle /> },
     ];
 
     return (
         <div className="space-y-6 knowledge-base-container overflow-x-hidden max-w-full relative">
-            {/* Global Protection Message */}
-            {protectionMsg && (
-                <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[100] w-full max-w-md px-4">
-                    <div className="bg-red-600/90 text-white p-3 rounded-lg shadow-2xl flex items-center justify-center gap-3 animate-pulse border border-red-400 backdrop-blur-sm">
-                        <FaShieldAlt className="text-xl" />
-                        <span className="font-bold text-sm md:text-base">{protectionMsg}</span>
-                    </div>
-                </div>
-            )}
+
 
             {success && (
                 <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[100] w-full max-w-md px-4 animate-fadeIn">

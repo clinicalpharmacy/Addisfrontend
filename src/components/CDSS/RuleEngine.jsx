@@ -140,6 +140,11 @@ export const mapPatientToFacts = (patientData, medicationHistory = []) => {
         edd: patientData.edd || '',
         pregnancy_notes: patientData.pregnancy_notes || '',
 
+        // ===== LACTATION INFORMATION =====
+        lactating: patientData.is_lactating === true || patientData.is_lactating === 'true',
+        is_lactating: patientData.is_lactating === true || patientData.is_lactating === 'true',
+        lactation_notes: patientData.lactation_notes || '',
+
         // ===== LABS - Organized in nested structure =====
         labs: {},
 

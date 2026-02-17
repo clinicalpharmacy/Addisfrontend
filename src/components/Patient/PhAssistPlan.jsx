@@ -59,12 +59,17 @@ const PhAssistPlan = ({ patientCode }) => {
                 notes: plan
             };
 
-            console.log('Saving plan with data:', planData);
-
-            const result = await api.post('/plans/pharmacy-assistance', planData);
+            let result;
+            if (editIndex !== null) {
+                // Update existing plan
+                result = await api.put(`/plans/${editIndex}`, planData);
+            } else {
+                // Add new plan
+                result = await api.post('/plans/pharmacy-assistance', planData);
+            }
 
             if (result.success) {
-                alert('Plan saved successfully!');
+                alert(`Plan ${editIndex !== null ? 'updated' : 'saved'} successfully!`);
                 setPharmacyAssessment('');
                 setPlan('');
                 setFollowUpDate('');

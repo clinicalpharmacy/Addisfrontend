@@ -19,11 +19,13 @@ import {
     FaBook
 } from 'react-icons/fa';
 import { useOutletContext } from 'react-router-dom';
+import useScreenshotProtection from '../../hooks/useScreenshotProtection';
 
 const HomeRemedies = () => {
     const context = useOutletContext();
     const protectionEnabled = context?.protectionEnabled ?? true;
     const toggleProtection = context?.toggleProtection ?? (() => { });
+    const protectionMsg = useScreenshotProtection(protectionEnabled);
     const [remedies, setRemedies] = useState([]);
     const [filteredRemedies, setFilteredRemedies] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -129,7 +131,7 @@ const HomeRemedies = () => {
             fetchRemedies();
             resetForm();
         } catch (err) {
-            console.error(err);
+            console.error('❌ Error saving remedy (Full Detail):', JSON.stringify(err, null, 2));
             setError('Error saving remedy: ' + err.message);
         } finally {
             setSaving(false);
@@ -195,6 +197,14 @@ const HomeRemedies = () => {
     return (
         <div className="bg-gray-50 min-h-full pb-8">
             <div className="max-w-7xl mx-auto px-4 py-6">
+                {protectionMsg && (
+                    <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[100] w-full max-w-md px-4">
+                        <div className="bg-red-600/90 text-white p-3 rounded-lg shadow-2xl flex items-center justify-center gap-3 animate-pulse border border-red-400 backdrop-blur-sm">
+                            <FaShieldAlt className="text-xl" />
+                            <span className="font-bold text-sm md:text-base">{protectionMsg}</span>
+                        </div>
+                    </div>
+                )}
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
