@@ -515,7 +515,10 @@ const PatientDetails = () => {
             appointment_date: (data.appointment_date && isValidDate(data.appointment_date)) ? data.appointment_date.split('T')[0] : '',
             edd: (data.edd && isValidDate(data.edd)) ? data.edd.split('T')[0] : '',
             last_measured: (data.last_measured && isValidDate(data.last_measured)) ? data.last_measured.split('T')[0] : new Date().toISOString().split('T')[0],
-            last_tested: (data.last_tested && isValidDate(data.last_tested)) ? data.last_tested.split('T')[0] : new Date().toISOString().split('T')[0]
+            last_tested: (data.last_tested && isValidDate(data.last_tested)) ? data.last_tested.split('T')[0] : new Date().toISOString().split('T')[0],
+            // Explicitly convert is_lactating to boolean
+            is_lactating: data.is_lactating === true || data.is_lactating === 'true' || data.is_lactating === 1,
+            is_pregnant: data.is_pregnant === true || data.is_pregnant === 'true' || data.is_pregnant === 1
         };
 
         setFormData(formDataToSet);
@@ -1716,7 +1719,7 @@ const PatientDetails = () => {
                 </div>
 
                 {/* Pregnancy Status (Females Only) */}
-                {(formData.gender === 'Female' || formData.gender === 'female') && (
+                {(formData.gender && formData.gender.toLowerCase() === 'female') && (
                     <div className="space-y-6">
                         {/* Pregnancy Status */}
                         <div className="bg-white rounded-xl shadow-lg p-6 mt-6 border border-pink-100">
