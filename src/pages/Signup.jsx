@@ -164,8 +164,10 @@ const Signup = () => {
     useEffect(() => {
         // Handle URL params for account type
         const typeParam = searchParams.get('type');
-        if (typeParam === 'individual' || typeParam === 'company') {
-            setAccountTypeSelection(typeParam);
+        if (typeParam === 'individual') {
+            setAccountTypeSelection('individual');
+        } else if (typeParam === 'company' || typeParam === 'organization') {
+            setAccountTypeSelection('company');
         }
 
         // Clear form data on component mount
@@ -563,12 +565,14 @@ const Signup = () => {
             <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
                 <div className="w-full max-w-6xl">
                     <div className="mb-8">
-                        <button
-                            onClick={() => setAccountTypeSelection(null)}
-                            className="flex items-center text-gray-600 hover:text-blue-600 font-bold transition-colors"
-                        >
-                            <FaArrowLeft className="mr-2" /> Back to Account Selection
-                        </button>
+                        {!searchParams.get('type') && (
+                            <button
+                                onClick={() => setAccountTypeSelection(null)}
+                                className="flex items-center text-gray-600 hover:text-blue-600 font-bold transition-colors"
+                            >
+                                <FaArrowLeft className="mr-2" /> Back to Account Selection
+                            </button>
+                        )}
                     </div>
 
                     <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-10">
