@@ -95,7 +95,7 @@ export const AdminCompanies = ({
                                         <p className="text-[9px] text-gray-400 uppercase font-black tracking-widest mb-2">Connectivity</p>
                                         <div className="flex flex-col gap-2">
                                             <div className="flex items-center gap-2 text-xs text-gray-700 font-bold">
-                                                <FaPhone className="text-purple-300 text-[10px]" /> {company.admin_phone || 'N/A'}
+                                                <FaPhone className="text-purple-300 text-[10px]" /> {company.users?.phone || 'N/A'}
                                             </div>
                                             <div className="flex items-center gap-2 text-[10px] text-gray-500 font-medium">
                                                 <FaCalendarAlt className="text-purple-300" /> {formatDate(company.created_at)}
