@@ -163,7 +163,7 @@ const Signup = () => {
 
     useEffect(() => {
         // Handle URL params for account type
-        const typeParam = searchParams.get('type');
+        const typeParam = searchParams.get('type')?.toLowerCase();
         if (typeParam === 'individual') {
             setAccountTypeSelection('individual');
         } else if (typeParam === 'company' || typeParam === 'organization') {
