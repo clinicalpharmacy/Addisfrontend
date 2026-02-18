@@ -807,7 +807,7 @@ const Signup = () => {
                                     <div className="mb-6">
                                         <label className="block text-gray-700 font-medium mb-2">
                                             <FaUserMd className="inline mr-2" />
-                                            Select Your Profession *
+                                            Select Category *
                                         </label>
                                         <select
                                             required
