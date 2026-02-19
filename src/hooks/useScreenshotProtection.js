@@ -22,8 +22,6 @@ import { useState, useEffect, useRef } from 'react';
  * 12. deviceorientation watch     — warns when phone is tilted (photo attempt)
  * 13. touchstart/end combo        — volume-button side-press heuristic
  *
- * Universal:
- * 14. Diagonal user watermark     — identity-stamped on every screenshotted frame
  */
 const useScreenshotProtection = (isEnabled = true) => {
     const [protectionMsg, setProtectionMsg] = useState('');
@@ -218,57 +216,6 @@ const useScreenshotProtection = (isEnabled = true) => {
         document.head.appendChild(style);
         document.body.classList.add('kb-select-none');
 
-        // ── Watermark overlay ─────────────────────────────────────────────
-        let watermarkLabel = 'CONFIDENTIAL';
-        try {
-            const userData = localStorage.getItem('user');
-            if (userData) {
-                const u = JSON.parse(userData);
-                const name = u.full_name || u.name || u.email || u.username || '';
-                const id = u.id ? `#${u.id}` : '';
-                if (name) watermarkLabel = `${name} ${id} · CONFIDENTIAL`.trim();
-            }
-        } catch (_) { /* ignore */ }
-
-        const oldWm = document.getElementById('kb-watermark-overlay');
-        if (oldWm) oldWm.remove();
-
-        const watermark = document.createElement('div');
-        watermark.id = 'kb-watermark-overlay';
-        watermark.setAttribute('aria-hidden', 'true');
-
-        const repeat = Array(30).fill(watermarkLabel).join('   ·   ');
-        const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-        const wmOpacity = isMobile ? '0.18' : '0.11';
-
-        watermark.innerHTML = `
-            <div style="
-                position: fixed;
-                top: 0; left: 0; right: 0; bottom: 0;
-                pointer-events: none;
-                z-index: 99999;
-                overflow: hidden;
-                display: flex;
-                flex-direction: column;
-                justify-content: space-around;
-            ">
-                ${Array(10).fill(0).map((_, i) => `
-                    <div style="
-                        width: 200%;
-                        white-space: nowrap;
-                        font-size: ${isMobile ? '11px' : '13px'};
-                        font-weight: 700;
-                        letter-spacing: 2px;
-                        color: rgba(80, 80, 80, ${wmOpacity});
-                        transform: rotate(-30deg) translateX(${i % 2 === 0 ? '-5%' : '5%'});
-                        user-select: none;
-                        pointer-events: none;
-                    ">${repeat}</div>
-                `).join('')}
-            </div>
-        `;
-        document.body.appendChild(watermark);
-
         // ── Cleanup ───────────────────────────────────────────────────────
         return () => {
             window.removeEventListener('contextmenu', handleContextMenu, true);
@@ -292,9 +239,6 @@ const useScreenshotProtection = (isEnabled = true) => {
             const existingStyle = document.getElementById('kb-protection-styles');
             if (existingStyle) existingStyle.remove();
 
-            const existingWatermark = document.getElementById('kb-watermark-overlay');
-            if (existingWatermark) existingWatermark.remove();
-
             document.body.classList.remove('kb-select-none');
             clearTimeout(msgTimeoutRef.current);
             clearTimeout(resizeTimerRef.current);
@@ -311,9 +255,6 @@ function cleanupAll() {
 
     const s = document.getElementById('kb-protection-styles');
     if (s) s.remove();
-
-    const w = document.getElementById('kb-watermark-overlay');
-    if (w) w.remove();
 
     document.body.classList.remove('kb-select-none');
 }
