@@ -38,13 +38,13 @@ const LabSettings = ({ onUpdate }) => {
 
     const categories = [
         'General',
-        'Hematology',
-        'Biochemistry',
+        'Complete blood count (CBC)',
+        'Liver function tests',
         'Electrolytes',
-        'Endocrine',
-        'Infectious Disease',
+        'Lipid profile',
+        'Renal function tests',
         'Urinalysis',
-        'Other'
+        'Coagulation test'
     ];
 
     useEffect(() => {
@@ -174,12 +174,13 @@ const LabSettings = ({ onUpdate }) => {
 
     const getCategoryStyles = (category) => {
         switch (category) {
-            case 'Hematology': return 'bg-red-50 text-red-600 border-red-100';
-            case 'Biochemistry': return 'bg-blue-50 text-blue-600 border-blue-100';
+            case 'Complete blood count (CBC)': return 'bg-red-50 text-red-600 border-red-100';
+            case 'Liver function tests': return 'bg-blue-50 text-blue-600 border-blue-100';
             case 'Electrolytes': return 'bg-amber-50 text-amber-600 border-amber-100';
-            case 'Endocrine': return 'bg-purple-50 text-purple-600 border-purple-100';
-            case 'Infectious Disease': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
+            case 'Lipid profile': return 'bg-purple-50 text-purple-600 border-purple-100';
+            case 'Renal function tests': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
             case 'Urinalysis': return 'bg-indigo-50 text-indigo-600 border-indigo-100';
+            case 'Coagulation test': return 'bg-indigo-50 text-indigo-600 border-indigo-100';
             default: return 'bg-gray-50 text-gray-600 border-gray-100';
         }
     };
