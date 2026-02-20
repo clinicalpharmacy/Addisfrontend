@@ -355,9 +355,9 @@ const DRNAssessment = ({ patientCode }) => {
 
             clinicalRules.forEach(rule => {
                 try {
-                    const isTriggered = evaluateRule(rule, facts);
+                    const evalResult = evaluateRule(rule, facts, true);
 
-                    if (isTriggered) {
+                    if (evalResult.triggered) {
                         triggeredRules.push(rule);
 
                         let message = rule.rule_name;
@@ -378,6 +378,11 @@ const DRNAssessment = ({ patientCode }) => {
                             }
                         } else {
                             recommendation = getDefaultRecommendation(rule.rule_type);
+                        }
+
+                        // Append matched medications to message if they aren't already there
+                        if (evalResult.matchedMedications.length > 0) {
+                            message += ` [Drug(s): ${evalResult.matchedMedications.join(', ')}]`;
                         }
 
                         // Map rule to DRN category
@@ -409,10 +414,12 @@ const DRNAssessment = ({ patientCode }) => {
                             message: message,
                             recommendation: recommendation,
                             severity: severity,
-                            medications: facts.medications?.filter(med =>
-                                message.toLowerCase().includes(med.toLowerCase()) ||
-                                recommendation.toLowerCase().includes(med.toLowerCase())
-                            ) || [],
+                            medications: evalResult.matchedMedications.length > 0
+                                ? evalResult.matchedMedications
+                                : (facts.medications?.filter(med =>
+                                    message.toLowerCase().includes(med.toLowerCase()) ||
+                                    recommendation.toLowerCase().includes(med.toLowerCase())
+                                ) || []),
                             timestamp: new Date().toISOString(),
                             evidence: rule.rule_description || '',
                             original_rule_name: rule.rule_name,

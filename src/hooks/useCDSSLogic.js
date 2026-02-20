@@ -174,11 +174,14 @@ export const useCDSSLogic = (patientData) => {
 
                 try {
                     console.log(`🎯 Evaluating rule: "${rule.rule_name}"`);
-                    const isTriggered = evaluateRule(rule, facts);
+                    const evalResult = evaluateRule(rule, facts, true);
 
-                    if (isTriggered) {
+                    if (evalResult.triggered) {
                         rulesTriggered++;
                         debug += `[${rulesEvaluated}] "${rule.rule_name}": ✅ TRIGGERED\n`;
+                        if (evalResult.matchedMedications.length > 0) {
+                            debug += `    💊 Matched: ${evalResult.matchedMedications.join(', ')}\n`;
+                        }
 
                         // Create alert
                         let message = rule.rule_name;
@@ -208,6 +211,11 @@ export const useCDSSLogic = (patientData) => {
                         message = formatAlertMessage(message, facts);
                         details = formatAlertMessage(details, facts);
 
+                        // Append matched medications to message
+                        if (evalResult.matchedMedications.length > 0) {
+                            message += ` [Drug(s): ${evalResult.matchedMedications.join(', ')}]`;
+                        }
+
                         const alert = {
                             id: `${rule.id}-${Date.now()}`,
                             rule_id: rule.id,
@@ -223,6 +231,7 @@ export const useCDSSLogic = (patientData) => {
                                 patient_type: facts.patient_type,
                                 is_pediatric: facts.is_pediatric,
                                 medications: facts.medication_names,
+                                matched_medications: evalResult.matchedMedications,
                                 labs: facts.labs
                             },
                             timestamp: new Date().toISOString(),
@@ -309,13 +318,21 @@ export const useCDSSLogic = (patientData) => {
 
             for (const rule of sampleTestRules) {
                 rulesEvaluated++;
-                const isTriggered = evaluateRule(rule, facts);
+                const evalResult = evaluateRule(rule, facts, true);
 
-                if (isTriggered) {
+                if (evalResult.triggered) {
                     rulesTriggered++;
-                    const message = rule.rule_action?.message || rule.rule_name;
+                    let message = rule.rule_action?.message || rule.rule_name;
                     const details = rule.rule_action?.recommendation || rule.rule_description;
                     const severity = rule.rule_action?.severity || rule.severity || 'moderate';
+
+                    // Format message
+                    message = formatAlertMessage(message, facts);
+
+                    // Append matched medications
+                    if (evalResult.matchedMedications.length > 0) {
+                        message += ` [Drug(s): ${evalResult.matchedMedications.join(', ')}]`;
+                    }
 
                     triggeredAlerts.push({
                         id: `test-${rule.id}-${Date.now()}`,
@@ -323,12 +340,13 @@ export const useCDSSLogic = (patientData) => {
                         rule_name: rule.rule_name,
                         rule_type: rule.rule_type,
                         severity: severity,
-                        message: formatAlertMessage(message, facts),
+                        message: message,
                         details: formatAlertMessage(details, facts),
                         evidence: {
                             facts: facts,
                             age_in_days: facts.age_in_days,
-                            medications: facts.medication_names
+                            medications: facts.medication_names,
+                            matched_medications: evalResult.matchedMedications
                         },
                         timestamp: new Date().toISOString(),
                         acknowledged: false,

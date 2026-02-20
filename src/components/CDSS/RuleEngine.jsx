@@ -1332,12 +1332,56 @@ export const debugRuleEvaluation = (rule, facts) => {
     return result;
 };
 
-// ✅ evaluateRule function
-export const evaluateRule = (rule, facts) => {
+// ✅ getMatchedMedications - finds which medications from a rule condition matched
+const getMatchedMedications = (condition, facts) => {
+    const matched = [];
+    if (!condition || !facts) return matched;
+
+    const checkConditions = (conditions) => {
+        if (!Array.isArray(conditions)) return;
+        conditions.forEach(cond => {
+            // If this is a nested any/all, recurse into it
+            if (cond.any) {
+                checkConditions(cond.any);
+            } else if (cond.all) {
+                checkConditions(cond.all);
+            } else if (cond.fact === 'medications' && cond.operator === 'contains' && cond.value) {
+                const searchValue = cond.value.toString().toLowerCase().trim();
+                const patientMeds = facts.medications || [];
+                if (Array.isArray(patientMeds)) {
+                    const found = patientMeds.some(med => {
+                        const medStr = String(med).toLowerCase().trim();
+                        return medStr.includes(searchValue) || medStr === searchValue;
+                    });
+                    if (found) {
+                        // Capitalize first letter for display
+                        const displayName = cond.value.charAt(0).toUpperCase() + cond.value.slice(1);
+                        if (!matched.includes(displayName)) {
+                            matched.push(displayName);
+                        }
+                    }
+                }
+            }
+        });
+    };
+
+    let parsedCondition = condition;
+    if (typeof condition === 'string') {
+        try { parsedCondition = JSON.parse(condition); } catch (e) { return matched; }
+    }
+
+    if (parsedCondition.all) checkConditions(parsedCondition.all);
+    if (parsedCondition.any) checkConditions(parsedCondition.any);
+
+    return matched;
+};
+
+// ✅ evaluateRule function - returns { triggered, matchedMedications } or boolean for backward compatibility
+export const evaluateRule = (rule, facts, returnDetails = false) => {
     try {
         if (!rule || !facts) {
             console.error('❌ Missing rule or facts');
-            return false;
+            return returnDetails ? { triggered: false, matchedMedications: [] } : false;
         }
 
         console.log(`\n🎯 Evaluating rule: "${rule.rule_name}"`);
@@ -1359,7 +1403,7 @@ export const evaluateRule = (rule, facts) => {
 
             if (!isApplicable) {
                 console.log(`⏭️ Rule "${rule.rule_name}" does not apply to ${patientType} patients. Skipping.`);
-                return false;
+                return returnDetails ? { triggered: false, matchedMedications: [] } : false;
             }
         }
 
@@ -1369,11 +1413,19 @@ export const evaluateRule = (rule, facts) => {
             console.log(`🚨 ALERT: Rule "${rule.rule_name}" TRIGGERED!`);
         }
 
+        if (returnDetails) {
+            const matchedMeds = result ? getMatchedMedications(rule.rule_condition, facts) : [];
+            if (matchedMeds.length > 0) {
+                console.log(`💊 Matched medications: ${matchedMeds.join(', ')}`);
+            }
+            return { triggered: result, matchedMedications: matchedMeds };
+        }
+
         return result;
 
     } catch (error) {
         console.error('❌ Error evaluating rule:', error);
-        return false;
+        return returnDetails ? { triggered: false, matchedMedications: [] } : false;
     }
 };
 
@@ -1454,11 +1506,21 @@ export const runClinicalDecisionSupport = async (facts) => {
         const results = [];
 
         for (const rule of rules) {
-            if (evaluateRule(rule, facts)) {
+            const evalResult = evaluateRule(rule, facts, true);
+            if (evalResult.triggered) {
+                let message = formatAlertMessage(rule.rule_action?.message || rule.rule_name, facts);
+                let recommendation = formatAlertMessage(rule.rule_action?.recommendation || rule.rule_description, facts);
+
+                // Append matched medication names to message if available
+                if (evalResult.matchedMedications.length > 0) {
+                    message += ` [Triggered by: ${evalResult.matchedMedications.join(', ')}]`;
+                }
+
                 results.push({
-                    message: formatAlertMessage(rule.rule_action?.message || rule.rule_name, facts),
-                    recommendation: formatAlertMessage(rule.rule_action?.recommendation || rule.rule_description, facts),
-                    severity: rule.rule_action?.severity || rule.severity || 'moderate'
+                    message,
+                    recommendation,
+                    severity: rule.rule_action?.severity || rule.severity || 'moderate',
+                    matchedMedications: evalResult.matchedMedications
                 });
             }
         }
