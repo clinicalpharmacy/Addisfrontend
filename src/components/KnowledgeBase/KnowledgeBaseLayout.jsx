@@ -81,10 +81,9 @@ const KnowledgeBaseLayout = () => {
                     <div className="flex items-center justify-between gap-4">
                         <div className="flex-1">
                             <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2 flex items-center gap-2">
-                                Knowledge Base
+                                Resources
                                 {protectionEnabled && <FaLock className="text-blue-500 text-lg md:text-xl" title="Content Protected" />}
                             </h1>
-                            <p className="text-gray-600 text-sm md:text-base">Access comprehensive information about medications, treatments, and patient care.</p>
                         </div>
 
                         {isSuperAdmin && (
