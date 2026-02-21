@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import supabase from '../../utils/supabase';
 import {
     FaPills,
@@ -24,7 +24,13 @@ import {
     FaLock,
     FaBan,
     FaShieldAlt,
-    FaArrowLeft
+    FaArrowLeft,
+    FaListUl,
+    FaIndent,
+    FaOutdent,
+    FaBold,
+    FaItalic,
+    FaHashtag
 } from 'react-icons/fa';
 import { useOutletContext } from 'react-router-dom';
 import useScreenshotProtection from '../../hooks/useScreenshotProtection';
@@ -53,6 +59,8 @@ const MedicationInfo = () => {
     const [showAddForm, setShowAddForm] = useState(false);
     const [selectedMedication, setSelectedMedication] = useState(null);
     const [expandedSections, setExpandedSections] = useState({});
+    const [activeFormatField, setActiveFormatField] = useState(null);
+    const [showFormattingHelp, setShowFormattingHelp] = useState(false);
 
 
     const [formData, setFormData] = useState({
@@ -119,25 +127,22 @@ const MedicationInfo = () => {
         fetchMedications();
     }, []);
 
-    useEffect(() => {
-        handleSearchAndFilter();
+    // Use useMemo for filtered medications
+    const filteredMeds = useMemo(() => {
+        if (!searchTerm.trim()) return medications;
+        
+        return medications.filter(med =>
+            (med.name && med.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (med.amharic_name && med.amharic_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (med.usage && med.usage.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (med.side_effects && med.side_effects.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
     }, [medications, searchTerm]);
 
-    const handleSearchAndFilter = () => {
-        let filtered = medications;
-
-        // Apply search filter
-        if (searchTerm.trim()) {
-            filtered = filtered.filter(med =>
-                (med.name && med.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                (med.amharic_name && med.amharic_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                (med.usage && med.usage.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                (med.side_effects && med.side_effects.toLowerCase().includes(searchTerm.toLowerCase()))
-            );
-        }
-
-        setFilteredMedications(filtered);
-    };
+    // Update filtered medications when search changes
+    useEffect(() => {
+        setFilteredMedications(filteredMeds);
+    }, [filteredMeds]);
 
     const handleSearchChange = (e) => {
         setSearchTerm(e.target.value);
@@ -163,6 +168,103 @@ const MedicationInfo = () => {
             .map(sentence => sentence.trim());
         
         return sentences;
+    };
+
+    // Formatting helper functions
+    const insertFormatting = (field, type) => {
+        const textarea = document.getElementById(field);
+        if (!textarea) return;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selectedText = formData[field].substring(start, end);
+        const beforeText = formData[field].substring(0, start);
+        const afterText = formData[field].substring(end);
+
+        let formattedText = '';
+        
+        switch(type) {
+            case 'bullet':
+                // Add bullet point at cursor or wrap selected lines
+                if (selectedText.includes('\n')) {
+                    // Multiple lines selected - add bullet to each line
+                    formattedText = selectedText.split('\n')
+                        .map(line => line.trim() ? `• ${line}` : line)
+                        .join('\n');
+                } else {
+                    // Single line or cursor
+                    formattedText = selectedText ? `• ${selectedText}` : '• ';
+                }
+                break;
+                
+            case 'subbullet':
+                // Add sub-bullet (indented)
+                if (selectedText.includes('\n')) {
+                    formattedText = selectedText.split('\n')
+                        .map(line => line.trim() ? `  ◦ ${line}` : line)
+                        .join('\n');
+                } else {
+                    formattedText = selectedText ? `  ◦ ${selectedText}` : '  ◦ ';
+                }
+                break;
+                
+            case 'number':
+                // Add numbered list
+                if (selectedText.includes('\n')) {
+                    const lines = selectedText.split('\n').filter(line => line.trim());
+                    formattedText = lines
+                        .map((line, index) => `${index + 1}. ${line}`)
+                        .join('\n');
+                } else {
+                    formattedText = selectedText ? `1. ${selectedText}` : '1. ';
+                }
+                break;
+                
+            case 'bold':
+                formattedText = `**${selectedText}**`;
+                break;
+                
+            case 'italic':
+                formattedText = `*${selectedText}*`;
+                break;
+                
+            case 'indent':
+                // Add tab/indent to selected lines
+                if (selectedText.includes('\n')) {
+                    formattedText = selectedText.split('\n')
+                        .map(line => line ? `    ${line}` : line)
+                        .join('\n');
+                } else {
+                    formattedText = `    ${selectedText}`;
+                }
+                break;
+                
+            case 'outdent':
+                // Remove one level of indentation
+                if (selectedText.includes('\n')) {
+                    formattedText = selectedText.split('\n')
+                        .map(line => line.replace(/^ {4}/, ''))
+                        .join('\n');
+                } else {
+                    formattedText = selectedText.replace(/^ {4}/, '');
+                }
+                break;
+                
+            default:
+                return;
+        }
+
+        setFormData({
+            ...formData,
+            [field]: beforeText + formattedText + afterText
+        });
+
+        // Restore cursor position after update
+        setTimeout(() => {
+            textarea.focus();
+            const newPosition = start + formattedText.length;
+            textarea.setSelectionRange(newPosition, newPosition);
+        }, 0);
     };
 
     // ADD MEDICATION TO DATABASE - ADMIN ONLY
@@ -321,7 +423,46 @@ const MedicationInfo = () => {
         }
     };
 
-    // REMOVED: handleExportData function - No export functionality
+    // DELETE MEDICATION - ADMIN ONLY
+    const handleDeleteMedication = async (id) => {
+        if (!isAdmin) {
+            setError('Only administrators can delete medications');
+            setTimeout(() => setError(''), 3000);
+            return;
+        }
+
+        if (!window.confirm('Are you sure you want to delete this medication? This action cannot be undone.')) {
+            return;
+        }
+
+        setSaving(true);
+        setError('');
+        
+        try {
+            const { error } = await supabase
+                .from('medication_information')
+                .delete()
+                .eq('id', id);
+
+            if (error) throw error;
+
+            setSuccessMessage('Medication deleted successfully');
+            
+            // Close modal if the deleted medication was selected
+            if (selectedMedication?.id === id) {
+                setSelectedMedication(null);
+            }
+            
+            // Refresh medication list
+            fetchMedications();
+            
+        } catch (err) {
+            console.error('Error deleting medication:', err);
+            setError('Failed to delete medication');
+        } finally {
+            setSaving(false);
+        }
+    };
 
     // Initialize database if empty - ADMIN ONLY
     const initializeDatabase = async () => {
@@ -341,10 +482,26 @@ const MedicationInfo = () => {
                 {
                     name: 'Amoxicillin',
                     amharic_name: 'አሞክሲሲሊን',
-                    usage: 'Bacterial infections: otitis media, pneumonia, UTIs',
-                    administration_and_cautions: 'Taken orally',
-                    side_effects: 'Diarrhea, nausea, rash',
-                    storage: 'Store at room temperature'
+                    usage: '• Bacterial infections: otitis media\n• Pneumonia\n• Urinary tract infections (UTIs)',
+                    administration_and_cautions: '• Take orally with or without food\n• Complete full course of treatment\n• Take at evenly spaced intervals',
+                    side_effects: '• Diarrhea\n• Nausea\n• Skin rash\n• Allergic reactions in sensitive individuals',
+                    storage: '• Store at room temperature\n• Keep away from moisture\n• Protect from light'
+                },
+                {
+                    name: 'Paracetamol',
+                    amharic_name: 'ፓራሲታሞል',
+                    usage: '• Fever reduction\n• Mild to moderate pain relief\n• Headache\n• Muscle aches',
+                    administration_and_cautions: '• Do not exceed recommended dose\n• Maximum 4g per day for adults\n• Avoid with severe liver disease',
+                    side_effects: '• Usually well tolerated\n• Rare skin rash\n• Liver damage with overdose',
+                    storage: '• Store below 25°C\n• Keep in original container\n• Protect from light'
+                },
+                {
+                    name: 'Ibuprofen',
+                    amharic_name: 'አይቡፕሮፌን',
+                    usage: '• Inflammation reduction\n• Pain relief\n• Fever reduction\n• Arthritis symptoms',
+                    administration_and_cautions: '• Take with food or milk\n• Avoid with stomach ulcers\n• Not for long-term use without supervision',
+                    side_effects: '• Stomach upset\n• Heartburn\n• Dizziness\n• Fluid retention',
+                    storage: '• Store at room temperature\n• Keep container tightly closed\n• Protect from light'
                 }
             ];
 
@@ -377,22 +534,51 @@ const MedicationInfo = () => {
         );
     }
 
-    // Convert textarea text to bullet list
-    const renderBullets = (text) => {
+    // Convert textarea text to bullet list with support for nested bullets
+    const renderFormattedText = (text) => {
         if (!text) return null;
 
-        return text
-            .split('\n')
-            .filter(line => line.trim() !== '')
-            .map((line, index) => (
-                <li key={index} className="ml-4 list-disc">{line}</li>
-            ));
+        const lines = text.split('\n');
+        
+        return lines.map((line, index) => {
+            // Check for bullet points (•)
+            if (line.trim().startsWith('•')) {
+                return (
+                    <li key={index} className="ml-4 list-disc text-sm text-gray-700">
+                        {line.replace('•', '').trim()}
+                    </li>
+                );
+            }
+            // Check for sub-bullets (◦)
+            else if (line.trim().startsWith('◦') || line.trim().startsWith('○')) {
+                return (
+                    <li key={index} className="ml-8 list-circle text-sm text-gray-600">
+                        {line.replace(/[◦○]/, '').trim()}
+                    </li>
+                );
+            }
+            // Check for numbered items
+            else if (/^\d+\./.test(line.trim())) {
+                return (
+                    <li key={index} className="ml-4 list-decimal text-sm text-gray-700">
+                        {line.replace(/^\d+\./, '').trim()}
+                    </li>
+                );
+            }
+            // Regular text
+            else if (line.trim()) {
+                return (
+                    <p key={index} className="text-sm text-gray-700 mb-1">
+                        {line}
+                    </p>
+                );
+            }
+            return null;
+        });
     };
 
     return (
-        <div
-            className="bg-gray-50 min-h-full pb-8"
-        >
+        <div className="bg-gray-50 min-h-full pb-8">
             {protectionMsg && (
                 <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[100] w-full max-w-md px-4">
                     <div className="bg-red-600/90 text-white p-3 rounded-lg shadow-2xl flex items-center justify-center gap-3 animate-pulse border border-red-400 backdrop-blur-sm">
@@ -426,9 +612,6 @@ const MedicationInfo = () => {
                             </div>
                         </div>
                         <div className="flex flex-wrap gap-2">
-
-
-                            {/* REMOVED: Export button */}
                             {/* Only show admin buttons to admins */}
                             {isAdmin && (
                                 <>
@@ -483,8 +666,6 @@ const MedicationInfo = () => {
                     </div>
                 )}
 
-
-
                 {/* Search and Filter Bar */}
                 <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 mb-6 md:mb-8">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -498,7 +679,6 @@ const MedicationInfo = () => {
                                 className="w-full pl-10 pr-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm md:text-base"
                             />
                         </div>
-
 
                         {/* Admin-only add button */}
                         {isAdmin && (
@@ -514,11 +694,10 @@ const MedicationInfo = () => {
                     <div className="mt-4 text-xs md:text-sm text-gray-500 flex flex-wrap gap-2 items-center">
                         <span>Showing {filteredMedications.length} of {medications.length} medications</span>
                         {!isAdmin && <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-600">Read-only</span>}
-
                     </div>
                 </div>
 
-                {/* Add Medication Form Modal - ADMIN ONLY */}
+                {/* Add/Edit Medication Form Modal - ADMIN ONLY with Bullet Point Formatting */}
                 {showAddForm && isAdmin && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
                         <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -527,27 +706,79 @@ const MedicationInfo = () => {
                                     <h2 className="text-2xl font-bold text-gray-900">
                                         {editingMedication ? 'Edit Medication' : 'Add New Medication'}
                                     </h2>
-                                    <button
-                                        onClick={() => {
-                                            setShowAddForm(false);
-                                            setEditingMedication(null);
-                                            setFormData({
-                                                name: '',
-                                                amharic_name: '',
-                                                usage: '',
-                                                administration_and_cautions: '',
-                                                side_effects: '',
-                                                storage: ''
-                                            });
-                                        }}
-                                        className="text-gray-500 hover:text-gray-700 text-2xl"
-                                        disabled={saving}
-                                    >
-                                        <FaTimes />
-                                    </button>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => setShowFormattingHelp(!showFormattingHelp)}
+                                            className="text-indigo-600 hover:text-indigo-800 text-sm flex items-center gap-1"
+                                            title="Formatting Help"
+                                        >
+                                            <FaInfoCircle />
+                                            <span className="hidden sm:inline">Formatting Help</span>
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setShowAddForm(false);
+                                                setEditingMedication(null);
+                                                setFormData({
+                                                    name: '',
+                                                    amharic_name: '',
+                                                    usage: '',
+                                                    administration_and_cautions: '',
+                                                    side_effects: '',
+                                                    storage: ''
+                                                });
+                                            }}
+                                            className="text-gray-500 hover:text-gray-700 text-2xl"
+                                            disabled={saving}
+                                        >
+                                            <FaTimes />
+                                        </button>
+                                    </div>
                                 </div>
 
+                                {/* Formatting Help Panel */}
+                                {showFormattingHelp && (
+                                    <div className="mb-6 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+                                        <h3 className="font-semibold text-indigo-800 mb-2 flex items-center gap-2">
+                                            <FaInfoCircle />
+                                            Formatting Tips
+                                        </h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                            <div>
+                                                <p className="font-medium text-indigo-700 mb-2">Bullet Points:</p>
+                                                <ul className="space-y-1 text-indigo-600">
+                                                    <li className="flex items-center gap-2">
+                                                        <FaListUl className="text-xs" /> 
+                                                        <span>Click • for main bullets</span>
+                                                    </li>
+                                                    <li className="flex items-center gap-2 ml-4">
+                                                        <span className="text-lg">◦</span> 
+                                                        <span>Click for sub-bullets (indented)</span>
+                                                    </li>
+                                                    <li className="flex items-center gap-2">
+                                                        <FaHashtag className="text-xs" /> 
+                                                        <span>Use for numbered lists</span>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-indigo-700 mb-2">Keyboard Shortcuts:</p>
+                                                <ul className="space-y-1 text-indigo-600">
+                                                    <li><span className="font-mono bg-indigo-100 px-1">•</span> - Main bullet</li>
+                                                    <li><span className="font-mono bg-indigo-100 px-1">  ◦</span> - Sub-bullet (2 spaces)</li>
+                                                    <li><span className="font-mono bg-indigo-100 px-1">1.</span> - Numbered item</li>
+                                                    <li>Use Tab/Shift+Tab for indentation</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <p className="text-xs text-indigo-500 mt-2">
+                                            Tip: Select text first, then click formatting buttons, or place cursor and start typing.
+                                        </p>
+                                    </div>
+                                )}
+
                                 <div className="space-y-6">
+                                    {/* Basic Info Fields */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -579,59 +810,263 @@ const MedicationInfo = () => {
                                         </div>
                                     </div>
 
+                                    {/* Usage Field with Formatting Toolbar */}
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
                                             የመድሃኒቱ ጥቅም: *
                                         </label>
+                                        <div className="mb-2 flex flex-wrap gap-1 p-1 bg-gray-100 rounded-lg">
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('usage', 'bullet')}
+                                                className="p-2 hover:bg-indigo-100 rounded text-indigo-600 transition-colors"
+                                                title="Add bullet point"
+                                                disabled={saving}
+                                            >
+                                                <FaListUl />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('usage', 'subbullet')}
+                                                className="p-2 hover:bg-indigo-100 rounded text-indigo-600 transition-colors"
+                                                title="Add sub-bullet"
+                                                disabled={saving}
+                                            >
+                                                <span className="text-lg font-bold">◦</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('usage', 'number')}
+                                                className="p-2 hover:bg-indigo-100 rounded text-indigo-600 transition-colors"
+                                                title="Add numbered list"
+                                                disabled={saving}
+                                            >
+                                                <FaHashtag />
+                                            </button>
+                                            <div className="w-px h-6 bg-gray-300 mx-1 self-center"></div>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('usage', 'indent')}
+                                                className="p-2 hover:bg-indigo-100 rounded text-indigo-600 transition-colors"
+                                                title="Indent"
+                                                disabled={saving}
+                                            >
+                                                <FaIndent />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('usage', 'outdent')}
+                                                className="p-2 hover:bg-indigo-100 rounded text-indigo-600 transition-colors"
+                                                title="Outdent"
+                                                disabled={saving}
+                                            >
+                                                <FaOutdent />
+                                            </button>
+                                        </div>
                                         <textarea
+                                            id="usage"
                                             value={formData.usage}
                                             onChange={(e) => setFormData({ ...formData, usage: e.target.value })}
-                                            rows="3"
-                                            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500"
-                                            placeholder="What is this medication used for?"
+                                            onFocus={() => setActiveFormatField('usage')}
+                                            rows="4"
+                                            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
+                                            placeholder="• First bullet point&#10;  ◦ Sub-bullet point&#10;• Another main point&#10;1. Numbered item"
                                             required
                                             disabled={saving}
                                         />
                                     </div>
 
+                                    {/* Administration Field with Formatting Toolbar */}
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
                                             አወሳሰድ እና ጥንቃቄዎች:
                                         </label>
+                                        <div className="mb-2 flex flex-wrap gap-1 p-1 bg-gray-100 rounded-lg">
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('administration_and_cautions', 'bullet')}
+                                                className="p-2 hover:bg-indigo-100 rounded text-indigo-600 transition-colors"
+                                                title="Add bullet point"
+                                                disabled={saving}
+                                            >
+                                                <FaListUl />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('administration_and_cautions', 'subbullet')}
+                                                className="p-2 hover:bg-indigo-100 rounded text-indigo-600 transition-colors"
+                                                title="Add sub-bullet"
+                                                disabled={saving}
+                                            >
+                                                <span className="text-lg font-bold">◦</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('administration_and_cautions', 'number')}
+                                                className="p-2 hover:bg-indigo-100 rounded text-indigo-600 transition-colors"
+                                                title="Add numbered list"
+                                                disabled={saving}
+                                            >
+                                                <FaHashtag />
+                                            </button>
+                                            <div className="w-px h-6 bg-gray-300 mx-1 self-center"></div>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('administration_and_cautions', 'indent')}
+                                                className="p-2 hover:bg-indigo-100 rounded text-indigo-600 transition-colors"
+                                                title="Indent"
+                                                disabled={saving}
+                                            >
+                                                <FaIndent />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('administration_and_cautions', 'outdent')}
+                                                className="p-2 hover:bg-indigo-100 rounded text-indigo-600 transition-colors"
+                                                title="Outdent"
+                                                disabled={saving}
+                                            >
+                                                <FaOutdent />
+                                            </button>
+                                        </div>
                                         <textarea
+                                            id="administration_and_cautions"
                                             value={formData.administration_and_cautions}
                                             onChange={(e) => setFormData({ ...formData, administration_and_cautions: e.target.value })}
-                                            rows="3"
-                                            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500"
-                                            placeholder="Administration and precautions..."
+                                            onFocus={() => setActiveFormatField('administration_and_cautions')}
+                                            rows="4"
+                                            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
+                                            placeholder="• Take with food&#10;• Avoid alcohol&#10;  ◦ Special caution for elderly"
                                             disabled={saving}
                                         />
                                     </div>
 
+                                    {/* Side Effects Field with Formatting Toolbar */}
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
                                             የጎንዮሽ ጉዳቶች:
                                         </label>
+                                        <div className="mb-2 flex flex-wrap gap-1 p-1 bg-gray-100 rounded-lg">
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('side_effects', 'bullet')}
+                                                className="p-2 hover:bg-indigo-100 rounded text-indigo-600 transition-colors"
+                                                title="Add bullet point"
+                                                disabled={saving}
+                                            >
+                                                <FaListUl />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('side_effects', 'subbullet')}
+                                                className="p-2 hover:bg-indigo-100 rounded text-indigo-600 transition-colors"
+                                                title="Add sub-bullet"
+                                                disabled={saving}
+                                            >
+                                                <span className="text-lg font-bold">◦</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('side_effects', 'number')}
+                                                className="p-2 hover:bg-indigo-100 rounded text-indigo-600 transition-colors"
+                                                title="Add numbered list"
+                                                disabled={saving}
+                                            >
+                                                <FaHashtag />
+                                            </button>
+                                            <div className="w-px h-6 bg-gray-300 mx-1 self-center"></div>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('side_effects', 'indent')}
+                                                className="p-2 hover:bg-indigo-100 rounded text-indigo-600 transition-colors"
+                                                title="Indent"
+                                                disabled={saving}
+                                            >
+                                                <FaIndent />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('side_effects', 'outdent')}
+                                                className="p-2 hover:bg-indigo-100 rounded text-indigo-600 transition-colors"
+                                                title="Outdent"
+                                                disabled={saving}
+                                            >
+                                                <FaOutdent />
+                                            </button>
+                                        </div>
                                         <textarea
+                                            id="side_effects"
                                             value={formData.side_effects}
                                             onChange={(e) => setFormData({ ...formData, side_effects: e.target.value })}
-                                            rows="3"
-                                            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500"
-                                            placeholder="side effects..."
+                                            onFocus={() => setActiveFormatField('side_effects')}
+                                            rows="4"
+                                            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
+                                            placeholder="• Nausea&#10;• Headache&#10;  ◦ Mild or severe"
                                             disabled={saving}
                                         />
                                     </div>
 
+                                    {/* Storage Field with Formatting Toolbar */}
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
                                             አቀማመጥ:
                                         </label>
+                                        <div className="mb-2 flex flex-wrap gap-1 p-1 bg-gray-100 rounded-lg">
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('storage', 'bullet')}
+                                                className="p-2 hover:bg-indigo-100 rounded text-indigo-600 transition-colors"
+                                                title="Add bullet point"
+                                                disabled={saving}
+                                            >
+                                                <FaListUl />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('storage', 'subbullet')}
+                                                className="p-2 hover:bg-indigo-100 rounded text-indigo-600 transition-colors"
+                                                title="Add sub-bullet"
+                                                disabled={saving}
+                                            >
+                                                <span className="text-lg font-bold">◦</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('storage', 'number')}
+                                                className="p-2 hover:bg-indigo-100 rounded text-indigo-600 transition-colors"
+                                                title="Add numbered list"
+                                                disabled={saving}
+                                            >
+                                                <FaHashtag />
+                                            </button>
+                                            <div className="w-px h-6 bg-gray-300 mx-1 self-center"></div>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('storage', 'indent')}
+                                                className="p-2 hover:bg-indigo-100 rounded text-indigo-600 transition-colors"
+                                                title="Indent"
+                                                disabled={saving}
+                                            >
+                                                <FaIndent />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('storage', 'outdent')}
+                                                className="p-2 hover:bg-indigo-100 rounded text-indigo-600 transition-colors"
+                                                title="Outdent"
+                                                disabled={saving}
+                                            >
+                                                <FaOutdent />
+                                            </button>
+                                        </div>
                                         <textarea
+                                            id="storage"
                                             value={formData.storage}
                                             onChange={(e) => setFormData({ ...formData, storage: e.target.value })}
-                                            rows="2"
-                                            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500"
-                                            placeholder="How to store the medication..."
+                                            onFocus={() => setActiveFormatField('storage')}
+                                            rows="3"
+                                            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
+                                            placeholder="• Store at room temperature&#10;• Keep away from moisture&#10;  ◦ Below 25°C"
                                             disabled={saving}
                                         />
                                     </div>
@@ -708,13 +1143,22 @@ const MedicationInfo = () => {
                                         
                                         {/* Admin Actions */}
                                         {isAdmin && (
-                                            <button
-                                                onClick={() => handleEditMedication(med)}
-                                                className="text-indigo-400 hover:text-indigo-600 transition-colors opacity-0 group-hover:opacity-100"
-                                                title="Edit"
-                                            >
-                                                <FaEdit className="text-xs" />
-                                            </button>
+                                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button
+                                                    onClick={() => handleEditMedication(med)}
+                                                    className="text-indigo-400 hover:text-indigo-600 transition-colors"
+                                                    title="Edit"
+                                                >
+                                                    <FaEdit className="text-xs" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteMedication(med.id)}
+                                                    className="text-red-400 hover:text-red-600 transition-colors"
+                                                    title="Delete"
+                                                >
+                                                    <FaTrash className="text-xs" />
+                                                </button>
+                                            </div>
                                         )}
                                     </div>
                                 </div>
@@ -760,24 +1204,24 @@ const MedicationInfo = () => {
                     </div>
                 )}
 
-                {/* Medication Details Modal - Compact and Reader-Friendly */}
+                {/* Medication Details Modal - Narrower Width with Enhanced Formatting */}
                 {selectedMedication && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-hidden">
+                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm max-h-[80vh] overflow-hidden">
                             {/* Header */}
-                            <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-indigo-800 text-white p-4">
+                            <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-indigo-800 text-white p-3">
                                 <div className="flex justify-between items-start">
-                                    <div className="flex-1">
-                                        <h2 className="text-lg font-bold truncate">{selectedMedication.name}</h2>
+                                    <div className="flex-1 min-w-0">
+                                        <h2 className="text-base font-bold truncate">{selectedMedication.name}</h2>
                                         {selectedMedication.amharic_name && (
-                                            <p className="text-sm font-bold text-green-300 mt-1 truncate">
+                                            <p className="text-xs font-bold text-green-300 mt-0.5 truncate">
                                                 {selectedMedication.amharic_name}
                                             </p>
                                         )}
                                     </div>
                                     <button
                                         onClick={() => setSelectedMedication(null)}
-                                        className="text-white hover:text-gray-200 text-xl ml-2 flex-shrink-0"
+                                        className="text-white hover:text-gray-200 text-lg ml-2 flex-shrink-0"
                                     >
                                         <FaTimes />
                                     </button>
@@ -785,31 +1229,27 @@ const MedicationInfo = () => {
                             </div>
                             
                             {/* Scrollable Content */}
-                            <div className="overflow-y-auto" style={{ maxHeight: 'calc(80vh - 130px)' }}>
-                                <div className="p-4 space-y-3">
+                            <div className="overflow-y-auto" style={{ maxHeight: 'calc(80vh - 120px)' }}>
+                                <div className="p-3 space-y-2">
                                     {/* Usage Section */}
                                     {selectedMedication.usage && (
                                         <div className="bg-blue-50 rounded-lg overflow-hidden border border-blue-100">
                                             <button
                                                 onClick={() => toggleSection('usage')}
-                                                className="w-full bg-blue-100 hover:bg-blue-200 p-3 text-left flex justify-between items-center transition-colors"
+                                                className="w-full bg-blue-100 hover:bg-blue-200 p-2 text-left flex justify-between items-center transition-colors"
                                             >
-                                                <h3 className="font-semibold text-blue-800 flex items-center gap-2 text-sm">
-                                                    <FaInfoCircle className="text-blue-600" />
+                                                <h3 className="font-semibold text-blue-800 flex items-center gap-1 text-xs">
+                                                    <FaInfoCircle className="text-blue-600 text-xs" />
                                                     የመድሃኒቱ ጥቅም:
                                                 </h3>
-                                                <span className="text-blue-600 text-lg font-bold">
+                                                <span className="text-blue-600 text-base font-bold">
                                                     {expandedSections.usage ? '−' : '+'}
                                                 </span>
                                             </button>
                                             {expandedSections.usage && (
-                                                <div className="p-3">
-                                                    <ul className="list-disc pl-5 space-y-1">
-                                                        {textToBullets(selectedMedication.usage).map((item, idx) => (
-                                                            <li key={idx} className="text-sm text-gray-700">
-                                                                {item}
-                                                            </li>
-                                                        ))}
+                                                <div className="p-2">
+                                                    <ul className="space-y-0.5">
+                                                        {renderFormattedText(selectedMedication.usage)}
                                                     </ul>
                                                 </div>
                                             )}
@@ -821,24 +1261,20 @@ const MedicationInfo = () => {
                                         <div className="bg-yellow-50 rounded-lg overflow-hidden border border-yellow-100">
                                             <button
                                                 onClick={() => toggleSection('administration')}
-                                                className="w-full bg-yellow-100 hover:bg-yellow-200 p-3 text-left flex justify-between items-center transition-colors"
+                                                className="w-full bg-yellow-100 hover:bg-yellow-200 p-2 text-left flex justify-between items-center transition-colors"
                                             >
-                                                <h3 className="font-semibold text-yellow-800 flex items-center gap-2 text-sm">
-                                                    <FaExclamationTriangle className="text-yellow-600" />
+                                                <h3 className="font-semibold text-yellow-800 flex items-center gap-1 text-xs">
+                                                    <FaExclamationTriangle className="text-yellow-600 text-xs" />
                                                     አወሳሰድ እና ጥንቃቄዎች:
                                                 </h3>
-                                                <span className="text-yellow-600 text-lg font-bold">
+                                                <span className="text-yellow-600 text-base font-bold">
                                                     {expandedSections.administration ? '−' : '+'}
                                                 </span>
                                             </button>
                                             {expandedSections.administration && (
-                                                <div className="p-3">
-                                                    <ul className="list-disc pl-5 space-y-1">
-                                                        {textToBullets(selectedMedication.administration_and_cautions).map((item, idx) => (
-                                                            <li key={idx} className="text-sm text-gray-700">
-                                                                {item}
-                                                            </li>
-                                                        ))}
+                                                <div className="p-2">
+                                                    <ul className="space-y-0.5">
+                                                        {renderFormattedText(selectedMedication.administration_and_cautions)}
                                                     </ul>
                                                 </div>
                                             )}
@@ -850,24 +1286,20 @@ const MedicationInfo = () => {
                                         <div className="bg-red-50 rounded-lg overflow-hidden border border-red-100">
                                             <button
                                                 onClick={() => toggleSection('sideEffects')}
-                                                className="w-full bg-red-100 hover:bg-red-200 p-3 text-left flex justify-between items-center transition-colors"
+                                                className="w-full bg-red-100 hover:bg-red-200 p-2 text-left flex justify-between items-center transition-colors"
                                             >
-                                                <h3 className="font-semibold text-red-800 flex items-center gap-2 text-sm">
-                                                    <FaExclamationCircle className="text-red-600" />
+                                                <h3 className="font-semibold text-red-800 flex items-center gap-1 text-xs">
+                                                    <FaExclamationCircle className="text-red-600 text-xs" />
                                                     የጎንዮሽ ጉዳቶች:
                                                 </h3>
-                                                <span className="text-red-600 text-lg font-bold">
+                                                <span className="text-red-600 text-base font-bold">
                                                     {expandedSections.sideEffects ? '−' : '+'}
                                                 </span>
                                             </button>
                                             {expandedSections.sideEffects && (
-                                                <div className="p-3">
-                                                    <ul className="list-disc pl-5 space-y-1">
-                                                        {textToBullets(selectedMedication.side_effects).map((item, idx) => (
-                                                            <li key={idx} className="text-sm text-gray-700">
-                                                                {item}
-                                                            </li>
-                                                        ))}
+                                                <div className="p-2">
+                                                    <ul className="space-y-0.5">
+                                                        {renderFormattedText(selectedMedication.side_effects)}
                                                     </ul>
                                                 </div>
                                             )}
@@ -879,24 +1311,20 @@ const MedicationInfo = () => {
                                         <div className="bg-green-50 rounded-lg overflow-hidden border border-green-100">
                                             <button
                                                 onClick={() => toggleSection('storage')}
-                                                className="w-full bg-green-100 hover:bg-green-200 p-3 text-left flex justify-between items-center transition-colors"
+                                                className="w-full bg-green-100 hover:bg-green-200 p-2 text-left flex justify-between items-center transition-colors"
                                             >
-                                                <h3 className="font-semibold text-green-800 flex items-center gap-2 text-sm">
-                                                    <FaCheckCircle className="text-green-600" />
+                                                <h3 className="font-semibold text-green-800 flex items-center gap-1 text-xs">
+                                                    <FaCheckCircle className="text-green-600 text-xs" />
                                                     አቀማመጥ:
                                                 </h3>
-                                                <span className="text-green-600 text-lg font-bold">
+                                                <span className="text-green-600 text-base font-bold">
                                                     {expandedSections.storage ? '−' : '+'}
                                                 </span>
                                             </button>
                                             {expandedSections.storage && (
-                                                <div className="p-3">
-                                                    <ul className="list-disc pl-5 space-y-1">
-                                                        {textToBullets(selectedMedication.storage).map((item, idx) => (
-                                                            <li key={idx} className="text-sm text-gray-700">
-                                                                {item}
-                                                            </li>
-                                                        ))}
+                                                <div className="p-2">
+                                                    <ul className="space-y-0.5">
+                                                        {renderFormattedText(selectedMedication.storage)}
                                                     </ul>
                                                 </div>
                                             )}
@@ -906,21 +1334,29 @@ const MedicationInfo = () => {
                             </div>
 
                             {/* Footer Actions */}
-                            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 p-3 flex justify-end gap-2">
+                            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 p-2 flex justify-end gap-1">
                                 {isAdmin && (
-                                    <button
-                                        onClick={() => {
-                                            handleEditMedication(selectedMedication);
-                                            setSelectedMedication(null);
-                                        }}
-                                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-lg flex items-center gap-1 text-sm"
-                                    >
-                                        <FaEdit className="text-xs" /> Edit
-                                    </button>
+                                    <>
+                                        <button
+                                            onClick={() => {
+                                                handleEditMedication(selectedMedication);
+                                                setSelectedMedication(null);
+                                            }}
+                                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-lg flex items-center gap-1 text-xs"
+                                        >
+                                            <FaEdit className="text-xs" /> Edit
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteMedication(selectedMedication.id)}
+                                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg flex items-center gap-1 text-xs"
+                                        >
+                                            <FaTrash className="text-xs" /> Delete
+                                        </button>
+                                    </>
                                 )}
                                 <button
                                     onClick={() => setSelectedMedication(null)}
-                                    className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-1.5 rounded-lg text-sm"
+                                    className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-3 py-1 rounded-lg text-xs"
                                 >
                                     Close
                                 </button>
