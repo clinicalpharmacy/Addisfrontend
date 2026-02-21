@@ -138,19 +138,6 @@ const Sidebar = ({ onClose }) => {
                 </button>
             </div>
 
-            {/* Logo for desktop */}
-            <div className="p-6 border-b border-gray-50 hidden md:block">
-                <div className="flex items-center gap-4">
-                    <div className="bg-blue-600 p-2.5 rounded-2xl shadow-lg shadow-blue-100 flex-shrink-0">
-                        <FaHospital className="text-white text-xl" />
-                    </div>
-                    <div className="min-w-0">
-                        <span className="font-black text-gray-900 block tracking-tight leading-none mb-1">AddisMed</span>
-                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Health Network</span>
-                    </div>
-                </div>
-            </div>
-
             {/* Navigation Menu */}
             <nav className="flex-1 p-4 sm:p-5 overflow-y-auto no-scrollbar relative z-10">
                 {/* Main Menu */}
@@ -185,7 +172,7 @@ const Sidebar = ({ onClose }) => {
                             >
                                 <div className="flex items-center gap-2.5.5">
                                     <FaUserInjured className="text-xl group-hover:scale-110 transition-transform" />
-                                    <span className="text-lg">Patient(s)</span>
+                                    <span className="text-lg">Patient</span>
                                 </div>
                                 <div className="flex items-center gap-2 text-sm">
                                     {!isSubscribed && <FaLock className="opacity-50" />}
@@ -606,6 +593,10 @@ const Sidebar = ({ onClose }) => {
                             </div>
                         </>
                     )}
+
+                    {/* Useful Resources Section - ALL USERS */}
+                    <div className="mt-6">
+                        <h3 className="text-xs uppercase text-gray-500 font-semibold mb-2 tracking-wider">Useful Resources</h3>
 
                         {/* Public Useful Links Page */}
                         <div className="mb-2">
