@@ -1133,28 +1133,28 @@ const MinorIllnesses = () => {
                 )}
 
                 {/* Illness Details Modal - Narrower Width with Enhanced Formatting */}
-                {selectedIllness && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                        <div className="bg-white rounded-xl shadow-2xl w-[60%] max-w-[60%] min-w-[300px] max-h-[90vh] overflow-hidden">
-                            {/* Header */}
-                            <div className="sticky top-0 bg-gradient-to-r from-white-600 to-white-800 text-black p-3">
-                                <div className="flex justify-between items-start">
-                                    <div className="flex-1 min-w-0">
-                                        <h2 className="text-base font-bold truncate">{selectedIllness.name}</h2>
-                                        {selectedIllness.amharic_name && (
-                                            <p className="text-xs font-bold text-black-100 mt-0.5 truncate">
-                                                {selectedIllness.amharic_name}
-                                            </p>
-                                        )}
-                                    </div>
-                                    <button
-                                        onClick={() => setSelectedIllness(null)}
-                                        className="text-white hover:text-gray-200 text-lg ml-2 flex-shrink-0"
-                                    >
-                                        <FaTimes />
-                                    </button>
+               {selectedIllness && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-xl shadow-2xl w-[60%] max-w-[60%] min-w-[300px] max-h-[90vh] overflow-hidden">
+                        {/* Header - White gradient with black text */}
+                        <div className="sticky top-0 bg-gradient-to-r from-gray-50 to-gray-100 text-gray-900 p-3 border-b border-gray-200">
+                            <div className="flex justify-between items-start">
+                                <div className="flex-1 min-w-0">
+                                    <h2 className="text-base font-bold text-gray-900 truncate">{selectedIllness.name}</h2>
+                                    {selectedIllness.amharic_name && (
+                                        <p className="text-xs font-medium text-gray-600 mt-0.5 truncate">
+                                            {selectedIllness.amharic_name}
+                                        </p>
+                                    )}
                                 </div>
+                                <button
+                                    onClick={() => setSelectedIllness(null)}
+                                    className="text-gray-500 hover:text-gray-700 text-lg ml-2 flex-shrink-0"
+                                >
+                                    <FaTimes />
+                                </button>
                             </div>
+                        </div>
                             
                             {/* Scrollable Content */}
                             <div className="overflow-y-auto" style={{ maxHeight: 'calc(160vh - 120px)' }}>
