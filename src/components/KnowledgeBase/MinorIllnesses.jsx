@@ -437,33 +437,6 @@ const MinorIllnesses = () => {
 
         setLoading(true);
         try {
-            const sampleIllnesses = [
-                {
-                    name: 'Common Cold',
-                    amharic_name: 'እምቢልታ',
-                    assessment: '• Runny or stuffy nose\n• Sneezing\n• Sore throat\n• Mild cough\n• Low-grade fever possible\n• Usually resolves in 7-10 days',
-                    referral: '• Fever > 101°F (38.3°C) for more than 3 days\n• Difficulty breathing\n• Severe headache\n• Symptoms lasting > 10 days',
-                    otc_drug: '• Antihistamines for runny nose\n• Decongestants for stuffiness\n• Acetaminophen or ibuprofen for fever\n• Cough suppressants at night\n• Expectorants for productive cough',
-                    for_pharmacists: '• Check for drug interactions\n• Warn about drowsiness with first-gen antihistamines\n• Recommend adequate hydration\n• Suggest rest and vitamin C'
-                },
-                {
-                    name: 'Headache',
-                    amharic_name: 'ራስ ምታት',
-                    assessment: '• Tension-type: dull, pressing pain both sides\n• Migraine: throbbing, often one-sided\n• May have nausea or light sensitivity\n• Duration varies from hours to days',
-                    referral: '• Sudden severe headache ("worst of life")\n• Headache after head injury\n• With fever and stiff neck\n• Neurological symptoms\n• Frequent recurring headaches',
-                    otc_drug: '• Acetaminophen 500-1000mg every 6h\n• Ibuprofen 200-400mg every 6-8h\n• Aspirin 325-650mg every 4-6h\n• Caffeine combinations may help\n• Rest in dark, quiet room',
-                    for_pharmacists: '• Assess for medication overuse headache\n• Check contraindications (aspirin in children)\n• Recommend stress reduction techniques\n• Suggest keeping headache diary'
-                },
-                {
-                    name: 'Heartburn',
-                    amharic_name: 'የሆድ ቃር',
-                    assessment: '• Burning sensation in chest\n• Sour taste in mouth\n• Worse after meals or lying down\n• May have regurgitation\n• Often occurs at night',
-                    referral: '• Difficulty swallowing\n• Unexplained weight loss\n• Chest pain with exertion\n• Vomiting blood\n• Symptoms despite treatment',
-                    otc_drug: '• Antacids for quick relief\n• H2 blockers (famotidine) for longer relief\n• Proton pump inhibitors (omeprazole) for daily use\n• Alginate preparations for barrier effect',
-                    for_pharmacists: '• Advise lifestyle modifications\n• Elevate head of bed\n• Avoid trigger foods\n• Don\'t lie down after meals\n• Weight loss if overweight'
-                }
-            ];
-
             const { data, error } = await supabase
                 .from('minor_illnesses')
                 .insert(sampleIllnesses)
@@ -1082,10 +1055,10 @@ const MinorIllnesses = () => {
                                                 onClick={() => setSelectedIllness(illness)}
                                                 className="text-left w-full flex items-center gap-1 group/button"
                                             >
-                                                <span className="font-bold text-gray-800 hover:text-red-600 transition-colors text-sm md:text-base">
+                                                <span className="font-bold text-black-800 hover:text-white-600 transition-colors text-sm md:text-base">
                                                     {illness.name}
                                                 </span>
-                                                <span className="text-gray-300 group-hover/button:text-red-400 text-xs transition-colors">
+                                                <span className="text-black-300 group-hover/button:text-white-400 text-xs transition-colors">
                                                     ▶
                                                 </span>
                                             </button>
