@@ -175,6 +175,57 @@ const Sidebar = ({ onClose }) => {
                                 </div>
                             </NavLink>
                         </li>
+
+                         {/* Patients Section */}
+                    {!isAdmin && user?.role !== 'health_care_client' && (
+                        <div className="mb-2">
+                            <button
+                                onClick={() => isSubscribed ? toggleSection('patients') : navigate('/subscription/plans')}
+                                className={`flex items-center justify-between w-full p-2.5 rounded-xl text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-300 font-bold group ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`}
+                            >
+                                <div className="flex items-center gap-2.5.5">
+                                    <FaUserInjured className="text-xl group-hover:scale-110 transition-transform" />
+                                    <span className="text-lg">Patients</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-sm">
+                                    {!isSubscribed && <FaLock className="opacity-50" />}
+                                    {expandedSections.patients ? <FaChevronDown /> : <FaChevronRight />}
+                                </div>
+                            </button>
+
+                            {expandedSections.patients && (
+                                <div className="ml-8 mt-2 space-y-1 animate-fadeIn">
+                                    <NavLink
+                                        to="/patients"
+                                        onClick={onClose}
+                                        className={({ isActive }) =>
+                                            `flex items-center gap-2.5 px-4 py-2 text-base rounded-lg transition-all ${isActive
+                                                ? 'text-blue-600 font-black'
+                                                : 'text-gray-400 hover:text-gray-700'
+                                            }`
+                                        }
+                                    >
+                                        <span className="w-2 h-2 rounded-full bg-current opacity-40" />
+                                        Patient Lists
+                                    </NavLink>
+                                    <NavLink
+                                        to="/patients/new"
+                                        onClick={onClose}
+                                        className={({ isActive }) =>
+                                            `flex items-center gap-2.5 px-4 py-2 text-base rounded-lg transition-all ${isActive
+                                                ? 'text-blue-600 font-black'
+                                                : 'text-gray-400 hover:text-gray-700'
+                                            }`
+                                        }
+                                    >
+                                        <span className="w-2 h-2 rounded-full bg-current opacity-40" />
+                                        New Patient
+                                    </NavLink>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                        
                         {!isAdmin && (
                             <li>
                                 <NavLink
@@ -196,7 +247,7 @@ const Sidebar = ({ onClose }) => {
                             </li>
                         )}
 
-                                                  {/* Medication Availability Link */}
+                      {/* Medication Availability Link */}
                         <div className="mb-2">
                             <NavLink
                                 to={isSubscribed ? "/medication-availability" : "/subscription/plans"}
@@ -352,58 +403,8 @@ const Sidebar = ({ onClose }) => {
 
                 {/* Advanced Navigation */}
                 <div className="mb-8">
-                    <h3 className="text-xs uppercase text-gray-400 font-black mb-4 tracking-[0.2em] px-3">Resource Grid</h3>
-
-                    {/* Patients Section */}
-                    {!isAdmin && user?.role !== 'health_care_client' && (
-                        <div className="mb-2">
-                            <button
-                                onClick={() => isSubscribed ? toggleSection('patients') : navigate('/subscription/plans')}
-                                className={`flex items-center justify-between w-full p-2.5 rounded-xl text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-300 font-bold group ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`}
-                            >
-                                <div className="flex items-center gap-2.5.5">
-                                    <FaUserInjured className="text-xl group-hover:scale-110 transition-transform" />
-                                    <span className="text-lg">Patients</span>
-                                </div>
-                                <div className="flex items-center gap-2 text-sm">
-                                    {!isSubscribed && <FaLock className="opacity-50" />}
-                                    {expandedSections.patients ? <FaChevronDown /> : <FaChevronRight />}
-                                </div>
-                            </button>
-
-                            {expandedSections.patients && (
-                                <div className="ml-8 mt-2 space-y-1 animate-fadeIn">
-                                    <NavLink
-                                        to="/patients"
-                                        onClick={onClose}
-                                        className={({ isActive }) =>
-                                            `flex items-center gap-2.5 px-4 py-2 text-base rounded-lg transition-all ${isActive
-                                                ? 'text-blue-600 font-black'
-                                                : 'text-gray-400 hover:text-gray-700'
-                                            }`
-                                        }
-                                    >
-                                        <span className="w-2 h-2 rounded-full bg-current opacity-40" />
-                                        Patient Lists
-                                    </NavLink>
-                                    <NavLink
-                                        to="/patients/new"
-                                        onClick={onClose}
-                                        className={({ isActive }) =>
-                                            `flex items-center gap-2.5 px-4 py-2 text-base rounded-lg transition-all ${isActive
-                                                ? 'text-blue-600 font-black'
-                                                : 'text-gray-400 hover:text-gray-700'
-                                            }`
-                                        }
-                                    >
-                                        <span className="w-2 h-2 rounded-full bg-current opacity-40" />
-                                        New Patient
-                                    </NavLink>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
+                    <h3 className="text-xs uppercase text-gray-400 font-black mb-4 tracking-[0.2em] px-3">Resource Section</h3>
+                   
                     {/* Knowledge Base Section */}
                     {/* Knowledge Base Section */}
                     <div className="mb-2">
