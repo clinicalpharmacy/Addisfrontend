@@ -1207,14 +1207,14 @@ const MedicationInfo = () => {
                 {/* Medication Details Modal - Narrower Width with Enhanced Formatting */}
                 {selectedMedication && (
                   <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-[90%] sm:max-w-[175px] md:max-w-[200px] max-h-[160vh] overflow-hidden">
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-[300px] sm:max-w-[175px] md:max-w-[200px] max-h-[160vh] overflow-hidden">
                             {/* Header */}
-                            <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-indigo-800 text-white p-3">
+                            <div className="sticky top-0 bg-gradient-to-r from-white-600 to-white-800 text-black p-3">
                                 <div className="flex justify-between items-start">
                                     <div className="flex-1 min-w-0">
                                         <h2 className="text-base font-bold truncate">{selectedMedication.name}</h2>
                                         {selectedMedication.amharic_name && (
-                                            <p className="text-xs font-bold text-green-300 mt-0.5 truncate">
+                                            <p className="text-xs font-bold text-black-300 mt-0.5 truncate">
                                                 {selectedMedication.amharic_name}
                                             </p>
                                         )}
