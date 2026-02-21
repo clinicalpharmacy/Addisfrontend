@@ -124,7 +124,7 @@ const Sidebar = ({ onClose }) => {
 
             {/* Close button for mobile */}
             <div className="p-5 border-b border-gray-50 flex justify-between items-center md:hidden bg-white/80 backdrop-blur-md sticky top-0 z-10">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                     <div className="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-100">
                         <FaHospital className="text-white text-base" />
                     </div>
@@ -149,7 +149,7 @@ const Sidebar = ({ onClose }) => {
                                 to={isSubscribed ? "/home" : "/subscription/plans"}
                                 onClick={onClose}
                                 className={({ isActive }) =>
-                                    `flex items-center gap-3 p-4 rounded-xl transition-all duration-300 group ${isActive && isSubscribed
+                                    `flex items-center gap-3 p-2.5 rounded-xl transition-all duration-300 group ${isActive && isSubscribed
                                         ? 'bg-blue-600 text-white shadow-lg shadow-blue-100 font-black'
                                         : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 font-bold'
                                     } ${!isSubscribed ? 'opacity-60' : ''}`
@@ -168,7 +168,7 @@ const Sidebar = ({ onClose }) => {
                         <div className="mb-2">
                             <button
                                 onClick={() => isSubscribed ? toggleSection('patients') : navigate('/subscription/plans')}
-                                className={`flex items-center justify-between w-full p-4 rounded-xl text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-300 font-bold group ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                className={`flex items-center justify-between w-full p-2.5 rounded-xl text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-300 font-bold group ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`}
                             >
                                 <div className="flex items-center gap-3">
                                     <FaUserInjured className="text-xl group-hover:scale-110 transition-transform" />
@@ -186,7 +186,7 @@ const Sidebar = ({ onClose }) => {
                                         to="/patients"
                                         onClick={onClose}
                                         className={({ isActive }) =>
-                                            `flex items-center gap-4 px-4 py-2 text-base rounded-lg transition-all ${isActive
+                                            `flex items-center gap-3 px-4 py-2 text-base rounded-lg transition-all ${isActive
                                                 ? 'text-blue-600 font-black'
                                                 : 'text-gray-400 hover:text-gray-700'
                                             }`
@@ -199,7 +199,7 @@ const Sidebar = ({ onClose }) => {
                                         to="/patients/new"
                                         onClick={onClose}
                                         className={({ isActive }) =>
-                                            `flex items-center gap-4 px-4 py-2 text-base rounded-lg transition-all ${isActive
+                                            `flex items-center gap-3 px-4 py-2 text-base rounded-lg transition-all ${isActive
                                                 ? 'text-blue-600 font-black'
                                                 : 'text-gray-400 hover:text-gray-700'
                                             }`
@@ -219,7 +219,7 @@ const Sidebar = ({ onClose }) => {
                                     to={isSubscribed ? "/cdss-analysis" : "/subscription/plans"}
                                     onClick={onClose}
                                     className={({ isActive }) =>
-                                        `flex items-center justify-between p-4 rounded-xl transition-all duration-300 group ${isActive
+                                        `flex items-center justify-between p-2.5 rounded-xl transition-all duration-300 group ${isActive
                                             ? 'bg-purple-600 text-white shadow-lg shadow-purple-100 font-black'
                                             : 'text-gray-500 hover:bg-purple-50 hover:text-purple-700 font-bold'
                                         } ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`
@@ -240,13 +240,13 @@ const Sidebar = ({ onClose }) => {
                                 to={isSubscribed ? "/medication-availability" : "/subscription/plans"}
                                 onClick={onClose}
                                 className={({ isActive }) =>
-                                    `flex items-center gap-4 p-4 rounded-lg transition-all duration-200 ${isActive && isSubscribed
+                                    `flex items-center gap-3 p-2.5 rounded-lg transition-all duration-200 ${isActive && isSubscribed
                                         ? 'bg-green-50 text-green-600 border-l-4 border-green-600 shadow-sm'
                                         : 'text-gray-600 hover:bg-green-50 hover:text-green-600 hover:shadow-sm'
                                     } ${!isSubscribed ? 'opacity-60' : ''}`
                                 }
                             >
-                                <div className="flex items-center gap-4 w-full">
+                                <div className="flex items-center gap-3 w-full">
                                     <FaPills className="text-xl" />
                                     <span className="font-medium text-base">Med Availability</span>
                                     {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
@@ -258,7 +258,7 @@ const Sidebar = ({ onClose }) => {
                         <li>
                             <button
                                 onClick={() => toggleSection('settings')}
-                                className={`flex items-center justify-between w-full p-4 rounded-xl transition-all duration-300 group ${location.pathname.startsWith('/settings')
+                                className={`flex items-center justify-between w-full p-2.5 rounded-xl transition-all duration-300 group ${location.pathname.startsWith('/settings')
                                     ? 'bg-blue-50 text-blue-600 font-black'
                                     : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 font-bold'
                                     }`}
@@ -276,7 +276,7 @@ const Sidebar = ({ onClose }) => {
                                         to="/settings"
                                         onClick={onClose}
                                         className={({ isActive }) =>
-                                            `flex items-center gap-4 px-4 py-2 text-sm rounded-lg transition-all ${isActive && !location.hash
+                                            `flex items-center gap-3 px-4 py-2 text-sm rounded-lg transition-all ${isActive && !location.hash
                                                 ? 'text-blue-600 font-black'
                                                 : 'text-gray-400 hover:text-gray-700'
                                             }`
@@ -288,7 +288,7 @@ const Sidebar = ({ onClose }) => {
                                         to="/settings#security"
                                         onClick={onClose}
                                         className={({ isActive }) =>
-                                            `flex items-center gap-4 px-4 py-2 text-sm rounded-lg transition-all ${location.hash === '#security'
+                                            `flex items-center gap-3 px-4 py-2 text-sm rounded-lg transition-all ${location.hash === '#security'
                                                 ? 'text-blue-600 font-black'
                                                 : 'text-gray-400 hover:text-gray-700'
                                             }`
@@ -305,7 +305,7 @@ const Sidebar = ({ onClose }) => {
                                     to="/subscription/plans"
                                     onClick={onClose}
                                     className={({ isActive }) =>
-                                        `flex items-center gap-4 p-4 rounded-lg transition-all duration-200 ${isActive
+                                        `flex items-center gap-3 p-2.5 rounded-lg transition-all duration-200 ${isActive
                                             ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-700 shadow-sm'
                                             : 'text-gray-600 hover:bg-blue-50 hover:text-blue-700 hover:shadow-sm'
                                         }`
@@ -324,7 +324,7 @@ const Sidebar = ({ onClose }) => {
                                         to="/subscription/plans"
                                         onClick={onClose}
                                         className={({ isActive }) =>
-                                            `flex items-center gap-4 p-4 rounded-lg transition-all duration-200 ${isActive
+                                            `flex items-center gap-3 p-2.5 rounded-lg transition-all duration-200 ${isActive
                                                 ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-700 shadow-sm'
                                                 : 'text-gray-600 hover:bg-blue-50 hover:text-blue-700 hover:shadow-sm'
                                             }`
@@ -341,7 +341,7 @@ const Sidebar = ({ onClose }) => {
                                 to={isSubscribed ? "/feedback" : "/subscription/plans"}
                                 onClick={onClose}
                                 className={({ isActive }) =>
-                                    `flex items-center gap-3 p-4 rounded-xl transition-all duration-300 group ${isActive && isSubscribed
+                                    `flex items-center gap-3 p-2.5 rounded-xl transition-all duration-300 group ${isActive && isSubscribed
                                         ? 'bg-blue-600 text-white shadow-lg shadow-blue-100 font-black'
                                         : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 font-bold'
                                     } ${!isSubscribed ? 'opacity-60' : ''}`
@@ -373,7 +373,7 @@ const Sidebar = ({ onClose }) => {
                                         }
                                         onClose?.();
                                     }}
-                                    className={`flex items-center justify-between p-4 rounded-xl text-gray-500 hover:bg-blue-50 hover:text-blue-600 w-full text-left transition-all duration-300 font-bold group ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                    className={`flex items-center justify-between p-2.5 rounded-xl text-gray-500 hover:bg-blue-50 hover:text-blue-600 w-full text-left transition-all duration-300 font-bold group ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`}
                                 >
                                     <div className="flex items-center gap-3">
                                         <div className="p-2 bg-gray-50 text-gray-400 group-hover:bg-blue-100 group-hover:text-blue-600 rounded-lg transition-colors">
@@ -397,7 +397,7 @@ const Sidebar = ({ onClose }) => {
                     <div className="mb-2">
                         <button
                             onClick={() => isSubscribed ? toggleSection('knowledge') : navigate('/subscription/plans')}
-                            className={`flex items-center justify-between w-full p-4 rounded-xl text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-300 font-bold group ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`}
+                            className={`flex items-center justify-between w-full p-2.5 rounded-xl text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-300 font-bold group ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`}
                         >
                             <div className="flex items-center gap-3">
                                 <FaBookMedical className="text-xl group-hover:scale-110 transition-transform" />
@@ -416,7 +416,7 @@ const Sidebar = ({ onClose }) => {
                                     onClick={onClose}
                                     end
                                     className={({ isActive }) =>
-                                        `flex items-center gap-4 px-4 py-2 text-lg rounded-lg transition-all ${isActive
+                                        `flex items-center gap-3 px-4 py-2 text-lg rounded-lg transition-all ${isActive
                                             ? 'text-indigo-600 font-black'
                                             : 'text-gray-400 hover:text-gray-700'
                                         }`
@@ -428,7 +428,7 @@ const Sidebar = ({ onClose }) => {
                                     to="/knowledge/remedies"
                                     onClick={onClose}
                                     className={({ isActive }) =>
-                                        `flex items-center gap-4 px-4 py-2 text-lg rounded-lg transition-all ${isActive
+                                        `flex items-center gap-3 px-4 py-2 text-lg rounded-lg transition-all ${isActive
                                             ? 'text-indigo-600 font-black'
                                             : 'text-gray-400 hover:text-gray-700'
                                         }`
@@ -442,7 +442,7 @@ const Sidebar = ({ onClose }) => {
                                             to="/knowledge/illnesses"
                                             onClick={onClose}
                                             className={({ isActive }) =>
-                                                `flex items-center gap-4 px-4 py-2 text-lg rounded-lg transition-all ${isActive
+                                                `flex items-center gap-3 px-4 py-2 text-lg rounded-lg transition-all ${isActive
                                                     ? 'text-indigo-600 font-black'
                                                     : 'text-gray-400 hover:text-gray-700'
                                                 }`
@@ -454,7 +454,7 @@ const Sidebar = ({ onClose }) => {
                                             to="/knowledge/compounding"
                                             onClick={onClose}
                                             className={({ isActive }) =>
-                                                `flex items-center gap-4 px-4 py-2 text-lg rounded-lg transition-all ${isActive
+                                                `flex items-center gap-3 px-4 py-2 text-lg rounded-lg transition-all ${isActive
                                                     ? 'text-indigo-600 font-black'
                                                     : 'text-gray-400 hover:text-gray-700'
                                                 }`
@@ -475,9 +475,9 @@ const Sidebar = ({ onClose }) => {
                             <div className="mb-2">
                                 <button
                                     onClick={() => toggleSection('cdss')}
-                                    className="flex items-center justify-between w-full p-4 rounded-lg text-purple-600 hover:bg-purple-50 transition-all duration-200 hover:shadow-sm border-l-4 border-purple-500"
+                                    className="flex items-center justify-between w-full p-2.5 rounded-lg text-purple-600 hover:bg-purple-50 transition-all duration-200 hover:shadow-sm border-l-4 border-purple-500"
                                 >
-                                    <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-3">
                                         <FaBrain className="text-lg" />
                                         <span className="font-medium">CDSS Admin Tools</span>
                                     </div>
@@ -490,7 +490,7 @@ const Sidebar = ({ onClose }) => {
                                             to="/admin/cdss/rules"
                                             onClick={onClose}
                                             className={({ isActive }) =>
-                                                `flex items-center gap-4 px-4 py-2 text-sm rounded-lg transition-all duration-200 ${isActive
+                                                `flex items-center gap-3 px-4 py-2 text-sm rounded-lg transition-all duration-200 ${isActive
                                                     ? 'text-purple-600 bg-purple-50 font-medium'
                                                     : 'text-gray-600 hover:bg-purple-50 hover:text-purple-700'
                                                 }`
@@ -503,7 +503,7 @@ const Sidebar = ({ onClose }) => {
                                             to="/admin/cdss/builder"
                                             onClick={onClose}
                                             className={({ isActive }) =>
-                                                `flex items-center gap-4 px-4 py-2 text-sm rounded-lg transition-all duration-200 ${isActive
+                                                `flex items-center gap-3 px-4 py-2 text-sm rounded-lg transition-all duration-200 ${isActive
                                                     ? 'text-purple-600 bg-purple-50 font-medium'
                                                     : 'text-gray-600 hover:bg-purple-50 hover:text-purple-700'
                                                 }`
@@ -521,7 +521,7 @@ const Sidebar = ({ onClose }) => {
                                     to="/admin/labs"
                                     onClick={onClose}
                                     className={({ isActive }) =>
-                                        `flex items-center gap-4 p-4 rounded-lg transition-all duration-200 ${isActive
+                                        `flex items-center gap-3 p-2.5 rounded-lg transition-all duration-200 ${isActive
                                             ? 'bg-red-50 text-red-600 border-l-4 border-red-600 shadow-sm'
                                             : 'text-gray-600 hover:bg-red-50 hover:text-red-800 hover:shadow-sm'
                                         }`
@@ -538,7 +538,7 @@ const Sidebar = ({ onClose }) => {
                                     to="/admin/dashboard"
                                     onClick={onClose}
                                     className={({ isActive }) =>
-                                        `flex items-center gap-4 p-4 rounded-lg transition-all duration-200 ${isActive
+                                        `flex items-center gap-3 p-2.5 rounded-lg transition-all duration-200 ${isActive
                                             ? 'bg-red-50 text-red-600 border-l-4 border-red-600 shadow-sm'
                                             : 'text-gray-600 hover:bg-red-50 hover:text-red-600 hover:shadow-sm'
                                         }`
@@ -559,13 +559,13 @@ const Sidebar = ({ onClose }) => {
                                     to={isSubscribed ? "/company/dashboard" : "/subscription/plans"}
                                     onClick={onClose}
                                     className={({ isActive }) =>
-                                        `flex items-center gap-4 p-4 rounded-lg transition-all duration-200 ${isActive && isSubscribed
+                                        `flex items-center gap-3 p-2.5 rounded-lg transition-all duration-200 ${isActive && isSubscribed
                                             ? 'bg-purple-50 text-purple-600 border-l-4 border-purple-600 shadow-sm'
                                             : 'text-gray-600 hover:bg-purple-50 hover:text-purple-600 hover:shadow-sm'
                                         } ${!isSubscribed ? 'opacity-60' : ''}`
                                     }
                                 >
-                                    <div className="flex items-center gap-4 w-full">
+                                    <div className="flex items-center gap-3 w-full">
                                         <FaChartBar className="text-lg" />
                                         <span className="font-medium">Company Dashboard</span>
                                         {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
@@ -578,13 +578,13 @@ const Sidebar = ({ onClose }) => {
                                     to={isSubscribed ? "/company-performance" : "/subscription/plans"}
                                     onClick={onClose}
                                     className={({ isActive }) =>
-                                        `flex items-center gap-4 p-4 rounded-lg transition-all duration-200 ${isActive && isSubscribed
+                                        `flex items-center gap-3 p-2.5 rounded-lg transition-all duration-200 ${isActive && isSubscribed
                                             ? 'bg-green-50 text-green-600 border-l-4 border-green-600 shadow-sm'
                                             : 'text-gray-600 hover:bg-green-50 hover:text-green-600 hover:shadow-sm'
                                         } ${!isSubscribed ? 'opacity-60' : ''}`
                                     }
                                 >
-                                    <div className="flex items-center gap-4 w-full">
+                                    <div className="flex items-center gap-3 w-full">
                                         <FaChartLine className="text-lg" />
                                         <span className="font-medium">Performance Report</span>
                                         {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
@@ -600,13 +600,13 @@ const Sidebar = ({ onClose }) => {
                                 to={isSubscribed ? "/useful-links" : "/subscription/plans"}
                                 onClick={onClose}
                                 className={({ isActive }) =>
-                                    `flex items-center gap-4 p-4 rounded-lg transition-all duration-200 ${isActive && isSubscribed
+                                    `flex items-center gap-3 p-2.5 rounded-lg transition-all duration-200 ${isActive && isSubscribed
                                         ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600 shadow-sm'
                                         : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm'
                                     } ${!isSubscribed ? 'opacity-60' : ''}`
                                 }
                             >
-                                <div className="flex items-center gap-4 w-full">
+                                <div className="flex items-center gap-3 w-full">
                                     <FaBookmark className="text-xl" />
                                     <span className="font-medium text-base">Useful Links</span>
                                     {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
@@ -621,7 +621,7 @@ const Sidebar = ({ onClose }) => {
                                     to="/admin/useful-links"
                                     onClick={onClose}
                                     className={({ isActive }) =>
-                                        `flex items-center gap-4 p-4 rounded-lg transition-all duration-200 ${isActive
+                                        `flex items-center gap-3 p-2.5 rounded-lg transition-all duration-200 ${isActive
                                             ? 'bg-red-50 text-red-600 border-l-4 border-red-600 shadow-sm'
                                             : 'text-gray-600 hover:bg-gray-50 hover:text-red-500 hover:shadow-sm'
                                         }`
@@ -638,7 +638,7 @@ const Sidebar = ({ onClose }) => {
 
             {/* User Info & Logout */}
             <div className="p-4 border-t border-gray-200 bg-gray-50">
-                <div className="flex items-center gap-4 mb-4">
+                <div className="flex items-center gap-3 mb-4">
                     <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                         <FaUserCircle className="text-blue-600 text-lg" />
                     </div>
@@ -673,7 +673,7 @@ const Sidebar = ({ onClose }) => {
                 </div>
                 <button
                     onClick={handleLogout}
-                    className="flex items-center gap-4 p-4 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 w-full transition-all duration-200 hover:shadow-sm"
+                    className="flex items-center gap-3 p-2.5 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 w-full transition-all duration-200 hover:shadow-sm"
                 >
                     <FaSignOutAlt />
                     <span className="font-medium">Logout</span>
