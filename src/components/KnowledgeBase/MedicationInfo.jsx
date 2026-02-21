@@ -23,7 +23,8 @@ import {
     FaEyeSlash,
     FaLock,
     FaBan,
-    FaShieldAlt
+    FaShieldAlt,
+    FaArrowLeft
 } from 'react-icons/fa';
 import { useOutletContext } from 'react-router-dom';
 import useScreenshotProtection from '../../hooks/useScreenshotProtection';
@@ -50,7 +51,7 @@ const MedicationInfo = () => {
     const [isAdmin, setIsAdmin] = useState(false);
     const [editingMedication, setEditingMedication] = useState(null);
     const [showAddForm, setShowAddForm] = useState(false);
-    const [expandedMedication, setExpandedMedication] = useState(null);
+    const [selectedMedication, setSelectedMedication] = useState(null);
 
 
     const [formData, setFormData] = useState({
@@ -364,7 +365,7 @@ const MedicationInfo = () => {
             .split('\n')
             .filter(line => line.trim() !== '')
             .map((line, index) => (
-                <li key={index}>{line}</li>
+                <li key={index} className="ml-4 list-disc">{line}</li>
             ));
     };
 
@@ -573,36 +574,32 @@ const MedicationInfo = () => {
                                         />
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Administration and Cautions
-                                            </label>
-                                            <textarea
-                                                value={formData.administration_and_cautions}
-                                                onChange={(e) => setFormData({ ...formData, administration_and_cautions: e.target.value })}
-                                                rows="3"
-                                                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500"
-                                                placeholder="Administration and precautions..."
-                                                disabled={saving}
-                                            />
-                                        </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Administration and Cautions
+                                        </label>
+                                        <textarea
+                                            value={formData.administration_and_cautions}
+                                            onChange={(e) => setFormData({ ...formData, administration_and_cautions: e.target.value })}
+                                            rows="3"
+                                            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500"
+                                            placeholder="Administration and precautions..."
+                                            disabled={saving}
+                                        />
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Side Effects
-                                            </label>
-                                            <textarea
-                                                value={formData.side_effects}
-                                                onChange={(e) => setFormData({ ...formData, side_effects: e.target.value })}
-                                                rows="3"
-                                                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500"
-                                                placeholder="side effects..."
-                                                disabled={saving}
-                                            />
-                                        </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Side Effects
+                                        </label>
+                                        <textarea
+                                            value={formData.side_effects}
+                                            onChange={(e) => setFormData({ ...formData, side_effects: e.target.value })}
+                                            rows="3"
+                                            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500"
+                                            placeholder="side effects..."
+                                            disabled={saving}
+                                        />
                                     </div>
 
                                     <div>
@@ -672,37 +669,19 @@ const MedicationInfo = () => {
                                         <FaPills className="text-xs text-indigo-400 mt-1.5 flex-shrink-0 group-hover:text-indigo-600 transition-colors" />
                                         <div className="flex-1 min-w-0">
                                             <button
-                                                onClick={() => setExpandedMedication(expandedMedication === med.id ? null : med.id)}
+                                                onClick={() => setSelectedMedication(med)}
                                                 className="text-left w-full flex items-center gap-1 group/button"
                                             >
                                                 <span className="font-bold text-gray-800 hover:text-indigo-600 transition-colors text-sm md:text-base">
                                                     {med.name}
                                                 </span>
-                                                {med.amharic_name && (
-                                                    <span className="text-xs text-gray-500 ml-2 font-normal">
-                                                        {med.amharic_name}
-                                                    </span>
-                                                )}
                                                 <span className="text-gray-300 group-hover/button:text-indigo-400 text-xs transition-colors">
-                                                    {expandedMedication === med.id ? '▼' : '▶'}
+                                                    ▶
                                                 </span>
                                             </button>
-                                            
-                                            {/* Expandable Details */}
-                                            {expandedMedication === med.id && (
-                                                <div className="mt-2 text-xs text-gray-600 space-y-2 border-l-2 border-indigo-200 pl-2">
-                                                    {med.usage && (
-                                                        <div>
-                                                            <span className="font-semibold text-indigo-700">Usage:</span>
-                                                            <p className="text-gray-600">{med.usage}</p>
-                                                        </div>
-                                                    )}
-                                                    {med.side_effects && (
-                                                        <div>
-                                                            <span className="font-semibold text-orange-700">Side Effects:</span>
-                                                            <p className="text-gray-600">{med.side_effects}</p>
-                                                        </div>
-                                                    )}
+                                            {med.amharic_name && (
+                                                <div className="text-xs text-gray-500 mt-0.5">
+                                                    {med.amharic_name}
                                                 </div>
                                             )}
                                         </div>
@@ -757,6 +736,102 @@ const MedicationInfo = () => {
                                     </button>
                                 </>
                             )}
+                        </div>
+                    </div>
+                )}
+
+                {/* Full Screen Medication Details Modal */}
+                {selectedMedication && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+                            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex justify-between items-center">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-gray-900">{selectedMedication.name}</h2>
+                                    {selectedMedication.amharic_name && (
+                                        <p className="text-lg text-gray-600 mt-1">{selectedMedication.amharic_name}</p>
+                                    )}
+                                </div>
+                                <button
+                                    onClick={() => setSelectedMedication(null)}
+                                    className="text-gray-500 hover:text-gray-700 text-2xl"
+                                >
+                                    <FaTimes />
+                                </button>
+                            </div>
+                            
+                            <div className="p-6 space-y-6">
+                                {/* Usage */}
+                                {selectedMedication.usage && (
+                                    <div className="bg-blue-50 rounded-lg p-4">
+                                        <h3 className="text-lg font-semibold text-blue-800 mb-3 flex items-center gap-2">
+                                            <FaInfoCircle className="text-blue-600" />
+                                            Usage / Indications
+                                        </h3>
+                                        <div className="text-gray-700 whitespace-pre-line">
+                                            {selectedMedication.usage}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Administration and Cautions */}
+                                {selectedMedication.administration_and_cautions && (
+                                    <div className="bg-yellow-50 rounded-lg p-4">
+                                        <h3 className="text-lg font-semibold text-yellow-800 mb-3 flex items-center gap-2">
+                                            <FaExclamationTriangle className="text-yellow-600" />
+                                            Administration and Cautions
+                                        </h3>
+                                        <div className="text-gray-700 whitespace-pre-line">
+                                            {selectedMedication.administration_and_cautions}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Side Effects */}
+                                {selectedMedication.side_effects && (
+                                    <div className="bg-red-50 rounded-lg p-4">
+                                        <h3 className="text-lg font-semibold text-red-800 mb-3 flex items-center gap-2">
+                                            <FaExclamationCircle className="text-red-600" />
+                                            Side Effects
+                                        </h3>
+                                        <div className="text-gray-700 whitespace-pre-line">
+                                            {selectedMedication.side_effects}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Storage */}
+                                {selectedMedication.storage && (
+                                    <div className="bg-green-50 rounded-lg p-4">
+                                        <h3 className="text-lg font-semibold text-green-800 mb-3 flex items-center gap-2">
+                                            <FaCheckCircle className="text-green-600" />
+                                            Storage Instructions
+                                        </h3>
+                                        <div className="text-gray-700 whitespace-pre-line">
+                                            {selectedMedication.storage}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 p-6 flex justify-end gap-3">
+                                {isAdmin && (
+                                    <button
+                                        onClick={() => {
+                                            handleEditMedication(selectedMedication);
+                                            setSelectedMedication(null);
+                                        }}
+                                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg flex items-center gap-2"
+                                    >
+                                        <FaEdit /> Edit Medication
+                                    </button>
+                                )}
+                                <button
+                                    onClick={() => setSelectedMedication(null)}
+                                    className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded-lg"
+                                >
+                                    Close
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}
