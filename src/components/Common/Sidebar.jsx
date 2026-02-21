@@ -185,7 +185,7 @@ const Sidebar = ({ onClose }) => {
                             >
                                 <div className="flex items-center gap-2.5.5">
                                     <FaUserInjured className="text-xl group-hover:scale-110 transition-transform" />
-                                    <span className="text-lg">Patients</span>
+                                    <span className="text-lg">Patient(s)</span>
                                 </div>
                                 <div className="flex items-center gap-2 text-sm">
                                     {!isSubscribed && <FaLock className="opacity-50" />}
@@ -606,10 +606,6 @@ const Sidebar = ({ onClose }) => {
                             </div>
                         </>
                     )}
-
-                    {/* Useful Resources Section - ALL USERS */}
-                    <div className="mt-6">
-                        <h3 className="text-xs uppercase text-gray-500 font-semibold mb-2 tracking-wider">Useful Resources</h3>
 
                         {/* Public Useful Links Page */}
                         <div className="mb-2">
