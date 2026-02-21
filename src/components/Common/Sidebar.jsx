@@ -172,7 +172,7 @@ const Sidebar = ({ onClose }) => {
                                 >
                                     <div className="flex items-center gap-2.5">
                                         <FaUserInjured className="text-xl group-hover:scale-110 transition-transform" />
-                                        <span className="text-lg">Patient</span>
+                                        <span className="text-lg">Medication Review</span>
                                     </div>
                                     <div className="flex items-center gap-2 text-sm">
                                         {!isSubscribed && <FaLock className="opacity-50" />}
@@ -248,7 +248,7 @@ const Sidebar = ({ onClose }) => {
                             >
                                 <div className="flex items-center gap-2.5 w-full">
                                     <FaPills className="text-xl" />
-                                    <span className="font-medium text-base">መድሃኒት ማፈላለጊያ</span>
+                                    <span className="font-bold text-base">መድሃኒት ማፈላለጊያ</span>
                                     {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
                                 </div>
                             </NavLink>
