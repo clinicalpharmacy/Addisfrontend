@@ -329,26 +329,27 @@ const Sidebar = ({ onClose }) => {
                             )}
                         </li>
 
-                        {/* Public Useful Links Page */}
-                        {(!isIndividual || ['pharmacist', 'pharmacy_student'].includes(user?.role)) && (
-                        <li className="mb-2">
-                            <NavLink
-                                to={isSubscribed ? "/useful-links" : "/subscription/plans"}
-                                onClick={onClose}
-                                className={({ isActive }) =>
-                                    `flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isActive && isSubscribed
-                                        ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600 shadow-sm'
-                                        : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm'
-                                    } ${!isSubscribed ? 'opacity-60' : ''}`
-                                }
-                            >
-                                <div className="flex items-center gap-2.5 w-full">
-                                    <FaBookmark className="text-xl" />
-                                    <span className="font-medium text-base">Useful Links</span>
-                                    {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
-                                </div>
-                            </NavLink>
-                        </li>
+                    {/* Public Useful Links Page - Hidden only for health care clients */}
+                        {(user?.role !== 'health_care_client' || !isIndividual) && (
+                            <li className="mb-2">
+                                <NavLink
+                                    to={isSubscribed ? "/useful-links" : "/subscription/plans"}
+                                    onClick={onClose}
+                                    className={({ isActive }) =>
+                                        `flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isActive && isSubscribed
+                                            ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600 shadow-sm'
+                                            : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm'
+                                        } ${!isSubscribed ? 'opacity-60' : ''}`
+                                    }
+                                >
+                                    <div className="flex items-center gap-2.5 w-full">
+                                        <FaBookmark className="text-xl" />
+                                        <span className="font-medium text-base">Useful Links</span>
+                                        {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
+                                    </div>
+                                </NavLink>
+                            </li>
+                        )}
 
                         <li>
                             <button
