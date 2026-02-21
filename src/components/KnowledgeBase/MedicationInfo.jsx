@@ -52,6 +52,7 @@ const MedicationInfo = () => {
     const [editingMedication, setEditingMedication] = useState(null);
     const [showAddForm, setShowAddForm] = useState(false);
     const [selectedMedication, setSelectedMedication] = useState(null);
+    const [expandedSections, setExpandedSections] = useState({});
 
 
     const [formData, setFormData] = useState({
@@ -142,8 +143,12 @@ const MedicationInfo = () => {
         setSearchTerm(e.target.value);
     };
 
-
-
+    const toggleSection = (section) => {
+        setExpandedSections(prev => ({
+            ...prev,
+            [section]: !prev[section]
+        }));
+    };
 
     // ADD MEDICATION TO DATABASE - ADMIN ONLY
     const handleAddMedication = async () => {
@@ -561,7 +566,7 @@ const MedicationInfo = () => {
 
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Usage / Indications *
+                                            የመድሃኒቱ ጥቅም: *
                                         </label>
                                         <textarea
                                             value={formData.usage}
@@ -576,7 +581,7 @@ const MedicationInfo = () => {
 
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Administration and Cautions
+                                            አወሳሰድ እና ጥንቃቄዎች:
                                         </label>
                                         <textarea
                                             value={formData.administration_and_cautions}
@@ -590,7 +595,7 @@ const MedicationInfo = () => {
 
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Side Effects
+                                            የጎንዮሽ ጉዳቶች:
                                         </label>
                                         <textarea
                                             value={formData.side_effects}
@@ -604,7 +609,7 @@ const MedicationInfo = () => {
 
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Storage Instructions
+                                            አቀማመጥ:
                                         </label>
                                         <textarea
                                             value={formData.storage}
@@ -740,15 +745,15 @@ const MedicationInfo = () => {
                     </div>
                 )}
 
-                {/* Full Screen Medication Details Modal */}
+                {/* Medication Details Modal - Limited to list area size */}
                 {selectedMedication && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-                            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex justify-between items-center">
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center p-4 z-50 overflow-y-auto">
+                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl my-8" style={{ maxHeight: 'calc(100vh - 4rem)' }}>
+                            <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex justify-between items-center rounded-t-xl">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-gray-900">{selectedMedication.name}</h2>
+                                    <h2 className="text-xl font-bold text-gray-900">{selectedMedication.name}</h2>
                                     {selectedMedication.amharic_name && (
-                                        <p className="text-lg text-gray-600 mt-1">{selectedMedication.amharic_name}</p>
+                                        <p className="text-base font-bold text-green-600 mt-1">{selectedMedication.amharic_name}</p>
                                     )}
                                 </div>
                                 <button
@@ -759,75 +764,123 @@ const MedicationInfo = () => {
                                 </button>
                             </div>
                             
-                            <div className="p-6 space-y-6">
-                                {/* Usage */}
+                            <div className="p-4 space-y-3 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 12rem)' }}>
+                                {/* Usage Section */}
                                 {selectedMedication.usage && (
-                                    <div className="bg-blue-50 rounded-lg p-4">
-                                        <h3 className="text-lg font-semibold text-blue-800 mb-3 flex items-center gap-2">
-                                            <FaInfoCircle className="text-blue-600" />
-                                            Usage / Indications
-                                        </h3>
-                                        <div className="text-gray-700 whitespace-pre-line">
-                                            {selectedMedication.usage}
-                                        </div>
+                                    <div className="border border-blue-200 rounded-lg overflow-hidden">
+                                        <button
+                                            onClick={() => toggleSection('usage')}
+                                            className="w-full bg-blue-50 hover:bg-blue-100 p-3 text-left flex justify-between items-center transition-colors"
+                                        >
+                                            <h3 className="font-semibold text-blue-800 flex items-center gap-2">
+                                                <FaInfoCircle className="text-blue-600" />
+                                                Usage / Indications
+                                            </h3>
+                                            <span className="text-blue-600 text-xl">
+                                                {expandedSections.usage ? '−' : '+'}
+                                            </span>
+                                        </button>
+                                        {expandedSections.usage && (
+                                            <div className="p-4 bg-white">
+                                                <div className="text-gray-700 whitespace-pre-line">
+                                                    {selectedMedication.usage}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
-                                {/* Administration and Cautions */}
+                                {/* Administration and Cautions Section */}
                                 {selectedMedication.administration_and_cautions && (
-                                    <div className="bg-yellow-50 rounded-lg p-4">
-                                        <h3 className="text-lg font-semibold text-yellow-800 mb-3 flex items-center gap-2">
-                                            <FaExclamationTriangle className="text-yellow-600" />
-                                            Administration and Cautions
-                                        </h3>
-                                        <div className="text-gray-700 whitespace-pre-line">
-                                            {selectedMedication.administration_and_cautions}
-                                        </div>
+                                    <div className="border border-yellow-200 rounded-lg overflow-hidden">
+                                        <button
+                                            onClick={() => toggleSection('administration')}
+                                            className="w-full bg-yellow-50 hover:bg-yellow-100 p-3 text-left flex justify-between items-center transition-colors"
+                                        >
+                                            <h3 className="font-semibold text-yellow-800 flex items-center gap-2">
+                                                <FaExclamationTriangle className="text-yellow-600" />
+                                                Administration and Cautions
+                                            </h3>
+                                            <span className="text-yellow-600 text-xl">
+                                                {expandedSections.administration ? '−' : '+'}
+                                            </span>
+                                        </button>
+                                        {expandedSections.administration && (
+                                            <div className="p-4 bg-white">
+                                                <div className="text-gray-700 whitespace-pre-line">
+                                                    {selectedMedication.administration_and_cautions}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
-                                {/* Side Effects */}
+                                {/* Side Effects Section */}
                                 {selectedMedication.side_effects && (
-                                    <div className="bg-red-50 rounded-lg p-4">
-                                        <h3 className="text-lg font-semibold text-red-800 mb-3 flex items-center gap-2">
-                                            <FaExclamationCircle className="text-red-600" />
-                                            Side Effects
-                                        </h3>
-                                        <div className="text-gray-700 whitespace-pre-line">
-                                            {selectedMedication.side_effects}
-                                        </div>
+                                    <div className="border border-red-200 rounded-lg overflow-hidden">
+                                        <button
+                                            onClick={() => toggleSection('sideEffects')}
+                                            className="w-full bg-red-50 hover:bg-red-100 p-3 text-left flex justify-between items-center transition-colors"
+                                        >
+                                            <h3 className="font-semibold text-red-800 flex items-center gap-2">
+                                                <FaExclamationCircle className="text-red-600" />
+                                                Side Effects
+                                            </h3>
+                                            <span className="text-red-600 text-xl">
+                                                {expandedSections.sideEffects ? '−' : '+'}
+                                            </span>
+                                        </button>
+                                        {expandedSections.sideEffects && (
+                                            <div className="p-4 bg-white">
+                                                <div className="text-gray-700 whitespace-pre-line">
+                                                    {selectedMedication.side_effects}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
-                                {/* Storage */}
+                                {/* Storage Section */}
                                 {selectedMedication.storage && (
-                                    <div className="bg-green-50 rounded-lg p-4">
-                                        <h3 className="text-lg font-semibold text-green-800 mb-3 flex items-center gap-2">
-                                            <FaCheckCircle className="text-green-600" />
-                                            Storage Instructions
-                                        </h3>
-                                        <div className="text-gray-700 whitespace-pre-line">
-                                            {selectedMedication.storage}
-                                        </div>
+                                    <div className="border border-green-200 rounded-lg overflow-hidden">
+                                        <button
+                                            onClick={() => toggleSection('storage')}
+                                            className="w-full bg-green-50 hover:bg-green-100 p-3 text-left flex justify-between items-center transition-colors"
+                                        >
+                                            <h3 className="font-semibold text-green-800 flex items-center gap-2">
+                                                <FaCheckCircle className="text-green-600" />
+                                                Storage Instructions
+                                            </h3>
+                                            <span className="text-green-600 text-xl">
+                                                {expandedSections.storage ? '−' : '+'}
+                                            </span>
+                                        </button>
+                                        {expandedSections.storage && (
+                                            <div className="p-4 bg-white">
+                                                <div className="text-gray-700 whitespace-pre-line">
+                                                    {selectedMedication.storage}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
 
-                            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 p-6 flex justify-end gap-3">
+                            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 p-4 flex justify-end gap-3 rounded-b-xl">
                                 {isAdmin && (
                                     <button
                                         onClick={() => {
                                             handleEditMedication(selectedMedication);
                                             setSelectedMedication(null);
                                         }}
-                                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg flex items-center gap-2"
+                                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
                                     >
-                                        <FaEdit /> Edit Medication
+                                        <FaEdit /> Edit
                                     </button>
                                 )}
                                 <button
                                     onClick={() => setSelectedMedication(null)}
-                                    className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded-lg"
+                                    className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg text-sm"
                                 >
                                     Close
                                 </button>
