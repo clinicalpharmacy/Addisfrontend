@@ -196,22 +196,7 @@ const Sidebar = ({ onClose }) => {
                             </li>
                         )}
 
-                        <li>
-                            <button
-                                onClick={() => toggleSection('settings')}
-                                className={`flex items-center justify-between w-full p-2.5 rounded-xl transition-all duration-300 group ${location.pathname.startsWith('/settings')
-                                    ? 'bg-blue-50 text-blue-600 font-black'
-                                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 font-bold'
-                                    }`}
-                            >
-                                <div className="flex items-center gap-2.5.5">
-                                    <FaCogs className="text-xl group-hover:rotate-45 transition-transform" />
-                                    <span className="text-base">Settings</span>
-                                </div>
-                                {expandedSections.settings ? <FaChevronDown className="text-current text-xs" /> : <FaChevronRight className="text-current text-xs" />}
-                            </button>
-
-                            {/* Medication Availability Link */}
+                                                  {/* Medication Availability Link */}
                         <div className="mb-2">
                             <NavLink
                                 to={isSubscribed ? "/medication-availability" : "/subscription/plans"}
@@ -230,6 +215,22 @@ const Sidebar = ({ onClose }) => {
                                 </div>
                             </NavLink>
                         </div>
+
+
+                        <li>
+                            <button
+                                onClick={() => toggleSection('settings')}
+                                className={`flex items-center justify-between w-full p-2.5 rounded-xl transition-all duration-300 group ${location.pathname.startsWith('/settings')
+                                    ? 'bg-blue-50 text-blue-600 font-black'
+                                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 font-bold'
+                                    }`}
+                            >
+                                <div className="flex items-center gap-2.5.5">
+                                    <FaCogs className="text-xl group-hover:rotate-45 transition-transform" />
+                                    <span className="text-base">Settings</span>
+                                </div>
+                                {expandedSections.settings ? <FaChevronDown className="text-current text-xs" /> : <FaChevronRight className="text-current text-xs" />}
+                            </button>
 
                             {expandedSections.settings && (
                                 <div className="ml-8 mt-2 space-y-1 animate-fadeIn">
