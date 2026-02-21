@@ -248,12 +248,86 @@ const Sidebar = ({ onClose }) => {
                             >
                                 <div className="flex items-center gap-2.5 w-full">
                                     <FaPills className="text-xl" />
-                                    <span className="font-medium text-base">Med Availability</span>
+                                    <span className="font-medium text-base">መድሃኒት ማፈላለጊያ</span>
                                     {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
                                 </div>
                             </NavLink>
                         </div>
+                        
+                    {/* Knowledge Base Section */}
+                    <div className="mb-2">
+                        <button
+                            onClick={() => isSubscribed ? toggleSection('knowledge') : navigate('/subscription/plans')}
+                            className={`flex items-center justify-between w-full p-2.5 rounded-xl text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-300 font-bold group ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`}
+                        >
+                            <div className="flex items-center gap-2.5">
+                                <FaBookMedical className="text-xl group-hover:scale-110 transition-transform" />
+                                <span className="text-lg">Resources</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm">
+                                {!isSubscribed && <FaLock className="opacity-50" />}
+                                {expandedSections.knowledge ? <FaChevronDown /> : <FaChevronRight />}
+                            </div>
+                        </button>
 
+                        {expandedSections.knowledge && (
+                            <div className="ml-8 mt-2 space-y-1 animate-fadeIn">
+                                <NavLink
+                                    to="/knowledge"
+                                    onClick={onClose}
+                                    end
+                                    className={({ isActive }) =>
+                                        `flex items-center gap-2.5 px-4 py-2 text-lg rounded-lg transition-all ${isActive
+                                            ? 'text-indigo-600 font-black'
+                                            : 'text-gray-400 hover:text-gray-700'
+                                        }`
+                                    }
+                                >
+                                    <FaCapsules className="text-base opacity-40" /> Medications
+                                </NavLink>
+                                <NavLink
+                                    to="/knowledge/remedies"
+                                    onClick={onClose}
+                                    className={({ isActive }) =>
+                                        `flex items-center gap-2.5 px-4 py-2 text-lg rounded-lg transition-all ${isActive
+                                            ? 'text-indigo-600 font-black'
+                                            : 'text-gray-400 hover:text-gray-700'
+                                        }`
+                                    }
+                                >
+                                    <FaVial className="text-base opacity-40" /> Home Remedies
+                                </NavLink>
+                                {(!isIndividual || ['pharmacist', 'pharmacy_student'].includes(user?.role)) && (
+                                    <>
+                                        <NavLink
+                                            to="/knowledge/illnesses"
+                                            onClick={onClose}
+                                            className={({ isActive }) =>
+                                                `flex items-center gap-2.5 px-4 py-2 text-lg rounded-lg transition-all ${isActive
+                                                    ? 'text-indigo-600 font-black'
+                                                    : 'text-gray-400 hover:text-gray-700'
+                                                }`
+                                            }
+                                        >
+                                            <FaStethoscope className="text-base opacity-40" /> Illnesses
+                                        </NavLink>
+                                        <NavLink
+                                            to="/knowledge/compounding"
+                                            onClick={onClose}
+                                            className={({ isActive }) =>
+                                                `flex items-center gap-2.5 px-4 py-2 text-lg rounded-lg transition-all ${isActive
+                                                    ? 'text-indigo-600 font-black'
+                                                    : 'text-gray-400 hover:text-gray-700'
+                                                }`
+                                            }
+                                        >
+                                            <FaVial className="text-base opacity-40" /> Compounding
+                                        </NavLink>
+                                    </>
+                                )}
+                            </div>
+                        )}
+                    </div>
 
                         <li>
                             <button
@@ -387,86 +461,6 @@ const Sidebar = ({ onClose }) => {
                         )}
                     </ul>
                 </div>
-
-                {/* Advanced Navigation */}
-                <div className="mb-8">
-                    <h3 className="text-xs uppercase text-gray-400 font-black mb-4 tracking-[0.2em] px-3">Resource Section</h3>
-                   
-                    {/* Knowledge Base Section */}
-                    {/* Knowledge Base Section */}
-                    <div className="mb-2">
-                        <button
-                            onClick={() => isSubscribed ? toggleSection('knowledge') : navigate('/subscription/plans')}
-                            className={`flex items-center justify-between w-full p-2.5 rounded-xl text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-300 font-bold group ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`}
-                        >
-                            <div className="flex items-center gap-2.5">
-                                <FaBookMedical className="text-xl group-hover:scale-110 transition-transform" />
-                                <span className="text-lg">Knowledge Base</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm">
-                                {!isSubscribed && <FaLock className="opacity-50" />}
-                                {expandedSections.knowledge ? <FaChevronDown /> : <FaChevronRight />}
-                            </div>
-                        </button>
-
-                        {expandedSections.knowledge && (
-                            <div className="ml-8 mt-2 space-y-1 animate-fadeIn">
-                                <NavLink
-                                    to="/knowledge"
-                                    onClick={onClose}
-                                    end
-                                    className={({ isActive }) =>
-                                        `flex items-center gap-2.5 px-4 py-2 text-lg rounded-lg transition-all ${isActive
-                                            ? 'text-indigo-600 font-black'
-                                            : 'text-gray-400 hover:text-gray-700'
-                                        }`
-                                    }
-                                >
-                                    <FaCapsules className="text-base opacity-40" /> Medications
-                                </NavLink>
-                                <NavLink
-                                    to="/knowledge/remedies"
-                                    onClick={onClose}
-                                    className={({ isActive }) =>
-                                        `flex items-center gap-2.5 px-4 py-2 text-lg rounded-lg transition-all ${isActive
-                                            ? 'text-indigo-600 font-black'
-                                            : 'text-gray-400 hover:text-gray-700'
-                                        }`
-                                    }
-                                >
-                                    <FaVial className="text-base opacity-40" /> Home Remedies
-                                </NavLink>
-                                {(!isIndividual || ['pharmacist', 'pharmacy_student'].includes(user?.role)) && (
-                                    <>
-                                        <NavLink
-                                            to="/knowledge/illnesses"
-                                            onClick={onClose}
-                                            className={({ isActive }) =>
-                                                `flex items-center gap-2.5 px-4 py-2 text-lg rounded-lg transition-all ${isActive
-                                                    ? 'text-indigo-600 font-black'
-                                                    : 'text-gray-400 hover:text-gray-700'
-                                                }`
-                                            }
-                                        >
-                                            <FaStethoscope className="text-base opacity-40" /> Illnesses
-                                        </NavLink>
-                                        <NavLink
-                                            to="/knowledge/compounding"
-                                            onClick={onClose}
-                                            className={({ isActive }) =>
-                                                `flex items-center gap-2.5 px-4 py-2 text-lg rounded-lg transition-all ${isActive
-                                                    ? 'text-indigo-600 font-black'
-                                                    : 'text-gray-400 hover:text-gray-700'
-                                                }`
-                                            }
-                                        >
-                                            <FaVial className="text-base opacity-40" /> Compounding
-                                        </NavLink>
-                                    </>
-                                )}
-                            </div>
-                        )}
-                    </div>
 
                     {/* Admin Navigation */}
                     {isAdmin && (
