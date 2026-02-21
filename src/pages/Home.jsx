@@ -17,7 +17,7 @@ const Home = () => {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 px-6 max-w-7xl mx-auto">
             {/* Welcome Section */}
             <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-6 text-white">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
