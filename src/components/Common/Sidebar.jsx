@@ -330,6 +330,7 @@ const Sidebar = ({ onClose }) => {
                         </li>
 
                         {/* Public Useful Links Page */}
+                        {(!isIndividual || ['pharmacist', 'pharmacy_student'].includes(user?.role)) && (
                         <li className="mb-2">
                             <NavLink
                                 to={isSubscribed ? "/useful-links" : "/subscription/plans"}
