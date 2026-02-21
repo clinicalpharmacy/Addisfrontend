@@ -37,7 +37,7 @@ const UsefulLinks = () => {
         <div className="p-6 max-w-5xl mx-auto">
             {/* Simple Header */}
             <div className="mb-6">
-                <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                <h1 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
                     <FaBookmark className="text-indigo-500" />
                     Useful Links
                 </h1>
@@ -76,7 +76,7 @@ const UsefulLinks = () => {
                                             href={link.url}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="text-indigo-600 hover:text-indigo-800 font-bold text-sm py-1 border-b border-gray-50 md:border-0 flex items-center justify-between group"
+                                            className="text-indigo-600 hover:text-indigo-800 font-bold text-sm py-1 border-b border-gray-50 md:border-0 flex items-center gap-1 group"
                                         >
                                             <span>{link.title}</span>
                                             <span className="text-gray-300 group-hover:text-indigo-400 text-xs">↗</span>
