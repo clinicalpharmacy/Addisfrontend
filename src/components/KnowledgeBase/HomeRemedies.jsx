@@ -1086,7 +1086,7 @@ const HomeRemedies = () => {
                             <div className="sticky top-0 bg-gradient-to-r from-green-600 to-green-800 text-white p-3">
                                 <div className="flex justify-between items-start">
                                     <div className="flex-1 min-w-0">
-                                        <h2 className="text-base font-bold truncate">{selectedRemedy.name}</h2>
+                                        <h1 className="text-base font-bold truncate">{selectedRemedy.name}</h1>
                                         {selectedRemedy.uses && (
                                             <p className="text-sm font-bold text-green-100 mt-0.5 truncate flex items-center gap-1">
                                                 <FaLanguage className="text-xs" /> {selectedRemedy.uses}
