@@ -1229,8 +1229,8 @@ const MedicationInfo = () => {
                             </div>
                             
                             {/* Scrollable Content */}
-                            <div className="overflow-y-auto" style={{ maxHeight: 'calc(80vh - 120px)' }}>
-                                <div className="p-3 space-y-2">
+                            <div className="overflow-y-auto" style={{ maxHeight: 'calc(160vh - 120px)' }}>
+                               <div className="p-3 space-y-2">
                                     {/* Usage Section */}
                                     {selectedMedication.usage && (
                                         <div className="bg-blue-50 rounded-lg overflow-hidden border border-blue-100">
