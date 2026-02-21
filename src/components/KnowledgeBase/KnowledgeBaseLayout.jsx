@@ -61,7 +61,7 @@ const KnowledgeBaseLayout = () => {
     ];
 
     return (
-        <div className="space-y-6 knowledge-base-container overflow-x-hidden max-w-full relative">
+        <div className="space-y-6 px-6 max-w-7xl mx-auto knowledge-base-container overflow-x-hidden max-w-full relative">
 
 
             {success && (
