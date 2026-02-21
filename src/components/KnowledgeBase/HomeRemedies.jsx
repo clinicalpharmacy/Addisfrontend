@@ -147,7 +147,7 @@ const HomeRemedies = () => {
 
         const start = textarea.selectionStart;
         const end = textarea.selectionEnd;
-        const selectedText = formData[field].substring(start, end);
+        const Text = formData[field].substring(start, end);
         const beforeText = formData[field].substring(0, start);
         const afterText = formData[field].substring(end);
 
@@ -155,48 +155,48 @@ const HomeRemedies = () => {
         
         switch(type) {
             case 'bullet':
-                if (selectedText.includes('\n')) {
-                    formattedText = selectedText.split('\n')
+                if (Text.includes('\n')) {
+                    formattedText = Text.split('\n')
                         .map(line => line.trim() ? `• ${line}` : line)
                         .join('\n');
                 } else {
-                    formattedText = selectedText ? `• ${selectedText}` : '• ';
+                    formattedText = Text ? `• ${Text}` : '• ';
                 }
                 break;
                 
             case 'subbullet':
-                if (selectedText.includes('\n')) {
-                    formattedText = selectedText.split('\n')
+                if (Text.includes('\n')) {
+                    formattedText = Text.split('\n')
                         .map(line => line.trim() ? `  ◦ ${line}` : line)
                         .join('\n');
                 } else {
-                    formattedText = selectedText ? `  ◦ ${selectedText}` : '  ◦ ';
+                    formattedText = Text ? `  ◦ ${Text}` : '  ◦ ';
                 }
                 break;
                 
             case 'number':
-                if (selectedText.includes('\n')) {
-                    const lines = selectedText.split('\n').filter(line => line.trim());
+                if (Text.includes('\n')) {
+                    const lines = Text.split('\n').filter(line => line.trim());
                     formattedText = lines
                         .map((line, index) => `${index + 1}. ${line}`)
                         .join('\n');
                 } else {
-                    formattedText = selectedText ? `1. ${selectedText}` : '1. ';
+                    formattedText = Text ? `1. ${Text}` : '1. ';
                 }
                 break;
                 
             case 'indent':
-                if (selectedText.includes('\n')) {
-                    formattedText = selectedText.split('\n')
+                if (Text.includes('\n')) {
+                    formattedText = Text.split('\n')
                         .map(line => line ? `    ${line}` : line)
                         .join('\n');
                 } else {
-                    formattedText = `    ${selectedText}`;
+                    formattedText = `    ${Text}`;
                 }
                 break;
                 
             case 'outdent':
-                if (selectedText.includes('\n')) {
+                if (Text.includes('\n')) {
                     formattedText = selectedText.split('\n')
                         .map(line => line.replace(/^ {4}/, ''))
                         .join('\n');
@@ -1088,7 +1088,7 @@ const HomeRemedies = () => {
                                     <div className="flex-1 min-w-0">
                                         <h2 className="text-base font-bold truncate">{selectedRemedy.name}</h2>
                                         {selectedRemedy.uses && (
-                                            <p className="text-xs font-bold text-green-100 mt-0.5 truncate flex items-center gap-1">
+                                            <p className="text-sm font-bold text-green-100 mt-0.5 truncate flex items-center gap-1">
                                                 <FaLanguage className="text-xs" /> {selectedRemedy.uses}
                                             </p>
                                         )}
