@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaPlus, FaEdit, FaTrash, FaSave, FaExternalLinkAlt, FaLink } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaSave, FaLink } from 'react-icons/fa';
 import api from '../utils/api';
 
 const AdminUsefulLinks = () => {
@@ -100,184 +100,186 @@ const AdminUsefulLinks = () => {
     };
 
     return (
-        <div className="space-y-4">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-5">
-                    <div>
-                        <h2 className="text-xl font-black text-gray-900 flex items-center gap-2">
-                            <FaLink className="text-blue-600 text-lg" /> Resource Pipeline
-                        </h2>
-                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
-                            Global intelligence links for all system users.
-                        </p>
-                    </div>
+        <div className="space-y-6">
 
-                    <button
-                        onClick={() => {
-                            setIsAdding(!isAdding);
-                            setEditingLink(null);
-                            setFormData({
-                                title: '',
-                                url: '',
-                                category: 'General',
-                                icon: 'FaExternalLinkAlt',
-                                description: ''
-                            });
-                        }}
-                        className={`w-full sm:w-auto px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-all shadow-sm font-black text-xs active:scale-95 ${
-                            isAdding
-                                ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                : 'bg-blue-600 text-white hover:bg-blue-700'
-                        }`}
-                    >
-                        {isAdding ? <FaPlus className="rotate-45" /> : <FaPlus />}
-                        {isAdding ? 'Decline Entry' : 'New Resource'}
-                    </button>
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h2 className="text-xl font-black text-gray-900 flex items-center gap-2">
+                        <FaLink className="text-blue-600 text-lg" />
+                        Resource Pipeline
+                    </h2>
+                    <p className="text-xs text-gray-500 uppercase tracking-wider">
+                        Global intelligence links for all system users.
+                    </p>
                 </div>
 
-                {isAdding && (
-                    <div className="bg-gray-50/50 p-5 md:p-8 rounded-2xl border border-gray-100 shadow-inner mb-8 animate-slideDown">
-                        <h3 className="text-sm font-black text-gray-900 mb-6 flex items-center gap-2 uppercase tracking-widest">
-                            <div className="bg-white p-2 rounded-lg shadow-sm">
-                                <FaLink className="text-blue-600" />
-                            </div>
-                            {editingLink ? 'Calibrate Resource' : 'Inject New Data Node'}
-                        </h3>
+                <button
+                    onClick={() => {
+                        setIsAdding(!isAdding);
+                        setEditingLink(null);
+                        setFormData({
+                            title: '',
+                            url: '',
+                            category: 'General',
+                            icon: 'FaExternalLinkAlt',
+                            description: ''
+                        });
+                    }}
+                    className={`px-4 py-2 rounded-md flex items-center gap-2 text-xs font-bold transition ${
+                        isAdding
+                            ? 'bg-gray-200 text-gray-700'
+                            : 'bg-blue-600 text-white hover:bg-blue-700'
+                    }`}
+                >
+                    {isAdding ? <FaPlus className="rotate-45" /> : <FaPlus />}
+                    {isAdding ? 'Cancel' : 'New Resource'}
+                </button>
+            </div>
 
-                        <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <div>
-                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-1.5">
-                                    Title Designation *
-                                </label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={formData.title}
-                                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white font-bold"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-1.5">
-                                    Destination URL *
-                                </label>
-                                <input
-                                    type="url"
-                                    required
-                                    value={formData.url}
-                                    onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white font-mono text-[11px]"
-                                />
-                            </div>
-
-                            <div className="md:col-span-2">
-                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-1.5">
-                                    Intelligence Summary
-                                </label>
-                                <textarea
-                                    value={formData.description}
-                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white min-h-[80px]"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-[10px] font-black text-gray-400 uppercase mb-1.5">
-                                    Taxonomy Category
-                                </label>
-                                <input
-                                    type="text"
-                                    value={formData.category}
-                                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
-                                />
-                            </div>
-
-                            <div className="flex items-end">
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="w-full bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition-all font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50"
-                                >
-                                    {loading ? (
-                                        <div className="animate-spin w-4 h-4 border-2 border-white/20 border-t-white rounded-full"></div>
-                                    ) : (
-                                        <FaSave />
-                                    )}
-                                    {editingLink ? 'Flush Changes' : 'Commit Resource'}
-                                </button>
-                            </div>
-                        </form>
+            {/* Add/Edit Form */}
+            {isAdding && (
+                <form
+                    onSubmit={handleSave}
+                    className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-6"
+                >
+                    <div>
+                        <label className="block text-xs font-semibold text-gray-600 mb-1">
+                            Title *
+                        </label>
+                        <input
+                            type="text"
+                            required
+                            value={formData.title}
+                            onChange={(e) =>
+                                setFormData({ ...formData, title: e.target.value })
+                            }
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                        />
                     </div>
-                )}
 
-                {/* Unified Line-Based Table */}
-                <div className="overflow-x-auto">
-                    <table className="w-full border-collapse bg-white rounded-xl overflow-hidden">
-                        <thead>
-                            <tr className="bg-gray-100 text-gray-600 uppercase text-xs">
-                                <th className="py-3 px-6 text-left">Category</th>
-                                <th className="py-3 px-6 text-left">Link Name</th>
-                                <th className="py-3 px-6 text-left">URL</th>
-                                <th className="py-3 px-6 text-center">Actions</th>
-                            </tr>
-                        </thead>
+                    <div>
+                        <label className="block text-xs font-semibold text-gray-600 mb-1">
+                            URL *
+                        </label>
+                        <input
+                            type="url"
+                            required
+                            value={formData.url}
+                            onChange={(e) =>
+                                setFormData({ ...formData, url: e.target.value })
+                            }
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                        />
+                    </div>
 
-                        <tbody className="text-gray-700 text-sm">
-                            {links.length > 0 ? (
-                                links.map((link) => (
-                                    <tr
-                                        key={link.id}
-                                        className="border-b border-gray-200 hover:bg-gray-50 transition"
-                                    >
-                                        <td className="py-3 px-6 font-semibold text-blue-600">
-                                            {link.category}
-                                        </td>
+                    <div className="md:col-span-2">
+                        <label className="block text-xs font-semibold text-gray-600 mb-1">
+                            Description
+                        </label>
+                        <textarea
+                            value={formData.description}
+                            onChange={(e) =>
+                                setFormData({ ...formData, description: e.target.value })
+                            }
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                            rows="3"
+                        />
+                    </div>
 
-                                        <td className="py-3 px-6 font-bold">
-                                            <a
-                                                href={link.url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-indigo-600 hover:underline"
-                                            >
-                                                {link.title}
-                                            </a>
-                                        </td>
+                    <div>
+                        <label className="block text-xs font-semibold text-gray-600 mb-1">
+                            Category
+                        </label>
+                        <input
+                            type="text"
+                            value={formData.category}
+                            onChange={(e) =>
+                                setFormData({ ...formData, category: e.target.value })
+                            }
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                        />
+                    </div>
 
-                                        <td className="py-3 px-6 text-xs text-gray-500 break-all">
-                                            {link.url}
-                                        </td>
+                    <div className="flex items-end">
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full bg-blue-600 text-white py-2 rounded-md text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                            <FaSave />
+                            {editingLink ? 'Update' : 'Save'}
+                        </button>
+                    </div>
+                </form>
+            )}
 
-                                        <td className="py-3 px-6 text-center space-x-2">
-                                            <button
-                                                onClick={() => startEdit(link)}
-                                                className="bg-yellow-500 hover:bg-yellow-600 text-white text-xs px-3 py-1 rounded"
-                                            >
-                                                Edit
-                                            </button>
+            {/* Clean Line-Based Table */}
+            <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                    <thead>
+                        <tr className="border-b text-xs uppercase text-gray-500">
+                            <th className="py-3 text-left">Category</th>
+                            <th className="py-3 text-left">Link Name</th>
+                            <th className="py-3 text-left">URL</th>
+                            <th className="py-3 text-center">Actions</th>
+                        </tr>
+                    </thead>
 
-                                            <button
-                                                onClick={() => handleDelete(link.id)}
-                                                className="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1 rounded"
-                                            >
-                                                Delete
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
-                            ) : (
-                                <tr>
-                                    <td colSpan="4" className="text-center py-6 text-gray-400">
-                                        No links found.
+                    <tbody className="text-sm text-gray-700">
+                        {links.length > 0 ? (
+                            links.map((link) => (
+                                <tr
+                                    key={link.id}
+                                    className="border-b hover:bg-gray-50 transition"
+                                >
+                                    <td className="py-3 font-medium text-blue-600">
+                                        {link.category}
+                                    </td>
+
+                                    <td className="py-3 font-semibold">
+                                        <a
+                                            href={link.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-indigo-600 hover:underline"
+                                        >
+                                            {link.title}
+                                        </a>
+                                    </td>
+
+                                    <td className="py-3 text-xs text-gray-500 break-all">
+                                        {link.url}
+                                    </td>
+
+                                    <td className="py-3 text-center space-x-3">
+                                        <button
+                                            onClick={() => startEdit(link)}
+                                            className="text-yellow-600 hover:underline text-xs"
+                                        >
+                                            Edit
+                                        </button>
+
+                                        <button
+                                            onClick={() => handleDelete(link.id)}
+                                            className="text-red-600 hover:underline text-xs"
+                                        >
+                                            Delete
+                                        </button>
                                     </td>
                                 </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="4" className="text-center py-6 text-gray-400">
+                                    No links found.
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
             </div>
+
         </div>
     );
 };
