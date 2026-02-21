@@ -1206,8 +1206,8 @@ const MedicationInfo = () => {
 
                 {/* Medication Details Modal - Narrower Width with Enhanced Formatting */}
                 {selectedMedication && (
-                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center p-4 z-50">
-                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-[60%] max-h-[90vh] overflow-hidden">
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                        <div className="bg-white rounded-xl shadow-2xl w-[60%] max-w-[60%] min-w-[300px] max-h-[90vh] overflow-hidden">
                             {/* Header */}
                             <div className="sticky top-0 bg-gradient-to-r from-white-600 to-white-800 text-black p-3">
                                 <div className="flex justify-between items-start">
