@@ -58,7 +58,7 @@ const Home = () => {
                             </div>
                             <div>
                                 <h2 className="text-xl font-bold text-gray-800">Patients</h2>
-                                <p className="text-sm text-gray-500">Manage records & treatments</p>
+                                <p className="text-sm text-gray-500">Medicines review for individual patients</p>
                             </div>
                         </div>
                         <div className="flex justify-end">
@@ -76,7 +76,7 @@ const Home = () => {
                         </div>
                         <div>
                             <h2 className="text-xl font-bold text-gray-800">Home Remedies</h2>
-                            <p className="text-sm text-gray-500">Traditional treatments</p>
+                            <p className="text-sm text-gray-500">Home made remedies</p>
                         </div>
                     </div>
                     <div className="flex justify-end">
@@ -94,7 +94,7 @@ const Home = () => {
                         </div>
                         <div>
                             <h2 className="text-xl font-bold text-gray-800">Medication Info</h2>
-                            <p className="text-sm text-gray-500">Drug database & interactions</p>
+                            <p className="text-sm text-gray-500">Database for Medicines information</p>
                         </div>
                     </div>
                     <div className="flex justify-end">
@@ -112,7 +112,7 @@ const Home = () => {
                         </div>
                         <div>
                             <h2 className="text-xl font-bold text-gray-800">Minor Illnesses</h2>
-                            <p className="text-sm text-gray-500">Treatment guides</p>
+                            <p className="text-sm text-gray-500">OTC-based Treatment guides</p>
                         </div>
                     </div>
                     <div className="flex justify-end">
@@ -125,7 +125,7 @@ const Home = () => {
 
             {/* Simple Footer */}
             <div className="text-center text-gray-500 text-sm">
-                <p>Addismed CDSS - Supporting pharmaceutical care decisions</p>
+                <p>Addismed - Supporting patient care decisions</p>
             </div>
         </div>
     );
