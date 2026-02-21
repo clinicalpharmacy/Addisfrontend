@@ -149,13 +149,13 @@ const Sidebar = ({ onClose }) => {
                                 to={isSubscribed ? "/home" : "/subscription/plans"}
                                 onClick={onClose}
                                 className={({ isActive }) =>
-                                    `flex items-center gap-2.5.5 p-2.5 rounded-xl transition-all duration-300 group ${isActive && isSubscribed
+                                    `flex items-center gap-2.5 p-2.5 rounded-xl transition-all duration-300 group ${isActive && isSubscribed
                                         ? 'bg-blue-600 text-white shadow-lg shadow-blue-100 font-black'
                                         : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 font-bold'
                                     } ${!isSubscribed ? 'opacity-60' : ''}`
                                 }
                             >
-                                <div className="flex items-center gap-2.5.5 w-full">
+                                <div className="flex items-center gap-2.5 w-full">
                                     <FaHome className="text-xl group-hover:scale-110 transition-transform" />
                                     <span className="text-base">Dashboard</span>
                                     {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
@@ -170,7 +170,7 @@ const Sidebar = ({ onClose }) => {
                                 onClick={() => isSubscribed ? toggleSection('patients') : navigate('/subscription/plans')}
                                 className={`flex items-center justify-between w-full p-2.5 rounded-xl text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-300 font-bold group ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`}
                             >
-                                <div className="flex items-center gap-2.5.5">
+                                <div className="flex items-center gap-2.5">
                                     <FaUserInjured className="text-xl group-hover:scale-110 transition-transform" />
                                     <span className="text-lg">Patient</span>
                                 </div>
@@ -225,7 +225,7 @@ const Sidebar = ({ onClose }) => {
                                         } ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`
                                     }
                                 >
-                                    <div className="flex items-center gap-2.5.5">
+                                    <div className="flex items-center gap-2.5">
                                         <FaBrain className="text-xl group-hover:scale-110 transition-transform" />
                                         <span className="text-base">Clinical Analysis</span>
                                     </div>
@@ -263,7 +263,7 @@ const Sidebar = ({ onClose }) => {
                                     : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 font-bold'
                                     }`}
                             >
-                                <div className="flex items-center gap-2.5.5">
+                                <div className="flex items-center gap-2.5">
                                     <FaCogs className="text-xl group-hover:rotate-45 transition-transform" />
                                     <span className="text-base">Settings</span>
                                 </div>
@@ -341,13 +341,13 @@ const Sidebar = ({ onClose }) => {
                                 to={isSubscribed ? "/feedback" : "/subscription/plans"}
                                 onClick={onClose}
                                 className={({ isActive }) =>
-                                    `flex items-center gap-2.5.5 p-2.5 rounded-xl transition-all duration-300 group ${isActive && isSubscribed
+                                    `flex items-center gap-2.5 p-2.5 rounded-xl transition-all duration-300 group ${isActive && isSubscribed
                                         ? 'bg-blue-600 text-white shadow-lg shadow-blue-100 font-black'
                                         : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 font-bold'
                                     } ${!isSubscribed ? 'opacity-60' : ''}`
                                 }
                             >
-                                <div className="flex items-center gap-2.5.5 w-full">
+                                <div className="flex items-center gap-2.5 w-full">
                                     <FaComments className="text-xl group-hover:scale-110 transition-transform" />
                                     <span className="text-base">Feedback</span>
                                     {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
@@ -375,7 +375,7 @@ const Sidebar = ({ onClose }) => {
                                     }}
                                     className={`flex items-center justify-between p-2.5 rounded-xl text-gray-500 hover:bg-blue-50 hover:text-blue-600 w-full text-left transition-all duration-300 font-bold group ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`}
                                 >
-                                    <div className="flex items-center gap-2.5.5">
+                                    <div className="flex items-center gap-2.5">
                                         <div className="p-2 bg-gray-50 text-gray-400 group-hover:bg-blue-100 group-hover:text-blue-600 rounded-lg transition-colors">
                                             <FaUserInjured className="text-base" />
                                         </div>
@@ -399,7 +399,7 @@ const Sidebar = ({ onClose }) => {
                             onClick={() => isSubscribed ? toggleSection('knowledge') : navigate('/subscription/plans')}
                             className={`flex items-center justify-between w-full p-2.5 rounded-xl text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-300 font-bold group ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`}
                         >
-                            <div className="flex items-center gap-2.5.5">
+                            <div className="flex items-center gap-2.5">
                                 <FaBookMedical className="text-xl group-hover:scale-110 transition-transform" />
                                 <span className="text-lg">Knowledge Base</span>
                             </div>
