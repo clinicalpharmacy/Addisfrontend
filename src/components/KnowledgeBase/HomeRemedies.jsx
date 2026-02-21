@@ -1088,8 +1088,8 @@ const HomeRemedies = () => {
                                     <div className="flex-1 min-w-0">
                                         <h2 className="text-base font-bold truncate">{selectedRemedy.name}</h2>
                                         {selectedRemedy.uses && (
-                                            <p className="text-sm font-bold text-white mt-1 truncate flex items-center gap-1 bg-green-700/30 p-1.5 rounded-md">
-                                                <FaLanguage className="text-white text-xs flex-shrink-0" />
+                                            <p className="text-sm font-bold text-black mt-1 truncate flex items-center gap-1 bg-green-700/30 p-1.5 rounded-md">
+                                                <FaLanguage className="text-black text-xs flex-shrink-0" />
                                                 <span className="font-extrabold">{selectedRemedy.uses}</span>
                                             </p>
                                         )}
