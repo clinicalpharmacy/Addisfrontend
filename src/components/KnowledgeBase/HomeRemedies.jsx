@@ -16,12 +16,13 @@ import {
     FaMortarPestle,
     FaPrescriptionBottleAlt,
     FaInfoCircle,
-    FaLanguage,
     FaDatabase,
     FaListUl,
     FaIndent,
     FaOutdent,
-    FaHashtag
+    FaHashtag,
+    FaShieldAlt,
+    FaLanguage
 } from 'react-icons/fa';
 import { useOutletContext } from 'react-router-dom';
 import useScreenshotProtection from '../../hooks/useScreenshotProtection';
@@ -75,7 +76,7 @@ const HomeRemedies = () => {
         setLoading(true);
         setError('');
         try {
-            console.log('Fetching remedies from database...');
+            console.log('Fetching home remedies from database...');
 
             const { data, error } = await supabase
                 .from('home_remedies')
@@ -223,7 +224,7 @@ const HomeRemedies = () => {
     // ADD REMEDY TO DATABASE - ADMIN ONLY
     const handleAddRemedy = async () => {
         if (!isAdmin) {
-            setError('Only administrators can add remedies');
+            setError('Only administrators can add home remedies');
             setTimeout(() => setError(''), 3000);
             return;
         }
@@ -234,7 +235,7 @@ const HomeRemedies = () => {
         }
 
         if (!formData.home_remedy.trim()) {
-            setError('Please enter home remedy preparation');
+            setError('Please enter home remedy preparation instructions');
             return;
         }
 
@@ -281,8 +282,8 @@ const HomeRemedies = () => {
             }, 1000);
 
         } catch (err) {
-            console.error('❌ Error saving remedy (Full Detail):', JSON.stringify(err, null, 2));
-            setError('Error saving remedy: ' + err.message);
+            console.error('Error saving remedy:', err);
+            setError(`Failed to save remedy: ${err.message}`);
         } finally {
             setSaving(false);
         }
@@ -291,7 +292,7 @@ const HomeRemedies = () => {
     // EDIT REMEDY - ADMIN ONLY
     const handleEditRemedy = (remedy) => {
         if (!isAdmin) {
-            setError('Only administrators can edit remedies');
+            setError('Only administrators can edit home remedies');
             setTimeout(() => setError(''), 3000);
             return;
         }
@@ -310,7 +311,7 @@ const HomeRemedies = () => {
     // UPDATE REMEDY IN DATABASE - ADMIN ONLY
     const handleUpdateRemedy = async () => {
         if (!isAdmin) {
-            setError('Only administrators can update remedies');
+            setError('Only administrators can update home remedies');
             setTimeout(() => setError(''), 3000);
             return;
         }
@@ -365,8 +366,8 @@ const HomeRemedies = () => {
             }, 1000);
 
         } catch (err) {
-            console.error('❌ Error updating remedy:', err);
-            setError('Error updating remedy: ' + err.message);
+            console.error('Error updating remedy:', err);
+            setError(`Failed to update remedy: ${err.message}`);
         } finally {
             setSaving(false);
         }
@@ -375,12 +376,12 @@ const HomeRemedies = () => {
     // DELETE REMEDY - ADMIN ONLY
     const handleDeleteRemedy = async (id) => {
         if (!isAdmin) {
-            setError('Only administrators can delete remedies');
+            setError('Only administrators can delete home remedies');
             setTimeout(() => setError(''), 3000);
             return;
         }
 
-        if (!window.confirm('Are you sure you want to delete this remedy? This action cannot be undone.')) {
+        if (!window.confirm('Are you sure you want to delete this home remedy? This action cannot be undone.')) {
             return;
         }
 
@@ -395,7 +396,7 @@ const HomeRemedies = () => {
 
             if (error) throw error;
 
-            setSuccessMessage('Remedy deleted successfully');
+            setSuccessMessage('Home remedy deleted successfully');
             
             if (selectedRemedy?.id === id) {
                 setSelectedRemedy(null);
@@ -405,7 +406,7 @@ const HomeRemedies = () => {
             
         } catch (err) {
             console.error('Error deleting remedy:', err);
-            setError('Failed to delete remedy');
+            setError('Failed to delete home remedy');
         } finally {
             setSaving(false);
         }
@@ -427,39 +428,40 @@ const HomeRemedies = () => {
         try {
             const sampleRemedies = [
                 {
-                    name: 'Honey and Ginger',
-                    uses: 'ማር እና ዝንጅብል',
-                    home_remedy: '• Grate fresh ginger root (1 inch piece)\n• Mix with 2 tablespoons of raw honey\n• Let sit for 10 minutes\n• Add warm water (not boiling)\n  ◦ Boiling water destroys beneficial enzymes',
-                    administration: '• Take 1 tablespoon every 4-6 hours\n• For cough: take before bed\n• For nausea: sip slowly\n  ◦ Can be taken throughout the day',
-                    medical_advise: • Not suitable for infants under 1 year (honey)\n• Consult doctor if pregnant\n• Discontinue if allergic reaction\n• See doctor if symptoms persist > 3 days'
+                    name: 'Honey and Lemon',
+                    uses: 'Sore throat, Cough',
+                    home_remedy: '• Mix 1 tablespoon of raw honey with fresh juice of half a lemon\n• Add to a cup of warm water\n• Stir well until honey dissolves\n• Drink while warm',
+                    administration: '• Take 2-3 times daily\n• Best taken before bed for nighttime cough\n• Can be consumed throughout the day as needed\n• Not for children under 1 year',
+                    medical_advise: '• Avoid in infants under 12 months (botulism risk)\n• Diabetics should monitor blood sugar\n• Consult doctor if symptoms persist > 7 days\n• Discontinue if allergic reaction occurs'
                 },
                 {
                     name: 'Turmeric Milk',
-                    uses: 'የሙቅ ወተት በርጭጭ',
-                    home_remedy: '• Heat 1 cup of milk (dairy or plant-based)\n• Add 1/2 teaspoon turmeric powder\n  ◦ Fresh grated turmeric works too\n• Add pinch of black pepper\n  ◦ Enhances absorption\n• Add honey to taste',
-                    administration: '• Drink warm before bedtime\n• For cold: 2 times daily\n• For inflammation: once daily\n  ◦ Best on empty stomach',
-                    medical_advise: '• May stain teeth and clothes\n• Avoid if gallstones present\n• Can interact with blood thinners\n• Start with small amount'
+                    uses: 'Cold, Inflammation, Immunity',
+                    home_remedy: '• Heat 1 cup of milk (dairy or plant-based)\n• Add 1/2 teaspoon of turmeric powder\n• Add a pinch of black pepper (enhances absorption)\n• Add honey or jaggery to taste\n• Stir well and drink warm',
+                    administration: '• Drink once daily, preferably before bed\n• Can be taken in the morning on empty stomach\n• Use consistently for best results\n• For acute conditions, can take twice daily',
+                    medical_advise: '• May interact with blood thinners\n• Consult doctor before use during pregnancy\n• Stop use before surgery (blood thinning effect)\n• May cause stomach upset in sensitive individuals'
                 },
                 {
-                    name: 'Garlic',
-                    uses: 'ነጭ ሽንኩርት',
-                    home_remedy: '• Crush 1-2 fresh garlic cloves\n• Let sit for 10 minutes\n  ◦ Activates allicin compound\n• Mix with honey or olive oil\n• Swallow whole or spread on bread',
-                    administration: '• Take once daily for prevention\n• For infection: 2-3 times daily\n• Best taken with food\n  ◦ Reduces stomach irritation',
-                    medical_advise: '• May cause bad breath/body odor\n• Can thin blood (caution with surgery)\n• Avoid if on blood thinners\n• Start with small dose'
+                    name: 'Ginger Tea',
+                    uses: 'Nausea, Indigestion, Inflammation',
+                    home_remedy: '• Grate 1-inch fresh ginger root\n• Boil in 2 cups of water for 10 minutes\n• Strain into a cup\n• Add honey and lemon to taste\n• Optional: add mint leaves for flavor',
+                    administration: '• Sip slowly, especially for nausea\n• Drink 30 minutes before meals for digestion\n• Can be consumed 2-3 times daily\n• Best when freshly prepared',
+                    medical_advise: '• May interact with blood thinners and diabetes medications\n• Avoid excessive amounts during pregnancy\n• May cause heartburn in some people\n• Consult doctor if taking anticoagulants'
                 }
             ];
 
-            const { error } = await supabase
+            const { data, error } = await supabase
                 .from('home_remedies')
-                .insert(sampleRemedies);
+                .insert(sampleRemedies)
+                .select();
 
             if (error) throw error;
 
-            setSuccessMessage('Sample remedies added successfully!');
+            setSuccessMessage('Sample home remedies added successfully!');
             fetchRemedies();
 
         } catch (err) {
-            console.error('Error adding sample data:', err);
+            console.error('Error initializing database:', err);
             setError('Failed to initialize database');
         } finally {
             setLoading(false);
@@ -614,7 +616,7 @@ const HomeRemedies = () => {
                                 type="text"
                                 value={searchTerm}
                                 onChange={handleSearchChange}
-                                placeholder="Search by name, uses, or preparation..."
+                                placeholder="Search remedies by name, uses, or preparation..."
                                 className="w-full pl-10 pr-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm md:text-base"
                             />
                         </div>
@@ -727,7 +729,7 @@ const HomeRemedies = () => {
                                                 value={formData.name}
                                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500"
-                                                placeholder="e.g., Honey and Ginger"
+                                                placeholder="e.g., Honey and Lemon"
                                                 required
                                                 disabled={saving}
                                             />
@@ -735,14 +737,14 @@ const HomeRemedies = () => {
 
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                ጥቅሙ (Uses)
+                                                Uses
                                             </label>
                                             <input
                                                 type="text"
                                                 value={formData.uses}
                                                 onChange={(e) => setFormData({ ...formData, uses: e.target.value })}
                                                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500"
-                                                placeholder="e.g., ማር እና ሎሚ"
+                                                placeholder="e.g., Sore throat, Cough"
                                                 disabled={saving}
                                             />
                                         </div>
@@ -808,7 +810,7 @@ const HomeRemedies = () => {
                                             onFocus={() => setActiveFormatField('home_remedy')}
                                             rows="4"
                                             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500 font-mono text-sm"
-                                            placeholder="• First preparation step&#10;  ◦ Sub-step or note&#10;• Another preparation step"
+                                            placeholder="• First preparation step&#10;  ◦ Sub-step or variation&#10;• Another step&#10;1. Numbered instruction"
                                             required
                                             disabled={saving}
                                         />
@@ -823,7 +825,7 @@ const HomeRemedies = () => {
                                             <button
                                                 type="button"
                                                 onClick={() => insertFormatting('administration', 'bullet')}
-                                                className="p-2 hover:bg-blue-100 rounded text-blue-600 transition-colors"
+                                                className="p-2 hover:bg-green-100 rounded text-green-600 transition-colors"
                                                 title="Add bullet point"
                                                 disabled={saving}
                                             >
@@ -832,7 +834,7 @@ const HomeRemedies = () => {
                                             <button
                                                 type="button"
                                                 onClick={() => insertFormatting('administration', 'subbullet')}
-                                                className="p-2 hover:bg-blue-100 rounded text-blue-600 transition-colors"
+                                                className="p-2 hover:bg-green-100 rounded text-green-600 transition-colors"
                                                 title="Add sub-bullet"
                                                 disabled={saving}
                                             >
@@ -841,7 +843,7 @@ const HomeRemedies = () => {
                                             <button
                                                 type="button"
                                                 onClick={() => insertFormatting('administration', 'number')}
-                                                className="p-2 hover:bg-blue-100 rounded text-blue-600 transition-colors"
+                                                className="p-2 hover:bg-green-100 rounded text-green-600 transition-colors"
                                                 title="Add numbered list"
                                                 disabled={saving}
                                             >
@@ -851,7 +853,7 @@ const HomeRemedies = () => {
                                             <button
                                                 type="button"
                                                 onClick={() => insertFormatting('administration', 'indent')}
-                                                className="p-2 hover:bg-blue-100 rounded text-blue-600 transition-colors"
+                                                className="p-2 hover:bg-green-100 rounded text-green-600 transition-colors"
                                                 title="Indent"
                                                 disabled={saving}
                                             >
@@ -860,7 +862,7 @@ const HomeRemedies = () => {
                                             <button
                                                 type="button"
                                                 onClick={() => insertFormatting('administration', 'outdent')}
-                                                className="p-2 hover:bg-blue-100 rounded text-blue-600 transition-colors"
+                                                className="p-2 hover:bg-green-100 rounded text-green-600 transition-colors"
                                                 title="Outdent"
                                                 disabled={saving}
                                             >
@@ -874,7 +876,7 @@ const HomeRemedies = () => {
                                             onFocus={() => setActiveFormatField('administration')}
                                             rows="4"
                                             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500 font-mono text-sm"
-                                            placeholder="• How to take the remedy&#10;  ◦ Special instructions"
+                                            placeholder="• How to take/use the remedy&#10;  ◦ Special instructions"
                                             disabled={saving}
                                         />
                                     </div>
@@ -882,7 +884,7 @@ const HomeRemedies = () => {
                                     {/* Medical Advice Field with Formatting Toolbar */}
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            የጤና ባለሙያ ምክር/ጥንቃቄዎች (Medical Advice)
+                                            የጤና ባለሙያ ምክር/ጥንቃቄዎች (Medical Advice/Precautions)
                                         </label>
                                         <div className="mb-2 flex flex-wrap gap-1 p-1 bg-gray-100 rounded-lg">
                                             <button
@@ -939,7 +941,7 @@ const HomeRemedies = () => {
                                             onFocus={() => setActiveFormatField('medical_advise')}
                                             rows="4"
                                             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500 font-mono text-sm"
-                                            placeholder="• Precautions&#10;  ◦ Who should avoid&#10;• When to see a doctor"
+                                            placeholder="• Important precautions&#10;  ◦ Who should avoid&#10;• When to consult a doctor"
                                             disabled={saving}
                                         />
                                     </div>
@@ -1007,8 +1009,8 @@ const HomeRemedies = () => {
                                                 </span>
                                             </button>
                                             {remedy.uses && (
-                                                <div className="text-xs text-gray-500 mt-0.5 truncate">
-                                                    {remedy.uses}
+                                                <div className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
+                                                    <FaLanguage className="text-xs" /> {remedy.uses}
                                                 </div>
                                             )}
                                         </div>
@@ -1043,7 +1045,7 @@ const HomeRemedies = () => {
                         <h3 className="text-xl font-medium text-gray-800 mb-2">No Remedies Found</h3>
                         <p className="text-gray-500 max-w-md mx-auto mb-6">
                             {searchTerm
-                                ? 'No remedies match your search criteria. Try a different search.'
+                                ? 'No home remedies match your search criteria. Try a different search.'
                                 : 'No home remedies found in the database.'}
                         </p>
                         <div className="flex flex-wrap gap-3 justify-center">
@@ -1103,22 +1105,22 @@ const HomeRemedies = () => {
                             {/* Scrollable Content */}
                             <div className="overflow-y-auto" style={{ maxHeight: 'calc(160vh - 120px)' }}>
                                <div className="p-3 space-y-2">
-                                    {/* Preparation Section */}
+                                    {/* Home Remedy Preparation Section */}
                                     {selectedRemedy.home_remedy && (
                                         <div className="bg-green-50 rounded-lg overflow-hidden border border-green-100">
                                             <button
-                                                onClick={() => toggleSection('preparation')}
+                                                onClick={() => toggleSection('home_remedy')}
                                                 className="w-full bg-green-100 hover:bg-green-200 p-2 text-left flex justify-between items-center transition-colors"
                                             >
                                                 <h3 className="font-semibold text-green-800 flex items-center gap-1 text-xs">
                                                     <FaMortarPestle className="text-green-600 text-xs" />
-                                                    አዘገጃጀት:
+                                                    አዘገጃጀት (Preparation):
                                                 </h3>
                                                 <span className="text-green-600 text-base font-bold">
-                                                    {expandedSections.preparation ? '−' : '+'}
+                                                    {expandedSections.home_remedy ? '−' : '+'}
                                                 </span>
                                             </button>
-                                            {expandedSections.preparation && (
+                                            {expandedSections.home_remedy && (
                                                 <div className="p-2">
                                                     <ul className="space-y-0.5">
                                                         {renderFormattedText(selectedRemedy.home_remedy)}
@@ -1137,7 +1139,7 @@ const HomeRemedies = () => {
                                             >
                                                 <h3 className="font-semibold text-blue-800 flex items-center gap-1 text-xs">
                                                     <FaPrescriptionBottleAlt className="text-blue-600 text-xs" />
-                                                    አወሳሰድ:
+                                                    አወሳሰድ (Administration):
                                                 </h3>
                                                 <span className="text-blue-600 text-base font-bold">
                                                     {expandedSections.administration ? '−' : '+'}
@@ -1157,7 +1159,7 @@ const HomeRemedies = () => {
                                     {selectedRemedy.medical_advise && (
                                         <div className="bg-yellow-50 rounded-lg overflow-hidden border border-yellow-100">
                                             <button
-                                                onClick={() => toggleSection('advice')}
+                                                onClick={() => toggleSection('medical_advise')}
                                                 className="w-full bg-yellow-100 hover:bg-yellow-200 p-2 text-left flex justify-between items-center transition-colors"
                                             >
                                                 <h3 className="font-semibold text-yellow-800 flex items-center gap-1 text-xs">
@@ -1165,10 +1167,10 @@ const HomeRemedies = () => {
                                                     የጤና ባለሙያ ምክር/ጥንቃቄዎች:
                                                 </h3>
                                                 <span className="text-yellow-600 text-base font-bold">
-                                                    {expandedSections.advice ? '−' : '+'}
+                                                    {expandedSections.medical_advise ? '−' : '+'}
                                                 </span>
                                             </button>
-                                            {expandedSections.advice && (
+                                            {expandedSections.medical_advise && (
                                                 <div className="p-2">
                                                     <ul className="space-y-0.5">
                                                         {renderFormattedText(selectedRemedy.medical_advise)}
@@ -1177,11 +1179,6 @@ const HomeRemedies = () => {
                                             )}
                                         </div>
                                     )}
-
-                                    {/* Footer with Date */}
-                                    <div className="text-xs text-gray-500 mt-3 pt-2 border-t border-gray-100">
-                                        Last updated: {new Date(selectedRemedy.updated_at || selectedRemedy.created_at).toLocaleDateString()}
-                                    </div>
                                 </div>
                             </div>
 
@@ -1227,18 +1224,18 @@ const HomeRemedies = () => {
                             </div>
                             <div className="text-center">
                                 <div className="text-2xl font-bold text-blue-600">
-                                    {remedies.filter(r => r.uses).length}
+                                    {remedies.filter(r => r.administration).length}
                                 </div>
-                                <div className="text-sm text-gray-600">With Uses</div>
+                                <div className="text-sm text-gray-600">With Admin Instructions</div>
                             </div>
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-purple-600">
+                                <div className="text-2xl font-bold text-yellow-600">
                                     {remedies.filter(r => r.medical_advise).length}
                                 </div>
                                 <div className="text-sm text-gray-600">With Medical Advice</div>
                             </div>
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-orange-600">{filteredRemedies.length}</div>
+                                <div className="text-2xl font-bold text-purple-600">{filteredRemedies.length}</div>
                                 <div className="text-sm text-gray-600">Currently Filtered</div>
                             </div>
                         </div>
