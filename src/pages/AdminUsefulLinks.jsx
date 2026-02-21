@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaPlus, FaEdit, FaTrash, FaSave, FaExternalLinkAlt, FaLink } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaSave, FaExternalLinkAlt, FaLink, FaFolder } from 'react-icons/fa';
 import api from '../utils/api';
 
 const AdminUsefulLinks = () => {
@@ -83,15 +83,16 @@ const AdminUsefulLinks = () => {
     };
 
     return (
-        <div className="space-y-6">
-            {/* Header Section */}
-            <div className="bg-white p-6 rounded-2xl shadow-lg border-t-4 border-indigo-500">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="space-y-4">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-5">
                     <div>
-                        <h2 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
-                            <FaLink className="text-indigo-500" /> Useful Links
+                        <h2 className="text-xl font-black text-gray-900 flex items-center gap-2">
+                            <FaLink className="text-blue-600 text-lg" /> Resource Pipeline
                         </h2>
-                        <p className="text-sm text-gray-600">Manage resource links for all system users.</p>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                            Global intelligence links for all system users.
+                        </p>
                     </div>
                     <button
                         onClick={() => {
@@ -99,144 +100,206 @@ const AdminUsefulLinks = () => {
                             setEditingLink(null);
                             setFormData({ title: '', url: '', category: 'General', icon: 'FaExternalLinkAlt', description: '' });
                         }}
-                        className={`px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-all font-medium ${isAdding ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-indigo-500 text-white hover:bg-indigo-600'
-                            }`}
+                        className={`w-full sm:w-auto px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-all shadow-sm font-black text-xs active:scale-95 ${
+                            isAdding
+                                ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                : 'bg-blue-600 text-white hover:bg-blue-700'
+                        }`}
                     >
                         {isAdding ? <FaPlus className="rotate-45" /> : <FaPlus />}
-                        {isAdding ? 'Cancel' : 'Add New Link'}
+                        {isAdding ? 'Decline Entry' : 'New Resource'}
                     </button>
                 </div>
-            </div>
 
-            {/* Add/Edit Form */}
-            {isAdding && (
-                <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                        {editingLink ? 'Edit Link' : 'Add New Link'}
-                    </h3>
-                    <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Link Name *</label>
-                            <input
-                                type="text" required
-                                value={formData.title}
-                                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                                placeholder="e.g. Clinical Pharmacopeia"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Link URL *</label>
-                            <input
-                                type="url" required
-                                value={formData.url}
-                                onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                                placeholder="https://..."
-                            />
-                        </div>
-                        <div className="md:col-span-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Description (Optional)</label>
-                            <textarea
-                                value={formData.description}
-                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                                placeholder="Brief description of this link..."
-                                rows="2"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                            <input
-                                type="text"
-                                value={formData.category}
-                                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                                placeholder="Clinical, Research, Tool, etc."
-                            />
-                        </div>
-                        <div className="flex items-end">
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="w-full bg-indigo-500 text-white py-2 px-4 rounded-lg hover:bg-indigo-600 transition-colors font-medium flex items-center justify-center gap-2 disabled:opacity-50"
-                            >
-                                {loading ? <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div> : <FaSave />}
-                                {editingLink ? 'Update Link' : 'Save Link'}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            )}
+                {isAdding && (
+                    <div className="bg-gray-50/50 p-5 md:p-8 rounded-2xl border border-gray-100 shadow-inner mb-8 animate-slideDown">
+                        <h3 className="text-sm font-black text-gray-900 mb-6 flex items-center gap-2 uppercase tracking-widest">
+                            <div className="bg-white p-2 rounded-lg shadow-sm">
+                                <FaLink className="text-blue-600" />
+                            </div>
+                            {editingLink ? 'Calibrate Resource' : 'Inject New Data Node'}
+                        </h3>
+                        <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-1.5 ml-1">
+                                    Title Designation *
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={formData.title}
+                                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white font-bold transition-all"
+                                    placeholder="e.g. Clinical Pharmacopeia"
+                                />
+                            </div>
 
-            {/* Links Table - Clean lines, no boxes */}
-            <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead>
-                            <tr className="border-b border-gray-200 bg-gray-50">
-                                <th className="py-4 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Link Name</th>
-                                <th className="py-4 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Link URL</th>
-                                <th className="py-4 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                                <th className="py-4 px-6 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {links.length === 0 ? (
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-1.5 ml-1">
+                                    Destination URL (Global) *
+                                </label>
+                                <input
+                                    type="url"
+                                    required
+                                    value={formData.url}
+                                    onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white font-mono text-[11px] font-bold"
+                                    placeholder="https://..."
+                                />
+                            </div>
+
+                            <div className="md:col-span-2">
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-1.5 ml-1">
+                                    Intelligence Summary
+                                </label>
+                                <textarea
+                                    value={formData.description}
+                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white font-medium min-h-[80px]"
+                                    rows="2"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-1.5 ml-1">
+                                    Taxonomy Category
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.category}
+                                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white font-black"
+                                />
+                            </div>
+
+                            <div className="flex items-end">
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="w-full bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-50"
+                                >
+                                    {loading ? (
+                                        <div className="animate-spin w-4 h-4 border-2 border-white/20 border-t-white rounded-full"></div>
+                                    ) : (
+                                        <FaSave />
+                                    )}
+                                    {editingLink ? 'Flush Changes' : 'Commit Resource'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                )}
+
+                <div className="overflow-hidden">
+
+                    {/* Desktop View Table (UNCHANGED) */}
+                    <div className="hidden lg:block overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead className="bg-gray-50/50 border-b border-gray-100">
                                 <tr>
-                                    <td colSpan="4" className="py-8 px-6 text-center text-gray-500">
-                                        No links found. Click "Add New Link" to create one.
-                                    </td>
+                                    <th className="px-6 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">Taxonomy</th>
+                                    <th className="px-6 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">Resource & Utility</th>
+                                    <th className="px-6 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">Interface</th>
+                                    <th className="px-6 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Operations</th>
                                 </tr>
-                            ) : (
-                                links.map(link => (
-                                    <tr key={link.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="py-3 px-6">
-                                            <a 
-                                                href={link.url} 
-                                                target="_blank" 
-                                                rel="noopener noreferrer" 
-                                                className="text-indigo-600 hover:text-indigo-800 hover:underline flex items-center gap-1 text-sm"
-                                            >
-                                                {link.title}
-                                                <FaExternalLinkAlt className="text-[10px]" />
-                                            </a>
-                                            {link.description && (
-                                                <p className="text-xs text-gray-500 mt-0.5">{link.description}</p>
-                                            )}
-                                        </td>
-                                        <td className="py-3 px-6">
-                                            <a 
-                                                href={link.url} 
-                                                target="_blank" 
-                                                rel="noopener noreferrer" 
-                                                className="text-gray-600 hover:text-indigo-600 text-xs break-all"
-                                            >
-                                                {link.url}
-                                            </a>
-                                        </td>
-                                        <td className="py-3 px-6">
-                                            <span className="text-xs text-gray-600">{link.category}</span>
-                                        </td>
-                                        <td className="py-3 px-6 text-right">
-                                            <button
-                                                onClick={() => startEdit(link)}
-                                                className="text-yellow-600 hover:text-yellow-800 font-medium mr-3 text-sm"
-                                            >
-                                                Edit
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(link.id)}
-                                                className="text-red-600 hover:text-red-800 font-medium text-sm"
-                                            >
-                                                Delete
-                                            </button>
+                            </thead>
+                            <tbody className="divide-y divide-gray-50">
+                                {links.length === 0 ? (
+                                    <tr>
+                                        <td colSpan="4" className="px-6 py-10 text-center text-gray-300 font-bold uppercase tracking-widest text-xs italic">
+                                            No intelligence nodes active.
                                         </td>
                                     </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
+                                ) : (
+                                    links.map(link => (
+                                        <tr key={link.id} className="hover:bg-gray-50/80 transition-colors group">
+                                            <td className="px-6 py-4">
+                                                <span className="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider border border-blue-100">
+                                                    {link.category}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="font-black text-gray-900 text-sm mb-0.5">{link.title}</div>
+                                                {link.description && (
+                                                    <div className="text-[10px] font-medium text-gray-400 leading-tight max-w-xs">
+                                                        {link.description}
+                                                    </div>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <a href={link.url} target="_blank" rel="noopener noreferrer"
+                                                   className="text-blue-500 font-mono text-[10px] flex items-center gap-1.5 hover:text-blue-700 font-bold">
+                                                    {link.url.replace(/^https?:\/\//, '').substring(0, 30)}...
+                                                    <FaExternalLinkAlt className="text-[8px]" />
+                                                </a>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex justify-end gap-1.5">
+                                                    <button onClick={() => startEdit(link)} className="text-blue-600 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg text-xs">
+                                                        <FaEdit />
+                                                    </button>
+                                                    <button onClick={() => handleDelete(link.id)} className="text-red-600 bg-red-50 hover:bg-red-100 p-2 rounded-lg text-xs">
+                                                        <FaTrash />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* ✅ REVISED Mobile View – Line Style */}
+                    <div className="lg:hidden divide-y divide-gray-100">
+                        {links.length === 0 ? (
+                            <div className="text-center py-10 text-gray-300 font-bold uppercase tracking-widest text-xs italic">
+                                System links buffer empty.
+                            </div>
+                        ) : (
+                            links.map(link => (
+                                <div key={link.id} className="py-4 flex items-start justify-between gap-4 hover:bg-gray-50 transition-colors">
+
+                                    <div className="flex-1 min-w-0">
+                                        <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">
+                                            {link.category}
+                                        </span>
+
+                                        <h4 className="font-black text-gray-900 text-sm leading-tight truncate">
+                                            {link.title}
+                                        </h4>
+
+                                        {link.description && (
+                                            <p className="text-[10px] text-gray-400 font-medium truncate">
+                                                {link.description}
+                                            </p>
+                                        )}
+
+                                        <a
+                                            href={link.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-blue-600 font-mono text-[10px] flex items-center gap-1 mt-1"
+                                        >
+                                            {link.url.replace(/^https?:\/\//, '').substring(0, 30)}...
+                                            <FaExternalLinkAlt className="text-[8px]" />
+                                        </a>
+                                    </div>
+
+                                    <div className="flex flex-col gap-2">
+                                        <button onClick={() => startEdit(link)} className="text-blue-600 text-xs">
+                                            <FaEdit />
+                                        </button>
+                                        <button onClick={() => handleDelete(link.id)} className="text-red-500 text-xs">
+                                            <FaTrash />
+                                        </button>
+                                    </div>
+
+                                </div>
+                            ))
+                        )}
+                    </div>
+
                 </div>
             </div>
         </div>
