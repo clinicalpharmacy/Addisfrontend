@@ -139,7 +139,7 @@ const Sidebar = ({ onClose }) => {
             </div>
 
             {/* Logo for desktop */}
-            <div className="p-4 border-b border-gray-50 hidden md:block">
+            <div className="p-6 border-b border-gray-50 hidden md:block">
                 <div className="flex items-center gap-4">
                     <div className="bg-blue-600 p-2.5 rounded-2xl shadow-lg shadow-blue-100 flex-shrink-0">
                         <FaHospital className="text-white text-xl" />
@@ -210,6 +210,26 @@ const Sidebar = ({ onClose }) => {
                                 </div>
                                 {expandedSections.settings ? <FaChevronDown className="text-current text-xs" /> : <FaChevronRight className="text-current text-xs" />}
                             </button>
+
+                            {/* Medication Availability Link */}
+                        <div className="mb-2">
+                            <NavLink
+                                to={isSubscribed ? "/medication-availability" : "/subscription/plans"}
+                                onClick={onClose}
+                                className={({ isActive }) =>
+                                    `flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isActive && isSubscribed
+                                        ? 'bg-green-50 text-green-600 border-l-4 border-green-600 shadow-sm'
+                                        : 'text-gray-600 hover:bg-green-50 hover:text-green-600 hover:shadow-sm'
+                                    } ${!isSubscribed ? 'opacity-60' : ''}`
+                                }
+                            >
+                                <div className="flex items-center gap-2.5 w-full">
+                                    <FaPills className="text-xl" />
+                                    <span className="font-medium text-base">Med Availability</span>
+                                    {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
+                                </div>
+                            </NavLink>
+                        </div>
 
                             {expandedSections.settings && (
                                 <div className="ml-8 mt-2 space-y-1 animate-fadeIn">
@@ -298,25 +318,6 @@ const Sidebar = ({ onClose }) => {
                     </ul>
                 </div>
 
-                                        {/* Medication Availability Link */}
-                        <div className="mb-2">
-                            <NavLink
-                                to={isSubscribed ? "/medication-availability" : "/subscription/plans"}
-                                onClick={onClose}
-                                className={({ isActive }) =>
-                                    `flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isActive && isSubscribed
-                                        ? 'bg-green-50 text-green-600 border-l-4 border-green-600 shadow-sm'
-                                        : 'text-gray-600 hover:bg-green-50 hover:text-green-600 hover:shadow-sm'
-                                    } ${!isSubscribed ? 'opacity-60' : ''}`
-                                }
-                            >
-                                <div className="flex items-center gap-2.5 w-full">
-                                    <FaPills className="text-xl" />
-                                    <span className="font-medium text-base">Med Availability</span>
-                                    {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
-                                </div>
-                            </NavLink>
-                        </div>
                 
                 {/* Quick Actions */}
                 <div className="mb-8">
