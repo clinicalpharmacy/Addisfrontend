@@ -23,13 +23,11 @@ import {
     FaChevronDown,
     FaChevronUp,
     FaInfoCircle,
+    FaDatabase,
     FaListUl,
     FaIndent,
     FaOutdent,
-    FaBold,
-    FaItalic,
-    FaHashtag,
-    FaDatabase
+    FaHashtag
 } from 'react-icons/fa';
 import { useOutletContext } from 'react-router-dom';
 import useScreenshotProtection from '../../hooks/useScreenshotProtection';
@@ -39,7 +37,7 @@ const MinorIllnesses = () => {
     const protectionEnabled = context?.protectionEnabled ?? true;
     const toggleProtection = context?.toggleProtection ?? (() => { });
     const protectionMsg = useScreenshotProtection(protectionEnabled);
-    
+
     const [illnesses, setIllnesses] = useState([]);
     const [filteredIllnesses, setFilteredIllnesses] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -50,12 +48,12 @@ const MinorIllnesses = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
-    const [expandedCards, setExpandedCards] = useState({});
+    const [successMessage, setSuccessMessage] = useState('');
+    const [selectedIllness, setSelectedIllness] = useState(null);
+    const [expandedSections, setExpandedSections] = useState({});
     const [activeFormatField, setActiveFormatField] = useState(null);
     const [showFormattingHelp, setShowFormattingHelp] = useState(false);
-    const [selectedIllness, setSelectedIllness] = useState(null);
-    
+
     const [formData, setFormData] = useState({
         name: '',
         amharic_name: '',
@@ -79,42 +77,56 @@ const MinorIllnesses = () => {
         }
     }, []);
 
-    useEffect(() => {
-        fetchIllnesses();
-    }, []);
-
+    // FETCH ILLNESSES FROM DATABASE
     const fetchIllnesses = async () => {
         setLoading(true);
         setError('');
         try {
+            console.log('Fetching illnesses from database...');
+
             const { data, error } = await supabase
                 .from('minor_illnesses')
                 .select('*')
-                .order('name');
+                .order('name', { ascending: true });
 
-            if (error) throw error;
+            if (error) {
+                console.error('Supabase error:', error);
+                throw error;
+            }
 
-            if (data) {
+            console.log('Fetched illnesses:', data);
+
+            if (data && data.length > 0) {
                 setIllnesses(data);
                 setFilteredIllnesses(data);
+            } else {
+                console.log('No illnesses found in database');
+                setIllnesses([]);
+                setFilteredIllnesses([]);
             }
         } catch (err) {
             console.error('Error fetching illnesses:', err);
             setError('Failed to load illnesses. Please try again.');
+            setIllnesses([]);
+            setFilteredIllnesses([]);
         } finally {
             setLoading(false);
         }
     };
 
+    useEffect(() => {
+        fetchIllnesses();
+    }, []);
+
     // Use useMemo for filtered illnesses
     const filteredIlls = useMemo(() => {
         if (!searchTerm.trim()) return illnesses;
         
-        return illnesses.filter(illness =>
-            (illness.name && illness.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (illness.amharic_name && illness.amharic_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (illness.assessment && illness.assessment.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (illness.referral && illness.referral.toLowerCase().includes(searchTerm.toLowerCase()))
+        return illnesses.filter(ill =>
+            (ill.name && ill.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (ill.amharic_name && ill.amharic_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (ill.assessment && ill.assessment.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (ill.otc_drug && ill.otc_drug.toLowerCase().includes(searchTerm.toLowerCase()))
         );
     }, [illnesses, searchTerm]);
 
@@ -127,10 +139,10 @@ const MinorIllnesses = () => {
         setSearchTerm(e.target.value);
     };
 
-    const toggleCard = (illnessId) => {
-        setExpandedCards(prev => ({
+    const toggleSection = (section) => {
+        setExpandedSections(prev => ({
             ...prev,
-            [illnessId]: !prev[illnessId]
+            [section]: !prev[section]
         }));
     };
 
@@ -179,14 +191,6 @@ const MinorIllnesses = () => {
                 }
                 break;
                 
-            case 'bold':
-                formattedText = `**${selectedText}**`;
-                break;
-                
-            case 'italic':
-                formattedText = `*${selectedText}*`;
-                break;
-                
             case 'indent':
                 if (selectedText.includes('\n')) {
                     formattedText = selectedText.split('\n')
@@ -216,7 +220,6 @@ const MinorIllnesses = () => {
             [field]: beforeText + formattedText + afterText
         });
 
-        // Restore cursor position after update
         setTimeout(() => {
             textarea.focus();
             const newPosition = start + formattedText.length;
@@ -224,205 +227,78 @@ const MinorIllnesses = () => {
         }, 0);
     };
 
-    // Initialize database with sample data - ADMIN ONLY
-    const initializeDatabase = async () => {
+    // ADD ILLNESS TO DATABASE - ADMIN ONLY
+    const handleAddIllness = async () => {
         if (!isAdmin) {
-            setError('Only administrators can initialize the database');
-            setTimeout(() => setError(''), 3000);
-            return;
-        }
-
-        if (!window.confirm('This will insert sample illnesses into the database. Continue?')) {
-            return;
-        }
-
-        setLoading(true);
-        try {
-            const sampleIllnesses = [
-                {
-                    name: 'Common Cold',
-                    amharic_name: 'እምቢልታ',
-                    assessment: '• Runny or stuffy nose\n• Sneezing\n• Sore throat\n• Mild cough\n• Low-grade fever possible\n  ◦ Usually below 101°F (38.3°C)',
-                    referral: '• Fever above 101°F (38.3°C) for more than 3 days\n• Difficulty breathing\n• Severe headache\n• Symptoms lasting more than 10 days',
-                    otc_drug: '• Antihistamines for runny nose\n• Decongestants for stuffiness\n• Acetaminophen for fever/pain\n• Cough suppressants for persistent cough',
-                    for_pharmacists: '• Check for drug interactions with other medications\n• Advise on proper hydration\n• Warn about drowsiness with first-generation antihistamines'
-                },
-                {
-                    name: 'Headache',
-                    amharic_name: 'ራስ ምታት',
-                    assessment: '• Tension headache:\n  ◦ Mild to moderate pain\n  ◦ Pressure around forehead\n• Migraine symptoms:\n  ◦ Throbbing pain\n  ◦ Sensitivity to light/sound\n  ◦ Nausea possible',
-                    referral: '• Sudden severe headache\n• Headache with stiff neck\n• After head injury\n• With vision changes\n• With confusion or seizures',
-                    otc_drug: '• Acetaminophen\n• Ibuprofen\n• Naproxen sodium\n• Aspirin (adults only)',
-                    for_pharmacists: '• Avoid overuse of pain relievers (rebound headaches)\n• Consider triptans for diagnosed migraines\n• Check for contraindications'
-                },
-                {
-                    name: 'Gastroenteritis',
-                    amharic_name: 'የሆድ እብጠት',
-                    assessment: '• Watery diarrhea\n• Nausea and vomiting\n• Stomach cramps\n• Low-grade fever\n• Usually viral cause',
-                    referral: '• Signs of dehydration\n  ◦ Dry mouth\n  ◦ Decreased urination\n  ◦ Dizziness\n• Blood in stool\n• High fever >101°F\n• Severe abdominal pain',
-                    otc_drug: '• Oral rehydration salts\n• Loperamide for diarrhea (no fever/blood)\n• Antiemetics for vomiting',
-                    for_pharmacists: '• Emphasize hydration\n• BRAT diet recommendations\n• Avoid dairy initially\n• Hand washing importance'
-                }
-            ];
-
-            const { error } = await supabase
-                .from('minor_illnesses')
-                .insert(sampleIllnesses);
-
-            if (error) throw error;
-
-            setSuccess('Sample illnesses added successfully!');
-            fetchIllnesses();
-
-        } catch (err) {
-            console.error('Error initializing database:', err);
-            setError('Failed to initialize database');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Convert textarea text to formatted display
-    const renderFormattedText = (text) => {
-        if (!text) return null;
-
-        const lines = text.split('\n');
-        
-        return lines.map((line, index) => {
-            const trimmed = line.trim();
-            
-            // Check for main bullet points (•)
-            if (trimmed.startsWith('•')) {
-                return (
-                    <li key={index} className="ml-4 list-disc text-sm text-gray-700">
-                        {trimmed.replace('•', '').trim()}
-                    </li>
-                );
-            }
-            // Check for sub-bullets (◦ or ○)
-            else if (trimmed.startsWith('◦') || trimmed.startsWith('○') || line.trim().startsWith('  •')) {
-                return (
-                    <li key={index} className="ml-8 list-circle text-sm text-gray-600">
-                        {trimmed.replace(/[◦○]/, '').trim()}
-                    </li>
-                );
-            }
-            // Check for numbered items
-            else if (/^\d+\./.test(trimmed)) {
-                return (
-                    <li key={index} className="ml-4 list-decimal text-sm text-gray-700">
-                        {trimmed.replace(/^\d+\./, '').trim()}
-                    </li>
-                );
-            }
-            // Regular text
-            else if (trimmed) {
-                // Check for bold formatting
-                let content = trimmed;
-                if (content.includes('**')) {
-                    const parts = content.split(/(\*\*.*?\*\*)/g);
-                    return (
-                        <p key={index} className="text-sm text-gray-700 mb-1">
-                            {parts.map((part, i) => {
-                                if (part.startsWith('**') && part.endsWith('**')) {
-                                    return <strong key={i}>{part.slice(2, -2)}</strong>;
-                                }
-                                return part;
-                            })}
-                        </p>
-                    );
-                }
-                // Check for italic formatting
-                if (content.includes('*') && !content.includes('**')) {
-                    const parts = content.split(/(\*.*?\*)/g);
-                    return (
-                        <p key={index} className="text-sm text-gray-700 mb-1">
-                            {parts.map((part, i) => {
-                                if (part.startsWith('*') && part.endsWith('*')) {
-                                    return <em key={i}>{part.slice(1, -1)}</em>;
-                                }
-                                return part;
-                            })}
-                        </p>
-                    );
-                }
-                return (
-                    <p key={index} className="text-sm text-gray-700 mb-1">
-                        {content}
-                    </p>
-                );
-            }
-            return null;
-        });
-    };
-
-    // ADD/EDIT ILLNESS - ADMIN ONLY
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
-        if (!isAdmin) {
-            setError('Only administrators can add or edit illnesses');
+            setError('Only administrators can add illnesses');
             setTimeout(() => setError(''), 3000);
             return;
         }
 
         if (!formData.name.trim()) {
-            setError('Illness name is required');
+            setError('Please enter an illness name');
             return;
         }
 
         if (!formData.assessment.trim()) {
-            setError('How to assess the illness is required');
+            setError('Please enter assessment information');
             return;
         }
 
         setSaving(true);
         setError('');
-        setSuccess('');
+        setSuccessMessage('');
 
         try {
-            const illnessData = {
-                name: formData.name.trim(),
-                amharic_name: formData.amharic_name.trim() || '',
-                assessment: formData.assessment.trim(),
-                referral: formData.referral.trim() || '',
-                otc_drug: formData.otc_drug.trim() || '',
-                for_pharmacists: formData.for_pharmacists.trim() || '',
-                updated_at: new Date().toISOString()
-            };
+            console.log('Saving illness:', formData);
 
-            if (editIllness) {
-                const { error } = await supabase
-                    .from('minor_illnesses')
-                    .update(illnessData)
-                    .eq('id', editIllness.id);
+            const { data, error } = await supabase
+                .from('minor_illnesses')
+                .insert([{
+                    name: formData.name,
+                    amharic_name: formData.amharic_name,
+                    assessment: formData.assessment,
+                    referral: formData.referral,
+                    otc_drug: formData.otc_drug,
+                    for_pharmacists: formData.for_pharmacists,
+                    created_at: new Date().toISOString()
+                }])
+                .select();
 
-                if (error) throw error;
-                setSuccess('Illness updated successfully!');
-            } else {
-                const { error } = await supabase
-                    .from('minor_illnesses')
-                    .insert([{
-                        ...illnessData,
-                        created_at: new Date().toISOString()
-                    }]);
-
-                if (error) throw error;
-                setSuccess('Illness added successfully!');
+            if (error) {
+                console.error('Supabase insert error:', error);
+                throw error;
             }
 
-            fetchIllnesses();
-            resetForm();
+            console.log('Illness saved:', data);
+
+            setSuccessMessage('Illness added successfully!');
+
+            setFormData({
+                name: '',
+                amharic_name: '',
+                assessment: '',
+                referral: '',
+                otc_drug: '',
+                for_pharmacists: ''
+            });
+
+            setShowForm(false);
+
+            setTimeout(() => {
+                fetchIllnesses();
+            }, 1000);
 
         } catch (err) {
             console.error('Error saving illness:', err);
-            setError('Error: ' + err.message);
+            setError(`Failed to save illness: ${err.message}`);
         } finally {
             setSaving(false);
         }
     };
 
-    const handleEdit = (illness) => {
+    // EDIT ILLNESS - ADMIN ONLY
+    const handleEditIllness = (illness) => {
         if (!isAdmin) {
             setError('Only administrators can edit illnesses');
             setTimeout(() => setError(''), 3000);
@@ -439,6 +315,73 @@ const MinorIllnesses = () => {
             for_pharmacists: illness.for_pharmacists || ''
         });
         setShowForm(true);
+    };
+
+    // UPDATE ILLNESS IN DATABASE - ADMIN ONLY
+    const handleUpdateIllness = async () => {
+        if (!isAdmin) {
+            setError('Only administrators can update illnesses');
+            setTimeout(() => setError(''), 3000);
+            return;
+        }
+
+        if (!formData.name.trim()) {
+            setError('Please enter an illness name');
+            return;
+        }
+
+        setSaving(true);
+        setError('');
+        setSuccessMessage('');
+
+        try {
+            console.log('Updating illness:', editIllness.id, formData);
+
+            const { data, error } = await supabase
+                .from('minor_illnesses')
+                .update({
+                    name: formData.name,
+                    amharic_name: formData.amharic_name,
+                    assessment: formData.assessment,
+                    referral: formData.referral,
+                    otc_drug: formData.otc_drug,
+                    for_pharmacists: formData.for_pharmacists,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', editIllness.id)
+                .select();
+
+            if (error) {
+                console.error('Supabase update error:', error);
+                throw error;
+            }
+
+            console.log('Illness updated:', data);
+
+            setSuccessMessage('Illness updated successfully!');
+
+            setFormData({
+                name: '',
+                amharic_name: '',
+                assessment: '',
+                referral: '',
+                otc_drug: '',
+                for_pharmacists: ''
+            });
+
+            setShowForm(false);
+            setEditIllness(null);
+
+            setTimeout(() => {
+                fetchIllnesses();
+            }, 1000);
+
+        } catch (err) {
+            console.error('Error updating illness:', err);
+            setError(`Failed to update illness: ${err.message}`);
+        } finally {
+            setSaving(false);
+        }
     };
 
     // DELETE ILLNESS - ADMIN ONLY
@@ -464,7 +407,7 @@ const MinorIllnesses = () => {
 
             if (error) throw error;
 
-            setSuccess('Illness deleted successfully');
+            setSuccessMessage('Illness deleted successfully');
             
             if (selectedIllness?.id === id) {
                 setSelectedIllness(null);
@@ -480,18 +423,102 @@ const MinorIllnesses = () => {
         }
     };
 
-    const resetForm = () => {
-        setFormData({
-            name: '',
-            amharic_name: '',
-            assessment: '',
-            referral: '',
-            otc_drug: '',
-            for_pharmacists: ''
+    // Initialize database if empty - ADMIN ONLY
+    const initializeDatabase = async () => {
+        if (!isAdmin) {
+            setError('Only administrators can initialize the database');
+            setTimeout(() => setError(''), 3000);
+            return;
+        }
+
+        if (!window.confirm('This will insert sample illnesses into the database. Continue?')) {
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const sampleIllnesses = [
+                {
+                    name: 'Common Cold',
+                    amharic_name: 'እምቢልታ',
+                    assessment: '• Runny or stuffy nose\n• Sneezing\n• Sore throat\n• Mild cough\n• Low-grade fever possible\n• Usually resolves in 7-10 days',
+                    referral: '• Fever > 101°F (38.3°C) for more than 3 days\n• Difficulty breathing\n• Severe headache\n• Symptoms lasting > 10 days',
+                    otc_drug: '• Antihistamines for runny nose\n• Decongestants for stuffiness\n• Acetaminophen or ibuprofen for fever\n• Cough suppressants at night\n• Expectorants for productive cough',
+                    for_pharmacists: '• Check for drug interactions\n• Warn about drowsiness with first-gen antihistamines\n• Recommend adequate hydration\n• Suggest rest and vitamin C'
+                },
+                {
+                    name: 'Headache',
+                    amharic_name: 'ራስ ምታት',
+                    assessment: '• Tension-type: dull, pressing pain both sides\n• Migraine: throbbing, often one-sided\n• May have nausea or light sensitivity\n• Duration varies from hours to days',
+                    referral: '• Sudden severe headache ("worst of life")\n• Headache after head injury\n• With fever and stiff neck\n• Neurological symptoms\n• Frequent recurring headaches',
+                    otc_drug: '• Acetaminophen 500-1000mg every 6h\n• Ibuprofen 200-400mg every 6-8h\n• Aspirin 325-650mg every 4-6h\n• Caffeine combinations may help\n• Rest in dark, quiet room',
+                    for_pharmacists: '• Assess for medication overuse headache\n• Check contraindications (aspirin in children)\n• Recommend stress reduction techniques\n• Suggest keeping headache diary'
+                },
+                {
+                    name: 'Heartburn',
+                    amharic_name: 'የሆድ ቃር',
+                    assessment: '• Burning sensation in chest\n• Sour taste in mouth\n• Worse after meals or lying down\n• May have regurgitation\n• Often occurs at night',
+                    referral: '• Difficulty swallowing\n• Unexplained weight loss\n• Chest pain with exertion\n• Vomiting blood\n• Symptoms despite treatment',
+                    otc_drug: '• Antacids for quick relief\n• H2 blockers (famotidine) for longer relief\n• Proton pump inhibitors (omeprazole) for daily use\n• Alginate preparations for barrier effect',
+                    for_pharmacists: '• Advise lifestyle modifications\n• Elevate head of bed\n• Avoid trigger foods\n• Don\'t lie down after meals\n• Weight loss if overweight'
+                }
+            ];
+
+            const { data, error } = await supabase
+                .from('minor_illnesses')
+                .insert(sampleIllnesses)
+                .select();
+
+            if (error) throw error;
+
+            setSuccessMessage('Sample illnesses added successfully!');
+            fetchIllnesses();
+
+        } catch (err) {
+            console.error('Error initializing database:', err);
+            setError('Failed to initialize database');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Convert textarea text to bullet list with support for nested bullets
+    const renderFormattedText = (text) => {
+        if (!text) return null;
+
+        const lines = text.split('\n');
+        
+        return lines.map((line, index) => {
+            if (line.trim().startsWith('•')) {
+                return (
+                    <li key={index} className="ml-4 list-disc text-sm text-gray-700">
+                        {line.replace('•', '').trim()}
+                    </li>
+                );
+            }
+            else if (line.trim().startsWith('◦') || line.trim().startsWith('○')) {
+                return (
+                    <li key={index} className="ml-8 list-circle text-sm text-gray-600">
+                        {line.replace(/[◦○]/, '').trim()}
+                    </li>
+                );
+            }
+            else if (/^\d+\./.test(line.trim())) {
+                return (
+                    <li key={index} className="ml-4 list-decimal text-sm text-gray-700">
+                        {line.replace(/^\d+\./, '').trim()}
+                    </li>
+                );
+            }
+            else if (line.trim()) {
+                return (
+                    <p key={index} className="text-sm text-gray-700 mb-1">
+                        {line}
+                    </p>
+                );
+            }
+            return null;
         });
-        setEditIllness(null);
-        setShowForm(false);
-        setError('');
     };
 
     if (loading) {
@@ -499,7 +526,7 @@ const MinorIllnesses = () => {
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="text-center">
                     <FaSpinner className="animate-spin text-4xl text-red-600 mx-auto mb-4" />
-                    <p className="mt-3 text-gray-600">Loading illnesses...</p>
+                    <p className="text-gray-600">Loading illnesses...</p>
                 </div>
             </div>
         );
@@ -540,6 +567,7 @@ const MinorIllnesses = () => {
                             </div>
                         </div>
                         <div className="flex flex-wrap gap-2">
+                            {/* Only show admin buttons to admins */}
                             {isAdmin && (
                                 <>
                                     <button
@@ -560,6 +588,7 @@ const MinorIllnesses = () => {
                             <button
                                 onClick={fetchIllnesses}
                                 className="bg-gray-600 hover:bg-gray-700 text-white px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
+                                title="Refresh data"
                             >
                                 <FaSync /> <span className="hidden sm:inline">Refresh</span>
                             </button>
@@ -568,13 +597,13 @@ const MinorIllnesses = () => {
                 </div>
 
                 {/* Success/Error Messages */}
-                {success && (
+                {successMessage && (
                     <div className="mb-4 p-4 bg-green-100 text-green-800 rounded-lg flex items-center justify-between text-sm md:text-base">
                         <div className="flex items-center gap-2">
                             <FaCheckCircle className="flex-shrink-0" />
-                            <span className="font-medium">{success}</span>
+                            <span>{successMessage}</span>
                         </div>
-                        <button onClick={() => setSuccess('')} className="text-green-800 hover:text-green-900">
+                        <button onClick={() => setSuccessMessage('')} className="text-green-800">
                             <FaTimes />
                         </button>
                     </div>
@@ -584,15 +613,15 @@ const MinorIllnesses = () => {
                     <div className="mb-4 p-4 bg-red-100 text-red-800 rounded-lg flex items-center justify-between text-sm md:text-base">
                         <div className="flex items-center gap-2">
                             <FaExclamationTriangle className="flex-shrink-0" />
-                            <span className="font-medium">{error}</span>
+                            <span>{error}</span>
                         </div>
-                        <button onClick={() => setError('')} className="text-red-800 hover:text-red-900">
+                        <button onClick={() => setError('')} className="text-red-800">
                             <FaTimes />
                         </button>
                     </div>
                 )}
 
-                {/* Search and Filter */}
+                {/* Search Bar */}
                 <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 mb-6 md:mb-8">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="relative md:col-span-2">
@@ -602,16 +631,17 @@ const MinorIllnesses = () => {
                                 value={searchTerm}
                                 onChange={handleSearchChange}
                                 placeholder="Search illnesses..."
-                                className="w-full pl-10 pr-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 text-sm md:text-base"
+                                className="w-full pl-10 pr-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm md:text-base"
                             />
                         </div>
 
+                        {/* Admin-only add button */}
                         {isAdmin && (
                             <button
                                 onClick={() => setShowForm(true)}
                                 className="hidden md:flex bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg items-center justify-center gap-2 font-medium"
                             >
-                                <FaPlus /> Add Illness
+                                <FaPlus /> Add New Illness
                             </button>
                         )}
                     </div>
@@ -619,150 +649,10 @@ const MinorIllnesses = () => {
                     <div className="mt-4 text-xs md:text-sm text-gray-500 flex flex-wrap gap-2 items-center">
                         <span>Showing {filteredIllnesses.length} of {illnesses.length} illnesses</span>
                         {!isAdmin && <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-600">Read-only</span>}
-                        {protectionEnabled && !isAdmin && <span className="bg-red-50 text-red-600 px-2 py-0.5 rounded flex items-center gap-1"><FaLock size={10} /> Protected</span>}
                     </div>
                 </div>
 
-                {/* Illnesses Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
-                    {filteredIllnesses.length > 0 ? (
-                        filteredIllnesses.map((illness) => (
-                            <div
-                                key={illness.id}
-                                className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition-shadow"
-                            >
-                                <div className="p-3 md:p-6">
-                                    <div className="flex justify-between items-start mb-3 md:mb-4">
-                                        <div 
-                                            className="flex-1 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors"
-                                            onClick={() => toggleCard(illness.id)}
-                                        >
-                                            <div className="flex items-center gap-2">
-                                                <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-1">{illness.name}</h3>
-                                                {expandedCards[illness.id] ? 
-                                                    <FaChevronUp className="text-gray-500 text-sm" /> : 
-                                                    <FaChevronDown className="text-gray-500 text-sm" />
-                                                }
-                                            </div>
-                                            {illness.amharic_name && (
-                                                <p className="text-xs md:text-sm text-gray-600 mb-2">{illness.amharic_name}</p>
-                                            )}
-                                        </div>
-                                        <div className="flex gap-2">
-                                            {isAdmin && (
-                                                <>
-                                                    <button
-                                                        onClick={() => handleEdit(illness)}
-                                                        className="text-indigo-500 hover:text-indigo-700 p-1"
-                                                        title="Edit"
-                                                    >
-                                                        <FaEdit className="text-sm" />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDeleteIllness(illness.id)}
-                                                        className="text-red-500 hover:text-red-700 p-1"
-                                                        title="Delete"
-                                                    >
-                                                        <FaTrash className="text-sm" />
-                                                    </button>
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* All content sections - only shown when card is expanded */}
-                                    {expandedCards[illness.id] && (
-                                        <>
-                                            {illness.assessment && (
-                                                <div className="mb-3 md:mb-4">
-                                                    <h4 className="font-semibold text-gray-700 mb-1.5 md:mb-2 flex items-center gap-1 text-sm md:text-base">
-                                                        <FaStethoscope className="text-xs md:text-sm" /> Assessment:
-                                                    </h4>
-                                                    <ul className="space-y-0.5">
-                                                        {renderFormattedText(illness.assessment)}
-                                                    </ul>
-                                                </div>
-                                            )}
-
-                                            {illness.referral && (
-                                                <div className="mb-3 md:mb-4 p-2 md:p-3 bg-yellow-50 border border-yellow-100 rounded">
-                                                    <h4 className="font-semibold text-yellow-700 mb-1 text-sm md:text-base">When to Refer:</h4>
-                                                    <ul className="space-y-0.5">
-                                                        {renderFormattedText(illness.referral)}
-                                                    </ul>
-                                                </div>
-                                            )}
-
-                                            {illness.otc_drug && (
-                                                <div className="mb-3 md:mb-4">
-                                                    <h4 className="font-semibold text-gray-700 mb-1.5 md:mb-2 flex items-center gap-1 text-sm md:text-base">
-                                                        <FaCapsules className="text-xs md:text-sm" /> OTC Recommendations:
-                                                    </h4>
-                                                    <ul className="space-y-0.5">
-                                                        {renderFormattedText(illness.otc_drug)}
-                                                    </ul>
-                                                </div>
-                                            )}
-
-                                            {illness.for_pharmacists && (
-                                                <div className="mb-3 md:mb-4 p-2 md:p-3 bg-blue-50 border border-blue-100 rounded">
-                                                    <h4 className="font-semibold text-blue-700 mb-1 flex items-center gap-1 text-sm md:text-base">
-                                                        <FaUserMd className="text-xs md:text-sm" /> Pharmacist Notes:
-                                                    </h4>
-                                                    <ul className="space-y-0.5">
-                                                        {renderFormattedText(illness.for_pharmacists)}
-                                                    </ul>
-                                                </div>
-                                            )}
-
-                                            <div className="text-xs text-gray-500 mt-3 md:mt-4 pt-2 md:pt-3 border-t border-gray-100">
-                                                Last updated: {new Date(illness.updated_at || illness.created_at).toLocaleDateString()}
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                        ))
-                    ) : (
-                        <div className="col-span-full bg-white rounded-xl shadow-lg p-12 text-center">
-                            <FaBookMedical className="text-5xl text-gray-300 mx-auto mb-4" />
-                            <h3 className="text-xl font-medium text-gray-800 mb-2">No Illnesses Found</h3>
-                            <p className="text-gray-500 max-w-md mx-auto mb-6">
-                                {searchTerm
-                                    ? 'No illnesses match your search. Try a different term.'
-                                    : 'No minor illnesses added yet.'}
-                            </p>
-                            <div className="flex flex-wrap gap-3 justify-center">
-                                <button
-                                    onClick={() => {
-                                        setSearchTerm('');
-                                    }}
-                                    className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg"
-                                >
-                                    Clear Search
-                                </button>
-                                {isAdmin && (
-                                    <>
-                                        <button
-                                            onClick={() => setShowForm(true)}
-                                            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center gap-2"
-                                        >
-                                            <FaPlus /> Add Illness
-                                        </button>
-                                        <button
-                                            onClick={initializeDatabase}
-                                            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg flex items-center gap-2"
-                                        >
-                                            <FaDatabase /> Add Sample Data
-                                        </button>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* Add/Edit Form Modal - ADMIN ONLY with enhanced formatting */}
+                {/* Add/Edit Illness Form Modal - ADMIN ONLY with Bullet Point Formatting */}
                 {showForm && isAdmin && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
                         <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -781,8 +671,18 @@ const MinorIllnesses = () => {
                                             <span className="hidden sm:inline">Formatting Help</span>
                                         </button>
                                         <button
-                                            type="button"
-                                            onClick={resetForm}
+                                            onClick={() => {
+                                                setShowForm(false);
+                                                setEditIllness(null);
+                                                setFormData({
+                                                    name: '',
+                                                    amharic_name: '',
+                                                    assessment: '',
+                                                    referral: '',
+                                                    otc_drug: '',
+                                                    for_pharmacists: ''
+                                                });
+                                            }}
                                             className="text-gray-500 hover:text-gray-700 text-2xl"
                                             disabled={saving}
                                         >
@@ -817,10 +717,11 @@ const MinorIllnesses = () => {
                                                 </ul>
                                             </div>
                                             <div>
-                                                <p className="font-medium text-red-700 mb-2">Text Formatting:</p>
+                                                <p className="font-medium text-red-700 mb-2">Keyboard Shortcuts:</p>
                                                 <ul className="space-y-1 text-red-600">
-                                                    <li><span className="font-mono bg-red-100 px-1">**bold**</span> - Bold text</li>
-                                                    <li><span className="font-mono bg-red-100 px-1">*italic*</span> - Italic text</li>
+                                                    <li><span className="font-mono bg-red-100 px-1">•</span> - Main bullet</li>
+                                                    <li><span className="font-mono bg-red-100 px-1">  ◦</span> - Sub-bullet (2 spaces)</li>
+                                                    <li><span className="font-mono bg-red-100 px-1">1.</span> - Numbered item</li>
                                                     <li>Use Tab/Shift+Tab for indentation</li>
                                                 </ul>
                                             </div>
@@ -831,348 +732,589 @@ const MinorIllnesses = () => {
                                     </div>
                                 )}
 
-                                <form onSubmit={handleSubmit}>
-                                    <div className="space-y-6">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    Illness Name *
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.name}
-                                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500"
-                                                    placeholder="e.g., Common Cold"
-                                                    required
-                                                    disabled={saving}
-                                                />
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    Amharic Name
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.amharic_name}
-                                                    onChange={(e) => setFormData({ ...formData, amharic_name: e.target.value })}
-                                                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500"
-                                                    placeholder="እምቢልታ"
-                                                    disabled={saving}
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Assessment Field with Formatting Toolbar */}
+                                <div className="space-y-6">
+                                    {/* Basic Info Fields */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Assessment *
+                                                Illness Name *
                                             </label>
-                                            <div className="mb-2 flex flex-wrap gap-1 p-1 bg-gray-100 rounded-lg">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => insertFormatting('assessment', 'bullet')}
-                                                    className="p-2 hover:bg-red-100 rounded text-red-600 transition-colors"
-                                                    title="Add bullet point"
-                                                    disabled={saving}
-                                                >
-                                                    <FaListUl />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => insertFormatting('assessment', 'subbullet')}
-                                                    className="p-2 hover:bg-red-100 rounded text-red-600 transition-colors"
-                                                    title="Add sub-bullet"
-                                                    disabled={saving}
-                                                >
-                                                    <span className="text-lg font-bold">◦</span>
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => insertFormatting('assessment', 'number')}
-                                                    className="p-2 hover:bg-red-100 rounded text-red-600 transition-colors"
-                                                    title="Add numbered list"
-                                                    disabled={saving}
-                                                >
-                                                    <FaHashtag />
-                                                </button>
-                                                <div className="w-px h-6 bg-gray-300 mx-1 self-center"></div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => insertFormatting('assessment', 'bold')}
-                                                    className="p-2 hover:bg-red-100 rounded text-red-600 transition-colors"
-                                                    title="Bold"
-                                                    disabled={saving}
-                                                >
-                                                    <FaBold />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => insertFormatting('assessment', 'italic')}
-                                                    className="p-2 hover:bg-red-100 rounded text-red-600 transition-colors"
-                                                    title="Italic"
-                                                    disabled={saving}
-                                                >
-                                                    <FaItalic />
-                                                </button>
-                                                <div className="w-px h-6 bg-gray-300 mx-1 self-center"></div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => insertFormatting('assessment', 'indent')}
-                                                    className="p-2 hover:bg-red-100 rounded text-red-600 transition-colors"
-                                                    title="Indent"
-                                                    disabled={saving}
-                                                >
-                                                    <FaIndent />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => insertFormatting('assessment', 'outdent')}
-                                                    className="p-2 hover:bg-red-100 rounded text-red-600 transition-colors"
-                                                    title="Outdent"
-                                                    disabled={saving}
-                                                >
-                                                    <FaOutdent />
-                                                </button>
-                                            </div>
-                                            <textarea
-                                                id="assessment"
-                                                value={formData.assessment}
-                                                onChange={(e) => setFormData({ ...formData, assessment: e.target.value })}
-                                                onFocus={() => setActiveFormatField('assessment')}
-                                                rows="4"
-                                                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 font-mono text-sm"
-                                                placeholder="• Main symptom or sign&#10;  ◦ Specific detail&#10;• Another key point&#10;1. First step in assessment"
+                                            <input
+                                                type="text"
+                                                value={formData.name}
+                                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500"
+                                                placeholder="e.g., Common Cold"
                                                 required
                                                 disabled={saving}
                                             />
                                         </div>
 
-                                        {/* Referral Field with Formatting Toolbar */}
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                When to Refer
+                                                Amharic Name
                                             </label>
-                                            <div className="mb-2 flex flex-wrap gap-1 p-1 bg-gray-100 rounded-lg">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => insertFormatting('referral', 'bullet')}
-                                                    className="p-2 hover:bg-yellow-100 rounded text-yellow-600 transition-colors"
-                                                    title="Add bullet point"
-                                                    disabled={saving}
-                                                >
-                                                    <FaListUl />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => insertFormatting('referral', 'subbullet')}
-                                                    className="p-2 hover:bg-yellow-100 rounded text-yellow-600 transition-colors"
-                                                    title="Add sub-bullet"
-                                                    disabled={saving}
-                                                >
-                                                    <span className="text-lg font-bold">◦</span>
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => insertFormatting('referral', 'number')}
-                                                    className="p-2 hover:bg-yellow-100 rounded text-yellow-600 transition-colors"
-                                                    title="Add numbered list"
-                                                    disabled={saving}
-                                                >
-                                                    <FaHashtag />
-                                                </button>
-                                                <div className="w-px h-6 bg-gray-300 mx-1 self-center"></div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => insertFormatting('referral', 'indent')}
-                                                    className="p-2 hover:bg-yellow-100 rounded text-yellow-600 transition-colors"
-                                                    title="Indent"
-                                                    disabled={saving}
-                                                >
-                                                    <FaIndent />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => insertFormatting('referral', 'outdent')}
-                                                    className="p-2 hover:bg-yellow-100 rounded text-yellow-600 transition-colors"
-                                                    title="Outdent"
-                                                    disabled={saving}
-                                                >
-                                                    <FaOutdent />
-                                                </button>
-                                            </div>
-                                            <textarea
-                                                id="referral"
-                                                value={formData.referral}
-                                                onChange={(e) => setFormData({ ...formData, referral: e.target.value })}
-                                                onFocus={() => setActiveFormatField('referral')}
-                                                rows="4"
-                                                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 font-mono text-sm"
-                                                placeholder="• Red flag symptoms&#10;  ◦ Severe pain&#10;• When to seek immediate care"
-                                                disabled={saving}
-                                            />
-                                        </div>
-
-                                        {/* OTC Drug Field with Formatting Toolbar */}
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                OTC Drug Recommendations
-                                            </label>
-                                            <div className="mb-2 flex flex-wrap gap-1 p-1 bg-gray-100 rounded-lg">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => insertFormatting('otc_drug', 'bullet')}
-                                                    className="p-2 hover:bg-green-100 rounded text-green-600 transition-colors"
-                                                    title="Add bullet point"
-                                                    disabled={saving}
-                                                >
-                                                    <FaListUl />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => insertFormatting('otc_drug', 'subbullet')}
-                                                    className="p-2 hover:bg-green-100 rounded text-green-600 transition-colors"
-                                                    title="Add sub-bullet"
-                                                    disabled={saving}
-                                                >
-                                                    <span className="text-lg font-bold">◦</span>
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => insertFormatting('otc_drug', 'number')}
-                                                    className="p-2 hover:bg-green-100 rounded text-green-600 transition-colors"
-                                                    title="Add numbered list"
-                                                    disabled={saving}
-                                                >
-                                                    <FaHashtag />
-                                                </button>
-                                                <div className="w-px h-6 bg-gray-300 mx-1 self-center"></div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => insertFormatting('otc_drug', 'indent')}
-                                                    className="p-2 hover:bg-green-100 rounded text-green-600 transition-colors"
-                                                    title="Indent"
-                                                    disabled={saving}
-                                                >
-                                                    <FaIndent />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => insertFormatting('otc_drug', 'outdent')}
-                                                    className="p-2 hover:bg-green-100 rounded text-green-600 transition-colors"
-                                                    title="Outdent"
-                                                    disabled={saving}
-                                                >
-                                                    <FaOutdent />
-                                                </button>
-                                            </div>
-                                            <textarea
-                                                id="otc_drug"
-                                                value={formData.otc_drug}
-                                                onChange={(e) => setFormData({ ...formData, otc_drug: e.target.value })}
-                                                onFocus={() => setActiveFormatField('otc_drug')}
-                                                rows="4"
-                                                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 font-mono text-sm"
-                                                placeholder="• Medication name&#10;  ◦ Dosage information&#10;• Important precautions"
-                                                disabled={saving}
-                                            />
-                                        </div>
-
-                                        {/* Pharmacist Notes Field with Formatting Toolbar */}
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Additional Tips for Pharmacist
-                                            </label>
-                                            <div className="mb-2 flex flex-wrap gap-1 p-1 bg-gray-100 rounded-lg">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => insertFormatting('for_pharmacists', 'bullet')}
-                                                    className="p-2 hover:bg-blue-100 rounded text-blue-600 transition-colors"
-                                                    title="Add bullet point"
-                                                    disabled={saving}
-                                                >
-                                                    <FaListUl />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => insertFormatting('for_pharmacists', 'subbullet')}
-                                                    className="p-2 hover:bg-blue-100 rounded text-blue-600 transition-colors"
-                                                    title="Add sub-bullet"
-                                                    disabled={saving}
-                                                >
-                                                    <span className="text-lg font-bold">◦</span>
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => insertFormatting('for_pharmacists', 'number')}
-                                                    className="p-2 hover:bg-blue-100 rounded text-blue-600 transition-colors"
-                                                    title="Add numbered list"
-                                                    disabled={saving}
-                                                >
-                                                    <FaHashtag />
-                                                </button>
-                                                <div className="w-px h-6 bg-gray-300 mx-1 self-center"></div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => insertFormatting('for_pharmacists', 'indent')}
-                                                    className="p-2 hover:bg-blue-100 rounded text-blue-600 transition-colors"
-                                                    title="Indent"
-                                                    disabled={saving}
-                                                >
-                                                    <FaIndent />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => insertFormatting('for_pharmacists', 'outdent')}
-                                                    className="p-2 hover:bg-blue-100 rounded text-blue-600 transition-colors"
-                                                    title="Outdent"
-                                                    disabled={saving}
-                                                >
-                                                    <FaOutdent />
-                                                </button>
-                                            </div>
-                                            <textarea
-                                                id="for_pharmacists"
-                                                value={formData.for_pharmacists}
-                                                onChange={(e) => setFormData({ ...formData, for_pharmacists: e.target.value })}
-                                                onFocus={() => setActiveFormatField('for_pharmacists')}
-                                                rows="4"
-                                                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 font-mono text-sm"
-                                                placeholder="• Professional advice&#10;  ◦ Drug interactions&#10;• Counseling points"
+                                            <input
+                                                type="text"
+                                                value={formData.amharic_name}
+                                                onChange={(e) => setFormData({ ...formData, amharic_name: e.target.value })}
+                                                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500"
+                                                placeholder="e.g., እምቢልታ"
                                                 disabled={saving}
                                             />
                                         </div>
                                     </div>
 
-                                    <div className="flex gap-3 mt-8 pt-6 border-t">
-                                        <button
-                                            type="submit"
+                                    {/* Assessment Field with Formatting Toolbar */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Minor Illness Assessment *
+                                        </label>
+                                        <div className="mb-2 flex flex-wrap gap-1 p-1 bg-gray-100 rounded-lg">
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('assessment', 'bullet')}
+                                                className="p-2 hover:bg-red-100 rounded text-red-600 transition-colors"
+                                                title="Add bullet point"
+                                                disabled={saving}
+                                            >
+                                                <FaListUl />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('assessment', 'subbullet')}
+                                                className="p-2 hover:bg-red-100 rounded text-red-600 transition-colors"
+                                                title="Add sub-bullet"
+                                                disabled={saving}
+                                            >
+                                                <span className="text-lg font-bold">◦</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('assessment', 'number')}
+                                                className="p-2 hover:bg-red-100 rounded text-red-600 transition-colors"
+                                                title="Add numbered list"
+                                                disabled={saving}
+                                            >
+                                                <FaHashtag />
+                                            </button>
+                                            <div className="w-px h-6 bg-gray-300 mx-1 self-center"></div>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('assessment', 'indent')}
+                                                className="p-2 hover:bg-red-100 rounded text-red-600 transition-colors"
+                                                title="Indent"
+                                                disabled={saving}
+                                            >
+                                                <FaIndent />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('assessment', 'outdent')}
+                                                className="p-2 hover:bg-red-100 rounded text-red-600 transition-colors"
+                                                title="Outdent"
+                                                disabled={saving}
+                                            >
+                                                <FaOutdent />
+                                            </button>
+                                        </div>
+                                        <textarea
+                                            id="assessment"
+                                            value={formData.assessment}
+                                            onChange={(e) => setFormData({ ...formData, assessment: e.target.value })}
+                                            onFocus={() => setActiveFormatField('assessment')}
+                                            rows="4"
+                                            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 font-mono text-sm"
+                                            placeholder="• First assessment point&#10;  ◦ Sub-bullet point&#10;• Another main point"
+                                            required
                                             disabled={saving}
-                                            className="flex-1 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                                        >
-                                            {saving ? (
-                                                <>
-                                                    <FaSpinner className="animate-spin" />
-                                                    {editIllness ? 'Updating...' : 'Saving...'}
-                                                </>
-                                            ) : (
-                                                <>
-                                                    {editIllness ? <FaEdit /> : <FaPlus />}
-                                                    {editIllness ? 'Update Illness' : 'Add Illness'}
-                                                </>
+                                        />
+                                    </div>
+
+                                    {/* Referral Field with Formatting Toolbar */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            When to Refer
+                                        </label>
+                                        <div className="mb-2 flex flex-wrap gap-1 p-1 bg-gray-100 rounded-lg">
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('referral', 'bullet')}
+                                                className="p-2 hover:bg-yellow-100 rounded text-yellow-600 transition-colors"
+                                                title="Add bullet point"
+                                                disabled={saving}
+                                            >
+                                                <FaListUl />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('referral', 'subbullet')}
+                                                className="p-2 hover:bg-yellow-100 rounded text-yellow-600 transition-colors"
+                                                title="Add sub-bullet"
+                                                disabled={saving}
+                                            >
+                                                <span className="text-lg font-bold">◦</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('referral', 'number')}
+                                                className="p-2 hover:bg-yellow-100 rounded text-yellow-600 transition-colors"
+                                                title="Add numbered list"
+                                                disabled={saving}
+                                            >
+                                                <FaHashtag />
+                                            </button>
+                                            <div className="w-px h-6 bg-gray-300 mx-1 self-center"></div>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('referral', 'indent')}
+                                                className="p-2 hover:bg-yellow-100 rounded text-yellow-600 transition-colors"
+                                                title="Indent"
+                                                disabled={saving}
+                                            >
+                                                <FaIndent />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('referral', 'outdent')}
+                                                className="p-2 hover:bg-yellow-100 rounded text-yellow-600 transition-colors"
+                                                title="Outdent"
+                                                disabled={saving}
+                                            >
+                                                <FaOutdent />
+                                            </button>
+                                        </div>
+                                        <textarea
+                                            id="referral"
+                                            value={formData.referral}
+                                            onChange={(e) => setFormData({ ...formData, referral: e.target.value })}
+                                            onFocus={() => setActiveFormatField('referral')}
+                                            rows="4"
+                                            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 font-mono text-sm"
+                                            placeholder="• When to refer to physician&#10;  ◦ Specific criteria"
+                                            disabled={saving}
+                                        />
+                                    </div>
+
+                                    {/* OTC Drug Field with Formatting Toolbar */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            OTC Drug Recommendations
+                                        </label>
+                                        <div className="mb-2 flex flex-wrap gap-1 p-1 bg-gray-100 rounded-lg">
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('otc_drug', 'bullet')}
+                                                className="p-2 hover:bg-green-100 rounded text-green-600 transition-colors"
+                                                title="Add bullet point"
+                                                disabled={saving}
+                                            >
+                                                <FaListUl />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('otc_drug', 'subbullet')}
+                                                className="p-2 hover:bg-green-100 rounded text-green-600 transition-colors"
+                                                title="Add sub-bullet"
+                                                disabled={saving}
+                                            >
+                                                <span className="text-lg font-bold">◦</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('otc_drug', 'number')}
+                                                className="p-2 hover:bg-green-100 rounded text-green-600 transition-colors"
+                                                title="Add numbered list"
+                                                disabled={saving}
+                                            >
+                                                <FaHashtag />
+                                            </button>
+                                            <div className="w-px h-6 bg-gray-300 mx-1 self-center"></div>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('otc_drug', 'indent')}
+                                                className="p-2 hover:bg-green-100 rounded text-green-600 transition-colors"
+                                                title="Indent"
+                                                disabled={saving}
+                                            >
+                                                <FaIndent />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('otc_drug', 'outdent')}
+                                                className="p-2 hover:bg-green-100 rounded text-green-600 transition-colors"
+                                                title="Outdent"
+                                                disabled={saving}
+                                            >
+                                                <FaOutdent />
+                                            </button>
+                                        </div>
+                                        <textarea
+                                            id="otc_drug"
+                                            value={formData.otc_drug}
+                                            onChange={(e) => setFormData({ ...formData, otc_drug: e.target.value })}
+                                            onFocus={() => setActiveFormatField('otc_drug')}
+                                            rows="4"
+                                            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 font-mono text-sm"
+                                            placeholder="• First medication recommendation&#10;  ◦ Specific dosage or instruction"
+                                            disabled={saving}
+                                        />
+                                    </div>
+
+                                    {/* For Pharmacists Field with Formatting Toolbar */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Additional Tips for Pharmacists
+                                        </label>
+                                        <div className="mb-2 flex flex-wrap gap-1 p-1 bg-gray-100 rounded-lg">
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('for_pharmacists', 'bullet')}
+                                                className="p-2 hover:bg-blue-100 rounded text-blue-600 transition-colors"
+                                                title="Add bullet point"
+                                                disabled={saving}
+                                            >
+                                                <FaListUl />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('for_pharmacists', 'subbullet')}
+                                                className="p-2 hover:bg-blue-100 rounded text-blue-600 transition-colors"
+                                                title="Add sub-bullet"
+                                                disabled={saving}
+                                            >
+                                                <span className="text-lg font-bold">◦</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('for_pharmacists', 'number')}
+                                                className="p-2 hover:bg-blue-100 rounded text-blue-600 transition-colors"
+                                                title="Add numbered list"
+                                                disabled={saving}
+                                            >
+                                                <FaHashtag />
+                                            </button>
+                                            <div className="w-px h-6 bg-gray-300 mx-1 self-center"></div>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('for_pharmacists', 'indent')}
+                                                className="p-2 hover:bg-blue-100 rounded text-blue-600 transition-colors"
+                                                title="Indent"
+                                                disabled={saving}
+                                            >
+                                                <FaIndent />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('for_pharmacists', 'outdent')}
+                                                className="p-2 hover:bg-blue-100 rounded text-blue-600 transition-colors"
+                                                title="Outdent"
+                                                disabled={saving}
+                                            >
+                                                <FaOutdent />
+                                            </button>
+                                        </div>
+                                        <textarea
+                                            id="for_pharmacists"
+                                            value={formData.for_pharmacists}
+                                            onChange={(e) => setFormData({ ...formData, for_pharmacists: e.target.value })}
+                                            onFocus={() => setActiveFormatField('for_pharmacists')}
+                                            rows="4"
+                                            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 font-mono text-sm"
+                                            placeholder="• Professional advice&#10;  ◦ Specific counseling points"
+                                            disabled={saving}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-3 mt-8 pt-6 border-t">
+                                    <button
+                                        onClick={editIllness ? handleUpdateIllness : handleAddIllness}
+                                        disabled={saving}
+                                        className="flex-1 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    >
+                                        {saving ? (
+                                            <>
+                                                <FaSpinner className="animate-spin" />
+                                                {editIllness ? 'Updating...' : 'Saving...'}
+                                            </>
+                                        ) : (
+                                            <>
+                                                {editIllness ? <FaEdit /> : <FaPlus />}
+                                                {editIllness ? 'Update Illness' : 'Add Illness'}
+                                            </>
+                                        )}
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setShowForm(false);
+                                            setEditIllness(null);
+                                            setFormData({
+                                                name: '',
+                                                amharic_name: '',
+                                                assessment: '',
+                                                referral: '',
+                                                otc_drug: '',
+                                                for_pharmacists: ''
+                                            });
+                                        }}
+                                        disabled={saving}
+                                        className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-lg font-medium disabled:opacity-50"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Illnesses Grid - Four Columns as Bold Lines */}
+                {filteredIllnesses.length > 0 ? (
+                    <div className="bg-white rounded-xl shadow-lg p-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-2">
+                            {filteredIllnesses.map((illness) => (
+                                <div key={illness.id} className="group py-2 border-b border-gray-100 lg:border-0">
+                                    <div className="flex items-start gap-2">
+                                        <FaThermometerHalf className="text-xs text-red-400 mt-1.5 flex-shrink-0 group-hover:text-red-600 transition-colors" />
+                                        <div className="flex-1 min-w-0">
+                                            <button
+                                                onClick={() => setSelectedIllness(illness)}
+                                                className="text-left w-full flex items-center gap-1 group/button"
+                                            >
+                                                <span className="font-bold text-gray-800 hover:text-red-600 transition-colors text-sm md:text-base">
+                                                    {illness.name}
+                                                </span>
+                                                <span className="text-gray-300 group-hover/button:text-red-400 text-xs transition-colors">
+                                                    ▶
+                                                </span>
+                                            </button>
+                                            {illness.amharic_name && (
+                                                <div className="text-xs text-gray-500 mt-0.5">
+                                                    {illness.amharic_name}
+                                                </div>
                                             )}
+                                        </div>
+                                        
+                                        {/* Admin Actions */}
+                                        {isAdmin && (
+                                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button
+                                                    onClick={() => handleEditIllness(illness)}
+                                                    className="text-red-400 hover:text-red-600 transition-colors"
+                                                    title="Edit"
+                                                >
+                                                    <FaEdit className="text-xs" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteIllness(illness.id)}
+                                                    className="text-red-400 hover:text-red-600 transition-colors"
+                                                    title="Delete"
+                                                >
+                                                    <FaTrash className="text-xs" />
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                ) : (
+                    <div className="bg-white rounded-xl shadow-lg p-12 text-center">
+                        <FaThermometerHalf className="text-5xl text-gray-300 mx-auto mb-4" />
+                        <h3 className="text-xl font-medium text-gray-800 mb-2">No Illnesses Found</h3>
+                        <p className="text-gray-500 max-w-md mx-auto mb-6">
+                            {searchTerm
+                                ? 'No illnesses match your search criteria. Try a different search.'
+                                : 'No illnesses found in the database.'}
+                        </p>
+                        <div className="flex flex-wrap gap-3 justify-center">
+                            <button
+                                onClick={() => {
+                                    setSearchTerm('');
+                                }}
+                                className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg"
+                            >
+                                Clear Search
+                            </button>
+                            {/* Only show admin buttons to admins */}
+                            {isAdmin && (
+                                <>
+                                    <button
+                                        onClick={() => setShowForm(true)}
+                                        className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center gap-2"
+                                    >
+                                        <FaPlus /> Add Illness
+                                    </button>
+                                    <button
+                                        onClick={initializeDatabase}
+                                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg flex items-center gap-2"
+                                    >
+                                        <FaDatabase /> Add Sample Data
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* Illness Details Modal - Narrower Width with Enhanced Formatting */}
+                {selectedIllness && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                        <div className="bg-white rounded-xl shadow-2xl w-[60%] max-w-[60%] min-w-[300px] max-h-[90vh] overflow-hidden">
+                            {/* Header */}
+                            <div className="sticky top-0 bg-gradient-to-r from-red-600 to-red-800 text-white p-3">
+                                <div className="flex justify-between items-start">
+                                    <div className="flex-1 min-w-0">
+                                        <h2 className="text-base font-bold truncate">{selectedIllness.name}</h2>
+                                        {selectedIllness.amharic_name && (
+                                            <p className="text-xs font-bold text-red-100 mt-0.5 truncate">
+                                                {selectedIllness.amharic_name}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <button
+                                        onClick={() => setSelectedIllness(null)}
+                                        className="text-white hover:text-gray-200 text-lg ml-2 flex-shrink-0"
+                                    >
+                                        <FaTimes />
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            {/* Scrollable Content */}
+                            <div className="overflow-y-auto" style={{ maxHeight: 'calc(160vh - 120px)' }}>
+                               <div className="p-3 space-y-2">
+                                    {/* Assessment Section */}
+                                    {selectedIllness.assessment && (
+                                        <div className="bg-red-50 rounded-lg overflow-hidden border border-red-100">
+                                            <button
+                                                onClick={() => toggleSection('assessment')}
+                                                className="w-full bg-red-100 hover:bg-red-200 p-2 text-left flex justify-between items-center transition-colors"
+                                            >
+                                                <h3 className="font-semibold text-red-800 flex items-center gap-1 text-xs">
+                                                    <FaStethoscope className="text-red-600 text-xs" />
+                                                    Minor Illness Assessment:
+                                                </h3>
+                                                <span className="text-red-600 text-base font-bold">
+                                                    {expandedSections.assessment ? '−' : '+'}
+                                                </span>
+                                            </button>
+                                            {expandedSections.assessment && (
+                                                <div className="p-2">
+                                                    <ul className="space-y-0.5">
+                                                        {renderFormattedText(selectedIllness.assessment)}
+                                                    </ul>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Referral Section */}
+                                    {selectedIllness.referral && (
+                                        <div className="bg-yellow-50 rounded-lg overflow-hidden border border-yellow-100">
+                                            <button
+                                                onClick={() => toggleSection('referral')}
+                                                className="w-full bg-yellow-100 hover:bg-yellow-200 p-2 text-left flex justify-between items-center transition-colors"
+                                            >
+                                                <h3 className="font-semibold text-yellow-800 flex items-center gap-1 text-xs">
+                                                    <FaExclamationTriangle className="text-yellow-600 text-xs" />
+                                                    When to Refer:
+                                                </h3>
+                                                <span className="text-yellow-600 text-base font-bold">
+                                                    {expandedSections.referral ? '−' : '+'}
+                                                </span>
+                                            </button>
+                                            {expandedSections.referral && (
+                                                <div className="p-2">
+                                                    <ul className="space-y-0.5">
+                                                        {renderFormattedText(selectedIllness.referral)}
+                                                    </ul>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* OTC Drug Section */}
+                                    {selectedIllness.otc_drug && (
+                                        <div className="bg-green-50 rounded-lg overflow-hidden border border-green-100">
+                                            <button
+                                                onClick={() => toggleSection('otc_drug')}
+                                                className="w-full bg-green-100 hover:bg-green-200 p-2 text-left flex justify-between items-center transition-colors"
+                                            >
+                                                <h3 className="font-semibold text-green-800 flex items-center gap-1 text-xs">
+                                                    <FaCapsules className="text-green-600 text-xs" />
+                                                    OTC Drug Recommendations:
+                                                </h3>
+                                                <span className="text-green-600 text-base font-bold">
+                                                    {expandedSections.otc_drug ? '−' : '+'}
+                                                </span>
+                                            </button>
+                                            {expandedSections.otc_drug && (
+                                                <div className="p-2">
+                                                    <ul className="space-y-0.5">
+                                                        {renderFormattedText(selectedIllness.otc_drug)}
+                                                    </ul>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* For Pharmacists Section */}
+                                    {selectedIllness.for_pharmacists && (
+                                        <div className="bg-blue-50 rounded-lg overflow-hidden border border-blue-100">
+                                            <button
+                                                onClick={() => toggleSection('for_pharmacists')}
+                                                className="w-full bg-blue-100 hover:bg-blue-200 p-2 text-left flex justify-between items-center transition-colors"
+                                            >
+                                                <h3 className="font-semibold text-blue-800 flex items-center gap-1 text-xs">
+                                                    <FaUserMd className="text-blue-600 text-xs" />
+                                                    Additional Information:
+                                                </h3>
+                                                <span className="text-blue-600 text-base font-bold">
+                                                    {expandedSections.for_pharmacists ? '−' : '+'}
+                                                </span>
+                                            </button>
+                                            {expandedSections.for_pharmacists && (
+                                                <div className="p-2">
+                                                    <ul className="space-y-0.5">
+                                                        {renderFormattedText(selectedIllness.for_pharmacists)}
+                                                    </ul>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Footer Actions */}
+                            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 p-2 flex justify-end gap-1">
+                                {isAdmin && (
+                                    <>
+                                        <button
+                                            onClick={() => {
+                                                handleEditIllness(selectedIllness);
+                                                setSelectedIllness(null);
+                                            }}
+                                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg flex items-center gap-1 text-xs"
+                                        >
+                                            <FaEdit className="text-xs" /> Edit
                                         </button>
                                         <button
-                                            type="button"
-                                            onClick={resetForm}
-                                            disabled={saving}
-                                            className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-lg font-medium disabled:opacity-50"
+                                            onClick={() => handleDeleteIllness(selectedIllness.id)}
+                                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg flex items-center gap-1 text-xs"
                                         >
-                                            Cancel
+                                            <FaTrash className="text-xs" /> Delete
                                         </button>
-                                    </div>
-                                </form>
+                                    </>
+                                )}
+                                <button
+                                    onClick={() => setSelectedIllness(null)}
+                                    className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-3 py-1 rounded-lg text-xs"
+                                >
+                                    Close
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -1194,9 +1336,9 @@ const MinorIllnesses = () => {
                             </div>
                             <div className="text-center">
                                 <div className="text-2xl font-bold text-green-600">
-                                    {illnesses.filter(i => i.referral).length}
+                                    {illnesses.filter(i => i.otc_drug).length}
                                 </div>
-                                <div className="text-sm text-gray-600">With Referral Info</div>
+                                <div className="text-sm text-gray-600">With OTC Recommendations</div>
                             </div>
                             <div className="text-center">
                                 <div className="text-2xl font-bold text-purple-600">{filteredIllnesses.length}</div>
