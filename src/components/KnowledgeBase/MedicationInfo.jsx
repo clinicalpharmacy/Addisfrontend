@@ -662,89 +662,68 @@ const MedicationInfo = () => {
                     </div>
                 )}
 
-                {/* Medications Grid - ALL CONTENT VISIBLE but protected from copying */}
+                {/* Medications Grid - Four Columns as Bold Lines */}
                 {filteredMedications.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {filteredMedications.map((med) => (
-                            <div
-                                key={med.id}
-                                className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition-shadow duration-200 medication-content"
-                            >
-                                <div className="p-6">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div className="flex-1">
-                                            <h3 className="text-xl font-bold text-gray-900 mb-1">{med.name}</h3>
-                                            {med.amharic_name && (
-                                                <p className="text-sm text-gray-600 mb-1">{med.amharic_name}</p>
+                    <div className="bg-white rounded-xl shadow-lg p-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-2">
+                            {filteredMedications.map((med) => (
+                                <div key={med.id} className="group py-2 border-b border-gray-100 lg:border-0">
+                                    <div className="flex items-start gap-2">
+                                        <FaPills className="text-xs text-indigo-400 mt-1.5 flex-shrink-0 group-hover:text-indigo-600 transition-colors" />
+                                        <div className="flex-1 min-w-0">
+                                            <button
+                                                onClick={() => setExpandedMedication(expandedMedication === med.id ? null : med.id)}
+                                                className="text-left w-full flex items-center gap-1 group/button"
+                                            >
+                                                <span className="font-bold text-gray-800 hover:text-indigo-600 transition-colors text-sm md:text-base">
+                                                    {med.name}
+                                                </span>
+                                                {med.amharic_name && (
+                                                    <span className="text-xs text-gray-500 ml-2 font-normal">
+                                                        {med.amharic_name}
+                                                    </span>
+                                                )}
+                                                <span className="text-gray-300 group-hover/button:text-indigo-400 text-xs transition-colors">
+                                                    {expandedMedication === med.id ? '▼' : '▶'}
+                                                </span>
+                                            </button>
+                                            
+                                            {/* Expandable Details */}
+                                            {expandedMedication === med.id && (
+                                                <div className="mt-2 text-xs text-gray-600 space-y-2 border-l-2 border-indigo-200 pl-2">
+                                                    {med.usage && (
+                                                        <div>
+                                                            <span className="font-semibold text-indigo-700">Usage:</span>
+                                                            <p className="text-gray-600">{med.usage}</p>
+                                                        </div>
+                                                    )}
+                                                    {med.side_effects && (
+                                                        <div>
+                                                            <span className="font-semibold text-orange-700">Side Effects:</span>
+                                                            <p className="text-gray-600">{med.side_effects}</p>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             )}
                                         </div>
-                                        {/* Only show edit button for admins */}
+                                        
+                                        {/* Admin Actions */}
                                         {isAdmin && (
-                                            <div className="flex items-center gap-2">
-                                                <button
-                                                    onClick={() => handleEditMedication(med)}
-                                                    className="text-indigo-600 hover:text-indigo-800 p-1"
-                                                    title="Edit"
-                                                >
-                                                    <FaEdit />
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Expandable Details */}
-                                    <div className="border-t pt-4">
-                                        <button
-                                            onClick={() => setExpandedMedication(expandedMedication === med.id ? null : med.id)}
-                                            className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center gap-2"
-                                        >
-                                            {expandedMedication === med.id ? (
-                                                <>
-                                                    <FaEyeSlash /> Hide Details
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <FaEye /> Show Details
-                                                </>
-                                            )}
-                                        </button>
-
-                                        {expandedMedication === med.id && (
-                                            <div className="mt-4 space-y-4">
-                                                <div>
-                                                    <h4 className="font-semibold text-gray-700 mb-2 text-sm">የመድሃኒቱ ጥቅም:</h4>
-                                                    <ul className="list-disc pl-5 text-sm text-gray-600">{renderBullets(med.usage)}</ul>
-                                                </div>
-
-                                                {med.administration_and_cautions && (
-                                                    <div>
-                                                        <h4 className="font-semibold text-gray-700 mb-2 text-sm">አወሳሰድ እና ጥንቃቄዎች:</h4>
-                                                        <ul className="list-disc pl-5 text-sm text-gray-600">{renderBullets(med.administration_and_cautions)}</ul>
-                                                    </div>
-                                                )}
-
-                                                {med.side_effects && (
-                                                    <div>
-                                                        <h4 className="font-semibold text-orange-700 mb-2 text-sm">የጎንዮሽ ጉዳቶች:</h4>
-                                                        <ul className="list-disc pl-5 text-sm text-gray-600">{renderBullets(med.side_effects)}</ul>
-                                                    </div>
-                                                )}
-
-                                                {med.storage && (
-                                                    <div>
-                                                        <h4 className="font-semibold text-green-700 mb-2 text-sm">አቀማመጥ:</h4>
-                                                        <ul className="list-disc pl-5 text-sm text-gray-600">{renderBullets(med.storage)}</ul>
-                                                    </div>
-                                                )}
-                                            </div>
+                                            <button
+                                                onClick={() => handleEditMedication(med)}
+                                                className="text-indigo-400 hover:text-indigo-600 transition-colors opacity-0 group-hover:opacity-100"
+                                                title="Edit"
+                                            >
+                                                <FaEdit className="text-xs" />
+                                            </button>
                                         )}
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
                 ) : (
-                    <div className="col-span-full bg-white rounded-xl shadow-lg p-12 text-center">
+                    <div className="bg-white rounded-xl shadow-lg p-12 text-center">
                         <FaPills className="text-5xl text-gray-300 mx-auto mb-4" />
                         <h3 className="text-xl font-medium text-gray-800 mb-2">No Medications Found</h3>
                         <p className="text-gray-500 max-w-md mx-auto mb-6">
