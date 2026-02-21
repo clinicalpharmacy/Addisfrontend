@@ -1137,12 +1137,12 @@ const MinorIllnesses = () => {
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
                         <div className="bg-white rounded-xl shadow-2xl w-[60%] max-w-[60%] min-w-[300px] max-h-[90vh] overflow-hidden">
                             {/* Header */}
-                            <div className="sticky top-0 bg-gradient-to-r from-red-600 to-red-800 text-white p-3">
+                            <div className="sticky top-0 bg-gradient-to-r from-white-600 to-white-800 text-black p-3">
                                 <div className="flex justify-between items-start">
                                     <div className="flex-1 min-w-0">
                                         <h2 className="text-base font-bold truncate">{selectedIllness.name}</h2>
                                         {selectedIllness.amharic_name && (
-                                            <p className="text-xs font-bold text-red-100 mt-0.5 truncate">
+                                            <p className="text-xs font-bold text-black-100 mt-0.5 truncate">
                                                 {selectedIllness.amharic_name}
                                             </p>
                                         )}
