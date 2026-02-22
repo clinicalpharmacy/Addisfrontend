@@ -272,7 +272,8 @@ const PatientList = () => {
                         <FaFilter /> Refresh
                     </button>
                 </div>
-
+            </div> 
+            
             {/* Patients Table (Desktop) */}
             <div className="hidden md:block bg-white rounded-xl shadow overflow-hidden">
                 <div className="overflow-x-auto">
@@ -391,6 +392,32 @@ const PatientList = () => {
                 </div>
             </div>
 
+            {/* Stats Section - Moved outside the map and before mobile patient list */}
+            <div className="md:hidden bg-white rounded-xl shadow p-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                <div className="bg-blue-50 p-3 rounded">
+                    <p className="text-blue-600">Total Patients</p>
+                    <p className="text-lg font-bold text-blue-800">{patients.length}</p>
+                </div>
+                <div className="bg-green-50 p-3 rounded">
+                    <p className="text-green-600">Active</p>
+                    <p className="text-lg font-bold text-green-800">
+                        {patients.filter(p => p.is_active !== false).length}
+                    </p>
+                </div>
+                <div className="bg-yellow-50 p-3 rounded">
+                    <p className="text-yellow-600">With Appointments</p>
+                    <p className="text-lg font-bold text-yellow-800">
+                        {patients.filter(p => p.appointmentDate).length}
+                    </p>
+                </div>
+                <div className="bg-purple-50 p-3 rounded">
+                    <p className="text-purple-600">Access Level</p>
+                    <p className="text-lg font-bold text-purple-800">
+                        {userRole === 'admin' ? 'Full' : userRole === 'company_admin' ? 'Company' : 'Personal'}
+                    </p>
+                </div>
+            </div>
+
             {/* Patients List (Mobile) */}
             <div className="md:hidden space-y-4">
                 {currentPatients.length > 0 ? (
@@ -399,33 +426,6 @@ const PatientList = () => {
                         const isIndividual = (userAccountType === 'individual' || userRole === 'individual_user' || userRole === 'pharmacist') && !userCompanyId;
                         const isAdmin = userRole === 'admin';
                         const canDelete = isAdmin || (patient.user_id === currentUserId && !isIndividual);
-
-            {/* Stats */}
-                <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                    <div className="bg-blue-50 p-3 rounded">
-                        <p className="text-blue-600">Total Patients</p>
-                        <p className="text-lg font-bold text-blue-800">{patients.length}</p>
-                    </div>
-                    <div className="bg-green-50 p-3 rounded">
-                        <p className="text-green-600">Active</p>
-                        <p className="text-lg font-bold text-green-800">
-                            {patients.filter(p => p.is_active !== false).length}
-                        </p>
-                    </div>
-                    <div className="bg-yellow-50 p-3 rounded">
-                        <p className="text-yellow-600">With Appointments</p>
-                        <p className="text-lg font-bold text-yellow-800">
-                            {patients.filter(p => p.appointmentDate).length}
-                        </p>
-                    </div>
-                    <div className="bg-purple-50 p-3 rounded">
-                        <p className="text-purple-600">Access Level</p>
-                        <p className="text-lg font-bold text-purple-800">
-                            {userRole === 'admin' ? 'Full' : userRole === 'company_admin' ? 'Company' : 'Personal'}
-                        </p>
-                    </div>
-                </div>
-            </div>
 
                         return (
                             <div key={patient.id} className="bg-white rounded-xl shadow p-4 border border-gray-100">
