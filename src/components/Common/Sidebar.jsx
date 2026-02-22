@@ -309,7 +309,7 @@ const Sidebar = ({ onClose }) => {
                                                     }`
                                                 }
                                             >
-                                                <FaStethoscope className="text-base opacity-40" /> Illnesses
+                                                <FaStethoscope className="text-base opacity-40" /> Minor Illnesses
                                             </NavLink>
                                             <NavLink
                                                 to="/knowledge/compounding"
