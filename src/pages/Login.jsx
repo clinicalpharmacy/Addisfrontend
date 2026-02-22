@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
     FaUserMd, FaLock, FaExclamationTriangle, FaSignInAlt,
-    FaSpinner, FaUserCheck, FaBuilding
+    FaSpinner, FaUserCheck, FaBuilding, FaEnvelope, FaEye, FaEyeSlash,
+    FaShieldAlt, FaHeartbeat, FaCheckCircle, FaArrowRight
 } from 'react-icons/fa';
 
 // IMPORTANT: Update this URL to your actual backend URL
@@ -23,8 +24,24 @@ const Login = () => {
     const [error, setError] = useState('');
     const [systemOnline, setSystemOnline] = useState(null);
     const [isCheckingHealth, setIsCheckingHealth] = useState(true);
+    const [focusedField, setFocusedField] = useState(null);
+    const [isEmailValid, setIsEmailValid] = useState(false);
+    const [passwordStrength, setPasswordStrength] = useState(0);
+    const [currentSlide, setCurrentSlide] = useState(0);
+
+    // Carousel messages for dynamic background
+    const carouselMessages = [
+        { icon: FaHeartbeat, text: "Patient Safety First", color: "from-blue-600 to-cyan-600" },
+        { icon: FaShieldAlt, text: "Secure & Confidential", color: "from-purple-600 to-pink-600" },
+        { icon: FaCheckCircle, text: "Evidence-Based Care", color: "from-green-600 to-teal-600" }
+    ];
 
     useEffect(() => {
+        // Rotate carousel messages
+        const interval = setInterval(() => {
+            setCurrentSlide((prev) => (prev + 1) % carouselMessages.length);
+        }, 3000);
+        
         // Check if user is already logged in
         const token = localStorage.getItem('token');
         const userRole = localStorage.getItem('userRole');
@@ -53,7 +70,28 @@ const Login = () => {
         };
 
         checkHealth();
+
+        return () => clearInterval(interval);
     }, [navigate]);
+
+    // Email validation
+    useEffect(() => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        setIsEmailValid(emailRegex.test(formData.email));
+    }, [formData.email]);
+
+    // Password strength indicator (simple version)
+    useEffect(() => {
+        if (formData.password.length === 0) {
+            setPasswordStrength(0);
+        } else if (formData.password.length < 6) {
+            setPasswordStrength(1);
+        } else if (formData.password.length < 10) {
+            setPasswordStrength(2);
+        } else {
+            setPasswordStrength(3);
+        }
+    }, [formData.password]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -181,31 +219,93 @@ const Login = () => {
         }
     };
 
+    const testLogin = (email, password) => {
+        setFormData({ email, password });
+    };
+
+    const getPasswordStrengthColor = () => {
+        switch(passwordStrength) {
+            case 0: return 'bg-gray-200';
+            case 1: return 'bg-red-500';
+            case 2: return 'bg-yellow-500';
+            case 3: return 'bg-green-500';
+            default: return 'bg-gray-200';
+        }
+    };
+
+    const getPasswordStrengthText = () => {
+        switch(passwordStrength) {
+            case 0: return '';
+            case 1: return 'Weak';
+            case 2: return 'Medium';
+            case 3: return 'Strong';
+            default: return '';
+        }
+    };
+
+    const CurrentIcon = carouselMessages[currentSlide].icon;
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
-            <div className="w-full max-w-md">
-                {/* Logo and Brand */}
-                <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl mb-4">
-                        <FaUserMd className="text-white text-2xl" />
+        <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 flex items-center justify-center p-4 relative overflow-hidden">
+            {/* Animated Background Elements */}
+            <div className="absolute inset-0 overflow-hidden">
+                <div className="absolute -top-40 -right-40 w-80 h-80 bg-white rounded-full opacity-10 animate-pulse"></div>
+                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-white rounded-full opacity-10 animate-pulse delay-1000"></div>
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full opacity-20 animate-ping"></div>
+                
+                {/* Floating medical icons */}
+                <FaHeartbeat className="absolute top-20 left-20 text-white opacity-10 text-6xl animate-bounce" />
+                <FaShieldAlt className="absolute bottom-20 right-20 text-white opacity-10 text-6xl animate-bounce delay-700" />
+                <FaUserMd className="absolute top-40 right-40 text-white opacity-10 text-6xl animate-bounce delay-300" />
+            </div>
+
+            <div className="w-full max-w-md relative z-10">
+                {/* Animated Logo and Brand */}
+                <div className="text-center mb-8 transform hover:scale-105 transition-transform duration-300">
+                    <div className="relative inline-block">
+                        <div className="absolute inset-0 bg-white rounded-2xl blur-xl opacity-50 animate-pulse"></div>
+                        <div className="relative flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl mb-4 mx-auto shadow-2xl">
+                            <FaUserMd className="text-white text-3xl animate-pulse" />
+                        </div>
                     </div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Addis Med</h1>
-                    <p className="text-gray-600 italic">Enhance Patient Safety & Optimize Medicines Use</p>
+                    <h1 className="text-4xl font-bold text-white mb-2 tracking-tight">Addis Med</h1>
+                    
+                    {/* Dynamic Carousel Message */}
+                    <div className="h-12 overflow-hidden">
+                        <div 
+                            className="transform transition-transform duration-500 ease-in-out"
+                            style={{ transform: `translateY(-${currentSlide * 3}rem)` }}
+                        >
+                            {carouselMessages.map((msg, index) => {
+                                const Icon = msg.icon;
+                                return (
+                                    <div key={index} className="h-12 flex items-center justify-center gap-2">
+                                        <Icon className="text-white text-xl animate-pulse" />
+                                        <p className="text-white text-lg font-light italic">{msg.text}</p>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
                 </div>
 
                 {/* Login Card */}
-                <div className="bg-white rounded-2xl shadow-xl p-8">
-                    <div className="mb-8">
-                        <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome Back</h2>
-                        <p className="text-gray-600">Sign in to your account</p>
+                <div className="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/20 transform transition-all duration-300 hover:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)]">
+                    <div className="mb-8 text-center">
+                        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl mb-4 shadow-lg">
+                            <FaSignInAlt className="text-white text-2xl" />
+                        </div>
+                        <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+                            Welcome Back
+                        </h2>
+                        <p className="text-gray-600">Sign in to continue your journey</p>
                     </div>
 
-                    {/* Error Message */}
+                    {/* Error Message with Animation */}
                     {error && (
-                        <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl">
+                        <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-xl animate-shake">
                             <div className="flex items-start gap-3">
-                                <FaExclamationTriangle className="text-red-500 mt-0.5 flex-shrink-0" />
+                                <FaExclamationTriangle className="text-red-500 mt-0.5 flex-shrink-0 animate-pulse" />
                                 <div className="flex-1 min-w-0">
                                     <div className="text-red-800 font-bold text-sm mb-1 uppercase tracking-wider">Error Encountered</div>
                                     <div className="text-red-600 text-sm leading-relaxed">{error}</div>
@@ -218,69 +318,116 @@ const Login = () => {
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {/* Email Field */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className={`block text-sm font-medium mb-2 transition-colors duration-300 ${focusedField === 'email' ? 'text-blue-600' : 'text-gray-700'}`}>
                                 Email Address
                             </label>
-                            <div className="relative">
+                            <div className="relative group">
                                 <input
                                     type="email"
                                     value={formData.email}
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                                    onFocus={() => setFocusedField('email')}
+                                    onBlur={() => setFocusedField(null)}
+                                    className={`w-full px-4 py-4 pl-12 border-2 rounded-xl outline-none transition-all duration-300 ${
+                                        focusedField === 'email' 
+                                            ? 'border-blue-500 shadow-lg shadow-blue-100' 
+                                            : isEmailValid && formData.email
+                                            ? 'border-green-500'
+                                            : 'border-gray-200 hover:border-gray-300'
+                                    }`}
                                     placeholder="your@email.com"
                                     required
                                     disabled={loading}
                                 />
+                                <FaEnvelope className={`absolute left-4 top-1/2 transform -translate-y-1/2 transition-colors duration-300 ${
+                                    focusedField === 'email' ? 'text-blue-500' : 'text-gray-400'
+                                }`} />
+                                {isEmailValid && formData.email && (
+                                    <FaCheckCircle className="absolute right-4 top-1/2 transform -translate-y-1/2 text-green-500 animate-scale-in" />
+                                )}
                             </div>
                         </div>
 
                         {/* Password Field */}
                         <div>
                             <div className="flex items-center justify-between mb-2">
-                                <label className="block text-sm font-medium text-gray-700">
+                                <label className={`block text-sm font-medium transition-colors duration-300 ${focusedField === 'password' ? 'text-blue-600' : 'text-gray-700'}`}>
                                     Password
                                 </label>
-                                <div className="flex items-center gap-4">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        className="text-sm text-gray-500 hover:text-blue-600 transition"
-                                        disabled={loading}
-                                    >
-                                        {showPassword ? 'Hide' : 'Show'}
-                                    </button>
-                                    <Link
-                                        to="/forgot-password"
-                                        className="text-sm text-blue-600 hover:text-blue-800 font-medium transition"
-                                    >
-                                        Forgot Password?
-                                    </Link>
-                                </div>
+                                <Link
+                                    to="/forgot-password"
+                                    className="text-sm text-blue-600 hover:text-blue-800 font-medium transition-all hover:underline flex items-center gap-1 group"
+                                >
+                                    Forgot Password?
+                                    <FaArrowRight className="text-xs opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                                </Link>
                             </div>
-                            <div className="relative">
+                            <div className="relative group">
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     value={formData.password}
                                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition pr-10"
+                                    onFocus={() => setFocusedField('password')}
+                                    onBlur={() => setFocusedField(null)}
+                                    className={`w-full px-4 py-4 pl-12 pr-12 border-2 rounded-xl outline-none transition-all duration-300 ${
+                                        focusedField === 'password' 
+                                            ? 'border-blue-500 shadow-lg shadow-blue-100' 
+                                            : formData.password
+                                            ? 'border-green-500'
+                                            : 'border-gray-200 hover:border-gray-300'
+                                    }`}
                                     placeholder="Enter your password"
                                     required
                                     disabled={loading}
                                 />
-                                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                                    <FaLock className="text-gray-400" />
-                                </div>
+                                <FaLock className={`absolute left-4 top-1/2 transform -translate-y-1/2 transition-colors duration-300 ${
+                                    focusedField === 'password' ? 'text-blue-500' : 'text-gray-400'
+                                }`} />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-600 transition-colors"
+                                >
+                                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                                </button>
                             </div>
+                            
+                            {/* Password Strength Indicator */}
+                            {formData.password && (
+                                <div className="mt-2 animate-slide-down">
+                                    <div className="flex gap-1 h-1">
+                                        {[1, 2, 3].map((level) => (
+                                            <div
+                                                key={level}
+                                                className={`flex-1 h-full rounded-full transition-all duration-500 ${
+                                                    level <= passwordStrength 
+                                                        ? getPasswordStrengthColor() 
+                                                        : 'bg-gray-200'
+                                                }`}
+                                            ></div>
+                                        ))}
+                                    </div>
+                                    <p className={`text-xs mt-1 font-medium ${
+                                        passwordStrength === 1 ? 'text-red-500' :
+                                        passwordStrength === 2 ? 'text-yellow-500' :
+                                        passwordStrength === 3 ? 'text-green-500' :
+                                        'text-gray-400'
+                                    }`}>
+                                        {getPasswordStrengthText()}
+                                    </p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Submit Button */}
                         <button
                             type="submit"
                             disabled={loading}
-                            className={`w-full py-3 px-4 rounded-xl font-medium transition ${loading
-                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl'
-                                }`}
+                            className={`w-full py-4 px-4 rounded-xl font-medium text-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] ${
+                                loading
+                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                    : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-xl hover:shadow-2xl'
+                            }`}
                         >
                             {loading ? (
                                 <span className="flex items-center justify-center gap-2">
@@ -291,6 +438,7 @@ const Login = () => {
                                 <span className="flex items-center justify-center gap-2">
                                     <FaSignInAlt />
                                     Sign In
+                                    <FaArrowRight className="text-sm animate-pulse" />
                                 </span>
                             )}
                         </button>
@@ -298,18 +446,18 @@ const Login = () => {
 
                     {/* Quick Test Logins (For Development Only) */}
                     {process.env.NODE_ENV === 'development' && (
-                        <div className="mt-6 p-4 bg-gray-50 rounded-xl">
-                            <p className="text-sm text-gray-600 mb-2">Quick Test (Dev Only):</p>
-                            <div className="flex flex-wrap gap-2">
+                        <div className="mt-6 p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
+                            <p className="text-sm text-gray-600 mb-3 font-medium">Quick Test (Dev Only):</p>
+                            <div className="flex gap-2">
                                 <button
                                     onClick={() => testLogin('admin@pharmacare.com', 'Admin@123')}
-                                    className="px-3 py-1 text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 rounded"
+                                    className="flex-1 px-3 py-2 text-xs bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg transition-all transform hover:scale-105 shadow-md"
                                 >
                                     Admin
                                 </button>
                                 <button
                                     onClick={() => testLogin('test@example.com', 'password123')}
-                                    className="px-3 py-1 text-xs bg-green-100 hover:bg-green-200 text-green-700 rounded"
+                                    className="flex-1 px-3 py-2 text-xs bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg transition-all transform hover:scale-105 shadow-md"
                                 >
                                     Test User
                                 </button>
@@ -318,23 +466,23 @@ const Login = () => {
                     )}
 
                     {/* Registration Links */}
-                    <div className="mt-8 pt-6 border-t border-gray-200">
+                    <div className="mt-8 pt-6 border-t-2 border-gray-100">
                         <p className="text-center text-gray-600 text-sm mb-4">
                             Don't have an account?
                         </p>
                         <div className="grid grid-cols-2 gap-3">
                             <Link
                                 to="/signup?type=individual"
-                                className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl transition text-sm font-medium"
+                                className="group flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 text-blue-700 rounded-xl transition-all transform hover:scale-105 text-sm font-medium border border-blue-200"
                             >
-                                <FaUserCheck />
+                                <FaUserCheck className="group-hover:animate-bounce" />
                                 Individual
                             </Link>
                             <Link
                                 to="/signup?type=organization"
-                                className="flex items-center justify-center gap-2 px-4 py-3 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl transition text-sm font-medium"
+                                className="group flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 text-purple-700 rounded-xl transition-all transform hover:scale-105 text-sm font-medium border border-purple-200"
                             >
-                                <FaBuilding />
+                                <FaBuilding className="group-hover:animate-bounce" />
                                 Organization
                             </Link>
                         </div>
@@ -344,25 +492,74 @@ const Login = () => {
                     <div className="mt-6 text-center">
                         <p className="text-xs text-gray-500">
                             Having trouble?{' '}
-                            <Link to="/forgot-password" title="Forgot Password" className="text-blue-600 hover:text-blue-800 underline">
-                                Reset your password
+                            <Link to="/contact-support" className="text-blue-600 hover:text-blue-800 underline font-medium transition-all hover:no-underline">
+                                Contact Support
                             </Link>
                         </p>
                     </div>
                 </div>
 
-                {/* Footer status indicator */}
-                <div className="mt-8 flex flex-col items-center gap-4">
-                    <div className="flex items-center gap-3 px-4 py-2 bg-white rounded-full shadow-sm border border-gray-100 transition-all hover:shadow-md">
-                        <div className={`w-2 h-2 rounded-full ${isCheckingHealth ? 'bg-blue-400 animate-pulse' : systemOnline ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)] animate-pulse'}`}></div>
-                        <span className={`text-[10px] font-black uppercase tracking-widest transition-colors duration-300 ${isCheckingHealth ? 'text-gray-400' : systemOnline ? 'text-green-600' : 'text-red-600'}`}>
+                {/* Enhanced Footer status indicator */}
+                <div className="mt-8 flex justify-center">
+                    <div className="group flex items-center gap-3 px-6 py-3 bg-white/90 backdrop-blur-sm rounded-full shadow-xl border border-white/50 transition-all hover:shadow-2xl hover:scale-105">
+                        <div className="relative">
+                            <div className={`w-3 h-3 rounded-full ${
+                                isCheckingHealth 
+                                    ? 'bg-blue-400 animate-ping' 
+                                    : systemOnline 
+                                    ? 'bg-green-500 animate-pulse' 
+                                    : 'bg-red-500 animate-pulse'
+                            }`}></div>
+                            <div className={`absolute inset-0 w-3 h-3 rounded-full ${
+                                isCheckingHealth 
+                                    ? 'bg-blue-400' 
+                                    : systemOnline 
+                                    ? 'bg-green-500' 
+                                    : 'bg-red-500'
+                            } opacity-75`}></div>
+                        </div>
+                        <span className={`text-xs font-bold uppercase tracking-wider ${
+                            isCheckingHealth 
+                                ? 'text-blue-600' 
+                                : systemOnline 
+                                ? 'text-green-600' 
+                                : 'text-red-600'
+                        }`}>
                             {isCheckingHealth ? 'Verifying System...' : systemOnline ? 'System Online' : 'System Offline'}
                         </span>
-                        <div className="w-px h-3 bg-gray-200 mx-1"></div>
-                        <span className="text-[10px] font-bold text-gray-400">v{import.meta.env.VITE_APP_VERSION || '2.0.1'}</span>
+                        <div className="w-px h-4 bg-gray-300 mx-1"></div>
+                        <span className="text-xs font-bold text-gray-500 group-hover:text-gray-700 transition-colors">
+                            v{import.meta.env.VITE_APP_VERSION || '2.0.1'}
+                        </span>
                     </div>
                 </div>
             </div>
+
+            <style jsx>{`
+                @keyframes shake {
+                    0%, 100% { transform: translateX(0); }
+                    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+                    20%, 40%, 60%, 80% { transform: translateX(5px); }
+                }
+                .animate-shake {
+                    animation: shake 0.5s ease-in-out;
+                }
+                @keyframes scale-in {
+                    0% { transform: scale(0) translateY(-50%); }
+                    50% { transform: scale(1.2) translateY(-50%); }
+                    100% { transform: scale(1) translateY(-50%); }
+                }
+                .animate-scale-in {
+                    animation: scale-in 0.3s ease-out;
+                }
+                @keyframes slide-down {
+                    0% { opacity: 0; transform: translateY(-10px); }
+                    100% { opacity: 1; transform: translateY(0); }
+                }
+                .animate-slide-down {
+                    animation: slide-down 0.3s ease-out;
+                }
+            `}</style>
         </div>
     );
 };
