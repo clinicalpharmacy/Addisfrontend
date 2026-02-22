@@ -26,42 +26,14 @@ const UsefulLinks = () => {
     };
 
     const filteredLinks = links.filter(link =>
-        link.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        link.category.toLowerCase().includes(searchTerm.toLowerCase())
+        link.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        link.category?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    // Group links by category
     const categories = [...new Set(filteredLinks.map(link => link.category))];
-
-    const renderLink = (link) => {
-        if (link.url) {
-            return (
-                <a
-                    key={link.id}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-indigo-600 hover:text-indigo-800 font-bold text-sm py-1 border-b border-gray-50 md:border-0 flex items-center gap-1 group"
-                >
-                    <span>{link.title}</span>
-                    <span className="text-gray-300 group-hover:text-indigo-400 text-xs">↗</span>
-                </a>
-            );
-        } else {
-            return (
-                <span
-                    key={link.id}
-                    className="text-gray-700 font-medium text-sm py-1 border-b border-gray-50 md:border-0 block"
-                >
-                    {link.title}
-                </span>
-            );
-        }
-    };
 
     return (
         <div className="p-6 max-w-5xl mx-auto">
-            {/* Simple Header */}
             <div className="mb-6">
                 <h1 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
                     <FaBookmark className="text-indigo-500" />
@@ -69,18 +41,14 @@ const UsefulLinks = () => {
                 </h1>
             </div>
 
-            {/* Search */}
             <div className="mb-6">
-                <div className="relative">
-                    <FaSearch className="absolute left-0 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
-                    <input
-                        type="text"
-                        placeholder="Search links by title or category..."
-                        className="w-full pl-6 py-2 border-b border-gray-200 focus:border-indigo-500 outline-none text-sm"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </div>
+                <input
+                    type="text"
+                    placeholder="Search links..."
+                    className="w-full py-2 border-b border-gray-200 focus:border-indigo-500 outline-none text-sm"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
             </div>
 
             {loading ? (
@@ -98,8 +66,31 @@ const UsefulLinks = () => {
                                 <h2 className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">
                                     {category}
                                 </h2>
+
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                    {categoryLinks.map(link => renderLink(link))}
+                                    {categoryLinks.map(link => {
+                                        const hasUrl = link.url && link.url.trim() !== '';
+
+                                        return hasUrl ? (
+                                            <a
+                                                key={link.id}
+                                                href={link.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-indigo-600 hover:text-indigo-800 font-bold text-sm py-1 border-b border-gray-50 md:border-0 flex items-center gap-1 group"
+                                            >
+                                                <span>{link.title}</span>
+                                                <span className="text-gray-300 group-hover:text-indigo-400 text-xs">↗</span>
+                                            </a>
+                                        ) : (
+                                            <div
+                                                key={link.id}
+                                                className="text-gray-500 font-bold text-sm py-1 border-b border-gray-50 md:border-0 flex items-center gap-1 cursor-default"
+                                            >
+                                                <span>{link.title}</span>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         );
