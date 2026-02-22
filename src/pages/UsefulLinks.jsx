@@ -71,13 +71,16 @@ const UsefulLinks = () => {
 
             {/* Search */}
             <div className="mb-6">
-                <input
-                    type="text"
-                    placeholder="Search links..."
-                    className="w-full py-2 border-b border-gray-200 focus:border-indigo-500 outline-none text-sm"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
+                <div className="relative">
+                    <FaSearch className="absolute left-0 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
+                    <input
+                        type="text"
+                        placeholder="Search links by title or category..."
+                        className="w-full pl-6 py-2 border-b border-gray-200 focus:border-indigo-500 outline-none text-sm"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
             </div>
 
             {loading ? (
