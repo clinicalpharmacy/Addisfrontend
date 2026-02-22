@@ -391,33 +391,7 @@ const PatientList = () => {
                     </table>
                 </div>
             </div>
-
-
-            {/* Stats */}
-                <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                    <div className="bg-blue-50 p-3 rounded">
-                        <p className="text-blue-600">Total Patients</p>
-                        <p className="text-lg font-bold text-blue-800">{patients.length}</p>
-                    </div>
-                    <div className="bg-green-50 p-3 rounded">
-                        <p className="text-green-600">Active</p>
-                        <p className="text-lg font-bold text-green-800">
-                            {patients.filter(p => p.is_active !== false).length}
-                        </p>
-                    </div>
-                    <div className="bg-yellow-50 p-3 rounded">
-                        <p className="text-yellow-600">With Appointments</p>
-                        <p className="text-lg font-bold text-yellow-800">
-                            {patients.filter(p => p.appointmentDate).length}
-                        </p>
-                    </div>
-                    <div className="bg-purple-50 p-3 rounded">
-                        <p className="text-purple-600">Access Level</p>
-                        <p className="text-lg font-bold text-purple-800">
-                            {userRole === 'admin' ? 'Full' : userRole === 'company_admin' ? 'Company' : 'Personal'}
-                        </p>
-                    </div>
-                </div>
+          
             {/* Patients List (Mobile) */}
             <div className="md:hidden space-y-4">
                 {currentPatients.length > 0 ? (
@@ -501,6 +475,32 @@ const PatientList = () => {
                 )}
             </div>
 
+              {/* Stats */}
+                <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                    <div className="bg-blue-50 p-3 rounded">
+                        <p className="text-blue-600">Total Patients</p>
+                        <p className="text-lg font-bold text-blue-800">{patients.length}</p>
+                    </div>
+                    <div className="bg-green-50 p-3 rounded">
+                        <p className="text-green-600">Active</p>
+                        <p className="text-lg font-bold text-green-800">
+                            {patients.filter(p => p.is_active !== false).length}
+                        </p>
+                    </div>
+                    <div className="bg-yellow-50 p-3 rounded">
+                        <p className="text-yellow-600">With Appointments</p>
+                        <p className="text-lg font-bold text-yellow-800">
+                            {patients.filter(p => p.appointmentDate).length}
+                        </p>
+                    </div>
+                    <div className="bg-purple-50 p-3 rounded">
+                        <p className="text-purple-600">Access Level</p>
+                        <p className="text-lg font-bold text-purple-800">
+                            {userRole === 'admin' ? 'Full' : userRole === 'company_admin' ? 'Company' : 'Personal'}
+                        </p>
+                    </div>
+                </div>
+            
             {/* Pagination Controls */}
             {filteredPatients.length > itemsPerPage && (
                 <div className="bg-white rounded-xl shadow p-4 flex flex-col md:flex-row justify-between items-center gap-4">
