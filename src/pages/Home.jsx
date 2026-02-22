@@ -7,462 +7,499 @@ import {
     FaUserMd,
     FaArrowRight,
     FaHeartbeat,
-    FaLeaf,
-    FaBookOpen,
-    FaStethoscope,
+    FaShieldAlt,
+    FaChartLine,
+    FaBell,
     FaCalendarCheck,
+    FaClock,
     FaSun,
     FaMoon,
     FaCloudSun,
-    FaStar,
-    FaChartLine,
-    FaShieldAlt,
-    FaClipboardList,
-    FaSearch,
-    FaInfoCircle
+    FaLeaf,
+    FaFlask,
+    FaBookOpen,
+    FaStethoscope
 } from 'react-icons/fa';
 
 const Home = () => {
+    const [greeting, setGreeting] = useState('');
+    const [greetingIcon, setGreetingIcon] = useState(null);
     const [currentTime, setCurrentTime] = useState(new Date());
-    const [greetingIcon, setGreetingIcon] = useState(<FaSun className="animate-spin-slow" />);
-    const [featuredTip, setFeaturedTip] = useState(0);
-    const [showWelcome, setShowWelcome] = useState(true);
-    const [statsVisible, setStatsVisible] = useState(false);
-    const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+    const [quote, setQuote] = useState('');
+    const [weatherEffect, setWeatherEffect] = useState('sunny');
+    const [recentActivities, setRecentActivities] = useState([]);
+    const [showWelcomeAnimation, setShowWelcomeAnimation] = useState(true);
+    const [hoveredCard, setHoveredCard] = useState(null);
+    const [user, setUser] = useState(null);
 
-    const getGreeting = () => {
+    // Medical quotes for inspiration
+    const quotes = [
+        { text: "The art of medicine consists of amusing the patient while nature cures the disease.", author: "Voltaire" },
+        { text: "Wherever the art of medicine is loved, there is also a love of humanity.", author: "Hippocrates" },
+        { text: "Medicine is not only a science; it is also an art. It does not consist of compounding pills and plasters.", author: "Paracelsus" },
+        { text: "The best medicine is to prevent disease from occurring.", author: "Chinese Proverb" },
+        { text: "Healing is a matter of time, but it is sometimes also a matter of opportunity.", author: "Hippocrates" }
+    ];
+
+    useEffect(() => {
+        // Get user from localStorage
+        const userData = JSON.parse(localStorage.getItem('user'));
+        setUser(userData);
+
+        // Update greeting
         const hour = new Date().getHours();
         if (hour < 12) {
-            setGreetingIcon(<FaSun className="animate-bounce text-yellow-300" />);
-            return 'Good morning';
+            setGreeting('Good morning');
+            setGreetingIcon(<FaSun className="animate-spin-slow" />);
+            setWeatherEffect('morning');
+        } else if (hour < 18) {
+            setGreeting('Good afternoon');
+            setGreetingIcon(<FaCloudSun className="animate-bounce-slow" />);
+            setWeatherEffect('afternoon');
+        } else {
+            setGreeting('Good evening');
+            setGreetingIcon(<FaMoon className="animate-pulse" />);
+            setWeatherEffect('evening');
         }
-        if (hour < 18) {
-            setGreetingIcon(<FaCloudSun className="animate-pulse text-orange-300" />);
-            return 'Good afternoon';
-        }
-        setGreetingIcon(<FaMoon className="animate-pulse text-blue-200" />);
-        return 'Good evening';
-    };
 
-    // Update time every second
-    useEffect(() => {
+        // Get random quote
+        const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+        setQuote(randomQuote);
+
+        // Update time every second
         const timer = setInterval(() => {
             setCurrentTime(new Date());
         }, 1000);
-        
-        // Simulate stats loading
-        setTimeout(() => setStatsVisible(true), 500);
-        
-        return () => clearInterval(timer);
-    }, []);
 
-    // Rotate health tips
-    useEffect(() => {
-        const tipInterval = setInterval(() => {
-            setFeaturedTip((prev) => (prev + 1) % healthTips.length);
-        }, 5000);
-        return () => clearInterval(tipInterval);
-    }, []);
+        // Simulate recent activities
+        setRecentActivities([
+            { id: 1, action: 'Patient review completed', time: '5 min ago', icon: FaUserInjured, color: 'blue' },
+            { id: 2, action: 'Medication info accessed', time: '15 min ago', icon: FaPills, color: 'purple' },
+            { id: 3, action: 'Home remedy saved', time: '32 min ago', icon: FaLeaf, color: 'green' }
+        ]);
 
-    // Track mouse movement for parallax effect
-    useEffect(() => {
-        const handleMouseMove = (e) => {
-            setMousePosition({
-                x: (e.clientX / window.innerWidth - 0.5) * 20,
-                y: (e.clientY / window.innerHeight - 0.5) * 20
-            });
+        // Hide welcome animation after 3 seconds
+        const animationTimer = setTimeout(() => {
+            setShowWelcomeAnimation(false);
+        }, 3000);
+
+        return () => {
+            clearInterval(timer);
+            clearTimeout(animationTimer);
         };
-        window.addEventListener('mousemove', handleMouseMove);
-        return () => window.removeEventListener('mousemove', handleMouseMove);
     }, []);
 
-    const healthTips = [
-        { icon: FaHeartbeat, text: "Stay hydrated - drink 8 glasses of water daily", color: "from-blue-400 to-blue-600" },
-        { icon: FaLeaf, text: "Include colorful vegetables in your meals", color: "from-green-400 to-green-600" },
-        { icon: FaMoon, text: "Get 7-8 hours of quality sleep", color: "from-purple-400 to-purple-600" },
-        { icon: FaStethoscope, text: "Regular check-ups prevent health issues", color: "from-red-400 to-red-600" }
+    // Get greeting-specific styles
+    const getGreetingStyles = () => {
+        switch(weatherEffect) {
+            case 'morning':
+                return 'from-amber-400 via-orange-400 to-rose-400';
+            case 'afternoon':
+                return 'from-sky-400 via-blue-400 to-indigo-400';
+            case 'evening':
+                return 'from-indigo-800 via-purple-800 to-pink-800';
+            default:
+                return 'from-blue-500 to-purple-600';
+        }
+    };
+
+    // Card data with enhanced properties
+    const cards = [
+        {
+            id: 'patients',
+            title: 'Patients',
+            description: 'Medicines review for individual patients',
+            icon: FaUserInjured,
+            color: 'blue',
+            gradient: 'from-blue-500 to-blue-600',
+            lightBg: 'bg-blue-50',
+            link: '/patients',
+            role: 'non-admin',
+            stats: '24 active',
+            icon2: FaStethoscope
+        },
+        {
+            id: 'remedies',
+            title: 'Home Remedies',
+            description: 'Natural and home-made remedies',
+            icon: FaLeaf,
+            color: 'green',
+            gradient: 'from-green-500 to-emerald-600',
+            lightBg: 'bg-green-50',
+            link: '/knowledge/remedies',
+            stats: '156 remedies',
+            icon2: FaFlask
+        },
+        {
+            id: 'medications',
+            title: 'Medication Info',
+            description: 'Comprehensive medicines database',
+            icon: FaPills,
+            color: 'purple',
+            gradient: 'from-purple-500 to-purple-600',
+            lightBg: 'bg-purple-50',
+            link: '/knowledge/medications',
+            stats: '2.5k+ drugs',
+            icon2: FaBookOpen
+        },
+        {
+            id: 'illnesses',
+            title: 'Minor Illnesses',
+            description: 'OTC-based treatment guides',
+            icon: FaUserMd,
+            color: 'orange',
+            gradient: 'from-orange-500 to-red-500',
+            lightBg: 'bg-orange-50',
+            link: '/knowledge/illnesses',
+            stats: '85 conditions',
+            icon2: FaHeartbeat
+        }
     ];
-
-    const quickStats = [
-        { label: "Active Patients", value: "1,247", icon: FaUserInjured, color: "blue" },
-        { label: "Medications", value: "3,892", icon: FaPills, color: "purple" },
-        { label: "Remedies", value: "156", icon: FaVial, color: "green" },
-        { label: "Daily Consultations", value: "89", icon: FaStethoscope, color: "orange" }
-    ];
-
-    const features = [
-        { icon: FaShieldAlt, title: "Secure & Private", description: "Your data is encrypted and protected" },
-        { icon: FaChartLine, title: "Track Progress", description: "Monitor health improvements over time" },
-        { icon: FaClipboardList, title: "Digital Records", description: "Access your health history anytime" }
-    ];
-
-    const TipIcon = healthTips[featuredTip].icon;
-
-    // Get user role from localStorage
-    const user = JSON.parse(localStorage.getItem('user'));
-    const isAdmin = user?.role === 'admin';
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 relative overflow-hidden">
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
             {/* Animated Background Elements */}
-            <div className="absolute inset-0 overflow-hidden">
-                <div 
-                    className="absolute top-20 left-20 w-72 h-72 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"
-                    style={{ transform: `translate(${mousePosition.x}px, ${mousePosition.y}px)` }}
-                ></div>
-                <div 
-                    className="absolute top-40 right-20 w-72 h-72 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"
-                    style={{ transform: `translate(${-mousePosition.x}px, ${-mousePosition.y}px)` }}
-                ></div>
-                <div 
-                    className="absolute bottom-20 left-1/2 w-72 h-72 bg-green-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"
-                    style={{ transform: `translate(${mousePosition.y}px, ${-mousePosition.x}px)` }}
-                ></div>
-                
-                {/* Floating medical symbols */}
-                <FaHeartbeat className="absolute top-1/4 left-1/4 text-blue-200 opacity-10 text-7xl animate-float" />
-                <FaPills className="absolute bottom-1/4 right-1/4 text-purple-200 opacity-10 text-7xl animate-float-delayed" />
-                <FaUserMd className="absolute top-3/4 left-1/3 text-green-200 opacity-10 text-7xl animate-float-slow" />
+            <div className="fixed inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute top-0 left-0 w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
+                <div className="absolute top-0 right-0 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
+                <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-pink-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
             </div>
 
-            <div className="relative z-10 space-y-8 px-6 max-w-7xl mx-auto py-8">
-                {/* Enhanced Welcome Section with Parallax */}
-                <div 
-                    className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-3xl p-8 text-white shadow-2xl transform hover:scale-[1.02] transition-transform duration-500 relative overflow-hidden group"
-                    style={{
-                        transform: `perspective(1000px) rotateX(${mousePosition.y * 0.5}deg) rotateY(${mousePosition.x * 0.5}deg)`
-                    }}
-                >
-                    {/* Animated background pattern */}
+            <div className="relative space-y-6 px-4 md:px-6 max-w-7xl mx-auto py-6">
+                {/* Welcome Animation Overlay */}
+                {showWelcomeAnimation && (
+                    <div className="fixed inset-0 flex items-center justify-center bg-white/90 backdrop-blur-sm z-50 animate-fade-out">
+                        <div className="text-center">
+                            <div className="relative">
+                                <div className="w-32 h-32 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mx-auto mb-4 animate-pulse"></div>
+                                <FaHeartbeat className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white text-4xl animate-ping" />
+                            </div>
+                            <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent animate-slide-up">
+                                Welcome back!
+                            </h2>
+                            <p className="text-gray-600 mt-2 animate-slide-up animation-delay-300">
+                                {user?.name || 'Loading your dashboard...'}
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Enhanced Welcome Section */}
+                <div className={`bg-gradient-to-r ${getGreetingStyles()} rounded-3xl p-8 text-white shadow-2xl transform transition-all duration-500 hover:scale-[1.02] hover:shadow-3xl relative overflow-hidden group`}>
+                    {/* Animated background patterns */}
                     <div className="absolute inset-0 opacity-10">
-                        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M30 0 L30 60 M0 30 L60 30" stroke="white" stroke-width="0.5"%3E%3C/path%3E%3C/svg%3E')] bg-repeat animate-pulse"></div>
+                        <div className="absolute -right-10 -top-10 w-40 h-40 bg-white rounded-full animate-ping"></div>
+                        <div className="absolute -left-10 -bottom-10 w-60 h-60 bg-white rounded-full animate-pulse"></div>
                     </div>
-
-                    <div className="relative flex flex-col md:flex-row justify-between items-start md:items-center">
-                        <div className="transform transition-all duration-700 hover:translate-x-2">
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm animate-pulse">
-                                    {greetingIcon}
+                    
+                    {/* Medical icons floating in background */}
+                    <FaHeartbeat className="absolute right-20 top-5 text-white opacity-5 text-7xl animate-float" />
+                    <FaShieldAlt className="absolute left-20 bottom-5 text-white opacity-5 text-7xl animate-float animation-delay-1000" />
+                    <FaChartLine className="absolute right-40 bottom-10 text-white opacity-5 text-6xl animate-float animation-delay-2000" />
+                    
+                    <div className="relative z-10">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
+                            <div className="group-hover:transform group-hover:translate-x-2 transition-transform duration-300">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <span className="text-4xl animate-float">
+                                        {greetingIcon}
+                                    </span>
+                                    <h1 className="text-3xl md:text-4xl font-bold">
+                                        {greeting}, {user?.name?.split(' ')[0] || 'User'}!
+                                    </h1>
                                 </div>
-                                <h1 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-blue-100">
-                                    {getGreeting()}.
-                                </h1>
+                                <p className="text-white/90 text-lg flex items-center gap-2">
+                                    <FaHeartbeat className="animate-pulse" />
+                                    {quote.text}
+                                </p>
+                                <p className="text-white/70 text-sm mt-1 italic">
+                                    — {quote.author}
+                                </p>
                             </div>
-                            <p className="text-blue-100 text-lg flex items-center gap-2">
-                                <FaStethoscope className="animate-pulse" />
-                                AddisMed Digital Health Platform
-                            </p>
                             
-                            {/* Animated Health Tip */}
-                            {showWelcome && (
-                                <div className="mt-4 flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 w-fit animate-slide-in">
-                                    <div className={`p-1 bg-gradient-to-r ${healthTips[featuredTip].color} rounded-full`}>
-                                        <TipIcon className="text-white text-sm" />
-                                    </div>
-                                    <p className="text-sm text-white font-light">
-                                        {healthTips[featuredTip].text}
+                            <div className="mt-4 md:mt-0 text-right bg-white/10 backdrop-blur-lg rounded-2xl p-4 border border-white/20 group-hover:scale-105 transition-all duration-300">
+                                <div className="flex items-center gap-3 justify-end">
+                                    <FaCalendarCheck className="text-2xl animate-bounce-slow" />
+                                    <p className="text-sm text-white/80">
+                                        {currentTime.toLocaleDateString('en-US', {
+                                            weekday: 'short',
+                                            month: 'short',
+                                            day: 'numeric'
+                                        })}
                                     </p>
                                 </div>
-                            )}
-                        </div>
-                        
-                        <div className="mt-6 md:mt-0 text-right transform transition-all duration-700 hover:scale-110">
-                            <div className="flex items-center gap-3 justify-end">
-                                <FaCalendarCheck className="text-2xl text-blue-200 animate-bounce" />
-                                <p className="text-sm text-blue-200 font-medium tracking-wide">
-                                    {currentTime.toLocaleDateString('en-US', {
-                                        weekday: 'long',
-                                        month: 'long',
-                                        day: 'numeric'
-                                    })}
-                                </p>
+                                <div className="flex items-center gap-2 justify-end mt-2">
+                                    <FaClock className="text-xl animate-spin-slow" />
+                                    <p className="text-3xl font-bold font-mono">
+                                        {currentTime.toLocaleTimeString('en-US', {
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                            second: '2-digit'
+                                        })}
+                                    </p>
+                                </div>
                             </div>
-                            <div className="relative mt-2">
-                                <p className="text-5xl font-bold font-mono tracking-wider bg-white/10 backdrop-blur-sm rounded-2xl px-4 py-2 inline-block">
-                                    {currentTime.toLocaleTimeString('en-US', {
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                        second: '2-digit'
-                                    })}
-                                </p>
-                                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-ping"></div>
+                        </div>
+
+                        {/* Quick Stats Row */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
+                            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-3 border border-white/20 transform hover:scale-105 transition-all duration-300">
+                                <p className="text-xs text-white/70">Patients Today</p>
+                                <p className="text-xl font-bold">12</p>
+                            </div>
+                            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-3 border border-white/20 transform hover:scale-105 transition-all duration-300">
+                                <p className="text-xs text-white/70">Remedies</p>
+                                <p className="text-xl font-bold">156</p>
+                            </div>
+                            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-3 border border-white/20 transform hover:scale-105 transition-all duration-300">
+                                <p className="text-xs text-white/70">Medications</p>
+                                <p className="text-xl font-bold">2.5k+</p>
+                            </div>
+                            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-3 border border-white/20 transform hover:scale-105 transition-all duration-300">
+                                <p className="text-xs text-white/70">Conditions</p>
+                                <p className="text-xl font-bold">85</p>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    {/* Quick Stats Preview */}
-                    <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {quickStats.map((stat, index) => {
-                            const Icon = stat.icon;
-                            return (
-                                <div 
-                                    key={index}
-                                    className={`bg-white/10 backdrop-blur-sm rounded-xl p-3 transform transition-all duration-500 hover:scale-105 hover:bg-white/20 ${
-                                        statsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-                                    }`}
-                                    style={{ transitionDelay: `${index * 100}ms` }}
-                                >
-                                    <div className="flex items-center gap-2">
-                                        <Icon className={`text-${stat.color}-300 text-xl`} />
-                                        <div>
-                                            <p className="text-2xl font-bold">{stat.value}</p>
-                                            <p className="text-xs text-blue-200">{stat.label}</p>
+                {/* Two Column Layout */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Main Content - Quick Access Grid */}
+                    <div className="lg:col-span-2">
+                        {/* Section Title */}
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+                                Quick Access
+                            </h2>
+                            <div className="flex gap-1">
+                                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                                <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse animation-delay-300"></div>
+                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse animation-delay-600"></div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {cards.map((card) => {
+                                const Icon = card.icon;
+                                const Icon2 = card.icon2;
+                                
+                                // Skip patients card for admin
+                                if (card.id === 'patients' && user?.role === 'admin') {
+                                    return null;
+                                }
+
+                                return (
+                                    <Link
+                                        key={card.id}
+                                        to={card.link}
+                                        onMouseEnter={() => setHoveredCard(card.id)}
+                                        onMouseLeave={() => setHoveredCard(null)}
+                                        className="group relative bg-white rounded-2xl shadow-xl overflow-hidden transform transition-all duration-500 hover:scale-105 hover:shadow-2xl"
+                                    >
+                                        {/* Animated background gradient */}
+                                        <div className={`absolute inset-0 bg-gradient-to-r ${card.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500`}></div>
+                                        
+                                        {/* Corner decoration */}
+                                        <div className={`absolute top-0 right-0 w-20 h-20 bg-gradient-to-br ${card.gradient} opacity-20 rounded-bl-full transform translate-x-10 -translate-y-10 group-hover:translate-x-0 group-hover:translate-y-0 transition-transform duration-500`}></div>
+                                        
+                                        <div className="relative p-6">
+                                            <div className="flex items-start justify-between mb-4">
+                                                <div className="flex items-center gap-4">
+                                                    <div className={`relative p-4 ${card.lightBg} rounded-2xl group-hover:scale-110 transition-transform duration-300`}>
+                                                        <Icon className={`text-${card.color}-600 text-3xl relative z-10`} />
+                                                        <div className={`absolute inset-0 bg-gradient-to-r ${card.gradient} rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-300`}></div>
+                                                        <Icon2 className={`absolute -bottom-1 -right-1 text-${card.color}-400 text-sm opacity-0 group-hover:opacity-100 transition-all duration-300`} />
+                                                    </div>
+                                                    <div>
+                                                        <h2 className="text-xl font-bold text-gray-800 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-gray-800 group-hover:to-gray-600 transition-all duration-300">
+                                                            {card.title}
+                                                        </h2>
+                                                        <p className="text-sm text-gray-500 mt-1">{card.description}</p>
+                                                    </div>
+                                                </div>
+                                                
+                                                {/* Stats badge */}
+                                                <div className={`px-2 py-1 ${card.lightBg} rounded-full text-${card.color}-600 text-xs font-bold`}>
+                                                    {card.stats}
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`w-2 h-2 bg-${card.color}-500 rounded-full animate-pulse`}></div>
+                                                    <span className="text-xs text-gray-400">Updated today</span>
+                                                </div>
+                                                <span className={`text-${card.color}-600 flex items-center gap-2 font-medium group-hover:gap-3 transition-all duration-300`}>
+                                                    {card.id === 'patients' ? 'Open' : 
+                                                     card.id === 'remedies' ? 'Browse' :
+                                                     card.id === 'medications' ? 'Search' : 'View'}
+                                                    <FaArrowRight className={`text-sm group-hover:translate-x-1 transition-transform duration-300 ${hoveredCard === card.id ? 'animate-bounce-x' : ''}`} />
+                                                </span>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
-                            );
-                        })}
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Sidebar - Recent Activity & Notifications */}
+                    <div className="lg:col-span-1">
+                        {/* Recent Activity Card */}
+                        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6 transform transition-all duration-300 hover:shadow-2xl">
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                                    <FaBell className="text-yellow-500 animate-bounce-slow" />
+                                    Recent Activity
+                                </h3>
+                                <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">
+                                    3 new
+                                </span>
+                            </div>
+                            
+                            <div className="space-y-4">
+                                {recentActivities.map((activity, index) => {
+                                    const ActivityIcon = activity.icon;
+                                    return (
+                                        <div 
+                                            key={activity.id}
+                                            className="flex items-start gap-3 group hover:bg-gray-50 p-2 rounded-xl transition-all duration-300 transform hover:scale-105"
+                                            style={{ animationDelay: `${index * 200}ms` }}
+                                        >
+                                            <div className={`p-2 bg-${activity.color}-100 rounded-lg group-hover:scale-110 transition-transform duration-300`}>
+                                                <ActivityIcon className={`text-${activity.color}-600`} />
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="text-sm font-medium text-gray-800">{activity.action}</p>
+                                                <p className="text-xs text-gray-400 mt-1">{activity.time}</p>
+                                            </div>
+                                            <div className={`w-2 h-2 bg-${activity.color}-500 rounded-full animate-pulse`}></div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            
+                            <button className="w-full mt-6 text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center justify-center gap-2 group">
+                                View all activity
+                                <FaArrowRight className="group-hover:translate-x-1 transition-transform" />
+                            </button>
+                        </div>
+
+                        {/* Quick Tips Card */}
+                        <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl shadow-xl p-6 text-white transform transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+                            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                                <FaHeartbeat className="animate-pulse" />
+                                Quick Tip
+                            </h3>
+                            <p className="text-sm text-white/90 mb-4">
+                                Remember to check for potential drug interactions when prescribing new medications.
+                            </p>
+                            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-3 border border-white/20">
+                                <p className="text-xs text-white/70">Did you know?</p>
+                                <p className="text-sm font-medium mt-1">
+                                    Regular medication reviews can reduce hospital admissions by up to 30%.
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                {/* Features Banner */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {features.map((feature, index) => {
-                        const Icon = feature.icon;
-                        return (
-                            <div 
-                                key={index}
-                                className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-500 transform hover:-translate-y-1 border border-white/50"
-                                style={{ animationDelay: `${index * 150}ms` }}
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg text-white">
-                                        <Icon className="text-xl animate-pulse" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-semibold text-gray-800">{feature.title}</h3>
-                                        <p className="text-xs text-gray-600">{feature.description}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-
-                {/* Quick Access Grid with Enhanced Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 auto-rows-fr">
-                    {/* Patients - Hidden for Admin */}
-                    {!isAdmin && (
-                        <Link 
-                            to="/patients" 
-                            className="group bg-white rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-[1.02] border border-transparent hover:border-blue-200 relative overflow-hidden"
-                        >
-                            <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-blue-600 opacity-0 group-hover:opacity-10 transition-opacity duration-500"></div>
-                            <div className="absolute -right-10 -top-10 w-32 h-32 bg-blue-200 rounded-full opacity-0 group-hover:opacity-20 transition-all duration-500 group-hover:scale-150"></div>
-                            
-                            <div className="flex items-center gap-5 mb-4 relative">
-                                <div className="p-4 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
-                                    <FaUserInjured className="text-blue-600 text-3xl group-hover:animate-bounce" />
-                                </div>
-                                <div className="flex-1">
-                                    <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent group-hover:from-blue-700 group-hover:to-blue-900 transition-all">
-                                        Patients
-                                    </h2>
-                                    <p className="text-sm text-gray-600 flex items-center gap-1">
-                                        <FaInfoCircle className="text-blue-400 text-xs" />
-                                        Medicines review for individual patients
-                                    </p>
-                                </div>
-                                <div className="p-2 bg-blue-50 rounded-full group-hover:bg-blue-100 transition-all group-hover:scale-110 group-hover:rotate-45">
-                                    <FaArrowRight className="text-blue-600" />
-                                </div>
-                            </div>
-                            
-                            {/* Progress indicator */}
-                            <div className="w-full h-1 bg-gray-100 rounded-full overflow-hidden">
-                                <div className="h-full w-3/4 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full group-hover:animate-pulse"></div>
-                            </div>
-                            <p className="text-xs text-gray-400 mt-2">75% of patients reviewed today</p>
-                        </Link>
-                    )}
-
-                    {/* Home Remedies */}
-                    <Link 
-                        to="/knowledge/remedies" 
-                        className="group bg-white rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-[1.02] border border-transparent hover:border-green-200 relative overflow-hidden"
-                    >
-                        <div className="absolute inset-0 bg-gradient-to-br from-green-500 to-green-600 opacity-0 group-hover:opacity-10 transition-opacity duration-500"></div>
-                        <div className="absolute -right-10 -top-10 w-32 h-32 bg-green-200 rounded-full opacity-0 group-hover:opacity-20 transition-all duration-500 group-hover:scale-150"></div>
-                        
-                        <div className="flex items-center gap-5 mb-4 relative">
-                            <div className="p-4 bg-gradient-to-br from-green-100 to-green-200 rounded-2xl group-hover:scale-110 group-hover:-rotate-6 transition-all duration-500">
-                                <FaVial className="text-green-600 text-3xl group-hover:animate-bounce" />
-                            </div>
-                            <div className="flex-1">
-                                <h2 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-green-800 bg-clip-text text-transparent group-hover:from-green-700 group-hover:to-green-900 transition-all">
-                                    Home Remedies
-                                </h2>
-                                <p className="text-sm text-gray-600 flex items-center gap-1">
-                                    <FaLeaf className="text-green-400 text-xs" />
-                                    Natural & home-made remedies
-                                </p>
-                            </div>
-                            <div className="p-2 bg-green-50 rounded-full group-hover:bg-green-100 transition-all group-hover:scale-110 group-hover:-rotate-45">
-                                <FaArrowRight className="text-green-600" />
-                            </div>
-                        </div>
-                        
-                        <div className="flex gap-2 mt-2">
-                            {['🌿', '🍯', '🌼', '🍋'].map((emoji, i) => (
-                                <span key={i} className="text-lg opacity-50 group-hover:opacity-100 group-hover:scale-110 transition-all" style={{ transitionDelay: `${i * 50}ms` }}>
-                                    {emoji}
-                                </span>
-                            ))}
-                        </div>
-                    </Link>
-
-                    {/* Medication Info */}
-                    <Link 
-                        to="/knowledge/medications" 
-                        className="group bg-white rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-[1.02] border border-transparent hover:border-purple-200 relative overflow-hidden"
-                    >
-                        <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-purple-600 opacity-0 group-hover:opacity-10 transition-opacity duration-500"></div>
-                        <div className="absolute -right-10 -top-10 w-32 h-32 bg-purple-200 rounded-full opacity-0 group-hover:opacity-20 transition-all duration-500 group-hover:scale-150"></div>
-                        
-                        <div className="flex items-center gap-5 mb-4 relative">
-                            <div className="p-4 bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl group-hover:scale-110 group-hover:rotate-12 transition-all duration-500">
-                                <FaPills className="text-purple-600 text-3xl group-hover:animate-pulse" />
-                            </div>
-                            <div className="flex-1">
-                                <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent group-hover:from-purple-700 group-hover:to-purple-900 transition-all">
-                                    Medication Info
-                                </h2>
-                                <p className="text-sm text-gray-600 flex items-center gap-1">
-                                    <FaSearch className="text-purple-400 text-xs" />
-                                    Comprehensive medicines database
-                                </p>
-                            </div>
-                            <div className="p-2 bg-purple-50 rounded-full group-hover:bg-purple-100 transition-all group-hover:scale-110 group-hover:rotate-12">
-                                <FaArrowRight className="text-purple-600" />
-                            </div>
-                        </div>
-                        
-                        <div className="flex items-center gap-2 mt-2">
-                            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">3,892 drugs</span>
-                            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">Interactions</span>
-                            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">Dosages</span>
-                        </div>
-                    </Link>
-
-                    {/* Minor Illnesses */}
-                    <Link 
-                        to="/knowledge/illnesses" 
-                        className="group bg-white rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-[1.02] border border-transparent hover:border-orange-200 relative overflow-hidden"
-                    >
-                        <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-orange-600 opacity-0 group-hover:opacity-10 transition-opacity duration-500"></div>
-                        <div className="absolute -right-10 -top-10 w-32 h-32 bg-orange-200 rounded-full opacity-0 group-hover:opacity-20 transition-all duration-500 group-hover:scale-150"></div>
-                        
-                        <div className="flex items-center gap-5 mb-4 relative">
-                            <div className="p-4 bg-gradient-to-br from-orange-100 to-orange-200 rounded-2xl group-hover:scale-110 group-hover:-rotate-12 transition-all duration-500">
-                                <FaUserMd className="text-orange-600 text-3xl group-hover:animate-bounce" />
-                            </div>
-                            <div className="flex-1">
-                                <h2 className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-orange-800 bg-clip-text text-transparent group-hover:from-orange-700 group-hover:to-orange-900 transition-all">
-                                    Minor Illnesses
-                                </h2>
-                                <p className="text-sm text-gray-600 flex items-center gap-1">
-                                    <FaBookOpen className="text-orange-400 text-xs" />
-                                    OTC-based treatment guides
-                                </p>
-                            </div>
-                            <div className="p-2 bg-orange-50 rounded-full group-hover:bg-orange-100 transition-all group-hover:scale-110 group-hover:-rotate-12">
-                                <FaArrowRight className="text-orange-600" />
-                            </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-4 gap-1 mt-2">
-                            {['Cold', 'Flu', 'Headache', 'Allergy'].map((illness, i) => (
-                                <span key={i} className="text-xs bg-orange-100 text-orange-700 px-1 py-1 rounded text-center group-hover:bg-orange-200 transition-all">
-                                    {illness}
-                                </span>
-                            ))}
-                        </div>
-                    </Link>
-                </div>
-
-                {/* Enhanced Footer with Stats */}
-                <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/50">
-                    <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                        <div className="flex items-center gap-2">
-                            <FaStar className="text-yellow-500 animate-spin-slow" />
-                            <p className="text-gray-700 font-medium">
-                                Addismed - Supporting patient care decisions
-                            </p>
-                        </div>
-                        
-                        <div className="flex items-center gap-6">
-                            <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                                <span className="text-sm text-gray-600">System Online</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <FaShieldAlt className="text-blue-500" />
-                                <span className="text-sm text-gray-600">HIPAA Compliant</span>
-                            </div>
+                {/* Enhanced Footer */}
+                <div className="relative mt-8 pt-8 border-t border-gray-200">
+                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                        <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-xl animate-pulse">
+                            <FaHeartbeat className="text-white text-xl" />
                         </div>
                     </div>
                     
-                    {/* Live activity indicator */}
-                    <div className="mt-4 flex items-center justify-center gap-3 text-xs text-gray-500">
-                        <span className="flex items-center gap-1">
-                            <span className="w-1 h-1 bg-green-500 rounded-full animate-ping"></span>
-                            247 active users
-                        </span>
-                        <span>•</span>
-                        <span>Updated 1 min ago</span>
-                        <span>•</span>
-                        <span className="text-blue-500 hover:underline cursor-pointer">View all activity</span>
+                    <div className="text-center">
+                        <p className="text-gray-600 text-sm mb-2">
+                            AddisMed - Supporting patient care decisions with evidence-based information
+                        </p>
+                        <div className="flex items-center justify-center gap-4 text-xs text-gray-400">
+                            <span className="hover:text-gray-600 transition-colors cursor-pointer">About</span>
+                            <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                            <span className="hover:text-gray-600 transition-colors cursor-pointer">Privacy</span>
+                            <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                            <span className="hover:text-gray-600 transition-colors cursor-pointer">Terms</span>
+                            <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                            <span className="hover:text-gray-600 transition-colors cursor-pointer">Contact</span>
+                        </div>
+                        <p className="text-xs text-gray-400 mt-4">
+                            © 2024 AddisMed Digital Health. All rights reserved.
+                        </p>
                     </div>
                 </div>
             </div>
 
             <style jsx>{`
                 @keyframes blob {
-                    0% { transform: scale(1) translate(0px, 0px); }
-                    33% { transform: scale(1.1) translate(30px, -50px); }
-                    66% { transform: scale(0.9) translate(-20px, 20px); }
-                    100% { transform: scale(1) translate(0px, 0px); }
+                    0% { transform: translate(0px, 0px) scale(1); }
+                    33% { transform: translate(30px, -50px) scale(1.1); }
+                    66% { transform: translate(-20px, 20px) scale(0.9); }
+                    100% { transform: translate(0px, 0px) scale(1); }
                 }
                 .animate-blob {
                     animation: blob 7s infinite;
                 }
-                .animation-delay-2000 {
-                    animation-delay: 2s;
-                }
-                .animation-delay-4000 {
-                    animation-delay: 4s;
-                }
-                
                 @keyframes float {
-                    0%, 100% { transform: translateY(0px) rotate(0deg); }
-                    50% { transform: translateY(-20px) rotate(5deg); }
+                    0%, 100% { transform: translateY(0px); }
+                    50% { transform: translateY(-20px); }
                 }
                 .animate-float {
                     animation: float 6s ease-in-out infinite;
                 }
-                .animate-float-delayed {
-                    animation: float 8s ease-in-out infinite;
-                    animation-delay: 1s;
-                }
-                .animate-float-slow {
-                    animation: float 10s ease-in-out infinite;
-                    animation-delay: 2s;
-                }
-                
                 @keyframes spin-slow {
                     from { transform: rotate(0deg); }
                     to { transform: rotate(360deg); }
                 }
                 .animate-spin-slow {
-                    animation: spin-slow 3s linear infinite;
+                    animation: spin-slow 10s linear infinite;
                 }
-                
-                @keyframes slide-in {
-                    0% { opacity: 0; transform: translateX(-20px); }
-                    100% { opacity: 1; transform: translateX(0); }
+                @keyframes bounce-slow {
+                    0%, 100% { transform: translateY(0); }
+                    50% { transform: translateY(-10px); }
                 }
-                .animate-slide-in {
-                    animation: slide-in 0.5s ease-out;
+                .animate-bounce-slow {
+                    animation: bounce-slow 3s ease-in-out infinite;
+                }
+                @keyframes slide-up {
+                    from { transform: translateY(30px); opacity: 0; }
+                    to { transform: translateY(0); opacity: 1; }
+                }
+                .animate-slide-up {
+                    animation: slide-up 0.6s ease-out;
+                }
+                @keyframes fade-out {
+                    0% { opacity: 1; }
+                    70% { opacity: 1; }
+                    100% { opacity: 0; visibility: hidden; }
+                }
+                .animate-fade-out {
+                    animation: fade-out 3s ease-in-out forwards;
+                }
+                @keyframes bounce-x {
+                    0%, 100% { transform: translateX(0); }
+                    50% { transform: translateX(5px); }
+                }
+                .animate-bounce-x {
+                    animation: bounce-x 0.5s ease-in-out infinite;
+                }
+                .animation-delay-300 {
+                    animation-delay: 300ms;
+                }
+                .animation-delay-600 {
+                    animation-delay: 600ms;
+                }
+                .animation-delay-1000 {
+                    animation-delay: 1000ms;
+                }
+                .animation-delay-2000 {
+                    animation-delay: 2000ms;
+                }
+                .animation-delay-4000 {
+                    animation-delay: 4000ms;
                 }
             `}</style>
         </div>
