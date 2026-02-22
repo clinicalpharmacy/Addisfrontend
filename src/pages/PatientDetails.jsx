@@ -257,7 +257,7 @@ const PatientDetails = () => {
         // Tiered restriction: Individual subscribers do NOT get clinical tools (plan, outcome, cost, drn)
         // BUT they DO get Clinical Analysis (after Medications)
         if (user?.account_type === 'individual' && !isAdmin) {
-            return allTabs.filter(tab => !['plan', 'outcome', 'cost', 'drn'].includes(tab.id));
+            return allTabs.filter(tab => !['overview', 'plan', 'outcome', 'cost', 'drn'].includes(tab.id));
         }
 
         // Everyone else (Admins and Company users with active sub) get everything
