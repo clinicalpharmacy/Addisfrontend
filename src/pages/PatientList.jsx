@@ -238,41 +238,43 @@ const PatientList = () => {
                 </button>
             </div>
 
-            {/* Search and Filters */}
-            <div className="bg-white rounded-xl shadow p-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="relative">
-                        <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                        <input
-                            type="text"
-                            value={searchTerm}
-                            onChange={handleSearch}
-                            placeholder="Search patients..."
-                            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
+            {/* Search and Filters - Only for Individual users */}
+            {userAccountType === 'individual' && (
+                <div className="bg-white rounded-xl shadow p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="relative">
+                            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                            <input
+                                type="text"
+                                value={searchTerm}
+                                onChange={handleSearch}
+                                placeholder="Search patients..."
+                                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                        </div>
+
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => {
+                                setStatusFilter(e.target.value);
+                                handleSearch({ target: { value: searchTerm } });
+                            }}
+                            className="border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                            <option value="all">All Status</option>
+                            <option value="active">Active Only</option>
+                            <option value="inactive">Inactive Only</option>
+                        </select>
+
+                        <button
+                            onClick={fetchPatients}
+                            className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-6 py-3 rounded-lg flex items-center justify-center gap-2 transition-colors"
+                        >
+                            <FaFilter /> Refresh
+                        </button>
                     </div>
-
-                    <select
-                        value={statusFilter}
-                        onChange={(e) => {
-                            setStatusFilter(e.target.value);
-                            handleSearch({ target: { value: searchTerm } });
-                        }}
-                        className="border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                        <option value="all">All Status</option>
-                        <option value="active">Active Only</option>
-                        <option value="inactive">Inactive Only</option>
-                    </select>
-
-                    <button
-                        onClick={fetchPatients}
-                        className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-6 py-3 rounded-lg flex items-center justify-center gap-2 transition-colors"
-                    >
-                        <FaFilter /> Refresh
-                    </button>
                 </div>
-            </div>
+            )}
 
             {/* Patients Table (Desktop) */}
             <div className="hidden md:block bg-white rounded-xl shadow overflow-hidden">
@@ -475,8 +477,15 @@ const PatientList = () => {
                 )}
             </div>
 
-              {/* Stats */}
+            {/* Stats - Reordered with Access Level first, only for Individual users */}
+            {userAccountType === 'individual' && (
                 <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                    <div className="bg-purple-50 p-3 rounded">
+                        <p className="text-purple-600">Access Level</p>
+                        <p className="text-lg font-bold text-purple-800">
+                            {userRole === 'admin' ? 'Full' : userRole === 'company_admin' ? 'Company' : 'Personal'}
+                        </p>
+                    </div>
                     <div className="bg-blue-50 p-3 rounded">
                         <p className="text-blue-600">Total Patients</p>
                         <p className="text-lg font-bold text-blue-800">{patients.length}</p>
@@ -493,13 +502,8 @@ const PatientList = () => {
                             {patients.filter(p => p.appointmentDate).length}
                         </p>
                     </div>
-                    <div className="bg-purple-50 p-3 rounded">
-                        <p className="text-purple-600">Access Level</p>
-                        <p className="text-lg font-bold text-purple-800">
-                            {userRole === 'admin' ? 'Full' : userRole === 'company_admin' ? 'Company' : 'Personal'}
-                        </p>
-                    </div>
                 </div>
+            )}
             
             {/* Pagination Controls */}
             {filteredPatients.length > itemsPerPage && (
