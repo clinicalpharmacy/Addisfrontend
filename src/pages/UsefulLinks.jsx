@@ -33,6 +33,32 @@ const UsefulLinks = () => {
     // Group links by category
     const categories = [...new Set(filteredLinks.map(link => link.category))];
 
+    const renderLink = (link) => {
+        if (link.url) {
+            return (
+                <a
+                    key={link.id}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-indigo-600 hover:text-indigo-800 font-bold text-sm py-1 border-b border-gray-50 md:border-0 flex items-center gap-1 group"
+                >
+                    <span>{link.title}</span>
+                    <span className="text-gray-300 group-hover:text-indigo-400 text-xs">↗</span>
+                </a>
+            );
+        } else {
+            return (
+                <span
+                    key={link.id}
+                    className="text-gray-700 font-medium text-sm py-1 border-b border-gray-50 md:border-0 block"
+                >
+                    {link.title}
+                </span>
+            );
+        }
+    };
+
     return (
         <div className="p-6 max-w-5xl mx-auto">
             {/* Simple Header */}
@@ -70,18 +96,7 @@ const UsefulLinks = () => {
                                     {category}
                                 </h2>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                    {categoryLinks.map(link => (
-                                        <a
-                                            key={link.id}
-                                            href={link.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-indigo-600 hover:text-indigo-800 font-bold text-sm py-1 border-b border-gray-50 md:border-0 flex items-center gap-1 group"
-                                        >
-                                            <span>{link.title}</span>
-                                            <span className="text-gray-300 group-hover:text-indigo-400 text-xs">↗</span>
-                                        </a>
-                                    ))}
+                                    {categoryLinks.map(link => renderLink(link))}
                                 </div>
                             </div>
                         );
