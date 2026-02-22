@@ -43,6 +43,7 @@ const PatientList = () => {
                 setUserAccountType(payload.account_type || '');
                 setUserCompanyId(payload.company_id || null);
             } catch (e) {
+                console.error('Failed to parse token', e);
             }
         }
 
@@ -69,6 +70,7 @@ const PatientList = () => {
                 setFilteredPatients([]);
             }
         } catch (error) {
+            console.error('Error fetching patients:', error);
             setPatients([]);
             setFilteredPatients([]);
         } finally {
@@ -127,7 +129,6 @@ const PatientList = () => {
         }
 
         try {
-            // Using centralized api utility
             const result = await api.delete(`/patients/${id}`);
 
             if (result.success) {
@@ -136,6 +137,7 @@ const PatientList = () => {
                 alert('Failed to delete patient');
             }
         } catch (error) {
+            console.error('Error deleting patient:', error);
             alert('Error deleting patient');
         }
     };
@@ -151,14 +153,6 @@ const PatientList = () => {
     const getSortIcon = (key) => {
         if (sortConfig.key !== key) return <FaSort className="text-gray-400" />;
         return sortConfig.direction === 'asc' ? <FaSortUp className="text-blue-500" /> : <FaSortDown className="text-blue-500" />;
-    };
-
-    const generatePatientCode = () => {
-        const date = new Date();
-        const year = date.getFullYear().toString().slice(-2);
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-        return `PAT${year}${month}${random}`;
     };
 
     const handleNewPatient = () => {
@@ -180,6 +174,7 @@ const PatientList = () => {
             const payload = JSON.parse(atob(token.split('.')[1]));
             return payload.userId;
         } catch (e) {
+            console.error('Failed to get user ID:', e);
             return null;
         }
     };
@@ -210,6 +205,9 @@ const PatientList = () => {
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentPatients = filteredPatients.slice(indexOfFirstItem, indexOfLastItem);
 
+    // Check if user is individual account type
+    const isIndividual = userAccountType === 'individual' && !userCompanyId;
+
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64">
@@ -228,18 +226,18 @@ const PatientList = () => {
                 </div>
                 <button
                     onClick={handleNewPatient}
-                    className={`px-6 py-3 rounded-lg flex items-center gap-2 transition-colors ${(userAccountType === 'individual' && !userCompanyId) && userRole !== 'admin' && patients.length >= 1
+                    className={`px-6 py-3 rounded-lg flex items-center gap-2 transition-colors ${isIndividual && userRole !== 'admin' && patients.length >= 1
                         ? 'bg-gray-400 cursor-not-allowed text-white'
                         : 'bg-blue-500 hover:bg-blue-600 text-white'
                         }`}
-                    title={(userAccountType === 'individual' && !userCompanyId) && userRole !== 'admin' && patients.length >= 1 ? "Limit reached for Individual plan" : "Add New Patient"}
+                    title={isIndividual && userRole !== 'admin' && patients.length >= 1 ? "Limit reached for Individual plan" : "Add New Patient"}
                 >
                     <FaPlus /> New Patient
                 </button>
             </div>
 
-            {/* Search and Filters - Only for Individual users */}
-            {userAccountType === 'individual' && (
+            {/* Search and Filters - Only for non-Individual users */}
+            {!isIndividual && (
                 <div className="bg-white rounded-xl shadow p-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="relative">
@@ -302,7 +300,10 @@ const PatientList = () => {
                                         {getSortIcon('created_at')}
                                     </div>
                                 </th>
-                                <th className="border p-3 text-left">Status</th>
+                                {/* Status column - hidden for Individual users */}
+                                {!isIndividual && (
+                                    <th className="border p-3 text-left">Status</th>
+                                )}
                                 <th className="border p-3 text-left">Actions</th>
                             </tr>
                         </thead>
@@ -310,9 +311,9 @@ const PatientList = () => {
                             {currentPatients.length > 0 ? (
                                 currentPatients.map((patient) => {
                                     const currentUserId = getCurrentUserId();
-                                    const isIndividual = (userAccountType === 'individual' || userRole === 'individual_user' || userRole === 'pharmacist') && !userCompanyId;
+                                    const isUserIndividual = isIndividual;
                                     const isAdmin = userRole === 'admin';
-                                    const canDelete = isAdmin || (patient.user_id === currentUserId && !isIndividual);
+                                    const canDelete = isAdmin || (patient.user_id === currentUserId && !isUserIndividual);
 
                                     return (
                                         <tr key={patient.id} className="border-b hover:bg-gray-50 transition-colors">
@@ -337,11 +338,14 @@ const PatientList = () => {
                                             <td className="border p-3 text-sm text-gray-600">
                                                 {patient.created_at ? new Date(patient.created_at).toLocaleDateString() : 'N/A'}
                                             </td>
-                                            <td className="border p-3">
-                                                <span className={`px-2 py-1 rounded text-xs ${getStatusColor(patient.is_active)}`}>
-                                                    {getStatusText(patient.is_active)}
-                                                </span>
-                                            </td>
+                                            {/* Status cell - hidden for Individual users */}
+                                            {!isIndividual && (
+                                                <td className="border p-3">
+                                                    <span className={`px-2 py-1 rounded text-xs ${getStatusColor(patient.is_active)}`}>
+                                                        {getStatusText(patient.is_active)}
+                                                    </span>
+                                                </td>
+                                            )}
                                             <td className="border p-3">
                                                 <div className="flex gap-2">
                                                     <button
@@ -361,7 +365,7 @@ const PatientList = () => {
                                                     <button
                                                         onClick={() => handleDelete(patient.id)}
                                                         className={`p-2 rounded ${canDelete ? 'text-red-500 hover:text-red-700 hover:bg-red-50' : 'text-gray-300 cursor-not-allowed'}`}
-                                                        title={isAdmin ? "Delete Patient" : (isIndividual ? "Individual accounts cannot delete records" : (canDelete ? "Delete Patient" : "Cannot delete this patient"))}
+                                                        title={isAdmin ? "Delete Patient" : (isUserIndividual ? "Individual accounts cannot delete records" : (canDelete ? "Delete Patient" : "Cannot delete this patient"))}
                                                         disabled={!canDelete}
                                                     >
                                                         <FaTrash />
@@ -373,7 +377,7 @@ const PatientList = () => {
                                 })
                             ) : (
                                 <tr>
-                                    <td colSpan="6" className="border p-8 text-center">
+                                    <td colSpan={isIndividual ? "5" : "6"} className="border p-8 text-center">
                                         <div className="py-8">
                                             <FaUserInjured className="text-4xl text-gray-300 mx-auto mb-3" />
                                             <p className="text-gray-500">
@@ -399,9 +403,9 @@ const PatientList = () => {
                 {currentPatients.length > 0 ? (
                     currentPatients.map((patient) => {
                         const currentUserId = getCurrentUserId();
-                        const isIndividual = (userAccountType === 'individual' || userRole === 'individual_user' || userRole === 'pharmacist') && !userCompanyId;
+                        const isUserIndividual = isIndividual;
                         const isAdmin = userRole === 'admin';
-                        const canDelete = isAdmin || (patient.user_id === currentUserId && !isIndividual);
+                        const canDelete = isAdmin || (patient.user_id === currentUserId && !isUserIndividual);
 
                         return (
                             <div key={patient.id} className="bg-white rounded-xl shadow p-4 border border-gray-100">
@@ -418,9 +422,12 @@ const PatientList = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    <div className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(patient.is_active)}`}>
-                                        {getStatusText(patient.is_active)}
-                                    </div>
+                                    {/* Status badge - hidden for Individual users */}
+                                    {!isIndividual && (
+                                        <div className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(patient.is_active)}`}>
+                                            {getStatusText(patient.is_active)}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="space-y-2 mb-4">
@@ -477,8 +484,8 @@ const PatientList = () => {
                 )}
             </div>
 
-            {/* Stats - Reordered with Access Level first, only for Individual users */}
-            {userAccountType === 'individual' && (
+            {/* Stats - Only for non-Individual users */}
+            {!isIndividual && (
                 <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                     <div className="bg-purple-50 p-3 rounded">
                         <p className="text-purple-600">Access Level</p>
@@ -505,7 +512,7 @@ const PatientList = () => {
                 </div>
             )}
             
-            {/* Pagination Controls */}
+            {/* Pagination Controls - Only show if there's more than one page or for non-individual users */}
             {filteredPatients.length > itemsPerPage && (
                 <div className="bg-white rounded-xl shadow p-4 flex flex-col md:flex-row justify-between items-center gap-4">
                     <div className="text-sm text-gray-600">
