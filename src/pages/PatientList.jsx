@@ -14,7 +14,8 @@ import {
     FaSortDown,
     FaChevronRight,
     FaIdCard,
-    FaClock
+    FaClock,
+    FaSyncAlt
 } from 'react-icons/fa';
 
 import api from '../utils/api';
@@ -25,7 +26,6 @@ const PatientList = () => {
     const [filteredPatients, setFilteredPatients] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
-    const [statusFilter, setStatusFilter] = useState('all');
     const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
     const [userRole, setUserRole] = useState('');
     const [userAccountType, setUserAccountType] = useState('');
@@ -91,14 +91,6 @@ const PatientList = () => {
             );
         }
 
-        if (statusFilter !== 'all') {
-            filtered = filtered.filter(patient =>
-                statusFilter === 'active'
-                    ? patient.is_active !== false
-                    : patient.is_active === false
-            );
-        }
-
         setFilteredPatients(filtered);
         setCurrentPage(1); // Reset to first page on search
     };
@@ -151,14 +143,6 @@ const PatientList = () => {
     const getSortIcon = (key) => {
         if (sortConfig.key !== key) return <FaSort className="text-gray-400" />;
         return sortConfig.direction === 'asc' ? <FaSortUp className="text-blue-500" /> : <FaSortDown className="text-blue-500" />;
-    };
-
-    const generatePatientCode = () => {
-        const date = new Date();
-        const year = date.getFullYear().toString().slice(-2);
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-        return `PAT${year}${month}${random}`;
     };
 
     const handleNewPatient = () => {
@@ -238,43 +222,39 @@ const PatientList = () => {
                 </button>
             </div>
 
-            {/* Search and Filters - Only for Individual users */}
-            {userAccountType === 'individual' && (
-                <div className="bg-white rounded-xl shadow p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="relative">
-                            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                            <input
-                                type="text"
-                                value={searchTerm}
-                                onChange={handleSearch}
-                                placeholder="Search patients..."
-                                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            />
+            {/* Search and Filters */}
+            <div className="bg-white rounded-xl shadow p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="relative">
+                        <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                        <input
+                            type="text"
+                            value={searchTerm}
+                            onChange={handleSearch}
+                            placeholder="Search patients..."
+                            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                    </div>
+
+                    <div className="flex gap-4">
+                        <div className="bg-purple-50 p-3 rounded flex-1 flex items-center justify-between">
+                            <div>
+                                <p className="text-purple-600 text-sm">Access Level</p>
+                                <p className="text-lg font-bold text-purple-800">
+                                    {userRole === 'admin' ? 'Full' : userRole === 'company_admin' ? 'Company' : 'Personal'}
+                                </p>
+                            </div>
+                            <button
+                                onClick={fetchPatients}
+                                className="bg-purple-200 hover:bg-purple-300 text-purple-800 p-3 rounded-lg flex items-center justify-center gap-2 transition-colors"
+                                title="Refresh"
+                            >
+                                <FaSyncAlt className={loading ? 'animate-spin' : ''} />
+                            </button>
                         </div>
-
-                        <select
-                            value={statusFilter}
-                            onChange={(e) => {
-                                setStatusFilter(e.target.value);
-                                handleSearch({ target: { value: searchTerm } });
-                            }}
-                            className="border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        >
-                            <option value="all">All Status</option>
-                            <option value="active">Active Only</option>
-                            <option value="inactive">Inactive Only</option>
-                        </select>
-
-                        <button
-                            onClick={fetchPatients}
-                            className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-6 py-3 rounded-lg flex items-center justify-center gap-2 transition-colors"
-                        >
-                            <FaFilter /> Refresh
-                        </button>
                     </div>
                 </div>
-            )}
+            </div>
 
             {/* Patients Table (Desktop) */}
             <div className="hidden md:block bg-white rounded-xl shadow overflow-hidden">
@@ -477,34 +457,6 @@ const PatientList = () => {
                 )}
             </div>
 
-            {/* Stats - Reordered with Access Level first, only for Individual users */}
-            {userAccountType === 'individual' && (
-                <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                    <div className="bg-purple-50 p-3 rounded">
-                        <p className="text-purple-600">Access Level</p>
-                        <p className="text-lg font-bold text-purple-800">
-                            {userRole === 'admin' ? 'Full' : userRole === 'company_admin' ? 'Company' : 'Personal'}
-                        </p>
-                    </div>
-                    <div className="bg-blue-50 p-3 rounded">
-                        <p className="text-blue-600">Total Patients</p>
-                        <p className="text-lg font-bold text-blue-800">{patients.length}</p>
-                    </div>
-                    <div className="bg-green-50 p-3 rounded">
-                        <p className="text-green-600">Active</p>
-                        <p className="text-lg font-bold text-green-800">
-                            {patients.filter(p => p.is_active !== false).length}
-                        </p>
-                    </div>
-                    <div className="bg-yellow-50 p-3 rounded">
-                        <p className="text-yellow-600">With Appointments</p>
-                        <p className="text-lg font-bold text-yellow-800">
-                            {patients.filter(p => p.appointmentDate).length}
-                        </p>
-                    </div>
-                </div>
-            )}
-            
             {/* Pagination Controls */}
             {filteredPatients.length > itemsPerPage && (
                 <div className="bg-white rounded-xl shadow p-4 flex flex-col md:flex-row justify-between items-center gap-4">
