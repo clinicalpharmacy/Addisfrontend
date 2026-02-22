@@ -117,7 +117,8 @@ const PatientDetails = () => {
     const [patient, setPatient] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isNewPatient, setIsNewPatient] = useState(false);
-    const [activeTab, setActiveTab] = useState('overview');
+    const [activeTab, setActiveTab] = useState('demographics');
+    const [defaultTabInitialized, setDefaultTabInitialized] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [newAllergy, setNewAllergy] = useState('');
     const [ageMode, setAgeMode] = useState('years');
@@ -132,6 +133,19 @@ const PatientDetails = () => {
     const [globalLabDefinitions, setGlobalLabDefinitions] = useState([]);
     const [vitalsHistory, setVitalsHistory] = useState([]);
     const [labsHistory, setLabsHistory] = useState([]);
+
+    // Effect to set correct default tab once user is loaded
+    useEffect(() => {
+    if (user && !defaultTabInitialized) {
+      if (user?.account_type === 'individual' && user?.role !== 'admin') {
+        setActiveTab('demographics');
+        } else {
+          setActiveTab('overview');
+        }
+        setDefaultTabInitialized(true);
+      }
+    }, [user, defaultTabInitialized]);
+
 
     // Form state (all fields)
     const [formData, setFormData] = useState({
