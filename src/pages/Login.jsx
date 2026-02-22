@@ -31,9 +31,9 @@ const Login = () => {
 
     // Carousel messages for dynamic background
     const carouselMessages = [
-        { icon: FaHeartbeat, text: "Patient Safety First", color: "from-blue-600 to-cyan-600" },
-        { icon: FaShieldAlt, text: "Secure & Confidential", color: "from-purple-600 to-pink-600" },
-        { icon: FaCheckCircle, text: "Evidence-Based Care", color: "from-green-600 to-teal-600" }
+        { icon: FaHeartbeat, text: "Digital Health", color: "from-blue-600 to-cyan-600" },
+        { icon: FaShieldAlt, text: "Enhance Patient Safety", color: "from-purple-600 to-pink-600" },
+        { icon: FaCheckCircle, text: "Optimize Medicines Use", color: "from-green-600 to-teal-600" }
     ];
 
     useEffect(() => {
