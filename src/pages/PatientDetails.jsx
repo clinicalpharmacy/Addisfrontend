@@ -154,7 +154,7 @@ const PatientDetails = () => {
         is_active: true, allergies: [], patient_type: 'adult',
         is_pregnant: false, pregnancy_weeks: '', pregnancy_trimester: '', edd: '', pregnancy_notes: '',
         is_lactating: false, lactation_notes: '',
-        weight_percentile: '', height_percentile: '', head_circumference_percentile: '', bmi_percentile: '',
+        weight_percentile: '', height_percentile: '', head_circumference_percentile: '', bsa_percentile: '',
         blood_pressure: '', heart_rate: '', temperature: '', respiratory_rate: '', oxygen_saturation: '',
         weight: '', height: '', last_measured: '',
         developmental_milestones: '', feeding_method: '', birth_weight: '', birth_length: '',
@@ -401,13 +401,16 @@ const PatientDetails = () => {
             return `${years} years (Adult)`;
         }
     }, [isValidDate, calculateAgeInDays]);
-
-    const calculateBMI = useCallback((weight, height) => {
-        if (!weight || !height || parseFloat(height) <= 0) return '';
-        const heightInMeters = parseFloat(height) / 100;
-        const weightNum = parseFloat(weight);
-        const bmi = weightNum / (heightInMeters * heightInMeters);
-        return bmi.toFixed(1);
+    
+    
+    const calculateBSA = useCallback((weight, height) => {
+        if (!weight || !height || parseFloat(weight) <= 0 || parseFloat(height) <= 0) return '';
+        
+        const weightNum = parseFloat(weight); // kg
+        const heightNum = parseFloat(height); // cm
+    
+        const bsa = 0.007184 * Math.pow(weightNum, 0.425) * Math.pow(heightNum, 0.725);
+        return bsa.toFixed(2); // BSA in m²
     }, []);
 
     const calculateTrimester = useCallback((weeks) => {
@@ -666,16 +669,16 @@ const PatientDetails = () => {
     const handleVitalsInputChange = useCallback((field, value) => {
 
 
-        // Handle weight and height for BMI calculation
+        // Handle weight and height for BSA calculation
         if (field === 'weight' || field === 'height') {
             const newWeight = field === 'weight' ? value : formData.weight;
             const newHeight = field === 'height' ? value : formData.height;
-            const newBmi = calculateBMI(newWeight, newHeight);
+            const newBSA = calculateBSA(newWeight, newHeight);
 
             setFormData(prev => ({
                 ...prev,
                 [field]: value,
-                bmi: newBmi
+                bsa: newBSA
             }));
             return;
         }
@@ -721,7 +724,7 @@ const PatientDetails = () => {
             ...prev,
             [field]: value
         }));
-    }, [formData.weight, formData.height, calculateBMI]);
+    }, [formData.weight, formData.height, calculateBSA]);
 
     const handleInputChange = useCallback((field, value) => {
 
@@ -1080,12 +1083,12 @@ const PatientDetails = () => {
                     height: cleanNumber(formData.height),
                     length: cleanNumber(formData.length),
                     head_circumference: cleanNumber(formData.head_circumference),
-                    bmi: cleanNumber(formData.bmi),
+                    bsa: cleanNumber(formData.bsa),
                     last_measured: cleanDate(formData.last_measured),
                     weight_percentile: cleanNumber(formData.weight_percentile),
                     height_percentile: cleanNumber(formData.height_percentile),
                     head_circumference_percentile: cleanNumber(formData.head_circumference_percentile),
-                    bmi_percentile: cleanNumber(formData.bmi_percentile),
+                    bsa_percentile: cleanNumber(formData.bsa_percentile),
                 },
 
                 labs: {
@@ -1588,19 +1591,19 @@ const PatientDetails = () => {
                         </div>
                     )}
 
-                    {/* BMI */}
+                    {/* BSA */}
                     <div className="space-y-2">
                         <label className="block text-sm font-medium text-gray-700">
-                            BMI {formData.bmi_percentile && (
+                            BSA (DuBois) {formData.bsa_percentile && (
                                 <span className="text-xs text-blue-600 ml-1">
-                                    ({formData.bmi_percentile} percentile)
+                                    ({formData.bsa_percentile} percentile)
                                 </span>
                             )}
                         </label>
                         {isEditing ? (
                             <input
                                 type="text"
-                                value={formData.bmi || ''}
+                                value={formData.bsa || ''}
                                 readOnly
                                 className="w-full border border-gray-300 rounded-lg p-3 bg-gray-100"
                                 placeholder="Calculated automatically"
@@ -1609,13 +1612,13 @@ const PatientDetails = () => {
                             <div className="p-3 bg-red-50 rounded-lg border border-red-200">
                                 <div className="flex items-center justify-between">
                                     <span className="font-medium text-gray-800">
-                                        {formData.bmi || '--'}
+                                        {formData.bsa || '--'}
                                     </span>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-sm text-gray-500">kg/m²</span>
-                                        {formData.bmi_percentile && (
+                                        <span className="text-sm text-gray-500">m²</span>
+                                        {formData.bsa_percentile && (
                                             <span className="text-sm text-blue-600 font-medium">
-                                                {formData.bmi_percentile}
+                                                {formData.bsa_percentile}
                                             </span>
                                         )}
                                     </div>
