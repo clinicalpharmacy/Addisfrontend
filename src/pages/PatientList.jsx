@@ -313,10 +313,7 @@ const PatientList = () => {
                                     const currentUserId = getCurrentUserId();
                                     const isUserIndividual = isIndividual;
                                     const isAdmin = userRole === 'admin';
-                                    const canDelete =
-                                        userAccountType === 'individual' &&
-                                        !userCompanyId &&
-                                        patient.user_id === currentUserId;
+                                    const canDelete = userAccountType === 'individual' && !userCompanyId;
 
                                     return (
                                         <tr key={patient.id} className="border-b hover:bg-gray-50 transition-colors">
@@ -368,8 +365,8 @@ const PatientList = () => {
                                                     <button
                                                         onClick={() => handleDelete(patient.id)}
                                                         className={`p-2 rounded ${canDelete ? 'text-red-500 hover:text-red-700 hover:bg-red-50' : 'text-gray-300 cursor-not-allowed'}`}
-                                                        title={isAdmin ? "Delete Patient" : (isUserIndividual ? "Individual accounts cannot delete records" : (canDelete ? "Delete Patient" : "Cannot delete this patient"))}
                                                         disabled={!canDelete}
+                                                        title={canDelete ? "Delete Patient" : "Delete not allowed for company accounts"}
                                                     >
                                                         <FaTrash />
                                                     </button>
@@ -408,10 +405,7 @@ const PatientList = () => {
                         const currentUserId = getCurrentUserId();
                         const isUserIndividual = isIndividual;
                         const isAdmin = userRole === 'admin';
-                        const canDelete =
-                            userAccountType === 'individual' &&
-                            !userCompanyId &&
-                            patient.user_id === currentUserId;
+                        const canDelete = userAccountType === 'individual' && !userCompanyId;
 
                         return (
                             <div key={patient.id} className="bg-white rounded-xl shadow p-4 border border-gray-100">
