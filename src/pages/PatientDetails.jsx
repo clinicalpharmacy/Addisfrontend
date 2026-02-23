@@ -2631,7 +2631,7 @@ const PatientDetails = () => {
                     <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-gray-600">Vitals</p>
+                                <p className="text-sm text-gray-600">Vitals & Anthropometry</p>
                                 <p className="text-2xl font-bold text-blue-600">
                                     {(() => {
                                         const vitals = ['blood_pressure', 'heart_rate', 'temperature', 'respiratory_rate', 'oxygen_saturation', 'weight', 'height'];
