@@ -1,17 +1,16 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import api from '../../utils/api';
-import supabase from '../../utils/supabase'; // Kept for auth fallback if needed
+import React, { useState, useEffect } from 'react';
+import supabase from '../../utils/supabase';
 import { mapPatientToFacts, evaluateRule } from '../CDSS/RuleEngine';
 import {
     FaStethoscope, FaEdit, FaDatabase, FaChevronUp, FaChevronDown,
-    FaPills, FaUserMd, FaChartLine, FaDownload, FaSync,
+    FaPills, FaFlask, FaUserMd, FaChartLine, FaDownload, FaSync,
     FaExclamationTriangle, FaCheckCircle, FaSpinner, FaSearch,
     FaHeartbeat, FaClipboardCheck, FaShieldAlt, FaUserCheck,
     FaMoneyBillWave, FaCapsules, FaTrash, FaPlus, FaFilter,
     FaSortAmountDown, FaFileMedical, FaClipboardList, FaRegCopy,
     FaCog, FaBell, FaFileAlt, FaVial, FaBalanceScale, FaSyringe,
     FaTint, FaUserInjured, FaHistory, FaNotesMedical, FaPrescription,
-    FaMicroscope, FaBox, FaClock, FaProcedures, FaUser, FaExclamationCircle, FaSave
+    FaMicroscope, FaBox, FaClock, FaProcedures, FaUser, FaExclamationCircle
 } from 'react-icons/fa';
 
 const DRNAssessment = ({ patientCode }) => {
@@ -152,13 +151,6 @@ const DRNAssessment = ({ patientCode }) => {
         ]
     };
 
-    // Derived filtered findings
-    const filteredFindings = useMemo(() => {
-        return (analysisResults?.findings || []).filter(f =>
-            filterSeverity === 'all' || f.severity?.toLowerCase() === filterSeverity.toLowerCase()
-        );
-    }, [analysisResults, filterSeverity]);
-
     // DTP Type colors for styling
     const getDTPTypeColor = (dtpType) => {
         const colors = {
@@ -286,20 +278,29 @@ const DRNAssessment = ({ patientCode }) => {
 
     const loadPatientData = async () => {
         try {
-            const res = await api.get(`/patients/code/${patientCode}`);
+            const { data: patient, error } = await supabase
+                .from('patients')
+                .select('*')
+                .eq('patient_code', patientCode)
+                .single();
 
-            if (res.success && res.patient) {
-                setPatientData(res.patient);
-                setPatientId(res.patient.id);
-                if (res.patient.labs) setLabs(res.patient.labs);
-
-                // Fetch Medications
-                const mRes = await api.get(`/medication-history/patient/${patientCode}`);
-                setMedications(mRes.success ? mRes.medications : (res.patient.medication_history || []));
-            } else {
+            if (error) {
                 setAuthError(`Patient not found: ${patientCode}`);
                 return;
             }
+
+            setPatientData(patient);
+            setPatientId(patient.id);
+
+            const { data: medicationsData } = await supabase
+                .from('medication_history')
+                .select('*')
+                .eq('patient_code', patientCode)
+                .eq('is_active', true);
+
+            setMedications(medicationsData || patient.medication_history || []);
+
+            if (patient.labs) setLabs(patient.labs);
         } catch (error) {
             console.error('Error loading patient:', error);
             setAuthError('Failed to load patient data.');
@@ -308,32 +309,46 @@ const DRNAssessment = ({ patientCode }) => {
 
     const fetchClinicalRules = async () => {
         try {
-            const res = await api.get('/clinical-rules');
-            if (res.success && res.rules) {
-                setClinicalRules(res.rules);
-                const rulesByType = {};
-                res.rules.forEach(rule => {
-                    if (!rulesByType[rule.rule_type]) rulesByType[rule.rule_type] = [];
-                    rulesByType[rule.rule_type].push(rule);
-                });
-                setActiveRules(rulesByType);
-            }
+            const { data, error } = await supabase
+                .from('clinical_rules')
+                .select('*')
+                .eq('is_active', true)
+                .order('rule_type', { ascending: true });
+
+            if (error) return;
+
+            setClinicalRules(data || []);
+
+            const rulesByType = {};
+            data.forEach(rule => {
+                if (!rulesByType[rule.rule_type]) rulesByType[rule.rule_type] = [];
+                rulesByType[rule.rule_type].push(rule);
+            });
+            setActiveRules(rulesByType);
         } catch (error) {
             console.error('Error fetching rules:', error);
         }
     };
 
     const fetchAssessments = async () => {
-        if (!patientCode || !userId) return;
+        if (!patientId || !userId) return;
 
         setIsLoading(true);
         try {
-            const res = await api.get(`/assessments/patient/${patientCode}`);
-            if (res.success) {
-                setAssessments(res.assessments || []);
-            } else {
+            const { data, error } = await supabase
+                .from('drn_assessments')
+                .select('*')
+                .eq('patient_code', patientCode)
+                .eq('user_id', userId)
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error('Error fetching assessments:', error);
                 setAssessments([]);
+                return;
             }
+
+            setAssessments(data || []);
         } catch (error) {
             console.error('Error fetching assessments:', error);
             setAssessments([]);
@@ -355,9 +370,9 @@ const DRNAssessment = ({ patientCode }) => {
 
             clinicalRules.forEach(rule => {
                 try {
-                    const evalResult = evaluateRule(rule, facts, true);
+                    const isTriggered = evaluateRule(rule, facts);
 
-                    if (evalResult.triggered) {
+                    if (isTriggered) {
                         triggeredRules.push(rule);
 
                         let message = rule.rule_name;
@@ -378,11 +393,6 @@ const DRNAssessment = ({ patientCode }) => {
                             }
                         } else {
                             recommendation = getDefaultRecommendation(rule.rule_type);
-                        }
-
-                        // Append matched medications to message if they aren't already there
-                        if (evalResult.matchedMedications.length > 0) {
-                            message += ` [Drug(s): ${evalResult.matchedMedications.join(', ')}]`;
                         }
 
                         // Map rule to DRN category
@@ -414,12 +424,11 @@ const DRNAssessment = ({ patientCode }) => {
                             message: message,
                             recommendation: recommendation,
                             severity: severity,
-                            medications: evalResult.matchedMedications.length > 0
-                                ? evalResult.matchedMedications
-                                : (facts.medications?.filter(med =>
-                                    message.toLowerCase().includes(med.toLowerCase()) ||
-                                    recommendation.toLowerCase().includes(med.toLowerCase())
-                                ) || []),
+                            confidence: 95,
+                            medications: facts.medications?.filter(med =>
+                                message.toLowerCase().includes(med.toLowerCase()) ||
+                                recommendation.toLowerCase().includes(med.toLowerCase())
+                            ) || [],
                             timestamp: new Date().toISOString(),
                             evidence: rule.rule_description || '',
                             original_rule_name: rule.rule_name,
@@ -535,9 +544,8 @@ const DRNAssessment = ({ patientCode }) => {
     };
 
     const saveAssessment = async (causeName) => {
-        if (!userId || !patientData || !patientId) {
-            console.error('Missing context:', { userId, patientData: !!patientData, patientId });
-            alert('User or Patient data not fully loaded. Please refresh the page.');
+        if (!userId || !patientData) {
+            alert('User ID or patient data not available');
             return;
         }
 
@@ -549,60 +557,63 @@ const DRNAssessment = ({ patientCode }) => {
         const causeDetails = menuItemsData[selectedCategory]?.find(c => c.name === causeName);
         const writeUp = writeUps[causeName];
 
-        if (!causeDetails) {
-            console.error('Missing cause details for:', causeName);
-            alert('Internal Error: Could not retrieve cause details.');
-            return;
-        }
-
         if (!writeUp?.specificCase || !writeUp?.medicalCondition || !writeUp?.medication) {
             alert('Please fill all required fields: Specific Case, Medical Condition, and Medication');
             return;
         }
 
         try {
-            // Map UI status to DB status
-            let dbStatus = 'active';
-            if (writeUp.status === 'Resolved') dbStatus = 'resolved';
-            else if (writeUp.status === 'Identified' || writeUp.status === 'Unresolved') dbStatus = 'active';
-
             const assessmentData = {
-                patient_id: patientId,
+                patient_id: patientData.id,
                 patient_code: patientCode,
                 user_id: userId,
                 category: selectedCategory,
                 cause_name: causeName,
-                rule_type: causeDetails.ruleType,
-                dtp_type: causeDetails.dtpType,
+                rule_type: causeDetails?.ruleType,
+                dtp_type: causeDetails?.dtpType,
                 specific_case: writeUp.specificCase,
                 medical_condition: writeUp.medicalCondition,
                 medication: writeUp.medication,
-                drn: causeDetails.drn,
-                status: dbStatus
+                drn: causeDetails?.drn,
+                status: 'active',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
             };
 
             let result;
 
             if (editId !== null) {
-                result = await api.put(`/assessments/drn/${editId}`, assessmentData);
+                const { data, error } = await supabase
+                    .from('drn_assessments')
+                    .update({
+                        ...assessmentData,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', editId)
+                    .eq('user_id', userId)
+                    .select();
+
+                if (error) throw error;
+                result = data[0];
             } else {
-                result = await api.post('/assessments/drn', assessmentData);
+                const { data, error } = await supabase
+                    .from('drn_assessments')
+                    .insert([assessmentData])
+                    .select();
+
+                if (error) throw error;
+                result = data[0];
             }
 
-            if (result.success) {
-                await fetchAssessments();
-                setSelectedCauses([]);
-                setWriteUps({});
-                setEditId(null);
-                alert(`Assessment ${editId !== null ? 'updated' : 'saved'} successfully!`);
-            } else {
-                throw new Error(result.error || 'Failed to save');
-            }
+            await fetchAssessments();
+            setSelectedCauses([]);
+            setWriteUps({});
+            setEditId(null);
+            alert(`Assessment ${editId !== null ? 'updated' : 'saved'} successfully!`);
 
         } catch (error) {
             console.error('Error saving assessment:', error);
-            const errorMessage = error.error || error.response?.data?.error || error.message || JSON.stringify(error);
-            alert(`Error ${editId !== null ? 'updating' : 'saving'} assessment: ${errorMessage}`);
+            alert(`Error ${editId !== null ? 'updating' : 'saving'} assessment: ${error.message}`);
         }
     };
 
@@ -611,17 +622,11 @@ const DRNAssessment = ({ patientCode }) => {
         setSelectedCategory(assessment.category);
         setSelectedCauses([assessment.cause_name]);
 
-        // Map DB status back to UI status
-        let uiStatus = 'Identified';
-        if (assessment.status === 'resolved' || assessment.status === 'Resolved') uiStatus = 'Resolved';
-        else if (assessment.status === 'active' || assessment.status === 'Active') uiStatus = 'Identified';
-
         setWriteUps({
             [assessment.cause_name]: {
                 specificCase: assessment.specific_case,
                 medicalCondition: assessment.medical_condition,
-                medication: assessment.medication,
-                status: uiStatus
+                medication: assessment.medication
             }
         });
 
@@ -632,14 +637,15 @@ const DRNAssessment = ({ patientCode }) => {
         if (!window.confirm('Are you sure you want to delete this assessment?')) return;
 
         try {
-            const result = await api.delete(`/assessments/drn/${id}`);
+            const { error } = await supabase
+                .from('drn_assessments')
+                .delete()
+                .eq('id', id);
 
-            if (result.success) {
-                setAssessments(assessments.filter(ass => ass.id !== id));
-                alert('Assessment deleted successfully!');
-            } else {
-                throw new Error(result.error || 'Failed to delete');
-            }
+            if (error) throw error;
+
+            setAssessments(assessments.filter(ass => ass.id !== id));
+            alert('Assessment deleted successfully!');
         } catch (error) {
             console.error('Error deleting assessment:', error);
             alert('Error deleting assessment: ' + error.message);
@@ -654,8 +660,7 @@ const DRNAssessment = ({ patientCode }) => {
             [finding.cause]: {
                 specificCase: `CDSS Rule: ${finding.original_rule_name || finding.rule_name}`,
                 medicalCondition: patientData?.diagnosis || 'To be specified',
-                medication: finding.medications?.join(', ') || 'To be specified',
-                status: 'Identified'
+                medication: finding.medications?.join(', ') || 'To be specified'
             }
         });
 
@@ -670,7 +675,7 @@ const DRNAssessment = ({ patientCode }) => {
     };
 
     const getSeverityColor = (severity) => {
-        switch (severity?.toLowerCase()) {
+        switch (severity) {
             case 'critical': return 'bg-red-500 text-white';
             case 'high': return 'bg-orange-500 text-white';
             case 'moderate': return 'bg-yellow-500 text-white';
@@ -679,18 +684,82 @@ const DRNAssessment = ({ patientCode }) => {
         }
     };
 
-    const getDisplayStatus = (status) => {
-        if (!status) return 'Active';
-        return status.charAt(0).toUpperCase() + status.slice(1);
+    const getCategoryColor = (category) => {
+        const colors = {
+            'Indication': 'bg-blue-100 text-blue-800 border-blue-200',
+            'Dosage': 'bg-teal-100 text-teal-800 border-teal-200',
+            'Rule out Ineffective Drug Therapy': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+            'Contraindication or Caution or ADE or SE or Allergy': 'bg-red-100 text-red-800 border-red-200',
+            'Drug Interaction': 'bg-orange-100 text-orange-800 border-orange-200',
+            'Administration': 'bg-purple-100 text-purple-800 border-purple-200',
+            'Monitoring': 'bg-pink-100 text-pink-800 border-pink-200',
+            'Adherence': 'bg-indigo-100 text-indigo-800 border-indigo-200',
+            'Product Quality': 'bg-green-100 text-green-800 border-green-200'
+        };
+        return colors[category] || 'bg-gray-100 text-gray-800 border-gray-200';
     };
+
+    const getRuleTypeColor = (ruleType) => {
+        const colors = {
+            'duplicate_therapy': 'bg-blue-50 text-blue-700',
+            'no_medical_indication': 'bg-blue-50 text-blue-700',
+            'nondrug_therapy_appropriate': 'bg-blue-50 text-blue-700',
+            'addiction_or_recreational_medicine_use': 'bg-blue-50 text-blue-700',
+            'treating_avoidable_ade': 'bg-blue-50 text-blue-700',
+            'prophylaxis_needed': 'bg-blue-50 text-blue-700',
+            'untreated_condition': 'bg-blue-50 text-blue-700',
+            'synergistic_therapy_needed': 'bg-teal-50 text-teal-700',
+            'low_dose': 'bg-teal-50 text-teal-700',
+            'less_frequent': 'bg-teal-50 text-teal-700',
+            'short_duration': 'bg-teal-50 text-teal-700',
+            'improper_storage': 'bg-teal-50 text-teal-700',
+            'high_dose': 'bg-teal-50 text-teal-700',
+            'high_frequent': 'bg-yellow-50 text-yellow-700',
+            'longer_duration': 'bg-yellow-50 text-yellow-700',
+            'dose_titration_slow_or_fast': 'bg-yellow-50 text-yellow-700',
+            'more_effective_drug_available': 'bg-yellow-50 text-yellow-700',
+            'condition_refractory_to_drug': 'bg-red-50 text-red-700',
+            'dosage_form_inappropriate': 'bg-red-50 text-red-700',
+            'undesirable_effect_ade_or_se': 'bg-red-50 text-red-700',
+            'unsafe_drug_contraindication_or_caution': 'bg-red-50 text-red-700',
+            'allergic_reaction': 'bg-orange-50 text-orange-700',
+            'di_increase_dose': 'bg-orange-50 text-orange-700',
+            'di_decrease_dose': 'bg-orange-50 text-orange-700',
+            'di_linked_to_ade': 'bg-orange-50 text-orange-700',
+            'incorrect_administration_decrease_dose_or_efficacy': 'bg-purple-50 text-purple-700',
+            'incorrect_administration_linked_to_ade': 'bg-purple-50 text-purple-700',
+            'patient_does_not_understand_instructions': 'bg-purple-50 text-purple-700',
+            'cannot_swallow_or_administer_drug': 'bg-pink-50 text-pink-700',
+            'need_monitoring_to_rule_out_effectiveness': 'bg-pink-50 text-pink-700',
+            'need_monitoring_to_rule_out_safety': 'bg-pink-50 text-pink-700',
+            'patient_prefers_not_to_take_drug': 'bg-indigo-50 text-indigo-700',
+            'patient_forgets_to_take_drug': 'bg-indigo-50 text-indigo-700',
+            'drug_not_available': 'bg-indigo-50 text-indigo-700',
+            'more_cost_effective_drug_available': 'bg-indigo-50 text-indigo-700',
+            'cannot_afford_drug': 'bg-green-50 text-green-700',
+            'product_quality_defect': 'bg-green-50 text-green-700'
+        };
+        return colors[ruleType] || 'bg-gray-50 text-gray-700';
+    };
+
+    const filteredFindings = analysisResults?.findings?.filter(finding => {
+        if (filterSeverity === 'all') return true;
+        return finding.severity === filterSeverity;
+    }) || [];
 
     if (authError) {
         return (
-            <div className="bg-white p-6 rounded-lg shadow border border-red-200">
-                <div className="text-center text-red-600">
-                    <h3 className="text-xl font-bold mb-2">Authentication Error</h3>
-                    <p className="text-base">{authError}</p>
-                    <button onClick={() => window.location.reload()} className="mt-4 px-6 py-2 bg-blue-600 text-white rounded text-base">Retry</button>
+            <div className="bg-white rounded-xl shadow-lg p-6">
+                <div className="text-center py-12">
+                    <FaExclamationCircle className="text-4xl text-yellow-500 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-800 mb-2">Authentication Required</h3>
+                    <p className="text-gray-600 mb-4">{authError}</p>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg"
+                    >
+                        Refresh Page
+                    </button>
                 </div>
             </div>
         );
@@ -698,312 +767,426 @@ const DRNAssessment = ({ patientCode }) => {
 
     if (!patientId || !userId) {
         return (
-            <div className="bg-white p-8 rounded-lg shadow text-center">
-                <FaSpinner className="animate-spin text-3xl text-blue-600 mx-auto mb-4" />
-                <p className="text-lg text-gray-600">Loading patient data...</p>
+            <div className="bg-white rounded-xl shadow-lg p-6">
+                <div className="text-center py-12">
+                    <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto mb-4" />
+                    <p className="text-gray-600">Initializing DRN Assessment...</p>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="bg-white rounded-xl shadow-lg p-3 md:p-6 overflow-x-hidden max-w-full">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 md:mb-6 gap-4">
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="bg-blue-100 p-2 md:p-3 rounded-full flex-shrink-0">
-                        <FaStethoscope className="text-blue-600 text-lg md:text-xl" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                        <h2 className="text-xl md:text-2xl font-bold text-gray-800 truncate">DRN Assessment</h2>
-                        <p className="text-xs md:text-base text-gray-600 flex items-center gap-2 truncate">
-                            <span>Patient:</span>
-                            <span className="font-semibold bg-blue-50 px-2 py-1 rounded text-xs md:text-sm">{patientCode}</span>
-                        </p>
+        <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="flex items-center gap-3 mb-6">
+                <div className="bg-gradient-to-br from-purple-600 to-blue-600 p-3 rounded-full">
+                    <FaStethoscope className="text-white text-xl" />
+                </div>
+                <div>
+                    <h2 className="text-2xl font-bold text-gray-800">DRN Assessment - 9 Categories</h2>
+                    <p className="text-gray-600">Powered by Clinical Decision Support System (CDSS)</p>
+                    <div className="text-sm text-gray-500 mt-1">
+                        Patient: {patientCode} | User ID: {userId?.substring(0, 8)}...
                     </div>
                 </div>
             </div>
 
-            {/* CDSS Analysis Section */}
-            <div className="bg-gray-50 rounded-lg p-3 md:p-6 mb-4 md:mb-8 border border-gray-200">
-                <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-                        <FaDatabase className="text-blue-600" />
-                        CDSS Analysis
+            {/* CDSS Analysis Section - RESTORED */}
+            <div className="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-xl font-semibold text-blue-800 flex items-center gap-2">
+                        <FaDatabase /> CDSS clinical analysis
                     </h3>
-                    <div className="flex gap-2">
-                        <select
-                            value={filterSeverity}
-                            onChange={(e) => setFilterSeverity(e.target.value)}
-                            className="text-xs border rounded-lg px-2 py-1 bg-white"
-                        >
-                            <option value="all">All Severities</option>
-                            <option value="critical">Critical</option>
-                            <option value="high">High</option>
-                            <option value="moderate">Moderate</option>
-                            <option value="low">Low</option>
-                        </select>
-                        <button
-                            onClick={runCdssAnalysis}
-                            className="text-blue-600 hover:text-blue-800 flex items-center gap-2 px-3 md:px-4 py-2 border border-blue-200 rounded-lg hover:bg-blue-50 transition text-sm flex-shrink-0"
-                        >
-                            <FaSync className={isAnalyzing ? 'animate-spin' : ''} />
-                            <span className="hidden sm:inline">Run Analysis</span>
-                        </button>
-                    </div>
+                    <button
+                        onClick={() => setShowAnalysis(!showAnalysis)}
+                        className="text-blue-600 hover:text-blue-800"
+                    >
+                        {showAnalysis ? <FaChevronUp /> : <FaChevronDown />}
+                    </button>
                 </div>
 
-                {isAnalyzing ? (
-                    <div className="text-center py-8">
-                        <FaSpinner className="animate-spin text-3xl text-blue-600 mx-auto mb-2" />
-                        <p className="text-sm text-blue-700 font-medium">Analyzing patient data...</p>
-                    </div>
-                ) : analysisResults ? (
-                    <div className="space-y-4">
-                        <div className="p-3 bg-white border border-blue-200 rounded-lg flex justify-between items-center">
-                            <span className="text-sm font-bold text-gray-700">{analysisResults.summary}</span>
-                            <span className="text-xs text-gray-400 font-medium">Last Scan: {new Date(analysisResults.timestamp).toLocaleTimeString()}</span>
-                        </div>
-                        {filteredFindings.length > 0 && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {filteredFindings.map((finding, idx) => (
-                                    <div key={idx} className="bg-white p-4 rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
-                                        <div className="flex justify-between items-start mb-2">
-                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${getSeverityColor(finding.severity)}`}>
-                                                {finding.severity}
-                                            </span>
+                {showAnalysis && (
+                    <>
+                        {isAnalyzing ? (
+                            <div className="text-center py-8">
+                                <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto mb-4" />
+                                <p className="text-gray-600">Running CDSS analysis...</p>
+                            </div>
+                        ) : analysisResults ? (
+                            <div className="space-y-4">
+                                <div className="bg-white rounded-lg p-4 border shadow-sm">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div>
+                                            <h4 className="font-semibold text-gray-800 text-lg">Analysis Results</h4>
+                                            <p className={`text-lg font-medium mt-2 ${analysisResults.totalFindings > 0
+                                                ? 'text-gray-800'
+                                                : 'text-green-600'
+                                                }`}>
+                                                {analysisResults.summary}
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
                                             <button
-                                                onClick={() => handleReviewFinding(finding)}
-                                                className="text-blue-600 hover:text-blue-800 text-sm"
-                                                title="Add to Assessment"
+                                                onClick={runCdssAnalysis}
+                                                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm flex items-center gap-2"
                                             >
-                                                <FaPlus />
+                                                <FaSync /> Re-run Analysis
                                             </button>
                                         </div>
-                                        <h4 className="font-bold text-sm text-gray-800 mb-1">{finding.cause}</h4>
-                                        <p className="text-xs text-gray-600 leading-relaxed mb-3">{finding.message}</p>
-                                        <div className="flex flex-wrap gap-1">
-                                            <span className="text-[9px] bg-gray-100 px-2 py-0.5 rounded-md text-gray-500 font-bold uppercase">{finding.drn}</span>
-                                            {finding.dtpType && <span className="text-[9px] bg-indigo-50 px-2 py-0.5 rounded-md text-indigo-500 font-bold uppercase">{finding.dtpType}</span>}
-                                        </div>
                                     </div>
-                                ))}
+
+
+                                    {/* Findings display - UPDATED WITHOUT ruleTypes */}
+                                    {filteredFindings.length > 0 ? (
+                                        <div className="space-y-3">
+                                            {filteredFindings.map((finding, idx) => (
+                                                <div key={idx} className="p-4 border rounded-lg hover:shadow-md transition">
+                                                    <div className="flex justify-between items-start">
+                                                        <div className="flex-1">
+                                                            <div className="flex flex-wrap items-center gap-2 mb-2">
+                                                                <span className="font-semibold text-gray-800">{finding.cause}</span>
+                                                                <span className={`px-2 py-1 ${getSeverityColor(finding.severity)} text-xs rounded font-medium`}>
+                                                                    {finding.severity}
+                                                                </span>
+                                                                <span className={`px-2 py-1 ${getCategoryColor(finding.category)} text-xs rounded`}>
+                                                                    {finding.category}
+                                                                </span>
+                                                                {finding.dtpType && (
+                                                                    <span className={`px-2 py-1 ${getDTPTypeColor(finding.dtpType)} text-xs rounded font-medium`}>
+                                                                        DTP: {finding.dtpType}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-sm text-gray-600 mb-2">{finding.message}</p>
+                                                            <div className="flex flex-wrap items-center gap-3 mt-2">
+                                                                <span className="text-xs text-gray-500">
+                                                                    Confidence: 95%
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => handleReviewFinding(finding)}
+                                                            className="ml-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg transition flex items-center gap-2"
+                                                        >
+                                                            <FaEdit /> Add to Assessment
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-8">
+                                            <FaCheckCircle className="text-4xl text-green-500 mx-auto mb-3" />
+                                            <p className="text-gray-600">No issues found matching current filter</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="text-center py-6">
+                                <FaDatabase className="text-4xl text-blue-400 mx-auto mb-4" />
+                                <p className="text-gray-600 mb-4">Run CDSS clinical analysis to detect drug-related problems</p>
+                                <button
+                                    onClick={runCdssAnalysis}
+                                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-lg font-medium shadow-md flex items-center gap-2 mx-auto"
+                                >
+                                    <FaDatabase /> Run clinical analysis
+                                </button>
                             </div>
                         )}
-                    </div>
-                ) : (
-                    <div className="text-center py-8 bg-white border border-dashed border-blue-200 rounded-lg">
-                        <p className="text-gray-500 text-sm mb-4">Run analysis to detect drug-related problems.</p>
-                        <button
-                            onClick={runCdssAnalysis}
-                            className="text-blue-600 hover:text-blue-800 flex items-center gap-2 px-4 py-2 border border-blue-200 rounded-lg hover:bg-blue-50 transition text-sm mx-auto"
-                        >
-                            <FaDatabase />
-                            Run Analysis
-                        </button>
-                    </div>
+                    </>
                 )}
             </div>
 
-            {/* Categories Selection - Visual Cards */}
-            <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Select Category</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                    {Object.entries(drnCategories).map(([cat, data]) => {
-                        const isSelected = selectedCategory === cat;
-                        const colorClasses = {
-                            blue: isSelected ? 'bg-blue-500 border-blue-600' : 'bg-blue-50 border-blue-200 hover:bg-blue-100',
-                            teal: isSelected ? 'bg-teal-500 border-teal-600' : 'bg-teal-50 border-teal-200 hover:bg-teal-100',
-                            yellow: isSelected ? 'bg-yellow-500 border-yellow-600' : 'bg-yellow-50 border-yellow-200 hover:bg-yellow-100',
-                            red: isSelected ? 'bg-red-500 border-red-600' : 'bg-red-50 border-red-200 hover:bg-red-100',
-                            orange: isSelected ? 'bg-orange-500 border-orange-600' : 'bg-orange-50 border-orange-200 hover:bg-orange-100',
-                            purple: isSelected ? 'bg-purple-500 border-purple-600' : 'bg-purple-50 border-purple-200 hover:bg-purple-100',
-                            pink: isSelected ? 'bg-pink-500 border-pink-600' : 'bg-pink-50 border-pink-200 hover:bg-pink-100',
-                            indigo: isSelected ? 'bg-indigo-500 border-indigo-600' : 'bg-indigo-50 border-indigo-200 hover:bg-indigo-100',
-                            green: isSelected ? 'bg-green-500 border-green-600' : 'bg-green-50 border-green-200 hover:bg-green-100',
-                        };
-                        const iconColorClasses = {
-                            blue: isSelected ? 'text-white' : 'text-blue-600',
-                            teal: isSelected ? 'text-white' : 'text-teal-600',
-                            yellow: isSelected ? 'text-white' : 'text-yellow-600',
-                            red: isSelected ? 'text-white' : 'text-red-600',
-                            orange: isSelected ? 'text-white' : 'text-orange-600',
-                            purple: isSelected ? 'text-white' : 'text-purple-600',
-                            pink: isSelected ? 'text-white' : 'text-pink-600',
-                            indigo: isSelected ? 'text-white' : 'text-indigo-600',
-                            green: isSelected ? 'text-white' : 'text-green-600',
-                        };
+            {/* 9 Category Selection */}
+            <div className="mb-8" id="assessment-form">
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">Select DRN Category (9 Categories)</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {Object.entries(drnCategories).map(([category, catData]) => {
+                        const Icon = catData.icon;
+                        const ruleCount = catData.ruleTypes.reduce((count, ruleType) => {
+                            return count + (activeRules[ruleType]?.length || 0);
+                        }, 0);
 
                         return (
                             <button
-                                key={cat}
-                                onClick={() => { setSelectedCategory(cat); setSelectedCauses([]); setWriteUps({}); setEditId(null); }}
-                                className={`p-5 rounded-xl border-2 text-center transition-all duration-300 group flex flex-col items-center justify-center gap-3 ${colorClasses[data.color] || colorClasses.blue} ${isSelected ? 'shadow-lg transform scale-105' : 'shadow-sm hover:shadow-md'}`}
+                                key={category}
+                                onClick={() => {
+                                    setSelectedCategory(category);
+                                    setSelectedCauses([]);
+                                    setWriteUps({});
+                                    setEditId(null);
+                                }}
+                                className={`p-4 rounded-lg text-left transition-all duration-200 border ${selectedCategory === category
+                                    ? 'border-blue-500 bg-blue-50 text-blue-800 shadow-sm'
+                                    : 'border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700 hover:shadow'
+                                    }`}
                             >
-                                <div className={`p-3 rounded-full ${isSelected ? 'bg-white/20' : 'bg-white'} transition-all group-hover:scale-110`}>
-                                    <data.icon className={`text-3xl ${iconColorClasses[data.color] || iconColorClasses.blue} transition-transform`} />
+                                <div className="flex items-center gap-3">
+                                    <div className={`p-2 rounded-full ${getCategoryColor(category)}`}>
+                                        <Icon className="text-current" />
+                                    </div>
+                                    <div>
+                                        <div className="font-medium">{category}</div>
+                                        <div className="text-sm text-gray-500 mt-1">
+                                            {ruleCount} rules • {menuItemsData[category]?.length || 0} causes
+                                        </div>
+                                    </div>
                                 </div>
-                                <span className={`text-xs font-bold leading-tight ${isSelected ? 'text-white' : 'text-gray-700'}`}>{cat}</span>
                             </button>
                         );
                     })}
                 </div>
             </div>
 
-            {/* Causes and Form Section */}
+            {/* Cause Selection and Form */}
             {selectedCategory && (
-                <div className="bg-gray-50 rounded-lg p-3 md:p-6 mb-4 md:mb-8 border border-gray-200" id="assessment-form">
-                    <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-xl font-semibold text-gray-800">{selectedCategory} Causes</h3>
-                        <div className="text-xs text-gray-400 font-bold uppercase">{selectedCauses.length} Selected</div>
+                <div className="mb-8 p-6 border rounded-lg bg-gray-50">
+                    <h3 className="text-lg font-semibold mb-6 text-gray-800">
+                        {selectedCategory} - Select Causes
+                    </h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                        {menuItemsData[selectedCategory]?.map(cause => {
+                            const ruleCount = activeRules?.[cause.ruleType]?.length || 0;
+                            const isSelected = selectedCauses.includes(cause.name);
+
+                            return (
+                                <div
+                                    key={cause.name}
+                                    className="flex items-center gap-3 p-4 border rounded-lg bg-white hover:shadow transition"
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={isSelected}
+                                        onChange={() => handleCauseSelection(cause.name)}
+                                        className="h-5 w-5 text-blue-600 focus:ring-blue-500"
+                                    />
+
+                                    <div className="flex-1">
+                                        <p className="font-medium text-gray-800">{cause.name}</p>
+
+                                        <div className="flex gap-2 mt-1">
+                                            {isSelected && cause.dtpType && (
+                                                <span className={`px-2 py-1 text-xs rounded ${getDTPTypeColor(cause.dtpType)}`}>
+                                                    {cause.dtpType}
+                                                </span>
+                                            )}
+
+                                            {ruleCount > 0 && (
+                                                <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
+                                                    {ruleCount} rules
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-                        {menuItemsData[selectedCategory]?.map(c => (
-                            <button
-                                key={c.name}
-                                onClick={() => handleCauseSelection(c.name)}
-                                className={`p-4 text-left border rounded-lg text-sm transition-all flex items-center justify-between ${selectedCauses.includes(c.name) ? 'bg-white border-blue-500 font-bold shadow-md text-blue-800' : 'bg-white/60 border-gray-200 hover:border-blue-300 hover:bg-white text-gray-700'}`}
+                    {selectedCauses.map(causeName => {
+                        const causeDetails = menuItemsData[selectedCategory]?.find(
+                            c => c.name === causeName
+                        );
+
+                        return (
+                            <div
+                                key={causeName}
+                                className="mb-8 p-6 border rounded-lg bg-white shadow-sm"
                             >
-                                <span className="flex-1 pr-4">{c.name}</span>
-                                <div className={`w-5 h-5 rounded-md border flex items-center justify-center ${selectedCauses.includes(c.name) ? 'bg-blue-600 border-blue-600' : 'bg-gray-100 border-gray-300'}`}>
-                                    {selectedCauses.includes(c.name) && <FaCheckCircle className="text-white text-xs" />}
-                                </div>
-                            </button>
-                        ))}
-                    </div>
+                                <div className="flex justify-between items-center mb-6">
+                                    <h4 className="font-semibold text-lg text-gray-800">
+                                        {causeName}
+                                    </h4>
 
-                    {/* Assessment Forms */}
-                    <div className="space-y-6">
-                        {selectedCauses.map(cause => (
-                            <div key={cause} className="bg-white p-4 md:p-6 rounded-lg shadow-sm border border-gray-200">
-                                <h5 className="font-bold text-lg text-gray-900 mb-4 pb-2 border-b">{cause} Details</h5>
-
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Medical Condition *</label>
-                                        <textarea
-                                            value={writeUps[cause]?.medicalCondition || ''}
-                                            onChange={e => handleWriteUpChange(cause, 'medicalCondition', e.target.value)}
-                                            className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-sm h-32 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all resize-none"
-                                            placeholder="Primary Diagnosis/Condition..."
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Medication *</label>
-                                        <textarea
-                                            value={writeUps[cause]?.medication || ''}
-                                            onChange={e => handleWriteUpChange(cause, 'medication', e.target.value)}
-                                            className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-sm h-32 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all resize-none"
-                                            placeholder="Drug name & dosage..."
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Specific Case *</label>
-                                        <textarea
-                                            value={writeUps[cause]?.specificCase || ''}
-                                            onChange={e => handleWriteUpChange(cause, 'specificCase', e.target.value)}
-                                            className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-sm h-32 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all resize-none"
-                                            placeholder="Details of the clinical finding..."
-                                        />
-                                    </div>
+                                    {causeDetails?.dtpType && (
+                                        <span className={`px-3 py-1 text-sm rounded ${getDTPTypeColor(causeDetails.dtpType)}`}>
+                                            DTP Type: {causeDetails.dtpType}
+                                        </span>
+                                    )}
                                 </div>
 
-                                <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-gray-50 p-4 rounded-lg border border-gray-100">
-                                    <div className="flex gap-2 w-full sm:w-auto">
-                                        {['Identified', 'Resolved', 'Unresolved'].map(status => (
-                                            <button
-                                                key={status}
-                                                onClick={() => handleWriteUpChange(cause, 'status', status)}
-                                                className={`flex-1 sm:flex-none px-4 py-2 text-xs font-bold uppercase rounded-lg border transition-all ${writeUps[cause]?.status === status ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-100'}`}
-                                            >
-                                                {status}
-                                            </button>
-                                        ))}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Specific Case *
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={writeUps[causeName]?.specificCase || ''}
+                                            onChange={e =>
+                                                handleWriteUpChange(
+                                                    causeName,
+                                                    'specificCase',
+                                                    e.target.value
+                                                )
+                                            }
+                                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            placeholder="Describe the specific case..."
+                                            required
+                                        />
                                     </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Medical Condition *
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={writeUps[causeName]?.medicalCondition || ''}
+                                            onChange={e =>
+                                                handleWriteUpChange(
+                                                    causeName,
+                                                    'medicalCondition',
+                                                    e.target.value
+                                                )
+                                            }
+                                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            placeholder="e.g., Hypertension, Diabetes"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Medication *
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={writeUps[causeName]?.medication || ''}
+                                            onChange={e =>
+                                                handleWriteUpChange(
+                                                    causeName,
+                                                    'medication',
+                                                    e.target.value
+                                                )
+                                            }
+                                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            placeholder="e.g., Enalapril 10mg"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-4 mt-8">
                                     <button
-                                        onClick={() => saveAssessment(cause)}
-                                        disabled={isLoading}
-                                        className="w-full sm:w-auto px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold text-sm hover:bg-blue-700 transition shadow-md hover:shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
+                                        onClick={() => saveAssessment(causeName)}
+                                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-lg font-medium shadow-md"
                                     >
-                                        {isLoading ? <FaSpinner className="animate-spin" /> : <FaSave />}
                                         {editId !== null ? 'Update Assessment' : 'Save Assessment'}
+                                    </button>
+
+                                    <button
+                                        onClick={() => {
+                                            setSelectedCauses(prev =>
+                                                prev.filter(c => c !== causeName)
+                                            );
+                                            setWriteUps(prev => {
+                                                const newWriteUps = { ...prev };
+                                                delete newWriteUps[causeName];
+                                                return newWriteUps;
+                                            });
+                                        }}
+                                        className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                                    >
+                                        Cancel
                                     </button>
                                 </div>
                             </div>
-                        ))}
-                    </div>
+                        );
+                    })}
                 </div>
             )}
 
-            {/* Assessment Archive Section */}
-            <div className="bg-gray-50 rounded-lg p-3 md:p-6 border border-gray-200">
+            {/* Saved Assessments Table - UPDATED to show DTP Type instead of ruleType */}
+            <div className="mt-12">
                 <div className="flex justify-between items-center mb-6">
-                    <div>
-                        <h3 className="text-xl font-semibold text-gray-800">Assessment Records</h3>
-                        <p className="text-xs text-gray-500 mt-1">Historical decision log ({assessments.length})</p>
-                    </div>
+                    <h3 className="text-xl font-semibold text-gray-800">
+                        Saved Assessments ({assessments.length})
+                    </h3>
+                    {assessments.length > 0 && (
+                        <button
+                            onClick={() => fetchAssessments()}
+                            className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                        >
+                            <FaSync className={isLoading ? 'animate-spin' : ''} /> Refresh
+                        </button>
+                    )}
                 </div>
 
                 {isLoading ? (
-                    <div className="text-center py-20">
-                        <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto" />
-                        <p className="mt-4 text-gray-500 font-medium text-sm">Loading records...</p>
+                    <div className="text-center py-8">
+                        <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto mb-4" />
+                        <p className="text-gray-600">Loading assessments...</p>
                     </div>
                 ) : assessments.length === 0 ? (
-                    <div className="text-center py-24 bg-white rounded-lg border border-dashed border-gray-200">
-                        <FaFileAlt className="text-4xl text-gray-200 mx-auto mb-4" />
-                        <p className="text-gray-400 font-medium text-sm">No assessments recorded</p>
+                    <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
+                        <FaStethoscope className="text-4xl text-gray-300 mx-auto mb-3" />
+                        <p className="text-gray-500">No assessments saved yet.</p>
                     </div>
                 ) : (
-                    <div className="space-y-4">
-                        {assessments.map(ass => (
-                            <div key={ass.id} className="p-4 md:p-6 bg-white border border-gray-100 rounded-lg shadow-sm hover:shadow-md transition-all flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-3 mb-3 flex-wrap">
-                                        <span className="font-bold text-gray-900 text-lg">{ass.cause_name}</span>
-                                        <span className={`px-3 py-1 text-xs font-bold uppercase rounded-full ${ass.status === 'Resolved' || ass.status === 'resolved' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
-                                            {getDisplayStatus(ass.status)}
-                                        </span>
-                                        <span className="text-xs text-gray-400 font-semibold bg-gray-50 px-2 py-1 rounded">{ass.category}</span>
-                                    </div>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-600 mb-4">
-                                        <div className="flex items-start gap-3 bg-gray-50 p-3 rounded-lg">
-                                            <FaNotesMedical className="text-gray-400 mt-0.5" />
-                                            <div>
-                                                <div className="text-xs uppercase text-gray-400 mb-0.5">Condition</div>
-                                                {ass.medical_condition}
+                    <div className="overflow-x-auto rounded-lg border">
+                        <table className="w-full">
+                            <thead className="bg-gray-100">
+                                <tr>
+                                    <th className="p-4 text-left font-medium text-gray-700">Category</th>
+                                    <th className="p-4 text-left font-medium text-gray-700">Cause</th>
+                                    <th className="p-4 text-left font-medium text-gray-700">DTP Type</th>
+                                    <th className="p-4 text-left font-medium text-gray-700">Specific Case</th>
+                                    <th className="p-4 text-left font-medium text-gray-700">Status</th>
+                                    <th className="p-4 text-left font-medium text-gray-700">Date</th>
+                                    <th className="p-4 text-left font-medium text-gray-700">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {assessments.map((assessment, index) => (
+                                    <tr key={assessment.id} className="border-t hover:bg-gray-50">
+                                        <td className="p-4">
+                                            <span className={`px-3 py-1 text-sm rounded-full ${getCategoryColor(assessment.category)}`}>
+                                                {assessment.category}
+                                            </span>
+                                        </td>
+                                        <td className="p-4 font-medium text-gray-800">{assessment.cause_name}</td>
+                                        <td className="p-4">
+                                            <span className={`px-2 py-1 text-xs rounded ${getDTPTypeColor(assessment.dtp_type)}`}>
+                                                {assessment.dtp_type || 'N/A'}
+                                            </span>
+                                        </td>
+                                        <td className="p-4 text-sm text-gray-700 max-w-xs">{assessment.specific_case}</td>
+                                        <td className="p-4">
+                                            <span className={`px-2 py-1 text-xs rounded-full ${assessment.status === 'active' ? 'bg-yellow-100 text-yellow-800' :
+                                                assessment.status === 'resolved' ? 'bg-green-100 text-green-800' :
+                                                    'bg-blue-100 text-blue-800'
+                                                }`}>
+                                                {assessment.status}
+                                            </span>
+                                        </td>
+                                        <td className="p-4 text-sm text-gray-600">
+                                            {new Date(assessment.created_at).toLocaleDateString()}
+                                        </td>
+                                        <td className="p-4">
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => handleEdit(assessment)}
+                                                    className="text-blue-500 hover:text-blue-700 p-2 hover:bg-blue-50 rounded"
+                                                    title="Edit assessment"
+                                                >
+                                                    <FaEdit />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteAssessment(assessment.id)}
+                                                    className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded"
+                                                    title="Delete assessment"
+                                                >
+                                                    <FaTrash />
+                                                </button>
                                             </div>
-                                        </div>
-                                        <div className="flex items-start gap-3 bg-gray-50 p-3 rounded-lg">
-                                            <FaPills className="text-gray-400 mt-0.5" />
-                                            <div>
-                                                <div className="text-xs uppercase text-gray-400 mb-0.5">Medication</div>
-                                                {ass.medication}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="text-sm text-gray-500 bg-gray-50 p-4 rounded-lg border-l-4 border-blue-500 italic">
-                                        "{ass.specific_case}"
-                                    </div>
-                                </div>
-                                <div className="flex gap-2 self-end lg:self-center">
-                                    <button
-                                        onClick={() => handleEdit(ass)}
-                                        className="p-3 bg-white border border-gray-200 text-blue-600 rounded-lg hover:bg-blue-50 transition-all"
-                                        title="Edit Record"
-                                    >
-                                        <FaEdit />
-                                    </button>
-                                    <button
-                                        onClick={() => handleDeleteAssessment(ass.id)}
-                                        className="p-3 bg-white border border-gray-200 text-red-500 rounded-lg hover:bg-red-50 transition-all"
-                                        title="Delete Record"
-                                    >
-                                        <FaTrash />
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 )}
             </div>
@@ -1012,3 +1195,5 @@ const DRNAssessment = ({ patientCode }) => {
 };
 
 export default DRNAssessment;
+
+
