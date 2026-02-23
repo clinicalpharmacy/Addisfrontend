@@ -246,7 +246,7 @@ const PatientDetails = () => {
         const allTabs = [
             { id: 'overview', label: 'Overview', icon: FaUser },
             { id: 'demographics', label: 'Demographics', icon: FaUser },
-            { id: 'vitals', label: 'Vitals_Anthropometry', icon: FaHeartbeat },
+            { id: 'vitals', label: 'Vitals & Anthropometry', icon: FaHeartbeat },
             { id: 'labs', label: 'Labs', icon: FaVial },
             { id: 'medications', label: 'Medications', icon: FaPills },
             { id: 'analysis', label: 'Clinical Analysis', icon: FaBrain },
