@@ -968,6 +968,9 @@ const PatientDetails = () => {
 
             // For new patients, validate required fields
             if (isNewPatient) {
+                const isIndividual = user?.account_type === 'individual' && user?.role !== 'admin';
+
+                if (!isIndividual) {
                 if (!formData.full_name || formData.full_name.trim() === '') {
                     alert('Please enter patient name');
                     return;
