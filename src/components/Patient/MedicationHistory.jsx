@@ -23,7 +23,7 @@ const MedicationHistory = ({ patientCode }) => {
         frequency: '',
         stop_date: '',
         indication: '',
-        drug_class: 'Antimicrobial',
+        drug_class: '',
         initiated_at: 'Hospital',
 
         // Additional Information
@@ -250,27 +250,48 @@ const MedicationHistory = ({ patientCode }) => {
     };
 
     const validateForm = () => {
-        if (!formData.drug_name.trim()) {
-            alert('Drug Name is required');
+    if (!formData.drug_name.trim()) {
+        alert('Drug Name is required');
+        return false;
+    }
+
+    if (!formData.start_date) {
+        alert('Start Date is required');
+        return false;
+    }
+
+    // Add these 4 new validations
+    if (!formData.dose) {
+        alert('Dose is required');
+        return false;
+    }
+
+    if (!formData.frequency) {
+        alert('Frequency is required');
+        return false;
+    }
+
+    if (!formData.roa) {
+        alert('Route of Administration is required');
+        return false;
+    }
+
+    if (!formData.indication.trim()) {
+        alert('Indication is required');
+        return false;
+    }
+
+    if (formData.start_date && formData.stop_date) {
+        const start = new Date(formData.start_date);
+        const stop = new Date(formData.stop_date);
+        if (stop < start) {
+            alert('Stop date cannot be before start date');
             return false;
         }
+    }
 
-        if (!formData.start_date) {
-            alert('Start Date is required');
-            return false;
-        }
-
-        if (formData.start_date && formData.stop_date) {
-            const start = new Date(formData.start_date);
-            const stop = new Date(formData.stop_date);
-            if (stop < start) {
-                alert('Stop date cannot be before start date');
-                return false;
-            }
-        }
-
-        return true;
-    };
+    return true;
+};
 
     const handleSave = async () => {
         if (!validateForm()) return;
@@ -362,7 +383,7 @@ const MedicationHistory = ({ patientCode }) => {
             frequency: '',
             stop_date: '',
             indication: '',
-            drug_class: 'Antimicrobial',
+            drug_class: '',
             initiated_at: 'Hospital',
             dosage_form: 'Tablet',
             brand_name: '',
@@ -523,8 +544,11 @@ const MedicationHistory = ({ patientCode }) => {
     const getStats = () => {
         const activeMeds = medications.filter(m => m.status === 'Active' || m.is_active === true);
         const oralMeds = medications.filter(m => m.roa === 'po');
-        const uniqueClasses = [...new Set(medications.map(m => m.drug_class).filter(Boolean))];
-
+        // Only calculate unique classes if they exist
+        const uniqueClasses = isCompanyUser 
+            ? [...new Set(medications.map(m => m.drug_class).filter(Boolean))]
+            : [];
+    
         return {
             total: medications.length,
             active: activeMeds.length,
@@ -533,7 +557,7 @@ const MedicationHistory = ({ patientCode }) => {
             reconciliations: reconciliations.length
         };
     };
-
+    
     useEffect(() => {
         applyFilters(medications);
     }, [medications, selectedClass, activeFilter, searchTerm]);
@@ -582,18 +606,27 @@ const MedicationHistory = ({ patientCode }) => {
                     <div className="text-xs md:text-sm text-purple-700">Oral</div>
                     <div className="text-lg md:text-xl font-bold text-purple-800">{stats.oral}</div>
                 </div>
-                <div className="bg-indigo-50 p-2 md:p-3 rounded-lg border border-indigo-100">
-                    <div className="text-xs md:text-sm text-indigo-700">Classes</div>
-                    <div className="text-lg md:text-xl font-bold text-indigo-800">{stats.classes}</div>
-                </div>
+                {/* Classes stat - ONLY FOR COMPANY USERS */}
+                {isCompanyUser && (
+                    <div className="bg-indigo-50 p-2 md:p-3 rounded-lg border border-indigo-100">
+                        <div className="text-xs md:text-sm text-indigo-700">Classes</div>
+                        <div className="text-lg md:text-xl font-bold text-indigo-800">{stats.classes}</div>
+                    </div>
+                )}
                 {isCompanyUser && (
                     <div className="bg-teal-50 p-2 md:p-3 rounded-lg border border-teal-100">
                         <div className="text-xs md:text-sm text-teal-700">Recon</div>
                         <div className="text-lg md:text-xl font-bold text-teal-800">{stats.reconciliations}</div>
                     </div>
                 )}
+                {/* If not company user, show a placeholder or adjust grid */}
+                {!isCompanyUser && (
+                    <div className="bg-teal-50 p-2 md:p-3 rounded-lg border border-teal-100 md:col-span-1">
+                        <div className="text-xs md:text-sm text-teal-700">Recon</div>
+                        <div className="text-lg md:text-xl font-bold text-teal-800">{stats.reconciliations}</div>
+                    </div>
+                )}
             </div>
-
             {/* Medication Registration Form */}
             <div className="bg-gray-50 rounded-lg p-3 md:p-6 mb-4 md:mb-8 border border-gray-200">
                 <div className="flex justify-between items-center mb-6">
@@ -618,7 +651,7 @@ const MedicationHistory = ({ patientCode }) => {
                     <h4 className="font-medium text-blue-800 mb-3 flex items-center gap-2">
                         <FaExclamationTriangle /> Required Information
                     </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {/* Drug Name */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -634,7 +667,7 @@ const MedicationHistory = ({ patientCode }) => {
                                 required
                             />
                         </div>
-
+                
                         {/* Start Date */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -649,108 +682,116 @@ const MedicationHistory = ({ patientCode }) => {
                                 required
                             />
                         </div>
+                
+                        {/* Drug Class - ONLY FOR COMPANY USERS */}
+                            {isCompanyUser && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Drug Class *
+                                    </label>
+                                    <select
+                                        name="drug_class"
+                                        value={formData.drug_class}
+                                        onChange={handleInputChange}
+                                        className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        required
+                                    >
+                                        <option value="">Select drug class</option>
+                                        {drugClasses.map(cls => (
+                                            <option key={cls} value={cls}>{cls}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
 
-                        {/* Drug Class */}
+                        {/* NEW: Dose */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Drug Class *
+                                Dose *
+                            </label>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    name="dose"
+                                    value={formData.dose}
+                                    onChange={handleInputChange}
+                                    className="flex-1 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                                    placeholder="e.g., 500"
+                                    required
+                                />
+                                <select
+                                    name="unit"
+                                    value={formData.unit}
+                                    onChange={handleInputChange}
+                                    className="w-24 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                                >
+                                    {units.map(unit => (
+                                        <option key={unit} value={unit}>{unit}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                
+                        {/* NEW: Route */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Route of Administration *
                             </label>
                             <select
-                                name="drug_class"
-                                value={formData.drug_class}
+                                name="roa"
+                                value={formData.roa}
                                 onChange={handleInputChange}
-                                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
                                 required
                             >
-                                {drugClasses.map(cls => (
-                                    <option key={cls} value={cls}>{cls}</option>
+                                <option value="">Select route</option>
+                                {roaOptions.map(route => (
+                                    <option key={route.value} value={route.value}>
+                                        {route.icon} {route.label}
+                                    </option>
                                 ))}
                             </select>
+                        </div>
+                
+                        {/* NEW: Frequency */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Frequency *
+                            </label>
+                            <select
+                                name="frequency"
+                                value={formData.frequency}
+                                onChange={handleInputChange}
+                                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                                required
+                            >
+                                <option value="">Select frequency</option>
+                                {frequencyOptions.map(freq => (
+                                    <option key={freq} value={freq}>{freq}</option>
+                                ))}
+                            </select>
+                        </div>
+                
+                        {/* NEW: Indication */}
+                        <div className="md:col-span-2 lg:col-span-3">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Indication *
+                            </label>
+                            <input
+                                type="text"
+                                name="indication"
+                                value={formData.indication}
+                                onChange={handleInputChange}
+                                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                                placeholder="e.g., Type 2 Diabetes, Hypertension, Infection"
+                                required
+                            />
                         </div>
                     </div>
                 </div>
 
-                {/* Basic Information */}
+                {/* Basic Information - Only non-required fields */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                    {/* Dose */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Dose
-                        </label>
-                        <div className="flex gap-2">
-                            <input
-                                type="text"
-                                name="dose"
-                                value={formData.dose}
-                                onChange={handleInputChange}
-                                className="flex-1 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
-                                placeholder="e.g., 500"
-                            />
-                            <select
-                                name="unit"
-                                value={formData.unit}
-                                onChange={handleInputChange}
-                                className="w-24 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
-                            >
-                                {units.map(unit => (
-                                    <option key={unit} value={unit}>{unit}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-
-                    {/* Frequency */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Frequency
-                        </label>
-                        <select
-                            name="frequency"
-                            value={formData.frequency}
-                            onChange={handleInputChange}
-                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
-                        >
-                            <option value="">Select frequency</option>
-                            {frequencyOptions.map(freq => (
-                                <option key={freq} value={freq}>{freq}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* Route */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Route
-                        </label>
-                        <select
-                            name="roa"
-                            value={formData.roa}
-                            onChange={handleInputChange}
-                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
-                        >
-                            {roaOptions.map(route => (
-                                <option key={route.value} value={route.value}>
-                                    {route.icon} {route.label}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* Indication */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Indication
-                        </label>
-                        <input
-                            type="text"
-                            name="indication"
-                            value={formData.indication}
-                            onChange={handleInputChange}
-                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
-                            placeholder="e.g., Type 2 Diabetes"
-                        />
-                    </div>
-
                     {/* Status */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -769,7 +810,7 @@ const MedicationHistory = ({ patientCode }) => {
                             ))}
                         </select>
                     </div>
-
+                
                     {/* Stop Date */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -784,7 +825,6 @@ const MedicationHistory = ({ patientCode }) => {
                         />
                     </div>
                 </div>
-
                 {/* Advanced Fields */}
                 {showAdvanced && (
                     <div className="mb-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
@@ -957,23 +997,25 @@ const MedicationHistory = ({ patientCode }) => {
                             </div>
                         </div>
 
-                        {/* Class Filter */}
-                        <div className="flex items-center gap-2">
-                            <span className="text-sm text-gray-600">Class:</span>
-                            <select
-                                value={selectedClass}
-                                onChange={(e) => setSelectedClass(e.target.value)}
-                                className="border border-gray-300 rounded-lg p-2 bg-white min-w-[150px]"
-                            >
-                                <option value="">All Classes</option>
-                                {drugClasses.map(cls => (
-                                    <option key={cls} value={cls}>{cls}</option>
-                                ))}
-                            </select>
-                        </div>
+                        {/* Class Filter - ONLY FOR COMPANY USERS */}
+                        {isCompanyUser && (
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-600">Class:</span>
+                                <select
+                                    value={selectedClass}
+                                    onChange={(e) => setSelectedClass(e.target.value)}
+                                    className="border border-gray-300 rounded-lg p-2 bg-white min-w-[150px]"
+                                >
+                                    <option value="">All Classes</option>
+                                    {drugClasses.map(cls => (
+                                        <option key={cls} value={cls}>{cls}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
                     </div>
                 </div>
-            </div>
+</div>
 
             {/* Medications List */}
             <div className="mb-8">
@@ -1013,6 +1055,8 @@ const MedicationHistory = ({ patientCode }) => {
                                     <tr key={med.id} className="border-t hover:bg-gray-50 group">
                                         <td className="p-2 md:p-4">
                                             <div className="font-medium text-gray-800 text-xs md:text-sm break-words max-w-[150px] md:max-w-none">{med.drug_name}</div>
+                                            {/* Only show drug class if it exists (for company users) */}
+                                            {med.drug_class && (
                                             <div className="text-xs text-gray-400 mt-1 break-words">{med.drug_class}</div>
                                         </td>
                                         <td className="p-2 md:p-4">
