@@ -592,41 +592,36 @@ const MedicationHistory = ({ patientCode }) => {
                 </button>
             </div>
 
-            {/* Quick Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-3 mb-4 md:mb-6">
-                <div className="bg-blue-50 p-2 md:p-3 rounded-lg border border-blue-100">
-                    <div className="text-xs md:text-sm text-blue-700">Total Meds</div>
-                    <div className="text-lg md:text-xl font-bold text-blue-800">{stats.total}</div>
-                </div>
-                <div className="bg-green-50 p-2 md:p-3 rounded-lg border border-green-100">
-                    <div className="text-xs md:text-sm text-green-700">Active</div>
-                    <div className="text-lg md:text-xl font-bold text-green-800">{stats.active}</div>
-                </div>
-                <div className="bg-purple-50 p-2 md:p-3 rounded-lg border border-purple-100">
-                    <div className="text-xs md:text-sm text-purple-700">Oral</div>
-                    <div className="text-lg md:text-xl font-bold text-purple-800">{stats.oral}</div>
-                </div>
-                {/* Classes stat - ONLY FOR COMPANY USERS */}
-                {isCompanyUser && (
-                    <div className="bg-indigo-50 p-2 md:p-3 rounded-lg border border-indigo-100">
-                        <div className="text-xs md:text-sm text-indigo-700">Classes</div>
-                        <div className="text-lg md:text-xl font-bold text-indigo-800">{stats.classes}</div>
+            {/* Quick Stats - ONLY FOR COMPANY USERS */}
+            {isCompanyUser && (
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-3 mb-4 md:mb-6">
+                    <div className="bg-blue-50 p-2 md:p-3 rounded-lg border border-blue-100">
+                        <div className="text-xs md:text-sm text-blue-700">Total Meds</div>
+                        <div className="text-lg md:text-xl font-bold text-blue-800">{stats.total}</div>
                     </div>
-                )}
-                {isCompanyUser && (
+                    <div className="bg-green-50 p-2 md:p-3 rounded-lg border border-green-100">
+                        <div className="text-xs md:text-sm text-green-700">Active</div>
+                        <div className="text-lg md:text-xl font-bold text-green-800">{stats.active}</div>
+                    </div>
+                    <div className="bg-purple-50 p-2 md:p-3 rounded-lg border border-purple-100">
+                        <div className="text-xs md:text-sm text-purple-700">Oral</div>
+                        <div className="text-lg md:text-xl font-bold text-purple-800">{stats.oral}</div>
+                    </div>
+                    {/* Classes stat - ONLY FOR COMPANY USERS */}
+                    {isCompanyUser && (
+                        <div className="bg-indigo-50 p-2 md:p-3 rounded-lg border border-indigo-100">
+                            <div className="text-xs md:text-sm text-indigo-700">Classes</div>
+                            <div className="text-lg md:text-xl font-bold text-indigo-800">{stats.classes}</div>
+                        </div>
+                    )}
                     <div className="bg-teal-50 p-2 md:p-3 rounded-lg border border-teal-100">
                         <div className="text-xs md:text-sm text-teal-700">Recon</div>
                         <div className="text-lg md:text-xl font-bold text-teal-800">{stats.reconciliations}</div>
                     </div>
-                )}
-                {/* If not company user, show a placeholder or adjust grid */}
-                {!isCompanyUser && (
-                    <div className="bg-teal-50 p-2 md:p-3 rounded-lg border border-teal-100 md:col-span-1">
-                        <div className="text-xs md:text-sm text-teal-700">Recon</div>
-                        <div className="text-lg md:text-xl font-bold text-teal-800">{stats.reconciliations}</div>
-                    </div>
-                )}
-            </div>
+                </div>
+            )}
+
+            
             {/* Medication Registration Form */}
             <div className="bg-gray-50 rounded-lg p-3 md:p-6 mb-4 md:mb-8 border border-gray-200">
                 <div className="flex justify-between items-center mb-6">
