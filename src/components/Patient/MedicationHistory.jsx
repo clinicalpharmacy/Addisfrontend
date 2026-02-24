@@ -276,7 +276,8 @@ const MedicationHistory = ({ patientCode }) => {
         return false;
     }
 
-    if (!formData.indication.trim()) {
+    // Only validate indication for company users
+    if (isCompanyUser && !formData.indication.trim()) {
         alert('Indication is required');
         return false;
     }
@@ -767,21 +768,23 @@ const MedicationHistory = ({ patientCode }) => {
                             </select>
                         </div>
                 
-                        {/* NEW: Indication */}
-                        <div className="md:col-span-2 lg:col-span-3">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Indication *
-                            </label>
-                            <input
-                                type="text"
-                                name="indication"
-                                value={formData.indication}
-                                onChange={handleInputChange}
-                                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
-                                placeholder="e.g., Type 2 Diabetes, Hypertension, Infection"
-                                required
-                            />
-                        </div>
+                        {/* Indication - ONLY FOR COMPANY USERS */}
+                        {isCompanyUser && (
+                            <div className="md:col-span-2 lg:col-span-3">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Indication *
+                                </label>
+                                <input
+                                    type="text"
+                                    name="indication"
+                                    value={formData.indication}
+                                    onChange={handleInputChange}
+                                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                                    placeholder="e.g., Type 2 Diabetes, Hypertension, Infection"
+                                    required
+                                />
+                            </div>
+                        )}
                     </div>
                 </div>
 
