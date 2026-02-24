@@ -1057,7 +1057,8 @@ const MedicationHistory = ({ patientCode }) => {
                                             <div className="font-medium text-gray-800 text-xs md:text-sm break-words max-w-[150px] md:max-w-none">{med.drug_name}</div>
                                             {/* Only show drug class if it exists (for company users) */}
                                             {med.drug_class && (
-                                            <div className="text-xs text-gray-400 mt-1 break-words">{med.drug_class}</div>
+                                                <div className="text-xs text-gray-400 mt-1 break-words">{med.drug_class}</div>
+                                             )}
                                         </td>
                                         <td className="p-2 md:p-4">
                                             <div className="text-gray-700 text-xs md:text-sm break-words">{med.dose} {med.unit}</div>
