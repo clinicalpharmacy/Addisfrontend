@@ -212,7 +212,7 @@ const Sidebar = ({ onClose }) => {
                                 )}
                             </li>
                         )}
-                        
+
                         {!isAdmin && (
                             <li>
                                 <NavLink
@@ -253,7 +253,7 @@ const Sidebar = ({ onClose }) => {
                                 </div>
                             </NavLink>
                         </li>
-                        
+
                         {/* Knowledge Base Section */}
                         <li className="mb-2">
                             <button
@@ -329,7 +329,7 @@ const Sidebar = ({ onClose }) => {
                             )}
                         </li>
 
-                    {/* Public Useful Links Page - Hidden only for health care clients */}
+                        {/* Public Useful Links Page - Hidden only for health care clients */}
                         {(user?.role !== 'health_care_client' || !isIndividual) && (
                             <li className="mb-2">
                                 <NavLink
@@ -513,19 +513,6 @@ const Sidebar = ({ onClose }) => {
                                         >
                                             <FaCogs className="text-sm" />
                                             Clinical Rules Admin
-                                        </NavLink>
-                                        <NavLink
-                                            to="/admin/cdss/builder"
-                                            onClick={onClose}
-                                            className={({ isActive }) =>
-                                                `flex items-center gap-2.5 px-4 py-2 text-sm rounded-lg transition-all duration-200 ${isActive
-                                                    ? 'text-purple-600 bg-purple-50 font-medium'
-                                                    : 'text-gray-600 hover:bg-purple-50 hover:text-purple-700'
-                                                }`
-                                            }
-                                        >
-                                            <FaCogs className="text-sm" />
-                                            Rule Builder
                                         </NavLink>
                                     </div>
                                 )}

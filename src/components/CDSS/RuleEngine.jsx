@@ -417,12 +417,28 @@ export const mapPatientToFacts = (patientData, medicationHistory = []) => {
                     facts.medication_names.push(drugName);
                     facts.medications.push(drugName);
 
+                    // Calculate days since start
+                    let daysSinceStart = null;
+                    if (med.start_date) {
+                        try {
+                            const startDate = new Date(med.start_date);
+                            const today = new Date();
+                            if (!isNaN(startDate.getTime())) {
+                                const diffTime = today - startDate;
+                                daysSinceStart = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                            }
+                        } catch (e) {
+                            console.warn('Error calculating drug duration:', e);
+                        }
+                    }
+
                     // Store full details for specific checks (dose, frequency, etc.)
                     facts.medication_data[drugKey] = {
                         dose: med.dose,
                         frequency: med.frequency,
                         roa: med.roa || med.route,
                         start_date: med.start_date,
+                        days_since_start: daysSinceStart,
                         stop_date: med.stop_date,
                         status: med.status,
                         indication: med.indication,
@@ -1488,6 +1504,7 @@ export const getAllAvailableFactNames = (facts) => {
                 allKeys.add(`medication_data.${medKey}.dose`);
                 allKeys.add(`medication_data.${medKey}.frequency`);
                 allKeys.add(`medication_data.${medKey}.roa`);
+                allKeys.add(`medication_data.${medKey}.days_since_start`);
             });
         }
     }

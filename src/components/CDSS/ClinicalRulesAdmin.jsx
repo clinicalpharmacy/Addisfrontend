@@ -408,6 +408,27 @@ const ClinicalRulesAdmin = () => {
 }`,
             severity: 'moderate',
             dtp_category: 'dose_error'
+        },
+        'Long-term Steroid Use Check': {
+            rule_name: 'Long-term Steroid Use Check',
+            rule_type: 'lab_monitoring',
+            rule_description: 'Alert if Prednisolone is used for more than 14 days',
+            rule_condition: `{
+  "all": [
+    {
+      "fact": "medication_data.prednisolone.days_since_start",
+      "operator": ">",
+      "value": 14
+    }
+  ]
+}`,
+            rule_action: `{
+  "message": "Long-term steroid use detected",
+  "recommendation": "The patient has been on Prednisolone for {{medication_data.prednisolone.days_since_start}} days. Consider tapering or adding gastric protection.",
+  "severity": "high"
+}`,
+            severity: 'high',
+            dtp_category: 'monitoring_needed'
         }
     };
 
