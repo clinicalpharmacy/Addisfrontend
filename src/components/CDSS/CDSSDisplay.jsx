@@ -46,48 +46,81 @@ const CDSSDisplay = ({ patientData, onBack }) => {
     const downloadReport = () => {
         if (!patientData) return;
 
-        const report = {
-            title: 'Clinical Decision Support Report',
-            patient: {
-                code: patientData.patient_code,
-                name: patientData.full_name,
-                age: patientData.age,
-                gender: patientData.gender,
-                diagnosis: patientData.diagnosis,
-                age_in_days: patientFacts?.age_in_days,
-                patient_type: patientFacts?.patient_type,
-                is_pediatric: patientFacts?.is_pediatric
-            },
-            analysis: analysisStats,
-            timestamp: new Date().toISOString(),
-            medications: medications.map(m => ({
-                name: m.drug_name,
-                dose: m.dose,
-                frequency: m.frequency,
-                indication: m.indication,
-                class: m.drug_class
-            })),
-            alerts: alerts.map(a => ({
-                rule: a.rule_name,
-                type: a.rule_type,
-                severity: a.severity,
-                message: a.message,
-                recommendation: a.details,
-                evidence: a.evidence,
-                timestamp: a.timestamp,
-                confidence: a.confidence,
-                patient_age_in_days: a.patient_age_in_days,
-                patient_type: a.patient_type
-            })),
-            summary: `Clinical analysis generated ${alerts.length} alerts for ${patientData.patient_code}`
-        };
+        const timestamp = new Date().toLocaleString();
+        const divider = '================================================';
 
-        const content = JSON.stringify(report, null, 2);
-        const blob = new Blob([content], { type: 'application/json' });
+        let reportText = `${divider}\n`;
+        reportText += `CLINICAL DECISION SUPPORT REPORT\n`;
+        reportText += `${divider}\n\n`;
+
+        reportText += `REPORT DETAILS\n`;
+        reportText += `Generated: ${timestamp}\n`;
+        reportText += `Patient Code: ${patientData.patient_code}\n`;
+        reportText += `Patient Name: ${patientData.full_name || 'N/A'}\n`;
+        reportText += `Age/Category: ${patientData.age || 'N/A'} (${patientFacts?.patient_type || 'N/A'})\n`;
+        reportText += `Gender: ${patientData.gender || 'N/A'}\n`;
+        reportText += `Primary Diagnosis: ${patientData.diagnosis || 'None recorded'}\n\n`;
+
+        reportText += `ANALYSIS SUMMARY\n`;
+        reportText += `Total Alerts: ${alerts.length}\n`;
+        reportText += `- Critical: ${analysisStats?.bySeverity?.critical || 0}\n`;
+        reportText += `- High Severity: ${analysisStats?.bySeverity?.high || 0}\n`;
+        reportText += `- Moderate: ${analysisStats?.bySeverity?.moderate || 0}\n`;
+        reportText += `- Low: ${analysisStats?.bySeverity?.low || 0}\n\n`;
+
+        if (medications && medications.length > 0) {
+            reportText += `CURRENT MEDICATIONS (${medications.length})\n`;
+            medications.forEach((m, i) => {
+                reportText += `${i + 1}. ${m.drug_name} (${m.drug_class || 'N/A'}) - ${m.dose || ''} ${m.frequency || ''}\n`;
+            });
+            reportText += `\n`;
+        }
+
+        reportText += `CLINICAL ALERTS & RECOMMENDATIONS\n`;
+        reportText += `${divider}\n`;
+
+        if (alerts.length === 0) {
+            reportText += `No clinical alerts detected during this analysis.\n`;
+        } else {
+            alerts.forEach((alert, index) => {
+                reportText += `\nALERT #${index + 1}: ${alert.rule_name}\n`;
+                reportText += `SEVERITY: ${alert.severity.toUpperCase()}\n`;
+                reportText += `MESSAGE: ${alert.message}\n`;
+                if (alert.details) {
+                    reportText += `RECOMMENDATION: ${alert.details}\n`;
+                }
+
+                // Simplified evidence
+                const evidence = alert.evidence;
+                if (evidence) {
+                    reportText += `EVIDENCE: `;
+                    const evidenceParts = [];
+                    if (evidence.matched_medications?.length > 0) {
+                        evidenceParts.push(`Medications: ${evidence.matched_medications.join(', ')}`);
+                    }
+                    if (evidence.labs) {
+                        const labKeys = Object.keys(evidence.labs).filter(k => evidence.labs[k]);
+                        if (labKeys.length > 0) {
+                            evidenceParts.push(`Lab Values: ${labKeys.map(k => `${k}=${evidence.labs[k]}`).join(', ')}`);
+                        }
+                    }
+                    reportText += evidenceParts.join(' | ') || 'Clinical parameters matched';
+                    reportText += `\n`;
+                }
+                reportText += `------------------------------------------------\n`;
+            });
+        }
+
+        reportText += `\n${divider}\n`;
+        reportText += `DISCLAIMER: This report is a decision support tool and should be \n`;
+        reportText += `reviewed by a qualified healthcare professional before clinical action.\n`;
+        reportText += `${divider}\n`;
+
+        const blob = new Blob([reportText], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `CDSS_Report_${patientData.patient_code}_${new Date().toISOString().split('T')[0]}.json`;
+        a.download = `Clinical_Analysis_${patientData.patient_code}_${new Date().toISOString().split('T')[0]}.txt`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
