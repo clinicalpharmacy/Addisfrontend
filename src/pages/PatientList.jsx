@@ -313,7 +313,7 @@ const PatientList = () => {
                                     const currentUserId = getCurrentUserId();
                                     const isUserIndividual = isIndividual;
                                     const isAdmin = userRole === 'admin';
-                                    const canDelete = userAccountType === 'individual' && !userCompanyId;
+                                    const canDelete = isAdmin;
 
                                     return (
                                         <tr key={patient.id} className="border-b hover:bg-gray-50 transition-colors">
@@ -405,7 +405,7 @@ const PatientList = () => {
                         const currentUserId = getCurrentUserId();
                         const isUserIndividual = isIndividual;
                         const isAdmin = userRole === 'admin';
-                        const canDelete = userAccountType === 'individual' && !userCompanyId;
+                        const canDelete = isAdmin;
 
                         return (
                             <div key={patient.id} className="bg-white rounded-xl shadow p-4 border border-gray-100">
