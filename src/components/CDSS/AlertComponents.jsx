@@ -16,21 +16,21 @@ export const AlertDetails = ({ alert }) => {
                             <h5 className="font-medium text-gray-600 mb-2 flex items-center gap-2">
                                 <FaCalendarDay className="text-blue-500" /> Age Information
                             </h5>
-                            <div className="space-y-1">
-                                <div className="text-sm pl-4">
-                                    • <span className="font-medium">Age in Days:</span>
-                                    <span className="ml-2 text-blue-600">{alert.evidence.age_in_days}</span>
+                            <div className="space-y-1 pl-2">
+                                <div className="text-xs flex justify-between items-center py-0.5">
+                                    <span className="text-gray-500">Age in Days</span>
+                                    <span className="font-bold text-blue-600">{alert.evidence.age_in_days}</span>
                                 </div>
                                 {alert.evidence.patient_type && (
-                                    <div className="text-sm pl-4">
-                                        • <span className="font-medium">Patient Type:</span>
-                                        <span className="ml-2 text-blue-600 capitalize">{alert.evidence.patient_type}</span>
+                                    <div className="text-xs flex justify-between items-center py-0.5">
+                                        <span className="text-gray-500">Type</span>
+                                        <span className="font-bold text-blue-600 capitalize">{alert.evidence.patient_type}</span>
                                     </div>
                                 )}
                                 {alert.evidence.is_pediatric && (
-                                    <div className="text-sm pl-4">
-                                        • <span className="font-medium">Pediatric:</span>
-                                        <span className="ml-2 text-green-600">Yes</span>
+                                    <div className="text-xs flex justify-between items-center py-0.5">
+                                        <span className="text-gray-500">Pediatric</span>
+                                        <span className="font-bold text-green-600">Yes</span>
                                     </div>
                                 )}
                             </div>
@@ -59,11 +59,11 @@ export const AlertDetails = ({ alert }) => {
                             <h5 className="font-medium text-gray-600 mb-2 flex items-center gap-2">
                                 <FaVial className="text-green-500" /> Lab Values
                             </h5>
-                            <div className="space-y-1">
+                            <div className="space-y-1 pl-2">
                                 {Object.entries(alert.evidence.labs).slice(0, 5).map(([key, value]) => (
-                                    <div key={key} className="text-sm pl-4">
-                                        • <span className="font-medium">{key}:</span>
-                                        <span className={`ml-2 ${value > 5 ? 'text-red-600' : 'text-gray-700'}`}>
+                                    <div key={key} className="text-xs flex justify-between items-center py-0.5">
+                                        <span className="text-gray-500">{key}</span>
+                                        <span className={`font-bold ${value > 5 ? 'text-red-600' : 'text-gray-700'}`}>
                                             {typeof value === 'number' ? value.toFixed(1) : value}
                                         </span>
                                     </div>

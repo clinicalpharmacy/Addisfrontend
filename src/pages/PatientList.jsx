@@ -217,16 +217,16 @@ const PatientList = () => {
     }
 
     return (
-        <div className="space-y-6 px-6 max-w-7xl mx-auto">
+        <div className="page-container">
             {/* Header */}
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Comprehensive Medication Management</h1>
-                    <p className="text-gray-600">Manage medication safety and effectiveness</p>
+                    <h1 className="text-xl md:text-2xl font-bold text-gray-800">Comprehensive Medication Management</h1>
+                    <p className="text-sm md:text-base text-gray-600">Manage medication safety and effectiveness</p>
                 </div>
                 <button
                     onClick={handleNewPatient}
-                    className={`px-6 py-3 rounded-lg flex items-center gap-2 transition-colors ${isIndividual && userRole !== 'admin' && patients.length >= 1
+                    className={`w-full sm:w-auto px-6 py-3 rounded-lg flex items-center justify-center gap-2 transition-colors ${isIndividual && userRole !== 'admin' && patients.length >= 1
                         ? 'bg-gray-400 cursor-not-allowed text-white'
                         : 'bg-blue-500 hover:bg-blue-600 text-white'
                         }`}
@@ -238,8 +238,8 @@ const PatientList = () => {
 
             {/* Search and Filters - Only for non-Individual users */}
             {!isIndividual && (
-                <div className="bg-white rounded-xl shadow p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white rounded-xl shadow p-4 md:p-6 border border-gray-100">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div className="relative">
                             <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                             <input
@@ -257,7 +257,7 @@ const PatientList = () => {
                                 setStatusFilter(e.target.value);
                                 handleSearch({ target: { value: searchTerm } });
                             }}
-                            className="border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         >
                             <option value="all">All Status</option>
                             <option value="active">Active Only</option>
@@ -266,7 +266,7 @@ const PatientList = () => {
 
                         <button
                             onClick={fetchPatients}
-                            className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-6 py-3 rounded-lg flex items-center justify-center gap-2 transition-colors"
+                            className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-6 py-3 rounded-lg flex items-center justify-center gap-2 transition-colors md:col-span-2 lg:col-span-1"
                         >
                             <FaFilter /> Refresh
                         </button>
@@ -275,7 +275,7 @@ const PatientList = () => {
             )}
 
             {/* Patients Table (Desktop) */}
-            <div className="hidden md:block bg-white rounded-xl shadow overflow-hidden">
+            <div className="hidden md:block table-wrapper">
                 <div className="overflow-x-auto">
                     <table className="w-full border-collapse">
                         <thead>
@@ -397,7 +397,7 @@ const PatientList = () => {
                     </table>
                 </div>
             </div>
-          
+
             {/* Patients List (Mobile) */}
             <div className="md:hidden space-y-4">
                 {currentPatients.length > 0 ? (
@@ -511,7 +511,7 @@ const PatientList = () => {
                     </div>
                 </div>
             )}
-            
+
             {/* Pagination Controls - Only show if there's more than one page or for non-individual users */}
             {filteredPatients.length > itemsPerPage && (
                 <div className="bg-white rounded-xl shadow p-4 flex flex-col md:flex-row justify-between items-center gap-4">

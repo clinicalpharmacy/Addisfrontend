@@ -136,14 +136,14 @@ const PatientDetails = () => {
 
     // Effect to set correct default tab once user is loaded
     useEffect(() => {
-    if (user && !defaultTabInitialized) {
-      if (user?.account_type === 'individual' && user?.role !== 'admin') {
-        setActiveTab('demographics');
-        } else {
-          setActiveTab('overview');
+        if (user && !defaultTabInitialized) {
+            if (user?.account_type === 'individual' && user?.role !== 'admin') {
+                setActiveTab('demographics');
+            } else {
+                setActiveTab('overview');
+            }
+            setDefaultTabInitialized(true);
         }
-        setDefaultTabInitialized(true);
-      }
     }, [user, defaultTabInitialized]);
 
 
@@ -401,14 +401,14 @@ const PatientDetails = () => {
             return `${years} years (Adult)`;
         }
     }, [isValidDate, calculateAgeInDays]);
-    
-    
+
+
     const calculateBSA = useCallback((weight, height) => {
         if (!weight || !height || parseFloat(weight) <= 0 || parseFloat(height) <= 0) return '';
-        
+
         const weightNum = parseFloat(weight); // kg
         const heightNum = parseFloat(height); // cm
-    
+
         const bsa = 0.007184 * Math.pow(weightNum, 0.425) * Math.pow(heightNum, 0.725);
         return bsa.toFixed(2); // BSA in m²
     }, []);
@@ -972,7 +972,7 @@ const PatientDetails = () => {
             // For new patients, validate required fields
             if (isNewPatient) {
                 const isIndividual = user?.account_type === 'individual' && user?.role !== 'admin';
-            
+
                 if (!isIndividual) {
                     if (!formData.full_name || formData.full_name.trim() === '') {
                         alert('Please enter patient name');
@@ -980,7 +980,7 @@ const PatientDetails = () => {
                     }
                 }
             }
-            
+
             let savePatientCode = getCurrentPatientCode();
 
             // For NEW patients, ALWAYS generate a fresh code
@@ -2237,7 +2237,7 @@ const PatientDetails = () => {
                     </div>
 
                     {/* Appointment Date */}
-                      {!isIndividual && (
+                    {!isIndividual && (
                         <div className="space-y-2">
                             <label className="block text-sm font-medium text-gray-700">
                                 Next Appointment
@@ -2793,10 +2793,12 @@ const PatientDetails = () => {
                             </h3>
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 relative z-10">
                                 {results.slice(0, 12).map((lab, idx) => (
-                                    <div key={idx} className="bg-white/80 backdrop-blur-sm p-3 rounded-lg border border-green-100 flex flex-col items-center justify-center shadow-sm">
-                                        <p className="text-[10px] uppercase font-bold text-green-600 tracking-wider mb-1 text-center">{lab.name}</p>
-                                        <p className="text-xl font-black text-gray-800">{lab.value}</p>
-                                        {lab.unit && <p className="text-[10px] text-gray-400 font-medium">{lab.unit}</p>}
+                                    <div key={idx} className="bg-white/80 backdrop-blur-sm p-3 rounded-lg border border-green-100 flex items-center justify-between shadow-sm">
+                                        <div className="flex flex-col">
+                                            <p className="text-[9px] uppercase font-bold text-green-600 tracking-wider text-left">{lab.name}</p>
+                                            {lab.unit && <p className="text-[8px] text-gray-400 font-medium">{lab.unit}</p>}
+                                        </div>
+                                        <p className="text-lg font-black text-gray-800 ml-2">{lab.value}</p>
                                     </div>
                                 ))}
                             </div>
@@ -2826,31 +2828,39 @@ const PatientDetails = () => {
                             </h3>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 {formData.blood_pressure && (
-                                    <div className="text-center p-3 bg-red-50 rounded-lg">
-                                        <p className="text-sm text-gray-600">Blood Pressure</p>
-                                        <p className="text-xl font-bold text-gray-800">{formData.blood_pressure}</p>
-                                        <p className="text-xs text-gray-500">mmHg</p>
+                                    <div className="bg-red-50 p-3 rounded-lg border border-red-100 flex items-center justify-between shadow-sm">
+                                        <div className="flex flex-col">
+                                            <p className="text-[9px] uppercase font-bold text-red-600 tracking-wider text-left">BP</p>
+                                            <p className="text-[8px] text-gray-400 font-medium">mmHg</p>
+                                        </div>
+                                        <p className="text-lg font-black text-gray-800 ml-2">{formData.blood_pressure}</p>
                                     </div>
                                 )}
                                 {formData.heart_rate && (
-                                    <div className="text-center p-3 bg-red-50 rounded-lg">
-                                        <p className="text-sm text-gray-600">Heart Rate</p>
-                                        <p className="text-xl font-bold text-gray-800">{formData.heart_rate}</p>
-                                        <p className="text-xs text-gray-500">bpm</p>
+                                    <div className="bg-red-50 p-3 rounded-lg border border-red-100 flex items-center justify-between shadow-sm">
+                                        <div className="flex flex-col">
+                                            <p className="text-[9px] uppercase font-bold text-red-600 tracking-wider text-left">Heart Rate</p>
+                                            <p className="text-[8px] text-gray-400 font-medium">bpm</p>
+                                        </div>
+                                        <p className="text-lg font-black text-gray-800 ml-2">{formData.heart_rate}</p>
                                     </div>
                                 )}
                                 {formData.temperature && (
-                                    <div className="text-center p-3 bg-red-50 rounded-lg">
-                                        <p className="text-sm text-gray-600">Temperature</p>
-                                        <p className="text-xl font-bold text-gray-800">{formData.temperature}</p>
-                                        <p className="text-xs text-gray-500">°C</p>
+                                    <div className="bg-red-50 p-3 rounded-lg border border-red-100 flex items-center justify-between shadow-sm">
+                                        <div className="flex flex-col">
+                                            <p className="text-[9px] uppercase font-bold text-red-600 tracking-wider text-left">Temp</p>
+                                            <p className="text-[8px] text-gray-400 font-medium">°C</p>
+                                        </div>
+                                        <p className="text-lg font-black text-gray-800 ml-2">{formData.temperature}</p>
                                     </div>
                                 )}
                                 {formData.oxygen_saturation && (
-                                    <div className="text-center p-3 bg-red-50 rounded-lg">
-                                        <p className="text-sm text-gray-600">SpO₂</p>
-                                        <p className="text-xl font-bold text-gray-800">{formData.oxygen_saturation}</p>
-                                        <p className="text-xs text-gray-500">%</p>
+                                    <div className="bg-red-50 p-3 rounded-lg border border-red-100 flex items-center justify-between shadow-sm">
+                                        <div className="flex flex-col">
+                                            <p className="text-[9px] uppercase font-bold text-red-600 tracking-wider text-left">SpO₂</p>
+                                            <p className="text-[8px] text-gray-400 font-medium">%</p>
+                                        </div>
+                                        <p className="text-lg font-black text-gray-800 ml-2">{formData.oxygen_saturation}</p>
                                     </div>
                                 )}
                             </div>

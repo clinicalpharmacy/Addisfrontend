@@ -17,27 +17,27 @@ const Home = () => {
     };
 
     return (
-        <div className="space-y-6 px-6 max-w-7xl mx-auto">
+        <div className="page-container">
             {/* Welcome Section */}
-            <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-6 text-white">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
+            <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold">
+                        <h1 className="text-xl md:text-2xl font-bold">
                             {getGreeting()}.
                         </h1>
                         <p className="text-blue-100 mt-1">
                             AddisMed Digital Health
                         </p>
                     </div>
-                    <div className="mt-4 md:mt-0 text-right">
-                        <p className="text-sm text-blue-200">
+                    <div className="text-left sm:text-right">
+                        <p className="text-xs md:text-sm text-blue-200 uppercase tracking-wider">
                             {new Date().toLocaleDateString('en-US', {
                                 weekday: 'short',
                                 month: 'short',
                                 day: 'numeric'
                             })}
                         </p>
-                        <p className="text-2xl font-bold mt-1">
+                        <p className="text-xl md:text-2xl font-bold mt-1">
                             {new Date().toLocaleTimeString('en-US', {
                                 hour: '2-digit',
                                 minute: '2-digit'

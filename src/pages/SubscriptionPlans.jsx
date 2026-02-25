@@ -314,43 +314,43 @@ const SubscriptionPlans = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-6 md:py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Header with Registration Status */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-3 bg-white rounded-full px-6 py-3 shadow-sm mb-4">
-            <FaUserCheck className="text-green-500" />
-            <span className="font-medium text-gray-700">Registration Complete</span>
-            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+        <div className="text-center mb-8 md:mb-12">
+          <div className="inline-flex items-center gap-2 md:gap-3 bg-white rounded-full px-4 md:px-6 py-2 md:py-3 shadow-sm mb-4">
+            <FaUserCheck className="text-green-500 text-sm md:text-base" />
+            <span className="font-medium text-gray-700 text-xs md:text-sm">Registration Complete</span>
+            <span className="text-[10px] md:text-xs bg-green-100 text-green-800 px-2 py-0.5 md:py-1 rounded-full">
               Step 2 of 3
             </span>
           </div>
 
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-2 md:mb-4">
             Choose Your Subscription Plan
           </h1>
-          <p className="text-lg text-gray-600">
+          <p className="text-sm md:text-lg text-gray-600">
             Select the perfect plan for your {accountType === 'individual' ? 'individual' : 'company'} needs
           </p>
         </div>
 
         {/* Registration Info Banner */}
-        <div className="mb-8 bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-xl p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="bg-green-100 p-3 rounded-full">
-                <FaUserCheck className="text-green-600 text-xl" />
+        <div className="mb-6 md:mb-8 bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-xl p-4 md:p-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3 md:gap-4">
+              <div className="bg-green-100 p-2 md:p-3 rounded-full flex-shrink-0">
+                <FaUserCheck className="text-green-600 text-lg md:text-xl" />
               </div>
-              <div>
-                <h3 className="font-bold text-gray-800">Registration Complete ✓</h3>
-                <p className="text-gray-600">
+              <div className="text-center md:text-left">
+                <h3 className="font-bold text-gray-800 text-sm md:text-base">Registration Complete ✓</h3>
+                <p className="text-gray-600 text-xs md:text-sm">
                   Welcome {user?.name}! Now select your subscription to complete setup.
                 </p>
               </div>
             </div>
-            <div className="text-right">
-              <p className="text-sm text-gray-500">Account Type</p>
-              <p className="font-bold text-blue-600">
+            <div className="text-center md:text-right border-t md:border-t-0 pt-3 md:pt-0 w-full md:w-auto">
+              <p className="text-[10px] md:text-sm text-gray-500 uppercase tracking-wider">Account Type</p>
+              <p className="font-bold text-blue-600 text-sm md:text-base">
                 {accountType === 'individual' ? 'Individual' : 'Company'}
               </p>
             </div>

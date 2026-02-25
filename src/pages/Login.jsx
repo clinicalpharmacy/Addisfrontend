@@ -41,7 +41,7 @@ const Login = () => {
         const interval = setInterval(() => {
             setCurrentSlide((prev) => (prev + 1) % carouselMessages.length);
         }, 3000);
-        
+
         // Check if user is already logged in
         const token = localStorage.getItem('token');
         const userRole = localStorage.getItem('userRole');
@@ -224,7 +224,7 @@ const Login = () => {
     };
 
     const getPasswordStrengthColor = () => {
-        switch(passwordStrength) {
+        switch (passwordStrength) {
             case 0: return 'bg-gray-200';
             case 1: return 'bg-red-500';
             case 2: return 'bg-yellow-500';
@@ -234,7 +234,7 @@ const Login = () => {
     };
 
     const getPasswordStrengthText = () => {
-        switch(passwordStrength) {
+        switch (passwordStrength) {
             case 0: return '';
             case 1: return 'Weak';
             case 2: return 'Medium';
@@ -248,40 +248,40 @@ const Login = () => {
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 flex items-center justify-center p-4 relative overflow-hidden">
             {/* Animated Background Elements */}
-            <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute inset-0 overflow-hidden hidden md:block">
                 <div className="absolute -top-40 -right-40 w-80 h-80 bg-white rounded-full opacity-10 animate-pulse"></div>
                 <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-white rounded-full opacity-10 animate-pulse delay-1000"></div>
                 <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full opacity-20 animate-ping"></div>
-                
+
                 {/* Floating medical icons */}
                 <FaHeartbeat className="absolute top-20 left-20 text-white opacity-10 text-6xl animate-bounce" />
                 <FaShieldAlt className="absolute bottom-20 right-20 text-white opacity-10 text-6xl animate-bounce delay-700" />
                 <FaUserMd className="absolute top-40 right-40 text-white opacity-10 text-6xl animate-bounce delay-300" />
             </div>
 
-            <div className="w-full max-w-md relative z-10">
+            <div className="w-full max-w-md relative z-10 px-2 sm:px-0">
                 {/* Animated Logo and Brand */}
-                <div className="text-center mb-8 transform hover:scale-105 transition-transform duration-300">
+                <div className="text-center mb-6 md:mb-8 transform hover:scale-105 transition-transform duration-300">
                     <div className="relative inline-block">
                         <div className="absolute inset-0 bg-white rounded-2xl blur-xl opacity-50 animate-pulse"></div>
-                        <div className="relative flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl mb-4 mx-auto shadow-2xl">
-                            <FaUserMd className="text-white text-3xl animate-pulse" />
+                        <div className="relative flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl mb-4 mx-auto shadow-2xl">
+                            <FaUserMd className="text-white text-2xl md:text-3xl animate-pulse" />
                         </div>
                     </div>
-                    <h1 className="text-4xl font-bold text-white mb-2 tracking-tight">Addis Med</h1>
-                    
+                    <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 tracking-tight">Addis Med</h1>
+
                     {/* Dynamic Carousel Message */}
-                    <div className="h-12 overflow-hidden">
-                        <div 
+                    <div className="h-10 md:h-12 overflow-hidden">
+                        <div
                             className="transform transition-transform duration-500 ease-in-out"
-                            style={{ transform: `translateY(-${currentSlide * 3}rem)` }}
+                            style={{ transform: `translateY(-${currentSlide * 2.5}rem)` }}
                         >
                             {carouselMessages.map((msg, index) => {
                                 const Icon = msg.icon;
                                 return (
-                                    <div key={index} className="h-12 flex items-center justify-center gap-2">
-                                        <Icon className="text-white text-xl animate-pulse" />
-                                        <p className="text-white text-lg font-light italic">{msg.text}</p>
+                                    <div key={index} className="h-10 md:h-12 flex items-center justify-center gap-2">
+                                        <Icon className="text-white text-lg md:text-xl animate-pulse" />
+                                        <p className="text-white text-base md:text-lg font-light italic">{msg.text}</p>
                                     </div>
                                 );
                             })}
@@ -290,15 +290,15 @@ const Login = () => {
                 </div>
 
                 {/* Login Card */}
-                <div className="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/20 transform transition-all duration-300 hover:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)]">
-                    <div className="mb-8 text-center">
-                        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl mb-4 shadow-lg">
-                            <FaSignInAlt className="text-white text-2xl" />
+                <div className="bg-white/95 backdrop-blur-lg rounded-2xl md:rounded-3xl shadow-2xl p-6 md:p-8 border border-white/20 transform transition-all duration-300 hover:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)]">
+                    <div className="mb-6 md:mb-8 text-center">
+                        <div className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl md:rounded-2xl mb-3 md:mb-4 shadow-lg">
+                            <FaSignInAlt className="text-white text-xl md:text-2xl" />
                         </div>
-                        <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+                        <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-1 md:mb-2">
                             Welcome Back
                         </h2>
-                        <p className="text-gray-600">Sign in to continue your journey</p>
+                        <p className="text-sm md:text-base text-gray-600">Sign in to continue your journey</p>
                     </div>
 
                     {/* Error Message with Animation */}
@@ -328,20 +328,18 @@ const Login = () => {
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                     onFocus={() => setFocusedField('email')}
                                     onBlur={() => setFocusedField(null)}
-                                    className={`w-full px-4 py-4 pl-12 border-2 rounded-xl outline-none transition-all duration-300 ${
-                                        focusedField === 'email' 
-                                            ? 'border-blue-500 shadow-lg shadow-blue-100' 
-                                            : isEmailValid && formData.email
+                                    className={`w-full px-4 py-4 pl-12 border-2 rounded-xl outline-none transition-all duration-300 ${focusedField === 'email'
+                                        ? 'border-blue-500 shadow-lg shadow-blue-100'
+                                        : isEmailValid && formData.email
                                             ? 'border-green-500'
                                             : 'border-gray-200 hover:border-gray-300'
-                                    }`}
+                                        }`}
                                     placeholder="your@email.com"
                                     required
                                     disabled={loading}
                                 />
-                                <FaEnvelope className={`absolute left-4 top-1/2 transform -translate-y-1/2 transition-colors duration-300 ${
-                                    focusedField === 'email' ? 'text-blue-500' : 'text-gray-400'
-                                }`} />
+                                <FaEnvelope className={`absolute left-4 top-1/2 transform -translate-y-1/2 transition-colors duration-300 ${focusedField === 'email' ? 'text-blue-500' : 'text-gray-400'
+                                    }`} />
                                 {isEmailValid && formData.email && (
                                     <FaCheckCircle className="absolute right-4 top-1/2 transform -translate-y-1/2 text-green-500 animate-scale-in" />
                                 )}
@@ -369,20 +367,18 @@ const Login = () => {
                                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                     onFocus={() => setFocusedField('password')}
                                     onBlur={() => setFocusedField(null)}
-                                    className={`w-full px-4 py-4 pl-12 pr-12 border-2 rounded-xl outline-none transition-all duration-300 ${
-                                        focusedField === 'password' 
-                                            ? 'border-blue-500 shadow-lg shadow-blue-100' 
-                                            : formData.password
+                                    className={`w-full px-4 py-4 pl-12 pr-12 border-2 rounded-xl outline-none transition-all duration-300 ${focusedField === 'password'
+                                        ? 'border-blue-500 shadow-lg shadow-blue-100'
+                                        : formData.password
                                             ? 'border-green-500'
                                             : 'border-gray-200 hover:border-gray-300'
-                                    }`}
+                                        }`}
                                     placeholder="Enter your password"
                                     required
                                     disabled={loading}
                                 />
-                                <FaLock className={`absolute left-4 top-1/2 transform -translate-y-1/2 transition-colors duration-300 ${
-                                    focusedField === 'password' ? 'text-blue-500' : 'text-gray-400'
-                                }`} />
+                                <FaLock className={`absolute left-4 top-1/2 transform -translate-y-1/2 transition-colors duration-300 ${focusedField === 'password' ? 'text-blue-500' : 'text-gray-400'
+                                    }`} />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
@@ -391,7 +387,7 @@ const Login = () => {
                                     {showPassword ? <FaEyeSlash /> : <FaEye />}
                                 </button>
                             </div>
-                            
+
                             {/* Password Strength Indicator */}
                             {formData.password && (
                                 <div className="mt-2 animate-slide-down">
@@ -399,20 +395,18 @@ const Login = () => {
                                         {[1, 2, 3].map((level) => (
                                             <div
                                                 key={level}
-                                                className={`flex-1 h-full rounded-full transition-all duration-500 ${
-                                                    level <= passwordStrength 
-                                                        ? getPasswordStrengthColor() 
-                                                        : 'bg-gray-200'
-                                                }`}
+                                                className={`flex-1 h-full rounded-full transition-all duration-500 ${level <= passwordStrength
+                                                    ? getPasswordStrengthColor()
+                                                    : 'bg-gray-200'
+                                                    }`}
                                             ></div>
                                         ))}
                                     </div>
-                                    <p className={`text-xs mt-1 font-medium ${
-                                        passwordStrength === 1 ? 'text-red-500' :
+                                    <p className={`text-xs mt-1 font-medium ${passwordStrength === 1 ? 'text-red-500' :
                                         passwordStrength === 2 ? 'text-yellow-500' :
-                                        passwordStrength === 3 ? 'text-green-500' :
-                                        'text-gray-400'
-                                    }`}>
+                                            passwordStrength === 3 ? 'text-green-500' :
+                                                'text-gray-400'
+                                        }`}>
                                         {getPasswordStrengthText()}
                                     </p>
                                 </div>
@@ -423,11 +417,10 @@ const Login = () => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className={`w-full py-4 px-4 rounded-xl font-medium text-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] ${
-                                loading
-                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                    : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-xl hover:shadow-2xl'
-                            }`}
+                            className={`w-full py-4 px-4 rounded-xl font-medium text-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] ${loading
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-xl hover:shadow-2xl'
+                                }`}
                         >
                             {loading ? (
                                 <span className="flex items-center justify-center gap-2">
@@ -503,28 +496,25 @@ const Login = () => {
                 <div className="mt-8 flex justify-center">
                     <div className="group flex items-center gap-3 px-6 py-3 bg-white/90 backdrop-blur-sm rounded-full shadow-xl border border-white/50 transition-all hover:shadow-2xl hover:scale-105">
                         <div className="relative">
-                            <div className={`w-3 h-3 rounded-full ${
-                                isCheckingHealth 
-                                    ? 'bg-blue-400 animate-ping' 
-                                    : systemOnline 
-                                    ? 'bg-green-500 animate-pulse' 
+                            <div className={`w-3 h-3 rounded-full ${isCheckingHealth
+                                ? 'bg-blue-400 animate-ping'
+                                : systemOnline
+                                    ? 'bg-green-500 animate-pulse'
                                     : 'bg-red-500 animate-pulse'
-                            }`}></div>
-                            <div className={`absolute inset-0 w-3 h-3 rounded-full ${
-                                isCheckingHealth 
-                                    ? 'bg-blue-400' 
-                                    : systemOnline 
-                                    ? 'bg-green-500' 
+                                }`}></div>
+                            <div className={`absolute inset-0 w-3 h-3 rounded-full ${isCheckingHealth
+                                ? 'bg-blue-400'
+                                : systemOnline
+                                    ? 'bg-green-500'
                                     : 'bg-red-500'
-                            } opacity-75`}></div>
+                                } opacity-75`}></div>
                         </div>
-                        <span className={`text-xs font-bold uppercase tracking-wider ${
-                            isCheckingHealth 
-                                ? 'text-blue-600' 
-                                : systemOnline 
-                                ? 'text-green-600' 
+                        <span className={`text-xs font-bold uppercase tracking-wider ${isCheckingHealth
+                            ? 'text-blue-600'
+                            : systemOnline
+                                ? 'text-green-600'
                                 : 'text-red-600'
-                        }`}>
+                            }`}>
                             {isCheckingHealth ? 'Verifying System...' : systemOnline ? 'System Online' : 'System Offline'}
                         </span>
                         <div className="w-px h-4 bg-gray-300 mx-1"></div>

@@ -491,32 +491,32 @@ const Signup = () => {
                     <div className="w-full max-w-4xl">
                         <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-12">
                             <div className="text-center mb-12">
-                                <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl mb-6 shadow-lg">
-                                    <FaRocket className="text-white text-3xl" />
+                                <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl md:rounded-3xl mb-4 md:mb-6 shadow-lg">
+                                    <FaRocket className="text-white text-2xl md:text-3xl" />
                                 </div>
-                                <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Welcome to Addis Clinical Pharmacy</h1>
-                                <p className="text-gray-600 md:text-lg">Please select your account type to get started</p>
+                                <h1 className="text-2xl md:text-4xl font-bold text-gray-800 mb-2 md:mb-4">Welcome to Addis Clinical Pharmacy</h1>
+                                <p className="text-gray-600 text-sm md:text-lg">Please select your account type to get started</p>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
                                 {/* Individual Selection */}
                                 <div
                                     onClick={() => setAccountTypeSelection('individual')}
-                                    className="group relative bg-white border-2 border-gray-100 rounded-3xl p-8 cursor-pointer hover:border-blue-500 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
+                                    className="group relative bg-white border-2 border-gray-100 rounded-2xl md:rounded-3xl p-6 md:p-8 cursor-pointer hover:border-blue-500 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
                                 >
-                                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="absolute top-4 right-4 opacity-0 md:group-hover:opacity-100 transition-opacity">
                                         <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white">
                                             <FaArrowRight className="text-sm" />
                                         </div>
                                     </div>
-                                    <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                                        <FaUserTie className="text-blue-600 text-3xl" />
+                                    <div className="w-12 h-12 md:w-16 md:h-16 bg-blue-100 rounded-xl md:rounded-2xl flex items-center justify-center mb-4 md:mb-6 group-hover:scale-110 transition-transform">
+                                        <FaUserTie className="text-blue-600 text-2xl md:text-3xl" />
                                     </div>
-                                    <h2 className="text-2xl font-bold text-gray-800 mb-3">Individual</h2>
-                                    <p className="text-gray-600 leading-relaxed">
+                                    <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2 md:mb-3">Individual</h2>
+                                    <p className="text-gray-600 text-sm md:text-base leading-relaxed">
                                         For healthcare professionals, pharmacists, and students looking for personal clinical decision support tools.
                                     </p>
-                                    <div className="mt-8 flex items-center text-blue-600 font-bold group-hover:translate-x-2 transition-transform">
+                                    <div className="mt-6 md:mt-8 flex items-center text-blue-600 text-sm md:text-base font-bold group-hover:translate-x-2 transition-transform">
                                         View Individual Plans <FaArrowRight className="ml-2" />
                                     </div>
                                 </div>
@@ -524,28 +524,28 @@ const Signup = () => {
                                 {/* Organization Selection */}
                                 <div
                                     onClick={() => setAccountTypeSelection('company')}
-                                    className="group relative bg-white border-2 border-gray-100 rounded-3xl p-8 cursor-pointer hover:border-green-500 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
+                                    className="group relative bg-white border-2 border-gray-100 rounded-2xl md:rounded-3xl p-6 md:p-8 cursor-pointer hover:border-green-500 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
                                 >
-                                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="absolute top-4 right-4 opacity-0 md:group-hover:opacity-100 transition-opacity">
                                         <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white">
                                             <FaArrowRight className="text-sm" />
                                         </div>
                                     </div>
-                                    <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                                        <FaBuilding className="text-green-600 text-3xl" />
+                                    <div className="w-12 h-12 md:w-16 md:h-16 bg-green-100 rounded-xl md:rounded-2xl flex items-center justify-center mb-4 md:mb-6 group-hover:scale-110 transition-transform">
+                                        <FaBuilding className="text-green-600 text-2xl md:text-3xl" />
                                     </div>
-                                    <h2 className="text-2xl font-bold text-gray-800 mb-3">Organization</h2>
-                                    <p className="text-gray-600 leading-relaxed">
+                                    <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2 md:mb-3">Organization</h2>
+                                    <p className="text-gray-600 text-sm md:text-base leading-relaxed">
                                         For pharmacies, hospitals, and clinics managing teams with clinical decision support and performance analytics.
                                     </p>
-                                    <div className="mt-8 flex items-center text-green-600 font-bold group-hover:translate-x-2 transition-transform">
+                                    <div className="mt-6 md:mt-8 flex items-center text-green-600 text-sm md:text-base font-bold group-hover:translate-x-2 transition-transform">
                                         View Company Plans <FaArrowRight className="ml-2" />
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="mt-12 text-center border-t border-gray-100 pt-8">
-                                <p className="text-gray-600">
+                            <div className="mt-8 md:mt-12 text-center border-t border-gray-100 pt-6 md:pt-8">
+                                <p className="text-gray-600 text-sm md:text-base">
                                     Already have an account?
                                     <Link to="/login" className="ml-2 text-blue-600 font-bold hover:underline">
                                         Log in here
@@ -699,35 +699,35 @@ const Signup = () => {
             <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
                 <div className="w-full max-w-4xl">
                     {/* Progress Bar */}
-                    <div className="mb-8">
-                        <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold">
+                    <div className="mb-6 md:mb-8">
+                        <div className="flex items-center justify-between mb-2">
+                            <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
+                                <div className="w-6 h-6 md:w-8 md:h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
                                     1
                                 </div>
-                                <span className="font-semibold text-green-600">Plan Selected</span>
+                                <span className="text-[10px] md:text-sm font-semibold text-green-600 text-center">Plan Selected</span>
                             </div>
-                            <div className="flex-1 h-2 mx-4 bg-gray-200 rounded-full">
-                                <div className="h-full w-1/3 bg-green-500 rounded-full"></div>
+                            <div className="flex-1 h-1 md:h-2 mx-2 md:mx-4 bg-gray-200 rounded-full">
+                                <div className="h-full w-full bg-green-500 rounded-full"></div>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
+                            <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
+                                <div className="w-6 h-6 md:w-8 md:h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
                                     2
                                 </div>
-                                <span className="font-semibold text-blue-600">Registration</span>
+                                <span className="text-[10px] md:text-sm font-semibold text-blue-600 text-center">Registration</span>
                             </div>
-                            <div className="flex-1 h-2 mx-4 bg-gray-200 rounded-full">
-                                <div className="h-full w-1/3 bg-green-500 rounded-full"></div>
+                            <div className="flex-1 h-1 md:h-2 mx-2 md:mx-4 bg-gray-200 rounded-full">
+                                <div className="h-full w-0 bg-green-500 rounded-full"></div>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 bg-gray-200 text-gray-400 rounded-full flex items-center justify-center font-bold">
+                            <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
+                                <div className="w-6 h-6 md:w-8 md:h-8 bg-gray-200 text-gray-400 rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
                                     3
                                 </div>
-                                <span className="text-gray-500">Payment</span>
+                                <span className="text-[10px] md:text-sm font-semibold text-gray-400 text-center">Payment</span>
                             </div>
                         </div>
-                        <p className="text-center text-gray-500 text-sm">
-                            Step 2 of 3: Complete your registration for {selectedPlanDetails?.name}
+                        <p className="text-center text-gray-500 text-[10px] md:text-sm mt-1">
+                            Step 2 of 3: Complete registration for {selectedPlanDetails?.name}
                         </p>
                     </div>
 

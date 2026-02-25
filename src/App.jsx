@@ -81,7 +81,7 @@ const MainLayout = ({ children, showSidebar = true, showNavbar = true }) => {
                 {/* Sidebar */}
                 {showSidebar && (
                     <>
-                        <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+                        <div className={`fixed inset-y-0 left-0 z-50 w-72 bg-white transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
                             } md:relative md:translate-x-0 border-r border-gray-200`}>
                             <Sidebar onClose={() => setSidebarOpen(false)} />
                         </div>
@@ -589,8 +589,8 @@ const Dashboard = () => {
     }
 
     return (
-        <div className="p-6">
-            <div className="flex justify-between items-center mb-6">
+        <div className="p-4 md:p-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div>
                     <h1 className="text-2xl font-bold">Dashboard</h1>
                     <p className="text-gray-600 mt-1">
@@ -600,7 +600,7 @@ const Dashboard = () => {
                 {!hasValidSubscription(user) && user?.role !== 'admin' && user?.account_type !== 'company_user' && (
                     <button
                         onClick={handleGetSubscription}
-                        className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium py-2 px-4 rounded-lg transition shadow-md"
+                        className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium py-2 px-4 rounded-lg transition shadow-md"
                     >
                         Get Subscription
                     </button>
@@ -610,9 +610,9 @@ const Dashboard = () => {
             {/* Subscription Banner */}
             {showSubscriptionBanner && user?.account_type !== 'company_user' && (
                 <div className="mb-6 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg animate-fadeIn">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
                         <div className="flex items-start gap-3">
-                            <div className="bg-yellow-100 p-2 rounded-lg">
+                            <div className="bg-yellow-100 p-2 rounded-lg shrink-0">
                                 <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                 </svg>
@@ -624,16 +624,16 @@ const Dashboard = () => {
                                 </p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 w-full lg:w-auto">
                             <button
                                 onClick={handleGetSubscription}
-                                className="bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white font-medium py-2 px-4 rounded-lg transition text-sm"
+                                className="flex-1 lg:flex-none bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white font-medium py-2 px-4 rounded-lg transition text-sm text-center"
                             >
                                 View Plans
                             </button>
                             <button
                                 onClick={handleDismissBanner}
-                                className="text-yellow-700 hover:text-yellow-800 text-sm font-medium"
+                                className="text-yellow-700 hover:text-yellow-800 text-sm font-medium whitespace-nowrap"
                             >
                                 Maybe Later
                             </button>
@@ -648,39 +648,39 @@ const Dashboard = () => {
                     <div className="bg-white rounded-xl shadow-lg p-6">
                         <h3 className="text-lg font-bold text-gray-800 mb-4">Account Information</h3>
                         <div className="space-y-3">
-                            <div>
+                            <div className="flex justify-between items-center py-1 border-b border-gray-50 last:border-0">
                                 <p className="text-sm text-gray-600">Email</p>
-                                <p className="font-medium">{user.email}</p>
+                                <p className="font-medium text-sm truncate ml-4 text-right flex-1">{user.email}</p>
                             </div>
-                            <div>
+                            <div className="flex justify-between items-center py-1 border-b border-gray-50 last:border-0">
                                 <p className="text-sm text-gray-600">Role</p>
-                                <p className="font-medium capitalize">{user.role?.replace('_', ' ')}</p>
+                                <p className="font-medium text-sm capitalize text-right">{user.role?.replace('_', ' ')}</p>
                             </div>
-                            <div>
+                            <div className="flex justify-between items-center py-1 border-b border-gray-50 last:border-0">
                                 <p className="text-sm text-gray-600">User ID</p>
-                                <p className="font-mono text-sm text-gray-700">{user.id || user._id || 'N/A'}</p>
+                                <p className="font-mono text-[10px] text-gray-500 text-right">{user.id || user._id || 'N/A'}</p>
                             </div>
-                            <div>
+                            <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
                                 <p className="text-sm text-gray-600">Approval Status</p>
-                                <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${user.approved
+                                <div className={`inline-block px-3 py-1 rounded-full text-[10px] font-bold ${user.approved
                                     ? 'bg-green-100 text-green-800'
                                     : 'bg-yellow-100 text-yellow-800'
                                     }`}>
-                                    {user.approved ? '✓ Approved' : '⏳ Pending Approval'}
+                                    {user.approved ? '✓ Approved' : '⏳ Pending'}
                                 </div>
                             </div>
-                            <div>
-                                <p className="text-sm text-gray-600">Subscription Status</p>
-                                <div className="flex flex-col items-start gap-2">
-                                    <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${hasValidSubscription(user)
+                            <div className="flex justify-between items-start py-2">
+                                <p className="text-sm text-gray-600">Subscription</p>
+                                <div className="flex flex-col items-end gap-1">
+                                    <div className={`inline-block px-3 py-1 rounded-full text-[10px] font-bold ${hasValidSubscription(user)
                                         ? 'bg-green-100 text-green-800'
-                                        : 'bg-red-100 text-red-800 font-bold'
+                                        : 'bg-red-100 text-red-800'
                                         }`}>
                                         {hasValidSubscription(user)
                                             ? '✓ Active'
                                             : (user.subscription_end_date && !isNaN(new Date(user.subscription_end_date)) && new Date(user.subscription_end_date) < new Date()
-                                                ? '❌ Subscription Expired'
-                                                : (user.account_type === 'company_user' ? '❌ Inactive (Contact Admin)' : '❌ Inactive'))
+                                                ? '❌ Expired'
+                                                : '❌ Inactive')
                                         }
                                     </div>
                                     {user?.account_type !== 'company_user' && !hasValidSubscription(user) && (
