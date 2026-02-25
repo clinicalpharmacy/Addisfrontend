@@ -464,8 +464,10 @@ const PatientDetails = () => {
         });
 
         const dob = data.date_of_birth;
-        const ageInDays = calculateAgeInDays(dob);
-        const ageInYears = calculateAge(dob);
+        // Only recalculate age if DOB is present and valid, otherwise trust database values
+        const hasValidDob = dob && isValidDate(dob);
+        const ageInDays = hasValidDob ? calculateAgeInDays(dob) : data.age_in_days;
+        const ageInYears = hasValidDob ? calculateAge(dob) : data.age;
         const patientType = determinePatientType(ageInDays);
 
         // Build complete form data object

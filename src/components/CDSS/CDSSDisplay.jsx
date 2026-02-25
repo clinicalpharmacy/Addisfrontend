@@ -43,88 +43,177 @@ const CDSSDisplay = ({ patientData, onBack }) => {
         low: 'bg-blue-500'
     };
 
-    const downloadReport = () => {
+    const downloadReport = async () => {
         if (!patientData) return;
 
-        const timestamp = new Date().toLocaleString();
-        const divider = '================================================';
+        try {
+            const { default: jsPDF } = await import('jspdf');
+            const { default: autoTable } = await import('jspdf-autotable');
 
-        let reportText = `${divider}\n`;
-        reportText += `CLINICAL DECISION SUPPORT REPORT\n`;
-        reportText += `${divider}\n\n`;
-
-        reportText += `REPORT DETAILS\n`;
-        reportText += `Generated: ${timestamp}\n`;
-        reportText += `Patient Code: ${patientData.patient_code}\n`;
-        reportText += `Patient Name: ${patientData.full_name || 'N/A'}\n`;
-        reportText += `Age/Category: ${patientData.age || 'N/A'} (${patientFacts?.patient_type || 'N/A'})\n`;
-        reportText += `Gender: ${patientData.gender || 'N/A'}\n`;
-        reportText += `Primary Diagnosis: ${patientData.diagnosis || 'None recorded'}\n\n`;
-
-        reportText += `ANALYSIS SUMMARY\n`;
-        reportText += `Total Alerts: ${alerts.length}\n`;
-        reportText += `- Critical: ${analysisStats?.bySeverity?.critical || 0}\n`;
-        reportText += `- High Severity: ${analysisStats?.bySeverity?.high || 0}\n`;
-        reportText += `- Moderate: ${analysisStats?.bySeverity?.moderate || 0}\n`;
-        reportText += `- Low: ${analysisStats?.bySeverity?.low || 0}\n\n`;
-
-        if (medications && medications.length > 0) {
-            reportText += `CURRENT MEDICATIONS (${medications.length})\n`;
-            medications.forEach((m, i) => {
-                reportText += `${i + 1}. ${m.drug_name} (${m.drug_class || 'N/A'}) - ${m.dose || ''} ${m.frequency || ''}\n`;
+            const doc = jsPDF({
+                orientation: 'p',
+                unit: 'mm',
+                format: 'a4'
             });
-            reportText += `\n`;
-        }
 
-        reportText += `CLINICAL ALERTS & RECOMMENDATIONS\n`;
-        reportText += `${divider}\n`;
+            // --- HEADER DESIGN ---
+            // Background for header
+            doc.setFillColor(37, 99, 235); // Blue-600
+            doc.rect(0, 0, 210, 40, 'F');
 
-        if (alerts.length === 0) {
-            reportText += `No clinical alerts detected during this analysis.\n`;
-        } else {
-            alerts.forEach((alert, index) => {
-                reportText += `\nALERT #${index + 1}: ${alert.rule_name}\n`;
-                reportText += `SEVERITY: ${alert.severity.toUpperCase()}\n`;
-                reportText += `MESSAGE: ${alert.message}\n`;
-                if (alert.details) {
-                    reportText += `RECOMMENDATION: ${alert.details}\n`;
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(22);
+            doc.setFont('helvetica', 'bold');
+            doc.text('CLINICAL DECISION SUPPORT REPORT', 15, 20);
+
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Generated on: ${new Date().toLocaleString()}`, 15, 30);
+            doc.text(`Patient Code: ${patientData.patient_code}`, 15, 35);
+
+            // --- PATIENT SUMMARY SECTION ---
+            doc.setTextColor(31, 41, 55); // Gray-800
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Patient Information', 15, 50);
+
+            doc.setDrawColor(229, 231, 235); // Gray-200
+            doc.line(15, 52, 195, 52);
+
+            autoTable(doc, {
+                startY: 55,
+                head: [],
+                body: [
+                    ['Full Name:', patientData.full_name || 'N/A', 'Gender:', patientData.gender || 'N/A'],
+                    ['Age:', `${patientData.age || 'N/A'} (${patientFacts?.patient_type || 'N/A'})`, 'Primary Diagnosis:', patientData.diagnosis || 'None recorded']
+                ],
+                theme: 'plain',
+                styles: { fontSize: 10, cellPadding: 2 },
+                columnStyles: {
+                    0: { fontStyle: 'bold', width: 30 },
+                    2: { fontStyle: 'bold', width: 40 }
                 }
+            });
 
-                // Simplified evidence
-                const evidence = alert.evidence;
-                if (evidence) {
-                    reportText += `EVIDENCE: `;
-                    const evidenceParts = [];
-                    if (evidence.matched_medications?.length > 0) {
-                        evidenceParts.push(`Medications: ${evidence.matched_medications.join(', ')}`);
+            // --- ANALYSIS STATS ---
+            let currentY = doc.lastAutoTable.finalY + 10;
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Analysis Summary', 15, currentY);
+            doc.line(15, currentY + 2, 195, currentY + 2);
+
+            const statsData = [
+                ['Total Alerts', analysisStats?.alertsGenerated || 0],
+                ['Critical', analysisStats?.bySeverity?.critical || 0],
+                ['High Severity', analysisStats?.bySeverity?.high || 0],
+                ['Moderate/Low', (analysisStats?.bySeverity?.moderate || 0) + (analysisStats?.bySeverity?.low || 0)]
+            ];
+
+            autoTable(doc, {
+                startY: currentY + 5,
+                head: [['Parameter', 'Count']],
+                body: statsData,
+                theme: 'striped',
+                headStyles: { fillColor: [79, 70, 229] }, // Indigo-600
+                styles: { fontSize: 9 }
+            });
+
+            // --- MEDICATIONS TABLE ---
+            if (medications && medications.length > 0) {
+                currentY = doc.lastAutoTable.finalY + 10;
+                doc.setFontSize(14);
+                doc.setFont('helvetica', 'bold');
+                doc.text('Current Medications', 15, currentY);
+
+                autoTable(doc, {
+                    startY: currentY + 5,
+                    head: [['#', 'Drug Name', 'Class', 'Dose/Frequency']],
+                    body: medications.map((m, i) => [
+                        i + 1,
+                        m.drug_name,
+                        m.drug_class || 'N/A',
+                        `${m.dose || ''} ${m.frequency || ''}`
+                    ]),
+                    theme: 'grid',
+                    headStyles: { fillColor: [107, 114, 128] }, // Gray-500
+                    styles: { fontSize: 8 }
+                });
+            }
+
+            // --- CLINICAL ALERTS TABLE ---
+            currentY = doc.lastAutoTable.finalY + 10;
+            if (currentY > 250) { doc.addPage(); currentY = 20; }
+
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Clinical Alerts & Recommendations', 15, currentY);
+
+            const alertRows = alerts.map((alert, index) => {
+                let evidence = '';
+                if (alert.evidence) {
+                    const parts = [];
+                    if (alert.evidence.matched_medications?.length > 0) {
+                        parts.push(`Meds: ${alert.evidence.matched_medications.join(', ')}`);
                     }
-                    if (evidence.labs) {
-                        const labKeys = Object.keys(evidence.labs).filter(k => evidence.labs[k]);
+                    if (alert.evidence.labs) {
+                        const labKeys = Object.keys(alert.evidence.labs).filter(k => alert.evidence.labs[k]);
                         if (labKeys.length > 0) {
-                            evidenceParts.push(`Lab Values: ${labKeys.map(k => `${k}=${evidence.labs[k]}`).join(', ')}`);
+                            parts.push(`Labs: ${labKeys.map(k => `${k}=${alert.evidence.labs[k]}`).join(', ')}`);
                         }
                     }
-                    reportText += evidenceParts.join(' | ') || 'Clinical parameters matched';
-                    reportText += `\n`;
+                    evidence = parts.join(' | ');
                 }
-                reportText += `------------------------------------------------\n`;
+
+                return [
+                    index + 1,
+                    {
+                        content: `${alert.rule_name}\n[${alert.severity.toUpperCase()}]`,
+                        styles: {
+                            fillColor: alert.severity === 'critical' ? [254, 226, 226] : (alert.severity === 'high' ? [255, 237, 213] : null),
+                            textColor: alert.severity === 'critical' ? [153, 27, 27] : (alert.severity === 'high' ? [154, 52, 18] : null),
+                            fontStyle: 'bold'
+                        }
+                    },
+                    alert.message,
+                    alert.details || 'N/A',
+                    evidence || 'Matched patterns'
+                ];
             });
+
+            autoTable(doc, {
+                startY: currentY + 5,
+                head: [['#', 'Alert/Severity', 'Clinical Message', 'Recommendation', 'Evidence']],
+                body: alertRows,
+                theme: 'grid',
+                headStyles: { fillColor: [220, 38, 38] }, // Red-600
+                styles: { fontSize: 7, cellPadding: 3 },
+                columnStyles: {
+                    1: { width: 35 },
+                    2: { width: 45 },
+                    3: { width: 45 },
+                    4: { width: 30 }
+                }
+            });
+
+            // --- FOOTER ---
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.setTextColor(156, 163, 175);
+                doc.text(
+                    'DISCLAIMER: This decision support tool should be reviewed by a professional. Patient data is confidential.',
+                    15, 285
+                );
+                doc.text(`Page ${i} of ${pageCount}`, 180, 285);
+            }
+
+            doc.save(`Clinical_Analysis_${patientData.patient_code}_${new Date().toISOString().split('T')[0]}.pdf`);
+        } catch (error) {
+            console.error('PDF Generation Error:', error);
+            // Fallback to text if PDF fails
+            alert('PDF generation failed. The library might still be installing. Please try again in 30 seconds.');
         }
-
-        reportText += `\n${divider}\n`;
-        reportText += `DISCLAIMER: This report is a decision support tool and should be \n`;
-        reportText += `reviewed by a qualified healthcare professional before clinical action.\n`;
-        reportText += `${divider}\n`;
-
-        const blob = new Blob([reportText], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Clinical_Analysis_${patientData.patient_code}_${new Date().toISOString().split('T')[0]}.txt`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
     };
 
     const AgeCategoryIcon = getAgeCategoryIcon(patientFacts);
@@ -161,11 +250,11 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                     {alerts.length > 0 && (
                         <button
                             onClick={downloadReport}
-                            className="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg flex items-center justify-center gap-2 text-sm flex-1 md:flex-initial"
-                            title="Export Report"
+                            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-sm flex-1 md:flex-initial shadow-sm transition-all hover:scale-105"
+                            title="Download PDF Report"
                         >
                             <FaDownload />
-                            <span className="hidden sm:inline">Export</span>
+                            <span className="hidden sm:inline">Export PDF</span>
                         </button>
                     )}
                 </div>
