@@ -439,7 +439,7 @@ export const useCDSSLogic = (patientData) => {
             }, 500);
             return () => clearTimeout(timer);
         }
-    }, [analyzePatient, loading, patientData, clinicalRules.length]);
+    }, [analyzePatient, loading, patientData, clinicalRules.length, medications.length]);
 
     const handleFilterChange = useCallback((severity) => {
         setSeverityFilter(severity);

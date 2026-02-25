@@ -208,7 +208,7 @@ const ClinicalRulesAdmin = () => {
   "all": [
     {
       "fact": "age",
-      "operator": ">",
+      "operator": ">=",
       "value": 65
     },
     {
@@ -220,7 +220,7 @@ const ClinicalRulesAdmin = () => {
 }`,
             rule_action: `{
   "message": "Elderly patient on anticoagulant",
-  "recommendation": "Monitor INR more frequently. Increased bleeding risk in patients >65 years.",
+  "recommendation": "Monitor INR more frequently. Increased bleeding risk in patients ≥65 years.",
   "severity": "moderate"
 }`,
             severity: 'moderate',
@@ -429,6 +429,58 @@ const ClinicalRulesAdmin = () => {
 }`,
             severity: 'high',
             dtp_category: 'monitoring_needed'
+        },
+        'Beers Criteria: Bisacodyl in Elderly': {
+            rule_name: 'Beers Criteria: Bisacodyl in Elderly',
+            rule_type: 'age_check',
+            rule_description: 'Avoid bisacodyl in patients ≥65 years due to risk of dehydration and electrolyte imbalance.',
+            rule_condition: `{
+  "all": [
+    {
+      "fact": "age",
+      "operator": ">=",
+      "value": 65
+    },
+    {
+      "fact": "medications",
+      "operator": "contains",
+      "value": "bisacodyl"
+    }
+  ]
+}`,
+            rule_action: `{
+  "message": "Beers Criteria: Avoid Bisacodyl in elderly",
+  "recommendation": "Bisacodyl should be avoided in patients ≥65 years. Consider safer alternatives like osmotic laxatives (e.g., polyethylene glycol).",
+  "severity": "high"
+}`,
+            severity: 'high',
+            dtp_category: 'age_restriction'
+        },
+        'Beers Criteria: Methyldopa in Elderly': {
+            rule_name: 'Beers Criteria: Methyldopa in Elderly',
+            rule_type: 'age_check',
+            rule_description: 'Avoid methyldopa in patients ≥65 years due to risk of bradycardia and depression.',
+            rule_condition: `{
+  "all": [
+    {
+      "fact": "age",
+      "operator": ">=",
+      "value": 65
+    },
+    {
+      "fact": "medications",
+      "operator": "contains",
+      "value": "methyldopa"
+    }
+  ]
+}`,
+            rule_action: `{
+  "message": "Beers Criteria: Avoid Methyldopa in elderly",
+  "recommendation": "Methyldopa should be avoided as first-line therapy for hypertension in patients ≥65 years. Potential for CNS adverse effects (bradycardia, depression).",
+  "severity": "high"
+}`,
+            severity: 'high',
+            dtp_category: 'age_restriction'
         }
     };
 

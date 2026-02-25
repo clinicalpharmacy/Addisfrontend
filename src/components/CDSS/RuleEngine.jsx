@@ -338,7 +338,7 @@ export const mapPatientToFacts = (patientData, medicationHistory = []) => {
         facts.is_age_1_to_12_years = ageInDays > 365 && ageInDays <= (12 * 365);
         facts.is_age_13_to_18_years = ageInDays > (12 * 365) && ageInDays <= (18 * 365);
         facts.is_age_over_18 = ageInDays > (18 * 365);
-        facts.is_age_over_65 = age > 65;
+        facts.is_age_over_65 = age >= 65;
 
         // Set category flags
         if (ageInDays <= 28) {
@@ -364,7 +364,7 @@ export const mapPatientToFacts = (patientData, medicationHistory = []) => {
             facts.is_teenager = true;
             facts.is_pediatric = true;
             console.log('🧑‍🎓 Patient classified as: ADOLESCENT');
-        } else if (age > 65) {
+        } else if (age >= 65) {
             facts.patient_type = 'geriatric';
             facts.is_geriatric = true;
             facts.is_adult = true;
@@ -376,7 +376,7 @@ export const mapPatientToFacts = (patientData, medicationHistory = []) => {
         }
     } else if (age >= 0) {
         // Fallback using age in years (Allow 0)
-        facts.is_age_over_65 = age > 65;
+        facts.is_age_over_65 = age >= 65;
 
         if (age < 1) {
             facts.patient_type = 'infant';
@@ -395,7 +395,7 @@ export const mapPatientToFacts = (patientData, medicationHistory = []) => {
             facts.is_teenager = true;
             facts.is_pediatric = true;
             facts.is_age_13_to_18_years = true;
-        } else if (age > 65) {
+        } else if (age >= 65) {
             facts.patient_type = 'geriatric';
             facts.is_geriatric = true;
             facts.is_adult = true;
