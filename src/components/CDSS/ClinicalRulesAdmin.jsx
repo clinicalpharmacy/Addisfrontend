@@ -361,6 +361,53 @@ const ClinicalRulesAdmin = () => {
 }`,
             severity: 'high',
             dtp_category: 'contraindication'
+        },
+        'Amoxicillin 500mg TID Check': {
+            rule_name: 'Amoxicillin 500mg TID Check',
+            rule_type: 'dose_check',
+            rule_description: 'Check for standard Amoxicillin 500mg TID dosing',
+            rule_condition: `{
+  "all": [
+    {
+      "fact": "medication_data.amoxicillin.dose",
+      "operator": "equals",
+      "value": "500mg"
+    },
+    {
+      "fact": "medication_data.amoxicillin.frequency",
+      "operator": "equals",
+      "value": "TID"
+    }
+  ]
+}`,
+            rule_action: `{
+  "message": "Standard Amoxicillin dose detected",
+  "recommendation": "Patient is on standard Amoxicillin 500mg TID. Ensure patient completes the full course.",
+  "severity": "low"
+}`,
+            severity: 'low',
+            dtp_category: 'dose_error'
+        },
+        'High Dose Lisinopril Alert': {
+            rule_name: 'High Dose Lisinopril Alert',
+            rule_type: 'dose_check',
+            rule_description: 'Alert when Lisinopril dose exceeds 40mg',
+            rule_condition: `{
+  "all": [
+    {
+      "fact": "medication_data.lisinopril.dose",
+      "operator": ">",
+      "value": 40
+    }
+  ]
+}`,
+            rule_action: `{
+  "message": "High dose Lisinopril detected",
+  "recommendation": "Lisinopril dose is above 40mg. Monitor blood pressure and renal function closely.",
+  "severity": "moderate"
+}`,
+            severity: 'moderate',
+            dtp_category: 'dose_error'
         }
     };
 

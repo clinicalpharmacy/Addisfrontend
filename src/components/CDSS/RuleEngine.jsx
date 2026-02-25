@@ -406,27 +406,45 @@ export const mapPatientToFacts = (patientData, medicationHistory = []) => {
     }
 
     // ✅ FIXED: EXTRACT MEDICATIONS
+    facts.medication_data = {};
     if (Array.isArray(medicationHistory)) {
         medicationHistory.forEach(med => {
             if (med && typeof med === 'object') {
                 if (med.drug_name) {
-                    const drugName = med.drug_name.toLowerCase();
+                    const drugName = med.drug_name.toLowerCase().trim();
+                    const drugKey = drugName.replace(/\s+/g, '_');
+
                     facts.medication_names.push(drugName);
                     facts.medications.push(drugName);
 
+                    // Store full details for specific checks (dose, frequency, etc.)
+                    facts.medication_data[drugKey] = {
+                        dose: med.dose,
+                        frequency: med.frequency,
+                        roa: med.roa || med.route,
+                        start_date: med.start_date,
+                        stop_date: med.stop_date,
+                        status: med.status,
+                        indication: med.indication,
+                        drug_name: med.drug_name,
+                        drug_class: med.drug_class
+                    };
+
                     if (med.generic_name) {
-                        const genericName = med.generic_name.toLowerCase();
+                        const genericName = med.generic_name.toLowerCase().trim();
                         facts.medications.push(genericName);
+                        facts.medication_data[genericName.replace(/\s+/g, '_')] = facts.medication_data[drugKey];
                     }
 
                     if (med.brand_name) {
-                        const brandName = med.brand_name.toLowerCase();
+                        const brandName = med.brand_name.toLowerCase().trim();
                         facts.medications.push(brandName);
+                        facts.medication_data[brandName.replace(/\s+/g, '_')] = facts.medication_data[drugKey];
                     }
                 }
 
                 if (med.drug_class) {
-                    const drugClass = med.drug_class.toLowerCase();
+                    const drugClass = med.drug_class.toLowerCase().trim();
                     facts.medication_classes.push(drugClass);
                     facts.medications.push(drugClass);
                 }
@@ -1463,6 +1481,15 @@ export const getAllAvailableFactNames = (facts) => {
         allKeys.add('medication_names');
         allKeys.add('medications');
         allKeys.add('medication_count');
+
+        // Add specific medication data fields
+        if (facts.medication_data) {
+            Object.keys(facts.medication_data).forEach(medKey => {
+                allKeys.add(`medication_data.${medKey}.dose`);
+                allKeys.add(`medication_data.${medKey}.frequency`);
+                allKeys.add(`medication_data.${medKey}.roa`);
+            });
+        }
     }
 
     // Get allergies
