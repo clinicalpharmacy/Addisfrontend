@@ -760,8 +760,8 @@ const DRNAssessment = ({ patientCode }) => {
                       </div>
                     </div>
                     
-                    {/* CDSS Analysis Section - UPDATED TO MATCH EXAMPLE */}
-                    <div className="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
+                    {/* CDSS Analysis Section */}
+                    <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 sm:p-5 border border-blue-200 w-full overflow-hidden">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-semibold text-blue-800 flex items-center gap-2">
                                 <FaDatabase /> CDSS clinical analysis
@@ -778,16 +778,16 @@ const DRNAssessment = ({ patientCode }) => {
                             <>
                                 {isAnalyzing ? (
                                     <div className="text-center py-8">
-                                        <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto mb-4" />
+                                        <FaSpinner className="animate-spin text-3xl text-blue-600 mx-auto mb-4" />
                                         <p className="text-gray-600">Running CDSS analysis...</p>
                                     </div>
                                 ) : analysisResults ? (
-                                    <div className="space-y-4">
-                                        <div className="bg-white rounded-lg p-4 border shadow-sm">
-                                            <div className="flex justify-between items-start mb-4">
+                                    <div className="space-y-3">
+                                        <div className="bg-white rounded-lg p-3 border shadow-sm">
+                                            <div className="flex justify-between items-start mb-3">
                                                 <div>
-                                                    <h4 className="font-semibold text-gray-800 text-lg">Analysis Results</h4>
-                                                    <p className={`text-lg font-medium mt-2 ${analysisResults.totalFindings > 0
+                                                    <h4 className="font-medium text-sm text-gray-800 text-base">Analysis Results</h4>
+                                                    <p className={`text-base font-medium mt-2 ${analysisResults.totalFindings > 0
                                                         ? 'text-gray-800'
                                                         : 'text-green-600'
                                                         }`}>
@@ -797,22 +797,21 @@ const DRNAssessment = ({ patientCode }) => {
                                                 <div className="text-right">
                                                     <button
                                                         onClick={runCdssAnalysis}
-                                                        className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm flex items-center gap-2"
+                                                        className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs flex items-center gap-1.5"
                                                     >
-                                                        <FaSync /> Re-run Analysis
+                                                        <FaSync className="text-xs" /> Run Analysis
                                                     </button>
                                                 </div>
                                             </div>
 
-                                            {/* Findings display - UPDATED WITHOUT RULE TYPES */}
                                             {filteredFindings.length > 0 ? (
                                                 <div className="space-y-3">
                                                     {filteredFindings.map((finding, idx) => (
-                                                        <div key={idx} className="p-4 border rounded-lg hover:shadow-md transition">
+                                                        <div key={idx} className="p-3 border rounded-lg hover:shadow-md transition">
                                                             <div className="flex justify-between items-start">
                                                                 <div className="flex-1">
                                                                     <div className="flex flex-wrap items-center gap-2 mb-2">
-                                                                        <span className="font-semibold text-gray-800">{finding.cause}</span>
+                                                                        <span className="font-medium text-sm text-gray-800">{finding.cause}</span>
                                                                         <span className={`px-2 py-1 ${getSeverityColor(finding.severity)} text-xs rounded font-medium`}>
                                                                             {finding.severity}
                                                                         </span>
@@ -825,10 +824,9 @@ const DRNAssessment = ({ patientCode }) => {
                                                                             </span>
                                                                         )}
                                                                     </div>
-                                                                    <p className="text-sm text-gray-600 mb-2">{finding.message}</p>
+                                                                    <p className="text-xs text-gray-600 mb-2">{finding.message}</p>
                                                                     <div className="flex flex-wrap items-center gap-3 mt-2">
                                                                         <span className="text-xs text-gray-500">
-                                                                            Confidence: 95%
                                                                         </span>
                                                                     </div>
                                                                 </div>
@@ -844,7 +842,7 @@ const DRNAssessment = ({ patientCode }) => {
                                                 </div>
                                             ) : (
                                                 <div className="text-center py-8">
-                                                    <FaCheckCircle className="text-4xl text-green-500 mx-auto mb-3" />
+                                                    <FaCheckCircle className="text-3xl text-green-500 mx-auto mb-3" />
                                                     <p className="text-gray-600">No issues found</p>
                                                 </div>
                                             )}
@@ -852,7 +850,7 @@ const DRNAssessment = ({ patientCode }) => {
                                     </div>
                                 ) : (
                                     <div className="text-center py-6">
-                                        <FaDatabase className="text-4xl text-blue-400 mx-auto mb-4" />
+                                        <FaDatabase className="text-3xl text-blue-400 mx-auto mb-4" />
                                         <p className="text-gray-600 mb-4">Run CDSS clinical analysis to detect drug-related problems</p>
                                         <button
                                             onClick={runCdssAnalysis}
