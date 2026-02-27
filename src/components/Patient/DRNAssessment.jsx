@@ -717,10 +717,10 @@ const DRNAssessment = ({ patientCode }) => {
 
     if (authError) {
         return (
-            <div className="bg-white rounded-xl shadow-lg p-4 w-full overflow-hidden">
+            <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 w-full max-w-full overflow-hidden">
                 <div className="text-center py-12">
                     <FaExclamationCircle className="text-3xl text-yellow-500 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-800 mb-2">Authentication Required</h3>
+                    <h3 className="text-xl font-medium text-sm text-gray-800 mb-2">Authentication Required</h3>
                     <p className="text-gray-600 mb-4">{authError}</p>
                     <button
                         onClick={() => window.location.reload()}
@@ -735,7 +735,7 @@ const DRNAssessment = ({ patientCode }) => {
 
     if (!patientId || !userId) {
         return (
-            <div className="bg-white rounded-xl shadow-lg p-4 w-full overflow-hidden">
+            <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 w-full max-w-full overflow-hidden">
                 <div className="text-center py-12">
                     <FaSpinner className="animate-spin text-3xl text-blue-600 mx-auto mb-4" />
                     <p className="text-gray-600">Initializing DRN Assessment...</p>
@@ -745,15 +745,15 @@ const DRNAssessment = ({ patientCode }) => {
     }
 
     return (
-        <div className="bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen p-4 w-full overflow-x-hidden">
-            <div className="w-full max-w-full mx-auto px-2">
-                <div className="bg-white rounded-xl shadow-lg p-4 w-full overflow-hidden">
+        <div className="bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen p-4 md:p-6 w-full overflow-x-hidden flex justify-center">
+            <div className="w-full max-w-7xl mx-auto px-2 sm:px-4">
+                <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 w-full max-w-full overflow-hidden">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="bg-gradient-to-br from-purple-600 to-blue-600 p-2 sm:p-3 rounded-full flex-shrink-0">
-                        <FaStethoscope className="text-white text-lg sm:text-xl" />
+                        <FaStethoscope className="text-white text-base sm:text-xl" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h2 className="text-lg sm:text-2xl font-bold text-gray-800 truncate">Drug-related need assessment activity</h2>
+                        <h2 className="text-base sm:text-2xl font-bold text-gray-800 truncate">Drug-related need assessment activity</h2>
                         <div className="text-xs sm:text-sm text-gray-500 mt-1 truncate">
                           Patient: {patientCode} | User ID: {userId?.substring(0, 8)}...
                         </div>
@@ -761,7 +761,7 @@ const DRNAssessment = ({ patientCode }) => {
                     </div>
                     
                     {/* CDSS Analysis Section */}
-                    <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200 w-full overflow-hidden">
+                    <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 sm:p-5 border border-blue-200 w-full overflow-hidden">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-semibold text-blue-800 flex items-center gap-2">
                                 <FaDatabase /> CDSS clinical analysis
@@ -784,7 +784,7 @@ const DRNAssessment = ({ patientCode }) => {
                                 ) : analysisResults ? (
                                     <div className="space-y-3">
                                         <div className="bg-white rounded-lg p-3 border shadow-sm">
-                                            <div className="flex justify-between items-start mb-4">
+                                            <div className="flex justify-between items-start mb-3">
                                                 <div>
                                                     <h4 className="font-medium text-sm text-gray-800 text-base">Analysis Results</h4>
                                                     <p className={`text-base font-medium mt-2 ${analysisResults.totalFindings > 0
@@ -797,9 +797,9 @@ const DRNAssessment = ({ patientCode }) => {
                                                 <div className="text-right">
                                                     <button
                                                         onClick={runCdssAnalysis}
-                                                        className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm flex items-center gap-2"
+                                                        className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs flex items-center gap-1.5"
                                                     >
-                                                        <FaSync /> Run Analysis
+                                                        <FaSync className="text-xs" /> Run Analysis
                                                     </button>
                                                 </div>
                                             </div>
@@ -867,7 +867,7 @@ const DRNAssessment = ({ patientCode }) => {
                     {/* 9 Category Selection */}
                     <div className="mb-8" id="assessment-form">
                         <h3 className="text-base font-semibold mb-4 text-gray-800">Select Drug-related need assessment category</h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 w-full">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 w-full">
                             {Object.entries(drnCategories).map(([category, catData]) => {
                                 const Icon = catData.icon;
 
@@ -1087,7 +1087,7 @@ const DRNAssessment = ({ patientCode }) => {
                             </div>
                         ) : (
                             <div className="w-full overflow-x-auto rounded-lg border">
-                              <table className="min-w-full divide-y divide-gray-200">
+                              <table className="w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-100">
                                         <tr>
                                             <th className="p-3 text-left font-medium text-gray-700">DRN Assessment Activity Category</th>
