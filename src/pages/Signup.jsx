@@ -128,7 +128,7 @@ const Signup = () => {
         role: 'pharmacist',
         woreda: '',
         company_name: '',
-        company_email: '', // Replaced registration number
+        company_email: '',
         company_address: '',
         company_size: '1-10',
         company_type: 'pharmacy',
@@ -159,8 +159,11 @@ const Signup = () => {
     const [chapaPaymentUrl, setChapaPaymentUrl] = useState('');
     const [chapaTxRef, setChapaTxRef] = useState('');
     const [selectedPlanDetails, setSelectedPlanDetails] = useState(null);
-    const [accountTypeSelection, setAccountTypeSelection] = useState(null); // 'individual' or 'company'
-    const [healthcareClientId, setHealthcareClientId] = useState(''); // For healthcare client auto-generated ID
+    const [accountTypeSelection, setAccountTypeSelection] = useState(null);
+    const [healthcareClientId, setHealthcareClientId] = useState('');
+    
+    // NEW: State for individual registration type selection
+    const [individualType, setIndividualType] = useState(null); // 'professional' or 'client'
 
     useEffect(() => {
         // Handle URL params for account type
@@ -227,6 +230,12 @@ const Signup = () => {
     const handlePlanSelect = (plan) => {
         setSelectedPlan(plan.id);
         setSelectedPlanDetails(plan);
+        
+        // Reset individual type when selecting new plan
+        if (plan.account_type === 'individual') {
+            setIndividualType(null);
+        }
+        
         setFormData(prev => ({
             ...prev,
             account_type: plan.account_type,
@@ -241,11 +250,8 @@ const Signup = () => {
         setError('');
         setSuccess('');
 
-        // Check if user selected "Health Care Client" role
-        const isHealthcareClient = formData.role === 'health_care_client';
-
-        // For healthcare client, skip validation and generate ID
-        if (isHealthcareClient) {
+        // For healthcare client, generate ID and skip to payment
+        if (individualType === 'client') {
             try {
                 // Generate unique ID for healthcare client
                 const clientId = generateHealthcareClientId();
@@ -253,7 +259,7 @@ const Signup = () => {
 
                 // Create minimal user data for healthcare client
                 const userData = {
-                    email: `${clientId}@temp.healthcareclient.com`, // Temporary email
+                    email: `${clientId}@temp.healthcareclient.com`,
                     name: `Healthcare Client ${clientId}`,
                     phone: 'N/A',
                     account_type: 'individual',
@@ -264,6 +270,7 @@ const Signup = () => {
                     selected_plan: selectedPlan,
                     selected_plan_details: selectedPlanDetails,
                     is_healthcare_client: true,
+                    individual_type: 'client',
                     registered_at: new Date().toISOString()
                 };
 
@@ -278,13 +285,15 @@ const Signup = () => {
                     account_type: 'individual',
                     selected_plan: selectedPlan,
                     selected_plan_details: selectedPlanDetails,
-                    is_healthcare_client: true
+                    is_healthcare_client: true,
+                    individual_type: 'client'
                 };
                 localStorage.setItem('payment_user_data', JSON.stringify(paymentUserData));
 
                 setRegisteredUser(userData);
                 setRegistrationComplete(true);
 
+                // Skip to payment step directly
                 setStep(3);
                 setSuccess(`✅ Healthcare Client registration initiated! Your unique ID is: ${clientId}. Please proceed to payment.`);
 
@@ -297,7 +306,7 @@ const Signup = () => {
             }
         }
 
-        // Regular validation for non-healthcare client users
+        // Regular validation for health professional users
         const trimmedPassword = formData.password ? formData.password.trim() : '';
         const trimmedConfirmPassword = formData.confirmPassword ? formData.confirmPassword.trim() : '';
         const trimmedAdminPassword = formData.account_type === 'company' ?
@@ -336,6 +345,7 @@ const Signup = () => {
                     license_number: formData.license_number?.trim() || '',
                     role: formData.role,
                     account_type: 'individual',
+                    individual_type: 'professional', // Add this field
                     selected_plan: selectedPlan,
                     skip_verification_email: true
                 };
@@ -403,6 +413,7 @@ const Signup = () => {
                 name: userName,
                 phone: formData.account_type === 'individual' ? formData.phone.trim() : formData.admin_phone.trim(),
                 account_type: formData.account_type,
+                individual_type: 'professional',
                 status: 'pending_payment',
                 userId: userId,
                 id: userId,
@@ -431,6 +442,7 @@ const Signup = () => {
                 userId: userId,
                 phone: formData.account_type === 'individual' ? formData.phone.trim() : formData.admin_phone.trim(),
                 account_type: formData.account_type,
+                individual_type: 'professional',
                 selected_plan: selectedPlan,
                 selected_plan_details: selectedPlanDetails
             };
@@ -473,7 +485,7 @@ const Signup = () => {
                     planId: selectedPlan,
                     userEmail: userData.email,
                     userName: userData.name,
-                    userPhone: '0000000000', // Placeholder phone
+                    userPhone: '0000000000',
                     userId: userData.userId || userData.id,
                     account_type: 'individual',
                     frontendUrl: window.location.origin,
@@ -569,6 +581,7 @@ const Signup = () => {
             setError('');
             setSelectedPlan('');
             setSelectedPlanDetails(null);
+            setIndividualType(null); // Reset individual type when going back
         } else if (step === 4) {
             setStep(3);
         }
@@ -609,7 +622,7 @@ const Signup = () => {
                                     </div>
                                     <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2 md:mb-3">Individual</h2>
                                     <p className="text-gray-600 text-sm md:text-base leading-relaxed">
-                                        For healthcare professionals, pharmacists, and students looking for personal clinical decision support tools.
+                                        For healthcare professionals, pharmacists, students, and healthcare clients looking for personal clinical decision support tools.
                                     </p>
                                     <div className="mt-6 md:mt-8 flex items-center text-blue-600 text-sm md:text-base font-bold group-hover:translate-x-2 transition-transform">
                                         View Individual Plans <FaArrowRight className="ml-2" />
@@ -680,7 +693,7 @@ const Signup = () => {
                             </h1>
                             <p className="text-gray-600">
                                 {isIndividual
-                                    ? 'High-performance clinical tools for independent professionals.'
+                                    ? 'High-performance clinical tools for independent professionals and healthcare clients.'
                                     : 'Enterprise-grade solutions for healthcare organizations.'}
                             </p>
                         </div>
@@ -789,12 +802,9 @@ const Signup = () => {
     // Step 2: Registration Form
     if (step === 2) {
         const isIndividual = selectedPlanDetails?.account_type === 'individual';
-        const isHealthcareClient = formData.role === 'health_care_client';
 
-        // For healthcare client, show simplified view with generated ID
-        if (isIndividual && isHealthcareClient) {
-            const generatedId = healthcareClientId || generateHealthcareClientId();
-            
+        // For individual plans, show the type selection first
+        if (isIndividual && !individualType) {
             return (
                 <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
                     <div className="w-full max-w-2xl">
@@ -814,7 +824,7 @@ const Signup = () => {
                                     <div className="w-6 h-6 md:w-8 md:h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
                                         2
                                     </div>
-                                    <span className="text-[10px] md:text-sm font-semibold text-blue-600 text-center">Registration</span>
+                                    <span className="text-[10px] md:text-sm font-semibold text-blue-600 text-center">Registration Type</span>
                                 </div>
                                 <div className="flex-1 h-1 md:h-2 mx-2 md:mx-4 bg-gray-200 rounded-full">
                                     <div className="h-full w-0 bg-green-500 rounded-full"></div>
@@ -824,6 +834,151 @@ const Signup = () => {
                                         3
                                     </div>
                                     <span className="text-[10px] md:text-sm font-semibold text-gray-400 text-center">Payment</span>
+                                </div>
+                            </div>
+                            <p className="text-center text-gray-500 text-[10px] md:text-sm mt-1">
+                                Step 2 of 3: Select registration type for {selectedPlanDetails?.name}
+                            </p>
+                        </div>
+
+                        {/* Selected Plan Info */}
+                        {selectedPlanDetails && (
+                            <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-white rounded-lg">
+                                            {selectedPlanDetails.icon &&
+                                                React.createElement(selectedPlanDetails.icon, {
+                                                    className: `text-xl ${selectedPlanDetails.color.includes('blue') ? 'text-blue-600' :
+                                                        selectedPlanDetails.color.includes('green') ? 'text-green-600' :
+                                                            selectedPlanDetails.color.includes('purple') ? 'text-purple-600' :
+                                                                'text-orange-600'}`
+                                                })
+                                            }
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold text-gray-800">{selectedPlanDetails.name}</h3>
+                                            <p className="text-sm text-gray-600">
+                                                {selectedPlanDetails.price} {selectedPlanDetails.currency} per {selectedPlanDetails.interval}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setStep(1)}
+                                        className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                                    >
+                                        Change Plan
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="bg-white rounded-3xl shadow-2xl p-8">
+                            <div className="text-center mb-8">
+                                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl mb-4">
+                                    <FaUser className="text-white text-2xl" />
+                                </div>
+                                <h1 className="text-2xl font-bold text-gray-800 mb-2">
+                                    Select Registration Type
+                                </h1>
+                                <p className="text-gray-600">
+                                    Please choose your registration category
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                                {/* Health Professional Option */}
+                                <div
+                                    onClick={() => setIndividualType('professional')}
+                                    className="group relative bg-white border-2 border-gray-100 rounded-2xl p-6 cursor-pointer hover:border-blue-500 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
+                                >
+                                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white">
+                                            <FaArrowRight className="text-sm" />
+                                        </div>
+                                    </div>
+                                    <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                        <FaUserMd className="text-blue-600 text-2xl" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-gray-800 mb-2">Health Professional</h3>
+                                    <p className="text-gray-600 text-sm">
+                                        For pharmacists, physicians, nurses, and health science students who need full access to clinical tools and resources.
+                                    </p>
+                                    <div className="mt-4 text-sm text-blue-600 font-medium">
+                                        Complete registration form →
+                                    </div>
+                                </div>
+
+                                {/* Health Care Client Option */}
+                                <div
+                                    onClick={() => setIndividualType('client')}
+                                    className="group relative bg-white border-2 border-gray-100 rounded-2xl p-6 cursor-pointer hover:border-green-500 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
+                                >
+                                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white">
+                                            <FaArrowRight className="text-sm" />
+                                        </div>
+                                    </div>
+                                    <div className="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                        <FaUserFriends className="text-green-600 text-2xl" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-gray-800 mb-2">Health Care Client</h3>
+                                    <p className="text-gray-600 text-sm">
+                                        For individuals seeking medication information, home remedies, and clinical alerts without professional account requirements.
+                                    </p>
+                                    <div className="mt-4 text-sm text-green-600 font-medium">
+                                        Continue to payment →
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-center pt-4 border-t">
+                                <button
+                                    onClick={goBack}
+                                    className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 px-8 rounded-xl transition"
+                                >
+                                    ← Back to Plan Selection
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // For healthcare client (individual + client type), show simplified view with generated ID
+        if (isIndividual && individualType === 'client') {
+            const generatedId = healthcareClientId || generateHealthcareClientId();
+            
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
+                    <div className="w-full max-w-2xl">
+                        {/* Progress Bar */}
+                        <div className="mb-6 md:mb-8">
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
+                                    <div className="w-6 h-6 md:w-8 md:h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
+                                        1
+                                    </div>
+                                    <span className="text-[10px] md:text-sm font-semibold text-green-600 text-center">Plan Selected</span>
+                                </div>
+                                <div className="flex-1 h-1 md:h-2 mx-2 md:mx-4 bg-gray-200 rounded-full">
+                                    <div className="h-full w-full bg-green-500 rounded-full"></div>
+                                </div>
+                                <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
+                                    <div className="w-6 h-6 md:w-8 md:h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
+                                        <FaCheck className="text-xs" />
+                                    </div>
+                                    <span className="text-[10px] md:text-sm font-semibold text-green-600 text-center">Type Selected</span>
+                                </div>
+                                <div className="flex-1 h-1 md:h-2 mx-2 md:mx-4 bg-gray-200 rounded-full">
+                                    <div className="h-full w-full bg-green-500 rounded-full"></div>
+                                </div>
+                                <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
+                                    <div className="w-6 h-6 md:w-8 md:h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
+                                        3
+                                    </div>
+                                    <span className="text-[10px] md:text-sm font-semibold text-blue-600 text-center">Payment</span>
                                 </div>
                             </div>
                             <p className="text-center text-gray-500 text-[10px] md:text-sm mt-1">
@@ -946,10 +1101,10 @@ const Signup = () => {
                             <div className="flex flex-col md:flex-row gap-4 pt-6 border-t">
                                 <button
                                     type="button"
-                                    onClick={goBack}
+                                    onClick={() => setIndividualType(null)}
                                     className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 px-4 rounded-xl transition"
                                 >
-                                    ← Back to Plan Selection
+                                    ← Back to Type Selection
                                 </button>
                                 <button
                                     onClick={handleRegistrationSubmit}
@@ -975,119 +1130,123 @@ const Signup = () => {
             );
         }
 
-        // Regular registration form for non-healthcare client users
-        return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
-                <div className="w-full max-w-4xl">
-                    {/* Progress Bar */}
-                    <div className="mb-6 md:mb-8">
-                        <div className="flex items-center justify-between mb-2">
-                            <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
-                                <div className="w-6 h-6 md:w-8 md:h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
-                                    1
-                                </div>
-                                <span className="text-[10px] md:text-sm font-semibold text-green-600 text-center">Plan Selected</span>
-                            </div>
-                            <div className="flex-1 h-1 md:h-2 mx-2 md:mx-4 bg-gray-200 rounded-full">
-                                <div className="h-full w-full bg-green-500 rounded-full"></div>
-                            </div>
-                            <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
-                                <div className="w-6 h-6 md:w-8 md:h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
-                                    2
-                                </div>
-                                <span className="text-[10px] md:text-sm font-semibold text-blue-600 text-center">Registration</span>
-                            </div>
-                            <div className="flex-1 h-1 md:h-2 mx-2 md:mx-4 bg-gray-200 rounded-full">
-                                <div className="h-full w-0 bg-green-500 rounded-full"></div>
-                            </div>
-                            <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
-                                <div className="w-6 h-6 md:w-8 md:h-8 bg-gray-200 text-gray-400 rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
-                                    3
-                                </div>
-                                <span className="text-[10px] md:text-sm font-semibold text-gray-400 text-center">Payment</span>
-                            </div>
-                        </div>
-                        <p className="text-center text-gray-500 text-[10px] md:text-sm mt-1">
-                            Step 2 of 3: Complete registration for {selectedPlanDetails?.name}
-                        </p>
-                    </div>
-
-                    {/* Selected Plan Info */}
-                    {selectedPlanDetails && (
-                        <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-white rounded-lg">
-                                        {selectedPlanDetails.icon &&
-                                            React.createElement(selectedPlanDetails.icon, {
-                                                className: `text-xl ${selectedPlanDetails.color.includes('blue') ? 'text-blue-600' :
-                                                    selectedPlanDetails.color.includes('green') ? 'text-green-600' :
-                                                        selectedPlanDetails.color.includes('purple') ? 'text-purple-600' :
-                                                            'text-orange-600'}`
-                                            })
-                                        }
+        // Regular registration form for health professional users (individual + professional type)
+        if (isIndividual && individualType === 'professional') {
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
+                    <div className="w-full max-w-4xl">
+                        {/* Progress Bar */}
+                        <div className="mb-6 md:mb-8">
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
+                                    <div className="w-6 h-6 md:w-8 md:h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
+                                        1
                                     </div>
-                                    <div>
-                                        <h3 className="font-bold text-gray-800">{selectedPlanDetails.name}</h3>
-                                        <p className="text-sm text-gray-600">
-                                            {selectedPlanDetails.price} {selectedPlanDetails.currency} per {selectedPlanDetails.interval}
-                                        </p>
-                                    </div>
+                                    <span className="text-[10px] md:text-sm font-semibold text-green-600 text-center">Plan Selected</span>
                                 </div>
-                                <button
-                                    onClick={() => setStep(1)}
-                                    className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-                                >
-                                    Change Plan
-                                </button>
+                                <div className="flex-1 h-1 md:h-2 mx-2 md:mx-4 bg-gray-200 rounded-full">
+                                    <div className="h-full w-full bg-green-500 rounded-full"></div>
+                                </div>
+                                <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
+                                    <div className="w-6 h-6 md:w-8 md:h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
+                                        <FaCheck className="text-xs" />
+                                    </div>
+                                    <span className="text-[10px] md:text-sm font-semibold text-green-600 text-center">Type Selected</span>
+                                </div>
+                                <div className="flex-1 h-1 md:h-2 mx-2 md:mx-4 bg-gray-200 rounded-full">
+                                    <div className="h-full w-1/2 bg-green-500 rounded-full"></div>
+                                </div>
+                                <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
+                                    <div className="w-6 h-6 md:w-8 md:h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
+                                        3
+                                    </div>
+                                    <span className="text-[10px] md:text-sm font-semibold text-blue-600 text-center">Registration</span>
+                                </div>
+                                <div className="flex-1 h-1 md:h-2 mx-2 md:mx-4 bg-gray-200 rounded-full">
+                                    <div className="h-full w-0 bg-green-500 rounded-full"></div>
+                                </div>
+                                <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
+                                    <div className="w-6 h-6 md:w-8 md:h-8 bg-gray-200 text-gray-400 rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
+                                        4
+                                    </div>
+                                    <span className="text-[10px] md:text-sm font-semibold text-gray-400 text-center">Payment</span>
+                                </div>
                             </div>
-                        </div>
-                    )}
-
-                    <div className="bg-white rounded-3xl shadow-2xl p-8">
-                        <div className="text-center mb-8">
-                            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl mb-4">
-                                {isIndividual ? (
-                                    <FaUserTie className="text-white text-2xl" />
-                                ) : (
-                                    <FaBuilding className="text-white text-2xl" />
-                                )}
-                            </div>
-                            <h1 className="text-2xl font-bold text-gray-800 mb-2">
-                                {isIndividual ? 'Individual Registration' : 'Company Registration'}
-                            </h1>
-                            <p className="text-gray-600">
-                                Please fill in all required information to create your {isIndividual ? 'individual' : 'company'} account
+                            <p className="text-center text-gray-500 text-[10px] md:text-sm mt-1">
+                                Step 3 of 4: Complete health professional registration for {selectedPlanDetails?.name}
                             </p>
                         </div>
 
-                        {error && (
-                            <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-xl">
-                                <div className="flex items-center gap-3">
-                                    <FaExclamationTriangle className="text-red-500" />
-                                    <div>
-                                        <p className="text-red-700 font-bold">Error</p>
-                                        <p className="text-red-600">{error}</p>
+                        {/* Selected Plan Info */}
+                        {selectedPlanDetails && (
+                            <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-white rounded-lg">
+                                            {selectedPlanDetails.icon &&
+                                                React.createElement(selectedPlanDetails.icon, {
+                                                    className: `text-xl ${selectedPlanDetails.color.includes('blue') ? 'text-blue-600' :
+                                                        selectedPlanDetails.color.includes('green') ? 'text-green-600' :
+                                                            selectedPlanDetails.color.includes('purple') ? 'text-purple-600' :
+                                                                'text-orange-600'}`
+                                                })
+                                            }
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold text-gray-800">{selectedPlanDetails.name}</h3>
+                                            <p className="text-sm text-gray-600">
+                                                {selectedPlanDetails.price} {selectedPlanDetails.currency} per {selectedPlanDetails.interval}
+                                            </p>
+                                        </div>
                                     </div>
+                                    <button
+                                        onClick={() => setStep(1)}
+                                        className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                                    >
+                                        Change Plan
+                                    </button>
                                 </div>
                             </div>
                         )}
 
-                        {success && (
-                            <div className="mb-6 p-4 bg-green-50 border-2 border-green-200 rounded-xl">
-                                <div className="flex items-center gap-3">
-                                    <FaCheck className="text-green-500" />
-                                    <div>
-                                        <p className="text-green-700 font-bold">Success</p>
-                                        <p className="text-green-600">{success}</p>
+                        <div className="bg-white rounded-3xl shadow-2xl p-8">
+                            <div className="text-center mb-8">
+                                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl mb-4">
+                                    <FaUserMd className="text-white text-2xl" />
+                                </div>
+                                <h1 className="text-2xl font-bold text-gray-800 mb-2">
+                                    Health Professional Registration
+                                </h1>
+                                <p className="text-gray-600">
+                                    Please fill in all required information to create your professional account
+                                </p>
+                            </div>
+
+                            {error && (
+                                <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-xl">
+                                    <div className="flex items-center gap-3">
+                                        <FaExclamationTriangle className="text-red-500" />
+                                        <div>
+                                            <p className="text-red-700 font-bold">Error</p>
+                                            <p className="text-red-600">{error}</p>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
 
-                        <form onSubmit={handleRegistrationSubmit} className="space-y-6">
-                            {isIndividual ? (
-                                // Individual Registration Form - WITHOUT INSTITUTION
+                            {success && (
+                                <div className="mb-6 p-4 bg-green-50 border-2 border-green-200 rounded-xl">
+                                    <div className="flex items-center gap-3">
+                                        <FaCheck className="text-green-500" />
+                                        <div>
+                                            <p className="text-green-700 font-bold">Success</p>
+                                            <p className="text-green-600">{success}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            <form onSubmit={handleRegistrationSubmit} className="space-y-6">
                                 <>
                                     <div className="mb-6">
                                         <label className="block text-gray-700 font-medium mb-2">
@@ -1106,7 +1265,6 @@ const Signup = () => {
                                             <option value="other_health_professional">Other Health Professional</option>
                                             <option value="pharmacy_student">Pharmacy Student</option>
                                             <option value="other_health_science_student">Other Health Science Student</option>
-                                            <option value="health_care_client">Health Care Client</option>
                                         </select>
                                     </div>
 
@@ -1278,45 +1436,183 @@ const Signup = () => {
                                         </div>
                                     </div>
                                 </>
-                            ) : (
-                                // Company Registration Form (unchanged)
-                                <>
-                                    <div className="bg-blue-50 p-6 rounded-xl mb-6">
-                                        <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                                            <FaBuilding /> Company Information
-                                        </h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div>
-                                                <label className="block text-gray-700 font-medium mb-2">
-                                                    Company Name *
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    required
-                                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                                    placeholder="Enter company name"
-                                                    value={formData.company_name}
-                                                    onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-gray-700 font-medium mb-2">
-                                                    <FaEnvelope className="inline mr-2" />
-                                                    Company Email *
-                                                </label>
-                                                <input
-                                                    type="email"
-                                                    required
-                                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                                    placeholder="Enter company email"
-                                                    value={formData.company_email}
-                                                    onChange={(e) => setFormData({ ...formData, company_email: e.target.value })}
-                                                />
-                                            </div>
+                            </form>
+
+                            <div className="flex flex-col md:flex-row gap-4 pt-6 border-t mt-6">
+                                <button
+                                    type="button"
+                                    onClick={() => setIndividualType(null)}
+                                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 px-4 rounded-xl transition"
+                                >
+                                    ← Back to Type Selection
+                                </button>
+                                <button
+                                    onClick={handleRegistrationSubmit}
+                                    disabled={loading}
+                                    className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium py-3 px-4 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
+                                >
+                                    {loading ? (
+                                        <>
+                                            <FaSpinner className="animate-spin" />
+                                            Processing...
+                                        </>
+                                    ) : (
+                                        <>
+                                            Continue to Payment
+                                            <FaArrowRight />
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Company Registration Form (unchanged)
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
+                <div className="w-full max-w-4xl">
+                    {/* Progress Bar */}
+                    <div className="mb-6 md:mb-8">
+                        <div className="flex items-center justify-between mb-2">
+                            <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
+                                <div className="w-6 h-6 md:w-8 md:h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
+                                    1
+                                </div>
+                                <span className="text-[10px] md:text-sm font-semibold text-green-600 text-center">Plan Selected</span>
+                            </div>
+                            <div className="flex-1 h-1 md:h-2 mx-2 md:mx-4 bg-gray-200 rounded-full">
+                                <div className="h-full w-full bg-green-500 rounded-full"></div>
+                            </div>
+                            <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
+                                <div className="w-6 h-6 md:w-8 md:h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
+                                    2
+                                </div>
+                                <span className="text-[10px] md:text-sm font-semibold text-blue-600 text-center">Registration</span>
+                            </div>
+                            <div className="flex-1 h-1 md:h-2 mx-2 md:mx-4 bg-gray-200 rounded-full">
+                                <div className="h-full w-0 bg-green-500 rounded-full"></div>
+                            </div>
+                            <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
+                                <div className="w-6 h-6 md:w-8 md:h-8 bg-gray-200 text-gray-400 rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
+                                    3
+                                </div>
+                                <span className="text-[10px] md:text-sm font-semibold text-gray-400 text-center">Payment</span>
+                            </div>
+                        </div>
+                        <p className="text-center text-gray-500 text-[10px] md:text-sm mt-1">
+                            Step 2 of 3: Complete company registration for {selectedPlanDetails?.name}
+                        </p>
+                    </div>
+
+                    {/* Selected Plan Info */}
+                    {selectedPlanDetails && (
+                        <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-white rounded-lg">
+                                        {selectedPlanDetails.icon &&
+                                            React.createElement(selectedPlanDetails.icon, {
+                                                className: `text-xl ${selectedPlanDetails.color.includes('blue') ? 'text-blue-600' :
+                                                    selectedPlanDetails.color.includes('green') ? 'text-green-600' :
+                                                        selectedPlanDetails.color.includes('purple') ? 'text-purple-600' :
+                                                            'text-orange-600'}`
+                                            })
+                                        }
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-gray-800">{selectedPlanDetails.name}</h3>
+                                        <p className="text-sm text-gray-600">
+                                            {selectedPlanDetails.price} {selectedPlanDetails.currency} per {selectedPlanDetails.interval}
+                                        </p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setStep(1)}
+                                    className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                                >
+                                    Change Plan
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="bg-white rounded-3xl shadow-2xl p-8">
+                        <div className="text-center mb-8">
+                            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl mb-4">
+                                <FaBuilding className="text-white text-2xl" />
+                            </div>
+                            <h1 className="text-2xl font-bold text-gray-800 mb-2">
+                                Company Registration
+                            </h1>
+                            <p className="text-gray-600">
+                                Please fill in all required information to create your company account
+                            </p>
+                        </div>
+
+                        {error && (
+                            <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-xl">
+                                <div className="flex items-center gap-3">
+                                    <FaExclamationTriangle className="text-red-500" />
+                                    <div>
+                                        <p className="text-red-700 font-bold">Error</p>
+                                        <p className="text-red-600">{error}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {success && (
+                            <div className="mb-6 p-4 bg-green-50 border-2 border-green-200 rounded-xl">
+                                <div className="flex items-center gap-3">
+                                    <FaCheck className="text-green-500" />
+                                    <div>
+                                        <p className="text-green-700 font-bold">Success</p>
+                                        <p className="text-green-600">{success}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        <form onSubmit={handleRegistrationSubmit} className="space-y-6">
+                            <>
+                                <div className="bg-blue-50 p-6 rounded-xl mb-6">
+                                    <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                        <FaBuilding /> Company Information
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label className="block text-gray-700 font-medium mb-2">
+                                                Company Name *
+                                            </label>
+                                            <input
+                                                type="text"
+                                                required
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                placeholder="Enter company name"
+                                                value={formData.company_name}
+                                                onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-gray-700 font-medium mb-2">
+                                                <FaEnvelope className="inline mr-2" />
+                                                Company Email *
+                                            </label>
+                                            <input
+                                                type="email"
+                                                required
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                placeholder="Enter company email"
+                                                value={formData.company_email}
+                                                onChange={(e) => setFormData({ ...formData, company_email: e.target.value })}
+                                            />
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                                         <div>
                                             <label className="block text-gray-700 font-medium mb-2">
                                                 <FaMapMarker className="inline mr-2" />
@@ -1331,187 +1627,239 @@ const Signup = () => {
                                                 onChange={(e) => setFormData({ ...formData, company_address: e.target.value })}
                                             />
                                         </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div>
-                                                <label className="block text-gray-700 font-medium mb-2">
-                                                    <FaBriefcase className="inline mr-2" />
-                                                    Company Type
-                                                </label>
-                                                <select
-                                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                                    value={formData.company_type}
-                                                    onChange={(e) => setFormData({ ...formData, company_type: e.target.value })}
+                                        <div>
+                                            <label className="block text-gray-700 font-medium mb-2">
+                                                <FaBriefcase className="inline mr-2" />
+                                                Company Type
+                                            </label>
+                                            <select
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                value={formData.company_type}
+                                                onChange={(e) => setFormData({ ...formData, company_type: e.target.value })}
+                                            >
+                                                <option value="pharmacy">Pharmacy</option>
+                                                <option value="hospital">Hospital</option>
+                                                <option value="clinic">Clinic</option>
+                                                <option value="pharmaceutical">Pharmaceutical Company</option>
+                                                <option value="health_center">Health Center</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                                        <div>
+                                            <label className="block text-gray-700 font-medium mb-2">
+                                                <FaFileInvoiceDollar className="inline mr-2" />
+                                                TIN Number *
+                                            </label>
+                                            <input
+                                                type="text"
+                                                required
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                placeholder="Enter company TIN number"
+                                                value={formData.tin_number}
+                                                onChange={(e) => setFormData({ ...formData, tin_number: e.target.value })}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-gray-700 font-medium mb-2">
+                                                <FaUsers className="inline mr-2" />
+                                                Company Size
+                                            </label>
+                                            <select
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                value={formData.company_size}
+                                                onChange={(e) => setFormData({ ...formData, company_size: e.target.value })}
+                                            >
+                                                <option value="1-10">1-10 employees</option>
+                                                <option value="11-50">11-50 employees</option>
+                                                <option value="51-200">51-200 employees</option>
+                                                <option value="201-500">201-500 employees</option>
+                                                <option value="500+">500+ employees</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                                        <div>
+                                            <label className="block text-gray-700 font-medium mb-2">
+                                                <FaGlobe className="inline mr-2" />
+                                                Country *
+                                            </label>
+                                            <input
+                                                type="text"
+                                                required
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                value={formData.country}
+                                                readOnly
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-gray-700 font-medium mb-2">
+                                                <FaMapMarker className="inline mr-2" />
+                                                Region/State *
+                                            </label>
+                                            <input
+                                                type="text"
+                                                required
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                placeholder="Enter region"
+                                                value={formData.region}
+                                                onChange={(e) => setFormData({ ...formData, region: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-4">
+                                        <label className="block text-gray-700 font-medium mb-2">
+                                            <FaMapMarker className="inline mr-2" />
+                                            Woreda/Zone (Optional)
+                                        </label>
+                                        <input
+                                            type="text"
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                            placeholder="Enter woreda/zone"
+                                            value={formData.woreda}
+                                            onChange={(e) => setFormData({ ...formData, woreda: e.target.value })}
+                                        />
+                                    </div>
+
+                                    <div className="mt-4">
+                                        <label className="block text-gray-700 font-medium mb-2">
+                                            <FaUsers className="inline mr-2" />
+                                            User Capacity *
+                                        </label>
+                                        <input
+                                            type="number"
+                                            required
+                                            min="1"
+                                            max={selectedPlanDetails?.user_limit || 20}
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                            placeholder="Enter number of users"
+                                            value={formData.user_capacity}
+                                            onChange={(e) => setFormData({ ...formData, user_capacity: e.target.value })}
+                                        />
+                                        <p className="text-sm text-gray-500 mt-1">
+                                            Maximum {selectedPlanDetails?.user_limit || 20} users allowed for this plan
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="bg-yellow-50 p-6 rounded-xl mb-6">
+                                    <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                        <FaUserTie /> Admin Account Information
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label className="block text-gray-700 font-medium mb-2">
+                                                <FaUser className="inline mr-2" />
+                                                Admin Full Name *
+                                            </label>
+                                            <input
+                                                type="text"
+                                                required
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                placeholder="Enter admin full name"
+                                                value={formData.admin_full_name}
+                                                onChange={(e) => setFormData({ ...formData, admin_full_name: e.target.value })}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-gray-700 font-medium mb-2">
+                                                <FaEnvelope className="inline mr-2" />
+                                                Admin Email *
+                                            </label>
+                                            <input
+                                                type="email"
+                                                required
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                placeholder="Enter admin email"
+                                                value={formData.admin_email}
+                                                onChange={(e) => setFormData({ ...formData, admin_email: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                                        <div>
+                                            <label className="block text-gray-700 font-medium mb-2">
+                                                <FaPhone className="inline mr-2" />
+                                                Admin Phone *
+                                            </label>
+                                            <input
+                                                type="tel"
+                                                required
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                placeholder="Enter admin phone number"
+                                                value={formData.admin_phone}
+                                                onChange={(e) => setFormData({ ...formData, admin_phone: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                                        <div>
+                                            <label className="block text-gray-700 font-medium mb-2">
+                                                <FaLock className="inline mr-2" />
+                                                Admin Password *
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type={showAdminPassword ? "text" : "password"}
+                                                    required
+                                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition pr-12"
+                                                    placeholder="Create admin password"
+                                                    value={formData.admin_password}
+                                                    onChange={(e) => handleAdminPasswordChange(e.target.value)}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    className="absolute right-3 top-3 text-gray-500 hover:text-gray-700"
+                                                    onClick={() => setShowAdminPassword(!showAdminPassword)}
                                                 >
-                                                    <option value="pharmacy">Pharmacy</option>
-                                                    <option value="hospital">Hospital</option>
-                                                    <option value="clinic">Clinic</option>
-                                                    <option value="pharmaceutical">Pharmaceutical Company</option>
-                                                    <option value="health_center">Health Center</option>
-                                                </select>
+                                                    {showAdminPassword ? <FaEyeSlash /> : <FaEye />}
+                                                </button>
                                             </div>
-                                            <div>
-                                                <label className="block text-gray-700 font-medium mb-2">
-                                                    <FaFileInvoiceDollar className="inline mr-2" />
-                                                    TIN Number *
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    required
-                                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                                    placeholder="Enter company TIN number"
-                                                    value={formData.tin_number}
-                                                    onChange={(e) => setFormData({ ...formData, tin_number: e.target.value })}
-                                                />
-                                            </div>
+                                            {adminPasswordStrength && (
+                                                <p className="mt-2 text-sm">
+                                                    Password strength:
+                                                    <span className={`ml-2 font-bold ${adminPasswordStrength === 'weak' ? 'text-red-500' :
+                                                        adminPasswordStrength === 'fair' ? 'text-yellow-500' :
+                                                            adminPasswordStrength === 'good' ? 'text-blue-500' :
+                                                                'text-green-500'
+                                                        }`}>
+                                                        {adminPasswordStrength.charAt(0).toUpperCase() + adminPasswordStrength.slice(1)}
+                                                    </span>
+                                                </p>
+                                            )}
                                         </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div>
-                                                <label className="block text-gray-700 font-medium mb-2">
-                                                    <FaGlobe className="inline mr-2" />
-                                                    Country *
-                                                </label>
+                                        <div>
+                                            <label className="block text-gray-700 font-medium mb-2">
+                                                <FaLock className="inline mr-2" />
+                                                Confirm Admin Password *
+                                            </label>
+                                            <div className="relative">
                                                 <input
-                                                    type="text"
+                                                    type={showAdminConfirmPassword ? "text" : "password"}
                                                     required
-                                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                                    value={formData.country}
-                                                    readOnly
+                                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition pr-12"
+                                                    placeholder="Confirm admin password"
+                                                    value={formData.admin_confirm_password}
+                                                    onChange={(e) => setFormData({ ...formData, admin_confirm_password: e.target.value })}
                                                 />
+                                                <button
+                                                    type="button"
+                                                    className="absolute right-3 top-3 text-gray-500 hover:text-gray-700"
+                                                    onClick={() => setShowAdminConfirmPassword(!showAdminConfirmPassword)}
+                                                >
+                                                    {showAdminConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                                                </button>
                                             </div>
-                                            <div>
-                                                <label className="block text-gray-700 font-medium mb-2">
-                                                    <FaMapMarker className="inline mr-2" />
-                                                    Region/State *
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    required
-                                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                                    placeholder="Enter region"
-                                                    value={formData.region}
-                                                    onChange={(e) => setFormData({ ...formData, region: e.target.value })}
-                                                />
-                                            </div>
+                                            {formData.admin_password && formData.admin_confirm_password && formData.admin_password !== formData.admin_confirm_password && (
+                                                <p className="mt-2 text-sm text-red-500">Passwords do not match</p>
+                                            )}
                                         </div>
                                     </div>
-
-                                    <div className="bg-yellow-50 p-6 rounded-xl mb-6">
-                                        <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                                            <FaUserTie /> Admin Account Information
-                                        </h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div>
-                                                <label className="block text-gray-700 font-medium mb-2">
-                                                    <FaUser className="inline mr-2" />
-                                                    Admin Full Name *
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    required
-                                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                                    placeholder="Enter admin full name"
-                                                    value={formData.admin_full_name}
-                                                    onChange={(e) => setFormData({ ...formData, admin_full_name: e.target.value })}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-gray-700 font-medium mb-2">
-                                                    <FaEnvelope className="inline mr-2" />
-                                                    Admin Email *
-                                                </label>
-                                                <input
-                                                    type="email"
-                                                    required
-                                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                                    placeholder="Enter admin email"
-                                                    value={formData.admin_email}
-                                                    onChange={(e) => setFormData({ ...formData, admin_email: e.target.value })}
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-                                            <div>
-                                                <label className="block text-gray-700 font-medium mb-2">
-                                                    <FaPhone className="inline mr-2" />
-                                                    Admin Phone *
-                                                </label>
-                                                <input
-                                                    type="tel"
-                                                    required
-                                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                                    placeholder="Enter admin phone number"
-                                                    value={formData.admin_phone}
-                                                    onChange={(e) => setFormData({ ...formData, admin_phone: e.target.value })}
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-                                            <div>
-                                                <label className="block text-gray-700 font-medium mb-2">
-                                                    <FaLock className="inline mr-2" />
-                                                    Admin Password *
-                                                </label>
-                                                <div className="relative">
-                                                    <input
-                                                        type={showAdminPassword ? "text" : "password"}
-                                                        required
-                                                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition pr-12"
-                                                        placeholder="Create admin password"
-                                                        value={formData.admin_password}
-                                                        onChange={(e) => handleAdminPasswordChange(e.target.value)}
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        className="absolute right-3 top-3 text-gray-500 hover:text-gray-700"
-                                                        onClick={() => setShowAdminPassword(!showAdminPassword)}
-                                                    >
-                                                        {showAdminPassword ? <FaEyeSlash /> : <FaEye />}
-                                                    </button>
-                                                </div>
-                                                {adminPasswordStrength && (
-                                                    <p className="mt-2 text-sm">
-                                                        Password strength:
-                                                        <span className={`ml-2 font-bold ${adminPasswordStrength === 'weak' ? 'text-red-500' :
-                                                            adminPasswordStrength === 'fair' ? 'text-yellow-500' :
-                                                                adminPasswordStrength === 'good' ? 'text-blue-500' :
-                                                                    'text-green-500'
-                                                            }`}>
-                                                            {adminPasswordStrength.charAt(0).toUpperCase() + adminPasswordStrength.slice(1)}
-                                                        </span>
-                                                    </p>
-                                                )}
-                                            </div>
-                                            <div>
-                                                <label className="block text-gray-700 font-medium mb-2">
-                                                    <FaLock className="inline mr-2" />
-                                                    Confirm Admin Password *
-                                                </label>
-                                                <div className="relative">
-                                                    <input
-                                                        type={showAdminConfirmPassword ? "text" : "password"}
-                                                        required
-                                                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition pr-12"
-                                                        placeholder="Confirm admin password"
-                                                        value={formData.admin_confirm_password}
-                                                        onChange={(e) => setFormData({ ...formData, admin_confirm_password: e.target.value })}
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        className="absolute right-3 top-3 text-gray-500 hover:text-gray-700"
-                                                        onClick={() => setShowAdminConfirmPassword(!showAdminConfirmPassword)}
-                                                    >
-                                                        {showAdminConfirmPassword ? <FaEyeSlash /> : <FaEye />}
-                                                    </button>
-                                                </div>
-                                                {formData.admin_password && formData.admin_confirm_password && formData.admin_password !== formData.admin_confirm_password && (
-                                                    <p className="mt-2 text-sm text-red-500">Passwords do not match</p>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </>
-                            )}
+                                </div>
+                            </>
 
                             <div className="flex flex-col md:flex-row gap-4 pt-6 border-t">
                                 <button
@@ -1542,7 +1890,7 @@ const Signup = () => {
                         </form>
                     </div>
                 </div>
-            </div >
+            </div>
         );
     }
 
@@ -1564,7 +1912,7 @@ const Signup = () => {
                                 </div>
                             </div>
                             <div className="flex-1 h-2 mx-2 md:mx-6 bg-gray-200 rounded-full">
-                                <div className="h-full w-1/2 bg-green-500 rounded-full"></div>
+                                <div className="h-full w-full bg-green-500 rounded-full"></div>
                             </div>
                             <div className="flex items-center gap-2 md:gap-3">
                                 <div className="w-8 h-8 md:w-10 md:h-10 bg-green-500 text-white rounded-full flex items-center justify-center font-bold shadow-lg text-xs md:text-sm">
@@ -1589,7 +1937,7 @@ const Signup = () => {
                             </div>
                         </div>
                         <p className="text-center text-gray-500 text-sm md:text-base mt-2">
-                            Step 3 of 4: Complete payment for your subscription
+                            Step 3 of 3: Complete payment for your subscription
                         </p>
                     </div>
 
