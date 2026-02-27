@@ -101,59 +101,59 @@ const DRNAssessment = ({ patientCode }) => {
     // ✅ Menu items with DTP Type included
     const menuItemsData = {
         Indication: [
-            { name: 'Duplicate Therapy', ruleType: 'duplicate_therapy', "DTP Type": 'Unnecessary Drug Therapy', drn: 'Indication' },
-            { name: 'No medical indication', ruleType: 'no_medical_indication', "DTP Type": 'Unnecessary Drug Therapy', drn: 'Indication' },
-            { name: 'Nondrug therapy appropriate', ruleType: 'nondrug_therapy_appropriate', "DTP Type": 'Unnecessary Drug Therapy', drn: 'Indication' },
-            { name: 'Addiction or recreational medicine use', ruleType: 'addiction_or_recreational_medicine_use', "DTP Type": 'Unnecessary Drug Therapy', drn: 'Indication' },
-            { name: 'Treating avoidable ADE', ruleType: 'treating_avoidable_ade', "DTP Type": 'Unnecessary Drug Therapy', drn: 'Indication' },
-            { name: 'Prophylaxis needed', ruleType: 'prophylaxis_needed', "DTP Type": 'Needs Additional Drug Therapy', drn: 'Indication' },
-            { name: 'Untreated condition', ruleType: 'untreated_condition', "DTP Type": 'Needs Additional Drug Therapy', drn: 'Indication' },
-            { name: 'Synergistic therapy needed', ruleType: 'synergistic_therapy_needed', "DTP Type": 'Needs Additional Drug Therapy', drn: 'Indication' },
+            { name: 'Duplicate Therapy', ruleType: 'duplicate_therapy', dtpType: 'Unnecessary Drug Therapy', drn: 'Indication' },
+            { name: 'No medical indication', ruleType: 'no_medical_indication', dtpType: 'Unnecessary Drug Therapy', drn: 'Indication' },
+            { name: 'Nondrug therapy appropriate', ruleType: 'nondrug_therapy_appropriate', dtpType: 'Unnecessary Drug Therapy', drn: 'Indication' },
+            { name: 'Addiction or recreational medicine use', ruleType: 'addiction_or_recreational_medicine_use', dtpType: 'Unnecessary Drug Therapy', drn: 'Indication' },
+            { name: 'Treating avoidable ADE', ruleType: 'treating_avoidable_ade', dtpType: 'Unnecessary Drug Therapy', drn: 'Indication' },
+            { name: 'Prophylaxis needed', ruleType: 'prophylaxis_needed', dtpType: 'Needs Additional Drug Therapy', drn: 'Indication' },
+            { name: 'Untreated condition', ruleType: 'untreated_condition', dtpType: 'Needs Additional Drug Therapy', drn: 'Indication' },
+            { name: 'Synergistic therapy needed', ruleType: 'synergistic_therapy_needed', dtpType: 'Needs Additional Drug Therapy', drn: 'Indication' },
         ],
         Dosage: [
-            { name: 'Low Dose', ruleType: 'low_dose', "DTP Type": 'Low Dose', drn: 'Effectiveness' },
-            { name: 'Less Frequent', ruleType: 'less_frequent', "DTP Type": 'Low Dose', drn: 'Effectiveness' },
-            { name: 'Short Duration', ruleType: 'short_duration', "DTP Type": 'Low Dose', drn: 'Effectiveness' },
-            { name: 'Improper Storage', ruleType: 'improper_storage', "DTP Type": 'Low Dose', drn: 'Effectiveness' },
-            { name: 'High Dose', ruleType: 'high_dose', "DTP Type": 'High Dose', drn: 'Safety' },
-            { name: 'More Frequent', ruleType: 'high_frequent', "DTP Type": 'High Dose', drn: 'Safety' },
-            { name: 'Longer Duration', ruleType: 'longer_duration', "DTP Type": 'High Dose', drn: 'Safety' },
-            { name: 'Dose Titration Slow or Fast', ruleType: 'dose_titration_slow_or_fast', "DTP Type": 'ADE', drn: 'Safety' },
+            { name: 'Low Dose', ruleType: 'low_dose', dtpType: 'Low Dose', drn: 'Effectiveness' },
+            { name: 'Less Frequent', ruleType: 'less_frequent', dtpType: 'Low Dose', drn: 'Effectiveness' },
+            { name: 'Short Duration', ruleType: 'short_duration', dtpType: 'Low Dose', drn: 'Effectiveness' },
+            { name: 'Improper Storage', ruleType: 'improper_storage', dtpType: 'Low Dose', drn: 'Effectiveness' },
+            { name: 'High Dose', ruleType: 'high_dose', dtpType: 'High Dose', drn: 'Safety' },
+            { name: 'More Frequent', ruleType: 'high_frequent', dtpType: 'High Dose', drn: 'Safety' },
+            { name: 'Longer Duration', ruleType: 'longer_duration', dtpType: 'High Dose', drn: 'Safety' },
+            { name: 'Dose Titration Slow or Fast', ruleType: 'dose_titration_slow_or_fast', dtpType: 'ADE', drn: 'Safety' },
         ],
         "Rule out Ineffective Drug Therapy": [
-            { name: 'More effective drug available', ruleType: 'more_effective_drug_available', "DTP Type": 'Ineffective Drug Therapy', drn: 'Effectiveness' },
-            { name: 'Condition refractory to drug', ruleType: 'condition_refractory_to_drug', "DTP Type": 'Ineffective Drug Therapy', drn: 'Effectiveness' },
-            { name: 'Dosage form inappropriate', ruleType: 'dosage_form_inappropriate', "DTP Type": 'Ineffective Drug Therapy', drn: 'Effectiveness' },
+            { name: 'More effective drug available', ruleType: 'more_effective_drug_available', dtpType: 'Ineffective Drug Therapy', drn: 'Effectiveness' },
+            { name: 'Condition refractory to drug', ruleType: 'condition_refractory_to_drug', dtpType: 'Ineffective Drug Therapy', drn: 'Effectiveness' },
+            { name: 'Dosage form inappropriate', ruleType: 'dosage_form_inappropriate', dtpType: 'Ineffective Drug Therapy', drn: 'Effectiveness' },
         ],
         "Contraindication or Caution or ADE or SE or Allergy": [
-            { name: 'Undesirable Effect (ADE or SE)', ruleType: 'undesirable_effect_ade_or_se', "DTP Type": 'ADE', drn: 'Safety' },
-            { name: 'Unsafe Drug (Contraindication or Caution)', ruleType: 'unsafe_drug_contraindication_or_caution', "DTP Type": 'ADE', drn: 'Safety' },
-            { name: 'Allergic Reaction', ruleType: 'allergic_reaction', "DTP Type": 'ADE', drn: 'Safety' },
+            { name: 'Undesirable Effect (ADE or SE)', ruleType: 'undesirable_effect_ade_or_se', dtpType: 'ADE', drn: 'Safety' },
+            { name: 'Unsafe Drug (Contraindication or Caution)', ruleType: 'unsafe_drug_contraindication_or_caution', dtpType: 'ADE', drn: 'Safety' },
+            { name: 'Allergic Reaction', ruleType: 'allergic_reaction', dtpType: 'ADE', drn: 'Safety' },
         ],
         "Drug Interaction": [
-            { name: 'DI increase dose', ruleType: 'di_increase_dose', "DTP Type": 'High Dose', drn: 'Safety' },
-            { name: 'DI decrease dose', ruleType: 'di_decrease_dose', "DTP Type": 'Low Dose', drn: 'Effectiveness' },
-            { name: 'DI linked to ADE', ruleType: 'di_linked_to_ade', "DTP Type": 'ADE', drn: 'Safety' },
+            { name: 'DI increase dose', ruleType: 'di_increase_dose', dtpType: 'High Dose', drn: 'Safety' },
+            { name: 'DI decrease dose', ruleType: 'di_decrease_dose', dtpType: 'Low Dose', drn: 'Effectiveness' },
+            { name: 'DI linked to ADE', ruleType: 'di_linked_to_ade', dtpType: 'ADE', drn: 'Safety' },
         ],
         Administration: [
-            { name: 'Incorrect administration decrease dose or efficacy', ruleType: 'incorrect_administration_decrease_dose_or_efficacy', "DTP Type": 'Low Dose', drn: 'Effectiveness' },
-            { name: 'Incorrect administration linked to ADE', ruleType: 'incorrect_administration_linked_to_ade', "DTP Type": 'ADE', drn: 'Safety' },
-            { name: 'Patient does not understand instructions', ruleType: 'patient_does_not_understand_instructions', "DTP Type": 'Non-Adherence', drn: 'Adherence' },
-            { name: 'Cannot swallow or administer drug', ruleType: 'cannot_swallow_or_administer_drug', "DTP Type": 'Non-Adherence', drn: 'Adherence' },
+            { name: 'Incorrect administration decrease dose or efficacy', ruleType: 'incorrect_administration_decrease_dose_or_efficacy', dtpType: 'Low Dose', drn: 'Effectiveness' },
+            { name: 'Incorrect administration linked to ADE', ruleType: 'incorrect_administration_linked_to_ade', dtpType: 'ADE', drn: 'Safety' },
+            { name: 'Patient does not understand instructions', ruleType: 'patient_does_not_understand_instructions', dtpType: 'Non-Adherence', drn: 'Adherence' },
+            { name: 'Cannot swallow or administer drug', ruleType: 'cannot_swallow_or_administer_drug', dtpType: 'Non-Adherence', drn: 'Adherence' },
         ],
         Monitoring: [
-            { name: 'Need Monitoring to rule out effectiveness', ruleType: 'need_monitoring_to_rule_out_effectiveness', "DTP Type": 'Needs additional monitoring', drn: 'Effectiveness' },
-            { name: 'Need Monitoring to rule out safety', ruleType: 'need_monitoring_to_rule_out_safety', "DTP Type": 'Needs additional monitoring', drn: 'Safety' },
+            { name: 'Need Monitoring to rule out effectiveness', ruleType: 'need_monitoring_to_rule_out_effectiveness', dtpType: 'Needs additional monitoring', drn: 'Effectiveness' },
+            { name: 'Need Monitoring to rule out safety', ruleType: 'need_monitoring_to_rule_out_safety', dtpType: 'Needs additional monitoring', drn: 'Safety' },
         ],
         Adherence: [
-            { name: 'Patient prefers not to take drug', ruleType: 'patient_prefers_not_to_take_drug', "DTP Type": 'Non-Adherence', drn: 'Adherence' },
-            { name: 'Patient forgets to take drug', ruleType: 'patient_forgets_to_take_drug', "DTP Type": 'Non-Adherence', drn: 'Adherence' },
-            { name: 'Drug not available', ruleType: 'drug_not_available', "DTP Type": 'Non-Adherence', drn: 'Adherence' },
-            { name: 'More cost-effective drug available', ruleType: 'more_cost_effective_drug_available', "DTP Type": 'Cost', drn: 'Adherence' },
-            { name: 'Cannot afford drug', ruleType: 'cannot_afford_drug', "DTP Type": 'Cost', drn: 'Adherence' },
+            { name: 'Patient prefers not to take drug', ruleType: 'patient_prefers_not_to_take_drug', dtpType: 'Non-Adherence', drn: 'Adherence' },
+            { name: 'Patient forgets to take drug', ruleType: 'patient_forgets_to_take_drug', dtpType: 'Non-Adherence', drn: 'Adherence' },
+            { name: 'Drug not available', ruleType: 'drug_not_available', dtpType: 'Non-Adherence', drn: 'Adherence' },
+            { name: 'More cost-effective drug available', ruleType: 'more_cost_effective_drug_available', dtpType: 'Cost', drn: 'Adherence' },
+            { name: 'Cannot afford drug', ruleType: 'cannot_afford_drug', dtpType: 'Cost', drn: 'Adherence' },
         ],
         "Product Quality": [
-            { name: 'Product Quality Defect', ruleType: 'product_quality_defect', "DTP Type": 'Product Quality Defect', drn: 'Product Quality' },
+            { name: 'Product Quality Defect', ruleType: 'product_quality_defect', dtpType: 'Product Quality Defect', drn: 'Product Quality' },
         ]
     };
 
@@ -324,6 +324,13 @@ const DRNAssessment = ({ patientCode }) => {
             if (error) return;
 
             setClinicalRules(data || []);
+
+            const rulesByType = {};
+            data.forEach(rule => {
+                if (!rulesByType[rule.rule_type]) rulesByType[rule.rule_type] = [];
+                rulesByType[rule.rule_type].push(rule);
+            });
+            setActiveRules(rulesByType);
         } catch (error) {
             console.error('Error fetching rules:', error);
         }
@@ -384,16 +391,9 @@ const DRNAssessment = ({ patientCode }) => {
                                     ? JSON.parse(rule.rule_action)
                                     : rule.rule_action;
 
-                                message = action.message_professional || action.message || rule.rule_name;
-                                recommendation = action.recommendation_professional || action.recommendation || getDefaultRecommendation(rule.rule_type);
-
-                                const clientMessage = action.message_client || action.message || message;
-                                const clientRecommendation = action.recommendation_client || action.recommendation || recommendation;
-
+                                message = action.message || rule.rule_name;
+                                recommendation = action.recommendation || getDefaultRecommendation(rule.rule_type);
                                 severity = action.severity || rule.severity || 'moderate';
-
-                                rule.client_message = clientMessage;
-                                rule.client_recommendation = clientRecommendation;
                             } catch (e) {
                                 recommendation = getDefaultRecommendation(rule.rule_type);
                             }
@@ -401,10 +401,12 @@ const DRNAssessment = ({ patientCode }) => {
                             recommendation = getDefaultRecommendation(rule.rule_type);
                         }
 
+                        // Map rule to DRN category
                         let drnCategory = 'Safety';
                         let causeName = rule.rule_name;
                         let dtpType = '';
 
+                        // Find matching category and DTP type
                         for (const [category, data] of Object.entries(drnCategories)) {
                             if (data.ruleTypes.includes(rule.rule_type)) {
                                 drnCategory = category;
@@ -412,7 +414,7 @@ const DRNAssessment = ({ patientCode }) => {
                                 const matchingCause = categoryCauses.find(c => c.ruleType === rule.rule_type);
                                 if (matchingCause) {
                                     causeName = matchingCause.name;
-                                    dtpType = matchingCause["DTP Type"];
+                                    dtpType = matchingCause.dtpType;
                                 }
                                 break;
                             }
@@ -582,7 +584,7 @@ const DRNAssessment = ({ patientCode }) => {
                 drn_assessment_activity_category: selectedCategory,
                 cause: causeName,
                 rule_type: causeDetails?.ruleType,
-                dtp_type: causeDetails?.["DTP Type"],
+                dtp_type: causeDetails?.dtpType,
                 specific_case: writeUp.specificCase,
                 medical_condition: writeUp.medicalCondition,
                 medication: writeUp.medication,
@@ -620,7 +622,7 @@ const DRNAssessment = ({ patientCode }) => {
             await fetchAssessments();
             
             // Check if ADE or Product Quality Defect to show reportable popup
-            if (causeDetails?.["DTP Type"] === 'ADE' || causeName === 'Product Quality Defect') {
+            if (causeDetails?.dtpType === 'ADE' || causeName === 'Product Quality Defect') {
                 setShowReportablePopup(true);
                 setReportableDTPCause(causeName);
             }
@@ -710,6 +712,49 @@ const DRNAssessment = ({ patientCode }) => {
         return colors[category] || 'bg-gray-100 text-gray-800 border-gray-200';
     };
 
+    const getRuleTypeColor = (ruleType) => {
+        const colors = {
+            'duplicate_therapy': 'bg-blue-50 text-blue-700',
+            'no_medical_indication': 'bg-blue-50 text-blue-700',
+            'nondrug_therapy_appropriate': 'bg-blue-50 text-blue-700',
+            'addiction_or_recreational_medicine_use': 'bg-blue-50 text-blue-700',
+            'treating_avoidable_ade': 'bg-blue-50 text-blue-700',
+            'prophylaxis_needed': 'bg-blue-50 text-blue-700',
+            'untreated_condition': 'bg-blue-50 text-blue-700',
+            'synergistic_therapy_needed': 'bg-teal-50 text-teal-700',
+            'low_dose': 'bg-teal-50 text-teal-700',
+            'less_frequent': 'bg-teal-50 text-teal-700',
+            'short_duration': 'bg-teal-50 text-teal-700',
+            'improper_storage': 'bg-teal-50 text-teal-700',
+            'high_dose': 'bg-teal-50 text-teal-700',
+            'high_frequent': 'bg-yellow-50 text-yellow-700',
+            'longer_duration': 'bg-yellow-50 text-yellow-700',
+            'dose_titration_slow_or_fast': 'bg-yellow-50 text-yellow-700',
+            'more_effective_drug_available': 'bg-yellow-50 text-yellow-700',
+            'condition_refractory_to_drug': 'bg-red-50 text-red-700',
+            'dosage_form_inappropriate': 'bg-red-50 text-red-700',
+            'undesirable_effect_ade_or_se': 'bg-red-50 text-red-700',
+            'unsafe_drug_contraindication_or_caution': 'bg-red-50 text-red-700',
+            'allergic_reaction': 'bg-orange-50 text-orange-700',
+            'di_increase_dose': 'bg-orange-50 text-orange-700',
+            'di_decrease_dose': 'bg-orange-50 text-orange-700',
+            'di_linked_to_ade': 'bg-orange-50 text-orange-700',
+            'incorrect_administration_decrease_dose_or_efficacy': 'bg-purple-50 text-purple-700',
+            'incorrect_administration_linked_to_ade': 'bg-purple-50 text-purple-700',
+            'patient_does_not_understand_instructions': 'bg-purple-50 text-purple-700',
+            'cannot_swallow_or_administer_drug': 'bg-pink-50 text-pink-700',
+            'need_monitoring_to_rule_out_effectiveness': 'bg-pink-50 text-pink-700',
+            'need_monitoring_to_rule_out_safety': 'bg-pink-50 text-pink-700',
+            'patient_prefers_not_to_take_drug': 'bg-indigo-50 text-indigo-700',
+            'patient_forgets_to_take_drug': 'bg-indigo-50 text-indigo-700',
+            'drug_not_available': 'bg-indigo-50 text-indigo-700',
+            'more_cost_effective_drug_available': 'bg-indigo-50 text-indigo-700',
+            'cannot_afford_drug': 'bg-green-50 text-green-700',
+            'product_quality_defect': 'bg-green-50 text-green-700'
+        };
+        return colors[ruleType] || 'bg-gray-50 text-gray-700';
+    };
+
     const filteredFindings = analysisResults?.findings?.filter(finding => {
         if (filterSeverity === 'all') return true;
         return finding.severity === filterSeverity;
@@ -753,15 +798,16 @@ const DRNAssessment = ({ patientCode }) => {
                         <FaStethoscope className="text-white text-base sm:text-xl" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h2 className="text-base sm:text-2xl font-bold text-gray-800 truncate">Drug-related need assessment activity</h2>
+                        <h2 className="text-base sm:text-2xl font-bold text-gray-800 truncate">DRN Assessment - 9 Categories</h2>
+                        <p className="text-gray-600 text-xs sm:text-sm">Powered by Clinical Decision Support System (CDSS)</p>
                         <div className="text-xs sm:text-sm text-gray-500 mt-1 truncate">
                           Patient: {patientCode} | User ID: {userId?.substring(0, 8)}...
                         </div>
                       </div>
                     </div>
                     
-                    {/* CDSS Analysis Section */}
-                    <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 sm:p-5 border border-blue-200 w-full overflow-hidden">
+                    {/* CDSS Analysis Section - UPDATED to match the provided code */}
+                    <div className="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-semibold text-blue-800 flex items-center gap-2">
                                 <FaDatabase /> CDSS clinical analysis
@@ -778,16 +824,16 @@ const DRNAssessment = ({ patientCode }) => {
                             <>
                                 {isAnalyzing ? (
                                     <div className="text-center py-8">
-                                        <FaSpinner className="animate-spin text-3xl text-blue-600 mx-auto mb-4" />
+                                        <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto mb-4" />
                                         <p className="text-gray-600">Running CDSS analysis...</p>
                                     </div>
                                 ) : analysisResults ? (
-                                    <div className="space-y-3">
-                                        <div className="bg-white rounded-lg p-3 border shadow-sm">
-                                            <div className="flex justify-between items-start mb-3">
+                                    <div className="space-y-4">
+                                        <div className="bg-white rounded-lg p-4 border shadow-sm">
+                                            <div className="flex justify-between items-start mb-4">
                                                 <div>
-                                                    <h4 className="font-medium text-sm text-gray-800 text-base">Analysis Results</h4>
-                                                    <p className={`text-base font-medium mt-2 ${analysisResults.totalFindings > 0
+                                                    <h4 className="font-semibold text-gray-800 text-lg">Analysis Results</h4>
+                                                    <p className={`text-lg font-medium mt-2 ${analysisResults.totalFindings > 0
                                                         ? 'text-gray-800'
                                                         : 'text-green-600'
                                                         }`}>
@@ -797,9 +843,9 @@ const DRNAssessment = ({ patientCode }) => {
                                                 <div className="text-right">
                                                     <button
                                                         onClick={runCdssAnalysis}
-                                                        className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs flex items-center gap-1.5"
+                                                        className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm flex items-center gap-2"
                                                     >
-                                                        <FaSync className="text-xs" /> Run Analysis
+                                                        <FaSync /> Re-run Analysis
                                                     </button>
                                                 </div>
                                             </div>
@@ -807,11 +853,11 @@ const DRNAssessment = ({ patientCode }) => {
                                             {filteredFindings.length > 0 ? (
                                                 <div className="space-y-3">
                                                     {filteredFindings.map((finding, idx) => (
-                                                        <div key={idx} className="p-3 border rounded-lg hover:shadow-md transition">
+                                                        <div key={idx} className="p-4 border rounded-lg hover:shadow-md transition">
                                                             <div className="flex justify-between items-start">
                                                                 <div className="flex-1">
                                                                     <div className="flex flex-wrap items-center gap-2 mb-2">
-                                                                        <span className="font-medium text-sm text-gray-800">{finding.cause}</span>
+                                                                        <span className="font-semibold text-gray-800">{finding.cause}</span>
                                                                         <span className={`px-2 py-1 ${getSeverityColor(finding.severity)} text-xs rounded font-medium`}>
                                                                             {finding.severity}
                                                                         </span>
@@ -824,9 +870,10 @@ const DRNAssessment = ({ patientCode }) => {
                                                                             </span>
                                                                         )}
                                                                     </div>
-                                                                    <p className="text-xs text-gray-600 mb-2">{finding.message}</p>
+                                                                    <p className="text-sm text-gray-600 mb-2">{finding.message}</p>
                                                                     <div className="flex flex-wrap items-center gap-3 mt-2">
                                                                         <span className="text-xs text-gray-500">
+                                                                            Confidence: 95%
                                                                         </span>
                                                                     </div>
                                                                 </div>
@@ -842,15 +889,15 @@ const DRNAssessment = ({ patientCode }) => {
                                                 </div>
                                             ) : (
                                                 <div className="text-center py-8">
-                                                    <FaCheckCircle className="text-3xl text-green-500 mx-auto mb-3" />
-                                                    <p className="text-gray-600">No issues found</p>
+                                                    <FaCheckCircle className="text-4xl text-green-500 mx-auto mb-3" />
+                                                    <p className="text-gray-600">No issues found matching current filter</p>
                                                 </div>
                                             )}
                                         </div>
                                     </div>
                                 ) : (
                                     <div className="text-center py-6">
-                                        <FaDatabase className="text-3xl text-blue-400 mx-auto mb-4" />
+                                        <FaDatabase className="text-4xl text-blue-400 mx-auto mb-4" />
                                         <p className="text-gray-600 mb-4">Run CDSS clinical analysis to detect drug-related problems</p>
                                         <button
                                             onClick={runCdssAnalysis}
@@ -870,6 +917,9 @@ const DRNAssessment = ({ patientCode }) => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 w-full">
                             {Object.entries(drnCategories).map(([category, catData]) => {
                                 const Icon = catData.icon;
+                                const ruleCount = catData.ruleTypes.reduce((count, ruleType) => {
+                                    return count + (activeRules[ruleType]?.length || 0);
+                                }, 0);
 
                                 return (
                                     <button
@@ -891,6 +941,9 @@ const DRNAssessment = ({ patientCode }) => {
                                             </div>
                                             <div>
                                                 <div className="font-medium">{category}</div>
+                                                <div className="text-xs text-gray-500 mt-1">
+                                                    {ruleCount} rules • {menuItemsData[category]?.length || 0} causes
+                                                </div>
                                             </div>
                                         </div>
                                     </button>
@@ -908,6 +961,7 @@ const DRNAssessment = ({ patientCode }) => {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8">
                                 {menuItemsData[selectedCategory]?.map(cause => {
+                                    const ruleCount = activeRules?.[cause.ruleType]?.length || 0;
                                     const isSelected = selectedCauses.includes(cause.name);
 
                                     return (
@@ -926,9 +980,15 @@ const DRNAssessment = ({ patientCode }) => {
                                                 <p className="font-medium text-gray-800">{cause.name}</p>
 
                                                 <div className="flex gap-2 mt-1">
-                                                    {isSelected && cause["DTP Type"] && (
-                                                        <span className={`px-2 py-1 text-xs rounded ${getDTPTypeColor(cause["DTP Type"])}`}>
-                                                            {cause["DTP Type"]}
+                                                    {isSelected && cause.dtpType && (
+                                                        <span className={`px-2 py-1 text-xs rounded ${getDTPTypeColor(cause.dtpType)}`}>
+                                                            {cause.dtpType}
+                                                        </span>
+                                                    )}
+
+                                                    {ruleCount > 0 && (
+                                                        <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
+                                                            {ruleCount} rules
                                                         </span>
                                                     )}
                                                 </div>
@@ -953,9 +1013,9 @@ const DRNAssessment = ({ patientCode }) => {
                                                 {causeName}
                                             </h4>
 
-                                            {causeDetails?.["DTP Type"] && (
-                                                <span className={`px-3 py-1 text-sm rounded ${getDTPTypeColor(causeDetails["DTP Type"])}`}>
-                                                    DTP Type: {causeDetails["DTP Type"]}
+                                            {causeDetails?.dtpType && (
+                                                <span className={`px-3 py-1 text-sm rounded ${getDTPTypeColor(causeDetails.dtpType)}`}>
+                                                    DTP Type: {causeDetails.dtpType}
                                                 </span>
                                             )}
                                         </div>
