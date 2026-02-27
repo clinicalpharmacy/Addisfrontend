@@ -719,8 +719,8 @@ const Signup = () => {
                             </h1>
                             <p className="text-gray-600">
                                 {isIndividual
-                                    ? 'High-performance clinical tools for independent professionals and healthcare clients.'
-                                    : 'Enterprise-grade solutions for healthcare organizations.'}
+                                    ? 'Educational and supportive clinical information for health professionals and healthcare clients.'
+                                    : 'Educational and supportive clinical information for pharmacies and healthcare facilities.'}
                             </p>
                         </div>
 
