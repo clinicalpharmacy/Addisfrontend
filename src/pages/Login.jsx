@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
     FaUserMd, FaLock, FaExclamationTriangle, FaSignInAlt,
     FaSpinner, FaUserCheck, FaBuilding, FaEnvelope, FaEye, FaEyeSlash,
-    FaShieldAlt, FaHeartbeat, FaCheckCircle, FaArrowRight
+    FaShieldAlt, FaHeartbeat, FaCheckCircle, FaArrowRight, FaIdCard
 } from 'react-icons/fa';
 
 // IMPORTANT: Update this URL to your actual backend URL
@@ -28,6 +28,7 @@ const Login = () => {
     const [isEmailValid, setIsEmailValid] = useState(false);
     const [passwordStrength, setPasswordStrength] = useState(0);
     const [currentSlide, setCurrentSlide] = useState(0);
+    const [loginMethod, setLoginMethod] = useState('email'); // 'email' or 'healthcareId'
 
     // Carousel messages for dynamic background
     const carouselMessages = [
@@ -80,6 +81,14 @@ const Login = () => {
         setIsEmailValid(emailRegex.test(formData.email));
     }, [formData.email]);
 
+    // Healthcare ID validation (basic format check)
+    const isHealthcareIdValid = () => {
+        if (!formData.email) return false;
+        // Check for HCC-XXXXXX-XXXXXX format (basic validation)
+        const healthcareIdRegex = /^HCC-[A-Z0-9]{6}-[A-Z0-9]{6}$/i;
+        return healthcareIdRegex.test(formData.email);
+    };
+
     // Password strength indicator (simple version)
     useEffect(() => {
         if (formData.password.length === 0) {
@@ -99,18 +108,22 @@ const Login = () => {
         setError('');
 
         if (!formData.email.trim() || !formData.password.trim()) {
-            setError('Email and password are required');
+            setError('Email/Healthcare ID and password are required');
             setLoading(false);
             return;
         }
 
+        // Determine if this is a healthcare client login (using HCC ID format)
+        const isHealthcareClient = /^HCC-/i.test(formData.email.trim());
+
         try {
-            console.log('🔐 Attempting login for:', formData.email);
+            console.log(`🔐 Attempting login for: ${formData.email} (${isHealthcareClient ? 'Healthcare Client' : 'Regular User'})`);
 
             // Using centralized api utility
             const data = await api.post('/auth/login', {
                 email: formData.email.trim().toLowerCase(),
-                password: formData.password.trim()
+                password: formData.password.trim(),
+                login_method: isHealthcareClient ? 'healthcare_id' : 'email'
             });
 
             console.log('✅ Login successful:', data);
@@ -127,6 +140,11 @@ const Login = () => {
                 localStorage.setItem('subscription_status', data.user.subscription_status || 'inactive');
                 localStorage.setItem('subscription_end_date', data.user.subscription_end_date || '');
                 localStorage.setItem('has_subscription', data.user.subscription_status === 'active' ? 'true' : 'false');
+                
+                // Store healthcare client ID if applicable
+                if (data.user.healthcare_client_id) {
+                    localStorage.setItem('healthcare_client_id', data.user.healthcare_client_id);
+                }
             }
 
             // Redirect based on role
@@ -221,6 +239,12 @@ const Login = () => {
 
     const testLogin = (email, password) => {
         setFormData({ email, password });
+        // Auto-detect login method based on email format
+        if (/^HCC-/i.test(email)) {
+            setLoginMethod('healthcareId');
+        } else {
+            setLoginMethod('email');
+        }
     };
 
     const getPasswordStrengthColor = () => {
@@ -299,6 +323,40 @@ const Login = () => {
                             Welcome Back
                         </h2>
                         <p className="text-sm md:text-base text-gray-600">Sign in to continue your journey</p>
+                        
+                        {/* Login Method Toggle */}
+                        <div className="flex items-center justify-center gap-2 mt-4 bg-gray-100 p-1 rounded-xl">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setLoginMethod('email');
+                                    setFormData({ ...formData, email: '' });
+                                    setError('');
+                                }}
+                                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${loginMethod === 'email'
+                                    ? 'bg-white text-blue-600 shadow-md'
+                                    : 'text-gray-600 hover:text-gray-800'
+                                    }`}
+                            >
+                                <FaEnvelope />
+                                Email
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setLoginMethod('healthcareId');
+                                    setFormData({ ...formData, email: '' });
+                                    setError('');
+                                }}
+                                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${loginMethod === 'healthcareId'
+                                    ? 'bg-white text-green-600 shadow-md'
+                                    : 'text-gray-600 hover:text-gray-800'
+                                    }`}
+                            >
+                                <FaIdCard />
+                                Healthcare ID
+                            </button>
+                        </div>
                     </div>
 
                     {/* Error Message with Animation */}
@@ -316,34 +374,51 @@ const Login = () => {
 
                     {/* Login Form */}
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        {/* Email Field */}
+                        {/* Email/Healthcare ID Field */}
                         <div>
                             <label className={`block text-sm font-medium mb-2 transition-colors duration-300 ${focusedField === 'email' ? 'text-blue-600' : 'text-gray-700'}`}>
-                                Email Address
+                                {loginMethod === 'email' ? 'Email Address' : 'Healthcare Client ID'}
                             </label>
                             <div className="relative group">
                                 <input
-                                    type="email"
+                                    type={loginMethod === 'email' ? "email" : "text"}
                                     value={formData.email}
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                     onFocus={() => setFocusedField('email')}
                                     onBlur={() => setFocusedField(null)}
                                     className={`w-full px-4 py-4 pl-12 border-2 rounded-xl outline-none transition-all duration-300 ${focusedField === 'email'
                                         ? 'border-blue-500 shadow-lg shadow-blue-100'
-                                        : isEmailValid && formData.email
-                                            ? 'border-green-500'
-                                            : 'border-gray-200 hover:border-gray-300'
+                                        : loginMethod === 'email'
+                                            ? isEmailValid && formData.email
+                                                ? 'border-green-500'
+                                                : 'border-gray-200 hover:border-gray-300'
+                                            : isHealthcareIdValid() && formData.email
+                                                ? 'border-green-500'
+                                                : 'border-gray-200 hover:border-gray-300'
                                         }`}
-                                    placeholder="your@email.com"
+                                    placeholder={loginMethod === 'email' ? "your@email.com" : "HCC-XXXXXX-XXXXXX"}
                                     required
                                     disabled={loading}
                                 />
-                                <FaEnvelope className={`absolute left-4 top-1/2 transform -translate-y-1/2 transition-colors duration-300 ${focusedField === 'email' ? 'text-blue-500' : 'text-gray-400'
-                                    }`} />
-                                {isEmailValid && formData.email && (
+                                {loginMethod === 'email' ? (
+                                    <FaEnvelope className={`absolute left-4 top-1/2 transform -translate-y-1/2 transition-colors duration-300 ${focusedField === 'email' ? 'text-blue-500' : 'text-gray-400'
+                                        }`} />
+                                ) : (
+                                    <FaIdCard className={`absolute left-4 top-1/2 transform -translate-y-1/2 transition-colors duration-300 ${focusedField === 'email' ? 'text-blue-500' : 'text-gray-400'
+                                        }`} />
+                                )}
+                                {loginMethod === 'email' && isEmailValid && formData.email && (
+                                    <FaCheckCircle className="absolute right-4 top-1/2 transform -translate-y-1/2 text-green-500 animate-scale-in" />
+                                )}
+                                {loginMethod === 'healthcareId' && isHealthcareIdValid() && formData.email && (
                                     <FaCheckCircle className="absolute right-4 top-1/2 transform -translate-y-1/2 text-green-500 animate-scale-in" />
                                 )}
                             </div>
+                            {loginMethod === 'healthcareId' && (
+                                <p className="text-xs text-gray-500 mt-2">
+                                    Enter your Healthcare Client ID (format: HCC-XXXXXX-XXXXXX)
+                                </p>
+                            )}
                         </div>
 
                         {/* Password Field */}
@@ -441,7 +516,7 @@ const Login = () => {
                     {process.env.NODE_ENV === 'development' && (
                         <div className="mt-6 p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
                             <p className="text-sm text-gray-600 mb-3 font-medium">Quick Test (Dev Only):</p>
-                            <div className="flex gap-2">
+                            <div className="flex flex-wrap gap-2">
                                 <button
                                     onClick={() => testLogin('admin@pharmacare.com', 'Admin@123')}
                                     className="flex-1 px-3 py-2 text-xs bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg transition-all transform hover:scale-105 shadow-md"
@@ -453,6 +528,12 @@ const Login = () => {
                                     className="flex-1 px-3 py-2 text-xs bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg transition-all transform hover:scale-105 shadow-md"
                                 >
                                     Test User
+                                </button>
+                                <button
+                                    onClick={() => testLogin('HCC-K3M9X2-8A4F6B', 'healthcare123')}
+                                    className="flex-1 px-3 py-2 text-xs bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg transition-all transform hover:scale-105 shadow-md"
+                                >
+                                    Healthcare Client
                                 </button>
                             </div>
                         </div>
