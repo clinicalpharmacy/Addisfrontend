@@ -12,8 +12,6 @@ import {
     FaTint, FaUserInjured, FaHistory, FaNotesMedical, FaPrescription,
     FaMicroscope, FaBox, FaClock, FaProcedures, FaUser, FaExclamationCircle
 } from 'react-icons/fa';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEdit, faTrash, faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
 
 const DRNAssessment = ({ patientCode }) => {
     const [assessments, setAssessments] = useState([]);
@@ -41,10 +39,8 @@ const DRNAssessment = ({ patientCode }) => {
     const [reportableDTPCause, setReportableDTPCause] = useState(null);
     const [showDefectLink, setShowDefectLink] = useState(false);
     const [editingIndex, setEditingIndex] = useState(null);
-    const [aiAnalysis, setAiAnalysis] = useState(null);
-    const [showAnalysisResults, setShowAnalysisResults] = useState(false);
 
-    // ✅ 9 DRN Categories matching original structure
+    // ✅ 9 DRN Categories
     const drnCategories = {
         Indication: {
             icon: FaClipboardCheck,
@@ -102,7 +98,7 @@ const DRNAssessment = ({ patientCode }) => {
         }
     };
 
-    // ✅ Menu items matching original structure with DTP Type included
+    // ✅ Menu items with DTP Type included
     const menuItemsData = {
         Indication: [
             { name: 'Duplicate Therapy', ruleType: 'duplicate_therapy', "DTP Type": 'Unnecessary Drug Therapy', drn: 'Indication' },
@@ -365,48 +361,6 @@ const DRNAssessment = ({ patientCode }) => {
         } finally {
             setIsLoading(false);
         }
-    };
-
-    const analyzeWithAI = () => {
-        setIsAnalyzing(true);
-        setShowAnalysisResults(true);
-        
-        setTimeout(() => {
-            if (!patientData || medications.length === 0) {
-                setAiAnalysis({
-                    summary: "Insufficient data for analysis",
-                    details: "Please ensure patient data and medication history are available",
-                    detectedDTPs: []
-                });
-            } else {
-                const detected = [];
-                
-                medications.forEach(med => {
-                    if (med.drug_class === 'Antimicrobial' && !med.stop_date) {
-                        detected.push({
-                            cause: "Longer Duration",
-                            evidence: `${med.drug_name} has extended duration (IDSA Guideline)`,
-                            category: "Dosage"
-                        });
-                    }
-                    
-                    if (med.drug_class === 'NSAID' && patientData.age > 65) {
-                        detected.push({
-                            cause: "Unsafe Drug",
-                            evidence: `${med.drug_name} use in elderly patient (Beers Criteria)`,
-                            category: "Contraindication or Caution or ADE or SE or Allergy"
-                        });
-                    }
-                });
-
-                setAiAnalysis({
-                    summary: detected.length > 0 ? `${detected.length} potential DTP Cause(s) detected` : "No critical issues found",
-                    detectedDTPs: detected,
-                    lastUpdated: new Date().toLocaleString()
-                });
-            }
-            setIsAnalyzing(false);
-        }, 1500);
     };
 
     const runCdssAnalysis = async () => {
@@ -708,25 +662,6 @@ const DRNAssessment = ({ patientCode }) => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    const handleDeleteAssessment = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this assessment?')) return;
-
-        try {
-            const { error } = await supabase
-                .from('drn_assessments')
-                .delete()
-                .eq('id', id);
-
-            if (error) throw error;
-
-            setAssessments(assessments.filter(ass => ass.id !== id));
-            alert('Assessment deleted successfully!');
-        } catch (error) {
-            console.error('Error deleting assessment:', error);
-            alert('Error deleting assessment: ' + error.message);
-        }
-    };
-
     const handleReviewFinding = (finding) => {
         setSelectedCategory(finding.category);
         setSelectedCauses([finding.cause]);
@@ -827,84 +762,11 @@ const DRNAssessment = ({ patientCode }) => {
                             <FaStethoscope className="text-white text-xl" />
                         </div>
                         <div>
-                            <h2 className="text-2xl font-bold text-gray-800">Drug-related Need Assessment Activity</h2>
-                            <p className="text-gray-600">Powered by Clinical Decision Support System (CDSS)</p>
+                            <h2 className="text-2xl font-bold text-gray-800">Drug-related need assessment activity</h2>
                             <div className="text-sm text-gray-500 mt-1">
                                 Patient: {patientCode} | User ID: {userId?.substring(0, 8)}...
                             </div>
                         </div>
-                    </div>
-
-                    {/* AI Analysis Section */}
-                    <div className="bg-white p-6 mb-6 rounded-xl shadow-lg border border-blue-200">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold text-blue-800">AI DRN Assessment</h2>
-                            <div className="flex items-center space-x-4">
-                                <button
-                                    onClick={() => setShowAnalysisResults(!showAnalysisResults)}
-                                    className="text-blue-600 hover:text-blue-800 transition-colors"
-                                >
-                                    <FontAwesomeIcon icon={showAnalysisResults ? faChevronUp : faChevronDown} />
-                                    <span className="ml-2">{showAnalysisResults ? 'Hide Results' : 'Show Results'}</span>
-                                </button>
-                                <button
-                                    onClick={analyzeWithAI}
-                                    disabled={isAnalyzing}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
-                                >
-                                    {isAnalyzing ? 'Analyzing...' : 'Run Analysis'}
-                                </button>
-                            </div>
-                        </div>
-
-                        {showAnalysisResults && (
-                            <>
-                                {isAnalyzing ? (
-                                    <div className="text-center py-4">
-                                        <div className="inline-flex items-center space-x-2">
-                                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-                                            <span>Analyzing {medications.length} medications...</span>
-                                        </div>
-                                    </div>
-                                ) : aiAnalysis ? (
-                                    <div className="space-y-4">
-                                        <div className={`p-4 rounded-lg ${
-                                            aiAnalysis.detectedDTPs.length > 0 ? 'bg-blue-50 border border-blue-200' : 'bg-green-50 border border-green-200'
-                                        }`}>
-                                            <p className="font-medium">
-                                                {aiAnalysis.summary}
-                                                {aiAnalysis.details && <span className="block text-sm mt-1">{aiAnalysis.details}</span>}
-                                            </p>
-                                        </div>
-
-                                        {aiAnalysis.detectedDTPs.map((dtp, index) => (
-                                            <div key={index} className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                                                <div className="flex justify-between items-start">
-                                                    <div>
-                                                        <h3 className="font-bold text-yellow-800">{dtp.cause}</h3>
-                                                        <p className="text-sm text-gray-700 mt-1">{dtp.evidence}</p>
-                                                    </div>
-                                                    <button
-                                                        onClick={() => {
-                                                            setSelectedCategory(dtp.category);
-                                                            setSelectedCauses([dtp.cause]);
-                                                        }}
-                                                        className="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm rounded hover:bg-yellow-200"
-                                                    >
-                                                        Review
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 text-center text-gray-600">
-                                        <p>No analysis performed yet</p>
-                                        <p className="text-sm mt-1">Analyzed data will appear here</p>
-                                    </div>
-                                )}
-                            </>
-                        )}
                     </div>
 
                     {/* CDSS Analysis Section */}
@@ -994,7 +856,7 @@ const DRNAssessment = ({ patientCode }) => {
                                                     <p className="text-gray-600">No issues found matching current filter</p>
                                                 </div>
                                             )}
-                                        </div>
+                                                        </div>
                                     </div>
                                 ) : (
                                     <div className="text-center py-6">
@@ -1014,7 +876,7 @@ const DRNAssessment = ({ patientCode }) => {
 
                     {/* 9 Category Selection */}
                     <div className="mb-8" id="assessment-form">
-                        <h3 className="text-lg font-semibold mb-4 text-gray-800">Select DRN Category (9 Categories)</h3>
+                        <h3 className="text-lg font-semibold mb-4 text-gray-800">Select Drug-related need assessment category</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             {Object.entries(drnCategories).map(([category, catData]) => {
                                 const Icon = catData.icon;
@@ -1252,12 +1114,10 @@ const DRNAssessment = ({ patientCode }) => {
                                     <thead className="bg-gray-100">
                                         <tr>
                                             <th className="p-4 text-left font-medium text-gray-700">Category</th>
-                                            <th className="p-4 text-left font-medium text-gray-700">Cause</th>
                                             <th className="p-4 text-left font-medium text-gray-700">DTP Type</th>
                                             <th className="p-4 text-left font-medium text-gray-700">Specific Case</th>
                                             <th className="p-4 text-left font-medium text-gray-700">Medical Condition</th>
                                             <th className="p-4 text-left font-medium text-gray-700">Medication</th>
-                                            <th className="p-4 text-left font-medium text-gray-700">Status</th>
                                             <th className="p-4 text-left font-medium text-gray-700">Date</th>
                                             <th className="p-4 text-left font-medium text-gray-700">Actions</th>
                                         </tr>
@@ -1270,7 +1130,6 @@ const DRNAssessment = ({ patientCode }) => {
                                                         {assessment.category}
                                                     </span>
                                                 </td>
-                                                <td className="p-4 font-medium text-gray-800">{assessment.cause_name}</td>
                                                 <td className="p-4">
                                                     <span className={`px-2 py-1 text-xs rounded ${getDTPTypeColor(assessment.dtp_type)}`}>
                                                         {assessment.dtp_type || 'N/A'}
@@ -1279,14 +1138,6 @@ const DRNAssessment = ({ patientCode }) => {
                                                 <td className="p-4 text-sm text-gray-700 max-w-xs">{assessment.specific_case}</td>
                                                 <td className="p-4 text-sm text-gray-700">{assessment.medical_condition}</td>
                                                 <td className="p-4 text-sm text-gray-700">{assessment.medication}</td>
-                                                <td className="p-4">
-                                                    <span className={`px-2 py-1 text-xs rounded-full ${assessment.status === 'active' ? 'bg-yellow-100 text-yellow-800' :
-                                                        assessment.status === 'resolved' ? 'bg-green-100 text-green-800' :
-                                                            'bg-blue-100 text-blue-800'
-                                                        }`}>
-                                                        {assessment.status}
-                                                    </span>
-                                                </td>
                                                 <td className="p-4 text-sm text-gray-600">
                                                     {new Date(assessment.created_at).toLocaleDateString()}
                                                 </td>
@@ -1298,13 +1149,6 @@ const DRNAssessment = ({ patientCode }) => {
                                                             title="Edit assessment"
                                                         >
                                                             <FaEdit />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDeleteAssessment(assessment.id)}
-                                                            className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded"
-                                                            title="Delete assessment"
-                                                        >
-                                                            <FaTrash />
                                                         </button>
                                                     </div>
                                                 </td>
