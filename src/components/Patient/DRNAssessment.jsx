@@ -717,9 +717,9 @@ const DRNAssessment = ({ patientCode }) => {
 
     if (authError) {
         return (
-            <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="bg-white rounded-xl shadow-lg p-4 w-full overflow-hidden">
                 <div className="text-center py-12">
-                    <FaExclamationCircle className="text-4xl text-yellow-500 mx-auto mb-4" />
+                    <FaExclamationCircle className="text-3xl text-yellow-500 mx-auto mb-4" />
                     <h3 className="text-xl font-semibold text-gray-800 mb-2">Authentication Required</h3>
                     <p className="text-gray-600 mb-4">{authError}</p>
                     <button
@@ -735,9 +735,9 @@ const DRNAssessment = ({ patientCode }) => {
 
     if (!patientId || !userId) {
         return (
-            <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="bg-white rounded-xl shadow-lg p-4 w-full overflow-hidden">
                 <div className="text-center py-12">
-                    <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto mb-4" />
+                    <FaSpinner className="animate-spin text-3xl text-blue-600 mx-auto mb-4" />
                     <p className="text-gray-600">Initializing DRN Assessment...</p>
                 </div>
             </div>
@@ -745,23 +745,23 @@ const DRNAssessment = ({ patientCode }) => {
     }
 
     return (
-        <div className="bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen p-6">
-            <div className="max-w-7xl mx-auto">
-                <div className="bg-white rounded-xl shadow-lg p-6">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="bg-gradient-to-br from-purple-600 to-blue-600 p-3 rounded-full">
-                            <FaStethoscope className="text-white text-xl" />
+        <div className="bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen p-4 w-full overflow-x-hidden">
+            <div className="w-full max-w-full mx-auto px-2">
+                <div className="bg-white rounded-xl shadow-lg p-4 w-full overflow-hidden">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="bg-gradient-to-br from-purple-600 to-blue-600 p-2 sm:p-3 rounded-full flex-shrink-0">
+                        <FaStethoscope className="text-white text-lg sm:text-xl" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h2 className="text-lg sm:text-2xl font-bold text-gray-800 truncate">Drug-related need assessment activity</h2>
+                        <div className="text-xs sm:text-sm text-gray-500 mt-1 truncate">
+                          Patient: {patientCode} | User ID: {userId?.substring(0, 8)}...
                         </div>
-                        <div>
-                            <h2 className="text-2xl font-bold text-gray-800">Drug-related need assessment activity</h2>
-                            <div className="text-sm text-gray-500 mt-1">
-                                Patient: {patientCode} | User ID: {userId?.substring(0, 8)}...
-                            </div>
-                        </div>
+                      </div>
                     </div>
-
+                    
                     {/* CDSS Analysis Section */}
-                    <div className="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
+                    <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200 w-full overflow-hidden">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-semibold text-blue-800 flex items-center gap-2">
                                 <FaDatabase /> CDSS clinical analysis
@@ -778,16 +778,16 @@ const DRNAssessment = ({ patientCode }) => {
                             <>
                                 {isAnalyzing ? (
                                     <div className="text-center py-8">
-                                        <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto mb-4" />
+                                        <FaSpinner className="animate-spin text-3xl text-blue-600 mx-auto mb-4" />
                                         <p className="text-gray-600">Running CDSS analysis...</p>
                                     </div>
                                 ) : analysisResults ? (
-                                    <div className="space-y-4">
-                                        <div className="bg-white rounded-lg p-4 border shadow-sm">
+                                    <div className="space-y-3">
+                                        <div className="bg-white rounded-lg p-3 border shadow-sm">
                                             <div className="flex justify-between items-start mb-4">
                                                 <div>
-                                                    <h4 className="font-semibold text-gray-800 text-lg">Analysis Results</h4>
-                                                    <p className={`text-lg font-medium mt-2 ${analysisResults.totalFindings > 0
+                                                    <h4 className="font-medium text-sm text-gray-800 text-base">Analysis Results</h4>
+                                                    <p className={`text-base font-medium mt-2 ${analysisResults.totalFindings > 0
                                                         ? 'text-gray-800'
                                                         : 'text-green-600'
                                                         }`}>
@@ -807,11 +807,11 @@ const DRNAssessment = ({ patientCode }) => {
                                             {filteredFindings.length > 0 ? (
                                                 <div className="space-y-3">
                                                     {filteredFindings.map((finding, idx) => (
-                                                        <div key={idx} className="p-4 border rounded-lg hover:shadow-md transition">
+                                                        <div key={idx} className="p-3 border rounded-lg hover:shadow-md transition">
                                                             <div className="flex justify-between items-start">
                                                                 <div className="flex-1">
                                                                     <div className="flex flex-wrap items-center gap-2 mb-2">
-                                                                        <span className="font-semibold text-gray-800">{finding.cause}</span>
+                                                                        <span className="font-medium text-sm text-gray-800">{finding.cause}</span>
                                                                         <span className={`px-2 py-1 ${getSeverityColor(finding.severity)} text-xs rounded font-medium`}>
                                                                             {finding.severity}
                                                                         </span>
@@ -824,10 +824,9 @@ const DRNAssessment = ({ patientCode }) => {
                                                                             </span>
                                                                         )}
                                                                     </div>
-                                                                    <p className="text-sm text-gray-600 mb-2">{finding.message}</p>
+                                                                    <p className="text-xs text-gray-600 mb-2">{finding.message}</p>
                                                                     <div className="flex flex-wrap items-center gap-3 mt-2">
                                                                         <span className="text-xs text-gray-500">
-                                                                            Confidence: 95%
                                                                         </span>
                                                                     </div>
                                                                 </div>
@@ -843,7 +842,7 @@ const DRNAssessment = ({ patientCode }) => {
                                                 </div>
                                             ) : (
                                                 <div className="text-center py-8">
-                                                    <FaCheckCircle className="text-4xl text-green-500 mx-auto mb-3" />
+                                                    <FaCheckCircle className="text-3xl text-green-500 mx-auto mb-3" />
                                                     <p className="text-gray-600">No issues found</p>
                                                 </div>
                                             )}
@@ -851,7 +850,7 @@ const DRNAssessment = ({ patientCode }) => {
                                     </div>
                                 ) : (
                                     <div className="text-center py-6">
-                                        <FaDatabase className="text-4xl text-blue-400 mx-auto mb-4" />
+                                        <FaDatabase className="text-3xl text-blue-400 mx-auto mb-4" />
                                         <p className="text-gray-600 mb-4">Run CDSS clinical analysis to detect drug-related problems</p>
                                         <button
                                             onClick={runCdssAnalysis}
@@ -867,8 +866,8 @@ const DRNAssessment = ({ patientCode }) => {
 
                     {/* 9 Category Selection */}
                     <div className="mb-8" id="assessment-form">
-                        <h3 className="text-lg font-semibold mb-4 text-gray-800">Select Drug-related need assessment category</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <h3 className="text-base font-semibold mb-4 text-gray-800">Select Drug-related need assessment category</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 w-full">
                             {Object.entries(drnCategories).map(([category, catData]) => {
                                 const Icon = catData.icon;
 
@@ -881,7 +880,7 @@ const DRNAssessment = ({ patientCode }) => {
                                             setWriteUps({});
                                             setEditId(null);
                                         }}
-                                        className={`p-4 rounded-lg text-left transition-all duration-200 border ${selectedCategory === category
+                                        className={`p-3 rounded-lg text-left transition-all duration-200 border ${selectedCategory === category
                                             ? 'border-blue-500 bg-blue-50 text-blue-800 shadow-sm'
                                             : 'border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700 hover:shadow'
                                             }`}
@@ -903,18 +902,18 @@ const DRNAssessment = ({ patientCode }) => {
                     {/* Cause Selection and Form */}
                     {selectedCategory && (
                         <div className="mb-8 p-6 border rounded-lg bg-gray-50">
-                            <h3 className="text-lg font-semibold mb-6 text-gray-800">
+                            <h3 className="text-base font-semibold mb-6 text-gray-800">
                                 {selectedCategory} - Select Causes
                             </h3>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8">
                                 {menuItemsData[selectedCategory]?.map(cause => {
                                     const isSelected = selectedCauses.includes(cause.name);
 
                                     return (
                                         <div
                                             key={cause.name}
-                                            className="flex items-center gap-3 p-4 border rounded-lg bg-white hover:shadow transition"
+                                            className="flex items-center gap-3 p-3 border rounded-lg bg-white hover:shadow transition"
                                         >
                                             <input
                                                 type="checkbox"
@@ -950,7 +949,7 @@ const DRNAssessment = ({ patientCode }) => {
                                         className="mb-8 p-6 border rounded-lg bg-white shadow-sm"
                                     >
                                         <div className="flex justify-between items-center mb-6">
-                                            <h4 className="font-semibold text-lg text-gray-800">
+                                            <h4 className="font-semibold text-base text-gray-800">
                                                 {causeName}
                                             </h4>
 
@@ -1023,7 +1022,7 @@ const DRNAssessment = ({ patientCode }) => {
                                             </div>
                                         </div>
 
-                                        <div className="flex gap-4 mt-8">
+                                        <div className="flex gap-3 mt-8">
                                             <button
                                                 onClick={() => saveAssessment(causeName)}
                                                 className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-lg font-medium shadow-md"
@@ -1063,7 +1062,7 @@ const DRNAssessment = ({ patientCode }) => {
                     {/* Saved Assessments Table */}
                     <div className="mt-12">
                         <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-semibold text-gray-800">
+                            <h3 className="text-xl font-medium text-sm text-gray-800">
                                 Saved Assessments ({assessments.length})
                             </h3>
                             {assessments.length > 0 && (
@@ -1078,46 +1077,46 @@ const DRNAssessment = ({ patientCode }) => {
 
                         {isLoading ? (
                             <div className="text-center py-8">
-                                <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto mb-4" />
+                                <FaSpinner className="animate-spin text-3xl text-blue-600 mx-auto mb-4" />
                                 <p className="text-gray-600">Loading assessments...</p>
                             </div>
                         ) : assessments.length === 0 ? (
                             <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
-                                <FaStethoscope className="text-4xl text-gray-300 mx-auto mb-3" />
+                                <FaStethoscope className="text-3xl text-gray-300 mx-auto mb-3" />
                                 <p className="text-gray-500">No assessments saved yet.</p>
                             </div>
                         ) : (
-                            <div className="overflow-x-auto rounded-lg border">
-                                <table className="w-full">
-                                    <thead className="bg-gray-100">
+                            <div className="w-full overflow-x-auto rounded-lg border">
+                              <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-100">
                                         <tr>
-                                            <th className="p-4 text-left font-medium text-gray-700">DRN Assessment Activity Category</th>
-                                            <th className="p-4 text-left font-medium text-gray-700">Cause</th>
-                                            <th className="p-4 text-left font-medium text-gray-700">DTP Type</th>
-                                            <th className="p-4 text-left font-medium text-gray-700">Specific Case</th>
-                                            <th className="p-4 text-left font-medium text-gray-700">Medical Condition</th>
-                                            <th className="p-4 text-left font-medium text-gray-700">Medication</th>
-                                            <th className="p-4 text-left font-medium text-gray-700">Date</th>
-                                            <th className="p-4 text-left font-medium text-gray-700">Actions</th>
+                                            <th className="p-3 text-left font-medium text-gray-700">DRN Assessment Activity Category</th>
+                                            <th className="p-3 text-left font-medium text-gray-700">Cause</th>
+                                            <th className="p-3 text-left font-medium text-gray-700">DTP Type</th>
+                                            <th className="p-3 text-left font-medium text-gray-700">Specific Case</th>
+                                            <th className="p-3 text-left font-medium text-gray-700">Medical Condition</th>
+                                            <th className="p-3 text-left font-medium text-gray-700">Medication</th>
+                                            <th className="p-3 text-left font-medium text-gray-700">Date</th>
+                                            <th className="p-3 text-left font-medium text-gray-700">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {assessments.map((assessment, index) => (
                                             <tr key={assessment.id} className="border-t hover:bg-gray-50">
-                                                <td className="p-4 text-sm text-gray-700">{assessment.drn_assessment_activity_category}</td>
-                                                <td className="p-4 font-medium text-gray-800">{assessment.cause}</td>
-                                                <td className="p-4">
+                                                <td className="p-3 text-sm text-gray-700">{assessment.drn_assessment_activity_category}</td>
+                                                <td className="p-3 font-medium text-gray-800">{assessment.cause}</td>
+                                                <td className="p-3">
                                                     <span className={`px-2 py-1 text-xs rounded ${getDTPTypeColor(assessment.dtp_type)}`}>
                                                         {assessment.dtp_type || 'N/A'}
                                                     </span>
                                                 </td>
-                                                <td className="p-4 text-sm text-gray-700 max-w-xs">{assessment.specific_case}</td>
-                                                <td className="p-4 text-sm text-gray-700">{assessment.medical_condition}</td>
-                                                <td className="p-4 text-sm text-gray-700">{assessment.medication}</td>
-                                                <td className="p-4 text-sm text-gray-600">
+                                                <td className="p-3 text-sm text-gray-700 max-w-xs">{assessment.specific_case}</td>
+                                                <td className="p-3 text-sm text-gray-700">{assessment.medical_condition}</td>
+                                                <td className="p-3 text-sm text-gray-700">{assessment.medication}</td>
+                                                <td className="p-3 text-xs text-gray-600">
                                                     {new Date(assessment.created_at).toLocaleDateString()}
                                                 </td>
-                                                <td className="p-4">
+                                                <td className="p-3">
                                                     <div className="flex gap-2">
                                                         <button
                                                             onClick={() => handleEdit(assessment)}
@@ -1142,7 +1141,7 @@ const DRNAssessment = ({ patientCode }) => {
             {showReportablePopup && (
                 <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-gray-900 bg-opacity-50 z-50">
                     <div className="bg-white p-10 rounded-xl shadow-lg">
-                        <p className="mb-8 text-gray-700 text-lg">Is this ADE reportable?</p>
+                        <p className="mb-8 text-gray-700 text-base">Is this ADE reportable?</p>
                         <div className="flex gap-6">
                             <button
                                 onClick={() => handleReportableResponse(true)}
