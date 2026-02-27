@@ -3,14 +3,9 @@ import supabase from '../../utils/supabase';
 import { mapPatientToFacts, evaluateRule } from '../CDSS/RuleEngine';
 import {
     FaStethoscope, FaEdit, FaDatabase, FaChevronUp, FaChevronDown,
-    FaPills, FaFlask, FaUserMd, FaChartLine, FaDownload, FaSync,
-    FaExclamationTriangle, FaCheckCircle, FaSpinner, FaSearch,
-    FaHeartbeat, FaClipboardCheck, FaShieldAlt, FaUserCheck,
-    FaMoneyBillWave, FaCapsules, FaTrash, FaPlus, FaFilter,
-    FaSortAmountDown, FaFileMedical, FaClipboardList, FaRegCopy,
-    FaCog, FaBell, FaFileAlt, FaVial, FaBalanceScale, FaSyringe,
-    FaTint, FaUserInjured, FaHistory, FaNotesMedical, FaPrescription,
-    FaMicroscope, FaBox, FaClock, FaProcedures, FaUser, FaExclamationCircle
+    FaPills, FaExclamationTriangle, FaCheckCircle, FaSpinner,
+    FaHeartbeat, FaClipboardCheck, FaUserCheck,
+    FaCapsules, FaSync
 } from 'react-icons/fa';
 
 const DRNAssessment = ({ patientCode }) => {
@@ -26,10 +21,8 @@ const DRNAssessment = ({ patientCode }) => {
     const [showAnalysis, setShowAnalysis] = useState(true);
     const [patientData, setPatientData] = useState(null);
     const [medications, setMedications] = useState([]);
-    const [labs, setLabs] = useState({});
     const [clinicalRules, setClinicalRules] = useState([]);
     const [activeRules, setActiveRules] = useState({});
-    const [showRulesInfo, setShowRulesInfo] = useState(false);
     const [filterSeverity, setFilterSeverity] = useState('all');
     const [userId, setUserId] = useState(null);
     const [patientId, setPatientId] = useState(null);
@@ -38,7 +31,6 @@ const DRNAssessment = ({ patientCode }) => {
     const [showReportablePopup, setShowReportablePopup] = useState(false);
     const [reportableDTPCause, setReportableDTPCause] = useState(null);
     const [showDefectLink, setShowDefectLink] = useState(false);
-    const [editingIndex, setEditingIndex] = useState(null);
 
     // ✅ 9 DRN Categories
     const drnCategories = {
@@ -73,7 +65,7 @@ const DRNAssessment = ({ patientCode }) => {
             description: 'Drug interactions'
         },
         Administration: {
-            icon: FaUserMd,
+            icon: FaStethoscope,
             color: 'purple',
             ruleTypes: ['incorrect_administration_decrease_dose_or_efficacy', 'incorrect_administration_linked_to_ade', 'patient_does_not_understand_instructions', 'cannot_swallow_or_administer_drug'],
             description: 'Administration related problems'
@@ -238,11 +230,13 @@ const DRNAssessment = ({ patientCode }) => {
         }
     };
 
-    // Initialize component
+    // Initialize component with cleanup
     useEffect(() => {
+        let isMounted = true;
+
         const initializeComponent = async () => {
             if (!patientCode) {
-                setAuthError('Patient code is required');
+                if (isMounted) setAuthError('Patient code is required');
                 return;
             }
 
@@ -260,26 +254,44 @@ const DRNAssessment = ({ patientCode }) => {
                 }
 
                 if (!currentUserId) {
-                    setAuthError('Please log in to use DRN Assessment.');
+                    if (isMounted) setAuthError('Please log in to use DRN Assessment.');
                     return;
                 }
 
-                setUserId(currentUserId);
-                setAuthError(null);
-                await loadPatientData();
-                await fetchClinicalRules();
+                if (isMounted) {
+                    setUserId(currentUserId);
+                    setAuthError(null);
+                    await loadPatientData();
+                    await fetchClinicalRules();
+                }
             } catch (error) {
                 console.error('Error initializing:', error);
-                setAuthError('Failed to initialize. Please refresh.');
+                if (isMounted) setAuthError('Failed to initialize. Please refresh.');
             }
         };
 
         initializeComponent();
+
+        return () => {
+            isMounted = false;
+        };
     }, [patientCode]);
 
     // Fetch assessments when both IDs are available
     useEffect(() => {
-        if (patientId && userId) fetchAssessments();
+        let isMounted = true;
+
+        const fetchData = async () => {
+            if (patientId && userId && isMounted) {
+                await fetchAssessments();
+            }
+        };
+
+        fetchData();
+
+        return () => {
+            isMounted = false;
+        };
     }, [patientId, userId]);
 
     const loadPatientData = async () => {
@@ -305,8 +317,6 @@ const DRNAssessment = ({ patientCode }) => {
                 .eq('is_active', true);
 
             setMedications(medicationsData || patient.medication_history || []);
-
-            if (patient.labs) setLabs(patient.labs);
         } catch (error) {
             console.error('Error loading patient:', error);
             setAuthError('Failed to load patient data.');
@@ -324,6 +334,13 @@ const DRNAssessment = ({ patientCode }) => {
             if (error) return;
 
             setClinicalRules(data || []);
+
+            const rulesByType = {};
+            data.forEach(rule => {
+                if (!rulesByType[rule.rule_type]) rulesByType[rule.rule_type] = [];
+                rulesByType[rule.rule_type].push(rule);
+            });
+            setActiveRules(rulesByType);
         } catch (error) {
             console.error('Error fetching rules:', error);
         }
@@ -384,6 +401,7 @@ const DRNAssessment = ({ patientCode }) => {
                                     ? JSON.parse(rule.rule_action)
                                     : rule.rule_action;
 
+                                // Prefer professional message/recommendation in this component
                                 message = action.message_professional || action.message || rule.rule_name;
                                 recommendation = action.recommendation_professional || action.recommendation || getDefaultRecommendation(rule.rule_type);
 
@@ -392,6 +410,7 @@ const DRNAssessment = ({ patientCode }) => {
 
                                 severity = action.severity || rule.severity || 'moderate';
 
+                                // Store client view data for reference if needed
                                 rule.client_message = clientMessage;
                                 rule.client_recommendation = clientRecommendation;
                             } catch (e) {
@@ -401,10 +420,12 @@ const DRNAssessment = ({ patientCode }) => {
                             recommendation = getDefaultRecommendation(rule.rule_type);
                         }
 
+                        // Map rule to DRN category
                         let drnCategory = 'Safety';
                         let causeName = rule.rule_name;
                         let dtpType = '';
 
+                        // Find matching category and DTP type
                         for (const [category, data] of Object.entries(drnCategories)) {
                             if (data.ruleTypes.includes(rule.rule_type)) {
                                 drnCategory = category;
@@ -428,7 +449,6 @@ const DRNAssessment = ({ patientCode }) => {
                             message: message,
                             recommendation: recommendation,
                             severity: severity,
-                            confidence: 95,
                             medications: facts.medications?.filter(med =>
                                 message.toLowerCase().includes(med.toLowerCase()) ||
                                 recommendation.toLowerCase().includes(med.toLowerCase())
@@ -717,10 +737,10 @@ const DRNAssessment = ({ patientCode }) => {
 
     if (authError) {
         return (
-            <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 w-full max-w-full overflow-hidden">
+            <div className="bg-white rounded-xl shadow-lg p-6">
                 <div className="text-center py-12">
-                    <FaExclamationCircle className="text-3xl text-yellow-500 mx-auto mb-4" />
-                    <h3 className="text-xl font-medium text-sm text-gray-800 mb-2">Authentication Required</h3>
+                    <FaExclamationTriangle className="text-4xl text-yellow-500 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-800 mb-2">Authentication Required</h3>
                     <p className="text-gray-600 mb-4">{authError}</p>
                     <button
                         onClick={() => window.location.reload()}
@@ -735,9 +755,9 @@ const DRNAssessment = ({ patientCode }) => {
 
     if (!patientId || !userId) {
         return (
-            <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 w-full max-w-full overflow-hidden">
+            <div className="bg-white rounded-xl shadow-lg p-6">
                 <div className="text-center py-12">
-                    <FaSpinner className="animate-spin text-3xl text-blue-600 mx-auto mb-4" />
+                    <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto mb-4" />
                     <p className="text-gray-600">Initializing DRN Assessment...</p>
                 </div>
             </div>
@@ -745,401 +765,413 @@ const DRNAssessment = ({ patientCode }) => {
     }
 
     return (
-        <div className="bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen p-4 md:p-6 w-full overflow-x-hidden flex justify-center">
-            <div className="w-full max-w-7xl mx-auto px-2 sm:px-4">
-                <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 w-full max-w-full overflow-hidden">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="bg-gradient-to-br from-purple-600 to-blue-600 p-2 sm:p-3 rounded-full flex-shrink-0">
-                        <FaStethoscope className="text-white text-base sm:text-xl" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <h2 className="text-base sm:text-2xl font-bold text-gray-800 truncate">Drug-related need assessment activity</h2>
-                        <div className="text-xs sm:text-sm text-gray-500 mt-1 truncate">
-                          Patient: {patientCode} | User ID: {userId?.substring(0, 8)}...
-                        </div>
-                      </div>
+        <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="flex items-center gap-3 mb-6">
+                <div className="bg-gradient-to-br from-purple-600 to-blue-600 p-3 rounded-full">
+                    <FaStethoscope className="text-white text-xl" />
+                </div>
+                <div>
+                    <h2 className="text-2xl font-bold text-gray-800">Drug-related need assessment activity</h2>
+                    <p className="text-gray-600">Powered by Clinical Decision Support System (CDSS)</p>
+                    <div className="text-sm text-gray-500 mt-1">
+                        Patient: {patientCode} | User ID: {userId?.substring(0, 8)}...
                     </div>
+                </div>
+            </div>
                     
-                    {/* CDSS Analysis Section */}
-                    <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 sm:p-5 border border-blue-200 w-full overflow-hidden">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-xl font-semibold text-blue-800 flex items-center gap-2">
-                                <FaDatabase /> CDSS clinical analysis
-                            </h3>
-                            <button
-                                onClick={() => setShowAnalysis(!showAnalysis)}
-                                className="text-blue-600 hover:text-blue-800"
-                            >
-                                {showAnalysis ? <FaChevronUp /> : <FaChevronDown />}
-                            </button>
-                        </div>
+            {/* CDSS Analysis Section */}
+            <div className="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-xl font-semibold text-blue-800 flex items-center gap-2">
+                        <FaDatabase /> CDSS clinical analysis
+                    </h3>
+                    <button
+                        onClick={() => setShowAnalysis(!showAnalysis)}
+                        className="text-blue-600 hover:text-blue-800"
+                    >
+                        {showAnalysis ? <FaChevronUp /> : <FaChevronDown />}
+                    </button>
+                </div>
 
-                        {showAnalysis && (
-                            <>
-                                {isAnalyzing ? (
-                                    <div className="text-center py-8">
-                                        <FaSpinner className="animate-spin text-3xl text-blue-600 mx-auto mb-4" />
-                                        <p className="text-gray-600">Running CDSS analysis...</p>
+                {showAnalysis && (
+                    <>
+                        {isAnalyzing ? (
+                            <div className="text-center py-8">
+                                <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto mb-4" />
+                                <p className="text-gray-600">Running CDSS analysis...</p>
+                            </div>
+                        ) : analysisResults ? (
+                            <div className="space-y-4">
+                                <div className="bg-white rounded-lg p-4 border shadow-sm">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div>
+                                            <h4 className="font-semibold text-gray-800 text-lg">Analysis Results</h4>
+                                            <p className={`text-lg font-medium mt-2 ${analysisResults.totalFindings > 0
+                                                ? 'text-gray-800'
+                                                : 'text-green-600'
+                                                }`}>
+                                                {analysisResults.summary}
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <button
+                                                onClick={runCdssAnalysis}
+                                                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm flex items-center gap-2"
+                                            >
+                                                <FaSync /> Re-run Analysis
+                                            </button>
+                                        </div>
                                     </div>
-                                ) : analysisResults ? (
-                                    <div className="space-y-3">
-                                        <div className="bg-white rounded-lg p-3 border shadow-sm">
-                                            <div className="flex justify-between items-start mb-3">
-                                                <div>
-                                                    <h4 className="font-medium text-sm text-gray-800 text-base">Analysis Results</h4>
-                                                    <p className={`text-base font-medium mt-2 ${analysisResults.totalFindings > 0
-                                                        ? 'text-gray-800'
-                                                        : 'text-green-600'
-                                                        }`}>
-                                                        {analysisResults.summary}
-                                                    </p>
-                                                </div>
-                                                <div className="text-right">
-                                                    <button
-                                                        onClick={runCdssAnalysis}
-                                                        className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs flex items-center gap-1.5"
-                                                    >
-                                                        <FaSync className="text-xs" /> Run Analysis
-                                                    </button>
-                                                </div>
-                                            </div>
 
-                                            {filteredFindings.length > 0 ? (
-                                                <div className="space-y-3">
-                                                    {filteredFindings.map((finding, idx) => (
-                                                        <div key={idx} className="p-3 border rounded-lg hover:shadow-md transition">
-                                                            <div className="flex justify-between items-start">
-                                                                <div className="flex-1">
-                                                                    <div className="flex flex-wrap items-center gap-2 mb-2">
-                                                                        <span className="font-medium text-sm text-gray-800">{finding.cause}</span>
-                                                                        <span className={`px-2 py-1 ${getSeverityColor(finding.severity)} text-xs rounded font-medium`}>
-                                                                            {finding.severity}
-                                                                        </span>
-                                                                        <span className={`px-2 py-1 ${getCategoryColor(finding.category)} text-xs rounded`}>
-                                                                            {finding.category}
-                                                                        </span>
-                                                                        {finding.dtpType && (
-                                                                            <span className={`px-2 py-1 ${getDTPTypeColor(finding.dtpType)} text-xs rounded font-medium`}>
-                                                                                DTP: {finding.dtpType}
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                    <p className="text-xs text-gray-600 mb-2">{finding.message}</p>
-                                                                    <div className="flex flex-wrap items-center gap-3 mt-2">
-                                                                        <span className="text-xs text-gray-500">
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
-                                                                <button
-                                                                    onClick={() => handleReviewFinding(finding)}
-                                                                    className="ml-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg transition flex items-center gap-2"
-                                                                >
-                                                                    <FaEdit /> Add to Assessment
-                                                                </button>
+                                    {/* Findings display */}
+                                    {filteredFindings.length > 0 ? (
+                                        <div className="space-y-3">
+                                            {filteredFindings.map((finding, idx) => (
+                                                <div key={idx} className="p-4 border rounded-lg hover:shadow-md transition">
+                                                    <div className="flex justify-between items-start">
+                                                        <div className="flex-1">
+                                                            <div className="flex flex-wrap items-center gap-2 mb-2">
+                                                                <span className="font-semibold text-gray-800">{finding.cause}</span>
+                                                                <span className={`px-2 py-1 ${getSeverityColor(finding.severity)} text-xs rounded font-medium`}>
+                                                                    {finding.severity}
+                                                                </span>
+                                                                <span className={`px-2 py-1 ${getCategoryColor(finding.category)} text-xs rounded`}>
+                                                                    {finding.category}
+                                                                </span>
+                                                                {finding.dtpType && (
+                                                                    <span className={`px-2 py-1 ${getDTPTypeColor(finding.dtpType)} text-xs rounded font-medium`}>
+                                                                        DTP: {finding.dtpType}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-sm text-gray-600 mb-2">{finding.message}</p>
+                                                            <div className="flex flex-wrap items-center gap-3 mt-2">
+                                                                <span className="text-xs text-gray-500">
+                                                                    Confidence: 95%
+                                                                </span>
                                                             </div>
                                                         </div>
-                                                    ))}
+                                                        <button
+                                                            onClick={() => handleReviewFinding(finding)}
+                                                            className="ml-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg transition flex items-center gap-2"
+                                                        >
+                                                            <FaEdit /> Add to Assessment
+                                                        </button>
+                                                    </div>
                                                 </div>
-                                            ) : (
-                                                <div className="text-center py-8">
-                                                    <FaCheckCircle className="text-3xl text-green-500 mx-auto mb-3" />
-                                                    <p className="text-gray-600">No issues found</p>
-                                                </div>
-                                            )}
+                                            ))}
                                         </div>
-                                    </div>
-                                ) : (
-                                    <div className="text-center py-6">
-                                        <FaDatabase className="text-3xl text-blue-400 mx-auto mb-4" />
-                                        <p className="text-gray-600 mb-4">Run CDSS clinical analysis to detect drug-related problems</p>
-                                        <button
-                                            onClick={runCdssAnalysis}
-                                            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-lg font-medium shadow-md flex items-center gap-2 mx-auto"
-                                        >
-                                            <FaDatabase /> Run clinical analysis
-                                        </button>
-                                    </div>
-                                )}
-                            </>
-                        )}
-                    </div>
-
-                    {/* 9 Category Selection */}
-                    <div className="mb-8" id="assessment-form">
-                        <h3 className="text-base font-semibold mb-4 text-gray-800">Select Drug-related need assessment category</h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 w-full">
-                            {Object.entries(drnCategories).map(([category, catData]) => {
-                                const Icon = catData.icon;
-
-                                return (
-                                    <button
-                                        key={category}
-                                        onClick={() => {
-                                            setSelectedCategory(category);
-                                            setSelectedCauses([]);
-                                            setWriteUps({});
-                                            setEditId(null);
-                                        }}
-                                        className={`p-3 rounded-lg text-left transition-all duration-200 border ${selectedCategory === category
-                                            ? 'border-blue-500 bg-blue-50 text-blue-800 shadow-sm'
-                                            : 'border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700 hover:shadow'
-                                            }`}
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className={`p-2 rounded-full ${getCategoryColor(category)}`}>
-                                                <Icon className="text-current" />
-                                            </div>
-                                            <div>
-                                                <div className="font-medium">{category}</div>
-                                            </div>
+                                    ) : (
+                                        <div className="text-center py-8">
+                                            <FaCheckCircle className="text-4xl text-green-500 mx-auto mb-3" />
+                                            <p className="text-gray-600">No issues found matching current filter</p>
                                         </div>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    {/* Cause Selection and Form */}
-                    {selectedCategory && (
-                        <div className="mb-8 p-6 border rounded-lg bg-gray-50">
-                            <h3 className="text-base font-semibold mb-6 text-gray-800">
-                                {selectedCategory} - Select Causes
-                            </h3>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8">
-                                {menuItemsData[selectedCategory]?.map(cause => {
-                                    const isSelected = selectedCauses.includes(cause.name);
-
-                                    return (
-                                        <div
-                                            key={cause.name}
-                                            className="flex items-center gap-3 p-3 border rounded-lg bg-white hover:shadow transition"
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                checked={isSelected}
-                                                onChange={() => handleCauseSelection(cause.name)}
-                                                className="h-5 w-5 text-blue-600 focus:ring-blue-500"
-                                            />
-
-                                            <div className="flex-1">
-                                                <p className="font-medium text-gray-800">{cause.name}</p>
-
-                                                <div className="flex gap-2 mt-1">
-                                                    {isSelected && cause["DTP Type"] && (
-                                                        <span className={`px-2 py-1 text-xs rounded ${getDTPTypeColor(cause["DTP Type"])}`}>
-                                                            {cause["DTP Type"]}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
+                                    )}
+                                </div>
                             </div>
+                        ) : (
+                            <div className="text-center py-6">
+                                <FaDatabase className="text-4xl text-blue-400 mx-auto mb-4" />
+                                <p className="text-gray-600 mb-4">Run CDSS clinical analysis to detect drug-related problems</p>
+                                <button
+                                    onClick={runCdssAnalysis}
+                                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-lg font-medium shadow-md flex items-center gap-2 mx-auto"
+                                >
+                                    <FaDatabase /> Run clinical analysis
+                                </button>
+                            </div>
+                        )}
+                    </>
+                )}
+            </div>
 
-                            {selectedCauses.map(causeName => {
-                                const causeDetails = menuItemsData[selectedCategory]?.find(
-                                    c => c.name === causeName
-                                );
+            {/* 9 Category Selection */}
+            <div className="mb-8" id="assessment-form">
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">Select Drug-related need assessment category</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {Object.entries(drnCategories).map(([category, catData]) => {
+                        const Icon = catData.icon;
+                        const ruleCount = catData.ruleTypes.reduce((count, ruleType) => {
+                            return count + (activeRules[ruleType]?.length || 0);
+                        }, 0);
 
-                                return (
-                                    <div
-                                        key={causeName}
-                                        className="mb-8 p-6 border rounded-lg bg-white shadow-sm"
-                                    >
-                                        <div className="flex justify-between items-center mb-6">
-                                            <h4 className="font-semibold text-base text-gray-800">
-                                                {causeName}
-                                            </h4>
+                        return (
+                            <button
+                                key={category}
+                                onClick={() => {
+                                    setSelectedCategory(category);
+                                    setSelectedCauses([]);
+                                    setWriteUps({});
+                                    setEditId(null);
+                                }}
+                                className={`p-4 rounded-lg text-left transition-all duration-200 border ${selectedCategory === category
+                                    ? 'border-blue-500 bg-blue-50 text-blue-800 shadow-sm'
+                                    : 'border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700 hover:shadow'
+                                    }`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className={`p-2 rounded-full ${getCategoryColor(category)}`}>
+                                        <Icon className="text-current" />
+                                    </div>
+                                    <div>
+                                        <div className="font-medium">{category}</div>
+                                        <div className="text-sm text-gray-500 mt-1">
+                                            {ruleCount} rules • {menuItemsData[category]?.length || 0} causes
+                                        </div>
+                                    </div>
+                                </div>
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
 
-                                            {causeDetails?.["DTP Type"] && (
-                                                <span className={`px-3 py-1 text-sm rounded ${getDTPTypeColor(causeDetails["DTP Type"])}`}>
-                                                    DTP Type: {causeDetails["DTP Type"]}
+            {/* Cause Selection and Form */}
+            {selectedCategory && (
+                <div className="mb-8 p-6 border rounded-lg bg-gray-50">
+                    <h3 className="text-lg font-semibold mb-6 text-gray-800">
+                        {selectedCategory} - Select Causes
+                    </h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                        {menuItemsData[selectedCategory]?.map(cause => {
+                            const ruleCount = activeRules?.[cause.ruleType]?.length || 0;
+                            const isSelected = selectedCauses.includes(cause.name);
+
+                            return (
+                                <div
+                                    key={cause.name}
+                                    className="flex items-center gap-3 p-4 border rounded-lg bg-white hover:shadow transition"
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={isSelected}
+                                        onChange={() => handleCauseSelection(cause.name)}
+                                        className="h-5 w-5 text-blue-600 focus:ring-blue-500"
+                                    />
+
+                                    <div className="flex-1">
+                                        <p className="font-medium text-gray-800">{cause.name}</p>
+
+                                        <div className="flex gap-2 mt-1">
+                                            {isSelected && cause.dtpType && (
+                                                <span className={`px-2 py-1 text-xs rounded ${getDTPTypeColor(cause.dtpType)}`}>
+                                                    {cause.dtpType}
+                                                </span>
+                                            )}
+
+                                            {ruleCount > 0 && (
+                                                <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
+                                                    {ruleCount} rules
                                                 </span>
                                             )}
                                         </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    Specific Case *
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={writeUps[causeName]?.specificCase || ''}
-                                                    onChange={e =>
-                                                        handleWriteUpChange(
-                                                            causeName,
-                                                            'specificCase',
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                    placeholder="Describe the specific case..."
-                                                    required
-                                                />
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    Medical Condition *
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={writeUps[causeName]?.medicalCondition || ''}
-                                                    onChange={e =>
-                                                        handleWriteUpChange(
-                                                            causeName,
-                                                            'medicalCondition',
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                    placeholder="e.g., Hypertension, Diabetes"
-                                                    required
-                                                />
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    Medication *
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={writeUps[causeName]?.medication || ''}
-                                                    onChange={e =>
-                                                        handleWriteUpChange(
-                                                            causeName,
-                                                            'medication',
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                    placeholder="e.g., Enalapril 10mg"
-                                                    required
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="flex gap-3 mt-8">
-                                            <button
-                                                onClick={() => saveAssessment(causeName)}
-                                                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-lg font-medium shadow-md"
-                                            >
-                                                {editId !== null ? 'Update Assessment' : 'Save Assessment'}
-                                            </button>
-
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedCauses(prev =>
-                                                        prev.filter(c => c !== causeName)
-                                                    );
-                                                    setWriteUps(prev => {
-                                                        const newWriteUps = { ...prev };
-                                                        delete newWriteUps[causeName];
-                                                        return newWriteUps;
-                                                    });
-                                                }}
-                                                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-                                            >
-                                                Cancel
-                                            </button>
-                                        </div>
                                     </div>
-                                );
-                            })}
-                        </div>
-                    )}
-
-                    {/* Reportable Link */}
-                    {showDefectLink && (
-                        <div className="mt-8 p-6 bg-blue-100 rounded-lg text-blue-800 shadow-md">
-                            <p>This case is reportable. Please submit the report at: <a href="https://primaryreporting.who-umc.org/ET" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline hover:text-blue-700">EFDA ADE Report</a></p>
-                        </div>
-                    )}
-
-                    {/* Saved Assessments Table */}
-                    <div className="mt-12">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-medium text-sm text-gray-800">
-                                Saved Assessments ({assessments.length})
-                            </h3>
-                            {assessments.length > 0 && (
-                                <button
-                                    onClick={() => fetchAssessments()}
-                                    className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
-                                >
-                                    <FaSync className={isLoading ? 'animate-spin' : ''} /> Refresh
-                                </button>
-                            )}
-                        </div>
-
-                        {isLoading ? (
-                            <div className="text-center py-8">
-                                <FaSpinner className="animate-spin text-3xl text-blue-600 mx-auto mb-4" />
-                                <p className="text-gray-600">Loading assessments...</p>
-                            </div>
-                        ) : assessments.length === 0 ? (
-                            <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
-                                <FaStethoscope className="text-3xl text-gray-300 mx-auto mb-3" />
-                                <p className="text-gray-500">No assessments saved yet.</p>
-                            </div>
-                        ) : (
-                            <div className="w-full overflow-x-auto rounded-lg border">
-                              <table className="w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-100">
-                                        <tr>
-                                            <th className="p-3 text-left font-medium text-gray-700">DRN Assessment Activity Category</th>
-                                            <th className="p-3 text-left font-medium text-gray-700">Cause</th>
-                                            <th className="p-3 text-left font-medium text-gray-700">DTP Type</th>
-                                            <th className="p-3 text-left font-medium text-gray-700">Specific Case</th>
-                                            <th className="p-3 text-left font-medium text-gray-700">Medical Condition</th>
-                                            <th className="p-3 text-left font-medium text-gray-700">Medication</th>
-                                            <th className="p-3 text-left font-medium text-gray-700">Date</th>
-                                            <th className="p-3 text-left font-medium text-gray-700">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {assessments.map((assessment, index) => (
-                                            <tr key={assessment.id} className="border-t hover:bg-gray-50">
-                                                <td className="p-3 text-sm text-gray-700">{assessment.drn_assessment_activity_category}</td>
-                                                <td className="p-3 font-medium text-gray-800">{assessment.cause}</td>
-                                                <td className="p-3">
-                                                    <span className={`px-2 py-1 text-xs rounded ${getDTPTypeColor(assessment.dtp_type)}`}>
-                                                        {assessment.dtp_type || 'N/A'}
-                                                    </span>
-                                                </td>
-                                                <td className="p-3 text-sm text-gray-700 max-w-xs">{assessment.specific_case}</td>
-                                                <td className="p-3 text-sm text-gray-700">{assessment.medical_condition}</td>
-                                                <td className="p-3 text-sm text-gray-700">{assessment.medication}</td>
-                                                <td className="p-3 text-xs text-gray-600">
-                                                    {new Date(assessment.created_at).toLocaleDateString()}
-                                                </td>
-                                                <td className="p-3">
-                                                    <div className="flex gap-2">
-                                                        <button
-                                                            onClick={() => handleEdit(assessment)}
-                                                            className="text-blue-500 hover:text-blue-700 p-2 hover:bg-blue-50 rounded"
-                                                            title="Edit assessment"
-                                                        >
-                                                            <FaEdit />
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
+                                </div>
+                            );
+                        })}
                     </div>
+
+                    {selectedCauses.map(causeName => {
+                        const causeDetails = menuItemsData[selectedCategory]?.find(
+                            c => c.name === causeName
+                        );
+
+                        return (
+                            <div
+                                key={causeName}
+                                className="mb-8 p-6 border rounded-lg bg-white shadow-sm"
+                            >
+                                <div className="flex justify-between items-center mb-6">
+                                    <h4 className="font-semibold text-lg text-gray-800">
+                                        {causeName}
+                                    </h4>
+
+                                    {causeDetails?.dtpType && (
+                                        <span className={`px-3 py-1 text-sm rounded ${getDTPTypeColor(causeDetails.dtpType)}`}>
+                                            DTP Type: {causeDetails.dtpType}
+                                        </span>
+                                    )}
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Specific Case *
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={writeUps[causeName]?.specificCase || ''}
+                                            onChange={e =>
+                                                handleWriteUpChange(
+                                                    causeName,
+                                                    'specificCase',
+                                                    e.target.value
+                                                )
+                                            }
+                                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            placeholder="Describe the specific case..."
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Medical Condition *
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={writeUps[causeName]?.medicalCondition || ''}
+                                            onChange={e =>
+                                                handleWriteUpChange(
+                                                    causeName,
+                                                    'medicalCondition',
+                                                    e.target.value
+                                                )
+                                            }
+                                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            placeholder="e.g., Hypertension, Diabetes"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Medication *
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={writeUps[causeName]?.medication || ''}
+                                            onChange={e =>
+                                                handleWriteUpChange(
+                                                    causeName,
+                                                    'medication',
+                                                    e.target.value
+                                                )
+                                            }
+                                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            placeholder="e.g., Enalapril 10mg"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-4 mt-8">
+                                    <button
+                                        onClick={() => saveAssessment(causeName)}
+                                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-lg font-medium shadow-md"
+                                    >
+                                        {editId !== null ? 'Update Assessment' : 'Save Assessment'}
+                                    </button>
+
+                                    <button
+                                        onClick={() => {
+                                            setSelectedCauses(prev =>
+                                                prev.filter(c => c !== causeName)
+                                            );
+                                            setWriteUps(prev => {
+                                                const newWriteUps = { ...prev };
+                                                delete newWriteUps[causeName];
+                                                return newWriteUps;
+                                            });
+                                        }}
+                                        className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
+            )}
+
+            {/* Reportable Link */}
+            {showDefectLink && (
+                <div className="mt-8 p-6 bg-blue-100 rounded-lg text-blue-800 shadow-md">
+                    <p>This case is reportable. Please submit the report at: <a href="https://primaryreporting.who-umc.org/ET" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline hover:text-blue-700">EFDA ADE Report</a></p>
+                </div>
+            )}
+
+            {/* Saved Assessments Table */}
+            <div className="mt-12">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xl font-medium text-gray-800">
+                        Saved Assessments ({assessments.length})
+                    </h3>
+                    {assessments.length > 0 && (
+                        <button
+                            onClick={() => fetchAssessments()}
+                            className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                        >
+                            <FaSync className={isLoading ? 'animate-spin' : ''} /> Refresh
+                        </button>
+                    )}
+                </div>
+
+                {isLoading ? (
+                    <div className="text-center py-8">
+                        <FaSpinner className="animate-spin text-3xl text-blue-600 mx-auto mb-4" />
+                        <p className="text-gray-600">Loading assessments...</p>
+                    </div>
+                ) : assessments.length === 0 ? (
+                    <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
+                        <FaStethoscope className="text-3xl text-gray-300 mx-auto mb-3" />
+                        <p className="text-gray-500">No assessments saved yet.</p>
+                    </div>
+                ) : (
+                    <div className="w-full overflow-x-auto rounded-lg border">
+                        <table className="w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-100">
+                                <tr>
+                                    <th className="p-3 text-left font-medium text-gray-700">DRN Assessment Activity Category</th>
+                                    <th className="p-3 text-left font-medium text-gray-700">Cause</th>
+                                    <th className="p-3 text-left font-medium text-gray-700">DTP Type</th>
+                                    <th className="p-3 text-left font-medium text-gray-700">Specific Case</th>
+                                    <th className="p-3 text-left font-medium text-gray-700">Medical Condition</th>
+                                    <th className="p-3 text-left font-medium text-gray-700">Medication</th>
+                                    <th className="p-3 text-left font-medium text-gray-700">Date</th>
+                                    <th className="p-3 text-left font-medium text-gray-700">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {assessments.map((assessment) => (
+                                    <tr key={assessment.id} className="border-t hover:bg-gray-50">
+                                        <td className="p-3 text-sm text-gray-700">{assessment.drn_assessment_activity_category}</td>
+                                        <td className="p-3 font-medium text-gray-800">{assessment.cause}</td>
+                                        <td className="p-3">
+                                            <span className={`px-2 py-1 text-xs rounded ${getDTPTypeColor(assessment.dtp_type)}`}>
+                                                {assessment.dtp_type || 'N/A'}
+                                            </span>
+                                        </td>
+                                        <td className="p-3 text-sm text-gray-700 max-w-xs">{assessment.specific_case}</td>
+                                        <td className="p-3 text-sm text-gray-700">{assessment.medical_condition}</td>
+                                        <td className="p-3 text-sm text-gray-700">{assessment.medication}</td>
+                                        <td className="p-3 text-xs text-gray-600">
+                                            {new Date(assessment.created_at).toLocaleDateString()}
+                                        </td>
+                                        <td className="p-3">
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => handleEdit(assessment)}
+                                                    className="text-blue-500 hover:text-blue-700 p-2 hover:bg-blue-50 rounded"
+                                                    title="Edit assessment"
+                                                >
+                                                    <FaEdit />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </div>
 
             {/* Reportable Popup */}
             {showReportablePopup && (
-                <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-gray-900 bg-opacity-50 z-50">
+                <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-50">
                     <div className="bg-white p-10 rounded-xl shadow-lg">
                         <p className="mb-8 text-gray-700 text-base">Is this ADE reportable?</p>
                         <div className="flex gap-6">
