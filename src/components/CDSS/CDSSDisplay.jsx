@@ -22,6 +22,9 @@ const CDSSDisplay = ({ patientData, onBack }) => {
         patientFacts
     } = useCDSSLogic(patientData);
 
+    const userRole = localStorage.getItem('userRole') || 'admin';
+    const isHealthcareClient = userRole === 'healthcare_client';
+
     const severityColors = {
         critical: 'bg-red-50 text-red-800 border-red-200 hover:bg-red-100',
         high: 'bg-orange-50 text-orange-800 border-orange-200 hover:bg-orange-100',
@@ -57,7 +60,6 @@ const CDSSDisplay = ({ patientData, onBack }) => {
             });
 
             // --- HEADER DESIGN ---
-            // Background for header
             doc.setFillColor(37, 99, 235); // Blue-600
             doc.rect(0, 0, 210, 40, 'F');
 
@@ -152,10 +154,12 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                 let evidence = '';
                 if (alert.evidence) {
                     const parts = [];
+                    // Medications are now allowed for everyone (including clients)
                     if (alert.evidence.matched_medications?.length > 0) {
                         parts.push(`Meds: ${alert.evidence.matched_medications.join(', ')}`);
                     }
-                    if (alert.evidence.labs) {
+                    // Other technical evidence (like labs) remains restricted for clients
+                    if (!isHealthcareClient && alert.evidence.labs) {
                         const labKeys = Object.keys(alert.evidence.labs).filter(k => alert.evidence.labs[k]);
                         if (labKeys.length > 0) {
                             parts.push(`Labs: ${labKeys.map(k => `${k}=${alert.evidence.labs[k]}`).join(', ')}`);
@@ -174,15 +178,18 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                             fontStyle: 'bold'
                         }
                     },
-                    alert.message,
-                    alert.details || 'N/A',
-                    evidence || 'Matched patterns'
+                    isHealthcareClient ? (alert.client_message || alert.message) : (alert.professional_message || alert.message),
+                    isHealthcareClient ? (alert.client_recommendation || alert.details || 'N/A') : (alert.professional_recommendation || alert.details || 'N/A'),
+                    isHealthcareClient ? 'General Guidance' : (evidence || 'Matched patterns')
                 ];
             });
 
             autoTable(doc, {
                 startY: currentY + 5,
-                head: [['#', 'Alert/Severity', 'Clinical Message', 'Recommendation', 'Evidence']],
+                head: [isHealthcareClient
+                    ? ['#', 'Alert/Severity', 'Guidance Message', 'Recommendation', 'Note']
+                    : ['#', 'Alert/Severity', 'Clinical Message', 'Recommendation', 'Evidence']
+                ],
                 body: alertRows,
                 theme: 'grid',
                 headStyles: { fillColor: [220, 38, 38] }, // Red-600
@@ -211,8 +218,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
             doc.save(`Clinical_Analysis_${patientData.patient_code}_${new Date().toISOString().split('T')[0]}.pdf`);
         } catch (error) {
             console.error('PDF Generation Error:', error);
-            // Fallback to text if PDF fails
-            alert('PDF generation failed. The library might still be installing. Please try again in 30 seconds.');
+            alert('PDF generation failed. Library error.');
         }
     };
 
@@ -239,13 +245,15 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                 </div>
 
                 <div className="flex flex-wrap gap-2 w-full md:w-auto">
-                    <button
-                        onClick={fetchClinicalRules}
-                        className="bg-purple-100 hover:bg-purple-200 text-purple-700 px-3 py-2 rounded-lg flex items-center justify-center gap-2 text-sm flex-1 md:flex-initial"
-                        title="Refresh Rules"
-                    >
-                        <FaRedo /> <span className="hidden sm:inline">Refresh Rules</span>
-                    </button>
+                    {!isHealthcareClient && (
+                        <button
+                            onClick={fetchClinicalRules}
+                            className="bg-purple-100 hover:bg-purple-200 text-purple-700 px-3 py-2 rounded-lg flex items-center justify-center gap-2 text-sm flex-1 md:flex-initial"
+                            title="Refresh Rules"
+                        >
+                            <FaRedo /> <span className="hidden sm:inline">Refresh Rules</span>
+                        </button>
+                    )}
 
                     {alerts.length > 0 && (
                         <button
@@ -280,14 +288,16 @@ const CDSSDisplay = ({ patientData, onBack }) => {
             )}
 
             {/* Status Bar - Simplified */}
-            <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="bg-green-50 p-3 rounded-lg border border-green-200">
-                    <div className="text-sm text-green-700 mb-1 flex items-center gap-1">
-                        <FaCheckCircle /> Available Rules
+            {!isHealthcareClient && (
+                <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                        <div className="text-sm text-green-700 mb-1 flex items-center gap-1">
+                            <FaCheckCircle /> Available Rules
+                        </div>
+                        <div className="text-xl font-bold text-green-800">{clinicalRules.length || 0}</div>
                     </div>
-                    <div className="text-xl font-bold text-green-800">{clinicalRules.length || 0}</div>
                 </div>
-            </div>
+            )}
 
             {/* Error Display */}
             {analysisError && (
@@ -368,7 +378,6 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                 const severityColor = severityColors[alert.severity];
                                 const severityBgColor = severityBgColors[alert.severity];
                                 const ruleTypeInfo = getRuleTypeInfo(alert.rule_type);
-                                const isExpanded = expandedAlert === alert.id;
 
                                 return (
                                     <div
@@ -382,20 +391,66 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                                 </div>
 
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="flex flex-wrap items-center gap-3 mb-2">
-                                                        <span className="font-bold text-gray-800">{alert.rule_name}</span>
-                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${ruleTypeInfo.color}`}>
-                                                            {ruleTypeInfo.label}
-                                                        </span>
-                                                        <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">
-                                                            {getTimeAgo(alert.timestamp)}
-                                                        </span>
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <div className="flex flex-wrap items-center gap-3">
+                                                            <span className="text-lg md:text-xl font-black text-gray-900 tracking-tight">{alert.rule_name}</span>
+                                                            <span className={`px-2.5 py-1 rounded text-xs font-bold ${ruleTypeInfo.color}`}>
+                                                                {ruleTypeInfo.label}
+                                                            </span>
+                                                            <span className="text-xs text-gray-500 uppercase font-bold tracking-widest">
+                                                                {getTimeAgo(alert.timestamp)}
+                                                            </span>
+                                                        </div>
                                                     </div>
 
-                                                    <div className="text-gray-700 font-medium mb-3">
-                                                        {alert.message}
+                                                    {/* Primary Action / Recommendation - Always visible and STATIC */}
+                                                    <div className="bg-green-50 border-l-8 border-green-500 p-4 md:p-5 rounded-r-xl mb-4 shadow-sm">
+                                                        <div className="flex items-center gap-2 mb-2">
+                                                            <FaCheckCircle className="text-green-600 text-sm" />
+                                                            <span className="text-xs md:text-sm font-black uppercase tracking-widest text-green-800">Required Action</span>
+                                                        </div>
+                                                        <div className="text-lg md:text-2xl font-black text-gray-900 leading-tight">
+                                                            {(isHealthcareClient ? (alert.client_recommendation || alert.details) : (alert.professional_recommendation || alert.details)) || 'Review clinical guidelines'}
+                                                        </div>
                                                     </div>
 
+                                                    {/* Secondary Context / Finding */}
+                                                    <div className="flex flex-col gap-3 p-4 bg-gray-50/80 rounded-xl border border-gray-200 mb-5 shadow-sm">
+                                                        <div className="flex items-start gap-3 text-sm md:text-lg text-gray-700">
+                                                            <span className="font-black text-blue-600 uppercase text-xs md:text-sm mt-1 shrink-0 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">Finding:</span>
+                                                            <p className="italic font-medium leading-relaxed">
+                                                                {isHealthcareClient ? (alert.client_message || alert.message) : (alert.professional_message || alert.message)}
+                                                            </p>
+                                                        </div>
+
+                                                        {/* Medications involved - now visible to everyone */}
+                                                        {alert.evidence?.matched_medications?.length > 0 && (
+                                                            <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-gray-300/50 mt-1">
+                                                                <span className="font-black text-purple-600 uppercase text-xs md:text-sm shrink-0">Drug(s) Trigger:</span>
+                                                                <div className="flex flex-wrap gap-2">
+                                                                    {alert.evidence.matched_medications.map((med, i) => (
+                                                                        <span key={i} className="px-3 py-1 bg-purple-100 text-purple-800 rounded-lg text-xs md:text-sm font-black border border-purple-200 shadow-sm flex items-center gap-2">
+                                                                            <FaCapsules className="text-sm" /> {med}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {!alert.acknowledged && (
+                                                        <div className="flex justify-end pt-3 border-t border-gray-100">
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    acknowledgeAlert(alert.id);
+                                                                }}
+                                                                className="text-xs md:text-sm font-black uppercase tracking-widest text-gray-400 hover:text-green-600 transition-all flex items-center gap-2 px-4 py-2 hover:bg-gray-50 rounded-lg"
+                                                            >
+                                                                <FaCheckCircle className="text-lg" /> Dismiss this alert
+                                                            </button>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>

@@ -1552,18 +1552,27 @@ export const runClinicalDecisionSupport = async (facts) => {
         for (const rule of rules) {
             const evalResult = evaluateRule(rule, facts, true);
             if (evalResult.triggered) {
-                let message = formatAlertMessage(rule.rule_action?.message || rule.rule_name, facts);
-                let recommendation = formatAlertMessage(rule.rule_action?.recommendation || rule.rule_description, facts);
+                const action = typeof rule.rule_action === 'string' ? JSON.parse(rule.rule_action) : (rule.rule_action || {});
+
+                let professional_message = formatAlertMessage(action.message_professional || action.message || rule.rule_name, facts);
+                let client_message = formatAlertMessage(action.message_client || action.message || rule.rule_name, facts);
+                let recommendation = formatAlertMessage(action.recommendation_professional || action.recommendation || rule.rule_description, facts);
+                let client_recommendation = formatAlertMessage(action.recommendation_client || action.recommendation || rule.rule_description, facts);
 
                 // Append matched medication names to message if available
                 if (evalResult.matchedMedications.length > 0) {
-                    message += ` [Triggered by: ${evalResult.matchedMedications.join(', ')}]`;
+                    const tag = ` [Triggered by: ${evalResult.matchedMedications.join(', ')}]`;
+                    professional_message += tag;
+                    client_message += tag;
                 }
 
                 results.push({
-                    message,
+                    message: professional_message, // Default
+                    professional_message,
+                    client_message,
                     recommendation,
-                    severity: rule.rule_action?.severity || rule.severity || 'moderate',
+                    client_recommendation,
+                    severity: action.severity || rule.severity || 'moderate',
                     matchedMedications: evalResult.matchedMedications
                 });
             }

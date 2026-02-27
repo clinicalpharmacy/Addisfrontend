@@ -385,9 +385,18 @@ const DRNAssessment = ({ patientCode }) => {
                                     ? JSON.parse(rule.rule_action)
                                     : rule.rule_action;
 
-                                message = action.message || rule.rule_name;
-                                recommendation = action.recommendation || getDefaultRecommendation(rule.rule_type);
+                                // Prefer professional message/recommendation in this component
+                                message = action.message_professional || action.message || rule.rule_name;
+                                recommendation = action.recommendation_professional || action.recommendation || getDefaultRecommendation(rule.rule_type);
+
+                                const clientMessage = action.message_client || action.message || message;
+                                const clientRecommendation = action.recommendation_client || action.recommendation || recommendation;
+
                                 severity = action.severity || rule.severity || 'moderate';
+
+                                // Store client view data for reference if needed
+                                rule.client_message = clientMessage;
+                                rule.client_recommendation = clientRecommendation;
                             } catch (e) {
                                 recommendation = getDefaultRecommendation(rule.rule_type);
                             }

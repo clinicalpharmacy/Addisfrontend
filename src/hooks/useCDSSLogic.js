@@ -184,7 +184,10 @@ export const useCDSSLogic = (patientData) => {
                         }
 
                         // Create alert
-                        let message = rule.rule_name;
+                        let professional_message = '';
+                        let client_message = '';
+                        let professional_recommendation = '';
+                        let client_recommendation = '';
                         let details = '';
                         let severity = rule.severity || 'moderate';
 
@@ -194,8 +197,11 @@ export const useCDSSLogic = (patientData) => {
                                     ? JSON.parse(rule.rule_action)
                                     : rule.rule_action;
 
-                                message = actionData.message || rule.rule_name;
-                                details = actionData.recommendation || '';
+                                professional_message = actionData.message_professional || actionData.message || rule.rule_name;
+                                client_message = actionData.message_client || actionData.message || rule.rule_name;
+                                professional_recommendation = actionData.recommendation_professional || actionData.recommendation || '';
+                                client_recommendation = actionData.recommendation_client || actionData.recommendation || '';
+                                details = professional_recommendation || actionData.recommendation || '';
                                 severity = actionData.severity || rule.severity || 'moderate';
                             } catch (e) {
                                 debug += `    ⚠️ Could not parse rule_action: ${e.message}\n`;
@@ -207,13 +213,16 @@ export const useCDSSLogic = (patientData) => {
                             details = rule.rule_description;
                         }
 
-                        // Format message with actual values
-                        message = formatAlertMessage(message, facts);
+                        // Format messages with actual values
+                        professional_message = formatAlertMessage(professional_message, facts);
+                        client_message = formatAlertMessage(client_message, facts);
+                        professional_recommendation = formatAlertMessage(professional_recommendation, facts);
+                        client_recommendation = formatAlertMessage(client_recommendation, facts);
                         details = formatAlertMessage(details, facts);
 
-                        // Append matched medications to message
+                        // Append matched medications to professional message
                         if (evalResult.matchedMedications.length > 0) {
-                            message += ` [Drug(s): ${evalResult.matchedMedications.join(', ')}]`;
+                            professional_message += ` [Drug(s): ${evalResult.matchedMedications.join(', ')}]`;
                         }
 
                         const alert = {
@@ -223,8 +232,12 @@ export const useCDSSLogic = (patientData) => {
                             rule_type: rule.rule_type,
                             rule_description: rule.rule_description,
                             severity: severity,
-                            message: message,
+                            message: professional_message || rule.rule_name, // Fallback for list view
+                            professional_message,
+                            client_message,
                             details: details,
+                            professional_recommendation: professional_recommendation,
+                            client_recommendation: client_recommendation,
                             evidence: {
                                 facts: facts,
                                 age_in_days: facts.age_in_days,
@@ -322,16 +335,20 @@ export const useCDSSLogic = (patientData) => {
 
                 if (evalResult.triggered) {
                     rulesTriggered++;
-                    let message = rule.rule_action?.message || rule.rule_name;
+                    const professional_message = rule.rule_action?.message_professional || rule.rule_action?.message || rule.rule_name;
+                    const client_message = rule.rule_action?.message_client || rule.rule_action?.message || rule.rule_name;
+                    const professional_recommendation = rule.rule_action?.recommendation_professional || rule.rule_action?.recommendation || rule.rule_description;
+                    const client_recommendation = rule.rule_action?.recommendation_client || rule.rule_action?.recommendation || rule.rule_description;
                     const details = rule.rule_action?.recommendation || rule.rule_description;
                     const severity = rule.rule_action?.severity || rule.severity || 'moderate';
 
                     // Format message
-                    message = formatAlertMessage(message, facts);
+                    // Format professional message
+                    let professional_message_formatted = formatAlertMessage(professional_message, facts);
 
                     // Append matched medications
                     if (evalResult.matchedMedications.length > 0) {
-                        message += ` [Drug(s): ${evalResult.matchedMedications.join(', ')}]`;
+                        professional_message_formatted += ` [Drug(s): ${evalResult.matchedMedications.join(', ')}]`;
                     }
 
                     triggeredAlerts.push({
@@ -340,8 +357,12 @@ export const useCDSSLogic = (patientData) => {
                         rule_name: rule.rule_name,
                         rule_type: rule.rule_type,
                         severity: severity,
-                        message: message,
+                        message: professional_message_formatted,
+                        professional_message: professional_message_formatted,
+                        client_message: formatAlertMessage(client_message, facts),
                         details: formatAlertMessage(details, facts),
+                        professional_recommendation: formatAlertMessage(professional_recommendation, facts),
+                        client_recommendation: formatAlertMessage(client_recommendation, facts),
                         evidence: {
                             facts: facts,
                             age_in_days: facts.age_in_days,

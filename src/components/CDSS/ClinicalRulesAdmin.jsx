@@ -85,8 +85,10 @@ const ClinicalRulesAdmin = () => {
         rule_description: '',
         rule_condition: JSON.stringify({ all: [] }, null, 2),
         rule_action: JSON.stringify({
-            message: '',
-            recommendation: '',
+            message_professional: '',
+            message_client: '',
+            recommendation_professional: '',
+            recommendation_client: '',
             severity: 'moderate'
         }, null, 2),
         severity: 'moderate',
@@ -167,8 +169,10 @@ const ClinicalRulesAdmin = () => {
   ]
 }`,
             rule_action: `{
-  "message": "Elevated creatinine detected",
-  "recommendation": "High creatinine detected. Review renal function and adjust renally cleared medications.",
+  "message_professional": "Elevated Creatinine Alert ({{labs.creatinine}} mg/dL)",
+  "message_client": "Kidney Function Notification",
+  "recommendation_professional": "High creatinine detected ({{labs.creatinine}} mg/dL). Review renal function and adjust renally cleared medications.",
+  "recommendation_client": "Your kidney function test shows elevated levels. Please discuss these results with your doctor.",
   "severity": "high"
 }`,
             severity: 'high',
@@ -193,8 +197,10 @@ const ClinicalRulesAdmin = () => {
   ]
 }`,
             rule_action: `{
-  "message": "Drug interaction detected",
-  "recommendation": "ACE inhibitor + NSAID combination may worsen renal function. Consider alternative pain management.",
+  "message_professional": "Drug Interaction: ACE Inhibitor + NSAID",
+  "message_client": "Medication Combination Warning",
+  "recommendation_professional": "Concurrent use of {{medication_data.lisinopril.drug_name}} and {{medication_data.ibuprofen.drug_name}} may decrease renal perfusion. Monitor serum creatinine and potassium.",
+  "recommendation_client": "The combination of these medications can affect your kidney function. Please consult your pharmacist or doctor.",
   "severity": "high"
 }`,
             severity: 'high',
@@ -219,8 +225,10 @@ const ClinicalRulesAdmin = () => {
   ]
 }`,
             rule_action: `{
-  "message": "Elderly patient on anticoagulant",
-  "recommendation": "Monitor INR more frequently. Increased bleeding risk in patients ≥65 years.",
+  "message_professional": "Geriatric Anticoagulation Monitor",
+  "message_client": "Medication Safety Alert",
+  "recommendation_professional": "Patient is {{age}} years old. Monitor INR more frequently. Increased bleeding risk in patients ≥65 years.",
+  "recommendation_client": "As you are over 65, this medication requires closer monitoring. Watch for any unusual bruising or bleeding.",
   "severity": "moderate"
 }`,
             severity: 'moderate',
@@ -246,8 +254,10 @@ const ClinicalRulesAdmin = () => {
   ]
 }`,
             rule_action: `{
-  "message": "Tetracycline contraindicated in neonates",
-  "recommendation": "Tetracycline is contraindicated in neonates due to tooth discoloration and bone growth issues. Consider alternative antibiotic.",
+  "message_professional": "Neonatal Contraindication: Tetracycline",
+  "message_client": "Newborn Safety Warning",
+  "recommendation_professional": "Tetracycline is contraindicated in neonates ({{age_in_days}} days old) due to tooth discoloration and bone growth issues. Consider alternative antibiotic.",
+  "recommendation_client": "This medication is not recommended for newborns. Please discuss safer alternatives for your baby with your pediatrician.",
   "severity": "critical"
 }`,
             severity: 'critical',
@@ -779,12 +789,25 @@ const ClinicalRulesAdmin = () => {
 
     const handleEdit = (rule) => {
         setEditRule(rule);
+
+        // Auto-migrate rule_action structure for the editor if it's in the old format
+        let actionObj = typeof rule.rule_action === 'string' ? JSON.parse(rule.rule_action) : (rule.rule_action || {});
+
+        const migratedAction = {
+            ...actionObj,
+            message_professional: actionObj.message_professional || actionObj.message || rule.rule_name || '',
+            message_client: actionObj.message_client || actionObj.message || rule.rule_name || '',
+            recommendation_professional: actionObj.recommendation_professional || actionObj.recommendation || rule.rule_description || '',
+            recommendation_client: actionObj.recommendation_client || actionObj.recommendation || rule.rule_description || '',
+            severity: actionObj.severity || rule.severity || 'moderate'
+        };
+
         setFormData({
             rule_name: rule.rule_name || '',
             rule_type: rule.rule_type || 'drug_interaction',
             rule_description: rule.rule_description || '',
             rule_condition: JSON.stringify(rule.rule_condition || { all: [] }, null, 2),
-            rule_action: JSON.stringify(rule.rule_action || { message: '', recommendation: '', severity: 'moderate' }, null, 2),
+            rule_action: JSON.stringify(migratedAction, null, 2),
             severity: rule.severity || 'moderate',
             dtp_category: rule.dtp_category || '',
             is_active: rule.is_active !== false,
@@ -820,6 +843,8 @@ const ClinicalRulesAdmin = () => {
             alert('❌ Error: ' + error.message);
         }
     };
+
+
 
     const toggleRuleStatus = async (id, currentStatus) => {
         try {
@@ -970,9 +995,9 @@ const ClinicalRulesAdmin = () => {
                 {isAdmin && (
                     <button
                         onClick={() => setShowForm(true)}
-                        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 shadow-lg"
+                        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-lg flex items-center justify-center gap-2 shadow-lg font-bold text-sm transition-all active:scale-95"
                     >
-                        <FaPlus /> Create New Rule
+                        <FaPlus /> CREATE NEW RULE
                     </button>
                 )}
             </div>
@@ -1637,14 +1662,16 @@ const ClinicalRulesAdmin = () => {
                                         }`}
                                     placeholder={`Example with variables:
 {
-  "message": "Pediatric medication alert for {{age_in_days}} day old patient",
-  "recommendation": "Adjust dose based on weight {{weight}} kg. Current dose may be too high for patient age.",
+  "message_professional": "PEDS ALERT: {{age_in_days}} days old",
+  "message_client": "Child Care Alert",
+  "recommendation_professional": "Adjust dose based on weight {{weight}} kg.",
+  "recommendation_client": "Follow pharmacist instructions meticulously.",
   "severity": "high"
 }`}
                                     required
                                 />
                                 <p className="text-xs text-gray-500 mt-2">
-                                    Required fields: message, recommendation, severity. You can use variables like {"{{age_in_days}}"}, {"{{weight}}"}, {"{{labs.creatinine}}"} in the message.
+                                    Required: severity. Use <b>message_professional/client</b> and <b>recommendation_professional/client</b> for audience-specific content.
                                 </p>
                             </div>
 

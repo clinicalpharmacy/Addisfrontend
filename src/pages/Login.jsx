@@ -84,8 +84,8 @@ const Login = () => {
     // Healthcare ID validation (basic format check)
     const isHealthcareIdValid = () => {
         if (!formData.email) return false;
-        // Check for HCC-XXXXXX-XXXXXX format (basic validation)
-        const healthcareIdRegex = /^HCC-[A-Z0-9]{6}-[A-Z0-9]{6}$/i;
+        // Check for HCC-XXXXXX-XXXXXX format (looser validation to accommodate timestamp lengths)
+        const healthcareIdRegex = /^HCC-[A-Z0-9]{6,10}-[A-Z0-9]{6,10}$/i;
         return healthcareIdRegex.test(formData.email);
     };
 
@@ -140,7 +140,7 @@ const Login = () => {
                 localStorage.setItem('subscription_status', data.user.subscription_status || 'inactive');
                 localStorage.setItem('subscription_end_date', data.user.subscription_end_date || '');
                 localStorage.setItem('has_subscription', data.user.subscription_status === 'active' ? 'true' : 'false');
-                
+
                 // Store healthcare client ID if applicable
                 if (data.user.healthcare_client_id) {
                     localStorage.setItem('healthcare_client_id', data.user.healthcare_client_id);
@@ -323,7 +323,7 @@ const Login = () => {
                             Welcome Back
                         </h2>
                         <p className="text-sm md:text-base text-gray-600">Sign in to continue your journey</p>
-                        
+
                         {/* Login Method Toggle */}
                         <div className="flex items-center justify-center gap-2 mt-4 bg-gray-100 p-1 rounded-xl">
                             <button
@@ -606,7 +606,7 @@ const Login = () => {
                 </div>
             </div>
 
-            <style jsx>{`
+            <style>{`
                 @keyframes shake {
                     0%, 100% { transform: translateX(0); }
                     10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }

@@ -161,9 +161,19 @@ const Signup = () => {
     const [selectedPlanDetails, setSelectedPlanDetails] = useState(null);
     const [accountTypeSelection, setAccountTypeSelection] = useState(null);
     const [healthcareClientId, setHealthcareClientId] = useState('');
-    
+
     // NEW: State for individual registration type selection
     const [individualType, setIndividualType] = useState(null); // 'professional' or 'client'
+
+    // Generate a stable healthcare client ID when user selects 'client' type
+    useEffect(() => {
+        if (individualType === 'client' && !healthcareClientId) {
+            setHealthcareClientId(generateHealthcareClientId());
+        }
+        if (individualType !== 'client') {
+            setHealthcareClientId('');
+        }
+    }, [individualType]);
 
     useEffect(() => {
         // Handle URL params for account type
@@ -230,12 +240,12 @@ const Signup = () => {
     const handlePlanSelect = (plan) => {
         setSelectedPlan(plan.id);
         setSelectedPlanDetails(plan);
-        
+
         // Reset individual type when selecting new plan
         if (plan.account_type === 'individual') {
             setIndividualType(null);
         }
-        
+
         setFormData(prev => ({
             ...prev,
             account_type: plan.account_type,
@@ -250,18 +260,25 @@ const Signup = () => {
         setError('');
         setSuccess('');
 
-        // For healthcare client, generate ID and skip to payment
+        // For healthcare client, use the stable ID and skip to payment
         if (individualType === 'client') {
             try {
-                // Generate unique ID for healthcare client
-                const clientId = generateHealthcareClientId();
-                setHealthcareClientId(clientId);
+                // Validate passwords match
+                if (formData.password !== formData.confirmPassword) {
+                    throw new Error('Passwords do not match');
+                }
 
-                // Create minimal user data for healthcare client
+                // Use the stable ID generated in useEffect
+                const clientId = healthcareClientId;
+                if (!clientId) {
+                    throw new Error('Healthcare Client ID not ready. Please try again.');
+                }
+
+                // Create user data for healthcare client
                 const userData = {
-                    email: `${clientId}@temp.healthcareclient.com`,
-                    name: `Healthcare Client ${clientId}`,
-                    phone: 'N/A',
+                    email: `${clientId}@hcc.addis-med.com`,
+                    name: formData.full_name || `Healthcare Client ${clientId}`,
+                    phone: formData.phone || 'N/A',
                     account_type: 'individual',
                     status: 'pending_payment',
                     userId: clientId,
@@ -271,7 +288,8 @@ const Signup = () => {
                     selected_plan_details: selectedPlanDetails,
                     is_healthcare_client: true,
                     individual_type: 'client',
-                    registered_at: new Date().toISOString()
+                    registered_at: new Date().toISOString(),
+                    password: formData.password
                 };
 
                 localStorage.setItem('registered_user', JSON.stringify(userData));
@@ -281,12 +299,13 @@ const Signup = () => {
                     email: userData.email,
                     name: userData.name,
                     userId: clientId,
-                    phone: 'N/A',
+                    phone: formData.phone || 'N/A',
                     account_type: 'individual',
                     selected_plan: selectedPlan,
                     selected_plan_details: selectedPlanDetails,
                     is_healthcare_client: true,
-                    individual_type: 'client'
+                    individual_type: 'client',
+                    client_password: formData.password
                 };
                 localStorage.setItem('payment_user_data', JSON.stringify(paymentUserData));
 
@@ -300,7 +319,9 @@ const Signup = () => {
                 setLoading(false);
                 return;
             } catch (err) {
-                setError('Error creating healthcare client account');
+                console.error('❌ Registration redirection failed:', err);
+                const msg = err.error || err.message || 'Registration failed';
+                setError(typeof msg === 'object' ? JSON.stringify(msg) : msg);
                 setLoading(false);
                 return;
             }
@@ -485,12 +506,13 @@ const Signup = () => {
                     planId: selectedPlan,
                     userEmail: userData.email,
                     userName: userData.name,
-                    userPhone: '0000000000',
+                    userPhone: userData.phone || '0000000000',
                     userId: userData.userId || userData.id,
                     account_type: 'individual',
                     frontendUrl: window.location.origin,
                     is_healthcare_client: true,
-                    healthcare_client_id: userData.userId
+                    healthcare_client_id: userData.userId,
+                    client_password: userData.password
                 };
 
                 const data = await api.post('/chapa/create-payment', paymentRequest);
@@ -565,7 +587,11 @@ const Signup = () => {
             }
 
         } catch (err) {
-            setPlanError(err.message);
+            console.error('❌ Payment initialization failed:', err);
+            const msg = err.error || err.message || 'Payment initialization failed.';
+            const details = err.details ? (typeof err.details === 'string' ? err.details : JSON.stringify(err.details, null, 2)) : '';
+
+            setPlanError(`${msg}${details ? '\n\nDetails: ' + details : ''}`);
             setPaymentLoading(false);
         }
     };
@@ -948,8 +974,8 @@ const Signup = () => {
 
         // For healthcare client (individual + client type), show simplified view with generated ID
         if (isIndividual && individualType === 'client') {
-            const generatedId = healthcareClientId || generateHealthcareClientId();
-            
+            const generatedId = healthcareClientId || '';
+
             return (
                 <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
                     <div className="w-full max-w-2xl">
@@ -1062,68 +1088,104 @@ const Signup = () => {
                                 </div>
                                 <div className="bg-white p-4 rounded-lg border-2 border-blue-300 mb-4">
                                     <p className="text-2xl font-mono font-bold text-center text-blue-600 break-all">
-                                        {generatedId}
+                                        {healthcareClientId}
                                     </p>
                                 </div>
                                 <p className="text-sm text-gray-600">
-                                    This ID will be used to identify your account. Please save it for future reference.
-                                    No additional registration information is required.
+                                    This ID will be used for login. You can set a password below to secure your account.
                                 </p>
                             </div>
 
-                            <div className="bg-yellow-50 p-6 rounded-xl mb-6">
-                                <div className="flex items-start gap-3">
-                                    <FaInfoCircle className="text-yellow-500 text-xl flex-shrink-0 mt-1" />
+                            <form onSubmit={handleRegistrationSubmit} className="space-y-6">
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                        <h4 className="font-bold text-gray-800 mb-2">Important Information:</h4>
-                                        <ul className="space-y-2 text-sm text-gray-600">
-                                            <li className="flex items-start gap-2">
-                                                <span className="text-yellow-500">•</span>
-                                                <span>No email verification required</span>
-                                            </li>
-                                            <li className="flex items-start gap-2">
-                                                <span className="text-yellow-500">•</span>
-                                                <span>Use your unique ID for login</span>
-                                            </li>
-                                            <li className="flex items-start gap-2">
-                                                <span className="text-yellow-500">•</span>
-                                                <span>Account will be activated immediately after payment</span>
-                                            </li>
-                                            <li className="flex items-start gap-2">
-                                                <span className="text-yellow-500">•</span>
-                                                <span>You can update your profile information later</span>
-                                            </li>
-                                        </ul>
+                                        <label className="block text-gray-700 font-medium mb-2">
+                                            <FaLock className="inline mr-2" />
+                                            Set Password *
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                type={showPassword ? "text" : "password"}
+                                                required
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition pr-12"
+                                                placeholder="Create a password"
+                                                value={formData.password}
+                                                onChange={(e) => handlePasswordChange(e.target.value)}
+                                            />
+                                            <button
+                                                type="button"
+                                                className="absolute right-3 top-3 text-gray-500 hover:text-gray-700"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                            >
+                                                {showPassword ? <FaEyeSlash /> : <FaEye />}
+                                            </button>
+                                        </div>
+                                        {passwordStrength && (
+                                            <p className="mt-2 text-sm">
+                                                Password strength:
+                                                <span className={`ml-2 font-bold ${passwordStrength === 'weak' ? 'text-red-500' :
+                                                    passwordStrength === 'fair' ? 'text-yellow-500' :
+                                                        passwordStrength === 'good' ? 'text-blue-500' :
+                                                            'text-green-500'
+                                                    }`}>
+                                                    {passwordStrength.charAt(0).toUpperCase() + passwordStrength.slice(1)}
+                                                </span>
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className="block text-gray-700 font-medium mb-2">
+                                            <FaLock className="inline mr-2" />
+                                            Confirm Password *
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                type={showConfirmPassword ? "text" : "password"}
+                                                required
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition pr-12"
+                                                placeholder="Confirm password"
+                                                value={formData.confirmPassword}
+                                                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                                            />
+                                            <button
+                                                type="button"
+                                                className="absolute right-3 top-3 text-gray-500 hover:text-gray-700"
+                                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                            >
+                                                {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div className="flex flex-col md:flex-row gap-4 pt-6 border-t">
-                                <button
-                                    type="button"
-                                    onClick={() => setIndividualType(null)}
-                                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 px-4 rounded-xl transition"
-                                >
-                                    ← Back to Type Selection
-                                </button>
-                                <button
-                                    onClick={handleRegistrationSubmit}
-                                    disabled={loading}
-                                    className="flex-1 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-medium py-3 px-4 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
-                                >
-                                    {loading ? (
-                                        <>
-                                            <FaSpinner className="animate-spin" />
-                                            Processing...
-                                        </>
-                                    ) : (
-                                        <>
-                                            Continue to Payment
-                                            <FaArrowRight />
-                                        </>
-                                    )}
-                                </button>
-                            </div>
+                                <div className="flex flex-col md:flex-row gap-4 pt-6 border-t">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIndividualType(null)}
+                                        className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 px-4 rounded-xl transition"
+                                    >
+                                        ← Back to Type Selection
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="flex-1 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-medium py-3 px-4 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
+                                    >
+                                        {loading ? (
+                                            <>
+                                                <FaSpinner className="animate-spin" />
+                                                Processing...
+                                            </>
+                                        ) : (
+                                            <>
+                                                Continue to Payment
+                                                <FaArrowRight />
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -2027,11 +2089,14 @@ const Signup = () => {
 
                         {planError && (
                             <div className="mt-6 p-4 bg-red-50 border-2 border-red-200 rounded-xl">
-                                <div className="flex items-center gap-3">
-                                    <FaExclamationTriangle className="text-red-500" />
-                                    <div>
-                                        <p className="text-red-700 font-bold">Payment Error</p>
-                                        <p className="text-red-600">{planError}</p>
+                                <div className="flex items-start gap-3">
+                                    <FaExclamationTriangle className="text-red-500 mt-1 flex-shrink-0" />
+                                    <div className="overflow-hidden">
+                                        <p className="text-red-700 font-bold">Payment Setup Failed</p>
+                                        <p className="text-red-600 text-sm whitespace-pre-wrap">{planError}</p>
+                                        <p className="text-xs text-red-400 mt-2">
+                                            Please verify your connection and try again. If this persists, contact support with the error details above.
+                                        </p>
                                     </div>
                                 </div>
                             </div>

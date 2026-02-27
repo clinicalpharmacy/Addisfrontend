@@ -23,8 +23,16 @@ const SubscriptionSuccess = () => {
 
     const tx_ref = searchParams.get('tx_ref');
     const status = searchParams.get('status');
-    const txid = searchParams.get('transaction_id');
-    const chapaRef = searchParams.get('chapa_ref');
+    const [isHealthcareClient, setIsHealthcareClient] = useState(false);
+    const [healthcareClientId, setHealthcareClientId] = useState('');
+
+    useEffect(() => {
+        const registeredUser = JSON.parse(localStorage.getItem('registered_user') || '{}');
+        if (registeredUser.is_healthcare_client) {
+            setIsHealthcareClient(true);
+            setHealthcareClientId(registeredUser.userId || registeredUser.id);
+        }
+    }, []);
 
     useEffect(() => {
         // Auto-assume success if tx_ref exists (Chapa doesn't always add status=success)
@@ -293,12 +301,14 @@ Support: support@addismed.com
                                 </div>
                                 <div>
                                     <p className="text-blue-800 font-bold text-lg">
-                                        {localStorage.getItem('user') ? 'Updating Subscription' : 'Processing Your Account'}
+                                        {isHealthcareClient ? 'Account Activated!' : (localStorage.getItem('user') ? 'Updating Subscription' : 'Processing Your Account')}
                                     </p>
                                     <p className="text-blue-600 text-sm mt-1">
-                                        {localStorage.getItem('user')
-                                            ? 'Your subscription is being updated. This may take a few moments to reflect in your account.'
-                                            : 'Your payment is being processed. Account activation usually takes 24-48 hours.'}
+                                        {isHealthcareClient
+                                            ? 'Your healthcare client account is now active. Use your unique ID to access clinical tools.'
+                                            : (localStorage.getItem('user')
+                                                ? 'Your subscription is being updated. This may take a few moments to reflect in your account.'
+                                                : 'Your payment is being processed. Account activation usually takes 24-48 hours.')}
                                     </p>
                                 </div>
                             </div>
@@ -313,7 +323,7 @@ Support: support@addismed.com
                                 <p className="text-sm text-gray-600 mb-1">Transaction ID</p>
                                 <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
                                     <code className="text-sm font-mono text-gray-800 break-all flex-1">
-                                        {tx_ref}
+                                        {tx_ref || searchParams.get('tx_ref')}
                                     </code>
                                     <button
                                         onClick={copyTransactionId}
@@ -361,41 +371,67 @@ Support: support@addismed.com
                             <FaCheckCircle className="text-green-600" />
                             What happens next?
                         </h3>
-                        <ul className="space-y-2 text-sm text-green-700">
-                            <li className="flex flex-col gap-2 p-3 bg-blue-50 rounded-xl border border-blue-100">
-                                <div className="flex items-start gap-2 text-blue-800 font-bold">
-                                    <span className="text-blue-600 mt-0.5"><FaEnvelope /></span>
-                                    <span>Check your email! We've sent a verification link.</span>
+                        {isHealthcareClient ? (
+                            <div className="space-y-4">
+                                <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
+                                    <p className="text-blue-800 font-bold mb-2 flex items-center gap-2">
+                                        <FaLock /> Your Healthcare Client ID
+                                    </p>
+                                    <div className="bg-white p-3 rounded-lg border border-blue-200 text-center">
+                                        <code className="text-lg font-bold text-blue-600 break-all">{healthcareClientId}</code>
+                                    </div>
+                                    <p className="text-xs text-blue-600 mt-2">
+                                        Please save this ID. You will use it to log in and access clinical information.
+                                    </p>
                                 </div>
-                                <div className="ml-7">
-                                    <button
-                                        onClick={resendVerification}
-                                        disabled={resending}
-                                        className="text-xs text-blue-600 hover:text-blue-800 underline font-medium flex items-center gap-1"
-                                    >
-                                        {resending ? <FaSpinner className="animate-spin" /> : null}
-                                        Didn't receive it? Click here to resend
-                                    </button>
-                                    {resendStatus && (
-                                        <p className={`text-xs mt-1 font-medium ${resendStatus.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>
-                                            {resendStatus.message}
-                                        </p>
-                                    )}
-                                </div>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <span className="text-green-600 mt-0.5">✓</span>
-                                <span>Click the link in the email to verify your identity</span>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <span className="text-green-600 mt-0.5">✓</span>
-                                <span>Your account will be activated immediately after verification</span>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <span className="text-green-600 mt-0.5">✓</span>
-                                <span>Logged in? Your dashboard will update automatically.</span>
-                            </li>
-                        </ul>
+                                <ul className="space-y-2 text-sm text-green-700">
+                                    <li className="flex items-start gap-2">
+                                        <span className="text-green-600 mt-0.5">✓</span>
+                                        <span>No email verification is required for Healthcare Clients.</span>
+                                    </li>
+                                    <li className="flex items-start gap-2">
+                                        <span className="text-green-600 mt-0.5">✓</span>
+                                        <span>Your account is active immediately.</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        ) : (
+                            <ul className="space-y-2 text-sm text-green-700">
+                                <li className="flex flex-col gap-2 p-3 bg-blue-50 rounded-xl border border-blue-100">
+                                    <div className="flex items-start gap-2 text-blue-800 font-bold">
+                                        <span className="text-blue-600 mt-0.5"><FaEnvelope /></span>
+                                        <span>Check your email! We've sent a verification link.</span>
+                                    </div>
+                                    <div className="ml-7">
+                                        <button
+                                            onClick={resendVerification}
+                                            disabled={resending}
+                                            className="text-xs text-blue-600 hover:text-blue-800 underline font-medium flex items-center gap-1"
+                                        >
+                                            {resending ? <FaSpinner className="animate-spin" /> : null}
+                                            Didn't receive it? Click here to resend
+                                        </button>
+                                        {resendStatus && (
+                                            <p className={`text-xs mt-1 font-medium ${resendStatus.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>
+                                                {resendStatus.message}
+                                            </p>
+                                        )}
+                                    </div>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="text-green-600 mt-0.5">✓</span>
+                                    <span>Click the link in the email to verify your identity</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="text-green-600 mt-0.5">✓</span>
+                                    <span>Your account will be activated immediately after verification</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="text-green-600 mt-0.5">✓</span>
+                                    <span>Logged in? Your dashboard will update automatically.</span>
+                                </li>
+                            </ul>
+                        )}
                     </div>
                 </div>
 
@@ -414,7 +450,7 @@ Support: support@addismed.com
                         className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium py-4 px-4 rounded-xl transition flex items-center justify-center gap-3"
                     >
                         <FaLock />
-                        {localStorage.getItem('user') ? 'Go to Dashboard' : 'Go to Login Page'}
+                        {isHealthcareClient ? 'Access Clinical Tools' : (localStorage.getItem('user') ? 'Go to Dashboard' : 'Go to Login Page')}
                     </button>
 
                     <button

@@ -74,6 +74,7 @@ export const getRoleBadge = (role) => {
         case 'laboratory': return <span className="px-2 py-1 text-xs bg-orange-100 text-orange-800 rounded">Lab</span>;
         case 'student': return <span className="px-2 py-1 text-xs bg-emerald-100 text-emerald-800 rounded">Student</span>;
         case 'company_admin': return <span className="px-2 py-1 text-xs bg-indigo-100 text-indigo-800 rounded">Company Admin</span>;
+        case 'healthcare_client': return <span className="px-2 py-1 text-xs bg-blue-50 text-blue-700 border border-blue-100 rounded font-bold">Healthcare Client</span>;
         default: return <span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded capitalize">{role}</span>;
     }
 };
