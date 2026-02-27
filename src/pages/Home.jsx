@@ -17,7 +17,7 @@ const Home = () => {
     };
 
     return (
-        <div className="page-container">
+        <div className="page-container w-full max-w-full overflow-x-hidden px-2 sm:px-4 md:px-6">
             {/* Welcome Section */}
             <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
