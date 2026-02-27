@@ -12,7 +12,7 @@ import {
     FaArrowLeft,
     FaEdit,
     FaTrash,
-
+    FaWifi,
     FaHeartbeat,
     FaVenusMars,
     FaPhone,
