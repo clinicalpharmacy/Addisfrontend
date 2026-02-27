@@ -160,6 +160,7 @@ const Signup = () => {
     const [chapaTxRef, setChapaTxRef] = useState('');
     const [selectedPlanDetails, setSelectedPlanDetails] = useState(null);
     const [accountTypeSelection, setAccountTypeSelection] = useState(null); // 'individual' or 'company'
+    const [healthcareClientId, setHealthcareClientId] = useState(''); // For healthcare client auto-generated ID
 
     useEffect(() => {
         // Handle URL params for account type
@@ -197,6 +198,14 @@ const Signup = () => {
         });
     }, [searchParams]);
 
+    // Generate unique ID for healthcare client
+    const generateHealthcareClientId = () => {
+        const prefix = 'HCC';
+        const timestamp = Date.now().toString(36).toUpperCase();
+        const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+        return `${prefix}-${timestamp}-${random}`;
+    };
+
     const checkPasswordStrength = (password) => {
         if (!password) return '';
         if (password.length < 6) return 'weak';
@@ -232,6 +241,63 @@ const Signup = () => {
         setError('');
         setSuccess('');
 
+        // Check if user selected "Health Care Client" role
+        const isHealthcareClient = formData.role === 'health_care_client';
+
+        // For healthcare client, skip validation and generate ID
+        if (isHealthcareClient) {
+            try {
+                // Generate unique ID for healthcare client
+                const clientId = generateHealthcareClientId();
+                setHealthcareClientId(clientId);
+
+                // Create minimal user data for healthcare client
+                const userData = {
+                    email: `${clientId}@temp.healthcareclient.com`, // Temporary email
+                    name: `Healthcare Client ${clientId}`,
+                    phone: 'N/A',
+                    account_type: 'individual',
+                    status: 'pending_payment',
+                    userId: clientId,
+                    id: clientId,
+                    user_id: clientId,
+                    selected_plan: selectedPlan,
+                    selected_plan_details: selectedPlanDetails,
+                    is_healthcare_client: true,
+                    registered_at: new Date().toISOString()
+                };
+
+                localStorage.setItem('registered_user', JSON.stringify(userData));
+                localStorage.setItem('last_registration', new Date().toISOString());
+
+                const paymentUserData = {
+                    email: userData.email,
+                    name: userData.name,
+                    userId: clientId,
+                    phone: 'N/A',
+                    account_type: 'individual',
+                    selected_plan: selectedPlan,
+                    selected_plan_details: selectedPlanDetails,
+                    is_healthcare_client: true
+                };
+                localStorage.setItem('payment_user_data', JSON.stringify(paymentUserData));
+
+                setRegisteredUser(userData);
+                setRegistrationComplete(true);
+
+                setStep(3);
+                setSuccess(`✅ Healthcare Client registration initiated! Your unique ID is: ${clientId}. Please proceed to payment.`);
+
+                setLoading(false);
+                return;
+            } catch (err) {
+                setError('Error creating healthcare client account');
+                setLoading(false);
+                return;
+            }
+        }
+
+        // Regular validation for non-healthcare client users
         const trimmedPassword = formData.password ? formData.password.trim() : '';
         const trimmedConfirmPassword = formData.confirmPassword ? formData.confirmPassword.trim() : '';
         const trimmedAdminPassword = formData.account_type === 'company' ?
@@ -263,13 +329,12 @@ const Signup = () => {
                     password: trimmedPassword,
                     full_name: formData.full_name.trim(),
                     phone: formData.phone.trim(),
-                    // REMOVED: institution field
                     country: formData.country,
                     region: formData.region,
                     woreda: formData.woreda.trim(),
                     tin_number: formData.tin_number.trim(),
                     license_number: formData.license_number?.trim() || '',
-                    role: formData.role, // Use selected role
+                    role: formData.role,
                     account_type: 'individual',
                     selected_plan: selectedPlan,
                     skip_verification_email: true
@@ -297,11 +362,7 @@ const Signup = () => {
                 };
             }
 
-
-
             const data = await api.post(endpoint, requestData);
-
-
 
             if (!data.success) {
                 throw new Error(data.error || 'Registration failed');
@@ -361,8 +422,6 @@ const Signup = () => {
                 form_name: formData.account_type === 'individual' ? formData.full_name.trim() : formData.admin_full_name.trim()
             };
 
-
-
             localStorage.setItem('registered_user', JSON.stringify(userData));
             localStorage.setItem('last_registration', new Date().toISOString());
 
@@ -388,8 +447,6 @@ const Signup = () => {
             }
 
         } catch (err) {
-
-            // Extracts error from backend response { success: false, error: "..." } which becomes 'err' here due to interceptor
             const errorMessage = err.error || err.message || (typeof err === 'string' ? err : 'An error occurred during registration');
             setError(errorMessage);
         } finally {
@@ -410,54 +467,92 @@ const Signup = () => {
 
             const userData = JSON.parse(userDataStr);
 
-            if (!userData.phone) {
-                setPlanError('Phone number is required for payment');
-                setPaymentLoading(false);
-                return;
-            }
-
-            const paymentRequest = {
-                planId: selectedPlan,
-                userEmail: userData.email,
-                userName: userData.name || userData.full_name || 'User',
-                userPhone: userData.phone,
-                userId: userData.userId || userData.id,
-                account_type: userData.account_type || 'individual',
-                frontendUrl: window.location.origin
-            };
-
-
-
-            const data = await api.post('/chapa/create-payment', paymentRequest);
-
-
-
-            if (!data.success) {
-                throw new Error(data.error || 'Payment failed');
-            }
-
-            if (data.payment_url) {
-                const paymentInfo = {
-                    tx_ref: data.tx_ref,
+            // For healthcare client, use generated data
+            if (userData.is_healthcare_client) {
+                const paymentRequest = {
                     planId: selectedPlan,
-                    planName: data.plan_name,
-                    amount: data.amount,
-                    currency: data.currency,
                     userEmail: userData.email,
-                    userPhone: data.user_phone || userData.phone,
-                    status: 'pending',
-                    payment_url: data.payment_url
+                    userName: userData.name,
+                    userPhone: '0000000000', // Placeholder phone
+                    userId: userData.userId || userData.id,
+                    account_type: 'individual',
+                    frontendUrl: window.location.origin,
+                    is_healthcare_client: true,
+                    healthcare_client_id: userData.userId
                 };
 
-                localStorage.setItem('pending_subscription', JSON.stringify(paymentInfo));
-                setChapaTxRef(data.tx_ref);
-                setChapaPaymentUrl(data.payment_url);
+                const data = await api.post('/chapa/create-payment', paymentRequest);
 
-                window.location.href = data.payment_url;
+                if (!data.success) {
+                    throw new Error(data.error || 'Payment failed');
+                }
+
+                if (data.payment_url) {
+                    const paymentInfo = {
+                        tx_ref: data.tx_ref,
+                        planId: selectedPlan,
+                        planName: data.plan_name,
+                        amount: data.amount,
+                        currency: data.currency,
+                        userEmail: userData.email,
+                        userPhone: '0000000000',
+                        status: 'pending',
+                        payment_url: data.payment_url,
+                        is_healthcare_client: true
+                    };
+
+                    localStorage.setItem('pending_subscription', JSON.stringify(paymentInfo));
+                    setChapaTxRef(data.tx_ref);
+                    setChapaPaymentUrl(data.payment_url);
+
+                    window.location.href = data.payment_url;
+                }
+            } else {
+                // Regular user payment flow
+                if (!userData.phone) {
+                    setPlanError('Phone number is required for payment');
+                    setPaymentLoading(false);
+                    return;
+                }
+
+                const paymentRequest = {
+                    planId: selectedPlan,
+                    userEmail: userData.email,
+                    userName: userData.name || userData.full_name || 'User',
+                    userPhone: userData.phone,
+                    userId: userData.userId || userData.id,
+                    account_type: userData.account_type || 'individual',
+                    frontendUrl: window.location.origin
+                };
+
+                const data = await api.post('/chapa/create-payment', paymentRequest);
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Payment failed');
+                }
+
+                if (data.payment_url) {
+                    const paymentInfo = {
+                        tx_ref: data.tx_ref,
+                        planId: selectedPlan,
+                        planName: data.plan_name,
+                        amount: data.amount,
+                        currency: data.currency,
+                        userEmail: userData.email,
+                        userPhone: data.user_phone || userData.phone,
+                        status: 'pending',
+                        payment_url: data.payment_url
+                    };
+
+                    localStorage.setItem('pending_subscription', JSON.stringify(paymentInfo));
+                    setChapaTxRef(data.tx_ref);
+                    setChapaPaymentUrl(data.payment_url);
+
+                    window.location.href = data.payment_url;
+                }
             }
 
         } catch (err) {
-
             setPlanError(err.message);
             setPaymentLoading(false);
         }
@@ -694,7 +789,193 @@ const Signup = () => {
     // Step 2: Registration Form
     if (step === 2) {
         const isIndividual = selectedPlanDetails?.account_type === 'individual';
+        const isHealthcareClient = formData.role === 'health_care_client';
 
+        // For healthcare client, show simplified view with generated ID
+        if (isIndividual && isHealthcareClient) {
+            const generatedId = healthcareClientId || generateHealthcareClientId();
+            
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
+                    <div className="w-full max-w-2xl">
+                        {/* Progress Bar */}
+                        <div className="mb-6 md:mb-8">
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
+                                    <div className="w-6 h-6 md:w-8 md:h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
+                                        1
+                                    </div>
+                                    <span className="text-[10px] md:text-sm font-semibold text-green-600 text-center">Plan Selected</span>
+                                </div>
+                                <div className="flex-1 h-1 md:h-2 mx-2 md:mx-4 bg-gray-200 rounded-full">
+                                    <div className="h-full w-full bg-green-500 rounded-full"></div>
+                                </div>
+                                <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
+                                    <div className="w-6 h-6 md:w-8 md:h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
+                                        2
+                                    </div>
+                                    <span className="text-[10px] md:text-sm font-semibold text-blue-600 text-center">Registration</span>
+                                </div>
+                                <div className="flex-1 h-1 md:h-2 mx-2 md:mx-4 bg-gray-200 rounded-full">
+                                    <div className="h-full w-0 bg-green-500 rounded-full"></div>
+                                </div>
+                                <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
+                                    <div className="w-6 h-6 md:w-8 md:h-8 bg-gray-200 text-gray-400 rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
+                                        3
+                                    </div>
+                                    <span className="text-[10px] md:text-sm font-semibold text-gray-400 text-center">Payment</span>
+                                </div>
+                            </div>
+                            <p className="text-center text-gray-500 text-[10px] md:text-sm mt-1">
+                                Step 2 of 3: Healthcare Client Registration
+                            </p>
+                        </div>
+
+                        {/* Selected Plan Info */}
+                        {selectedPlanDetails && (
+                            <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-white rounded-lg">
+                                            {selectedPlanDetails.icon &&
+                                                React.createElement(selectedPlanDetails.icon, {
+                                                    className: `text-xl ${selectedPlanDetails.color.includes('blue') ? 'text-blue-600' :
+                                                        selectedPlanDetails.color.includes('green') ? 'text-green-600' :
+                                                            selectedPlanDetails.color.includes('purple') ? 'text-purple-600' :
+                                                                'text-orange-600'}`
+                                                })
+                                            }
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold text-gray-800">{selectedPlanDetails.name}</h3>
+                                            <p className="text-sm text-gray-600">
+                                                {selectedPlanDetails.price} {selectedPlanDetails.currency} per {selectedPlanDetails.interval}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setStep(1)}
+                                        className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                                    >
+                                        Change Plan
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="bg-white rounded-3xl shadow-2xl p-8">
+                            <div className="text-center mb-8">
+                                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-green-500 to-green-600 rounded-2xl mb-4">
+                                    <FaUserFriends className="text-white text-2xl" />
+                                </div>
+                                <h1 className="text-2xl font-bold text-gray-800 mb-2">
+                                    Healthcare Client Registration
+                                </h1>
+                                <p className="text-gray-600">
+                                    Your account will be created with a unique identifier
+                                </p>
+                            </div>
+
+                            {error && (
+                                <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-xl">
+                                    <div className="flex items-center gap-3">
+                                        <FaExclamationTriangle className="text-red-500" />
+                                        <div>
+                                            <p className="text-red-700 font-bold">Error</p>
+                                            <p className="text-red-600">{error}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {success && (
+                                <div className="mb-6 p-4 bg-green-50 border-2 border-green-200 rounded-xl">
+                                    <div className="flex items-center gap-3">
+                                        <FaCheck className="text-green-500" />
+                                        <div>
+                                            <p className="text-green-700 font-bold">Success</p>
+                                            <p className="text-green-600">{success}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="mb-8 p-6 bg-blue-50 rounded-xl border-2 border-blue-200">
+                                <div className="flex items-center gap-4 mb-4">
+                                    <FaIdCard className="text-blue-500 text-2xl" />
+                                    <h3 className="font-bold text-gray-800 text-lg">Your Unique Healthcare Client ID</h3>
+                                </div>
+                                <div className="bg-white p-4 rounded-lg border-2 border-blue-300 mb-4">
+                                    <p className="text-2xl font-mono font-bold text-center text-blue-600 break-all">
+                                        {generatedId}
+                                    </p>
+                                </div>
+                                <p className="text-sm text-gray-600">
+                                    This ID will be used to identify your account. Please save it for future reference.
+                                    No additional registration information is required.
+                                </p>
+                            </div>
+
+                            <div className="bg-yellow-50 p-6 rounded-xl mb-6">
+                                <div className="flex items-start gap-3">
+                                    <FaInfoCircle className="text-yellow-500 text-xl flex-shrink-0 mt-1" />
+                                    <div>
+                                        <h4 className="font-bold text-gray-800 mb-2">Important Information:</h4>
+                                        <ul className="space-y-2 text-sm text-gray-600">
+                                            <li className="flex items-start gap-2">
+                                                <span className="text-yellow-500">•</span>
+                                                <span>No email verification required</span>
+                                            </li>
+                                            <li className="flex items-start gap-2">
+                                                <span className="text-yellow-500">•</span>
+                                                <span>Use your unique ID for login</span>
+                                            </li>
+                                            <li className="flex items-start gap-2">
+                                                <span className="text-yellow-500">•</span>
+                                                <span>Account will be activated immediately after payment</span>
+                                            </li>
+                                            <li className="flex items-start gap-2">
+                                                <span className="text-yellow-500">•</span>
+                                                <span>You can update your profile information later</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col md:flex-row gap-4 pt-6 border-t">
+                                <button
+                                    type="button"
+                                    onClick={goBack}
+                                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 px-4 rounded-xl transition"
+                                >
+                                    ← Back to Plan Selection
+                                </button>
+                                <button
+                                    onClick={handleRegistrationSubmit}
+                                    disabled={loading}
+                                    className="flex-1 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-medium py-3 px-4 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
+                                >
+                                    {loading ? (
+                                        <>
+                                            <FaSpinner className="animate-spin" />
+                                            Processing...
+                                        </>
+                                    ) : (
+                                        <>
+                                            Continue to Payment
+                                            <FaArrowRight />
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Regular registration form for non-healthcare client users
         return (
             <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
                 <div className="w-full max-w-4xl">
