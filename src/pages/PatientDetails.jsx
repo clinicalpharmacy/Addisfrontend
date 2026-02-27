@@ -2934,7 +2934,7 @@ const PatientDetails = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-2 sm:p-4 md:p-6 max-w-full overflow-x-hidden">
+        <div className="min-h-screen bg-gray-50 p-2 sm:p-4 md:p-6 w-full max-w-full overflow-x-hidden">
             {/* Connection Status Banner */}
             {(!isOnline || backendStatus === 'offline') && (
                 <div className="mb-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-3 md:p-4 rounded-lg shadow">
@@ -2980,80 +2980,91 @@ const PatientDetails = () => {
                     </div>
                 )}
 
-                <div className="bg-white rounded-xl shadow-lg p-2 md:p-6 mb-4 md:mb-6">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="bg-white rounded-xl shadow-lg p-3 md:p-6 mb-4 md:mb-6 w-full overflow-hidden">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 w-full">
+                        {/* Left side with back button and patient info */}
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
                             <button
                                 onClick={() => navigate('/patients')}
-                                className="text-gray-600 hover:text-gray-800 p-2 hover:bg-gray-100 rounded-lg flex-shrink-0"
+                                className="text-gray-600 hover:text-gray-800 p-1.5 hover:bg-gray-100 rounded-lg flex-shrink-0"
                                 title="Back to Patients"
                             >
                                 <FaArrowLeft className="text-lg md:text-xl" />
                             </button>
                             <div className="min-w-0 flex-1">
-                                <h1 className="text-xl md:text-2xl font-bold text-gray-800 truncate">
+                                <h1 className="text-lg md:text-2xl font-bold text-gray-800 truncate">
                                     {isNewPatient ? 'New Patient' : `Patient: ${getCurrentPatientCode()}`}
                                 </h1>
                                 {formData.full_name && (
-                                    <p className="text-gray-600 mt-1 text-xs md:text-base truncate">
+                                    <p className="text-xs md:text-base text-gray-600 mt-0.5 truncate">
                                         {formData.full_name} • {formatAgeDisplay(formData.age_in_days, formData.date_of_birth)} • {formData.gender || 'Gender not specified'}
                                         {formData.is_pregnant && ` • Pregnancy: ${formData.pregnancy_weeks} weeks`}
                                     </p>
                                 )}
                             </div>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-
+                        
+                        {/* Right side with action buttons */}
+                        <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
                             <button
                                 onClick={() => setIsEditing(!isEditing)}
-                                className={`px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm ${isEditing
-                                    ? 'bg-gray-300 hover:bg-gray-400 text-gray-800'
-                                    : 'bg-yellow-500 hover:bg-yellow-600 text-white'
-                                    }`}
+                                className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg flex items-center gap-1.5 text-xs md:text-sm whitespace-nowrap ${
+                                    isEditing
+                                        ? 'bg-gray-300 hover:bg-gray-400 text-gray-800'
+                                        : 'bg-yellow-500 hover:bg-yellow-600 text-white'
+                                }`}
                             >
-                                <FaEdit /> <span className="hidden sm:inline">{isEditing ? 'Cancel' : 'Edit'}</span>
+                                <FaEdit className="text-xs md:text-sm" /> 
+                                <span className="hidden sm:inline">{isEditing ? 'Cancel' : 'Edit'}</span>
                             </button>
+                            
                             {isEditing && (
                                 <button
                                     onClick={handleSaveAll}
-                                    className="bg-green-600 hover:bg-green-700 text-white px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
+                                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 md:px-4 md:py-2 rounded-lg flex items-center gap-1.5 text-xs md:text-sm whitespace-nowrap"
                                 >
-                                    <FaSave /> <span className="hidden sm:inline">{isNewPatient ? 'Create' : 'Save'}</span>
+                                    <FaSave className="text-xs md:text-sm" /> 
+                                    <span className="hidden sm:inline">{isNewPatient ? 'Create' : 'Save'}</span>
                                 </button>
                             )}
+                            
                             {!isNewPatient && (
                                 <button
                                     onClick={handleDelete}
-                                    className="bg-red-500 hover:bg-red-600 text-white px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
+                                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 md:px-4 md:py-2 rounded-lg flex items-center gap-1.5 text-xs md:text-sm whitespace-nowrap"
                                 >
-                                    <FaTrash /> <span className="hidden sm:inline">Delete</span>
+                                    <FaTrash className="text-xs md:text-sm" /> 
+                                    <span className="hidden sm:inline">Delete</span>
                                 </button>
                             )}
                         </div>
                     </div>
-                </div>
 
-                <div className="bg-white rounded-xl shadow-lg p-2 md:p-4 mb-4 md:mb-6">
-                    <nav className="flex space-x-1 overflow-x-auto scrollbar-hide">
+                <div className="bg-white rounded-xl shadow-lg p-2 md:p-4 mb-4 md:mb-6 w-full overflow-hidden">
+    
+                    {/* Navigation tabs with horizontal scroll on mobile */}
+                    <nav className="flex space-x-1 overflow-x-auto scrollbar-hide pb-1">
                         {tabs.map((tab) => {
                             const Icon = tab.icon;
                             return (
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
-                                    className={`py-2 px-3 md:px-4 rounded-lg font-medium text-xs md:text-sm flex items-center gap-2 whitespace-nowrap ${activeTab === tab.id
-                                        ? 'bg-blue-500 text-white'
-                                        : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
-                                        }`}
+                                    className={`py-1.5 px-2 md:py-2 md:px-4 rounded-lg font-medium text-xs md:text-sm flex items-center gap-1 md:gap-2 whitespace-nowrap flex-shrink-0 ${
+                                        activeTab === tab.id
+                                            ? 'bg-blue-500 text-white'
+                                            : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                                    }`}
                                 >
-                                    <Icon className="text-sm md:text-base" /> <span className="hidden sm:inline">{tab.label}</span>
+                                    <Icon className="text-xs md:text-sm" /> 
+                                    <span className="hidden sm:inline">{tab.label}</span>
                                 </button>
                             );
                         })}
                     </nav>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-lg p-2 sm:p-4 md:p-6">
+                <div className="bg-white rounded-xl shadow-lg p-3 sm:p-4 md:p-6 w-full overflow-hidden">
                     {renderTabContent()}
                 </div>
 
