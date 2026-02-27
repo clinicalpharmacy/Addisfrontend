@@ -324,13 +324,6 @@ const DRNAssessment = ({ patientCode }) => {
             if (error) return;
 
             setClinicalRules(data || []);
-
-            const rulesByType = {};
-            data.forEach(rule => {
-                if (!rulesByType[rule.rule_type]) rulesByType[rule.rule_type] = [];
-                rulesByType[rule.rule_type].push(rule);
-            });
-            setActiveRules(rulesByType);
         } catch (error) {
             console.error('Error fetching rules:', error);
         }
@@ -594,7 +587,6 @@ const DRNAssessment = ({ patientCode }) => {
                 medical_condition: writeUp.medicalCondition,
                 medication: writeUp.medication,
                 drn: causeDetails?.drn,
-                status: 'active',
                 is_reportable: isReportable,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
@@ -689,7 +681,6 @@ const DRNAssessment = ({ patientCode }) => {
         setShowReportablePopup(false);
         
         if (response) {
-            // Show the EFDA report link
             setShowDefectLink(true);
         }
     };
@@ -808,7 +799,7 @@ const DRNAssessment = ({ patientCode }) => {
                                                         onClick={runCdssAnalysis}
                                                         className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm flex items-center gap-2"
                                                     >
-                                                        <FaSync /> Re-run Analysis
+                                                        <FaSync /> Run Analysis
                                                     </button>
                                                 </div>
                                             </div>
@@ -853,10 +844,10 @@ const DRNAssessment = ({ patientCode }) => {
                                             ) : (
                                                 <div className="text-center py-8">
                                                     <FaCheckCircle className="text-4xl text-green-500 mx-auto mb-3" />
-                                                    <p className="text-gray-600">No issues found matching current filter</p>
+                                                    <p className="text-gray-600">No issues found</p>
                                                 </div>
                                             )}
-                                                        </div>
+                                        </div>
                                     </div>
                                 ) : (
                                     <div className="text-center py-6">
@@ -880,9 +871,6 @@ const DRNAssessment = ({ patientCode }) => {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             {Object.entries(drnCategories).map(([category, catData]) => {
                                 const Icon = catData.icon;
-                                const ruleCount = catData.ruleTypes.reduce((count, ruleType) => {
-                                    return count + (activeRules[ruleType]?.length || 0);
-                                }, 0);
 
                                 return (
                                     <button
@@ -904,9 +892,6 @@ const DRNAssessment = ({ patientCode }) => {
                                             </div>
                                             <div>
                                                 <div className="font-medium">{category}</div>
-                                                <div className="text-sm text-gray-500 mt-1">
-                                                    {ruleCount} rules • {menuItemsData[category]?.length || 0} causes
-                                                </div>
                                             </div>
                                         </div>
                                     </button>
@@ -924,7 +909,6 @@ const DRNAssessment = ({ patientCode }) => {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                                 {menuItemsData[selectedCategory]?.map(cause => {
-                                    const ruleCount = activeRules?.[cause.ruleType]?.length || 0;
                                     const isSelected = selectedCauses.includes(cause.name);
 
                                     return (
@@ -946,12 +930,6 @@ const DRNAssessment = ({ patientCode }) => {
                                                     {isSelected && cause["DTP Type"] && (
                                                         <span className={`px-2 py-1 text-xs rounded ${getDTPTypeColor(cause["DTP Type"])}`}>
                                                             {cause["DTP Type"]}
-                                                        </span>
-                                                    )}
-
-                                                    {ruleCount > 0 && (
-                                                        <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
-                                                            {ruleCount} rules
                                                         </span>
                                                     )}
                                                 </div>
@@ -1113,7 +1091,7 @@ const DRNAssessment = ({ patientCode }) => {
                                 <table className="w-full">
                                     <thead className="bg-gray-100">
                                         <tr>
-                                            <th className="p-4 text-left font-medium text-gray-700">Category</th>
+                                            <th className="p-4 text-left font-medium text-gray-700">Cause</th>
                                             <th className="p-4 text-left font-medium text-gray-700">DTP Type</th>
                                             <th className="p-4 text-left font-medium text-gray-700">Specific Case</th>
                                             <th className="p-4 text-left font-medium text-gray-700">Medical Condition</th>
@@ -1125,11 +1103,7 @@ const DRNAssessment = ({ patientCode }) => {
                                     <tbody>
                                         {assessments.map((assessment, index) => (
                                             <tr key={assessment.id} className="border-t hover:bg-gray-50">
-                                                <td className="p-4">
-                                                    <span className={`px-3 py-1 text-sm rounded-full ${getCategoryColor(assessment.category)}`}>
-                                                        {assessment.category}
-                                                    </span>
-                                                </td>
+                                                <td className="p-4 font-medium text-gray-800">{assessment.cause_name}</td>
                                                 <td className="p-4">
                                                     <span className={`px-2 py-1 text-xs rounded ${getDTPTypeColor(assessment.dtp_type)}`}>
                                                         {assessment.dtp_type || 'N/A'}
