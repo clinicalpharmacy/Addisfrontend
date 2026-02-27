@@ -12,7 +12,6 @@ import {
     FaArrowLeft,
     FaEdit,
     FaTrash,
-    FaWifi,
     FaHeartbeat,
     FaVenusMars,
     FaPhone,
@@ -32,10 +31,10 @@ import {
     FaCapsules,
     FaProcedures,
     FaPrescriptionBottleAlt,
-
     FaSync,
     FaBrain,
-    FaHistory
+    FaHistory,
+    FaWifi
 } from 'react-icons/fa';
 
 // Import components
