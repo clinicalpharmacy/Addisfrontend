@@ -28,7 +28,7 @@ const Login = () => {
     const [isEmailValid, setIsEmailValid] = useState(false);
     const [passwordStrength, setPasswordStrength] = useState(0);
     const [currentSlide, setCurrentSlide] = useState(0);
-    const [loginMethod, setLoginMethod] = useState('email'); // 'email' or 'healthcareId'
+    const [loginMethod, setLoginMethod] = useState('email'); // 'email' or 'addisMedId'
 
     // Carousel messages for dynamic background
     const carouselMessages = [
@@ -81,12 +81,12 @@ const Login = () => {
         setIsEmailValid(emailRegex.test(formData.email));
     }, [formData.email]);
 
-    // Healthcare ID validation (basic format check)
-    const isHealthcareIdValid = () => {
+    // Addis-Med ID validation (basic format check)
+    const isAddisMedIdValid = () => {
         if (!formData.email) return false;
         // Check for HCC-XXXXXX-XXXXXX format (looser validation to accommodate timestamp lengths)
-        const healthcareIdRegex = /^HCC-[A-Z0-9]{6,10}-[A-Z0-9]{6,10}$/i;
-        return healthcareIdRegex.test(formData.email);
+        const addisMedIdRegex = /^HCC-[A-Z0-9]{6,10}-[A-Z0-9]{6,10}$/i;
+        return addisMedIdRegex.test(formData.email);
     };
 
     // Password strength indicator (simple version)
@@ -108,7 +108,7 @@ const Login = () => {
         setError('');
 
         if (!formData.email.trim() || !formData.password.trim()) {
-            setError('Email/Healthcare ID and password are required');
+            setError('Email/Addis-Med ID and password are required');
             setLoading(false);
             return;
         }
@@ -123,7 +123,7 @@ const Login = () => {
             const data = await api.post('/auth/login', {
                 email: formData.email.trim().toLowerCase(),
                 password: formData.password.trim(),
-                login_method: isHealthcareClient ? 'healthcare_id' : 'email'
+                login_method: isHealthcareClient ? 'addis_med_id' : 'email'
             });
 
             console.log('✅ Login successful:', data);
@@ -241,7 +241,7 @@ const Login = () => {
         setFormData({ email, password });
         // Auto-detect login method based on email format
         if (/^HCC-/i.test(email)) {
-            setLoginMethod('healthcareId');
+            setLoginMethod('addisMedId');
         } else {
             setLoginMethod('email');
         }
@@ -344,17 +344,17 @@ const Login = () => {
                             <button
                                 type="button"
                                 onClick={() => {
-                                    setLoginMethod('healthcareId');
+                                    setLoginMethod('addisMedId');
                                     setFormData({ ...formData, email: '' });
                                     setError('');
                                 }}
-                                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${loginMethod === 'healthcareId'
+                                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${loginMethod === 'addisMedId'
                                     ? 'bg-white text-green-600 shadow-md'
                                     : 'text-gray-600 hover:text-gray-800'
                                     }`}
                             >
                                 <FaIdCard />
-                                Healthcare ID
+                                Addis-Med ID
                             </button>
                         </div>
                     </div>
@@ -374,10 +374,10 @@ const Login = () => {
 
                     {/* Login Form */}
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        {/* Email/Healthcare ID Field */}
+                        {/* Email/Addis-Med ID Field */}
                         <div>
                             <label className={`block text-sm font-medium mb-2 transition-colors duration-300 ${focusedField === 'email' ? 'text-blue-600' : 'text-gray-700'}`}>
-                                {loginMethod === 'email' ? 'Email Address' : 'Healthcare Client ID'}
+                                {loginMethod === 'email' ? 'Email Address' : 'Addis-Med ID'}
                             </label>
                             <div className="relative group">
                                 <input
@@ -392,7 +392,7 @@ const Login = () => {
                                             ? isEmailValid && formData.email
                                                 ? 'border-green-500'
                                                 : 'border-gray-200 hover:border-gray-300'
-                                            : isHealthcareIdValid() && formData.email
+                                            : isAddisMedIdValid() && formData.email
                                                 ? 'border-green-500'
                                                 : 'border-gray-200 hover:border-gray-300'
                                         }`}
@@ -410,13 +410,13 @@ const Login = () => {
                                 {loginMethod === 'email' && isEmailValid && formData.email && (
                                     <FaCheckCircle className="absolute right-4 top-1/2 transform -translate-y-1/2 text-green-500 animate-scale-in" />
                                 )}
-                                {loginMethod === 'healthcareId' && isHealthcareIdValid() && formData.email && (
+                                {loginMethod === 'addisMedId' && isAddisMedIdValid() && formData.email && (
                                     <FaCheckCircle className="absolute right-4 top-1/2 transform -translate-y-1/2 text-green-500 animate-scale-in" />
                                 )}
                             </div>
-                            {loginMethod === 'healthcareId' && (
+                            {loginMethod === 'addisMedId' && (
                                 <p className="text-xs text-gray-500 mt-2">
-                                    Enter your Healthcare Client ID (format: HCC-XXXXXX-XXXXXX)
+                                    Enter your Addis-Med ID (format: HCC-XXXXXX-XXXXXX)
                                 </p>
                             )}
                         </div>
