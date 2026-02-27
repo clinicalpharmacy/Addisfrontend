@@ -19,7 +19,7 @@ const Home = () => {
     return (
         <div className="page-container w-full max-w-full overflow-x-hidden px-2 sm:px-4 md:px-6">
             {/* Welcome Section */}
-            <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg">
+            <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-4 sm:p-6 text-white shadow-lg w-full">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                         <h1 className="text-xl md:text-2xl font-bold">
@@ -48,10 +48,10 @@ const Home = () => {
             </div>
 
             {/* Quick Access Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 w-full">
                 {/* Patients - Hidden for Admin */}
                 {JSON.parse(localStorage.getItem('user'))?.role !== 'admin' && (
-                    <Link to="/patients" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
+                    <Link to="/patients" className="bg-white rounded-xl shadow p-4 sm:p-6 hover:shadow-md transition w-full">
                         <div className="flex items-center gap-4 mb-4">
                             <div className="p-3 bg-blue-100 rounded-full">
                                 <FaUserInjured className="text-blue-600 text-2xl" />
@@ -124,7 +124,7 @@ const Home = () => {
             </div>
 
             {/* Simple Footer */}
-            <div className="text-center text-gray-500 text-sm">
+            <div className="text-center text-gray-500 text-xs sm:text-sm">
                 <p>Addismed - Supporting patient care decisions</p>
             </div>
         </div>
