@@ -772,7 +772,6 @@ const DRNAssessment = ({ patientCode }) => {
                 </div>
                 <div>
                     <h2 className="text-2xl font-bold text-gray-800">Drug-related need assessment activity</h2>
-                    <p className="text-gray-600">Powered by Clinical Decision Support System (CDSS)</p>
                     <div className="text-sm text-gray-500 mt-1">
                         Patient: {patientCode} | User ID: {userId?.substring(0, 8)}...
                     </div>
@@ -847,7 +846,6 @@ const DRNAssessment = ({ patientCode }) => {
                                                             <p className="text-sm text-gray-600 mb-2">{finding.message}</p>
                                                             <div className="flex flex-wrap items-center gap-3 mt-2">
                                                                 <span className="text-xs text-gray-500">
-                                                                    Confidence: 95%
                                                                 </span>
                                                             </div>
                                                         </div>
@@ -891,9 +889,6 @@ const DRNAssessment = ({ patientCode }) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                     {Object.entries(drnCategories).map(([category, catData]) => {
                         const Icon = catData.icon;
-                        const ruleCount = catData.ruleTypes.reduce((count, ruleType) => {
-                            return count + (activeRules[ruleType]?.length || 0);
-                        }, 0);
 
                         return (
                             <button
@@ -915,9 +910,6 @@ const DRNAssessment = ({ patientCode }) => {
                                     </div>
                                     <div>
                                         <div className="font-medium">{category}</div>
-                                        <div className="text-sm text-gray-500 mt-1">
-                                            {ruleCount} rules • {menuItemsData[category]?.length || 0} causes
-                                        </div>
                                     </div>
                                 </div>
                             </button>
@@ -935,7 +927,6 @@ const DRNAssessment = ({ patientCode }) => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                         {menuItemsData[selectedCategory]?.map(cause => {
-                            const ruleCount = activeRules?.[cause.ruleType]?.length || 0;
                             const isSelected = selectedCauses.includes(cause.name);
 
                             return (
@@ -960,11 +951,6 @@ const DRNAssessment = ({ patientCode }) => {
                                                 </span>
                                             )}
 
-                                            {ruleCount > 0 && (
-                                                <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
-                                                    {ruleCount} rules
-                                                </span>
-                                            )}
                                         </div>
                                     </div>
                                 </div>
