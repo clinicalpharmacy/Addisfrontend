@@ -2959,9 +2959,7 @@ const PatientDetails = () => {
                 </div>
             )}
 
-            <div className="max-w-7xl mx-auto">
-
-
+            <div className="max-w-[1600px] mx-auto">
                 {/* Error Display */}
                 {error && (
                     <div className="mb-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-3 md:p-4 rounded-lg">
