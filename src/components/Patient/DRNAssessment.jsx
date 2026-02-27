@@ -580,7 +580,7 @@ const DRNAssessment = ({ patientCode }) => {
                 patient_code: patientCode,
                 user_id: userId,
                 drn_assessment_activity_category: selectedCategory,
-                cause_name: causeName,
+                cause: causeName,
                 rule_type: causeDetails?.ruleType,
                 dtp_type: causeDetails?.["DTP Type"],
                 specific_case: writeUp.specificCase,
@@ -641,10 +641,10 @@ const DRNAssessment = ({ patientCode }) => {
     const handleEdit = (assessment) => {
         setEditId(assessment.id);
         setSelectedCategory(assessment.drn_assessment_activity_category);
-        setSelectedCauses([assessment.cause_name]);
+        setSelectedCauses([assessment.cause]);
 
         setWriteUps({
-            [assessment.cause_name]: {
+            [assessment.cause]: {
                 specificCase: assessment.specific_case,
                 medicalCondition: assessment.medical_condition,
                 medication: assessment.medication
@@ -1105,7 +1105,7 @@ const DRNAssessment = ({ patientCode }) => {
                                         {assessments.map((assessment, index) => (
                                             <tr key={assessment.id} className="border-t hover:bg-gray-50">
                                                 <td className="p-4 text-sm text-gray-700">{assessment.drn_assessment_activity_category}</td>
-                                                <td className="p-4 font-medium text-gray-800">{assessment.cause_name}</td>
+                                                <td className="p-4 font-medium text-gray-800">{assessment.cause}</td>
                                                 <td className="p-4">
                                                     <span className={`px-2 py-1 text-xs rounded ${getDTPTypeColor(assessment.dtp_type)}`}>
                                                         {assessment.dtp_type || 'N/A'}
