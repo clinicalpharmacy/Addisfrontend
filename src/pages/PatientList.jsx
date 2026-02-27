@@ -219,7 +219,7 @@ const PatientList = () => {
     return (
         <div className="page-container w-full max-w-full overflow-x-hidden px-3 sm:px-4 md:px-6 lg:px-8">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full">
                 <div>
                     <h1 className="text-xl md:text-2xl font-bold text-gray-800">Comprehensive Medication Management</h1>
                     <p className="text-sm md:text-base text-gray-600">Manage medication safety and effectiveness</p>
@@ -275,8 +275,8 @@ const PatientList = () => {
             )}
 
             {/* Patients Table (Desktop) */}
-            <div className="hidden md:block table-wrapper">
-                <div className="overflow-x-auto">
+            <div className="hidden md:block table-wrapper w-full">
+               <div className="overflow-x-auto rounded-lg border border-gray-200">    
                     <table className="w-full border-collapse">
                         <thead>
                             <tr className="bg-gray-100 text-gray-700">
