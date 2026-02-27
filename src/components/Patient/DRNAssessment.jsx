@@ -579,7 +579,7 @@ const DRNAssessment = ({ patientCode }) => {
                 patient_id: patientData.id,
                 patient_code: patientCode,
                 user_id: userId,
-                category: selectedCategory,
+                drn_assessment_activity_category: selectedCategory,
                 cause_name: causeName,
                 rule_type: causeDetails?.ruleType,
                 dtp_type: causeDetails?.["DTP Type"],
@@ -640,7 +640,7 @@ const DRNAssessment = ({ patientCode }) => {
 
     const handleEdit = (assessment) => {
         setEditId(assessment.id);
-        setSelectedCategory(assessment.category);
+        setSelectedCategory(assessment.drn_assessment_activity_category);
         setSelectedCauses([assessment.cause_name]);
 
         setWriteUps({
@@ -1091,6 +1091,7 @@ const DRNAssessment = ({ patientCode }) => {
                                 <table className="w-full">
                                     <thead className="bg-gray-100">
                                         <tr>
+                                            <th className="p-4 text-left font-medium text-gray-700">DRN Assessment Activity Category</th>
                                             <th className="p-4 text-left font-medium text-gray-700">Cause</th>
                                             <th className="p-4 text-left font-medium text-gray-700">DTP Type</th>
                                             <th className="p-4 text-left font-medium text-gray-700">Specific Case</th>
@@ -1103,6 +1104,7 @@ const DRNAssessment = ({ patientCode }) => {
                                     <tbody>
                                         {assessments.map((assessment, index) => (
                                             <tr key={assessment.id} className="border-t hover:bg-gray-50">
+                                                <td className="p-4 text-sm text-gray-700">{assessment.drn_assessment_activity_category}</td>
                                                 <td className="p-4 font-medium text-gray-800">{assessment.cause_name}</td>
                                                 <td className="p-4">
                                                     <span className={`px-2 py-1 text-xs rounded ${getDTPTypeColor(assessment.dtp_type)}`}>
