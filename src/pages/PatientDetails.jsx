@@ -2959,7 +2959,7 @@ const PatientDetails = () => {
                 </div>
             )}
 
-            <div className="max-w-7xl mx-auto">
+            <div className="w-full max-w-full mx-auto px-1 sm:px-2 md:px-4">
 
 
                 {/* Error Display */}
