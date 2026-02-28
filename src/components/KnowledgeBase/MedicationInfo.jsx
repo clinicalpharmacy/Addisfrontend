@@ -1120,307 +1120,288 @@ const MedicationInfo = () => {
                     </div>
                 )}
 
-{/* Search Results - Show only when search has at least 2 characters */}
-{searchTerm.length >= 2 ? (
-    filteredMedications.length > 0 ? (
-        <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-lg font-semibold text-gray-700 mb-4 pb-2 border-b">
-                Search Results {filteredMedications.length === 1 ? '(1 medication found)' : `(${filteredMedications.length} medications found)`}
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-2">
-                {filteredMedications.map((med) => (
-                    <div key={med.id} className="group py-2 border-b border-gray-100 lg:border-0">
-                        <div className="flex items-start gap-2">
-                            <FaPills className="text-xs text-indigo-400 mt-1.5 flex-shrink-0 group-hover:text-indigo-600 transition-colors" />
-                            <div className="flex-1 min-w-0">
-                                <button
-                                    onClick={() => setSelectedMedication(med)}
-                                    className="text-left w-full flex items-center gap-1 group/button"
-                                >
-                                    <span className="font-bold text-gray-800 hover:text-indigo-600 transition-colors text-sm md:text-base">
-                                        {med.name}
-                                    </span>
-                                    <span className="text-gray-300 group-hover/button:text-indigo-400 text-xs transition-colors">
-                                        ▶
-                                    </span>
-                                </button>
-                                {med.amharic_name && (
-                                    <div className="text-xs text-gray-500 mt-0.5">
-                                        {med.amharic_name}
+                {/* Search Results - Show only when search has at least 2 characters */}
+                {searchTerm.length >= 2 ? (
+                    filteredMedications.length > 0 ? (
+                        <div className="bg-white rounded-xl shadow-lg p-6">
+                            <h2 className="text-lg font-semibold text-gray-700 mb-4 pb-2 border-b">
+                                Search Results {filteredMedications.length === 1 ? '(1 medication found)' : `(${filteredMedications.length} medications found)`}
+                            </h2>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-2">
+                                {filteredMedications.map((med) => (
+                                    <div key={med.id} className="group py-2 border-b border-gray-100 lg:border-0">
+                                        <div className="flex items-start gap-2">
+                                            <FaPills className="text-xs text-indigo-400 mt-1.5 flex-shrink-0 group-hover:text-indigo-600 transition-colors" />
+                                            <div className="flex-1 min-w-0">
+                                                <button
+                                                    onClick={() => setSelectedMedication(med)}
+                                                    className="text-left w-full flex items-center gap-1 group/button"
+                                                >
+                                                    <span className="font-bold text-gray-800 hover:text-indigo-600 transition-colors text-sm md:text-base">
+                                                        {med.name}
+                                                    </span>
+                                                    <span className="text-gray-300 group-hover/button:text-indigo-400 text-xs transition-colors">
+                                                        ▶
+                                                    </span>
+                                                </button>
+                                                {med.amharic_name && (
+                                                    <div className="text-xs text-gray-500 mt-0.5">
+                                                        {med.amharic_name}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            
+                                            {/* Admin Actions */}
+                                            {isAdmin && (
+                                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button
+                                                        onClick={() => handleEditMedication(med)}
+                                                        className="text-indigo-400 hover:text-indigo-600 transition-colors"
+                                                        title="Edit"
+                                                    >
+                                                        <FaEdit className="text-xs" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteMedication(med.id)}
+                                                        className="text-red-400 hover:text-red-600 transition-colors"
+                                                        title="Delete"
+                                                    >
+                                                        <FaTrash className="text-xs" />
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                )}
+                                ))}
                             </div>
                             
-                            {/* Admin Actions */}
-                            {isAdmin && (
-                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button
-                                        onClick={() => handleEditMedication(med)}
-                                        className="text-indigo-400 hover:text-indigo-600 transition-colors"
-                                        title="Edit"
-                                    >
-                                        <FaEdit className="text-xs" />
-                                    </button>
-                                    <button
-                                        onClick={() => handleDeleteMedication(med.id)}
-                                        className="text-red-400 hover:text-red-600 transition-colors"
-                                        title="Delete"
-                                    >
-                                        <FaTrash className="text-xs" />
-                                    </button>
-                                </div>
-                            )}
+                            {/* Quick tip */}
+                            <div className="mt-4 text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                                <span className="font-medium">Tip:</span> Click on a medication name to view full details.
+                            </div>
                         </div>
-                    </div>
-                ))}
-            </div>
-            
-            {/* Quick tip */}
-            <div className="mt-4 text-xs text-gray-500 bg-gray-50 p-2 rounded">
-                <span className="font-medium">Tip:</span> Click on a medication name to view full details.
-            </div>
-        </div>
-    ) : (
-        <div className="bg-white rounded-xl shadow-lg p-12 text-center">
-            <FaPills className="text-5xl text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-medium text-gray-800 mb-2">No Medications Found</h3>
-            <p className="text-gray-500 max-w-md mx-auto mb-6">
-                "{searchTerm}" - No medications match your search criteria. Try a different search term.
-            </p>
-            <button
-                onClick={() => setSearchTerm('')}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg"
-            >
-                Clear Search
-            </button>
-        </div>
-    )
-) : (
-    <div className="bg-white rounded-xl shadow-lg p-12 text-center">
-        <div className="max-w-md mx-auto">
-            <FaPills className="text-5xl text-indigo-300 mx-auto mb-4" />
-            <h3 className="text-xl font-medium text-gray-800 mb-2">Medication Database</h3>
-            <p className="text-gray-500 mb-4">
-                Search for a specific medication by name to view its information.
-            </p>
-            
-            {/* Search tips */}
-            <div className="bg-indigo-50 p-4 rounded-lg text-left">
-                <h4 className="font-medium text-indigo-800 mb-2 flex items-center gap-2">
-                    <FaInfoCircle className="text-indigo-600" />
-                    Search Tips
-                </h4>
-                <ul className="text-sm text-indigo-700 space-y-1">
-                    <li>• Type at least 2 characters to search</li>
-                    <li>• Search by English or Amharic name</li>
-                    <li>• Results appear as you type</li>
-                </ul>
-            </div>
-            
-            {/* Database stats */}
-            <div className="mt-6 text-sm text-gray-500 border-t pt-4">
-                <span className="font-semibold text-indigo-600">{medications.length}</span> medications available in database
-            </div>
-        </div>
-    </div>
-)}
-                            {/* Only show admin buttons to admins */}
-                            {isAdmin && (
-                                <>
-                                    <button
-                                        onClick={() => setShowAddForm(true)}
-                                        className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center gap-2"
-                                    >
-                                        <FaPlus /> Add Medication
-                                    </button>
-                                    <button
-                                        onClick={initializeDatabase}
-                                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg flex items-center gap-2"
-                                    >
-                                        <FaDatabase /> Add Sample Data
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                )}
-
-{/* Medication Details Modal - With Improved Scrolling */}
-{selectedMedication && (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-xl shadow-2xl w-[60%] max-w-[60%] min-w-[300px] max-h-[90vh] overflow-hidden flex flex-col">
-            {/* Header - Fixed */}
-            <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-indigo-800 text-white p-4 flex-shrink-0">
-                <div className="flex justify-between items-start">
-                    <div className="flex-1 min-w-0">
-                        <h2 className="text-xl font-bold truncate pr-4">{selectedMedication.name}</h2>
-                        {selectedMedication.amharic_name && (
-                            <p className="text-sm text-indigo-200 mt-1 truncate">
-                                {selectedMedication.amharic_name}
+                    ) : (
+                        <div className="bg-white rounded-xl shadow-lg p-12 text-center">
+                            <FaPills className="text-5xl text-gray-300 mx-auto mb-4" />
+                            <h3 className="text-xl font-medium text-gray-800 mb-2">No Medications Found</h3>
+                            <p className="text-gray-500 max-w-md mx-auto mb-6">
+                                "{searchTerm}" - No medications match your search criteria. Try a different search term.
                             </p>
-                        )}
-                    </div>
-                    <button
-                        onClick={() => setSelectedMedication(null)}
-                        className="text-white hover:text-gray-200 text-xl flex-shrink-0"
-                        aria-label="Close"
-                    >
-                        <FaTimes />
-                    </button>
-                </div>
-            </div>
-            
-            {/* Scrollable Content Area - With improved scrolling */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                {/* Usage Section */}
-                {selectedMedication.usage && (
-                    <div className="bg-blue-50 rounded-lg overflow-hidden border border-blue-100">
-                        <button
-                            onClick={() => toggleSection('usage')}
-                            className="w-full bg-blue-100 hover:bg-blue-200 p-3 text-left flex justify-between items-center transition-colors"
-                        >
-                            <h3 className="font-semibold text-blue-800 flex items-center gap-2">
-                                <FaInfoCircle className="text-blue-600" />
-                                የመድሃኒቱ ጥቅም:
-                            </h3>
-                            <span className="text-blue-600 text-xl font-bold">
-                                {expandedSections.usage ? '−' : '+'}
-                            </span>
-                        </button>
-                        {expandedSections.usage && (
-                            <div className="p-4 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-blue-100">
-                                <div className="space-y-1">
-                                    {renderFormattedText(selectedMedication.usage)}
-                                </div>
-                                {/* Show content size indicator for large content */}
-                                {selectedMedication.usage.length > 500 && (
-                                    <div className="mt-2 text-xs text-blue-600 flex items-center gap-1">
-                                </div>
-                                )}
+                            <button
+                                onClick={() => setSearchTerm('')}
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg"
+                            >
+                                Clear Search
+                            </button>
+                        </div>
+                    )
+                ) : (
+                    <div className="bg-white rounded-xl shadow-lg p-12 text-center">
+                        <div className="max-w-md mx-auto">
+                            <FaPills className="text-5xl text-indigo-300 mx-auto mb-4" />
+                            <h3 className="text-xl font-medium text-gray-800 mb-2">Medication Database</h3>
+                            <p className="text-gray-500 mb-4">
+                                Search for a specific medication by name to view its information.
+                            </p>
+                            
+                            {/* Search tips */}
+                            <div className="bg-indigo-50 p-4 rounded-lg text-left">
+                                <h4 className="font-medium text-indigo-800 mb-2 flex items-center gap-2">
+                                    <FaInfoCircle className="text-indigo-600" />
+                                    Search Tips
+                                </h4>
+                                <ul className="text-sm text-indigo-700 space-y-1">
+                                    <li>• Type at least 2 characters to search</li>
+                                    <li>• Search by English or Amharic name</li>
+                                    <li>• Results appear as you type</li>
+                                </ul>
                             </div>
-                        )}
+                            
+                            {/* Database stats */}
+                            <div className="mt-6 text-sm text-gray-500 border-t pt-4">
+                                <span className="font-semibold text-indigo-600">{medications.length}</span> medications available in database
+                            </div>
+                        </div>
                     </div>
                 )}
 
-                {/* Administration Section */}
-                {selectedMedication.administration_and_cautions && (
-                    <div className="bg-yellow-50 rounded-lg overflow-hidden border border-yellow-100">
-                        <button
-                            onClick={() => toggleSection('administration')}
-                            className="w-full bg-yellow-100 hover:bg-yellow-200 p-3 text-left flex justify-between items-center transition-colors"
-                        >
-                            <h3 className="font-semibold text-yellow-800 flex items-center gap-2">
-                                <FaExclamationTriangle className="text-yellow-600" />
-                                አወሳሰድ እና ጥንቃቄዎች:
-                            </h3>
-                            <span className="text-yellow-600 text-xl font-bold">
-                                {expandedSections.administration ? '−' : '+'}
-                            </span>
-                        </button>
-                        {expandedSections.administration && (
-                            <div className="p-4 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-yellow-300 scrollbar-track-yellow-100">
-                                <div className="space-y-1">
-                                    {renderFormattedText(selectedMedication.administration_and_cautions)}
+                {/* Medication Details Modal - With Improved Scrolling */}
+                {selectedMedication && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                        <div className="bg-white rounded-xl shadow-2xl w-[60%] max-w-[60%] min-w-[300px] max-h-[90vh] overflow-hidden flex flex-col">
+                            {/* Header - Fixed */}
+                            <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-indigo-800 text-white p-4 flex-shrink-0">
+                                <div className="flex justify-between items-start">
+                                    <div className="flex-1 min-w-0">
+                                        <h2 className="text-xl font-bold truncate pr-4">{selectedMedication.name}</h2>
+                                        {selectedMedication.amharic_name && (
+                                            <p className="text-sm text-indigo-200 mt-1 truncate">
+                                                {selectedMedication.amharic_name}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <button
+                                        onClick={() => setSelectedMedication(null)}
+                                        className="text-white hover:text-gray-200 text-xl flex-shrink-0"
+                                        aria-label="Close"
+                                    >
+                                        <FaTimes />
+                                    </button>
                                 </div>
-                                {selectedMedication.administration_and_cautions.length > 500 && (
-                                    <div className="mt-2 text-xs text-yellow-600 flex items-center gap-1">
-                                </div>
-                                )}
                             </div>
-                        )}
-                    </div>
-                )}
+                            
+                            {/* Scrollable Content Area - With improved scrolling */}
+                            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                                {/* Usage Section */}
+                                {selectedMedication.usage && (
+                                    <div className="bg-blue-50 rounded-lg overflow-hidden border border-blue-100">
+                                        <button
+                                            onClick={() => toggleSection('usage')}
+                                            className="w-full bg-blue-100 hover:bg-blue-200 p-3 text-left flex justify-between items-center transition-colors"
+                                        >
+                                            <h3 className="font-semibold text-blue-800 flex items-center gap-2">
+                                                <FaInfoCircle className="text-blue-600" />
+                                                የመድሃኒቱ ጥቅም:
+                                            </h3>
+                                            <span className="text-blue-600 text-xl font-bold">
+                                                {expandedSections.usage ? '−' : '+'}
+                                            </span>
+                                        </button>
+                                        {expandedSections.usage && (
+                                            <div className="p-4 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-blue-100">
+                                                <div className="space-y-1">
+                                                    {renderFormattedText(selectedMedication.usage)}
+                                                </div>
+                                                {/* Show content size indicator for large content */}
+                                                {selectedMedication.usage.length > 500 && (
+                                                    <div className="mt-2 text-xs text-blue-600 flex items-center gap-1">
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
 
-                {/* Side Effects Section */}
-                {selectedMedication.side_effects && (
-                    <div className="bg-red-50 rounded-lg overflow-hidden border border-red-100">
-                        <button
-                            onClick={() => toggleSection('sideEffects')}
-                            className="w-full bg-red-100 hover:bg-red-200 p-3 text-left flex justify-between items-center transition-colors"
-                        >
-                            <h3 className="font-semibold text-red-800 flex items-center gap-2">
-                                <FaExclamationCircle className="text-red-600" />
-                                የጎንዮሽ ጉዳቶች:
-                            </h3>
-                            <span className="text-red-600 text-xl font-bold">
-                                {expandedSections.sideEffects ? '−' : '+'}
-                            </span>
-                        </button>
-                        {expandedSections.sideEffects && (
-                            <div className="p-4 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-red-300 scrollbar-track-red-100">
-                                <div className="space-y-1">
-                                    {renderFormattedText(selectedMedication.side_effects)}
-                                </div>
-                                {selectedMedication.side_effects.length > 500 && (
-                                    <div className="mt-2 text-xs text-red-600 flex items-center gap-1">
+                                {/* Administration Section */}
+                                {selectedMedication.administration_and_cautions && (
+                                    <div className="bg-yellow-50 rounded-lg overflow-hidden border border-yellow-100">
+                                        <button
+                                            onClick={() => toggleSection('administration')}
+                                            className="w-full bg-yellow-100 hover:bg-yellow-200 p-3 text-left flex justify-between items-center transition-colors"
+                                        >
+                                            <h3 className="font-semibold text-yellow-800 flex items-center gap-2">
+                                                <FaExclamationTriangle className="text-yellow-600" />
+                                                አወሳሰድ እና ጥንቃቄዎች:
+                                            </h3>
+                                            <span className="text-yellow-600 text-xl font-bold">
+                                                {expandedSections.administration ? '−' : '+'}
+                                            </span>
+                                        </button>
+                                        {expandedSections.administration && (
+                                            <div className="p-4 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-yellow-300 scrollbar-track-yellow-100">
+                                                <div className="space-y-1">
+                                                    {renderFormattedText(selectedMedication.administration_and_cautions)}
+                                                </div>
+                                                {selectedMedication.administration_and_cautions.length > 500 && (
+                                                    <div className="mt-2 text-xs text-yellow-600 flex items-center gap-1">
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Side Effects Section */}
+                                {selectedMedication.side_effects && (
+                                    <div className="bg-red-50 rounded-lg overflow-hidden border border-red-100">
+                                        <button
+                                            onClick={() => toggleSection('sideEffects')}
+                                            className="w-full bg-red-100 hover:bg-red-200 p-3 text-left flex justify-between items-center transition-colors"
+                                        >
+                                            <h3 className="font-semibold text-red-800 flex items-center gap-2">
+                                                <FaExclamationCircle className="text-red-600" />
+                                                የጎንዮሽ ጉዳቶች:
+                                            </h3>
+                                            <span className="text-red-600 text-xl font-bold">
+                                                {expandedSections.sideEffects ? '−' : '+'}
+                                            </span>
+                                        </button>
+                                        {expandedSections.sideEffects && (
+                                            <div className="p-4 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-red-300 scrollbar-track-red-100">
+                                                <div className="space-y-1">
+                                                    {renderFormattedText(selectedMedication.side_effects)}
+                                                </div>
+                                                {selectedMedication.side_effects.length > 500 && (
+                                                    <div className="mt-2 text-xs text-red-600 flex items-center gap-1">
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Storage Section */}
+                                {selectedMedication.storage && (
+                                    <div className="bg-green-50 rounded-lg overflow-hidden border border-green-100">
+                                        <button
+                                            onClick={() => toggleSection('storage')}
+                                            className="w-full bg-green-100 hover:bg-green-200 p-3 text-left flex justify-between items-center transition-colors"
+                                        >
+                                            <h3 className="font-semibold text-green-800 flex items-center gap-2">
+                                                <FaCheckCircle className="text-green-600" />
+                                                አቀማመጥ:
+                                            </h3>
+                                            <span className="text-green-600 text-xl font-bold">
+                                                {expandedSections.storage ? '−' : '+'}
+                                            </span>
+                                        </button>
+                                        {expandedSections.storage && (
+                                            <div className="p-4 max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-green-300 scrollbar-track-green-100">
+                                                <div className="space-y-1">
+                                                    {renderFormattedText(selectedMedication.storage)}
+                                                </div>
+                                                {selectedMedication.storage.length > 300 && (
+                                                    <div className="mt-2 text-xs text-green-600 flex items-center gap-1">
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
-                        )}
-                    </div>
-                )}
 
-                {/* Storage Section */}
-                {selectedMedication.storage && (
-                    <div className="bg-green-50 rounded-lg overflow-hidden border border-green-100">
-                        <button
-                            onClick={() => toggleSection('storage')}
-                            className="w-full bg-green-100 hover:bg-green-200 p-3 text-left flex justify-between items-center transition-colors"
-                        >
-                            <h3 className="font-semibold text-green-800 flex items-center gap-2">
-                                <FaCheckCircle className="text-green-600" />
-                                አቀማመጥ:
-                            </h3>
-                            <span className="text-green-600 text-xl font-bold">
-                                {expandedSections.storage ? '−' : '+'}
-                            </span>
-                        </button>
-                        {expandedSections.storage && (
-                            <div className="p-4 max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-green-300 scrollbar-track-green-100">
-                                <div className="space-y-1">
-                                    {renderFormattedText(selectedMedication.storage)}
-                                </div>
-                                {selectedMedication.storage.length > 300 && (
-                                    <div className="mt-2 text-xs text-green-600 flex items-center gap-1">
-                                    </div>
+                            {/* Footer Actions - Fixed */}
+                            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 p-3 flex justify-end gap-2 flex-shrink-0">
+                                {isAdmin && (
+                                    <>
+                                        <button
+                                            onClick={() => {
+                                                handleEditMedication(selectedMedication);
+                                                setSelectedMedication(null);
+                                            }}
+                                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
+                                        >
+                                            <FaEdit /> Edit
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteMedication(selectedMedication.id)}
+                                            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
+                                        >
+                                            <FaTrash /> Delete
+                                        </button>
+                                    </>
                                 )}
+                                <button
+                                    onClick={() => setSelectedMedication(null)}
+                                    className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg text-sm"
+                                >
+                                    Close
+                                </button>
                             </div>
-                        )}
+                        </div>
                     </div>
                 )}
-            </div>
 
-            {/* Footer Actions - Fixed */}
-            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 p-3 flex justify-end gap-2 flex-shrink-0">
-                {isAdmin && (
-                    <>
-                        <button
-                            onClick={() => {
-                                handleEditMedication(selectedMedication);
-                                setSelectedMedication(null);
-                            }}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
-                        >
-                            <FaEdit /> Edit
-                        </button>
-                        <button
-                            onClick={() => handleDeleteMedication(selectedMedication.id)}
-                            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
-                        >
-                            <FaTrash /> Delete
-                        </button>
-                    </>
-                )}
-                <button
-                    onClick={() => setSelectedMedication(null)}
-                    className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg text-sm"
-                >
-                    Close
-                </button>
-            </div>
-        </div>
-    </div>
-)}
                 {/* Summary Footer */}
                 {filteredMedications.length > 0 && (
                     <div className="mt-8 bg-white rounded-xl shadow-lg p-6">
