@@ -675,11 +675,11 @@ const MedicationInfo = () => {
                                 type="text"
                                 value={searchTerm}
                                 onChange={handleSearchChange}
-                                placeholder="Search medications..."
+                                placeholder="Search for a specific medication by name..."
                                 className="w-full pl-10 pr-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm md:text-base"
                             />
                         </div>
-
+                
                         {/* Admin-only add button */}
                         {isAdmin && (
                             <button
@@ -690,9 +690,15 @@ const MedicationInfo = () => {
                             </button>
                         )}
                     </div>
-
+                
                     <div className="mt-4 text-xs md:text-sm text-gray-500 flex flex-wrap gap-2 items-center">
-                        <span>Showing {filteredMedications.length} of {medications.length} medications</span>
+                        {searchTerm.length >= 2 ? (
+                            <span>Found {filteredMedications.length} medication{filteredMedications.length !== 1 ? 's' : ''} matching "{searchTerm}"</span>
+                        ) : searchTerm.length > 0 ? (
+                            <span>Type at least 2 characters to search...</span>
+                        ) : (
+                            <span>{medications.length} medications in database - Search above to find a specific medication</span>
+                        )}
                         {!isAdmin && <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-600">Read-only</span>}
                     </div>
                 </div>
@@ -1114,75 +1120,110 @@ const MedicationInfo = () => {
                     </div>
                 )}
 
-                {/* Medications Grid - Four Columns as Bold Lines */}
-                {filteredMedications.length > 0 ? (
-                    <div className="bg-white rounded-xl shadow-lg p-6">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-2">
-                            {filteredMedications.map((med) => (
-                                <div key={med.id} className="group py-2 border-b border-gray-100 lg:border-0">
-                                    <div className="flex items-start gap-2">
-                                        <FaPills className="text-xs text-indigo-400 mt-1.5 flex-shrink-0 group-hover:text-indigo-600 transition-colors" />
-                                        <div className="flex-1 min-w-0">
-                                            <button
-                                                onClick={() => setSelectedMedication(med)}
-                                                className="text-left w-full flex items-center gap-1 group/button"
-                                            >
-                                                <span className="font-bold text-gray-800 hover:text-indigo-600 transition-colors text-sm md:text-base">
-                                                    {med.name}
-                                                </span>
-                                                <span className="text-gray-300 group-hover/button:text-indigo-400 text-xs transition-colors">
-                                                    ▶
-                                                </span>
-                                            </button>
-                                            {med.amharic_name && (
-                                                <div className="text-xs text-gray-500 mt-0.5">
-                                                    {med.amharic_name}
-                                                </div>
-                                            )}
-                                        </div>
-                                        
-                                        {/* Admin Actions */}
-                                        {isAdmin && (
-                                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button
-                                                    onClick={() => handleEditMedication(med)}
-                                                    className="text-indigo-400 hover:text-indigo-600 transition-colors"
-                                                    title="Edit"
-                                                >
-                                                    <FaEdit className="text-xs" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteMedication(med.id)}
-                                                    className="text-red-400 hover:text-red-600 transition-colors"
-                                                    title="Delete"
-                                                >
-                                                    <FaTrash className="text-xs" />
-                                                </button>
-                                            </div>
-                                        )}
+{/* Search Results - Show only when search has at least 2 characters */}
+{searchTerm.length >= 2 ? (
+    filteredMedications.length > 0 ? (
+        <div className="bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-lg font-semibold text-gray-700 mb-4 pb-2 border-b">
+                Search Results {filteredMedications.length === 1 ? '(1 medication found)' : `(${filteredMedications.length} medications found)`}
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-2">
+                {filteredMedications.map((med) => (
+                    <div key={med.id} className="group py-2 border-b border-gray-100 lg:border-0">
+                        <div className="flex items-start gap-2">
+                            <FaPills className="text-xs text-indigo-400 mt-1.5 flex-shrink-0 group-hover:text-indigo-600 transition-colors" />
+                            <div className="flex-1 min-w-0">
+                                <button
+                                    onClick={() => setSelectedMedication(med)}
+                                    className="text-left w-full flex items-center gap-1 group/button"
+                                >
+                                    <span className="font-bold text-gray-800 hover:text-indigo-600 transition-colors text-sm md:text-base">
+                                        {med.name}
+                                    </span>
+                                    <span className="text-gray-300 group-hover/button:text-indigo-400 text-xs transition-colors">
+                                        ▶
+                                    </span>
+                                </button>
+                                {med.amharic_name && (
+                                    <div className="text-xs text-gray-500 mt-0.5">
+                                        {med.amharic_name}
                                     </div>
+                                )}
+                            </div>
+                            
+                            {/* Admin Actions */}
+                            {isAdmin && (
+                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button
+                                        onClick={() => handleEditMedication(med)}
+                                        className="text-indigo-400 hover:text-indigo-600 transition-colors"
+                                        title="Edit"
+                                    >
+                                        <FaEdit className="text-xs" />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDeleteMedication(med.id)}
+                                        className="text-red-400 hover:text-red-600 transition-colors"
+                                        title="Delete"
+                                    >
+                                        <FaTrash className="text-xs" />
+                                    </button>
                                 </div>
-                            ))}
+                            )}
                         </div>
                     </div>
-                ) : (
-                    <div className="bg-white rounded-xl shadow-lg p-12 text-center">
-                        <FaPills className="text-5xl text-gray-300 mx-auto mb-4" />
-                        <h3 className="text-xl font-medium text-gray-800 mb-2">No Medications Found</h3>
-                        <p className="text-gray-500 max-w-md mx-auto mb-6">
-                            {searchTerm
-                                ? 'No medications match your search criteria. Try a different search or filter.'
-                                : 'No medications found in the database.'}
-                        </p>
-                        <div className="flex flex-wrap gap-3 justify-center">
-                            <button
-                                onClick={() => {
-                                    setSearchTerm('');
-                                }}
-                                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg"
-                            >
-                                Clear Filters
-                            </button>
+                ))}
+            </div>
+            
+            {/* Quick tip */}
+            <div className="mt-4 text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                <span className="font-medium">Tip:</span> Click on a medication name to view full details.
+            </div>
+        </div>
+    ) : (
+        <div className="bg-white rounded-xl shadow-lg p-12 text-center">
+            <FaPills className="text-5xl text-gray-300 mx-auto mb-4" />
+            <h3 className="text-xl font-medium text-gray-800 mb-2">No Medications Found</h3>
+            <p className="text-gray-500 max-w-md mx-auto mb-6">
+                "{searchTerm}" - No medications match your search criteria. Try a different search term.
+            </p>
+            <button
+                onClick={() => setSearchTerm('')}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg"
+            >
+                Clear Search
+            </button>
+        </div>
+    )
+) : (
+    <div className="bg-white rounded-xl shadow-lg p-12 text-center">
+        <div className="max-w-md mx-auto">
+            <FaPills className="text-5xl text-indigo-300 mx-auto mb-4" />
+            <h3 className="text-xl font-medium text-gray-800 mb-2">Medication Database</h3>
+            <p className="text-gray-500 mb-4">
+                Search for a specific medication by name to view its information.
+            </p>
+            
+            {/* Search tips */}
+            <div className="bg-indigo-50 p-4 rounded-lg text-left">
+                <h4 className="font-medium text-indigo-800 mb-2 flex items-center gap-2">
+                    <FaInfoCircle className="text-indigo-600" />
+                    Search Tips
+                </h4>
+                <ul className="text-sm text-indigo-700 space-y-1">
+                    <li>• Type at least 2 characters to search</li>
+                    <li>• Search by English or Amharic name</li>
+                    <li>• Results appear as you type</li>
+                </ul>
+            </div>
+            
+            {/* Database stats */}
+            <div className="mt-6 text-sm text-gray-500 border-t pt-4">
+                <span className="font-semibold text-indigo-600">{medications.length}</span> medications available in database
+            </div>
+        </div>
+    </div>
+)}
                             {/* Only show admin buttons to admins */}
                             {isAdmin && (
                                 <>
