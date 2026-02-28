@@ -2906,7 +2906,7 @@ const PatientDetails = () => {
                 return <MedicationHistory patientCode={getCurrentPatientCode()} />;
             case 'analysis':
                 return <CDSSDisplay 
-                    patientData={formData} />;
+                    patientData={formData}
                     onBack={() => {}} // Empty function since we're already in patient details
                 />;
             case 'drn':
