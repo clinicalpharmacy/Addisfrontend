@@ -1254,9 +1254,7 @@ const MedicationInfo = () => {
                                 {/* Show content size indicator for large content */}
                                 {selectedMedication.usage.length > 500 && (
                                     <div className="mt-2 text-xs text-blue-600 flex items-center gap-1">
-                                        <FaInfoCircle />
-                                        <span>Scroll for more content ({Math.ceil(selectedMedication.usage.length / 500)} screens)</span>
-                                    </div>
+                                </div>
                                 )}
                             </div>
                         )}
