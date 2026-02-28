@@ -5,7 +5,7 @@ import {
     FaStethoscope, FaEdit, FaDatabase, FaChevronUp, FaChevronDown,
     FaPills, FaExclamationTriangle, FaCheckCircle, FaSpinner,
     FaHeartbeat, FaClipboardCheck, FaUserCheck,
-    FaCapsules, FaSync
+    FaCapsules, FaSync, FaExclamationCircle
 } from 'react-icons/fa';
 
 const DRNAssessment = ({ patientCode }) => {
