@@ -2905,7 +2905,10 @@ const PatientDetails = () => {
             case 'medications':
                 return <MedicationHistory patientCode={getCurrentPatientCode()} />;
             case 'analysis':
-                return <CDSSDisplay patientData={formData} />;
+                return <CDSSDisplay 
+                    patientData={formData} />;
+                    onBack={() => {}} // Empty function since we're already in patient details
+                />;
             case 'drn':
                 return <DRNAssessment patientCode={getCurrentPatientCode()} />;
             case 'plan':
@@ -2917,7 +2920,7 @@ const PatientDetails = () => {
             default:
                 return renderOverviewSection();
         }
-    }, [activeTab, renderOverviewSection, renderDemographicsSection, renderVitalsSection, renderLabsSection, getCurrentPatientCode]);
+    }, [activeTab, renderOverviewSection, renderDemographicsSection, renderVitalsSection, renderLabsSection, getCurrentPatientCode, formData]);
 
     if (loading) {
         return (
