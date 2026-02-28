@@ -99,7 +99,7 @@ const ClinicalRulesAdmin = () => {
     const ruleTypes = [
         { value: 'drug_interaction', label: 'Drug Interaction', icon: FaPills, color: 'bg-red-100 text-red-800', category: 'Safety' },
         { value: 'dose_check', label: 'Dose Check', icon: FaPills, color: 'bg-blue-100 text-blue-800', category: 'Effectiveness' },
-        { value: 'contraindication', label: 'Contraindication', icon: FaSkullCrossbones, color: 'bg-purple-100 text-purple-800', category: 'Safety' },
+        { value: 'contraindication', label: 'Contraindication or Unsafe Drug', icon: FaSkullCrossbones, color: 'bg-purple-100 text-purple-800', category: 'Safety' },
         { value: 'allergy_check', label: 'Allergy Check', icon: FaExclamationTriangle, color: 'bg-orange-100 text-orange-800', category: 'Safety' },
         { value: 'safety_monitoring', label: 'Safety Monitoring', icon: FaVial, color: 'bg-green-100 text-green-800', category: 'Effectiveness' },
         { value: 'duplicate_therapy', label: 'Duplicate Therapy', icon: FaCopy, color: 'bg-yellow-100 text-yellow-800', category: 'Indication' },
