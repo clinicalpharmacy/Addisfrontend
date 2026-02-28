@@ -15,6 +15,7 @@ import {
 
 const API_URL = import.meta.env.VITE_API_URL;
 import api from '../utils/api';
+import UserAgreement from '../components/UserAgreement';
 
 // Define subscription plans with updated pricing
 const SUBSCRIPTION_PLANS = [
@@ -313,7 +314,7 @@ const Signup = () => {
                 setRegistrationComplete(true);
 
                 // Skip to payment step directly
-                setStep(3);
+                setStep(4);
                 setSuccess(`✅ Healthcare Client registration initiated! Your unique ID is: ${clientId}. Please proceed to payment.`);
 
                 setLoading(false);
@@ -472,7 +473,7 @@ const Signup = () => {
             setRegisteredUser(userData);
             setRegistrationComplete(true);
 
-            setStep(3);
+            setStep(4);
             if (formData.account_type === 'individual') {
                 setSuccess(`✅ Registration successful! Please proceed to payment. Note: Your verification email will be sent ONLY after a successful payment.`);
             } else {
@@ -597,19 +598,22 @@ const Signup = () => {
     };
 
     const goBack = () => {
-        if (step === 3) {
-            setStep(2);
+        if (step === 4) {
+            setStep(3);
             setError('');
             setSuccess('');
             setPlanError('');
+        } else if (step === 3) {
+            setStep(2);
+            setError('');
         } else if (step === 2) {
             setStep(1);
             setError('');
             setSelectedPlan('');
             setSelectedPlanDetails(null);
             setIndividualType(null); // Reset individual type when going back
-        } else if (step === 4) {
-            setStep(3);
+        } else if (step === 5) {
+            setStep(4);
         }
     };
 
@@ -825,8 +829,21 @@ const Signup = () => {
         );
     }
 
-    // Step 2: Registration Form
+    // Step 2: User Agreement
     if (step === 2) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
+                <UserAgreement
+                    accountType={selectedPlanDetails?.account_type || 'individual'}
+                    onAgree={() => setStep(3)}
+                    onBack={() => setStep(1)}
+                />
+            </div>
+        );
+    }
+
+    // Step 3: Registration Form
+    if (step === 3) {
         const isIndividual = selectedPlanDetails?.account_type === 'individual';
 
         // For individual plans, show the type selection first
@@ -839,16 +856,16 @@ const Signup = () => {
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
                                     <div className="w-6 h-6 md:w-8 md:h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
-                                        1
+                                        <FaCheck className="text-xs" />
                                     </div>
-                                    <span className="text-[10px] md:text-sm font-semibold text-green-600 text-center">Plan Selected</span>
+                                    <span className="text-[10px] md:text-sm font-semibold text-green-600 text-center">Plan & Agreement</span>
                                 </div>
                                 <div className="flex-1 h-1 md:h-2 mx-2 md:mx-4 bg-gray-200 rounded-full">
                                     <div className="h-full w-full bg-green-500 rounded-full"></div>
                                 </div>
                                 <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
                                     <div className="w-6 h-6 md:w-8 md:h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
-                                        2
+                                        3
                                     </div>
                                     <span className="text-[10px] md:text-sm font-semibold text-blue-600 text-center">Registration Type</span>
                                 </div>
@@ -857,13 +874,13 @@ const Signup = () => {
                                 </div>
                                 <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
                                     <div className="w-6 h-6 md:w-8 md:h-8 bg-gray-200 text-gray-400 rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
-                                        3
+                                        4
                                     </div>
                                     <span className="text-[10px] md:text-sm font-semibold text-gray-400 text-center">Payment</span>
                                 </div>
                             </div>
                             <p className="text-center text-gray-500 text-[10px] md:text-sm mt-1">
-                                Step 2 of 3: Select registration type for {selectedPlanDetails?.name}
+                                Step 3 of 4: Select registration type for {selectedPlanDetails?.name}
                             </p>
                         </div>
 
@@ -984,9 +1001,9 @@ const Signup = () => {
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
                                     <div className="w-6 h-6 md:w-8 md:h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
-                                        1
+                                        <FaCheck className="text-xs" />
                                     </div>
-                                    <span className="text-[10px] md:text-sm font-semibold text-green-600 text-center">Plan Selected</span>
+                                    <span className="text-[10px] md:text-sm font-semibold text-green-600 text-center">Plan & Agreement</span>
                                 </div>
                                 <div className="flex-1 h-1 md:h-2 mx-2 md:mx-4 bg-gray-200 rounded-full">
                                     <div className="h-full w-full bg-green-500 rounded-full"></div>
@@ -1004,11 +1021,20 @@ const Signup = () => {
                                     <div className="w-6 h-6 md:w-8 md:h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
                                         3
                                     </div>
-                                    <span className="text-[10px] md:text-sm font-semibold text-blue-600 text-center">Payment</span>
+                                    <span className="text-[10px] md:text-sm font-semibold text-blue-600 text-center">Registration</span>
+                                </div>
+                                <div className="flex-1 h-1 md:h-2 mx-2 md:mx-4 bg-gray-200 rounded-full">
+                                    <div className="h-full w-0 bg-green-500 rounded-full"></div>
+                                </div>
+                                <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
+                                    <div className="w-6 h-6 md:w-8 md:h-8 bg-gray-200 text-gray-400 rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
+                                        4
+                                    </div>
+                                    <span className="text-[10px] md:text-sm font-semibold text-gray-400 text-center">Payment</span>
                                 </div>
                             </div>
                             <p className="text-center text-gray-500 text-[10px] md:text-sm mt-1">
-                                Step 2 of 3: Healthcare Client Registration
+                                Step 3 of 4: Healthcare Client Registration
                             </p>
                         </div>
 
@@ -1202,9 +1228,9 @@ const Signup = () => {
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
                                     <div className="w-6 h-6 md:w-8 md:h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
-                                        1
+                                        <FaCheck className="text-xs" />
                                     </div>
-                                    <span className="text-[10px] md:text-sm font-semibold text-green-600 text-center">Plan Selected</span>
+                                    <span className="text-[10px] md:text-sm font-semibold text-green-600 text-center">Plan & Agreement</span>
                                 </div>
                                 <div className="flex-1 h-1 md:h-2 mx-2 md:mx-4 bg-gray-200 rounded-full">
                                     <div className="h-full w-full bg-green-500 rounded-full"></div>
@@ -1216,7 +1242,7 @@ const Signup = () => {
                                     <span className="text-[10px] md:text-sm font-semibold text-green-600 text-center">Type Selected</span>
                                 </div>
                                 <div className="flex-1 h-1 md:h-2 mx-2 md:mx-4 bg-gray-200 rounded-full">
-                                    <div className="h-full w-1/2 bg-green-500 rounded-full"></div>
+                                    <div className="h-full w-full bg-green-500 rounded-full"></div>
                                 </div>
                                 <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
                                     <div className="w-6 h-6 md:w-8 md:h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
@@ -1541,16 +1567,16 @@ const Signup = () => {
                         <div className="flex items-center justify-between mb-2">
                             <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
                                 <div className="w-6 h-6 md:w-8 md:h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
-                                    1
+                                    <FaCheck className="text-xs" />
                                 </div>
-                                <span className="text-[10px] md:text-sm font-semibold text-green-600 text-center">Plan Selected</span>
+                                <span className="text-[10px] md:text-sm font-semibold text-green-600 text-center">Plan & Agreement</span>
                             </div>
                             <div className="flex-1 h-1 md:h-2 mx-2 md:mx-4 bg-gray-200 rounded-full">
                                 <div className="h-full w-full bg-green-500 rounded-full"></div>
                             </div>
                             <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
                                 <div className="w-6 h-6 md:w-8 md:h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
-                                    2
+                                    3
                                 </div>
                                 <span className="text-[10px] md:text-sm font-semibold text-blue-600 text-center">Registration</span>
                             </div>
@@ -1559,13 +1585,13 @@ const Signup = () => {
                             </div>
                             <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
                                 <div className="w-6 h-6 md:w-8 md:h-8 bg-gray-200 text-gray-400 rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
-                                    3
+                                    4
                                 </div>
                                 <span className="text-[10px] md:text-sm font-semibold text-gray-400 text-center">Payment</span>
                             </div>
                         </div>
                         <p className="text-center text-gray-500 text-[10px] md:text-sm mt-1">
-                            Step 2 of 3: Complete company registration for {selectedPlanDetails?.name}
+                            Step 3 of 4: Complete company registration for {selectedPlanDetails?.name}
                         </p>
                     </div>
 
@@ -1956,8 +1982,8 @@ const Signup = () => {
         );
     }
 
-    // Step 3: Payment (unchanged)
-    if (step === 3) {
+    // Step 4: Payment (unchanged)
+    if (step === 4) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
                 <div className="w-full max-w-7xl">
@@ -1969,7 +1995,7 @@ const Signup = () => {
                                     <FaCheck className="text-xs md:text-sm" />
                                 </div>
                                 <div className="hidden md:block">
-                                    <span className="font-semibold text-green-600 text-sm md:text-base">Plan Selected</span>
+                                    <span className="font-semibold text-green-600 text-sm md:text-base">Plan & Agreement</span>
                                     <p className="text-xs text-gray-500">{selectedPlanDetails?.name}</p>
                                 </div>
                             </div>
@@ -1986,11 +2012,11 @@ const Signup = () => {
                                 </div>
                             </div>
                             <div className="flex-1 h-2 mx-2 md:mx-6 bg-gray-200 rounded-full">
-                                <div className="h-full w-1/2 bg-green-500 rounded-full"></div>
+                                <div className="h-full w-full bg-green-500 rounded-full"></div>
                             </div>
                             <div className="flex items-center gap-2 md:gap-3">
                                 <div className="w-8 h-8 md:w-10 md:h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold shadow-lg text-xs md:text-sm">
-                                    3
+                                    4
                                 </div>
                                 <div className="hidden md:block">
                                     <span className="font-semibold text-blue-600 text-sm md:text-base">Payment</span>
@@ -1999,7 +2025,7 @@ const Signup = () => {
                             </div>
                         </div>
                         <p className="text-center text-gray-500 text-sm md:text-base mt-2">
-                            Step 3 of 3: Complete payment for your subscription
+                            Step 4 of 4: Complete payment for your subscription
                         </p>
                     </div>
 
@@ -2107,8 +2133,8 @@ const Signup = () => {
         );
     }
 
-    // Step 4: Success & Admin Approval Status (unchanged)
-    if (step === 4) {
+    // Step 5: Success & Admin Approval Status (unchanged)
+    if (step === 5) {
         const userData = JSON.parse(localStorage.getItem('registered_user') || '{}');
         const paymentData = JSON.parse(localStorage.getItem('user_payment') || '{}');
 

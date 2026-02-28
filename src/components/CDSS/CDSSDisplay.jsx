@@ -224,6 +224,31 @@ const CDSSDisplay = ({ patientData, onBack }) => {
 
     const AgeCategoryIcon = getAgeCategoryIcon(patientFacts);
 
+    const [hasAcknowledged, setHasAcknowledged] = useState(false);
+
+    if (!hasAcknowledged && alerts.length > 0) {
+        return (
+            <div className="bg-white rounded-xl shadow-lg p-8 md:p-12 text-center">
+                <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <FaShieldAlt className="text-blue-600 text-4xl" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-800 mb-4">User Acknowledgment</h2>
+                <div className="bg-blue-50 border-1 border-blue-200 p-6 rounded-2xl mb-8 max-w-2xl mx-auto">
+                    <p className="text-gray-700 text-lg leading-relaxed">
+                        “By continuing, you acknowledge that this supportive clinical information does not replace consultation with a licensed healthcare professional.”
+                    </p>
+                </div>
+                <button
+                    onClick={() => setHasAcknowledged(true)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-10 rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 flex items-center gap-2 mx-auto"
+                >
+                    <FaCheckCircle />
+                    Accept & Continue
+                </button>
+            </div>
+        );
+    }
+
     return (
         <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
             {/* Header */}
