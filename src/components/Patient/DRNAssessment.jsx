@@ -817,7 +817,6 @@ const DRNAssessment = ({ patientCode }) => {
                                                 onClick={runCdssAnalysis}
                                                 className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm flex items-center gap-2"
                                             >
-                                                <FaSync /> Re-run Analysis
                                             </button>
                                         </div>
                                     </div>
