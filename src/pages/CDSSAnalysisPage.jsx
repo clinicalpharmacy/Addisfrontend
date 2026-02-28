@@ -111,12 +111,11 @@ const CDSSAnalysisPage = () => {
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                                 {filteredPatients.length > 0 ? (
                                     filteredPatients.map(patient => (
-                                        <button
-                                          onClick={() => handleSelectPatient(patient)}
-                                          className="w-full bg-purple-50 text-purple-600 py-2 rounded-lg font-semibold hover:bg-purple-600 hover:text-white transition-all"
+                                        <div
+                                            key={patient.id}
+                                            onClick={() => handleSelectPatient(patient)}
+                                            className="bg-white p-6 rounded-xl shadow-sm border border-transparent hover:border-purple-300 hover:shadow-md transition-all cursor-pointer group"
                                         >
-                                          Run Analysis
-                                        </button>
                                             <div className="flex items-center gap-4 mb-4">
                                                 <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-600 transition-colors">
                                                     <FaUserInjured className="text-purple-600 group-hover:text-white text-xl" />
