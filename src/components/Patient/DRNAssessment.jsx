@@ -31,6 +31,7 @@ const DRNAssessment = ({ patientCode }) => {
     const [showReportablePopup, setShowReportablePopup] = useState(false);
     const [reportableDTPCause, setReportableDTPCause] = useState(null);
     const [showDefectLink, setShowDefectLink] = useState(false);
+    const [analysisError, setAnalysisError] = useState(null);
 
     // ✅ 9 DRN Categories
     const drnCategories = {
