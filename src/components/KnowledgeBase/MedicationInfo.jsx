@@ -1283,9 +1283,7 @@ const MedicationInfo = () => {
                                 </div>
                                 {selectedMedication.administration_and_cautions.length > 500 && (
                                     <div className="mt-2 text-xs text-yellow-600 flex items-center gap-1">
-                                        <FaInfoCircle />
-                                        <span>Scroll for more content</span>
-                                    </div>
+                                </div>
                                 )}
                             </div>
                         )}
@@ -1314,8 +1312,6 @@ const MedicationInfo = () => {
                                 </div>
                                 {selectedMedication.side_effects.length > 500 && (
                                     <div className="mt-2 text-xs text-red-600 flex items-center gap-1">
-                                        <FaInfoCircle />
-                                        <span>Scroll for more content</span>
                                     </div>
                                 )}
                             </div>
@@ -1345,8 +1341,6 @@ const MedicationInfo = () => {
                                 </div>
                                 {selectedMedication.storage.length > 300 && (
                                     <div className="mt-2 text-xs text-green-600 flex items-center gap-1">
-                                        <FaInfoCircle />
-                                        <span>Scroll for more content</span>
                                     </div>
                                 )}
                             </div>
