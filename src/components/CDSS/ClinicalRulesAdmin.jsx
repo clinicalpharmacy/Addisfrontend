@@ -126,14 +126,14 @@ const ClinicalRulesAdmin = () => {
 
     const dtpCategories = [
         { value: 'adverse_drug_event', label: 'Adverse Drug Event' },
-        { value: 'drug_interaction', label: 'Drug Interaction' },
-        { value: 'dose_error', label: 'Dose Issue' },
-        { value: 'contraindication', label: 'Contraindication or Unsafe Drug' },
-        { value: 'monitoring_needed', label: 'Monitoring Needed' },
-        { value: 'therapeutic_duplication', label: 'Therapeutic Duplication' },
-        { value: 'quality_issue', label: 'Quality Issue' },
-        { value: 'adherence_issue', label: 'Adherence Issue' },
-        { value: 'age_restriction', label: 'Age Restriction' }
+        { value: 'low_dose', label: 'Low Dose' },
+        { value: 'high_dose', label: 'High Dose' },
+        { value: 'unnecessary_drug_therapy', label: 'Unnecessary Drug Therapy' },
+        { value: 'monitoring_needed', label: 'Needs Additional Monitoring' },
+        { value: 'ineffective_therapy', label: 'Ineffective Therapy' },
+        { value: 'quality_issue', label: 'Poor Quality' },
+        { value: 'needs_additional_drug_therapy', label: 'Needs Additional Drug Therapy' },
+        { value: 'adherence_issue', label: 'Non-dherence' }
     ];
 
     const appliesToOptions = [
