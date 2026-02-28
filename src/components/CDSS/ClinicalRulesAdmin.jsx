@@ -1,4 +1,4 @@
-// src/components/CDSS/ClinicalRulesAdmin.jsx - UPDATED WITH AGE-IN-DAYS EXAMPLES
+// src/components/CDSS/ClinicalRulesAdmin.jsx
 import React, { useState, useEffect } from 'react';
 import supabase from '../../utils/supabase';
 import {
@@ -152,346 +152,6 @@ const ClinicalRulesAdmin = () => {
         { value: 'child', label: 'Child (1-12 years)' },
         { value: 'adolescent', label: 'Adolescent (13-18 years)' }
     ];
-
-    const sampleRules = {
-        'High Creatinine Alert': {
-            rule_name: 'High Creatinine Alert',
-            rule_type: 'lab_monitoring',
-            rule_description: 'Alert when creatinine levels indicate renal impairment',
-            rule_condition: `{
-  "all": [
-    {
-      "fact": "labs.creatinine",
-      "operator": ">",
-      "value": 1.5
-    }
-  ]
-}`,
-            rule_action: `{
-  "message_professional": "Elevated Creatinine Alert ({{labs.creatinine}} mg/dL)",
-  "message_client": "Kidney Function Notification",
-  "recommendation_professional": "High creatinine detected ({{labs.creatinine}} mg/dL). Review renal function and adjust renally cleared medications.",
-  "recommendation_client": "Your kidney function test shows elevated levels. Please discuss these results with your doctor.",
-  "severity": "high"
-}`,
-            severity: 'high',
-            dtp_category: 'monitoring_needed'
-        },
-        'ACE Inhibitor + NSAID Interaction': {
-            rule_name: 'ACE Inhibitor + NSAID Interaction',
-            rule_type: 'drug_interaction',
-            rule_description: 'Detects concurrent use of ACE inhibitors and NSAIDs',
-            rule_condition: `{
-  "all": [
-    {
-      "fact": "medications",
-      "operator": "contains",
-      "value": "lisinopril"
-    },
-    {
-      "fact": "medications",
-      "operator": "contains",
-      "value": "ibuprofen"
-    }
-  ]
-}`,
-            rule_action: `{
-  "message_professional": "Drug Interaction: ACE Inhibitor + NSAID",
-  "message_client": "Medication Combination Warning",
-  "recommendation_professional": "Concurrent use of {{medication_data.lisinopril.drug_name}} and {{medication_data.ibuprofen.drug_name}} may decrease renal perfusion. Monitor serum creatinine and potassium.",
-  "recommendation_client": "The combination of these medications can affect your kidney function. Please consult your pharmacist or doctor.",
-  "severity": "high"
-}`,
-            severity: 'high',
-            dtp_category: 'drug_interaction'
-        },
-        'Elderly Patient on Warfarin': {
-            rule_name: 'Elderly Patient on Warfarin',
-            rule_type: 'dose_check',
-            rule_description: 'Monitor warfarin use in elderly patients',
-            rule_condition: `{
-  "all": [
-    {
-      "fact": "age",
-      "operator": ">=",
-      "value": 65
-    },
-    {
-      "fact": "medications",
-      "operator": "contains",
-      "value": "warfarin"
-    }
-  ]
-}`,
-            rule_action: `{
-  "message_professional": "Geriatric Anticoagulation Monitor",
-  "message_client": "Medication Safety Alert",
-  "recommendation_professional": "Patient is {{age}} years old. Monitor INR more frequently. Increased bleeding risk in patients ≥65 years.",
-  "recommendation_client": "As you are over 65, this medication requires closer monitoring. Watch for any unusual bruising or bleeding.",
-  "severity": "moderate"
-}`,
-            severity: 'moderate',
-            dtp_category: 'dose_error'
-        },
-        // ✅ ADDED: Age-in-days sample rules
-        'Neonate Tetracycline Contraindication': {
-            rule_name: 'Neonate Tetracycline Contraindication',
-            rule_type: 'contraindication',
-            rule_description: 'Tetracycline contraindicated in neonates',
-            rule_condition: `{
-  "all": [
-    {
-      "fact": "is_neonate",
-      "operator": "equals",
-      "value": true
-    },
-    {
-      "fact": "medications",
-      "operator": "contains",
-      "value": "tetracycline"
-    }
-  ]
-}`,
-            rule_action: `{
-  "message_professional": "Neonatal Contraindication: Tetracycline",
-  "message_client": "Newborn Safety Warning",
-  "recommendation_professional": "Tetracycline is contraindicated in neonates ({{age_in_days}} days old) due to tooth discoloration and bone growth issues. Consider alternative antibiotic.",
-  "recommendation_client": "This medication is not recommended for newborns. Please discuss safer alternatives for your baby with your pediatrician.",
-  "severity": "critical"
-}`,
-            severity: 'critical',
-            dtp_category: 'age_restriction'
-        },
-        'Infant Gentamicin Dose Check': {
-            rule_name: 'Infant Gentamicin Dose Check',
-            rule_type: 'dose_check',
-            rule_description: 'Gentamicin requires weight-based dosing in infants',
-            rule_condition: `{
-  "all": [
-    {
-      "fact": "is_infant",
-      "operator": "equals",
-      "value": true
-    },
-    {
-      "fact": "medications",
-      "operator": "contains",
-      "value": "gentamicin"
-    }
-  ]
-}`,
-            rule_action: `{
-  "message": "Gentamicin prescribed for infant",
-  "recommendation": "Gentamicin requires weight-based dosing for infants. Calculate dose based on {{weight}} kg and age {{age_in_days}} days.",
-  "severity": "high"
-}`,
-            severity: 'high',
-            dtp_category: 'dose_error'
-        },
-        'Pediatric Aspirin Warning': {
-            rule_name: 'Pediatric Aspirin Warning',
-            rule_type: 'age_check',
-            rule_description: 'Aspirin caution in children with viral infections',
-            rule_condition: `{
-  "all": [
-    {
-      "fact": "is_pediatric",
-      "operator": "equals",
-      "value": true
-    },
-    {
-      "fact": "medications",
-      "operator": "contains",
-      "value": "aspirin"
-    },
-    {
-      "fact": "conditions",
-      "operator": "contains",
-      "value": "viral infection"
-    }
-  ]
-}`,
-            rule_action: `{
-  "message": "Aspirin caution in pediatric patient with viral infection",
-  "recommendation": "Aspirin use in children with viral infections may increase risk of Reye's syndrome. Consider alternative antipyretic/analgesic.",
-  "severity": "critical"
-}`,
-            severity: 'critical',
-            dtp_category: 'age_restriction'
-        },
-        'Age in Days Specific Check': {
-            rule_name: 'Age in Days Specific Check',
-            rule_type: 'pediatric_check',
-            rule_description: 'Specific medication check based on exact age in days',
-            rule_condition: `{
-  "all": [
-    {
-      "fact": "age_in_days",
-      "operator": "<=",
-      "value": 365
-    },
-    {
-      "fact": "medications",
-      "operator": "contains",
-      "value": "chloramphenicol"
-    }
-  ]
-}`,
-            rule_action: `{
-  "message": "Chloramphenicol in infant less than 1 year",
-  "recommendation": "Chloramphenicol requires careful monitoring in infants <1 year due to risk of Gray Baby Syndrome. Monitor serum levels closely.",
-  "severity": "high"
-}`,
-            severity: 'high',
-            dtp_category: 'age_restriction'
-        },
-        'Lactation Safety Check': {
-            rule_name: 'Lactation Safety Check',
-            rule_type: 'contraindication',
-            rule_description: 'Identify medications that require caution or are contraindicated during breastfeeding',
-            rule_condition: `{
-  "all": [
-    {
-      "fact": "is_lactating",
-      "operator": "equals",
-      "value": true
-    },
-    {
-      "fact": "medications",
-      "operator": "contains",
-      "value": "metronidazole"
-    }
-  ]
-}`,
-            rule_action: `{
-  "message": "Metronidazole caution in breastfeeding",
-  "recommendation": "Metronidazole is excreted in breast milk. Consider withholding breastfeeding for 12-24 hours after a single large dose, or use alternative antibiotic if possible.",
-  "severity": "high"
-}`,
-            severity: 'high',
-            dtp_category: 'contraindication'
-        },
-        'Amoxicillin 500mg TID Check': {
-            rule_name: 'Amoxicillin 500mg TID Check',
-            rule_type: 'dose_check',
-            rule_description: 'Check for standard Amoxicillin 500mg TID dosing',
-            rule_condition: `{
-  "all": [
-    {
-      "fact": "medication_data.amoxicillin.dose",
-      "operator": "equals",
-      "value": "500mg"
-    },
-    {
-      "fact": "medication_data.amoxicillin.frequency",
-      "operator": "equals",
-      "value": "TID"
-    }
-  ]
-}`,
-            rule_action: `{
-  "message": "Standard Amoxicillin dose detected",
-  "recommendation": "Patient is on standard Amoxicillin 500mg TID. Ensure patient completes the full course.",
-  "severity": "low"
-}`,
-            severity: 'low',
-            dtp_category: 'dose_error'
-        },
-        'High Dose Lisinopril Alert': {
-            rule_name: 'High Dose Lisinopril Alert',
-            rule_type: 'dose_check',
-            rule_description: 'Alert when Lisinopril dose exceeds 40mg',
-            rule_condition: `{
-  "all": [
-    {
-      "fact": "medication_data.lisinopril.dose",
-      "operator": ">",
-      "value": 40
-    }
-  ]
-}`,
-            rule_action: `{
-  "message": "High dose Lisinopril detected",
-  "recommendation": "Lisinopril dose is above 40mg. Monitor blood pressure and renal function closely.",
-  "severity": "moderate"
-}`,
-            severity: 'moderate',
-            dtp_category: 'dose_error'
-        },
-        'Long-term Steroid Use Check': {
-            rule_name: 'Long-term Steroid Use Check',
-            rule_type: 'lab_monitoring',
-            rule_description: 'Alert if Prednisolone is used for more than 14 days',
-            rule_condition: `{
-  "all": [
-    {
-      "fact": "medication_data.prednisolone.days_since_start",
-      "operator": ">",
-      "value": 14
-    }
-  ]
-}`,
-            rule_action: `{
-  "message": "Long-term steroid use detected",
-  "recommendation": "The patient has been on Prednisolone for {{medication_data.prednisolone.days_since_start}} days. Consider tapering or adding gastric protection.",
-  "severity": "high"
-}`,
-            severity: 'high',
-            dtp_category: 'monitoring_needed'
-        },
-        'Beers Criteria: Bisacodyl in Elderly': {
-            rule_name: 'Beers Criteria: Bisacodyl in Elderly',
-            rule_type: 'age_check',
-            rule_description: 'Avoid bisacodyl in patients ≥65 years due to risk of dehydration and electrolyte imbalance.',
-            rule_condition: `{
-  "all": [
-    {
-      "fact": "age",
-      "operator": ">=",
-      "value": 65
-    },
-    {
-      "fact": "medications",
-      "operator": "contains",
-      "value": "bisacodyl"
-    }
-  ]
-}`,
-            rule_action: `{
-  "message": "Beers Criteria: Avoid Bisacodyl in elderly",
-  "recommendation": "Bisacodyl should be avoided in patients ≥65 years. Consider safer alternatives like osmotic laxatives (e.g., polyethylene glycol).",
-  "severity": "high"
-}`,
-            severity: 'high',
-            dtp_category: 'age_restriction'
-        },
-        'Beers Criteria: Methyldopa in Elderly': {
-            rule_name: 'Beers Criteria: Methyldopa in Elderly',
-            rule_type: 'age_check',
-            rule_description: 'Avoid methyldopa in patients ≥65 years due to risk of bradycardia and depression.',
-            rule_condition: `{
-  "all": [
-    {
-      "fact": "age",
-      "operator": ">=",
-      "value": 65
-    },
-    {
-      "fact": "medications",
-      "operator": "contains",
-      "value": "methyldopa"
-    }
-  ]
-}`,
-            rule_action: `{
-  "message": "Beers Criteria: Avoid Methyldopa in elderly",
-  "recommendation": "Methyldopa should be avoided as first-line therapy for hypertension in patients ≥65 years. Potential for CNS adverse effects (bradycardia, depression).",
-  "severity": "high"
-}`,
-            severity: 'high',
-            dtp_category: 'age_restriction'
-        }
-    };
 
     useEffect(() => {
         checkUserStatus();
@@ -894,26 +554,6 @@ const ClinicalRulesAdmin = () => {
         setFormError('');
     };
 
-    const loadSample = (sampleName) => {
-        const sample = sampleRules[sampleName];
-        if (sample) {
-            setFormData({
-                rule_name: sample.rule_name,
-                rule_type: sample.rule_type,
-                rule_description: sample.rule_description,
-                rule_condition: sample.rule_condition,
-                rule_action: sample.rule_action,
-                severity: sample.severity,
-                dtp_category: sample.dtp_category,
-                is_active: true,
-                applies_to: ['all_patients']
-            });
-            setEditRule(null);
-            setShowForm(true);
-            setFormError('');
-        }
-    };
-
     const getRuleTypeInfo = (type) => {
         return ruleTypes.find(t => t.value === type) || ruleTypes[0];
     };
@@ -1100,8 +740,6 @@ const ClinicalRulesAdmin = () => {
                             </div>
                         </div>
                         <div className="flex gap-2">
-                            {isAdmin && (
-                            )}
                             <select
                                 value={filterType}
                                 onChange={(e) => setFilterType(e.target.value)}
@@ -1116,6 +754,8 @@ const ClinicalRulesAdmin = () => {
                             </select>
                         </div>
                     </div>
+                </>
+            )}
 
             {/* Rules Container */}
             {currentUser ? (
@@ -1694,6 +1334,6 @@ const ClinicalRulesAdmin = () => {
             )}
         </div>
     );
-}
+};
 
 export default ClinicalRulesAdmin;
