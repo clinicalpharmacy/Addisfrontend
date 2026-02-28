@@ -127,11 +127,10 @@ const ClinicalRulesAdmin = () => {
     const dtpCategories = [
         { value: 'adverse_drug_event', label: 'Adverse Drug Event' },
         { value: 'drug_interaction', label: 'Drug Interaction' },
-        { value: 'dose_error', label: 'Dose Error' },
-        { value: 'contraindication', label: 'Contraindication' },
+        { value: 'dose_error', label: 'Dose Issue' },
+        { value: 'contraindication', label: 'Contraindication or Unsafe Drug' },
         { value: 'monitoring_needed', label: 'Monitoring Needed' },
         { value: 'therapeutic_duplication', label: 'Therapeutic Duplication' },
-        { value: 'lactation_safety', label: 'Lactation Safety' },
         { value: 'quality_issue', label: 'Quality Issue' },
         { value: 'adherence_issue', label: 'Adherence Issue' },
         { value: 'age_restriction', label: 'Age Restriction' }
