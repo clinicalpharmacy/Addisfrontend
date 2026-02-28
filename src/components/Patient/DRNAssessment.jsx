@@ -5,7 +5,7 @@ import {
     FaStethoscope, FaEdit, FaDatabase, FaChevronUp, FaChevronDown,
     FaPills, FaExclamationTriangle, FaCheckCircle, FaSpinner,
     FaHeartbeat, FaClipboardCheck, FaUserCheck,
-    FaCapsules, FaSync, FaExclamationCircle
+    FaCapsules, FaSync
 } from 'react-icons/fa';
 
 const DRNAssessment = ({ patientCode }) => {
@@ -31,7 +31,6 @@ const DRNAssessment = ({ patientCode }) => {
     const [showReportablePopup, setShowReportablePopup] = useState(false);
     const [reportableDTPCause, setReportableDTPCause] = useState(null);
     const [showDefectLink, setShowDefectLink] = useState(false);
-    const [analysisError, setAnalysisError] = useState(null);
 
     // ✅ 9 DRN Categories
     const drnCategories = {
@@ -374,164 +373,139 @@ const DRNAssessment = ({ patientCode }) => {
         }
     };
 
-const runCdssAnalysis = async () => {
-    setIsAnalyzing(true);
-    setAnalysisError(null); // Clear previous errors
+    const runCdssAnalysis = async () => {
+        setIsAnalyzing(true);
 
-    try {
-        // Ensure patient data is loaded
-        if (!patientData) {
-            await loadPatientData();
-        }
-        
-        if (!patientData) {
-            throw new Error('Unable to load patient data');
-        }
+        try {
+            if (!patientData) await loadPatientData();
+            if (!patientData) throw new Error('No patient data');
 
-        // Ensure medications data exists
-        const currentMedications = medications || [];
-        
-        // Ensure clinical rules are loaded
-        if (!clinicalRules || clinicalRules.length === 0) {
-            await fetchClinicalRules();
-        }
-        
-        if (!clinicalRules || clinicalRules.length === 0) {
+            const facts = mapPatientToFacts(patientData, medications);
+            const triggeredRules = [];
+            const findings = [];
+
+            clinicalRules.forEach(rule => {
+                try {
+                    const isTriggered = evaluateRule(rule, facts);
+
+                    if (isTriggered) {
+                        triggeredRules.push(rule);
+
+                        let message = rule.rule_name;
+                        let recommendation = '';
+                        let severity = rule.severity || 'moderate';
+
+                        if (rule.rule_action) {
+                            try {
+                                const action = typeof rule.rule_action === 'string'
+                                    ? JSON.parse(rule.rule_action)
+                                    : rule.rule_action;
+
+                                // Prefer professional message/recommendation in this component
+                                message = action.message_professional || action.message || rule.rule_name;
+                                recommendation = action.recommendation_professional || action.recommendation || getDefaultRecommendation(rule.rule_type);
+
+                                const clientMessage = action.message_client || action.message || message;
+                                const clientRecommendation = action.recommendation_client || action.recommendation || recommendation;
+
+                                severity = action.severity || rule.severity || 'moderate';
+
+                                // Store client view data for reference if needed
+                                rule.client_message = clientMessage;
+                                rule.client_recommendation = clientRecommendation;
+                            } catch (e) {
+                                recommendation = getDefaultRecommendation(rule.rule_type);
+                            }
+                        } else {
+                            recommendation = getDefaultRecommendation(rule.rule_type);
+                        }
+
+                        // Map rule to DRN category
+                        let drnCategory = 'Safety';
+                        let causeName = rule.rule_name;
+                        let dtpType = '';
+
+                        // Find matching category and DTP type
+                        for (const [category, data] of Object.entries(drnCategories)) {
+                            if (data.ruleTypes.includes(rule.rule_type)) {
+                                drnCategory = category;
+                                const categoryCauses = menuItemsData[category] || [];
+                                const matchingCause = categoryCauses.find(c => c.ruleType === rule.rule_type);
+                                if (matchingCause) {
+                                    causeName = matchingCause.name;
+                                    dtpType = matchingCause["DTP Type"];
+                                }
+                                break;
+                            }
+                        }
+
+                        findings.push({
+                            rule_id: rule.id,
+                            rule_type: rule.rule_type,
+                            rule_name: rule.rule_name,
+                            category: drnCategory,
+                            cause: causeName,
+                            dtpType: dtpType,
+                            message: message,
+                            recommendation: recommendation,
+                            severity: severity,
+                            medications: facts.medications?.filter(med =>
+                                message.toLowerCase().includes(med.toLowerCase()) ||
+                                recommendation.toLowerCase().includes(med.toLowerCase())
+                            ) || [],
+                            timestamp: new Date().toISOString(),
+                            evidence: rule.rule_description || '',
+                            original_rule_name: rule.rule_name,
+                            original_rule_type: rule.rule_type,
+                            drn: drnCategory
+                        });
+                    }
+                } catch (ruleError) {
+                    console.error(`Error evaluating rule ${rule.rule_name}:`, ruleError);
+                }
+            });
+
+            const findingsByCategory = {};
+            Object.keys(drnCategories).forEach(category => {
+                findingsByCategory[category] = findings.filter(f => f.category === category);
+            });
+
+            const analysisResult = {
+                summary: findings.length > 0
+                    ? `CDSS analysis detected ${findings.length} drug-related problems`
+                    : "No drug-related problems detected",
+                findings: findings,
+                findingsByCategory: findingsByCategory,
+                timestamp: new Date().toISOString(),
+                patientCode: patientCode,
+                analyzedAt: new Date().toISOString(),
+                totalFindings: findings.length,
+                metadata: {
+                    rulesEvaluated: clinicalRules.length,
+                    rulesTriggered: triggeredRules.length,
+                    patientFacts: facts,
+                    categoriesAnalyzed: Object.keys(findingsByCategory).filter(cat => findingsByCategory[cat].length > 0)
+                }
+            };
+
+            setAnalysisResults(analysisResult);
+
+        } catch (error) {
+            console.error('Error in CDSS analysis:', error);
             setAnalysisResults({
-                summary: "No clinical rules available",
+                summary: "Analysis failed",
                 findings: [],
                 timestamp: new Date().toISOString(),
                 patientCode: patientCode,
                 analyzedAt: new Date().toISOString(),
-                totalFindings: 0
+                totalFindings: 0,
+                error: error.message
             });
+        } finally {
             setIsAnalyzing(false);
-            return;
         }
+    };
 
-        // Map patient data to facts with null checks
-        const facts = mapPatientToFacts(patientData || {}, currentMedications || []);
-        
-        const triggeredRules = [];
-        const findings = [];
-
-        // Safely iterate through clinical rules
-        clinicalRules.forEach(rule => {
-            if (!rule) return; // Skip if rule is null
-            
-            try {
-                const isTriggered = evaluateRule(rule, facts);
-
-                if (isTriggered) {
-                    triggeredRules.push(rule);
-
-                    let message = rule.rule_name || 'Unknown rule';
-                    let recommendation = '';
-                    let severity = rule.severity || 'moderate';
-
-                    if (rule.rule_action) {
-                        try {
-                            const action = typeof rule.rule_action === 'string'
-                                ? JSON.parse(rule.rule_action)
-                                : rule.rule_action;
-
-                            message = action.message || rule.rule_name;
-                            recommendation = action.recommendation || getDefaultRecommendation(rule.rule_type);
-                            severity = action.severity || rule.severity || 'moderate';
-                        } catch (e) {
-                            recommendation = getDefaultRecommendation(rule.rule_type);
-                        }
-                    } else {
-                        recommendation = getDefaultRecommendation(rule.rule_type);
-                    }
-
-                    // Map rule to DRN category
-                    let drnCategory = 'Safety';
-                    let causeName = rule.rule_name || 'Unknown cause';
-                    let dtpType = '';
-
-                    // Find matching category and DTP type
-                    for (const [category, data] of Object.entries(drnCategories || {})) {
-                        if (data?.ruleTypes?.includes(rule.rule_type)) {
-                            drnCategory = category;
-                            const categoryCauses = menuItemsData[category] || [];
-                            const matchingCause = categoryCauses.find(c => c?.ruleType === rule.rule_type);
-                            if (matchingCause) {
-                                causeName = matchingCause.name || rule.rule_name;
-                                dtpType = matchingCause.dtpType || '';
-                            }
-                            break;
-                        }
-                    }
-
-                    findings.push({
-                        rule_id: rule.id,
-                        rule_type: rule.rule_type,
-                        rule_name: rule.rule_name,
-                        category: drnCategory,
-                        cause: causeName,
-                        dtpType: dtpType,
-                        message: message,
-                        recommendation: recommendation,
-                        severity: severity,
-                        confidence: 95,
-                        medications: facts?.medications?.filter(med =>
-                            message?.toLowerCase().includes(med?.toLowerCase() || '') ||
-                            recommendation?.toLowerCase().includes(med?.toLowerCase() || '')
-                        ) || [],
-                        timestamp: new Date().toISOString(),
-                        evidence: rule.rule_description || '',
-                        original_rule_name: rule.rule_name,
-                        original_rule_type: rule.rule_type,
-                        drn: drnCategory
-                    });
-                }
-            } catch (ruleError) {
-                console.error(`Error evaluating rule ${rule?.rule_name}:`, ruleError);
-            }
-        });
-
-        const findingsByCategory = {};
-        Object.keys(drnCategories || {}).forEach(category => {
-            findingsByCategory[category] = findings.filter(f => f.category === category);
-        });
-
-        const analysisResult = {
-            summary: findings.length > 0
-                ? `CDSS analysis detected ${findings.length} drug-related problems`
-                : "No drug-related problems detected",
-            findings: findings,
-            findingsByCategory: findingsByCategory,
-            timestamp: new Date().toISOString(),
-            patientCode: patientCode,
-            analyzedAt: new Date().toISOString(),
-            totalFindings: findings.length,
-            metadata: {
-                rulesEvaluated: clinicalRules?.length || 0,
-                rulesTriggered: triggeredRules.length,
-                patientFacts: facts,
-                categoriesAnalyzed: Object.keys(findingsByCategory).filter(cat => findingsByCategory[cat]?.length > 0)
-            }
-        };
-
-        setAnalysisResults(analysisResult);
-
-    } catch (error) {
-        console.error('Error in CDSS analysis:', error);
-        setAnalysisError(error.message);
-        setAnalysisResults({
-            summary: "Analysis failed",
-            findings: [],
-            timestamp: new Date().toISOString(),
-            patientCode: patientCode,
-            analyzedAt: new Date().toISOString(),
-            totalFindings: 0,
-            error: error.message
-        });
-    } finally {
-        setIsAnalyzing(false);
-    }
-};
     const getDefaultRecommendation = (ruleType) => {
         const recommendations = {
             'duplicate_therapy': 'Review medication list for duplicate therapy and consider discontinuing redundant medications.',
@@ -818,109 +792,96 @@ const runCdssAnalysis = async () => {
                     </button>
                 </div>
 
-{showAnalysis && (
-    <>
-        {isAnalyzing ? (
-            <div className="text-center py-8">
-                <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto mb-4" />
-                <p className="text-gray-600">Running CDSS analysis...</p>
-            </div>
-        ) : analysisError ? (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-                <FaExclamationCircle className="text-4xl text-red-500 mx-auto mb-4" />
-                <h4 className="text-lg font-semibold text-red-800 mb-2">Analysis Error</h4>
-                <p className="text-red-600 mb-4">{analysisError}</p>
-                <button
-                    onClick={runCdssAnalysis}
-                    className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg"
-                >
-                    Try Again
-                </button>
-            </div>
-        ) : analysisResults ? (
-            <div className="space-y-4">
-                <div className="bg-white rounded-lg p-4 border shadow-sm">
-                    <div className="flex justify-between items-start mb-4">
-                        <div>
-                            <h4 className="font-semibold text-gray-800 text-lg">Analysis Results</h4>
-                            <p className={`text-lg font-medium mt-2 ${analysisResults.totalFindings > 0
-                                ? 'text-gray-800'
-                                : 'text-green-600'
-                                }`}>
-                                {analysisResults.summary}
-                            </p>
-                        </div>
-                        <div className="text-right">
-                            <button
-                                onClick={runCdssAnalysis}
-                                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm flex items-center gap-2"
-                            >
-                                <FaSync /> Re-run Analysis
-                            </button>
-                        </div>
-                    </div>
-
-                    {analysisResults.error && (
-                        <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
-                            Error: {analysisResults.error}
-                        </div>
-                    )}
-
-                    {/* Findings display */}
-                    {filteredFindings.length > 0 ? (
-                        <div className="space-y-3">
-                            {filteredFindings.map((finding, idx) => (
-                                <div key={idx} className="p-4 border rounded-lg hover:shadow-md transition">
-                                    <div className="flex justify-between items-start">
-                                        <div className="flex-1">
-                                            <div className="flex flex-wrap items-center gap-2 mb-2">
-                                                <span className="font-semibold text-gray-800">{finding.cause}</span>
-                                                <span className={`px-2 py-1 ${getSeverityColor(finding.severity)} text-xs rounded font-medium`}>
-                                                    {finding.severity}
-                                                </span>
-                                                <span className={`px-2 py-1 ${getCategoryColor(finding.category)} text-xs rounded`}>
-                                                    {finding.category}
-                                                </span>
-                                                {finding.dtpType && (
-                                                    <span className={`px-2 py-1 ${getDTPTypeColor(finding.dtpType)} text-xs rounded font-medium`}>
-                                                        DTP: {finding.dtpType}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <p className="text-sm text-gray-600 mb-2">{finding.message}</p>
+                {showAnalysis && (
+                    <>
+                        {isAnalyzing ? (
+                            <div className="text-center py-8">
+                                <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto mb-4" />
+                                <p className="text-gray-600">Running CDSS analysis...</p>
+                            </div>
+                        ) : analysisResults ? (
+                            <div className="space-y-4">
+                                <div className="bg-white rounded-lg p-4 border shadow-sm">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div>
+                                            <h4 className="font-semibold text-gray-800 text-lg">Analysis Results</h4>
+                                            <p className={`text-lg font-medium mt-2 ${analysisResults.totalFindings > 0
+                                                ? 'text-gray-800'
+                                                : 'text-green-600'
+                                                }`}>
+                                                {analysisResults.summary}
+                                            </p>
                                         </div>
-                                        <button
-                                            onClick={() => handleReviewFinding(finding)}
-                                            className="ml-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg transition flex items-center gap-2"
-                                        >
-                                            <FaEdit /> Add to Assessment
-                                        </button>
+                                        <div className="text-right">
+                                            <button
+                                                onClick={runCdssAnalysis}
+                                                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm flex items-center gap-2"
+                                            >
+                                                <FaSync /> Re-run Analysis
+                                            </button>
+                                        </div>
                                     </div>
+
+                                    {/* Findings display */}
+                                    {filteredFindings.length > 0 ? (
+                                        <div className="space-y-3">
+                                            {filteredFindings.map((finding, idx) => (
+                                                <div key={idx} className="p-4 border rounded-lg hover:shadow-md transition">
+                                                    <div className="flex justify-between items-start">
+                                                        <div className="flex-1">
+                                                            <div className="flex flex-wrap items-center gap-2 mb-2">
+                                                                <span className="font-semibold text-gray-800">{finding.cause}</span>
+                                                                <span className={`px-2 py-1 ${getSeverityColor(finding.severity)} text-xs rounded font-medium`}>
+                                                                    {finding.severity}
+                                                                </span>
+                                                                <span className={`px-2 py-1 ${getCategoryColor(finding.category)} text-xs rounded`}>
+                                                                    {finding.category}
+                                                                </span>
+                                                                {finding.dtpType && (
+                                                                    <span className={`px-2 py-1 ${getDTPTypeColor(finding.dtpType)} text-xs rounded font-medium`}>
+                                                                        DTP: {finding.dtpType}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-sm text-gray-600 mb-2">{finding.message}</p>
+                                                            <div className="flex flex-wrap items-center gap-3 mt-2">
+                                                                <span className="text-xs text-gray-500">
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => handleReviewFinding(finding)}
+                                                            className="ml-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg transition flex items-center gap-2"
+                                                        >
+                                                            <FaEdit /> Add to Assessment
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-8">
+                                            <FaCheckCircle className="text-4xl text-green-500 mx-auto mb-3" />
+                                            <p className="text-gray-600">No issues found matching current filter</p>
+                                        </div>
+                                    )}
                                 </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="text-center py-8">
-                            <FaCheckCircle className="text-4xl text-green-500 mx-auto mb-3" />
-                            <p className="text-gray-600">No issues found</p>
-                        </div>
-                    )}
-                </div>
+                            </div>
+                        ) : (
+                            <div className="text-center py-6">
+                                <FaDatabase className="text-4xl text-blue-400 mx-auto mb-4" />
+                                <p className="text-gray-600 mb-4">Run CDSS clinical analysis to detect drug-related problems</p>
+                                <button
+                                    onClick={runCdssAnalysis}
+                                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-lg font-medium shadow-md flex items-center gap-2 mx-auto"
+                                >
+                                    <FaDatabase /> Run clinical analysis
+                                </button>
+                            </div>
+                        )}
+                    </>
+                )}
             </div>
-        ) : (
-            <div className="text-center py-6">
-                <FaDatabase className="text-4xl text-blue-400 mx-auto mb-4" />
-                <p className="text-gray-600 mb-4">Run CDSS clinical analysis to detect drug-related problems</p>
-                <button
-                    onClick={runCdssAnalysis}
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-lg font-medium shadow-md flex items-center gap-2 mx-auto"
-                >
-                    <FaDatabase /> Run clinical analysis
-                </button>
-            </div>
-        )}
-    </>
-)}
 
             {/* 9 Category Selection */}
             <div className="mb-8" id="assessment-form">
