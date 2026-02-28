@@ -1204,167 +1204,190 @@ const MedicationInfo = () => {
                     </div>
                 )}
 
-                {/* Medication Details Modal - Narrower Width with Enhanced Formatting */}
-                {selectedMedication && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                        <div className="bg-white rounded-xl shadow-2xl w-[60%] max-w-[60%] min-w-[300px] max-h-[90vh] overflow-hidden">
-                            {/* Header */}
-                            <div className="sticky top-0 bg-gradient-to-r from-white-600 to-white-800 text-black p-3">
-                                <div className="flex justify-between items-start">
-                                    <div className="flex-1 min-w-0">
-                                        <h2 className="text-base font-bold truncate">{selectedMedication.name}</h2>
-                                        {selectedMedication.amharic_name && (
-                                            <p className="text-xs font-bold text-black-300 mt-0.5 truncate">
-                                                {selectedMedication.amharic_name}
-                                            </p>
-                                        )}
+{/* Medication Details Modal - With Improved Scrolling */}
+{selectedMedication && (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-xl shadow-2xl w-[60%] max-w-[60%] min-w-[300px] max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Header - Fixed */}
+            <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-indigo-800 text-white p-4 flex-shrink-0">
+                <div className="flex justify-between items-start">
+                    <div className="flex-1 min-w-0">
+                        <h2 className="text-xl font-bold truncate pr-4">{selectedMedication.name}</h2>
+                        {selectedMedication.amharic_name && (
+                            <p className="text-sm text-indigo-200 mt-1 truncate">
+                                {selectedMedication.amharic_name}
+                            </p>
+                        )}
+                    </div>
+                    <button
+                        onClick={() => setSelectedMedication(null)}
+                        className="text-white hover:text-gray-200 text-xl flex-shrink-0"
+                        aria-label="Close"
+                    >
+                        <FaTimes />
+                    </button>
+                </div>
+            </div>
+            
+            {/* Scrollable Content Area - With improved scrolling */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                {/* Usage Section */}
+                {selectedMedication.usage && (
+                    <div className="bg-blue-50 rounded-lg overflow-hidden border border-blue-100">
+                        <button
+                            onClick={() => toggleSection('usage')}
+                            className="w-full bg-blue-100 hover:bg-blue-200 p-3 text-left flex justify-between items-center transition-colors"
+                        >
+                            <h3 className="font-semibold text-blue-800 flex items-center gap-2">
+                                <FaInfoCircle className="text-blue-600" />
+                                የመድሃኒቱ ጥቅም:
+                            </h3>
+                            <span className="text-blue-600 text-xl font-bold">
+                                {expandedSections.usage ? '−' : '+'}
+                            </span>
+                        </button>
+                        {expandedSections.usage && (
+                            <div className="p-4 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-blue-100">
+                                <div className="space-y-1">
+                                    {renderFormattedText(selectedMedication.usage)}
+                                </div>
+                                {/* Show content size indicator for large content */}
+                                {selectedMedication.usage.length > 500 && (
+                                    <div className="mt-2 text-xs text-blue-600 flex items-center gap-1">
+                                        <FaInfoCircle />
+                                        <span>Scroll for more content ({Math.ceil(selectedMedication.usage.length / 500)} screens)</span>
                                     </div>
-                                    <button
-                                        onClick={() => setSelectedMedication(null)}
-                                        className="text-white hover:text-gray-200 text-lg ml-2 flex-shrink-0"
-                                    >
-                                        <FaTimes />
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            {/* Scrollable Content */}
-                            <div className="overflow-y-auto" style={{ maxHeight: 'calc(160vh - 120px)' }}>
-                               <div className="p-3 space-y-2">
-                                    {/* Usage Section */}
-                                    {selectedMedication.usage && (
-                                        <div className="bg-blue-50 rounded-lg overflow-hidden border border-blue-100">
-                                            <button
-                                                onClick={() => toggleSection('usage')}
-                                                className="w-full bg-blue-100 hover:bg-blue-200 p-2 text-left flex justify-between items-center transition-colors"
-                                            >
-                                                <h3 className="font-semibold text-blue-800 flex items-center gap-1 text-xs">
-                                                    <FaInfoCircle className="text-blue-600 text-xs" />
-                                                    የመድሃኒቱ ጥቅም:
-                                                </h3>
-                                                <span className="text-blue-600 text-base font-bold">
-                                                    {expandedSections.usage ? '−' : '+'}
-                                                </span>
-                                            </button>
-                                            {expandedSections.usage && (
-                                                <div className="p-2">
-                                                    <ul className="space-y-0.5">
-                                                        {renderFormattedText(selectedMedication.usage)}
-                                                    </ul>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {/* Administration Section */}
-                                    {selectedMedication.administration_and_cautions && (
-                                        <div className="bg-yellow-50 rounded-lg overflow-hidden border border-yellow-100">
-                                            <button
-                                                onClick={() => toggleSection('administration')}
-                                                className="w-full bg-yellow-100 hover:bg-yellow-200 p-2 text-left flex justify-between items-center transition-colors"
-                                            >
-                                                <h3 className="font-semibold text-yellow-800 flex items-center gap-1 text-xs">
-                                                    <FaExclamationTriangle className="text-yellow-600 text-xs" />
-                                                    አወሳሰድ እና ጥንቃቄዎች:
-                                                </h3>
-                                                <span className="text-yellow-600 text-base font-bold">
-                                                    {expandedSections.administration ? '−' : '+'}
-                                                </span>
-                                            </button>
-                                            {expandedSections.administration && (
-                                                <div className="p-2">
-                                                    <ul className="space-y-0.5">
-                                                        {renderFormattedText(selectedMedication.administration_and_cautions)}
-                                                    </ul>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {/* Side Effects Section */}
-                                    {selectedMedication.side_effects && (
-                                        <div className="bg-red-50 rounded-lg overflow-hidden border border-red-100">
-                                            <button
-                                                onClick={() => toggleSection('sideEffects')}
-                                                className="w-full bg-red-100 hover:bg-red-200 p-2 text-left flex justify-between items-center transition-colors"
-                                            >
-                                                <h3 className="font-semibold text-red-800 flex items-center gap-1 text-xs">
-                                                    <FaExclamationCircle className="text-red-600 text-xs" />
-                                                    የጎንዮሽ ጉዳቶች:
-                                                </h3>
-                                                <span className="text-red-600 text-base font-bold">
-                                                    {expandedSections.sideEffects ? '−' : '+'}
-                                                </span>
-                                            </button>
-                                            {expandedSections.sideEffects && (
-                                                <div className="p-2">
-                                                    <ul className="space-y-0.5">
-                                                        {renderFormattedText(selectedMedication.side_effects)}
-                                                    </ul>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {/* Storage Section */}
-                                    {selectedMedication.storage && (
-                                        <div className="bg-green-50 rounded-lg overflow-hidden border border-green-100">
-                                            <button
-                                                onClick={() => toggleSection('storage')}
-                                                className="w-full bg-green-100 hover:bg-green-200 p-2 text-left flex justify-between items-center transition-colors"
-                                            >
-                                                <h3 className="font-semibold text-green-800 flex items-center gap-1 text-xs">
-                                                    <FaCheckCircle className="text-green-600 text-xs" />
-                                                    አቀማመጥ:
-                                                </h3>
-                                                <span className="text-green-600 text-base font-bold">
-                                                    {expandedSections.storage ? '−' : '+'}
-                                                </span>
-                                            </button>
-                                            {expandedSections.storage && (
-                                                <div className="p-2">
-                                                    <ul className="space-y-0.5">
-                                                        {renderFormattedText(selectedMedication.storage)}
-                                                    </ul>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Footer Actions */}
-                            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 p-2 flex justify-end gap-1">
-                                {isAdmin && (
-                                    <>
-                                        <button
-                                            onClick={() => {
-                                                handleEditMedication(selectedMedication);
-                                                setSelectedMedication(null);
-                                            }}
-                                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-lg flex items-center gap-1 text-xs"
-                                        >
-                                            <FaEdit className="text-xs" /> Edit
-                                        </button>
-                                        <button
-                                            onClick={() => handleDeleteMedication(selectedMedication.id)}
-                                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg flex items-center gap-1 text-xs"
-                                        >
-                                            <FaTrash className="text-xs" /> Delete
-                                        </button>
-                                    </>
                                 )}
-                                <button
-                                    onClick={() => setSelectedMedication(null)}
-                                    className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-3 py-1 rounded-lg text-xs"
-                                >
-                                    Close
-                                </button>
                             </div>
-                        </div>
+                        )}
                     </div>
                 )}
 
+                {/* Administration Section */}
+                {selectedMedication.administration_and_cautions && (
+                    <div className="bg-yellow-50 rounded-lg overflow-hidden border border-yellow-100">
+                        <button
+                            onClick={() => toggleSection('administration')}
+                            className="w-full bg-yellow-100 hover:bg-yellow-200 p-3 text-left flex justify-between items-center transition-colors"
+                        >
+                            <h3 className="font-semibold text-yellow-800 flex items-center gap-2">
+                                <FaExclamationTriangle className="text-yellow-600" />
+                                አወሳሰድ እና ጥንቃቄዎች:
+                            </h3>
+                            <span className="text-yellow-600 text-xl font-bold">
+                                {expandedSections.administration ? '−' : '+'}
+                            </span>
+                        </button>
+                        {expandedSections.administration && (
+                            <div className="p-4 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-yellow-300 scrollbar-track-yellow-100">
+                                <div className="space-y-1">
+                                    {renderFormattedText(selectedMedication.administration_and_cautions)}
+                                </div>
+                                {selectedMedication.administration_and_cautions.length > 500 && (
+                                    <div className="mt-2 text-xs text-yellow-600 flex items-center gap-1">
+                                        <FaInfoCircle />
+                                        <span>Scroll for more content</span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Side Effects Section */}
+                {selectedMedication.side_effects && (
+                    <div className="bg-red-50 rounded-lg overflow-hidden border border-red-100">
+                        <button
+                            onClick={() => toggleSection('sideEffects')}
+                            className="w-full bg-red-100 hover:bg-red-200 p-3 text-left flex justify-between items-center transition-colors"
+                        >
+                            <h3 className="font-semibold text-red-800 flex items-center gap-2">
+                                <FaExclamationCircle className="text-red-600" />
+                                የጎንዮሽ ጉዳቶች:
+                            </h3>
+                            <span className="text-red-600 text-xl font-bold">
+                                {expandedSections.sideEffects ? '−' : '+'}
+                            </span>
+                        </button>
+                        {expandedSections.sideEffects && (
+                            <div className="p-4 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-red-300 scrollbar-track-red-100">
+                                <div className="space-y-1">
+                                    {renderFormattedText(selectedMedication.side_effects)}
+                                </div>
+                                {selectedMedication.side_effects.length > 500 && (
+                                    <div className="mt-2 text-xs text-red-600 flex items-center gap-1">
+                                        <FaInfoCircle />
+                                        <span>Scroll for more content</span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Storage Section */}
+                {selectedMedication.storage && (
+                    <div className="bg-green-50 rounded-lg overflow-hidden border border-green-100">
+                        <button
+                            onClick={() => toggleSection('storage')}
+                            className="w-full bg-green-100 hover:bg-green-200 p-3 text-left flex justify-between items-center transition-colors"
+                        >
+                            <h3 className="font-semibold text-green-800 flex items-center gap-2">
+                                <FaCheckCircle className="text-green-600" />
+                                አቀማመጥ:
+                            </h3>
+                            <span className="text-green-600 text-xl font-bold">
+                                {expandedSections.storage ? '−' : '+'}
+                            </span>
+                        </button>
+                        {expandedSections.storage && (
+                            <div className="p-4 max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-green-300 scrollbar-track-green-100">
+                                <div className="space-y-1">
+                                    {renderFormattedText(selectedMedication.storage)}
+                                </div>
+                                {selectedMedication.storage.length > 300 && (
+                                    <div className="mt-2 text-xs text-green-600 flex items-center gap-1">
+                                        <FaInfoCircle />
+                                        <span>Scroll for more content</span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            {/* Footer Actions - Fixed */}
+            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 p-3 flex justify-end gap-2 flex-shrink-0">
+                {isAdmin && (
+                    <>
+                        <button
+                            onClick={() => {
+                                handleEditMedication(selectedMedication);
+                                setSelectedMedication(null);
+                            }}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
+                        >
+                            <FaEdit /> Edit
+                        </button>
+                        <button
+                            onClick={() => handleDeleteMedication(selectedMedication.id)}
+                            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
+                        >
+                            <FaTrash /> Delete
+                        </button>
+                    </>
+                )}
+                <button
+                    onClick={() => setSelectedMedication(null)}
+                    className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg text-sm"
+                >
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+)}
                 {/* Summary Footer */}
                 {filteredMedications.length > 0 && (
                     <div className="mt-8 bg-white rounded-xl shadow-lg p-6">
