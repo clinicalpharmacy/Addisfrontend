@@ -9,6 +9,7 @@ import {
     FaClock, FaUser, FaCapsules, FaRedo, FaRocket,
     FaCalendarDay, FaUserTag, FaVial, FaBaby, FaChevronDown, FaChevronUp,
     FaExclamationCircle, FaHeartbeat
+    FaShieldAlt
 } from 'react-icons/fa';
 
 const CDSSDisplay = ({ patientData, onBack }) => {
