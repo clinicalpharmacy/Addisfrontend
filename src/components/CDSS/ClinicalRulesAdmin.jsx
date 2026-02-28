@@ -60,7 +60,6 @@ const ClinicalRulesAdmin = () => {
     const [loading, setLoading] = useState(false);
     const [formError, setFormError] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
-    const [showExamples, setShowExamples] = useState(true);
     const [isAdmin, setIsAdmin] = useState(false);
     const [currentUser, setCurrentUser] = useState(null);
     const [checkingAdmin, setCheckingAdmin] = useState(true);
@@ -1102,13 +1101,6 @@ const ClinicalRulesAdmin = () => {
                         </div>
                         <div className="flex gap-2">
                             {isAdmin && (
-                                <button
-                                    onClick={() => setShowExamples(!showExamples)}
-                                    className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg flex items-center gap-2"
-                                >
-                                    {showExamples ? <FaEyeSlash /> : <FaEye />}
-                                    {showExamples ? 'Hide Examples' : 'Show Examples'}
-                                </button>
                             )}
                             <select
                                 value={filterType}
@@ -1124,52 +1116,6 @@ const ClinicalRulesAdmin = () => {
                             </select>
                         </div>
                     </div>
-
-                    {/* Sample Rules - Only show for admins */}
-                    {showExamples && isAdmin && (
-                        <div className="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-200">
-                            <h3 className="text-lg font-semibold text-blue-800 mb-4 flex items-center gap-2">
-                                <FaMagic /> Sample Rules (Click to Load)
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                {Object.entries(sampleRules).map(([name, rule]) => {
-                                    const typeInfo = getRuleTypeInfo(rule.rule_type);
-                                    const Icon = typeInfo.icon;
-                                    return (
-                                        <button
-                                            key={name}
-                                            onClick={() => loadSample(name)}
-                                            className="bg-white p-4 rounded-lg border hover:shadow-md transition text-left"
-                                        >
-                                            <div className="flex items-start gap-3">
-                                                <div className={`p-2 rounded-full ${typeInfo.color}`}>
-                                                    <Icon className="text-current" />
-                                                </div>
-                                                <div className="flex-1">
-                                                    <h4 className="font-medium text-gray-800">{rule.rule_name}</h4>
-                                                    <p className="text-sm text-gray-600 mt-1">{rule.rule_description}</p>
-                                                    <div className="flex items-center gap-2 mt-2">
-                                                        <span className={`px-2 py-1 text-xs rounded ${typeInfo.color}`}>
-                                                            {typeInfo.label}
-                                                        </span>
-                                                        <span className={`px-2 py-1 text-xs rounded ${rule.severity === 'critical' ? 'bg-red-100 text-red-800' :
-                                                            rule.severity === 'high' ? 'bg-orange-100 text-orange-800' :
-                                                                rule.severity === 'moderate' ? 'bg-yellow-100 text-yellow-800' :
-                                                                    'bg-blue-100 text-blue-800'
-                                                            }`}>
-                                                            {rule.severity}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
-                </>
-            )}
 
             {/* Rules Container */}
             {currentUser ? (
@@ -1748,6 +1694,6 @@ const ClinicalRulesAdmin = () => {
             )}
         </div>
     );
-};
+}
 
 export default ClinicalRulesAdmin;
