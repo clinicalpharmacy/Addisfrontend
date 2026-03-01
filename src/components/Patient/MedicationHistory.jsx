@@ -332,8 +332,9 @@ const MedicationHistory = ({ patientCode }) => {
             roa: formData.roa,
             frequency: formData.frequency || null,
             stop_date: formData.stop_date || null,
+            indication: formData.indication || null, 
             cycle: formData.cycle || null,
-            indication: formData.indication || null,           
+            regimen: formData.regimen || null,
             drug_class: formData.drug_class,
             initiated_at: formData.initiated_at,
 
@@ -401,8 +402,9 @@ const MedicationHistory = ({ patientCode }) => {
             roa: 'po',
             frequency: '',
             stop_date: '',
-            cycle: '',
             indication: '',
+            cycle: '',
+            regimen: '',
             drug_class: '',
             initiated_at: 'Hospital',
             dosage_form: 'Tablet',
@@ -469,8 +471,8 @@ const MedicationHistory = ({ patientCode }) => {
             filtered = filtered.filter(med =>
                 med.drug_name?.toLowerCase().includes(term) ||
                 med.brand_name?.toLowerCase().includes(term) ||
-                med.cycle?.toLowerCase().includes(term) ||
                 med.indication?.toLowerCase().includes(term) ||
+                med.cycle?.toLowerCase().includes(term) ||
                 med.drug_class?.toLowerCase().includes(term)
             );
         }
@@ -1105,6 +1107,8 @@ const MedicationHistory = ({ patientCode }) => {
                                     <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden md:table-cell">Frequency</th>
                                     <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Dates</th>
                                     <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Indication</th>
+                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Cycle</th>
+                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Regimen</th>
                                     <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Status</th>
                                     <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Actions</th>
                                 </tr>
@@ -1151,6 +1155,9 @@ const MedicationHistory = ({ patientCode }) => {
                                         </td>
                                         <td className="p-2 md:p-4 hidden lg:table-cell">
                                             <div className="text-gray-700 text-xs md:text-sm break-words">{med.cycle || '—'}</div>
+                                        </td>
+                                        <td className="p-2 md:p-4 hidden lg:table-cell">
+                                            <div className="text-gray-700 text-xs md:text-sm break-words">{med.regimen || '—'}</div>
                                         </td>
                                         <td className="p-2 md:p-4">
                                             <span className={`px-2 md:px-3 py-1 text-xs rounded-full border ${getStatusColor(med.status)}`}>
