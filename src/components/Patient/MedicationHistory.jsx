@@ -168,10 +168,8 @@ const MedicationHistory = ({ patientCode }) => {
         currentUser.role === 'admin'
     );
 
-    const isHealthcareClient =
-        currentUser?.account_type === 'individual' &&
-        currentUser?.individual_type === 'client';
-    
+    const isHealthcareClient = currentUser?.is_healthcare_client === true;
+        
     const fetchReconciliations = async () => {
         try {
             const result = await api.get(`/reconciliations/patient/${patientCode}`);
