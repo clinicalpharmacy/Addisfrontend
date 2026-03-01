@@ -1105,7 +1105,10 @@ const MedicationHistory = ({ patientCode }) => {
                             <thead className="bg-gray-100">
                                 <tr>
                                     <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Drug Name</th>
-                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Dose & Route / Frequency</th>
+                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">
+                                        <div>Dose & Route</div>
+                                        <div>Frequency</div>
+                                    </th>
                                     <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden md:table-cell">Regimen / Cycle</th>
                                     <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Dates</th>
                                     {/* Conditionally show Indication header only for non-healthcare clients */}
