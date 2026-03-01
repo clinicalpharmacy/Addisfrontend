@@ -168,7 +168,7 @@ const MedicationHistory = ({ patientCode }) => {
         currentUser.role === 'admin'
     );
 
-    const isHealthcareClient = currentUser?.is_healthcare_client === false;
+    const isHealthcareClient = currentUser?.is_healthcare_client === true;
     
     const fetchReconciliations = async () => {
         try {
@@ -285,19 +285,19 @@ const MedicationHistory = ({ patientCode }) => {
         return false;
     }
     
-       // Only validate indication for company users
-    if (isCompanyUser && !formData.indication.trim()) {
-        alert('Indication is required');
+       // Only validate indication for company users and health professionals
+    if (!isHealthcareClient && !formData.indication.trim()) {
+        alert('Indication is required for company users and health professionals');
         return false;
    }
         
-        // Only validate cycle for company users
-    if (isCompanyUser && !formData.cycle.trim()) {
+        // Only validate cycle for company users and health professionals
+    if (!isHealthcareClient && !formData.cycle.trim()) {
         return false;
    }
         
-        // Only validate regimen for company users
-    if (isCompanyUser && !formData.regimen.trim()) {
+        // Only validate regimen for company users and health professionals
+    if (!isHealthcareClient && !formData.regimen.trim()) {
         return false;
    }
         
