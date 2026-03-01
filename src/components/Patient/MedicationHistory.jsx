@@ -121,8 +121,8 @@ const MedicationHistory = ({ patientCode }) => {
     ];
 
     const cycleOptions = [
-        'First', 'Second', 'Third', 'Fourth',
-        'Fifth', 'Sixth'
+        'First cycle', 'Second cycle', 'Third cycle', 'Fourth cycle',
+        'Fifth cycle', 'Sixth cycle'
     ];
 
     const statusOptions = [
@@ -1129,13 +1129,15 @@ const MedicationHistory = ({ patientCode }) => {
                                              )}
                                         </td>
                                         <td className="p-2 md:p-4">
-                                            <div className="text-gray-700 text-xs md:text-sm break-words">{med.dose} {med.unit}</div>
-                                            <div className="text-xs text-gray-500 uppercase">{med.roa}</div>
-                                            <div className="text-xs text-gray-500 mt-1 border-t pt-1">{med.frequency}</div>
+                                            <div className="text-gray-700 text-xs md:text-sm break-words">
+                                                <span className="font-medium">{med.dose} {med.unit}</span>
+                                                <span className="text-gray-500 uppercase ml-1">({med.roa})</span>
+                                            </div>
+                                            <div className="text-xs text-gray-500">{med.frequency}</div>
                                         </td>
                                         <td className="p-2 md:p-4 hidden md:table-cell">
                                             <div className="text-gray-700 text-xs md:text-sm break-words font-medium">{med.regimen || '—'}</div>
-                                            <div className="text-xs text-gray-500 mt-1 border-t pt-1">{med.cycle || '—'}</div>
+                                            <div className="text-xs text-gray-500>{med.cycle || '—'}</div>
                                         </td>
                                         <td className="p-2 md:p-4 hidden lg:table-cell">
                                             <div className="space-y-1">
