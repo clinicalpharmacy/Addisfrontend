@@ -831,24 +831,24 @@ const MedicationHistory = ({ patientCode }) => {
                         </select>
                     </div>
 
-                     {/* Regimen - ONLY FOR COMPANY USERS */}
-                        {isCompanyUser && (
-                            <div className="md:col-span-2 lg:col-span-3">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Regimen
-                                </label>
-                                <input
-                                    type="text"
-                                    name="regimen"
-                                    value={formData.regimen}
-                                    onChange={handleInputChange}
-                                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
-                                    placeholder="e.g., FOLFOX, TIP, RHZE"
-                                    required
-                                />
-                            </div>
-                        )}
-                    </div>
+                 {/* Regimen - ONLY FOR COMPANY USERS */}
+                    {isCompanyUser && (
+                        <div className="md:col-span-2 lg:col-span-3">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Regimen
+                            </label>
+                            <input
+                                type="text"
+                                name="regimen"
+                                value={formData.regimen}
+                                onChange={handleInputChange}
+                                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                                placeholder="e.g., FOLFOX, TIP, RHZE"
+                                required
+                            />
+                        </div>
+                    )}
+                </div>
 
                 {/* Basic Information - Only non-required fields */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
