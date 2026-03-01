@@ -12,6 +12,7 @@ import {
     FaArrowLeft,
     FaEdit,
     FaTrash,
+
     FaHeartbeat,
     FaVenusMars,
     FaPhone,
@@ -31,14 +32,10 @@ import {
     FaCapsules,
     FaProcedures,
     FaPrescriptionBottleAlt,
+
     FaSync,
     FaBrain,
-    FaHistory,
-    FaWifi,
-    FaArrowRight,
-    FaArrowLeft as FaArrowLeftIcon,
-    FaCheck,
-    FaList
+    FaHistory
 } from 'react-icons/fa';
 
 // Import components
@@ -51,6 +48,7 @@ import CDSSDisplay from '../components/CDSS/CDSSDisplay';
 
 import api from '../utils/api';
 import supabase from '../utils/supabase';
+
 
 // Create memoized LabInputField component
 const LabInputField = React.memo(({
@@ -135,10 +133,6 @@ const PatientDetails = () => {
     const [globalLabDefinitions, setGlobalLabDefinitions] = useState([]);
     const [vitalsHistory, setVitalsHistory] = useState([]);
     const [labsHistory, setLabsHistory] = useState([]);
-    
-    // --- STEPPER STATE FOR INDIVIDUAL USERS ---
-    const [currentStep, setCurrentStep] = useState(1);
-    const [completedSteps, setCompletedSteps] = useState(new Set());
 
     // Effect to set correct default tab once user is loaded
     useEffect(() => {
@@ -151,6 +145,7 @@ const PatientDetails = () => {
             setDefaultTabInitialized(true);
         }
     }, [user, defaultTabInitialized]);
+
 
     // Form state (all fields)
     const [formData, setFormData] = useState({
@@ -170,112 +165,6 @@ const PatientDetails = () => {
 
     // --- 2. HELPERS & UTILS ---
 
-    // --- STEP DEFINITIONS FOR INDIVIDUAL USERS ---
-    const demographicSteps = useMemo(() => [
-        {
-            id: 1,
-            title: 'Basic Information',
-            description: 'Patient name, age, and gender',
-            icon: FaUser,
-            fields: ['full_name', 'age', 'age_in_days', 'gender', 'date_of_birth'],
-            isRequired: true
-        },
-        {
-            id: 2,
-            title: 'Contact Details',
-            description: 'Contact number and address',
-            icon: FaPhone,
-            fields: ['contact_number', 'address'],
-            isRequired: false
-        },
-        {
-            id: 3,
-            title: 'Medical Information',
-            description: 'Diagnosis and allergies',
-            icon: FaStethoscope,
-            fields: ['diagnosis', 'allergies'],
-            isRequired: false
-        },
-        {
-            id: 4,
-            title: 'Appointment',
-            description: 'Next appointment date',
-            icon: FaCalendarAlt,
-            fields: ['appointment_date'],
-            isRequired: false
-        },
-        {
-            id: 5,
-            title: 'Pregnancy & Lactation',
-            description: 'For female patients',
-            icon: FaBaby,
-            fields: ['is_pregnant', 'pregnancy_weeks', 'pregnancy_trimester', 'edd', 'pregnancy_notes', 'is_lactating', 'lactation_notes'],
-            isRequired: false,
-            condition: () => formData.gender?.toLowerCase() === 'female'
-        },
-        {
-            id: 6,
-            title: 'Pediatric Information',
-            description: 'For pediatric patients',
-            icon: FaChild,
-            fields: ['birth_weight', 'birth_length', 'feeding_method', 'vaccination_status', 'developmental_milestones', 'special_instructions'],
-            isRequired: false,
-            condition: () => formData.patient_type && formData.patient_type !== 'adult'
-        }
-    ], [formData.gender, formData.patient_type]);
-
-    // Check if current step is complete
-    const isStepComplete = useCallback((stepId) => {
-        const step = demographicSteps.find(s => s.id === stepId);
-        if (!step) return false;
-        
-        if (step.id === 1) {
-            // Basic info step requires at least name
-            return formData.full_name && formData.full_name.trim() !== '';
-        }
-        
-        // For other steps, they're optional
-        return true;
-    }, [demographicSteps, formData.full_name]);
-
-    // Mark step as completed when navigating away
-    const handleStepComplete = useCallback((stepId) => {
-        if (isStepComplete(stepId)) {
-            setCompletedSteps(prev => new Set([...prev, stepId]));
-        }
-    }, [isStepComplete]);
-
-    // Navigate to next step
-    const goToNextStep = useCallback(() => {
-        if (currentStep < demographicSteps.length) {
-            handleStepComplete(currentStep);
-            setCurrentStep(prev => prev + 1);
-        }
-    }, [currentStep, demographicSteps.length, handleStepComplete]);
-
-    // Navigate to previous step
-    const goToPrevStep = useCallback(() => {
-        if (currentStep > 1) {
-            setCurrentStep(prev => prev - 1);
-        }
-    }, [currentStep]);
-
-    // Jump to specific step
-    const goToStep = useCallback((stepId) => {
-        // Only allow jumping to steps that are either completed or the current one
-        if (completedSteps.has(stepId) || stepId === currentStep || stepId < currentStep) {
-            setCurrentStep(stepId);
-        }
-    }, [completedSteps, currentStep]);
-
-    // Calculate overall progress
-    const progressPercentage = useMemo(() => {
-        const totalRequiredSteps = demographicSteps.filter(s => s.isRequired).length;
-        const completedRequired = demographicSteps
-            .filter(s => s.isRequired && completedSteps.has(s.id))
-            .length;
-        return Math.round((completedRequired / totalRequiredSteps) * 100);
-    }, [demographicSteps, completedSteps]);
 
     // --- 3. EFFECTS ---
     // Initialize user from localStorage
@@ -343,6 +232,7 @@ const PatientDetails = () => {
         }
     }, [globalLabDefinitions]);
 
+
     // Use useMemo for heavy computations that depend on formData
     const pediatricAgeGroups = useMemo(() => [
         { type: 'neonate', minDays: 0, maxDays: 28, label: 'Neonate (0-28 days)', icon: FaBaby },
@@ -392,6 +282,8 @@ const PatientDetails = () => {
 
         return allTabs;
     }, [user]);
+
+
 
     const generatePatientCode = useCallback(() => {
         const timestamp = Date.now().toString().slice(-6);
@@ -509,6 +401,7 @@ const PatientDetails = () => {
             return `${years} years (Adult)`;
         }
     }, [isValidDate, calculateAgeInDays]);
+
 
     const calculateBSA = useCallback((weight, height) => {
         if (!weight || !height || parseFloat(weight) <= 0 || parseFloat(height) <= 0) return '';
@@ -650,6 +543,8 @@ const PatientDetails = () => {
             setLoading(true);
             setError(null);
 
+
+
             // CASE 0: Creating a new patient
             const isNewPatientRoute = patientCode === 'new' || location.pathname.endsWith('/patients/new');
 
@@ -686,8 +581,10 @@ const PatientDetails = () => {
 
             // CASE 2: Fetching existing patient
 
+
             try {
                 const result = await api.get(`/patients/code/${patientCode}`);
+
 
                 if (result.success && result.patient) {
 
@@ -725,6 +622,7 @@ const PatientDetails = () => {
 
     // Create a memoized change handler for lab inputs
     const handleLabInputChange = useCallback((field, value) => {
+
 
         // For numeric fields, allow empty string or valid numbers
         const numericFields = [
@@ -771,6 +669,7 @@ const PatientDetails = () => {
 
     // Create a memoized change handler for vitals inputs
     const handleVitalsInputChange = useCallback((field, value) => {
+
 
         // Handle weight and height for BSA calculation
         if (field === 'weight' || field === 'height') {
@@ -830,6 +729,7 @@ const PatientDetails = () => {
     }, [formData.weight, formData.height, calculateBSA]);
 
     const handleInputChange = useCallback((field, value) => {
+
 
         // Handle date fields with validation
         if (field === 'date_of_birth' && value) {
@@ -1105,6 +1005,7 @@ const PatientDetails = () => {
             }
 
             // Log what we're saving
+
 
             // Calculate ages
             let ageInDays = formData.age_in_days;
@@ -1753,6 +1654,10 @@ const PatientDetails = () => {
                     </div>
                 </div>
 
+
+
+
+
                 {/* Vitals History Table */}
                 {!isNewPatient && vitalsHistory.length > 0 && (
                     <div className="mt-12 bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
@@ -1881,7 +1786,22 @@ const PatientDetails = () => {
                     });
                 })()}
 
+
+
                 <div className="space-y-8">
+
+
+
+
+
+
+
+
+
+
+
+
+
 
                     {/* --- NON-GLOBAL CUSTOM LABS --- */}
                     {customLabs.filter(l => !l.isGlobal).length > 0 && (
@@ -2002,653 +1922,12 @@ const PatientDetails = () => {
         );
     }, [formData, isEditing, showPediatricLabs, handleSaveLabs, handleLabInputChange, handleInputChange, labsHistory, isNewPatient, customLabs, setCustomLabs]);
 
-    // STEP-BASED DEMOGRAPHICS RENDERER FOR INDIVIDUAL USERS
-    const renderDemographicsStep = useCallback((step) => {
-        const isIndividual = user?.account_type === 'individual' && user?.role !== 'admin';
-        
-        // If not individual user, render full demographics section
-        if (!isIndividual) {
-            return renderDemographicsSection();
-        }
-
-        // For individual users, render step-based interface
-        switch(step.id) {
-            case 1: // Basic Information
-                return (
-                    <div className="space-y-6">
-                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl mb-6">
-                            <h3 className="text-lg font-bold text-blue-800 mb-2">Welcome! Let's start with basic information</h3>
-                            <p className="text-blue-600">Please enter the patient's name, age, and gender to begin.</p>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Full Name - Required */}
-                            <div className="space-y-2 md:col-span-2">
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Full Name <span className="text-red-500">*</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    value={formData.full_name || ''}
-                                    onChange={(e) => handleInputChange('full_name', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    placeholder="Enter patient's full name"
-                                    required
-                                />
-                                {!formData.full_name && (
-                                    <p className="text-xs text-red-500 mt-1">Name is required</p>
-                                )}
-                            </div>
-
-                            {/* Age Input */}
-                            <div className="space-y-2">
-                                <div className="flex justify-between items-center">
-                                    <label className="block text-sm font-medium text-gray-700">
-                                        Age {ageMode === 'days' ? '(in days)' : '(in years)'}
-                                    </label>
-                                    {formData.age_in_days && parseInt(formData.age_in_days) < 730 && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setAgeMode(ageMode === 'days' ? 'years' : 'days')}
-                                            className="text-xs text-blue-600 hover:text-blue-800"
-                                        >
-                                            Show in {ageMode === 'days' ? 'years' : 'days'}
-                                        </button>
-                                    )}
-                                </div>
-                                {ageMode === 'days' ? (
-                                    <input
-                                        type="number"
-                                        value={formData.age_in_days || ''}
-                                        onChange={(e) => handleInputChange('age_in_days', e.target.value)}
-                                        className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                        placeholder="Enter age in days"
-                                        min="0"
-                                        max="365"
-                                    />
-                                ) : (
-                                    <input
-                                        type="number"
-                                        value={formData.age || ''}
-                                        onChange={(e) => handleInputChange('age', e.target.value)}
-                                        className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                        placeholder="Enter age"
-                                        min="0"
-                                        max="120"
-                                    />
-                                )}
-                            </div>
-
-                            {/* Date of Birth */}
-                            <div className="space-y-2">
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Date of Birth
-                                </label>
-                                <input
-                                    type="date"
-                                    value={formData.date_of_birth || ''}
-                                    onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                />
-                            </div>
-
-                            {/* Gender */}
-                            <div className="space-y-2">
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Gender
-                                </label>
-                                <select
-                                    value={formData.gender || ''}
-                                    onChange={(e) => handleInputChange('gender', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                >
-                                    <option value="">Select Gender</option>
-                                    <option value="Male">Male</option>
-                                    <option value="Female">Female</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                );
-
-            case 2: // Contact Details
-                return (
-                    <div className="space-y-6">
-                        <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-xl mb-6">
-                            <h3 className="text-lg font-bold text-green-800 mb-2">Contact Information</h3>
-                            <p className="text-green-600">Add contact details for follow-ups and appointments.</p>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Contact Number
-                                </label>
-                                <input
-                                    type="tel"
-                                    value={formData.contact_number || ''}
-                                    onChange={(e) => handleInputChange('contact_number', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                                    placeholder="Phone number"
-                                />
-                            </div>
-
-                            <div className="space-y-2 md:col-span-2">
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Address
-                                </label>
-                                <textarea
-                                    value={formData.address || ''}
-                                    onChange={(e) => handleInputChange('address', e.target.value)}
-                                    rows="3"
-                                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                                    placeholder="Patient's address"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                );
-
-            case 3: // Medical Information
-                return (
-                    <div className="space-y-6">
-                        <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-xl mb-6">
-                            <h3 className="text-lg font-bold text-purple-800 mb-2">Medical Information</h3>
-                            <p className="text-purple-600">Add diagnosis and any known allergies.</p>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 gap-6">
-                            {/* Diagnosis */}
-                            <div className="space-y-2">
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Diagnosis
-                                </label>
-                                <textarea
-                                    value={formData.diagnosis || ''}
-                                    onChange={(e) => handleInputChange('diagnosis', e.target.value)}
-                                    rows="4"
-                                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                                    placeholder="Enter diagnosis"
-                                />
-                            </div>
-
-                            {/* Allergies */}
-                            <div className="space-y-2">
-                                <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
-                                    <FaAllergies /> Allergies
-                                </label>
-                                <div className="space-y-3">
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="text"
-                                            value={newAllergy}
-                                            onChange={(e) => setNewAllergy(e.target.value)}
-                                            className="flex-1 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                                            placeholder="Add an allergy (e.g., Penicillin)"
-                                            onKeyPress={(e) => e.key === 'Enter' && handleAddAllergy()}
-                                        />
-                                        <button
-                                            onClick={handleAddAllergy}
-                                            className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-lg flex items-center gap-2"
-                                        >
-                                            <FaPlus /> Add
-                                        </button>
-                                    </div>
-                                    {formData.allergies.length > 0 && (
-                                        <div className="flex flex-wrap gap-2">
-                                            {formData.allergies.map((allergy, index) => (
-                                                <div key={index} className="bg-red-100 text-red-800 px-3 py-2 rounded-lg flex items-center gap-2">
-                                                    {allergy}
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleRemoveAllergy(index)}
-                                                        className="text-red-600 hover:text-red-800"
-                                                    >
-                                                        <FaTimes />
-                                                    </button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                );
-
-            case 4: // Appointment
-                return (
-                    <div className="space-y-6">
-                        <div className="bg-gradient-to-r from-yellow-50 to-amber-50 p-6 rounded-xl mb-6">
-                            <h3 className="text-lg font-bold text-yellow-800 mb-2">Appointment Scheduling</h3>
-                            <p className="text-yellow-600">Set the next appointment date for this patient.</p>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Next Appointment Date
-                                </label>
-                                <input
-                                    type="date"
-                                    value={formData.appointment_date || ''}
-                                    onChange={(e) => handleInputChange('appointment_date', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Status
-                                </label>
-                                <div className="flex items-center gap-4 p-3">
-                                    <label className="flex items-center gap-2">
-                                        <input
-                                            type="radio"
-                                            checked={formData.is_active === true}
-                                            onChange={() => handleInputChange('is_active', true)}
-                                            className="text-green-500"
-                                        />
-                                        <span>Active</span>
-                                    </label>
-                                    <label className="flex items-center gap-2">
-                                        <input
-                                            type="radio"
-                                            checked={formData.is_active === false}
-                                            onChange={() => handleInputChange('is_active', false)}
-                                            className="text-red-500"
-                                        />
-                                        <span>Inactive</span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                );
-
-            case 5: // Pregnancy & Lactation
-                if (!formData.gender || formData.gender.toLowerCase() !== 'female') {
-                    return (
-                        <div className="text-center py-12">
-                            <FaBaby className="text-6xl text-gray-300 mx-auto mb-4" />
-                            <h3 className="text-xl font-bold text-gray-500 mb-2">Not Applicable</h3>
-                            <p className="text-gray-400">Pregnancy and lactation information is only relevant for female patients.</p>
-                        </div>
-                    );
-                }
-
-                return (
-                    <div className="space-y-6">
-                        <div className="bg-gradient-to-r from-pink-50 to-rose-50 p-6 rounded-xl mb-6">
-                            <h3 className="text-lg font-bold text-pink-800 mb-2">Pregnancy & Lactation</h3>
-                            <p className="text-pink-600">Record pregnancy and breastfeeding status if applicable.</p>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Pregnancy Status */}
-                            <div className="bg-pink-50 p-4 rounded-lg border border-pink-200 md:col-span-2">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Is the patient pregnant?
-                                </label>
-                                <div className="flex gap-4">
-                                    <button
-                                        type="button"
-                                        onClick={() => handleInputChange('is_pregnant', false)}
-                                        className={`flex-1 py-3 px-4 rounded-lg text-sm font-bold transition-all ${
-                                            !formData.is_pregnant 
-                                                ? 'bg-gray-200 text-gray-800 shadow-inner' 
-                                                : 'bg-white text-gray-400 hover:bg-gray-50'
-                                        }`}
-                                    >
-                                        No
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleInputChange('is_pregnant', true)}
-                                        className={`flex-1 py-3 px-4 rounded-lg text-sm font-bold transition-all ${
-                                            formData.is_pregnant 
-                                                ? 'bg-pink-500 text-white shadow-md' 
-                                                : 'bg-white text-gray-400 hover:bg-pink-50'
-                                        }`}
-                                    >
-                                        Yes
-                                    </button>
-                                </div>
-                            </div>
-
-                            {formData.is_pregnant && (
-                                <>
-                                    <div className="space-y-2">
-                                        <label className="block text-sm font-medium text-gray-700">
-                                            Pregnancy Weeks
-                                        </label>
-                                        <input
-                                            type="number"
-                                            value={formData.pregnancy_weeks || ''}
-                                            onChange={(e) => handleInputChange('pregnancy_weeks', e.target.value)}
-                                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                                            placeholder="e.g., 12"
-                                            min="0"
-                                            max="42"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="block text-sm font-medium text-gray-700">
-                                            Trimester
-                                        </label>
-                                        <div className="p-3 bg-gray-50 rounded-lg border border-gray-200 font-medium">
-                                            {formData.pregnancy_trimester || 'Select weeks to calculate'}
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="block text-sm font-medium text-gray-700">
-                                            Expected Due Date (EDD)
-                                        </label>
-                                        <input
-                                            type="date"
-                                            value={formData.edd || ''}
-                                            onChange={(e) => handleInputChange('edd', e.target.value)}
-                                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                                        />
-                                    </div>
-                                    <div className="space-y-2 md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700">
-                                            Pregnancy Notes
-                                        </label>
-                                        <textarea
-                                            value={formData.pregnancy_notes || ''}
-                                            onChange={(e) => handleInputChange('pregnancy_notes', e.target.value)}
-                                            rows="2"
-                                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                                            placeholder="Any additional notes about the pregnancy"
-                                        />
-                                    </div>
-                                </>
-                            )}
-
-                            {/* Lactation Status */}
-                            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 md:col-span-2 mt-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Is the patient lactating/breastfeeding?
-                                </label>
-                                <div className="flex gap-4">
-                                    <button
-                                        type="button"
-                                        onClick={() => handleInputChange('is_lactating', false)}
-                                        className={`flex-1 py-3 px-4 rounded-lg text-sm font-bold transition-all ${
-                                            !formData.is_lactating 
-                                                ? 'bg-gray-200 text-gray-800 shadow-inner' 
-                                                : 'bg-white text-gray-400 hover:bg-gray-50'
-                                        }`}
-                                    >
-                                        No
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleInputChange('is_lactating', true)}
-                                        className={`flex-1 py-3 px-4 rounded-lg text-sm font-bold transition-all ${
-                                            formData.is_lactating 
-                                                ? 'bg-blue-500 text-white shadow-md' 
-                                                : 'bg-white text-gray-400 hover:bg-blue-50'
-                                        }`}
-                                    >
-                                        Yes
-                                    </button>
-                                </div>
-                            </div>
-
-                            {formData.is_lactating && (
-                                <div className="space-y-2 md:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700">
-                                        Lactation Notes
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={formData.lactation_notes || ''}
-                                        onChange={(e) => handleInputChange('lactation_notes', e.target.value)}
-                                        className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                        placeholder="e.g., Exclusive breastfeeding, pumping, etc."
-                                    />
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                );
-
-            case 6: // Pediatric Information
-                if (!formData.patient_type || formData.patient_type === 'adult') {
-                    return (
-                        <div className="text-center py-12">
-                            <FaChild className="text-6xl text-gray-300 mx-auto mb-4" />
-                            <h3 className="text-xl font-bold text-gray-500 mb-2">Not Applicable</h3>
-                            <p className="text-gray-400">Pediatric information is only relevant for patients under 18 years.</p>
-                        </div>
-                    );
-                }
-
-                return (
-                    <div className="space-y-6">
-                        <div className="bg-gradient-to-r from-pink-50 to-purple-50 p-6 rounded-xl mb-6">
-                            <h3 className="text-lg font-bold text-purple-800 mb-2">Pediatric Information</h3>
-                            <p className="text-purple-600">Additional information for pediatric patients.</p>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Birth Weight
-                                </label>
-                                <div className="flex gap-2">
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        value={formData.birth_weight || ''}
-                                        onChange={(e) => handleInputChange('birth_weight', e.target.value)}
-                                        className="flex-1 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                                        placeholder="e.g., 3.5"
-                                    />
-                                    <div className="w-16 bg-gray-100 border border-gray-300 rounded-lg p-3 text-center text-gray-700">
-                                        kg
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Birth Length
-                                </label>
-                                <div className="flex gap-2">
-                                    <input
-                                        type="number"
-                                        step="0.1"
-                                        value={formData.birth_length || ''}
-                                        onChange={(e) => handleInputChange('birth_length', e.target.value)}
-                                        className="flex-1 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                                        placeholder="e.g., 50"
-                                    />
-                                    <div className="w-16 bg-gray-100 border border-gray-300 rounded-lg p-3 text-center text-gray-700">
-                                        cm
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Feeding Method
-                                </label>
-                                <select
-                                    value={formData.feeding_method || ''}
-                                    onChange={(e) => handleInputChange('feeding_method', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                                >
-                                    <option value="">Select method</option>
-                                    <option value="Breastfed">Breastfed</option>
-                                    <option value="Formula">Formula</option>
-                                    <option value="Mixed">Mixed</option>
-                                    <option value="Solids">Solids</option>
-                                </select>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Vaccination Status
-                                </label>
-                                <select
-                                    value={formData.vaccination_status || ''}
-                                    onChange={(e) => handleInputChange('vaccination_status', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                                >
-                                    <option value="">Select status</option>
-                                    <option value="Up to date">Up to date</option>
-                                    <option value="Partially vaccinated">Partially vaccinated</option>
-                                    <option value="Not vaccinated">Not vaccinated</option>
-                                    <option value="Unknown">Unknown</option>
-                                </select>
-                            </div>
-
-                            <div className="md:col-span-2 space-y-2">
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Developmental Milestones
-                                </label>
-                                <textarea
-                                    value={formData.developmental_milestones || ''}
-                                    onChange={(e) => handleInputChange('developmental_milestones', e.target.value)}
-                                    rows="3"
-                                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                                    placeholder="Describe developmental milestones"
-                                />
-                            </div>
-
-                            <div className="md:col-span-2 space-y-2">
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Special Instructions
-                                </label>
-                                <textarea
-                                    value={formData.special_instructions || ''}
-                                    onChange={(e) => handleInputChange('special_instructions', e.target.value)}
-                                    rows="2"
-                                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                                    placeholder="Any special care instructions"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                );
-
-            default:
-                return null;
-        }
-    }, [user, formData, ageMode, newAllergy, handleInputChange, handleAddAllergy, handleRemoveAllergy, renderDemographicsSection]);
-
-    // Render demographics section based on user type
     const renderDemographicsSection = useCallback(() => {
         const ageDisplay = formatAgeDisplay(formData.age_in_days, formData.date_of_birth);
         const isPediatric = formData.patient_type && formData.patient_type !== 'adult';
         const patientCodeToDisplay = getCurrentPatientCode();
         const isIndividual = user?.account_type === 'individual' && user?.role !== 'admin';
 
-        // If individual user, render the step-based wizard
-        if (isIndividual) {
-            const currentStepData = demographicSteps.find(s => s.id === currentStep);
-            
-            return (
-                <div className="space-y-6">
-                    {/* Progress Header */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <div>
-                                <h2 className="text-xl font-bold text-gray-800">Patient Information</h2>
-                                <p className="text-gray-600">Step {currentStep} of {demographicSteps.length}</p>
-                            </div>
-                            <div className="text-right">
-                                <span className="text-sm font-medium text-blue-600">
-                                    {progressPercentage}% Complete
-                                </span>
-                            </div>
-                        </div>
-                        
-                        {/* Progress Bar */}
-                        <div className="w-full bg-gray-200 rounded-full h-2.5 mb-6">
-                            <div 
-                                className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
-                                style={{ width: `${progressPercentage}%` }}
-                            ></div>
-                        </div>
-
-                        {/* Step Indicators */}
-                        <div className="flex items-center justify-between overflow-x-auto pb-2">
-                            {demographicSteps.map((step) => {
-                                const Icon = step.icon;
-                                const isActive = step.id === currentStep;
-                                const isCompleted = completedSteps.has(step.id);
-                                const isClickable = isCompleted || step.id < currentStep;
-
-                                return (
-                                    <button
-                                        key={step.id}
-                                        onClick={() => isClickable && goToStep(step.id)}
-                                        className={`flex flex-col items-center min-w-[80px] ${
-                                            isClickable ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'
-                                        }`}
-                                        disabled={!isClickable}
-                                    >
-                                        <div className={`
-                                            w-10 h-10 rounded-full flex items-center justify-center mb-2
-                                            ${isActive ? 'bg-blue-500 text-white ring-4 ring-blue-100' : ''}
-                                            ${isCompleted && !isActive ? 'bg-green-500 text-white' : ''}
-                                            ${!isActive && !isCompleted ? 'bg-gray-200 text-gray-500' : ''}
-                                        `}>
-                                            {isCompleted ? <FaCheck /> : <Icon />}
-                                        </div>
-                                        <span className="text-xs font-medium text-gray-600 text-center">
-                                            {step.title}
-                                        </span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    {/* Current Step Content */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                        {renderDemographicsStep(currentStepData)}
-                    </div>
-
-                    {/* Navigation Buttons */}
-                    <div className="flex justify-between mt-6">
-                        <button
-                            onClick={goToPrevStep}
-                            disabled={currentStep === 1}
-                            className={`px-6 py-3 rounded-lg flex items-center gap-2 ${
-                                currentStep === 1
-                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                            }`}
-                        >
-                            <FaArrowLeftIcon /> Previous
-                        </button>
-                        
-                        {currentStep < demographicSteps.length ? (
-                            <button
-                                onClick={goToNextStep}
-                                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg flex items-center gap-2"
-                            >
-                                Next <FaArrowRight />
-                            </button>
-                        ) : (
-                            <button
-                                onClick={handleSaveDemographics}
-                                className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg flex items-center gap-2"
-                            >
-                                <FaSave /> Save & Continue
-                            </button>
-                        )}
-                    </div>
-                </div>
-            );
-        }
-
-        // Original demographics section for non-individual users
         return (
             <div className="space-y-6">
                 <div className="flex items-center justify-between mb-6">
@@ -3258,7 +2537,7 @@ const PatientDetails = () => {
                 )}
             </div>
         );
-    }, [formData, patient, isEditing, ageMode, newAllergy, handleSaveDemographics, formatAgeDisplay, handleInputChange, handleAddAllergy, handleRemoveAllergy, user, demographicSteps, currentStep, completedSteps, progressPercentage, goToStep, goToPrevStep, goToNextStep, renderDemographicsStep]);
+    }, [formData, patient, isEditing, ageMode, newAllergy, handleSaveDemographics, formatAgeDisplay, handleInputChange, handleAddAllergy, handleRemoveAllergy]);
 
     const renderOverviewSection = useCallback(() => {
         const ageDisplay = formatAgeDisplay(formData.age_in_days, formData.date_of_birth);
