@@ -586,7 +586,7 @@ const Login = () => {
             {/* Bottom Right Section - Registration Links and System Status */}
             <div className="absolute bottom-4 right-4 md:bottom-8 md:right-8 z-20 flex flex-col items-end gap-3">
                 {/* Registration Links */}
-                <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-4 w-64">
+                <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-6 w-72">
                     <p className="text-center text-gray-600 text-sm mb-3 font-medium">
                         Don't have an account?
                     </p>
