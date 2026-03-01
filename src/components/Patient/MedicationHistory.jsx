@@ -168,6 +168,11 @@ const MedicationHistory = ({ patientCode }) => {
         currentUser.role === 'admin'
     );
 
+    const isHealthCareClient = currentUser && (
+    currentUser.account_type === 'individual' &&
+    currentUser.individual_type === 'Health_care_client'
+    );
+    
     const fetchReconciliations = async () => {
         try {
             const result = await api.get(`/reconciliations/patient/${patientCode}`);
@@ -792,66 +797,53 @@ const MedicationHistory = ({ patientCode }) => {
                             </select>
                         </div>
                 
+            {!isHealth_care_client && (
+              <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex flex-col md:flex-row gap-4">
+                  {/* Indication */}
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Indication</label>
+                    <input
+                      type="text"
+                      name="indication"
+                      value={formData.indication}
+                      onChange={handleInputChange}
+                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., Type 2 Diabetes"
+                      required
+                    />
+                  </div>
                 
-                        {/* Indication - COMPANY USERS */}
-                        {isCompanyUser && (
-                            <div className="md:col-span-2 lg:col-span-3">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Indication *
-                                </label>
-                                <input
-                                    type="text"
-                                    name="indication"
-                                    value={formData.indication}
-                                    onChange={handleInputChange}
-                                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
-                                    placeholder="e.g., Type 2 Diabetes"
-                                    required
-                                />
-                            </div>
-                        )}
-
-                        {/* Cycle */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Cycle
-                            </label>
-                            <select
-                                name="cycle"
-                                value={formData.cycle}
-                                onChange={handleInputChange}
-                                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
-                                required
-                            >
-                                <option value="">Select cycle</option>
-                                {cycleOptions.map(cycle => (
-                                    <option key={cycle} value={cycle}>
-                                        {cycle}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                        
-                        {/* Regimen - COMPANY USERS */}
-                        {isCompanyUser && (
-                            <div className="md:col-span-2 lg:col-span-3">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Regimen
-                                </label>
-                                <input
-                                    type="text"
-                                    name="regimen"
-                                    value={formData.regimen}
-                                    onChange={handleInputChange}
-                                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
-                                    placeholder="e.g., FOLFOX"
-                                    required
-                                />
-                            </div>
-                        )}
+                  {/* Cycle */}
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Cycle</label>
+                    <select
+                      name="cycle"
+                      value={formData.cycle}
+                      onChange={handleInputChange}
+                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select cycle</option>
+                      {cycleOptions.map(cycle => (
+                        <option key={cycle} value={cycle}>{cycle}</option>
+                      ))}
+                    </select>
+                  </div>
                 
-                    </div>
+                  {/* Regimen */}
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Regimen</label>
+                    <input
+                      type="text"
+                      name="regimen"
+                      value={formData.regimen}
+                      onChange={handleInputChange}
+                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., FOLFOX"
+                    />
+                  </div>
                 </div>
+                        
                 {/* Basic Information - Only non-required fields */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                     {/* Status */}
