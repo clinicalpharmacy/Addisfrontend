@@ -1112,8 +1112,52 @@ const MedicationHistory = ({ patientCode }) => {
                     <h3 className="text-lg font-semibold text-gray-800">
                         Medication List ({filteredMedications.length} of {medications.length})
                     </h3>
-                    <div className="text-sm text-gray-600">
-                        {filteredMedications.length === 0 ? 'No medications found' : 'Showing all medications'}
+                    <div className="flex items-center gap-3">
+                        <div className="text-sm text-gray-600">
+                            {filteredMedications.length === 0 ? 'No medications found' : 'Showing all medications'}
+                        </div>
+                        <button
+                            onClick={() => {
+                                // Refresh duration for all medications
+                                const updatedMedications = medications.map(med => {
+                                    if (med.start_date && !med.stop_date) {
+                                        const start = new Date(med.start_date);
+                                        const stop = new Date();
+                                        
+                                        // Set time to midnight to compare dates only
+                                        start.setHours(0, 0, 0, 0);
+                                        stop.setHours(0, 0, 0, 0);
+                                        
+                                        // Calculate difference in days including both start and end dates
+                                        const diffTime = stop - start;
+                                        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include today
+                                        
+                                        if (!isNaN(start.getTime())) {
+                                            let years = Math.floor(diffDays / 365);
+                                            let remainingDays = diffDays % 365;
+                                            let months = Math.floor(remainingDays / 30);
+                                            let days = remainingDays % 30;
+            
+                                            const parts = [];
+                                            if (years > 0) parts.push(`${years} year${years > 1 ? 's' : ''}`);
+                                            if (months > 0) parts.push(`${months} month${months > 1 ? 's' : ''}`);
+                                            if (days > 0 || parts.length === 0) parts.push(`${days} day${days !== 1 ? 's' : ''}`);
+            
+                                            med.duration = parts.join(', ');
+                                        }
+                                    }
+                                    return med;
+                                });
+                                
+                                setMedications(updatedMedications);
+                                applyFilters(updatedMedications);
+                            }}
+                            className="text-blue-600 hover:text-blue-800 flex items-center gap-1 px-2 py-1 border border-blue-200 rounded-lg hover:bg-blue-50 transition text-xs"
+                            title="Refresh duration for all medications"
+                        >
+                            <FaSync className="text-xs" />
+                            <span>Refresh Duration</span>
+                        </button>
                     </div>
                 </div>
 
