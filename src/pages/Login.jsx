@@ -283,34 +283,34 @@ const Login = () => {
                 <FaUserMd className="absolute top-40 right-40 text-white opacity-10 text-6xl animate-bounce delay-300" />
             </div>
 
-            {/* Top Left Corner - Addis Med Brand with Moving Texts */}
-            <div className="absolute top-4 left-4 md:top-8 md:left-8 z-20">
+            {/* Left Center - Addis Med Brand with Moving Texts */}
+            <div className="absolute left-4 md:left-8 top-1/2 transform -translate-y-1/2 z-20 hidden lg:block">
                 <div className="flex flex-col items-start">
                     <div className="flex items-center gap-3">
                         <div className="relative">
                             <div className="absolute inset-0 bg-white rounded-xl blur-xl opacity-50 animate-pulse"></div>
-                            <div className="relative flex items-center justify-center w-12 h-12 md:w-14 md:h-14 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl shadow-2xl">
-                                <FaUserMd className="text-white text-xl md:text-2xl animate-pulse" />
+                            <div className="relative flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl shadow-2xl">
+                                <FaUserMd className="text-white text-2xl md:text-3xl animate-pulse" />
                             </div>
                         </div>
                         <div>
-                            <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">Addis Med</h1>
-                            <p className="text-white/80 text-xs md:text-sm">Healthcare System</p>
+                            <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">Addis Med</h1>
+                            <p className="text-white/80 text-sm md:text-base">Healthcare System</p>
                         </div>
                     </div>
 
                     {/* Moving Texts Carousel */}
-                    <div className="mt-2 ml-2 h-8 md:h-10 overflow-hidden">
+                    <div className="mt-4 ml-2 h-12 md:h-14 overflow-hidden">
                         <div
                             className="transform transition-transform duration-500 ease-in-out"
-                            style={{ transform: `translateY(-${currentSlide * 2.5}rem)` }}
+                            style={{ transform: `translateY(-${currentSlide * 3}rem)` }}
                         >
                             {carouselMessages.map((msg, index) => {
                                 const Icon = msg.icon;
                                 return (
-                                    <div key={index} className="h-8 md:h-10 flex items-center gap-2">
-                                        <Icon className="text-white/90 text-sm md:text-base" />
-                                        <p className="text-white/90 text-sm md:text-base font-light">{msg.text}</p>
+                                    <div key={index} className="h-12 md:h-14 flex items-center gap-3">
+                                        <Icon className="text-white/90 text-lg md:text-xl" />
+                                        <p className="text-white/90 text-lg md:text-xl font-light">{msg.text}</p>
                                     </div>
                                 );
                             })}
@@ -319,8 +319,43 @@ const Login = () => {
                 </div>
             </div>
 
-            {/* Center - Login Card (Slightly Wider) */}
-            <div className="w-full max-w-xl relative z-10 px-2 sm:px-0">
+            {/* Mobile/Tablet Top Left Corner - Addis Med Brand (visible on smaller screens) */}
+            <div className="absolute top-4 left-4 md:top-8 md:left-8 z-20 lg:hidden">
+                <div className="flex flex-col items-start">
+                    <div className="flex items-center gap-2">
+                        <div className="relative">
+                            <div className="absolute inset-0 bg-white rounded-xl blur-xl opacity-50 animate-pulse"></div>
+                            <div className="relative flex items-center justify-center w-10 h-10 md:w-12 md:h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl shadow-2xl">
+                                <FaUserMd className="text-white text-lg md:text-xl animate-pulse" />
+                            </div>
+                        </div>
+                        <div>
+                            <h1 className="text-xl md:text-2xl font-bold text-white tracking-tight">Addis Med</h1>
+                        </div>
+                    </div>
+
+                    {/* Moving Texts Carousel - Mobile */}
+                    <div className="mt-2 ml-2 h-6 md:h-8 overflow-hidden">
+                        <div
+                            className="transform transition-transform duration-500 ease-in-out"
+                            style={{ transform: `translateY(-${currentSlide * 1.5}rem)` }}
+                        >
+                            {carouselMessages.map((msg, index) => {
+                                const Icon = msg.icon;
+                                return (
+                                    <div key={index} className="h-6 md:h-8 flex items-center gap-2">
+                                        <Icon className="text-white/90 text-xs md:text-sm" />
+                                        <p className="text-white/90 text-xs md:text-sm font-light">{msg.text}</p>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Center - Login Card (Less Wide) */}
+            <div className="w-full max-w-md relative z-10 px-2 sm:px-0">
                 {/* Login Card */}
                 <div className="bg-white/95 backdrop-blur-lg rounded-2xl md:rounded-3xl shadow-2xl p-6 md:p-8 border border-white/20 transform transition-all duration-300 hover:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)]">
                     <div className="mb-6 md:mb-8 text-center">
