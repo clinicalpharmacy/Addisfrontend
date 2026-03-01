@@ -121,9 +121,13 @@ const MedicationHistory = ({ patientCode }) => {
     ];
 
     const cycleOptions = [
-        'First cycle', 'Second cycle', 'Third cycle', 'Fourth cycle',
-        'Fifth cycle', 'Sixth cycle'
-    ];
+        { value: 'First cycle', label: 'First cycle' },
+        { value: 'Second cycle', label: 'Second cycle' },
+        { value: 'Third cycle', label: 'Third cycle' },
+        { value: 'Fourth cycle', label: 'Fourth cycle' },
+        { value: 'Fifth cycle', label: 'Fifth cycle' },
+        { value: 'Sixth cycle', label: 'Sixth cycle' }
+  ];
 
     const statusOptions = [
         { value: 'Active', label: 'Active', color: 'green' },
