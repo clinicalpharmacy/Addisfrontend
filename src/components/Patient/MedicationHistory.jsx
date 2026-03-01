@@ -179,7 +179,18 @@ const MedicationHistory = ({ patientCode }) => {
         // Direct flag
         currentUser.is_healthcare_client === true
     );
-   
+
+    useEffect(() => {
+        console.log('===== USER DEBUG INFO =====');
+        console.log('Current User from state:', currentUser);
+        console.log('Raw user from localStorage:', localStorage.getItem('user'));
+        console.log('isHealthcareClient:', isHealthcareClient);
+        console.log('Healthcare client ID:', currentUser?.healthcare_client_id);
+        console.log('Account type:', currentUser?.account_type);
+        console.log('Role:', currentUser?.role);
+        console.log('is_healthcare_client flag:', currentUser?.is_healthcare_client);
+        console.log('==========================');
+    }, [currentUser, isHealthcareClient]);
     
     const fetchReconciliations = async () => {
         try {
@@ -191,6 +202,7 @@ const MedicationHistory = ({ patientCode }) => {
             console.error('Error fetching reconciliations:', error);
         }
     };
+
 
     const fetchMedications = async () => {
         try {
