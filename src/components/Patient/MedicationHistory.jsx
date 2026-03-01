@@ -1137,7 +1137,7 @@ const MedicationHistory = ({ patientCode }) => {
                                         </td>
                                         <td className="p-2 md:p-4 hidden md:table-cell">
                                             <div className="text-gray-700 text-xs md:text-sm break-words font-medium">{med.regimen || '—'}</div>
-                                            <div className="text-xs text-gray-500>{med.cycle || '—'}</div>
+                                            <div className="text-xs text-gray-500">{med.cycle || '—'}</div>
                                         </td>
                                         <td className="p-2 md:p-4 hidden lg:table-cell">
                                             <div className="space-y-1">
