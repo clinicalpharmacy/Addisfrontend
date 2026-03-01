@@ -283,7 +283,7 @@ const Login = () => {
                 <FaUserMd className="absolute top-40 right-40 text-white opacity-10 text-6xl animate-bounce delay-300" />
             </div>
 
-            <div className="w-full max-w-md relative z-10 px-0 sm:px-0 py-4">
+            <div className="w-full max-w-sm mx-auto relative z-10 px-0 sm:px-0 py-4">
                 {/* Animated Logo and Brand - Compact for mobile */}
                 <div className="text-center mb-4 transform hover:scale-105 transition-transform duration-300">
                     <div className="relative inline-block">
