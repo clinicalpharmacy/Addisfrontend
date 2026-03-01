@@ -168,7 +168,7 @@ const MedicationHistory = ({ patientCode }) => {
         currentUser.role === 'admin'
     );
 
-    const isHealthcareClient = currentUser?.is_healthcare_client === true;
+    const isHealthcareClient = currentUser?.is_healthcare_client === false;
     
     const fetchReconciliations = async () => {
         try {
@@ -809,6 +809,7 @@ const MedicationHistory = ({ patientCode }) => {
                         onChange={handleInputChange}
                         className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
                         placeholder="e.g., Type 2 Diabetes"
+                        required
                       />
                     </div>
             
