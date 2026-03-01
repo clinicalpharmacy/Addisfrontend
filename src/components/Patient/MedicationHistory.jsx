@@ -1147,6 +1147,13 @@ const MedicationHistory = ({ patientCode }) => {
                                             </div>
                                             <div className="text-xs text-gray-500">{med.frequency}</div>
                                         </td>
+                                        {!isHealthcareClient && (
+                                            <>
+                                                <td className="p-2 md:p-4 hidden lg:table-cell">
+                                                    <div className="text-gray-700 text-xs md:text-sm break-words">{med.indication || '—'}</div>
+                                                </td>
+                                            </>
+                                        )}
                                         <td className="p-2 md:p-4 hidden md:table-cell">
                                             <div className="text-gray-700 text-xs md:text-sm break-words font-medium">{med.regimen || '—'}</div>
                                             <div className="text-xs text-gray-500">{med.cycle || '—'}</div>
@@ -1171,14 +1178,6 @@ const MedicationHistory = ({ patientCode }) => {
                                                 )}
                                             </div>
                                         </td>
-
-                                        {!isHealthcareClient && (
-                                            <>
-                                                <td className="p-2 md:p-4 hidden lg:table-cell">
-                                                    <div className="text-gray-700 text-xs md:text-sm break-words">{med.indication || '—'}</div>
-                                                </td>
-                                            </>
-                                        )}
                                         <td className="p-2 md:p-4">
                                             <span className={`px-2 md:px-3 py-1 text-xs rounded-full border ${getStatusColor(med.status)}`}>
                                                 {med.status}
