@@ -236,7 +236,8 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                 <h2 className="text-2xl font-bold text-gray-800 mb-4">User Acknowledgment</h2>
                 <div className="bg-blue-50 border-1 border-blue-200 p-6 rounded-2xl mb-8 max-w-2xl mx-auto">
                     <p className="text-gray-700 text-lg leading-relaxed">
-                        “By continuing, you acknowledge that this supportive clinical information does not replace consultation with a licensed healthcare professional.”
+                        <span className="block">“By continuing, you acknowledge that this supportive clinical information does not replace consultation with a licensed healthcare professional.”</span>
+                        <span className="block font-bold text-blue-800 text-base border-t border-blue-200 pt-4">“በመቀጠልዎ፤ ይህ መልዕክት ፈቃድ ካለው የጤና ባለሙያ ጋር የሚደረገውን የማማከር አገልግሎት የማይተካ መሆኑን ይስማማሉ።”</span> 
                     </p>
                 </div>
                 <button
@@ -244,7 +245,8 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                     className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-10 rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 flex items-center gap-2 mx-auto"
                 >
                     <FaCheckCircle />
-                    Accept & Continue
+                        <span>Accept & Continue</span>
+                        <span className="border-l border-blue-400 pl-2">ተቀብያለሁ እናም ይቀጥል</span>
                 </button>
             </div>
         );
