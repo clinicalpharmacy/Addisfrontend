@@ -305,7 +305,7 @@ const Login = () => {
                                 return (
                                     <div key={index} className="h-8 flex items-center justify-center gap-1">
                                         <Icon className="text-white text-sm animate-pulse" />
-                                        <p className="text-white text-xs font-light italic">{msg.text}</p>
+                                        <p className="text-white text-xs font-bold italic">{msg.text}</p>
                                     </div>
                                 );
                             })}
@@ -316,11 +316,8 @@ const Login = () => {
                 {/* Login Card - Optimized for mobile */}
                 <div className="bg-white/95 backdrop-blur-lg rounded-2xl shadow-2xl p-5 border border-white/20 transform transition-all duration-300">
                     <div className="mb-5 text-center">
-                        <div className="inline-flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl mb-2 shadow-lg">
-                            <FaSignInAlt className="text-white text-base" />
-                        </div>
                         <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-0.5">
-                            Welcome Back
+                            Welcome
                         </h2>
                         <p className="text-xs text-gray-600">Sign in to continue your journey</p>
 
@@ -354,7 +351,7 @@ const Login = () => {
                                     }`}
                             >
                                 <FaIdCard className="text-xs" />
-                                ID
+                                AddisMed ID
                             </button>
                         </div>
                     </div>
