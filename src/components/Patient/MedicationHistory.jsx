@@ -24,6 +24,8 @@ const MedicationHistory = ({ patientCode }) => {
         stop_date: '',
         indication: '',
         drug_class: '',
+        cycle: '',
+        regimen: '',
         initiated_at: 'Hospital',
 
         // Additional Information
@@ -280,17 +282,23 @@ const MedicationHistory = ({ patientCode }) => {
         alert('Route of Administration is required');
         return false;
     }
-
-    // Only validate indication for company users
+    
+       // Only validate indication for company users
     if (isCompanyUser && !formData.indication.trim()) {
         alert('Indication is required');
         return false;
-    }
-        // Only validate Cycle for company users
+   }
+        
+        // Only validate cycle for company users
     if (isCompanyUser && !formData.cycle.trim()) {
         return false;
-    }
-
+   }
+        
+        // Only validate regimen for company users
+    if (isCompanyUser && !formData.regimen.trim()) {
+        return false;
+   }
+        
     if (formData.start_date && formData.stop_date) {
         const start = new Date(formData.start_date);
         const stop = new Date(formData.stop_date);
@@ -324,8 +332,8 @@ const MedicationHistory = ({ patientCode }) => {
             roa: formData.roa,
             frequency: formData.frequency || null,
             stop_date: formData.stop_date || null,
-            indication: formData.indication || null,
             cycle: formData.cycle || null,
+            indication: formData.indication || null,           
             drug_class: formData.drug_class,
             initiated_at: formData.initiated_at,
 
@@ -393,8 +401,8 @@ const MedicationHistory = ({ patientCode }) => {
             roa: 'po',
             frequency: '',
             stop_date: '',
-            indication: '',
             cycle: '',
+            indication: '',
             drug_class: '',
             initiated_at: 'Hospital',
             dosage_form: 'Tablet',
@@ -461,8 +469,8 @@ const MedicationHistory = ({ patientCode }) => {
             filtered = filtered.filter(med =>
                 med.drug_name?.toLowerCase().includes(term) ||
                 med.brand_name?.toLowerCase().includes(term) ||
-                med.indication?.toLowerCase().includes(term) ||
                 med.cycle?.toLowerCase().includes(term) ||
+                med.indication?.toLowerCase().includes(term) ||
                 med.drug_class?.toLowerCase().includes(term)
             );
         }
@@ -780,7 +788,7 @@ const MedicationHistory = ({ patientCode }) => {
                             </select>
                         </div>
                 
-                        {/* Indication - ONLY FOR COMPANY USERS */}
+                     {/* Indication - ONLY FOR COMPANY USERS */}
                         {isCompanyUser && (
                             <div className="md:col-span-2 lg:col-span-3">
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -813,13 +821,33 @@ const MedicationHistory = ({ patientCode }) => {
                                 required
                             >
                                 <option value="">Select cycle</option>
-                                {roaOptions.map(cycle => (
+                                {cycleOptions.map(cycle => (
                                     <option key={cycle.value} value={cycle.value}>
                                         {cycle.icon} {cycle.label}
                                     </option>
                                 ))}
                             </select>
                         </div>
+
+                     {/* Regimen - ONLY FOR COMPANY USERS */}
+                        {isCompanyUser && (
+                            <div className="md:col-span-2 lg:col-span-3">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Regimen
+                                </label>
+                                <input
+                                    type="text"
+                                    name="regimen"
+                                    value={formData.regimen}
+                                    onChange={handleInputChange}
+                                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                                    placeholder="e.g., FOLFOX, TIP, RHZE"
+                                    required
+                                />
+                            </div>
+                        )}
+                    </div>
+                </div>
 
                 {/* Basic Information - Only non-required fields */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
