@@ -168,18 +168,17 @@ const MedicationHistory = ({ patientCode }) => {
         currentUser.role === 'admin'
     );
 
-    // Check if user is an individual healthcare client
-    const isHealthcareClient = currentUser && (
-        // Has healthcare_client_id
-        currentUser.healthcare_client_id ||
-        // Account type is individual
-        currentUser.account_type === 'individual' ||
-        // Role indicates individual user
-        ['individual_healthcare_client', 'individual_user', 'healthcare_client'].includes(currentUser.role) ||
-        // Direct flag
-        currentUser.is_healthcare_client === true
-    );
-
+    // Is user an individual?
+    const isIndividualUser = currentUser?.account_type === 'individual';
+    
+    // Is user an individual healthcare client?
+    const isIndividualHealthcareClient =
+        isIndividualUser &&
+        (
+            currentUser?.healthcare_client_id ||
+            currentUser?.role === 'healthcare_client' ||
+            currentUser?.is_healthcare_client === true
+        );
     
     const fetchReconciliations = async () => {
         try {
