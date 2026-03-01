@@ -1200,9 +1200,18 @@ const MedicationHistory = ({ patientCode }) => {
                                             <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Indication</th>
                                         </>
                                     )}
+                                    {/* Conditionally show Regimen & Cycle header only for non-healthcare clients */}
+                                    {!isHealthcareClient && (
+                                        <>
+                                            <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">
+                                                <div>Regimen</div>
+                                                <div>Cycle</div>
+                                            </th>
+                                        </>
+                                    )}
                                     <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">
-                                        <div>Regimen (if)</div>
-                                        <div>Cycle (if)</div>
+                                        <div>Regimen</div>
+                                        <div>Cycle</div>
                                     </th>
                                     <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Dates</th>
                                     <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Status</th>
@@ -1233,10 +1242,14 @@ const MedicationHistory = ({ patientCode }) => {
                                                 </td>
                                             </>
                                         )}
-                                        <td className="p-2 md:p-4">
-                                            <div className="text-gray-700 text-xs md:text-sm break-words font-medium">{med.regimen || '—'}</div>
-                                            <div className="text-xs text-gray-500">{med.cycle || '—'}</div>
-                                        </td>
+                                        {!isHealthcareClient && (
+                                            <>
+                                                <td className="p-2 md:p-4">
+                                                    <div className="text-gray-700 text-xs md:text-sm break-words font-medium">{med.regimen || '—'}</div>
+                                                    <div className="text-xs text-gray-500">{med.cycle || '—'}</div>
+                                                </td>
+                                            </>
+                                        )}
                                         <td className="p-2 md:p-4">
                                             <div className="space-y-1">
                                                 <div className="flex items-center gap-2 text-xs md:text-sm">
