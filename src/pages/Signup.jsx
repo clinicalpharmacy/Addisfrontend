@@ -719,7 +719,7 @@ const Signup = () => {
                                 {isIndividual ? <FaUserTie className="text-white text-3xl" /> : <FaBuilding className="text-white text-3xl" />}
                             </div>
                             <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
-                                Choose Your {isIndividual ? 'Individual' : 'Company'} Plan
+                                Choose&nbsp;Your {isIndividual ? 'Individual' : 'Company'}&nbsp;Plan
                             </h1>
                             <p className="text-gray-600">
                                 {isIndividual
