@@ -171,7 +171,7 @@ const MedicationHistory = ({ patientCode }) => {
     // Check if user is an individual healthcare client
     const isHealthcareClient = currentUser && (
         // Has healthcare_client_id
-        !!currentUser.healthcare_client_id ||
+        currentUser.healthcare_client_id ||
         // Account type is individual
         currentUser.account_type === 'individual' ||
         // Role indicates individual user
@@ -180,17 +180,6 @@ const MedicationHistory = ({ patientCode }) => {
         currentUser.is_healthcare_client === true
     );
 
-    useEffect(() => {
-        console.log('===== USER DEBUG INFO =====');
-        console.log('Current User from state:', currentUser);
-        console.log('Raw user from localStorage:', localStorage.getItem('user'));
-        console.log('isHealthcareClient:', isHealthcareClient);
-        console.log('Healthcare client ID:', currentUser?.healthcare_client_id);
-        console.log('Account type:', currentUser?.account_type);
-        console.log('Role:', currentUser?.role);
-        console.log('is_healthcare_client flag:', currentUser?.is_healthcare_client);
-        console.log('==========================');
-    }, [currentUser, isHealthcareClient]);
     
     const fetchReconciliations = async () => {
         try {
@@ -309,18 +298,18 @@ const MedicationHistory = ({ patientCode }) => {
     }
     
        // Only validate indication for company users and health professionals
-    if (!!isHealthcareClient&& !formData.indication.trim()) {
+    if (isIndividualUser && !isHealthcareClient  && !formData.indication.trim()) {
         alert('Indication is required for company users and health professionals');
         return false;
    }
         
         // Only validate cycle for company users and health professionals
-    if (!!isHealthcareClient&& !formData.cycle.trim()) {
+    if (isIndividualUser && !isHealthcareClient  && !formData.cycle.trim()) {
         return false;
    }
         
         // Only validate regimen for company users and health professionals
-    if (!!isHealthcareClient&& !formData.regimen.trim()) {
+    if (isIndividualUser && !isHealthcareClient  && !formData.regimen.trim()) {
         return false;
    }
         
