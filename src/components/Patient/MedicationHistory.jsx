@@ -169,7 +169,7 @@ const MedicationHistory = ({ patientCode }) => {
     );
 
     const isHealthcareClient = currentUser?.is_healthcare_client === true;
-        
+    
     const fetchReconciliations = async () => {
         try {
             const result = await api.get(`/reconciliations/patient/${patientCode}`);
@@ -963,6 +963,8 @@ const MedicationHistory = ({ patientCode }) => {
                         </div>
                     </div>
                 )}
+            </div>
+         )} 
 
                 {/* Action Buttons */}
                 <div className="flex gap-4 mt-6">
