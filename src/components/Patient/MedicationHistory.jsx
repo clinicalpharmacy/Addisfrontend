@@ -69,6 +69,7 @@ const MedicationHistory = ({ patientCode }) => {
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [reconciliations, setReconciliations] = useState([]);
+    const [showForm, setShowForm] = useState(false);
 
     const reconciliationSites = [
         'Admission', 'Discharge', 'Transfer In', 'Transfer Out',
@@ -464,6 +465,7 @@ const MedicationHistory = ({ patientCode }) => {
         });
         setIsEditing(false);
         setShowAdvanced(false);
+        setShowForm(false);
     };
 
     const handleEdit = (medication) => {
@@ -475,6 +477,7 @@ const MedicationHistory = ({ patientCode }) => {
             initiated_at: medication.initiated_at || 'Hospital',
         });
         setIsEditing(true);
+        setShowForm(true);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -678,375 +681,387 @@ const MedicationHistory = ({ patientCode }) => {
                 </div>
             )}
 
+            {/* Toggle Form Button */}
+            <div className="mb-4">
+                <button
+                    onClick={() => setShowForm(!showForm)}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+                >
+                    <FaPrescription />
+                    {showForm ? 'Hide Add Medication Form' : 'Show Add Medication Form'}
+                </button>
+            </div>
             
-            {/* Medication Registration Form */}
-            <div className="bg-gray-50 rounded-lg p-3 md:p-6 mb-4 md:mb-8 border border-gray-200">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-                  <FaPrescription />
-                  {isEditing ? 'Edit Medication' : 'Add New Medication'}
-                </h3>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowAdvanced(!showAdvanced)}
-                    className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
-                  >
-                    <FaInfoCircle />
-                    {showAdvanced ? 'Basic Fields' : 'All Fields'}
-                  </button>
-                </div>
-              </div>
-            
-              {/* Required Fields */}
-              <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <h4 className="font-medium text-blue-800 mb-3 flex items-center gap-2">
-                  <FaExclamationTriangle /> Required Information
-                </h4>
-            
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {/* Drug Name */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Drug Name (Generic) *
-                    </label>
-                    <input
-                      type="text"
-                      name="drug_name"
-                      value={formData.drug_name}
-                      onChange={handleInputChange}
-                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
-                      placeholder="e.g., Metformin"
-                      required
-                    />
-                  </div>
-            
-                  {/* Start Date */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Start Date *
-                    </label>
-                    <input
-                      type="date"
-                      name="start_date"
-                      value={formData.start_date}
-                      onChange={handleInputChange}
-                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
-                      required
-                    />
-                  </div>
-            
-                  {/* Drug Class - COMPANY USERS */}
-                  {isCompanyUser && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Drug Class *
-                      </label>
-                      <select
-                        name="drug_class"
-                        value={formData.drug_class}
-                        onChange={handleInputChange}
-                        className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
-                        required
+            {/* Medication Registration Form - Collapsible */}
+            {showForm && (
+                <div className="bg-gray-50 rounded-lg p-3 md:p-6 mb-4 md:mb-8 border border-gray-200">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                      <FaPrescription />
+                      {isEditing ? 'Edit Medication' : 'Add New Medication'}
+                    </h3>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowAdvanced(!showAdvanced)}
+                        className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
                       >
-                        <option value="">Select drug class</option>
-                        {drugClasses.map(cls => (
-                          <option key={cls} value={cls}>{cls}</option>
-                        ))}
-                      </select>
+                        <FaInfoCircle />
+                        {showAdvanced ? 'Basic Fields' : 'All Fields'}
+                      </button>
+                    </div>
+                  </div>
+                
+                  {/* Required Fields */}
+                  <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <h4 className="font-medium text-blue-800 mb-3 flex items-center gap-2">
+                      <FaExclamationTriangle /> Required Information
+                    </h4>
+                
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {/* Drug Name */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Drug Name (Generic) *
+                        </label>
+                        <input
+                          type="text"
+                          name="drug_name"
+                          value={formData.drug_name}
+                          onChange={handleInputChange}
+                          className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                          placeholder="e.g., Metformin"
+                          required
+                        />
+                      </div>
+                
+                      {/* Start Date */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Start Date *
+                        </label>
+                        <input
+                          type="date"
+                          name="start_date"
+                          value={formData.start_date}
+                          onChange={handleInputChange}
+                          className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                          required
+                        />
+                      </div>
+                
+                      {/* Drug Class - COMPANY USERS */}
+                      {isCompanyUser && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Drug Class *
+                          </label>
+                          <select
+                            name="drug_class"
+                            value={formData.drug_class}
+                            onChange={handleInputChange}
+                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                            required
+                          >
+                            <option value="">Select drug class</option>
+                            {drugClasses.map(cls => (
+                              <option key={cls} value={cls}>{cls}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                
+                      {/* Dose */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Dose *
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            name="dose"
+                            value={formData.dose}
+                            onChange={handleInputChange}
+                            className="flex-1 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                            placeholder="e.g., 500"
+                            required
+                          />
+                          <select
+                            name="unit"
+                            value={formData.unit}
+                            onChange={handleInputChange}
+                            className="w-24 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                          >
+                            {units.map(unit => (
+                              <option key={unit} value={unit}>{unit}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                
+                      {/* Route */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Route of Administration *
+                        </label>
+                        <select
+                          name="roa"
+                          value={formData.roa}
+                          onChange={handleInputChange}
+                          className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                          required
+                        >
+                          <option value="">Select route</option>
+                          {roaOptions.map(route => (
+                            <option key={route.value} value={route.value}>
+                              {route.icon} {route.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                
+                      {/* Frequency */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Frequency *
+                        </label>
+                        <select
+                          name="frequency"
+                          value={formData.frequency}
+                          onChange={handleInputChange}
+                          className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                          required
+                        >
+                          <option value="">Select frequency</option>
+                          {frequencyOptions.map(freq => (
+                            <option key={freq} value={freq}>{freq}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                
+                  {/* Indication, Cycle, Regimen - Conditional based on healthcare client */}
+                  {!isHealthcareClient && (
+                    <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="flex flex-col md:flex-row gap-4">
+                        {/* Indication */}
+                        <div className="flex-1">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Indication *</label>
+                          <input
+                            type="text"
+                            name="indication"
+                            value={formData.indication}
+                            onChange={handleInputChange}
+                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                            placeholder="e.g., Type 2 Diabetes"
+                            required
+                          />
+                        </div>
+                
+                        {/* Cycle */}
+                        <div className="flex-1">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Cycle</label>
+                          <select
+                            name="cycle"
+                            value={formData.cycle}
+                            onChange={handleInputChange}
+                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                          >
+                            <option value="">Select cycle</option>
+                            {cycleOptions.map((cycle) => (
+                              <option key={cycle.value} value={cycle.value}>
+                                {cycle.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                
+                        {/* Regimen */}
+                        <div className="flex-1">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Regimen</label>
+                          <input
+                            type="text"
+                            name="regimen"
+                            value={formData.regimen}
+                            onChange={handleInputChange}
+                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                            placeholder="e.g., FOLFOX"
+                          />
+                        </div>
+                      </div>
                     </div>
                   )}
-            
-                  {/* Dose */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Dose *
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        name="dose"
-                        value={formData.dose}
-                        onChange={handleInputChange}
-                        className="flex-1 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
-                        placeholder="e.g., 500"
-                        required
-                      />
+                
+                  {/* Basic Information - Only non-required fields */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                    {/* Status */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Status
+                      </label>
                       <select
-                        name="unit"
-                        value={formData.unit}
-                        onChange={handleInputChange}
-                        className="w-24 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
-                      >
-                        {units.map(unit => (
-                          <option key={unit} value={unit}>{unit}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-            
-                  {/* Route */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Route of Administration *
-                    </label>
-                    <select
-                      name="roa"
-                      value={formData.roa}
-                      onChange={handleInputChange}
-                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
-                      required
-                    >
-                      <option value="">Select route</option>
-                      {roaOptions.map(route => (
-                        <option key={route.value} value={route.value}>
-                          {route.icon} {route.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-            
-                  {/* Frequency */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Frequency *
-                    </label>
-                    <select
-                      name="frequency"
-                      value={formData.frequency}
-                      onChange={handleInputChange}
-                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
-                      required
-                    >
-                      <option value="">Select frequency</option>
-                      {frequencyOptions.map(freq => (
-                        <option key={freq} value={freq}>{freq}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-            
-              {/* Indication, Cycle, Regimen - Conditional based on healthcare client */}
-              {!isHealthcareClient && (
-                <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <div className="flex flex-col md:flex-row gap-4">
-                    {/* Indication */}
-                    <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Indication *</label>
-                      <input
-                        type="text"
-                        name="indication"
-                        value={formData.indication}
-                        onChange={handleInputChange}
-                        className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
-                        placeholder="e.g., Type 2 Diabetes"
-                        required
-                      />
-                    </div>
-            
-                    {/* Cycle */}
-                    <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Cycle</label>
-                      <select
-                        name="cycle"
-                        value={formData.cycle}
+                        name="status"
+                        value={formData.status}
                         onChange={handleInputChange}
                         className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
                       >
-                        <option value="">Select cycle</option>
-                        {cycleOptions.map((cycle) => (
-                          <option key={cycle.value} value={cycle.value}>
-                            {cycle.label}
+                        {statusOptions.map(status => (
+                          <option key={status.value} value={status.value}>
+                            {status.label}
                           </option>
                         ))}
                       </select>
                     </div>
-            
-                    {/* Regimen */}
-                    <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Regimen</label>
+                
+                    {/* Stop Date */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Stop Date
+                      </label>
                       <input
-                        type="text"
-                        name="regimen"
-                        value={formData.regimen}
+                        type="date"
+                        name="stop_date"
+                        value={formData.stop_date}
                         onChange={handleInputChange}
                         className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
-                        placeholder="e.g., FOLFOX"
                       />
                     </div>
                   </div>
-                </div>
-              )}
-            
-              {/* Basic Information - Only non-required fields */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                {/* Status */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Status
-                  </label>
-                  <select
-                    name="status"
-                    value={formData.status}
-                    onChange={handleInputChange}
-                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
-                  >
-                    {statusOptions.map(status => (
-                      <option key={status.value} value={status.value}>
-                        {status.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-            
-                {/* Stop Date */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Stop Date
-                  </label>
-                  <input
-                    type="date"
-                    name="stop_date"
-                    value={formData.stop_date}
-                    onChange={handleInputChange}
-                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-            
-              {/* Advanced Fields */}
-              {showAdvanced && (
-                <div className="mb-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                  <h4 className="font-medium text-yellow-800 mb-3 flex items-center gap-2">
-                    <FaPills /> Additional Information
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {/* Brand Name */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Brand Name
-                      </label>
-                      <input
-                        type="text"
-                        name="brand_name"
-                        value={formData.brand_name}
-                        onChange={handleInputChange}
-                        className="w-full border border-gray-300 rounded-lg p-3"
-                        placeholder="e.g., Glucophage"
-                      />
+                
+                  {/* Advanced Fields */}
+                  {showAdvanced && (
+                    <div className="mb-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                      <h4 className="font-medium text-yellow-800 mb-3 flex items-center gap-2">
+                        <FaPills /> Additional Information
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {/* Brand Name */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Brand Name
+                          </label>
+                          <input
+                            type="text"
+                            name="brand_name"
+                            value={formData.brand_name}
+                            onChange={handleInputChange}
+                            className="w-full border border-gray-300 rounded-lg p-3"
+                            placeholder="e.g., Glucophage"
+                          />
+                        </div>
+                        {/* Dosage Form */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Dosage Form
+                          </label>
+                          <select
+                            name="dosage_form"
+                            value={formData.dosage_form}
+                            onChange={handleInputChange}
+                            className="w-full border border-gray-300 rounded-lg p-3"
+                          >
+                            {dosageForms.map(form => (
+                              <option key={form} value={form}>{form}</option>
+                            ))}
+                          </select>
+                        </div>
+                
+                        {/* Strength */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Strength
+                          </label>
+                          <input
+                            type="text"
+                            name="strength"
+                            value={formData.strength}
+                            onChange={handleInputChange}
+                            className="w-full border border-gray-300 rounded-lg p-3"
+                            placeholder="e.g., 500mg/5ml"
+                          />
+                        </div>
+                
+                        {/* Initiated At */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Initiated At
+                          </label>
+                          <select
+                            name="initiated_at"
+                            value={formData.initiated_at}
+                            onChange={handleInputChange}
+                            className="w-full border border-gray-300 rounded-lg p-3"
+                          >
+                            {initiatedAtOptions.map(place => (
+                              <option key={place} value={place}>{place}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                
+                      {/* Notes */}
+                      <div className="mt-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Notes
+                        </label>
+                        <textarea
+                          name="notes"
+                          value={formData.notes}
+                          onChange={handleInputChange}
+                          rows="3"
+                          className="w-full border border-gray-300 rounded-lg p-3"
+                          placeholder="Additional notes..."
+                        />
+                      </div>
                     </div>
-                    {/* Dosage Form */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Dosage Form
-                      </label>
-                      <select
-                        name="dosage_form"
-                        value={formData.dosage_form}
-                        onChange={handleInputChange}
-                        className="w-full border border-gray-300 rounded-lg p-3"
-                      >
-                        {dosageForms.map(form => (
-                          <option key={form} value={form}>{form}</option>
-                        ))}
-                      </select>
-                    </div>
-            
-                    {/* Strength */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Strength
-                      </label>
-                      <input
-                        type="text"
-                        name="strength"
-                        value={formData.strength}
-                        onChange={handleInputChange}
-                        className="w-full border border-gray-300 rounded-lg p-3"
-                        placeholder="e.g., 500mg/5ml"
-                      />
-                    </div>
-            
-                    {/* Initiated At */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Initiated At
-                      </label>
-                      <select
-                        name="initiated_at"
-                        value={formData.initiated_at}
-                        onChange={handleInputChange}
-                        className="w-full border border-gray-300 rounded-lg p-3"
-                      >
-                        {initiatedAtOptions.map(place => (
-                          <option key={place} value={place}>{place}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-            
-                  {/* Notes */}
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Notes
-                    </label>
-                    <textarea
-                      name="notes"
-                      value={formData.notes}
-                      onChange={handleInputChange}
-                      rows="3"
-                      className="w-full border border-gray-300 rounded-lg p-3"
-                      placeholder="Additional notes..."
-                    />
-                  </div>
-                </div>
-              )}
-            
-              {/* Action Buttons */}
-              <div className="flex gap-4 mt-6">
-                <button
-                  onClick={handleSave}
-                  disabled={loading}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                >
-                  {loading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <FaSave /> {isEditing ? 'Update Medication' : 'Save Medication'}
-                    </>
                   )}
-                </button>
-            
-                {isEditing && (
-                  <button
-                    onClick={resetForm}
-                    className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-lg transition"
-                  >
-                    Cancel Edit
-                  </button>
-                )}
-            
-                <button
-                  onClick={() => {
-                    if (formData.drug_name || formData.start_date) {
-                      if (window.confirm('Clear all fields?')) {
-                        resetForm();
-                      }
-                    } else {
-                      resetForm();
-                    }
-                  }}
-                  className="text-gray-600 hover:text-gray-800 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-                >
-                  Clear Form
-                </button>
-              </div>
-            </div>
+                
+                  {/* Action Buttons */}
+                  <div className="flex gap-4 mt-6">
+                    <button
+                      onClick={handleSave}
+                      disabled={loading}
+                      className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    >
+                      {loading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <FaSave /> {isEditing ? 'Update Medication' : 'Save Medication'}
+                        </>
+                      )}
+                    </button>
+                
+                    {isEditing && (
+                      <button
+                        onClick={resetForm}
+                        className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-lg transition"
+                      >
+                        Cancel Edit
+                      </button>
+                    )}
+                
+                    <button
+                      onClick={() => {
+                        if (formData.drug_name || formData.start_date) {
+                          if (window.confirm('Clear all fields?')) {
+                            resetForm();
+                          }
+                        } else {
+                          resetForm();
+                        }
+                      }}
+                      className="text-gray-600 hover:text-gray-800 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                    >
+                      Clear Form
+                    </button>
+                  </div>
+                </div>
+            )}
             {/* Filters and Search */}
             <div className="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
