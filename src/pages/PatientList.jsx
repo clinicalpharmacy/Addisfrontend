@@ -159,7 +159,7 @@ const PatientList = () => {
         // Individual accounts without a company can only create one patient
         const isIndividual = userAccountType === 'individual' && !userCompanyId;
         if (isIndividual && userRole !== 'admin' && patients.length >= 1) {
-            alert('Individual subscription plan is limited to 1 patient record. Please upgrade to a Professional or Enterprise plan to manage more patients.');
+            alert('Individual subscription plan is limited to 1 patient record. Please upgrade to a Company plan to manage more patients.');
             navigate('/subscription');
             return;
         }
