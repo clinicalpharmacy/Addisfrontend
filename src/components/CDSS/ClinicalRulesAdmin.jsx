@@ -102,7 +102,7 @@ const ClinicalRulesAdmin = () => {
         { value: 'contraindication', label: 'Contraindication or Unsafe Drug', icon: FaSkullCrossbones, color: 'bg-purple-100 text-purple-800', category: 'Safety' },
         { value: 'allergy_check', label: 'Allergy Check', icon: FaExclamationTriangle, color: 'bg-orange-100 text-orange-800', category: 'Safety' },
         { value: 'safety_monitoring', label: 'Safety Monitoring', icon: FaVial, color: 'bg-green-100 text-green-800', category: 'Safety' },
-        { value: 'preventive_medicine', label: 'Preventive Monitoring', icon: FaVial, color: 'bg-green-100 text-green-800', category: 'Indication' },
+        { value: 'preventive_medicine', label: 'Preventive Medicine', icon: FaVial, color: 'bg-green-100 text-green-800', category: 'Indication' },
         { value: 'duplicate_therapy', label: 'Duplicate Therapy', icon: FaCopy, color: 'bg-yellow-100 text-yellow-800', category: 'Indication' },
         { value: 'pregnancy_check', label: 'Pregnancy Safety', icon: FaUser, color: 'bg-pink-100 text-pink-800', category: 'Safety' },
         { value: 'lactation_safety', label: 'Lactation Safety', icon: FaCogs, color: 'bg-emerald-100 text-emerald-800', category: 'Safety' },
