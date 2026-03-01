@@ -195,12 +195,44 @@ const MedicationHistory = ({ patientCode }) => {
         try {
             setLoading(true);
             console.log('Fetching medications for patient:', patientCode);
-
+    
             const result = await api.get(`/medication-history/patient/${patientCode}`);
-
+    
             if (result.success && result.medications) {
-                setMedications(result.medications);
-                applyFilters(result.medications);
+                // Recalculate duration for each medication based on current dates
+                const updatedMedications = result.medications.map(med => {
+                    // Recalculate duration if start_date exists
+                    if (med.start_date) {
+                        const start = new Date(med.start_date);
+                        const stop = med.stop_date ? new Date(med.stop_date) : new Date();
+                        
+                        // Set time to midnight to compare dates only
+                        start.setHours(0, 0, 0, 0);
+                        stop.setHours(0, 0, 0, 0);
+                        
+                        // Calculate difference in days including both start and end dates
+                        const diffTime = stop - start;
+                        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end dates
+                        
+                        if (!isNaN(start.getTime())) {
+                            let years = Math.floor(diffDays / 365);
+                            let remainingDays = diffDays % 365;
+                            let months = Math.floor(remainingDays / 30);
+                            let days = remainingDays % 30;
+    
+                            const parts = [];
+                            if (years > 0) parts.push(`${years} year${years > 1 ? 's' : ''}`);
+                            if (months > 0) parts.push(`${months} month${months > 1 ? 's' : ''}`);
+                            if (days > 0 || parts.length === 0) parts.push(`${days} day${days !== 1 ? 's' : ''}`);
+    
+                            med.duration = parts.join(', ');
+                        }
+                    }
+                    return med;
+                });
+    
+                setMedications(updatedMedications);
+                applyFilters(updatedMedications);
             } else {
                 console.error('API error:', result.error || 'Unknown error');
                 alert('Error loading medications. Please check console for details.');
