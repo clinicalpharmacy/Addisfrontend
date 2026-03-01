@@ -168,7 +168,18 @@ const MedicationHistory = ({ patientCode }) => {
         currentUser.role === 'admin'
     );
 
-    const isHealthcareClient = currentUser?.is_healthcare_client === true;
+    // Check if user is an individual healthcare client/patient
+    const isIndividualUser = currentUser && (
+        // Has healthcare_client_id (individual patient)
+        !!currentUser.healthcare_client_id ||
+        // Account type is individual
+        currentUser.account_type === 'individual' ||
+        // Role indicates individual user
+        ['individual_healthcare_client', 'individual_user', 'healthcare_client'].includes(currentUser.role) ||
+        // Direct flag
+        currentUser.is_healthcare_client === true
+    );
+   
     
     const fetchReconciliations = async () => {
         try {
@@ -286,18 +297,18 @@ const MedicationHistory = ({ patientCode }) => {
     }
     
        // Only validate indication for company users and health professionals
-    if (!isHealthcareClient && !formData.indication.trim()) {
+    if (!!isIndividualUser&& !formData.indication.trim()) {
         alert('Indication is required for company users and health professionals');
         return false;
    }
         
         // Only validate cycle for company users and health professionals
-    if (!isHealthcareClient && !formData.cycle.trim()) {
+    if (!!isIndividualUser&& !formData.cycle.trim()) {
         return false;
    }
         
         // Only validate regimen for company users and health professionals
-    if (!isHealthcareClient && !formData.regimen.trim()) {
+    if (!!isIndividualUser&& !formData.regimen.trim()) {
         return false;
    }
         
@@ -796,7 +807,7 @@ const MedicationHistory = ({ patientCode }) => {
               </div>
             
               {/* Indication, Cycle, Regimen - Conditional based on healthcare client */}
-              {!isHealthcareClient && (
+              {!isIndividualUser && (
                 <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
                   <div className="flex flex-col md:flex-row gap-4">
                     {/* Indication */}
@@ -1101,7 +1112,7 @@ const MedicationHistory = ({ patientCode }) => {
                                     <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden md:table-cell">Frequency</th>
                                     <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Dates</th>
                                     {/* Conditionally show Indication, Cycle, Regimen headers only for non-healthcare clients */}
-                                    {!isHealthcareClient && (
+                                    {!isIndividualUser && (
                                         <>
                                             <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Indication</th>
                                             <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Cycle</th>
@@ -1150,7 +1161,7 @@ const MedicationHistory = ({ patientCode }) => {
                                             </div>
                                         </td>
 
-                                        {!isHealthcareClient && (
+                                        {!isIndividualUser && (
                                             <>
                                                 <td className="p-2 md:p-4 hidden lg:table-cell">
                                                     <div className="text-gray-700 text-xs md:text-sm break-words">{med.indication || '—'}</div>
