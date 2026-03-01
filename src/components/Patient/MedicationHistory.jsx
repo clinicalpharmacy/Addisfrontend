@@ -144,28 +144,36 @@ const MedicationHistory = ({ patientCode }) => {
     ];
 
     useEffect(() => {
+        let isMounted = true;
         const userData = localStorage.getItem('user');
-        if (userData) {
+        if (userData && isMounted) {
             try {
                 setCurrentUser(JSON.parse(userData));
             } catch (error) {
                 console.error('Error parsing user data:', error);
             }
         }
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
     useEffect(() => {
-        if (patientCode) {
+        let isMounted = true;
+        if (patientCode && isMounted) {
             fetchMedications();
             fetchReconciliations();
         }
+        return () => {
+            isMounted = false;
+        };
     }, [patientCode]);
 
     const isCompanyUser = currentUser && (
         !!currentUser.company_id ||
         currentUser.account_type === 'company' ||
-        ['company_admin', 'company_user'].includes(currentUser.role) ||
-        currentUser.role === 'admin'
+        ['company_admin', 'company_user'].includes(currentUser?.role) ||
+        currentUser?.role === 'admin'
     );
 
     // Check if user is an individual healthcare client
@@ -175,7 +183,7 @@ const MedicationHistory = ({ patientCode }) => {
         // Account type is individual
         currentUser.account_type === 'individual' ||
         // Role indicates individual user
-        ['individual_healthcare_client', 'individual_user', 'healthcare_client'].includes(currentUser.role) ||
+        ['individual_healthcare_client', 'individual_user', 'healthcare_client'].includes(currentUser?.role) ||
         // Direct flag
         currentUser.is_healthcare_client === true
     );
@@ -197,12 +205,14 @@ const MedicationHistory = ({ patientCode }) => {
             const result = await api.get(`/reconciliations/patient/${patientCode}`);
             if (result.success) {
                 setReconciliations(result.reconciliations || []);
+            } else {
+                setReconciliations([]);
             }
         } catch (error) {
             console.error('Error fetching reconciliations:', error);
+            setReconciliations([]);
         }
     };
-
 
     const fetchMedications = async () => {
         try {
@@ -216,11 +226,15 @@ const MedicationHistory = ({ patientCode }) => {
                 applyFilters(result.medications);
             } else {
                 console.error('API error:', result.error || 'Unknown error');
+                setMedications([]);
+                setFilteredMedications([]);
                 alert('Error loading medications. Please check console for details.');
             }
         } catch (error) {
             console.error('Error fetching medications:', error);
             const errorMsg = error.error || error.message || 'Error loading medications';
+            setMedications([]);
+            setFilteredMedications([]);
             alert(`❌ ${errorMsg}`);
         } finally {
             setLoading(false);
@@ -234,6 +248,7 @@ const MedicationHistory = ({ patientCode }) => {
         const stop = formData.stop_date ? new Date(formData.stop_date) : new Date();
 
         if (isNaN(start.getTime())) return '';
+        if (isNaN(stop.getTime())) return '';
 
         let years = stop.getFullYear() - start.getFullYear();
         let months = stop.getMonth() - start.getMonth();
@@ -282,61 +297,60 @@ const MedicationHistory = ({ patientCode }) => {
     };
 
     const validateForm = () => {
-    if (!formData.drug_name.trim()) {
-        alert('Drug Name is required');
-        return false;
-    }
-
-    if (!formData.start_date) {
-        alert('Start Date is required');
-        return false;
-    }
-
-    // Add these 4 new validations
-    if (!formData.dose) {
-        alert('Dose is required');
-        return false;
-    }
-
-    if (!formData.frequency) {
-        alert('Frequency is required');
-        return false;
-    }
-
-    if (!formData.roa) {
-        alert('Route of Administration is required');
-        return false;
-    }
-    
-       // Only validate indication for NON-healthcare clients
-    if (!isHealthcareClient&& !formData.indication.trim()) {
-        alert('Indication is required for company users and health professionals');
-        return false;
-   }
-        
-        // Only validate regimen for NON-healthcare clients
-    if (!isHealthcareClient&& !formData.regimen.trim()) {
-        alert('Regimen is required for company users and health professionals');
-        return false;
-   }
-        
-        // Only validate cycle for NON-healthcare clients
-    if (!isHealthcareClient&& !formData.cycle.trim()) {
-        alert('Cycle is required for company users and health professionals');
-        return false;
-   }
-        
-    if (formData.start_date && formData.stop_date) {
-        const start = new Date(formData.start_date);
-        const stop = new Date(formData.stop_date);
-        if (stop < start) {
-            alert('Stop date cannot be before start date');
+        if (!formData.drug_name?.trim()) {
+            alert('Drug Name is required');
             return false;
         }
-    }
 
-    return true;
-};
+        if (!formData.start_date) {
+            alert('Start Date is required');
+            return false;
+        }
+
+        if (!formData.dose) {
+            alert('Dose is required');
+            return false;
+        }
+
+        if (!formData.frequency) {
+            alert('Frequency is required');
+            return false;
+        }
+
+        if (!formData.roa) {
+            alert('Route of Administration is required');
+            return false;
+        }
+        
+        // Only validate indication for NON-healthcare clients
+        if (!isHealthcareClient && !formData.indication?.trim()) {
+            alert('Indication is required for company users and health professionals');
+            return false;
+        }
+        
+        // Only validate regimen for NON-healthcare clients
+        if (!isHealthcareClient && !formData.regimen?.trim()) {
+            alert('Regimen is required for company users and health professionals');
+            return false;
+        }
+        
+        // Only validate cycle for NON-healthcare clients
+        if (!isHealthcareClient && !formData.cycle?.trim()) {
+            alert('Cycle is required for company users and health professionals');
+            return false;
+        }
+        
+        if (formData.start_date && formData.stop_date) {
+            const start = new Date(formData.start_date);
+            const stop = new Date(formData.stop_date);
+            if (stop < start) {
+                alert('Stop date cannot be before start date');
+                return false;
+            }
+        }
+
+        return true;
+    };
 
     const handleSave = async () => {
         if (!validateForm()) return;
@@ -398,8 +412,8 @@ const MedicationHistory = ({ patientCode }) => {
             let result;
 
             if (isEditing && formData.id) {
-                // Update existing medication
-                result = await api.put(`/medications/${formData.id}`, medicationData);
+                // Update existing medication - FIXED: Using consistent /medication-history endpoint
+                result = await api.put(`/medication-history/${formData.id}`, medicationData);
             } else {
                 // Add new medication
                 result = await api.post('/medication-history', medicationData);
@@ -489,7 +503,7 @@ const MedicationHistory = ({ patientCode }) => {
         }
     };
 
-    const applyFilters = (meds) => {
+    const applyFilters = (meds = []) => {
         let filtered = meds || [];
 
         // Apply search term filter
@@ -536,12 +550,12 @@ const MedicationHistory = ({ patientCode }) => {
     };
 
     const handleSaveReconciliation = async () => {
-        if (!reconciliationData.site.trim()) {
+        if (!reconciliationData.site?.trim()) {
             alert('Reconciliation site is required');
             return;
         }
 
-        if (!reconciliationData.findings.trim()) {
+        if (!reconciliationData.findings?.trim()) {
             alert('Findings and Decision is required');
             return;
         }
@@ -610,7 +624,7 @@ const MedicationHistory = ({ patientCode }) => {
     
     useEffect(() => {
         applyFilters(medications);
-    }, [medications, selectedClass, activeFilter, searchTerm]);
+    }, [medications, selectedClass, activeFilter, searchTerm]); // Note: applyFilters is stable and doesn't need to be in deps
 
     const stats = getStats();
 
