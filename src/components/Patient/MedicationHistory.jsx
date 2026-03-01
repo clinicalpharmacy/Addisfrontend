@@ -168,17 +168,12 @@ const MedicationHistory = ({ patientCode }) => {
         currentUser.role === 'admin'
     );
 
-    // Is user an individual?
     const isIndividualUser = currentUser?.account_type === 'individual';
     
-    // Is user an individual healthcare client?
-    const isIndividualHealthcareClient =
-        isIndividualUser &&
-        (
-            currentUser?.healthcare_client_id ||
-            currentUser?.role === 'healthcare_client' ||
-            currentUser?.is_healthcare_client === true
-        );
+    const isHealthcareClient = isIndividualUser && 
+        (currentUser?.healthcare_client_id || 
+         currentUser?.role === 'healthcare_client' || 
+         currentUser?.is_healthcare_client === true);
     
     const fetchReconciliations = async () => {
         try {
@@ -297,18 +292,20 @@ const MedicationHistory = ({ patientCode }) => {
     }
     
        // Only validate indication for company users and health professionals
-    if (isIndividualUser && !isHealthcareClient  && !formData.indication.trim()) {
+    if (!isHealthcareClient && !formData.indication.trim()) {
         alert('Indication is required for company users and health professionals');
         return false;
    }
         
         // Only validate cycle for company users and health professionals
-    if (isIndividualUser && !isHealthcareClient  && !formData.cycle.trim()) {
+    if (!isHealthcareClient  && !formData.cycle.trim()) {
+        alert('Cycle is required for company users and health professionals');
         return false;
    }
         
         // Only validate regimen for company users and health professionals
-    if (isIndividualUser && !isHealthcareClient  && !formData.regimen.trim()) {
+    if (!isHealthcareClient  && !formData.regimen.trim()) {
+        alert('Regimen is required for company users and health professionals');
         return false;
    }
         
