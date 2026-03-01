@@ -301,18 +301,6 @@ const MedicationHistory = ({ patientCode }) => {
         return false;
    }
         
-        // Only validate cycle for company users and health professionals
-    if (!isHealthcareClient  && !formData.cycle.trim()) {
-        alert('Cycle is required for company users and health professionals');
-        return false;
-   }
-        
-        // Only validate regimen for company users and health professionals
-    if (!isHealthcareClient  && !formData.regimen.trim()) {
-        alert('Regimen is required for company users and health professionals');
-        return false;
-   }
-        
     if (formData.start_date && formData.stop_date) {
         const start = new Date(formData.start_date);
         const stop = new Date(formData.stop_date);
