@@ -1197,14 +1197,14 @@ const MedicationHistory = ({ patientCode }) => {
                                     {/* Conditionally show Indication header only for non-healthcare clients */}
                                     {!isHealthcareClient && (
                                         <>
-                                            <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Indication</th>
+                                            <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Indication</th>
                                         </>
                                     )}
                                     <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">
                                         <div>Regimen (if)</div>
                                         <div>Cycle (if)</div>
                                     </th>
-                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Dates</th>
+                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Dates</th>
                                     <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Status</th>
                                     <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Actions</th>
                                 </tr>
