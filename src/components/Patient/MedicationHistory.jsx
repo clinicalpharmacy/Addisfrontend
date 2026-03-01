@@ -1096,24 +1096,20 @@ const MedicationHistory = ({ patientCode }) => {
                         <table className="w-full">
                             <thead className="bg-gray-100">
                                 <tr>
-                                    <thead className="bg-gray-100">
-                                    <tr>
-                                        <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Drug Name</th>
-                                        <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Dose & Route</th>
-                                        <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden md:table-cell">Frequency</th>
-                                        <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Dates</th>
-                                        {/* Conditionally show Indication, Cycle, Regimen headers only for non-healthcare clients */}
-                                        {!isHealthcareClient && (
-                                            <>
-                                                <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Indication</th>
-                                                <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Cycle</th>
-                                                <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Regimen</th>
-                                            </>
-                                        )}
-                                        <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Status</th>
-                                        <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Actions</th>
-                                    </tr>
-                                </thead>
+                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Drug Name</th>
+                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Dose & Route</th>
+                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden md:table-cell">Frequency</th>
+                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Dates</th>
+                                    {/* Conditionally show Indication, Cycle, Regimen headers only for non-healthcare clients */}
+                                    {!isHealthcareClient && (
+                                        <>
+                                            <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Indication</th>
+                                            <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Cycle</th>
+                                            <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Regimen</th>
+                                        </>
+                                    )}
+                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Status</th>
+                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
