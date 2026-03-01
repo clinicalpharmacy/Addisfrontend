@@ -168,10 +168,9 @@ const MedicationHistory = ({ patientCode }) => {
         currentUser.role === 'admin'
     );
 
-    const isHealthCareClient = currentUser && (
-    currentUser.account_type === 'individual' &&
-    currentUser.individual_type === 'Health_care_client'
-    );
+    const isHealthCareClient =
+        currentUser?.account_type === 'individual' &&
+        currentUser?.individual_type === 'client';
     
     const fetchReconciliations = async () => {
         try {
@@ -797,7 +796,7 @@ const MedicationHistory = ({ patientCode }) => {
                             </select>
                         </div>
                 
-            {!isHealth_care_client && (
+            {!isHealthcareClient && (
               <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
                 <div className="flex flex-col md:flex-row gap-4">
                   {/* Indication */}
