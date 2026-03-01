@@ -283,293 +283,286 @@ const Login = () => {
                 <FaUserMd className="absolute top-40 right-40 text-white opacity-10 text-6xl animate-bounce delay-300" />
             </div>
 
-            {/* Main content with three-section layout */}
-            <div className="w-full max-w-6xl relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center min-h-[600px]">
-                
-                {/* Left Section - Brand and Moving Texts (Middle) */}
-                <div className="lg:col-span-4 flex flex-col items-start justify-center h-full">
-                    <div className="transform hover:scale-105 transition-transform duration-300">
-                        <div className="relative inline-block">
-                            <div className="absolute inset-0 bg-white rounded-2xl blur-xl opacity-50 animate-pulse"></div>
-                            <div className="relative flex items-center justify-center w-20 h-20 md:w-24 md:h-24 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl mb-6 shadow-2xl">
-                                <FaUserMd className="text-white text-3xl md:text-4xl animate-pulse" />
+            {/* Top Left Corner - Addis Med Brand with Moving Texts */}
+            <div className="absolute top-4 left-4 md:top-8 md:left-8 z-20">
+                <div className="flex flex-col items-start">
+                    <div className="flex items-center gap-3">
+                        <div className="relative">
+                            <div className="absolute inset-0 bg-white rounded-xl blur-xl opacity-50 animate-pulse"></div>
+                            <div className="relative flex items-center justify-center w-12 h-12 md:w-14 md:h-14 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl shadow-2xl">
+                                <FaUserMd className="text-white text-xl md:text-2xl animate-pulse" />
                             </div>
                         </div>
-                        <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">Addis Med</h1>
+                        <div>
+                            <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">Addis Med</h1>
+                            <p className="text-white/80 text-xs md:text-sm">Healthcare System</p>
+                        </div>
+                    </div>
 
-                        {/* Dynamic Carousel Message */}
-                        <div className="h-16 md:h-20 overflow-hidden">
-                            <div
-                                className="transform transition-transform duration-500 ease-in-out"
-                                style={{ transform: `translateY(-${currentSlide * 4}rem)` }}
+                    {/* Moving Texts Carousel */}
+                    <div className="mt-2 ml-2 h-8 md:h-10 overflow-hidden">
+                        <div
+                            className="transform transition-transform duration-500 ease-in-out"
+                            style={{ transform: `translateY(-${currentSlide * 2.5}rem)` }}
+                        >
+                            {carouselMessages.map((msg, index) => {
+                                const Icon = msg.icon;
+                                return (
+                                    <div key={index} className="h-8 md:h-10 flex items-center gap-2">
+                                        <Icon className="text-white/90 text-sm md:text-base" />
+                                        <p className="text-white/90 text-sm md:text-base font-light">{msg.text}</p>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Center - Login Card (Slightly Wider) */}
+            <div className="w-full max-w-xl relative z-10 px-2 sm:px-0">
+                {/* Login Card */}
+                <div className="bg-white/95 backdrop-blur-lg rounded-2xl md:rounded-3xl shadow-2xl p-6 md:p-8 border border-white/20 transform transition-all duration-300 hover:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)]">
+                    <div className="mb-6 md:mb-8 text-center">
+                        <div className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl md:rounded-2xl mb-3 md:mb-4 shadow-lg">
+                            <FaSignInAlt className="text-white text-xl md:text-2xl" />
+                        </div>
+                        <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-1 md:mb-2">
+                            Welcome Back
+                        </h2>
+                        <p className="text-sm md:text-base text-gray-600">Sign in to continue your journey</p>
+
+                        {/* Login Method Toggle */}
+                        <div className="flex items-center justify-center gap-2 mt-4 bg-gray-100 p-1 rounded-xl">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setLoginMethod('email');
+                                    setFormData({ ...formData, email: '' });
+                                    setError('');
+                                }}
+                                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${loginMethod === 'email'
+                                    ? 'bg-white text-blue-600 shadow-md'
+                                    : 'text-gray-600 hover:text-gray-800'
+                                    }`}
                             >
-                                {carouselMessages.map((msg, index) => {
-                                    const Icon = msg.icon;
-                                    return (
-                                        <div key={index} className="h-16 md:h-20 flex items-center gap-3">
-                                            <Icon className="text-white text-2xl md:text-3xl animate-pulse" />
-                                            <p className="text-white text-xl md:text-2xl font-light italic">{msg.text}</p>
-                                        </div>
-                                    );
-                                })}
-                            </div>
+                                <FaEnvelope />
+                                Email
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setLoginMethod('addisMedId');
+                                    setFormData({ ...formData, email: '' });
+                                    setError('');
+                                }}
+                                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${loginMethod === 'addisMedId'
+                                    ? 'bg-white text-green-600 shadow-md'
+                                    : 'text-gray-600 hover:text-gray-800'
+                                    }`}
+                            >
+                                <FaIdCard />
+                                Addis-Med ID
+                            </button>
                         </div>
                     </div>
-                </div>
 
-                {/* Center Section - Welcome Box / Login Card */}
-                <div className="lg:col-span-4 flex items-center justify-center">
-                    <div className="w-full max-w-md">
-                        {/* Login Card */}
-                        <div className="bg-white/95 backdrop-blur-lg rounded-2xl md:rounded-3xl shadow-2xl p-6 md:p-8 border border-white/20 transform transition-all duration-300 hover:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)]">
-                            <div className="mb-6 md:mb-8 text-center">
-                                <div className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl md:rounded-2xl mb-3 md:mb-4 shadow-lg">
-                                    <FaSignInAlt className="text-white text-xl md:text-2xl" />
-                                </div>
-                                <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-1 md:mb-2">
-                                    Welcome Back
-                                </h2>
-                                <p className="text-sm md:text-base text-gray-600">Sign in to continue your journey</p>
-
-                                {/* Login Method Toggle */}
-                                <div className="flex items-center justify-center gap-2 mt-4 bg-gray-100 p-1 rounded-xl">
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setLoginMethod('email');
-                                            setFormData({ ...formData, email: '' });
-                                            setError('');
-                                        }}
-                                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${loginMethod === 'email'
-                                            ? 'bg-white text-blue-600 shadow-md'
-                                            : 'text-gray-600 hover:text-gray-800'
-                                            }`}
-                                    >
-                                        <FaEnvelope />
-                                        Email
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setLoginMethod('addisMedId');
-                                            setFormData({ ...formData, email: '' });
-                                            setError('');
-                                        }}
-                                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${loginMethod === 'addisMedId'
-                                            ? 'bg-white text-green-600 shadow-md'
-                                            : 'text-gray-600 hover:text-gray-800'
-                                            }`}
-                                    >
-                                        <FaIdCard />
-                                        Addis-Med ID
-                                    </button>
+                    {/* Error Message with Animation */}
+                    {error && (
+                        <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-xl animate-shake">
+                            <div className="flex items-start gap-3">
+                                <FaExclamationTriangle className="text-red-500 mt-0.5 flex-shrink-0 animate-pulse" />
+                                <div className="flex-1 min-w-0">
+                                    <div className="text-red-800 font-bold text-sm mb-1 uppercase tracking-wider">Error Encountered</div>
+                                    <div className="text-red-600 text-sm leading-relaxed">{error}</div>
                                 </div>
                             </div>
+                        </div>
+                    )}
 
-                            {/* Error Message with Animation */}
-                            {error && (
-                                <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-xl animate-shake">
-                                    <div className="flex items-start gap-3">
-                                        <FaExclamationTriangle className="text-red-500 mt-0.5 flex-shrink-0 animate-pulse" />
-                                        <div className="flex-1 min-w-0">
-                                            <div className="text-red-800 font-bold text-sm mb-1 uppercase tracking-wider">Error Encountered</div>
-                                            <div className="text-red-600 text-sm leading-relaxed">{error}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Login Form */}
-                            <form onSubmit={handleSubmit} className="space-y-6">
-                                {/* Email/Addis-Med ID Field */}
-                                <div>
-                                    <label className={`block text-sm font-medium mb-2 transition-colors duration-300 ${focusedField === 'email' ? 'text-blue-600' : 'text-gray-700'}`}>
-                                        {loginMethod === 'email' ? 'Email Address' : 'Addis-Med ID'}
-                                    </label>
-                                    <div className="relative group">
-                                        <input
-                                            type={loginMethod === 'email' ? "email" : "text"}
-                                            value={formData.email}
-                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                            onFocus={() => setFocusedField('email')}
-                                            onBlur={() => setFocusedField(null)}
-                                            className={`w-full px-4 py-4 pl-12 border-2 rounded-xl outline-none transition-all duration-300 ${focusedField === 'email'
-                                                ? 'border-blue-500 shadow-lg shadow-blue-100'
-                                                : loginMethod === 'email'
-                                                    ? isEmailValid && formData.email
-                                                        ? 'border-green-500'
-                                                        : 'border-gray-200 hover:border-gray-300'
-                                                    : isAddisMedIdValid() && formData.email
-                                                        ? 'border-green-500'
-                                                        : 'border-gray-200 hover:border-gray-300'
-                                                }`}
-                                            placeholder={loginMethod === 'email' ? "your@email.com" : "HCC-XXXXXX-XXXXXX"}
-                                            required
-                                            disabled={loading}
-                                        />
-                                        {loginMethod === 'email' ? (
-                                            <FaEnvelope className={`absolute left-4 top-1/2 transform -translate-y-1/2 transition-colors duration-300 ${focusedField === 'email' ? 'text-blue-500' : 'text-gray-400'
-                                                }`} />
-                                        ) : (
-                                            <FaIdCard className={`absolute left-4 top-1/2 transform -translate-y-1/2 transition-colors duration-300 ${focusedField === 'email' ? 'text-blue-500' : 'text-gray-400'
-                                                }`} />
-                                        )}
-                                        {loginMethod === 'email' && isEmailValid && formData.email && (
-                                            <FaCheckCircle className="absolute right-4 top-1/2 transform -translate-y-1/2 text-green-500 animate-scale-in" />
-                                        )}
-                                        {loginMethod === 'addisMedId' && isAddisMedIdValid() && formData.email && (
-                                            <FaCheckCircle className="absolute right-4 top-1/2 transform -translate-y-1/2 text-green-500 animate-scale-in" />
-                                        )}
-                                    </div>
-                                    {loginMethod === 'addisMedId' && (
-                                        <p className="text-xs text-gray-500 mt-2">
-                                            Enter your Addis-Med ID (format: HCC-XXXXXX-XXXXXX)
-                                        </p>
-                                    )}
-                                </div>
-
-                                {/* Password Field */}
-                                <div>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <label className={`block text-sm font-medium transition-colors duration-300 ${focusedField === 'password' ? 'text-blue-600' : 'text-gray-700'}`}>
-                                            Password
-                                        </label>
-                                        <Link
-                                            to="/forgot-password"
-                                            className="text-sm text-blue-600 hover:text-blue-800 font-medium transition-all hover:underline flex items-center gap-1 group"
-                                        >
-                                            Forgot Password?
-                                            <FaArrowRight className="text-xs opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-                                        </Link>
-                                    </div>
-                                    <div className="relative group">
-                                        <input
-                                            type={showPassword ? "text" : "password"}
-                                            value={formData.password}
-                                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                            onFocus={() => setFocusedField('password')}
-                                            onBlur={() => setFocusedField(null)}
-                                            className={`w-full px-4 py-4 pl-12 pr-12 border-2 rounded-xl outline-none transition-all duration-300 ${focusedField === 'password'
-                                                ? 'border-blue-500 shadow-lg shadow-blue-100'
-                                                : formData.password
-                                                    ? 'border-green-500'
-                                                    : 'border-gray-200 hover:border-gray-300'
-                                                }`}
-                                            placeholder="Enter your password"
-                                            required
-                                            disabled={loading}
-                                        />
-                                        <FaLock className={`absolute left-4 top-1/2 transform -translate-y-1/2 transition-colors duration-300 ${focusedField === 'password' ? 'text-blue-500' : 'text-gray-400'
-                                            }`} />
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-600 transition-colors"
-                                        >
-                                            {showPassword ? <FaEyeSlash /> : <FaEye />}
-                                        </button>
-                                    </div>
-
-                                    {/* Password Strength Indicator */}
-                                    {formData.password && (
-                                        <div className="mt-2 animate-slide-down">
-                                            <div className="flex gap-1 h-1">
-                                                {[1, 2, 3].map((level) => (
-                                                    <div
-                                                        key={level}
-                                                        className={`flex-1 h-full rounded-full transition-all duration-500 ${level <= passwordStrength
-                                                            ? getPasswordStrengthColor()
-                                                            : 'bg-gray-200'
-                                                            }`}
-                                                    ></div>
-                                                ))}
-                                            </div>
-                                            <p className={`text-xs mt-1 font-medium ${passwordStrength === 1 ? 'text-red-500' :
-                                                passwordStrength === 2 ? 'text-yellow-500' :
-                                                    passwordStrength === 3 ? 'text-green-500' :
-                                                        'text-gray-400'
-                                                }`}>
-                                                {getPasswordStrengthText()}
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Submit Button */}
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className={`w-full py-4 px-4 rounded-xl font-medium text-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] ${loading
-                                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                        : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-xl hover:shadow-2xl'
+                    {/* Login Form */}
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        {/* Email/Addis-Med ID Field */}
+                        <div>
+                            <label className={`block text-sm font-medium mb-2 transition-colors duration-300 ${focusedField === 'email' ? 'text-blue-600' : 'text-gray-700'}`}>
+                                {loginMethod === 'email' ? 'Email Address' : 'Addis-Med ID'}
+                            </label>
+                            <div className="relative group">
+                                <input
+                                    type={loginMethod === 'email' ? "email" : "text"}
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                    onFocus={() => setFocusedField('email')}
+                                    onBlur={() => setFocusedField(null)}
+                                    className={`w-full px-4 py-4 pl-12 border-2 rounded-xl outline-none transition-all duration-300 ${focusedField === 'email'
+                                        ? 'border-blue-500 shadow-lg shadow-blue-100'
+                                        : loginMethod === 'email'
+                                            ? isEmailValid && formData.email
+                                                ? 'border-green-500'
+                                                : 'border-gray-200 hover:border-gray-300'
+                                            : isAddisMedIdValid() && formData.email
+                                                ? 'border-green-500'
+                                                : 'border-gray-200 hover:border-gray-300'
                                         }`}
-                                >
-                                    {loading ? (
-                                        <span className="flex items-center justify-center gap-2">
-                                            <FaSpinner className="animate-spin" />
-                                            Processing...
-                                        </span>
-                                    ) : (
-                                        <span className="flex items-center justify-center gap-2">
-                                            <FaSignInAlt />
-                                            Sign In
-                                            <FaArrowRight className="text-sm animate-pulse" />
-                                        </span>
-                                    )}
-                                </button>
-                            </form>
+                                    placeholder={loginMethod === 'email' ? "your@email.com" : "HCC-XXXXXX-XXXXXX"}
+                                    required
+                                    disabled={loading}
+                                />
+                                {loginMethod === 'email' ? (
+                                    <FaEnvelope className={`absolute left-4 top-1/2 transform -translate-y-1/2 transition-colors duration-300 ${focusedField === 'email' ? 'text-blue-500' : 'text-gray-400'
+                                        }`} />
+                                ) : (
+                                    <FaIdCard className={`absolute left-4 top-1/2 transform -translate-y-1/2 transition-colors duration-300 ${focusedField === 'email' ? 'text-blue-500' : 'text-gray-400'
+                                        }`} />
+                                )}
+                                {loginMethod === 'email' && isEmailValid && formData.email && (
+                                    <FaCheckCircle className="absolute right-4 top-1/2 transform -translate-y-1/2 text-green-500 animate-scale-in" />
+                                )}
+                                {loginMethod === 'addisMedId' && isAddisMedIdValid() && formData.email && (
+                                    <FaCheckCircle className="absolute right-4 top-1/2 transform -translate-y-1/2 text-green-500 animate-scale-in" />
+                                )}
+                            </div>
+                            {loginMethod === 'addisMedId' && (
+                                <p className="text-xs text-gray-500 mt-2">
+                                    Enter your Addis-Med ID (format: HCC-XXXXXX-XXXXXX)
+                                </p>
+                            )}
+                        </div>
 
-                            {/* Quick Test Logins (For Development Only) */}
-                            {process.env.NODE_ENV === 'development' && (
-                                <div className="mt-6 p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
-                                    <p className="text-sm text-gray-600 mb-3 font-medium">Quick Test (Dev Only):</p>
-                                    <div className="flex flex-wrap gap-2">
-                                        <button
-                                            onClick={() => testLogin('admin@pharmacare.com', 'Admin@123')}
-                                            className="flex-1 px-3 py-2 text-xs bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg transition-all transform hover:scale-105 shadow-md"
-                                        >
-                                            Admin
-                                        </button>
-                                        <button
-                                            onClick={() => testLogin('test@example.com', 'password123')}
-                                            className="flex-1 px-3 py-2 text-xs bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg transition-all transform hover:scale-105 shadow-md"
-                                        >
-                                            Test User
-                                        </button>
-                                        <button
-                                            onClick={() => testLogin('HCC-K3M9X2-8A4F6B', 'healthcare123')}
-                                            className="flex-1 px-3 py-2 text-xs bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg transition-all transform hover:scale-105 shadow-md"
-                                        >
-                                            Healthcare Client
-                                        </button>
+                        {/* Password Field */}
+                        <div>
+                            <div className="flex items-center justify-between mb-2">
+                                <label className={`block text-sm font-medium transition-colors duration-300 ${focusedField === 'password' ? 'text-blue-600' : 'text-gray-700'}`}>
+                                    Password
+                                </label>
+                                <Link
+                                    to="/forgot-password"
+                                    className="text-sm text-blue-600 hover:text-blue-800 font-medium transition-all hover:underline flex items-center gap-1 group"
+                                >
+                                    Forgot Password?
+                                    <FaArrowRight className="text-xs opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                                </Link>
+                            </div>
+                            <div className="relative group">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    value={formData.password}
+                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                    onFocus={() => setFocusedField('password')}
+                                    onBlur={() => setFocusedField(null)}
+                                    className={`w-full px-4 py-4 pl-12 pr-12 border-2 rounded-xl outline-none transition-all duration-300 ${focusedField === 'password'
+                                        ? 'border-blue-500 shadow-lg shadow-blue-100'
+                                        : formData.password
+                                            ? 'border-green-500'
+                                            : 'border-gray-200 hover:border-gray-300'
+                                        }`}
+                                    placeholder="Enter your password"
+                                    required
+                                    disabled={loading}
+                                />
+                                <FaLock className={`absolute left-4 top-1/2 transform -translate-y-1/2 transition-colors duration-300 ${focusedField === 'password' ? 'text-blue-500' : 'text-gray-400'
+                                    }`} />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-600 transition-colors"
+                                >
+                                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                                </button>
+                            </div>
+
+                            {/* Password Strength Indicator */}
+                            {formData.password && (
+                                <div className="mt-2 animate-slide-down">
+                                    <div className="flex gap-1 h-1">
+                                        {[1, 2, 3].map((level) => (
+                                            <div
+                                                key={level}
+                                                className={`flex-1 h-full rounded-full transition-all duration-500 ${level <= passwordStrength
+                                                    ? getPasswordStrengthColor()
+                                                    : 'bg-gray-200'
+                                                    }`}
+                                            ></div>
+                                        ))}
                                     </div>
+                                    <p className={`text-xs mt-1 font-medium ${passwordStrength === 1 ? 'text-red-500' :
+                                        passwordStrength === 2 ? 'text-yellow-500' :
+                                            passwordStrength === 3 ? 'text-green-500' :
+                                                'text-gray-400'
+                                        }`}>
+                                        {getPasswordStrengthText()}
+                                    </p>
                                 </div>
                             )}
                         </div>
-                    </div>
-                </div>
 
-                {/* Right Section - Empty for balance (or could add additional content) */}
-                <div className="lg:col-span-4"></div>
+                        {/* Submit Button */}
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className={`w-full py-4 px-4 rounded-xl font-medium text-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] ${loading
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-xl hover:shadow-2xl'
+                                }`}
+                        >
+                            {loading ? (
+                                <span className="flex items-center justify-center gap-2">
+                                    <FaSpinner className="animate-spin" />
+                                    Processing...
+                                </span>
+                            ) : (
+                                <span className="flex items-center justify-center gap-2">
+                                    <FaSignInAlt />
+                                    Sign In
+                                    <FaArrowRight className="text-sm animate-pulse" />
+                                </span>
+                            )}
+                        </button>
+                    </form>
 
-                {/* Bottom Left Section - Registration Links and System Status */}
-                <div className="absolute bottom-8 left-8 flex flex-col items-start gap-4">
-                    {/* Registration Links */}
-                    <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-4 shadow-xl border border-white/50">
-                        <p className="text-gray-600 text-sm font-medium mb-3">
+                    {/* Quick Test Logins (For Development Only) */}
+                    {process.env.NODE_ENV === 'development' && (
+                        <div className="mt-6 p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
+                            <p className="text-sm text-gray-600 mb-3 font-medium">Quick Test (Dev Only):</p>
+                            <div className="flex flex-wrap gap-2">
+                                <button
+                                    onClick={() => testLogin('admin@pharmacare.com', 'Admin@123')}
+                                    className="flex-1 px-3 py-2 text-xs bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg transition-all transform hover:scale-105 shadow-md"
+                                >
+                                    Admin
+                                </button>
+                                <button
+                                    onClick={() => testLogin('test@example.com', 'password123')}
+                                    className="flex-1 px-3 py-2 text-xs bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg transition-all transform hover:scale-105 shadow-md"
+                                >
+                                    Test User
+                                </button>
+                                <button
+                                    onClick={() => testLogin('HCC-K3M9X2-8A4F6B', 'healthcare123')}
+                                    className="flex-1 px-3 py-2 text-xs bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg transition-all transform hover:scale-105 shadow-md"
+                                >
+                                    Healthcare Client
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Registration Links - Now inside the card as before */}
+                    <div className="mt-8 pt-6 border-t-2 border-gray-100">
+                        <p className="text-center text-gray-600 text-sm mb-4">
                             Don't have an account?
                         </p>
-                        <div className="flex gap-3">
+                        <div className="grid grid-cols-2 gap-3">
                             <Link
                                 to="/signup?type=individual"
-                                className="group flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 text-blue-700 rounded-xl transition-all transform hover:scale-105 text-sm font-medium border border-blue-200"
+                                className="group flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 text-blue-700 rounded-xl transition-all transform hover:scale-105 text-sm font-medium border border-blue-200"
                             >
                                 <FaUserCheck className="group-hover:animate-bounce" />
                                 Individual
                             </Link>
                             <Link
                                 to="/signup?type=organization"
-                                className="group flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 text-purple-700 rounded-xl transition-all transform hover:scale-105 text-sm font-medium border border-purple-200"
+                                className="group flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 text-purple-700 rounded-xl transition-all transform hover:scale-105 text-sm font-medium border border-purple-200"
                             >
                                 <FaBuilding className="group-hover:animate-bounce" />
                                 Organization
@@ -577,45 +570,47 @@ const Login = () => {
                         </div>
                     </div>
 
-                    {/* System Status */}
-                    <div className="group flex items-center gap-3 px-6 py-3 bg-white/90 backdrop-blur-sm rounded-full shadow-xl border border-white/50 transition-all hover:shadow-2xl hover:scale-105">
-                        <div className="relative">
-                            <div className={`w-3 h-3 rounded-full ${isCheckingHealth
-                                ? 'bg-blue-400 animate-ping'
-                                : systemOnline
-                                    ? 'bg-green-500 animate-pulse'
-                                    : 'bg-red-500 animate-pulse'
-                                }`}></div>
-                            <div className={`absolute inset-0 w-3 h-3 rounded-full ${isCheckingHealth
-                                ? 'bg-blue-400'
-                                : systemOnline
-                                    ? 'bg-green-500'
-                                    : 'bg-red-500'
-                                } opacity-75`}></div>
-                        </div>
-                        <span className={`text-xs font-bold uppercase tracking-wider ${isCheckingHealth
-                            ? 'text-blue-600'
-                            : systemOnline
-                                ? 'text-green-600'
-                                : 'text-red-600'
-                            }`}>
-                            {isCheckingHealth ? 'Verifying System...' : systemOnline ? 'System Online' : 'System Offline'}
-                        </span>
-                        <div className="w-px h-4 bg-gray-300 mx-1"></div>
-                        <span className="text-xs font-bold text-gray-500 group-hover:text-gray-700 transition-colors">
-                            v{import.meta.env.VITE_APP_VERSION || '2.0.1'}
-                        </span>
-                    </div>
-
-                    {/* Help Text */}
-                    <div className="text-center">
-                        <p className="text-xs text-white/80">
+                    {/* Help Text - Inside the card as before */}
+                    <div className="mt-6 text-center">
+                        <p className="text-xs text-gray-500">
                             Having trouble?{' '}
-                            <Link to="/contact-support" className="text-white hover:text-white underline font-medium transition-all hover:no-underline">
+                            <Link to="/contact-support" className="text-blue-600 hover:text-blue-800 underline font-medium transition-all hover:no-underline">
                                 Contact Support
                             </Link>
                         </p>
                     </div>
+                </div>
+            </div>
+
+            {/* Bottom Right Corner - System Status */}
+            <div className="absolute bottom-4 right-4 md:bottom-8 md:right-8 z-20">
+                <div className="group flex items-center gap-3 px-6 py-3 bg-white/90 backdrop-blur-sm rounded-full shadow-xl border border-white/50 transition-all hover:shadow-2xl hover:scale-105">
+                    <div className="relative">
+                        <div className={`w-3 h-3 rounded-full ${isCheckingHealth
+                            ? 'bg-blue-400 animate-ping'
+                            : systemOnline
+                                ? 'bg-green-500 animate-pulse'
+                                : 'bg-red-500 animate-pulse'
+                            }`}></div>
+                        <div className={`absolute inset-0 w-3 h-3 rounded-full ${isCheckingHealth
+                            ? 'bg-blue-400'
+                            : systemOnline
+                                ? 'bg-green-500'
+                                : 'bg-red-500'
+                            } opacity-75`}></div>
+                    </div>
+                    <span className={`text-xs font-bold uppercase tracking-wider ${isCheckingHealth
+                        ? 'text-blue-600'
+                        : systemOnline
+                            ? 'text-green-600'
+                            : 'text-red-600'
+                        }`}>
+                        {isCheckingHealth ? 'Verifying System...' : systemOnline ? 'System Online' : 'System Offline'}
+                    </span>
+                    <div className="w-px h-4 bg-gray-300 mx-1"></div>
+                    <span className="text-xs font-bold text-gray-500 group-hover:text-gray-700 transition-colors">
+                        v{import.meta.env.VITE_APP_VERSION || '2.0.1'}
+                    </span>
                 </div>
             </div>
 
