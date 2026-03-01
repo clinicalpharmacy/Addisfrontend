@@ -792,26 +792,6 @@ const MedicationHistory = ({ patientCode }) => {
                             </select>
                         </div>
                 
-                        {/* Cycle */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Cycle *
-                            </label>
-                            <select
-                                name="cycle"
-                                value={formData.cycle}
-                                onChange={handleInputChange}
-                                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
-                                required
-                            >
-                                <option value="">Select cycle</option>
-                                {cycleOptions.map(cycle => (
-                                    <option key={cycle} value={cycle}>
-                                        {cycle}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
                 
                         {/* Indication - COMPANY USERS */}
                         {isCompanyUser && (
@@ -830,12 +810,33 @@ const MedicationHistory = ({ patientCode }) => {
                                 />
                             </div>
                         )}
-                
+
+                        {/* Cycle */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Cycle
+                            </label>
+                            <select
+                                name="cycle"
+                                value={formData.cycle}
+                                onChange={handleInputChange}
+                                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                                required
+                            >
+                                <option value="">Select cycle</option>
+                                {cycleOptions.map(cycle => (
+                                    <option key={cycle} value={cycle}>
+                                        {cycle}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        
                         {/* Regimen - COMPANY USERS */}
                         {isCompanyUser && (
                             <div className="md:col-span-2 lg:col-span-3">
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Regimen *
+                                    Regimen
                                 </label>
                                 <input
                                     type="text"
