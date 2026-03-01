@@ -810,26 +810,26 @@ const MedicationHistory = ({ patientCode }) => {
                     </div>
                 </div>
 
-                     {/* NEW: Cycle */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Cycle
-                            </label>
-                            <select
-                                name="cycle"
-                                value={formData.cycle}
-                                onChange={handleInputChange}
-                                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
-                                required
-                            >
-                                <option value="">Select cycle</option>
-                                {cycleOptions.map(cycle => (
-                                    <option key={cycle.value} value={cycle.value}>
-                                        {cycle.icon} {cycle.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+                 {/* NEW: Cycle */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Cycle
+                        </label>
+                        <select
+                            name="cycle"
+                            value={formData.cycle}
+                            onChange={handleInputChange}
+                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                            required
+                        >
+                            <option value="">Select cycle</option>
+                            {cycleOptions.map(cycle => (
+                                <option key={cycle.value} value={cycle.value}>
+                                    {cycle.icon} {cycle.label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
 
                      {/* Regimen - ONLY FOR COMPANY USERS */}
                         {isCompanyUser && (
