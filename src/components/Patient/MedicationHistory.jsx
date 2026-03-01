@@ -168,7 +168,7 @@ const MedicationHistory = ({ patientCode }) => {
         currentUser.role === 'admin'
     );
 
-    const isHealthCareClient =
+    const isHealthcareClient =
         currentUser?.account_type === 'individual' &&
         currentUser?.individual_type === 'client';
     
