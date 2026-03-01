@@ -24,8 +24,8 @@ const MedicationHistory = ({ patientCode }) => {
         stop_date: '',
         indication: '',
         drug_class: '',
-        cycle: '',
         regimen: '',
+        cycle: '',
         initiated_at: 'Hospital',
 
         // Additional Information
@@ -314,13 +314,13 @@ const MedicationHistory = ({ patientCode }) => {
         return false;
    }
         
-        // Only validate cycle for company users and health professionals
-    if (!!isHealthcareClient&& !formData.cycle.trim()) {
+        // Only validate regimen for company users and health professionals
+    if (!!isHealthcareClient&& !formData.regimen.trim()) {
         return false;
    }
         
-        // Only validate regimen for company users and health professionals
-    if (!!isHealthcareClient&& !formData.regimen.trim()) {
+        // Only validate cycle for company users and health professionals
+    if (!!isHealthcareClient&& !formData.cycle.trim()) {
         return false;
    }
         
@@ -358,8 +358,8 @@ const MedicationHistory = ({ patientCode }) => {
             frequency: formData.frequency || null,
             stop_date: formData.stop_date || null,
             indication: formData.indication || null, 
-            cycle: formData.cycle || null,
             regimen: formData.regimen || null,
+            cycle: formData.cycle || null,
             drug_class: formData.drug_class,
             initiated_at: formData.initiated_at,
 
@@ -428,8 +428,8 @@ const MedicationHistory = ({ patientCode }) => {
             frequency: '',
             stop_date: '',
             indication: '',
-            cycle: '',
             regimen: '',
+            cycle: '',
             drug_class: '',
             initiated_at: 'Hospital',
             dosage_form: 'Tablet',
@@ -835,6 +835,19 @@ const MedicationHistory = ({ patientCode }) => {
                         required
                       />
                     </div>
+                   
+                    {/* Regimen */}
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Regimen</label>
+                      <input
+                        type="text"
+                        name="regimen"
+                        value={formData.regimen}
+                        onChange={handleInputChange}
+                        className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                        placeholder="e.g., FOLFOX"
+                      />
+                    </div>
             
                     {/* Cycle */}
                     <div className="flex-1">
@@ -850,19 +863,6 @@ const MedicationHistory = ({ patientCode }) => {
                           <option key={cycle} value={cycle}>{cycle}</option>
                         ))}
                       </select>
-                    </div>
-            
-                    {/* Regimen */}
-                    <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Regimen</label>
-                      <input
-                        type="text"
-                        name="regimen"
-                        value={formData.regimen}
-                        onChange={handleInputChange}
-                        className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
-                        placeholder="e.g., FOLFOX"
-                      />
                     </div>
                   </div>
                 </div>
@@ -1120,15 +1120,13 @@ const MedicationHistory = ({ patientCode }) => {
                             <thead className="bg-gray-100">
                                 <tr>
                                     <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Drug Name</th>
-                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Dose & Route</th>
-                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden md:table-cell">Frequency</th>
+                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Dose & Route & Frequency</th>
                                     <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Dates</th>
-                                    {/* Conditionally show Indication, Cycle, Regimen headers only for non-healthcare clients */}
+                                    {/* Conditionally show Indication, Regimen, Cycle headers only for non-healthcare clients */}
                                     {!isHealthcareClient && (
                                         <>
                                             <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Indication</th>
-                                            <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Cycle</th>
-                                            <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Regimen</th>
+                                            <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Regimen & Cycle</th>
                                         </>
                                     )}
                                     <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Status</th>
@@ -1179,10 +1177,10 @@ const MedicationHistory = ({ patientCode }) => {
                                                     <div className="text-gray-700 text-xs md:text-sm break-words">{med.indication || '—'}</div>
                                                 </td>
                                                 <td className="p-2 md:p-4 hidden lg:table-cell">
-                                                    <div className="text-gray-700 text-xs md:text-sm break-words">{med.cycle || '—'}</div>
+                                                    <div className="text-gray-700 text-xs md:text-sm break-words">{med.regimen || '—'}</div>
                                                 </td>
                                                 <td className="p-2 md:p-4 hidden lg:table-cell">
-                                                    <div className="text-gray-700 text-xs md:text-sm break-words">{med.regimen || '—'}</div>
+                                                    <div className="text-gray-700 text-xs md:text-sm break-words">{med.cycle || '—'}</div>
                                                 </td>
                                             </>
                                         )}
