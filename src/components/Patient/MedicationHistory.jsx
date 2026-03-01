@@ -298,18 +298,18 @@ const MedicationHistory = ({ patientCode }) => {
     }
     
        // Only validate indication for company users and health professionals
-    if (isCompanyUser && !isHealthcareClient  && !formData.indication.trim()) {
+    if (isIndividualUser && !isHealthcareClient  && !formData.indication.trim()) {
         alert('Indication is required for company users and health professionals');
         return false;
    }
         
         // Only validate cycle for company users and health professionals
-    if (isCompanyUser && !isHealthcareClient  && !formData.cycle.trim()) {
+    if (isIndividualUser && !isHealthcareClient  && !formData.cycle.trim()) {
         return false;
    }
         
         // Only validate regimen for company users and health professionals
-    if (isCompanyUser && !isHealthcareClient  && !formData.regimen.trim()) {
+    if (isIndividualUser && !isHealthcareClient  && !formData.regimen.trim()) {
         return false;
    }
         
@@ -1109,13 +1109,15 @@ const MedicationHistory = ({ patientCode }) => {
                             <thead className="bg-gray-100">
                                 <tr>
                                     <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Drug Name</th>
-                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Dose / Route / Frequency</th>
+                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Dose & Route</th>
+                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden md:table-cell">Frequency</th>
                                     <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Dates</th>
-                                    {/* Conditionally show Indication, Cycle/Regimen headers only for non-healthcare clients */}
+                                    {/* Conditionally show Indication, Cycle, Regimen headers only for non-healthcare clients */}
                                     {!isHealthcareClient && (
                                         <>
                                             <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Indication</th>
-                                            <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Cycle / Regimen</th>
+                                            <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Cycle</th>
+                                            <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Regimen</th>
                                         </>
                                     )}
                                     <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Status</th>
@@ -1133,15 +1135,11 @@ const MedicationHistory = ({ patientCode }) => {
                                              )}
                                         </td>
                                         <td className="p-2 md:p-4">
-                                            <div className="text-gray-700 text-xs md:text-sm break-words">
-                                                <span className="font-medium">{med.dose} {med.unit}</span>
-                                                <span className="mx-1 text-gray-400">•</span>
-                                                <span className="uppercase">{med.roa}</span>
-                                            </div>
-                                            <div className="text-xs text-gray-500 mt-1 break-words">
-                                                <FaClock className="inline mr-1 text-gray-400" />
-                                                {med.frequency}
-                                            </div>
+                                            <div className="text-gray-700 text-xs md:text-sm break-words">{med.dose} {med.unit}</div>
+                                            <div className="text-xs text-gray-500 uppercase">{med.roa}</div>
+                                        </td>
+                                        <td className="p-2 md:p-4 hidden md:table-cell">
+                                            <div className="text-gray-700 text-xs md:text-sm break-words">{med.frequency}</div>
                                         </td>
                                         <td className="p-2 md:p-4 hidden lg:table-cell">
                                             <div className="space-y-1">
@@ -1170,21 +1168,10 @@ const MedicationHistory = ({ patientCode }) => {
                                                     <div className="text-gray-700 text-xs md:text-sm break-words">{med.indication || '—'}</div>
                                                 </td>
                                                 <td className="p-2 md:p-4 hidden lg:table-cell">
-                                                    <div className="text-gray-700 text-xs md:text-sm break-words">
-                                                        {med.cycle && med.regimen ? (
-                                                            <>
-                                                                <span className="font-medium">{med.cycle}</span>
-                                                                <span className="mx-1 text-gray-400">/</span>
-                                                                <span>{med.regimen}</span>
-                                                            </>
-                                                        ) : med.cycle ? (
-                                                            med.cycle
-                                                        ) : med.regimen ? (
-                                                            med.regimen
-                                                        ) : (
-                                                            '—'
-                                                        )}
-                                                    </div>
+                                                    <div className="text-gray-700 text-xs md:text-sm break-words">{med.cycle || '—'}</div>
+                                                </td>
+                                                <td className="p-2 md:p-4 hidden lg:table-cell">
+                                                    <div className="text-gray-700 text-xs md:text-sm break-words">{med.regimen || '—'}</div>
                                                 </td>
                                             </>
                                         )}
