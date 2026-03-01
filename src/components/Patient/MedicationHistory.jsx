@@ -849,7 +849,6 @@ const MedicationHistory = ({ patientCode }) => {
                             </div>
                         )}
                     </div>
-                </div>
 
                 {/* Basic Information - Only non-required fields */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
