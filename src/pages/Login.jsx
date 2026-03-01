@@ -295,7 +295,6 @@ const Login = () => {
                         </div>
                         <div>
                             <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">Addis Med</h1>
-                            <p className="text-white/80 text-sm md:text-base">Healthcare System</p>
                         </div>
                     </div>
 
@@ -363,7 +362,7 @@ const Login = () => {
                             <FaSignInAlt className="text-white text-xl md:text-2xl" />
                         </div>
                         <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-1 md:mb-2">
-                            Welcome Back
+                            Welcome
                         </h2>
                         <p className="text-sm md:text-base text-gray-600">Sign in to continue your journey</p>
 
@@ -581,32 +580,35 @@ const Login = () => {
                             </div>
                         </div>
                     )}
+                </div>
+            </div>
 
-                    {/* Registration Links - Now inside the card as before */}
-                    <div className="mt-8 pt-6 border-t-2 border-gray-100">
-                        <p className="text-center text-gray-600 text-sm mb-4">
-                            Don't have an account?
-                        </p>
-                        <div className="grid grid-cols-2 gap-3">
-                            <Link
-                                to="/signup?type=individual"
-                                className="group flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 text-blue-700 rounded-xl transition-all transform hover:scale-105 text-sm font-medium border border-blue-200"
-                            >
-                                <FaUserCheck className="group-hover:animate-bounce" />
-                                Individual
-                            </Link>
-                            <Link
-                                to="/signup?type=organization"
-                                className="group flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 text-purple-700 rounded-xl transition-all transform hover:scale-105 text-sm font-medium border border-purple-200"
-                            >
-                                <FaBuilding className="group-hover:animate-bounce" />
-                                Organization
-                            </Link>
-                        </div>
+            {/* Bottom Right Section - Registration Links and System Status */}
+            <div className="absolute bottom-4 right-4 md:bottom-8 md:right-8 z-20 flex flex-col items-end gap-3">
+                {/* Registration Links */}
+                <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-4 w-64">
+                    <p className="text-center text-gray-600 text-sm mb-3 font-medium">
+                        Don't have an account?
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                        <Link
+                            to="/signup?type=individual"
+                            className="group flex items-center justify-center gap-1 px-3 py-2 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 text-blue-700 rounded-lg transition-all transform hover:scale-105 text-xs font-medium border border-blue-200"
+                        >
+                            <FaUserCheck className="group-hover:animate-bounce text-xs" />
+                            Individual
+                        </Link>
+                        <Link
+                            to="/signup?type=organization"
+                            className="group flex items-center justify-center gap-1 px-3 py-2 bg-gradient-to-r from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 text-purple-700 rounded-lg transition-all transform hover:scale-105 text-xs font-medium border border-purple-200"
+                        >
+                            <FaBuilding className="group-hover:animate-bounce text-xs" />
+                            Organization
+                        </Link>
                     </div>
-
-                    {/* Help Text - Inside the card as before */}
-                    <div className="mt-6 text-center">
+                    
+                    {/* Help Text */}
+                    <div className="mt-3 text-center">
                         <p className="text-xs text-gray-500">
                             Having trouble?{' '}
                             <Link to="/contact-support" className="text-blue-600 hover:text-blue-800 underline font-medium transition-all hover:no-underline">
@@ -615,10 +617,8 @@ const Login = () => {
                         </p>
                     </div>
                 </div>
-            </div>
 
-            {/* Bottom Right Corner - System Status */}
-            <div className="absolute bottom-4 right-4 md:bottom-8 md:right-8 z-20">
+                {/* System Status */}
                 <div className="group flex items-center gap-3 px-6 py-3 bg-white/90 backdrop-blur-sm rounded-full shadow-xl border border-white/50 transition-all hover:shadow-2xl hover:scale-105">
                     <div className="relative">
                         <div className={`w-3 h-3 rounded-full ${isCheckingHealth
