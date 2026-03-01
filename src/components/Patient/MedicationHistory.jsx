@@ -823,9 +823,8 @@ const MedicationHistory = ({ patientCode }) => {
                             required
                         >
                             <option value="">Select cycle</option>
-                            {cycleOptions.map(cycle => (
-                                <option key={cycle.value} value={cycle.value}>
-                                    {cycle.icon} {cycle.label}
+                                <option key={cycle} value={cycle}>
+                                    {cycle}
                                 </option>
                             ))}
                         </select>
