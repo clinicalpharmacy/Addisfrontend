@@ -1105,15 +1105,13 @@ const MedicationHistory = ({ patientCode }) => {
                             <thead className="bg-gray-100">
                                 <tr>
                                     <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Drug Name</th>
-                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Dose & Route</th>
-                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden md:table-cell">Frequency</th>
+                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Dose & Route / Frequency</th>
+                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden md:table-cell">Regimen / Cycle</th>
                                     <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Dates</th>
-                                    {/* Conditionally show Indication, Cycle, Regimen headers only for non-healthcare clients */}
+                                    {/* Conditionally show Indication header only for non-healthcare clients */}
                                     {!isHealthcareClient && (
                                         <>
                                             <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Indication</th>
-                                            <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Cycle</th>
-                                            <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Regimen</th>
                                         </>
                                     )}
                                     <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Status</th>
@@ -1133,9 +1131,11 @@ const MedicationHistory = ({ patientCode }) => {
                                         <td className="p-2 md:p-4">
                                             <div className="text-gray-700 text-xs md:text-sm break-words">{med.dose} {med.unit}</div>
                                             <div className="text-xs text-gray-500 uppercase">{med.roa}</div>
+                                            <div className="text-xs text-gray-500 mt-1 border-t pt-1">{med.frequency}</div>
                                         </td>
                                         <td className="p-2 md:p-4 hidden md:table-cell">
-                                            <div className="text-gray-700 text-xs md:text-sm break-words">{med.frequency}</div>
+                                            <div className="text-gray-700 text-xs md:text-sm break-words font-medium">{med.regimen || '—'}</div>
+                                            <div className="text-xs text-gray-500 mt-1 border-t pt-1">{med.cycle || '—'}</div>
                                         </td>
                                         <td className="p-2 md:p-4 hidden lg:table-cell">
                                             <div className="space-y-1">
@@ -1163,12 +1163,6 @@ const MedicationHistory = ({ patientCode }) => {
                                                 <td className="p-2 md:p-4 hidden lg:table-cell">
                                                     <div className="text-gray-700 text-xs md:text-sm break-words">{med.indication || '—'}</div>
                                                 </td>
-                                                <td className="p-2 md:p-4 hidden lg:table-cell">
-                                                    <div className="text-gray-700 text-xs md:text-sm break-words">{med.cycle || '—'}</div>
-                                                </td>
-                                                <td className="p-2 md:p-4 hidden lg:table-cell">
-                                                    <div className="text-gray-700 text-xs md:text-sm break-words">{med.regimen || '—'}</div>
-                                                </td>
                                             </>
                                         )}
                                         <td className="p-2 md:p-4">
@@ -1185,13 +1179,16 @@ const MedicationHistory = ({ patientCode }) => {
                                                 >
                                                     <FaEdit className="text-sm" />
                                                 </button>
-                                                <button
-                                                    onClick={() => handleDelete(med.id)}
-                                                    className="text-red-500 hover:text-red-700 p-1 md:p-2 hover:bg-red-50 rounded transition"
-                                                    title="Delete medication"
-                                                >
-                                                    <FaTrash className="text-sm" />
-                                                </button>
+                                                {/* Delete button hidden for company users */}
+                                                {!isCompanyUser && (
+                                                    <button
+                                                        onClick={() => handleDelete(med.id)}
+                                                        className="text-red-500 hover:text-red-700 p-1 md:p-2 hover:bg-red-50 rounded transition"
+                                                        title="Delete medication"
+                                                    >
+                                                        <FaTrash className="text-sm" />
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
