@@ -121,8 +121,8 @@ const MedicationHistory = ({ patientCode }) => {
     ];
 
     const cycleOptions = [
-        'First', 'Second', 'Third', 'Fourth',
-        'Fifth', 'Sixth'
+        'First cycle', 'Second cycle', 'Third cycle', 'Fourth cycle',
+        'Fifth cycle', 'Sixth cycle'
     ];
 
     const statusOptions = [
@@ -308,19 +308,21 @@ const MedicationHistory = ({ patientCode }) => {
         return false;
     }
     
-       // Only validate indication for company users and health professionals
-    if (!!isHealthcareClient&& !formData.indication.trim()) {
+       // Only validate indication for NON-healthcare clients
+    if (!isHealthcareClient&& !formData.indication.trim()) {
         alert('Indication is required for company users and health professionals');
         return false;
    }
         
-        // Only validate regimen for company users and health professionals
-    if (!!isHealthcareClient&& !formData.regimen.trim()) {
+        // Only validate regimen for NON-healthcare clients
+    if (!isHealthcareClient&& !formData.regimen.trim()) {
+        alert('Regimen is required for company users and health professionals');
         return false;
    }
         
-        // Only validate cycle for company users and health professionals
-    if (!!isHealthcareClient&& !formData.cycle.trim()) {
+        // Only validate cycle for NON-healthcare clients
+    if (!isHealthcareClient&& !formData.cycle.trim()) {
+        alert('Cycle is required for company users and health professionals');
         return false;
    }
         
@@ -818,7 +820,7 @@ const MedicationHistory = ({ patientCode }) => {
                 </div>
               </div>
             
-              {/* Indication, Cycle, Regimen - Conditional based on healthcare client */}
+              {/* Indication, Regimen, Cycle  - Conditional based on healthcare client */}
               {!isHealthcareClient && (
                 <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
                   <div className="flex flex-col md:flex-row gap-4">
@@ -1107,7 +1109,13 @@ const MedicationHistory = ({ patientCode }) => {
                 </div>
 
 {filteredMedications.length === 0 ? (
-    // ... empty state code ...
+    <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+        <FaPills className="text-4xl mx-auto mb-3 text-gray-300" />
+        <p className="text-gray-500">No medications found</p>
+        <p className="text-sm text-gray-400 mt-1">
+            {medications.length > 0 ? 'Try changing your search or filter' : 'Add medications using the form above'}
+        </p>
+    </div>
 ) : (
     <div className="overflow-x-auto rounded-lg border border-gray-200">
         <table className="w-full">
@@ -1226,7 +1234,6 @@ const MedicationHistory = ({ patientCode }) => {
         </table>
     </div>
 )}
-
             {/* Medication Reconciliation Section */}
             {isCompanyUser && (
                 <div className="bg-gradient-to-r from-teal-50 to-blue-50 rounded-lg p-6 mb-8 border border-teal-200">
