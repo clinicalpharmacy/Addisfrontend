@@ -1209,10 +1209,6 @@ const MedicationHistory = ({ patientCode }) => {
                                             </th>
                                         </>
                                     )}
-                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">
-                                        <div>Regimen</div>
-                                        <div>Cycle</div>
-                                    </th>
                                     <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Dates</th>
                                     <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Status</th>
                                     <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Actions</th>
