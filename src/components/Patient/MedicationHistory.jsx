@@ -105,9 +105,9 @@ const MedicationHistory = ({ patientCode }) => {
     const frequencyOptions = [
         'Once daily', 'Twice daily', 'Three times daily', 'Four times daily',
         'Every morning', 'Every evening', 'Every night', 'At bedtime',
-        'Weekly', 'Every other day', 'Every 4 hours', 'Every 6 hours',
-        'Every 8 hours', 'Every 12 hours', 'Before meals', 'After meals',
-        'With meals', 'On empty stomach', 'As needed (PRN)'
+        'Weekly', 'Every other day', 'Three times per week', 'Every 4 hours', 
+        'Every 6 hours', 'Every 8 hours', 'Every 12 hours', 'Before meals', 
+        'After meals', 'With meals', 'On empty stomach', 'As needed (PRN)'
     ];
 
     const drugClasses = [
@@ -116,6 +116,11 @@ const MedicationHistory = ({ patientCode }) => {
         'Anticonvulsant', 'Antiparkinsonism', 'Dermatologic agent', 'GI drug',
         'Hormonal agent', 'Ophthalmologic agent', 'Otic agent',
         'Vitamin/Supplement', 'Respiratory agent', 'Ophthalmic', 'Other'
+    ];
+
+    const cycleOptions = [
+        'First', 'Second', 'Third', 'Fourth',
+        'Fifth', 'Sixth'
     ];
 
     const statusOptions = [
@@ -281,6 +286,10 @@ const MedicationHistory = ({ patientCode }) => {
         alert('Indication is required');
         return false;
     }
+        // Only validate Cycle for company users
+    if (isCompanyUser && !formData.cycle.trim()) {
+        return false;
+    }
 
     if (formData.start_date && formData.stop_date) {
         const start = new Date(formData.start_date);
@@ -316,6 +325,7 @@ const MedicationHistory = ({ patientCode }) => {
             frequency: formData.frequency || null,
             stop_date: formData.stop_date || null,
             indication: formData.indication || null,
+            cycle: formData.cycle || null,
             drug_class: formData.drug_class,
             initiated_at: formData.initiated_at,
 
@@ -384,6 +394,7 @@ const MedicationHistory = ({ patientCode }) => {
             frequency: '',
             stop_date: '',
             indication: '',
+            cycle: '',
             drug_class: '',
             initiated_at: 'Hospital',
             dosage_form: 'Tablet',
@@ -451,6 +462,7 @@ const MedicationHistory = ({ patientCode }) => {
                 med.drug_name?.toLowerCase().includes(term) ||
                 med.brand_name?.toLowerCase().includes(term) ||
                 med.indication?.toLowerCase().includes(term) ||
+                med.cycle?.toLowerCase().includes(term) ||
                 med.drug_class?.toLowerCase().includes(term)
             );
         }
@@ -788,6 +800,27 @@ const MedicationHistory = ({ patientCode }) => {
                     </div>
                 </div>
 
+                     {/* NEW: Cycle */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Cycle
+                            </label>
+                            <select
+                                name="cycle"
+                                value={formData.cycle}
+                                onChange={handleInputChange}
+                                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                                required
+                            >
+                                <option value="">Select cycle</option>
+                                {roaOptions.map(cycle => (
+                                    <option key={cycle.value} value={cycle.value}>
+                                        {cycle.icon} {cycle.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
                 {/* Basic Information - Only non-required fields */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                     {/* Status */}
@@ -1087,6 +1120,9 @@ const MedicationHistory = ({ patientCode }) => {
                                         </td>
                                         <td className="p-2 md:p-4 hidden lg:table-cell">
                                             <div className="text-gray-700 text-xs md:text-sm break-words">{med.indication || '—'}</div>
+                                        </td>
+                                        <td className="p-2 md:p-4 hidden lg:table-cell">
+                                            <div className="text-gray-700 text-xs md:text-sm break-words">{med.cycle || '—'}</div>
                                         </td>
                                         <td className="p-2 md:p-4">
                                             <span className={`px-2 md:px-3 py-1 text-xs rounded-full border ${getStatusColor(med.status)}`}>
