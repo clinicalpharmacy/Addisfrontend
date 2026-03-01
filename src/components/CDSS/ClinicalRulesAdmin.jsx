@@ -91,7 +91,7 @@ const ClinicalRulesAdmin = () => {
             severity: 'moderate'
         }, null, 2),
         severity: 'moderate',
-        dtp_category: '',
+        dtp_type: '',
         is_active: true,
         applies_to: []
     });
@@ -124,7 +124,7 @@ const ClinicalRulesAdmin = () => {
         { value: 'low', label: 'Low', color: 'bg-blue-500 text-white', icon: FaEye }
     ];
 
-    const dtpCategories = [
+    const dtpType = [
         { value: 'adverse_drug_event', label: 'Adverse Drug Event' },
         { value: 'low_dose', label: 'Low Dose' },
         { value: 'high_dose', label: 'High Dose' },
@@ -384,7 +384,7 @@ const ClinicalRulesAdmin = () => {
                 rule_condition: ruleCondition,
                 rule_action: ruleAction,
                 severity: formData.severity,
-                dtp_category: formData.dtp_category || null,
+                dtp_type: formData.dtp_type || null,
                 is_active: formData.is_active,
                 applies_to: formData.applies_to,
                 updated_at: new Date().toISOString()
@@ -466,7 +466,7 @@ const ClinicalRulesAdmin = () => {
             rule_condition: JSON.stringify(rule.rule_condition || { all: [] }, null, 2),
             rule_action: JSON.stringify(migratedAction, null, 2),
             severity: rule.severity || 'moderate',
-            dtp_category: rule.dtp_category || '',
+            dtp_type: rule.dtp_type || '',
             is_active: rule.is_active !== false,
             applies_to: rule.applies_to || []
         });
@@ -543,7 +543,7 @@ const ClinicalRulesAdmin = () => {
                 severity: 'moderate'
             }, null, 2),
             severity: 'moderate',
-            dtp_category: '',
+            dtp_type: '',
             is_active: true,
             applies_to: []
         });
@@ -1076,15 +1076,15 @@ const ClinicalRulesAdmin = () => {
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        DTP Category
+                                        DTP Type
                                     </label>
                                     <select
-                                        value={formData.dtp_category}
-                                        onChange={(e) => setFormData({ ...formData, dtp_category: e.target.value })}
+                                        value={formData.dtp_type}
+                                        onChange={(e) => setFormData({ ...formData, dtp_type: e.target.value })}
                                         className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                                     >
                                         <option value="">Select Category</option>
-                                        {dtpCategories.map(cat => (
+                                        {dtpType.map(cat => (
                                             <option key={cat.value} value={cat.value}>
                                                 {cat.label}
                                             </option>
