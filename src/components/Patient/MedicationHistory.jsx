@@ -24,8 +24,8 @@ const MedicationHistory = ({ patientCode }) => {
         stop_date: '',
         indication: '',
         drug_class: '',
-        regimen: '',
         cycle: '',
+        regimen: '',
         initiated_at: 'Hospital',
 
         // Additional Information
@@ -121,8 +121,8 @@ const MedicationHistory = ({ patientCode }) => {
     ];
 
     const cycleOptions = [
-        'First cycle', 'Second cycle', 'Third cycle', 'Fourth cycle',
-        'Fifth cycle', 'Sixth cycle'
+        'First', 'Second', 'Third', 'Fourth',
+        'Fifth', 'Sixth'
     ];
 
     const statusOptions = [
@@ -144,36 +144,28 @@ const MedicationHistory = ({ patientCode }) => {
     ];
 
     useEffect(() => {
-        let isMounted = true;
         const userData = localStorage.getItem('user');
-        if (userData && isMounted) {
+        if (userData) {
             try {
                 setCurrentUser(JSON.parse(userData));
             } catch (error) {
                 console.error('Error parsing user data:', error);
             }
         }
-        return () => {
-            isMounted = false;
-        };
     }, []);
 
     useEffect(() => {
-        let isMounted = true;
-        if (patientCode && isMounted) {
+        if (patientCode) {
             fetchMedications();
             fetchReconciliations();
         }
-        return () => {
-            isMounted = false;
-        };
     }, [patientCode]);
 
     const isCompanyUser = currentUser && (
         !!currentUser.company_id ||
         currentUser.account_type === 'company' ||
-        ['company_admin', 'company_user'].includes(currentUser?.role) ||
-        currentUser?.role === 'admin'
+        ['company_admin', 'company_user'].includes(currentUser.role) ||
+        currentUser.role === 'admin'
     );
 
     // Check if user is an individual healthcare client
@@ -183,7 +175,7 @@ const MedicationHistory = ({ patientCode }) => {
         // Account type is individual
         currentUser.account_type === 'individual' ||
         // Role indicates individual user
-        ['individual_healthcare_client', 'individual_user', 'healthcare_client'].includes(currentUser?.role) ||
+        ['individual_healthcare_client', 'individual_user', 'healthcare_client'].includes(currentUser.role) ||
         // Direct flag
         currentUser.is_healthcare_client === true
     );
@@ -205,14 +197,12 @@ const MedicationHistory = ({ patientCode }) => {
             const result = await api.get(`/reconciliations/patient/${patientCode}`);
             if (result.success) {
                 setReconciliations(result.reconciliations || []);
-            } else {
-                setReconciliations([]);
             }
         } catch (error) {
             console.error('Error fetching reconciliations:', error);
-            setReconciliations([]);
         }
     };
+
 
     const fetchMedications = async () => {
         try {
@@ -226,15 +216,11 @@ const MedicationHistory = ({ patientCode }) => {
                 applyFilters(result.medications);
             } else {
                 console.error('API error:', result.error || 'Unknown error');
-                setMedications([]);
-                setFilteredMedications([]);
                 alert('Error loading medications. Please check console for details.');
             }
         } catch (error) {
             console.error('Error fetching medications:', error);
             const errorMsg = error.error || error.message || 'Error loading medications';
-            setMedications([]);
-            setFilteredMedications([]);
             alert(`❌ ${errorMsg}`);
         } finally {
             setLoading(false);
@@ -248,7 +234,6 @@ const MedicationHistory = ({ patientCode }) => {
         const stop = formData.stop_date ? new Date(formData.stop_date) : new Date();
 
         if (isNaN(start.getTime())) return '';
-        if (isNaN(stop.getTime())) return '';
 
         let years = stop.getFullYear() - start.getFullYear();
         let months = stop.getMonth() - start.getMonth();
@@ -297,60 +282,59 @@ const MedicationHistory = ({ patientCode }) => {
     };
 
     const validateForm = () => {
-        if (!formData.drug_name?.trim()) {
-            alert('Drug Name is required');
-            return false;
-        }
+    if (!formData.drug_name.trim()) {
+        alert('Drug Name is required');
+        return false;
+    }
 
-        if (!formData.start_date) {
-            alert('Start Date is required');
-            return false;
-        }
+    if (!formData.start_date) {
+        alert('Start Date is required');
+        return false;
+    }
 
-        if (!formData.dose) {
-            alert('Dose is required');
-            return false;
-        }
+    // Add these 4 new validations
+    if (!formData.dose) {
+        alert('Dose is required');
+        return false;
+    }
 
-        if (!formData.frequency) {
-            alert('Frequency is required');
-            return false;
-        }
+    if (!formData.frequency) {
+        alert('Frequency is required');
+        return false;
+    }
 
-        if (!formData.roa) {
-            alert('Route of Administration is required');
-            return false;
-        }
+    if (!formData.roa) {
+        alert('Route of Administration is required');
+        return false;
+    }
+    
+       // Only validate indication for company users and health professionals
+    if (!!isHealthcareClient&& !formData.indication.trim()) {
+        alert('Indication is required for company users and health professionals');
+        return false;
+   }
         
-        // Only validate indication for NON-healthcare clients
-        if (!isHealthcareClient && !formData.indication?.trim()) {
-            alert('Indication is required for company users and health professionals');
+        // Only validate cycle for company users and health professionals
+    if (!!isHealthcareClient&& !formData.cycle.trim()) {
+        return false;
+   }
+        
+        // Only validate regimen for company users and health professionals
+    if (!!isHealthcareClient&& !formData.regimen.trim()) {
+        return false;
+   }
+        
+    if (formData.start_date && formData.stop_date) {
+        const start = new Date(formData.start_date);
+        const stop = new Date(formData.stop_date);
+        if (stop < start) {
+            alert('Stop date cannot be before start date');
             return false;
         }
-        
-        // Only validate regimen for NON-healthcare clients
-        if (!isHealthcareClient && !formData.regimen?.trim()) {
-            alert('Regimen is required for company users and health professionals');
-            return false;
-        }
-        
-        // Only validate cycle for NON-healthcare clients
-        if (!isHealthcareClient && !formData.cycle?.trim()) {
-            alert('Cycle is required for company users and health professionals');
-            return false;
-        }
-        
-        if (formData.start_date && formData.stop_date) {
-            const start = new Date(formData.start_date);
-            const stop = new Date(formData.stop_date);
-            if (stop < start) {
-                alert('Stop date cannot be before start date');
-                return false;
-            }
-        }
+    }
 
-        return true;
-    };
+    return true;
+};
 
     const handleSave = async () => {
         if (!validateForm()) return;
@@ -374,8 +358,8 @@ const MedicationHistory = ({ patientCode }) => {
             frequency: formData.frequency || null,
             stop_date: formData.stop_date || null,
             indication: formData.indication || null, 
-            regimen: formData.regimen || null,
             cycle: formData.cycle || null,
+            regimen: formData.regimen || null,
             drug_class: formData.drug_class,
             initiated_at: formData.initiated_at,
 
@@ -412,8 +396,8 @@ const MedicationHistory = ({ patientCode }) => {
             let result;
 
             if (isEditing && formData.id) {
-                // Update existing medication - FIXED: Using consistent /medication-history endpoint
-                result = await api.put(`/medication-history/${formData.id}`, medicationData);
+                // Update existing medication
+                result = await api.put(`/medications/${formData.id}`, medicationData);
             } else {
                 // Add new medication
                 result = await api.post('/medication-history', medicationData);
@@ -444,8 +428,8 @@ const MedicationHistory = ({ patientCode }) => {
             frequency: '',
             stop_date: '',
             indication: '',
-            regimen: '',
             cycle: '',
+            regimen: '',
             drug_class: '',
             initiated_at: 'Hospital',
             dosage_form: 'Tablet',
@@ -503,7 +487,7 @@ const MedicationHistory = ({ patientCode }) => {
         }
     };
 
-    const applyFilters = (meds = []) => {
+    const applyFilters = (meds) => {
         let filtered = meds || [];
 
         // Apply search term filter
@@ -550,12 +534,12 @@ const MedicationHistory = ({ patientCode }) => {
     };
 
     const handleSaveReconciliation = async () => {
-        if (!reconciliationData.site?.trim()) {
+        if (!reconciliationData.site.trim()) {
             alert('Reconciliation site is required');
             return;
         }
 
-        if (!reconciliationData.findings?.trim()) {
+        if (!reconciliationData.findings.trim()) {
             alert('Findings and Decision is required');
             return;
         }
@@ -624,7 +608,7 @@ const MedicationHistory = ({ patientCode }) => {
     
     useEffect(() => {
         applyFilters(medications);
-    }, [medications, selectedClass, activeFilter, searchTerm]); // Note: applyFilters is stable and doesn't need to be in deps
+    }, [medications, selectedClass, activeFilter, searchTerm]);
 
     const stats = getStats();
 
@@ -834,7 +818,7 @@ const MedicationHistory = ({ patientCode }) => {
                 </div>
               </div>
             
-              {/* Indication, Regimen, Cycle  - Conditional based on healthcare client */}
+              {/* Indication, Cycle, Regimen - Conditional based on healthcare client */}
               {!isHealthcareClient && (
                 <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
                   <div className="flex flex-col md:flex-row gap-4">
@@ -849,19 +833,6 @@ const MedicationHistory = ({ patientCode }) => {
                         className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
                         placeholder="e.g., Type 2 Diabetes"
                         required
-                      />
-                    </div>
-                   
-                    {/* Regimen */}
-                    <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Regimen</label>
-                      <input
-                        type="text"
-                        name="regimen"
-                        value={formData.regimen}
-                        onChange={handleInputChange}
-                        className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
-                        placeholder="e.g., FOLFOX"
                       />
                     </div>
             
@@ -879,6 +850,19 @@ const MedicationHistory = ({ patientCode }) => {
                           <option key={cycle} value={cycle}>{cycle}</option>
                         ))}
                       </select>
+                    </div>
+            
+                    {/* Regimen */}
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Regimen</label>
+                      <input
+                        type="text"
+                        name="regimen"
+                        value={formData.regimen}
+                        onChange={handleInputChange}
+                        className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                        placeholder="e.g., FOLFOX"
+                      />
                     </div>
                   </div>
                 </div>
@@ -1122,132 +1106,117 @@ const MedicationHistory = ({ patientCode }) => {
                     </div>
                 </div>
 
-{filteredMedications.length === 0 ? (
-    <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
-        <FaPills className="text-4xl mx-auto mb-3 text-gray-300" />
-        <p className="text-gray-500">No medications found</p>
-        <p className="text-sm text-gray-400 mt-1">
-            {medications.length > 0 ? 'Try changing your search or filter' : 'Add medications using the form above'}
-        </p>
-    </div>
-) : (
-    <div className="overflow-x-auto rounded-lg border border-gray-200">
-        <table className="w-full">
-            <thead className="bg-gray-100">
-                <tr>
-                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Drug Name</th>
-                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Dose & Route & Frequency</th>
-                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Dates</th>
-                    {/* Conditionally show Indication, Regimen & Cycle headers only for non-healthcare clients */}
-                    {!isHealthcareClient && (
-                        <>
-                            <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Indication</th>
-                            <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Regimen & Cycle</th>
-                        </>
-                    )}
-                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Status</th>
-                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {filteredMedications.map((med) => (
-                    <tr key={med.id} className="border-t hover:bg-gray-50 group">
-                        <td className="p-2 md:p-4">
-                            <div className="font-medium text-gray-800 text-xs md:text-sm break-words max-w-[150px] md:max-w-none">{med.drug_name}</div>
-                            {/* Only show drug class if it exists (for company users) */}
-                            {med.drug_class && (
-                                <div className="text-xs text-gray-400 mt-1 break-words">{med.drug_class}</div>
-                            )}
-                        </td>
-                        <td className="p-2 md:p-4">
-                            <div className="space-y-1">
-                                <div className="text-gray-700 text-xs md:text-sm font-medium break-words">
-                                    {med.dose} {med.unit} 
-                                    <span className="text-xs text-gray-500 uppercase ml-1">({med.roa})</span>
-                                </div>
-                                {med.frequency && (
-                                    <div className="text-xs text-gray-500 break-words mt-1">
-                                        {med.frequency}
-                                    </div>
-                                )}
-                            </div>
-                        </td>
-                        <td className="p-2 md:p-4 hidden lg:table-cell">
-                            <div className="space-y-1">
-                                <div className="flex items-center gap-2 text-xs md:text-sm">
-                                    <FaCalendar className="text-gray-400 text-xs flex-shrink-0" />
-                                    <span className="break-words">Start: {med.start_date}</span>
-                                </div>
-                                {med.stop_date && (
-                                    <div className="flex items-center gap-2 text-xs md:text-sm">
-                                        <FaCalendar className="text-gray-400 text-xs flex-shrink-0" />
-                                        <span className="break-words">Stop: {med.stop_date}</span>
-                                    </div>
-                                )}
-                                {med.duration && (
-                                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                                        <FaClock className="text-gray-400 flex-shrink-0" />
-                                        <span className="break-words">{med.duration}</span>
-                                    </div>
-                                )}
-                            </div>
-                        </td>
+                {filteredMedications.length === 0 ? (
+                    <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                        <FaPills className="text-4xl mx-auto mb-3 text-gray-300" />
+                        <p className="text-gray-500">No medications found</p>
+                        <p className="text-sm text-gray-400 mt-1">
+                            {medications.length > 0 ? 'Try changing your search or filter' : 'Add medications using the form above'}
+                        </p>
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto rounded-lg border border-gray-200">
+                        <table className="w-full">
+                            <thead className="bg-gray-100">
+                                <tr>
+                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Drug Name</th>
+                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Dose & Route</th>
+                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden md:table-cell">Frequency</th>
+                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Dates</th>
+                                    {/* Conditionally show Indication, Cycle, Regimen headers only for non-healthcare clients */}
+                                    {!isHealthcareClient && (
+                                        <>
+                                            <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Indication</th>
+                                            <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Cycle</th>
+                                            <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Regimen</th>
+                                        </>
+                                    )}
+                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Status</th>
+                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredMedications.map((med) => (
+                                    <tr key={med.id} className="border-t hover:bg-gray-50 group">
+                                        <td className="p-2 md:p-4">
+                                            <div className="font-medium text-gray-800 text-xs md:text-sm break-words max-w-[150px] md:max-w-none">{med.drug_name}</div>
+                                            {/* Only show drug class if it exists (for company users) */}
+                                            {med.drug_class && (
+                                                <div className="text-xs text-gray-400 mt-1 break-words">{med.drug_class}</div>
+                                             )}
+                                        </td>
+                                        <td className="p-2 md:p-4">
+                                            <div className="text-gray-700 text-xs md:text-sm break-words">{med.dose} {med.unit}</div>
+                                            <div className="text-xs text-gray-500 uppercase">{med.roa}</div>
+                                        </td>
+                                        <td className="p-2 md:p-4 hidden md:table-cell">
+                                            <div className="text-gray-700 text-xs md:text-sm break-words">{med.frequency}</div>
+                                        </td>
+                                        <td className="p-2 md:p-4 hidden lg:table-cell">
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2 text-xs md:text-sm">
+                                                    <FaCalendar className="text-gray-400 text-xs flex-shrink-0" />
+                                                    <span className="break-words">Start: {med.start_date}</span>
+                                                </div>
+                                                {med.stop_date && (
+                                                    <div className="flex items-center gap-2 text-xs md:text-sm">
+                                                        <FaCalendar className="text-gray-400 text-xs flex-shrink-0" />
+                                                        <span className="break-words">Stop: {med.stop_date}</span>
+                                                    </div>
+                                                )}
+                                                {med.duration && (
+                                                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                                                        <FaClock className="text-gray-400 flex-shrink-0" />
+                                                        <span className="break-words">{med.duration}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </td>
 
-                        {/* Conditionally show Indication, Regimen & Cycle cells only for non-healthcare clients */}
-                        {!isHealthcareClient && (
-                            <>
-                                <td className="p-2 md:p-4 hidden lg:table-cell">
-                                    <div className="text-gray-700 text-xs md:text-sm break-words">{med.indication || '—'}</div>
-                                </td>
-                                <td className="p-2 md:p-4 hidden lg:table-cell">
-                                    <div className="space-y-1">
-                                        {med.regimen && (
-                                            <div className="text-gray-700 text-xs md:text-sm font-medium break-words">
-                                                {med.regimen}
+                                        {!isHealthcareClient && (
+                                            <>
+                                                <td className="p-2 md:p-4 hidden lg:table-cell">
+                                                    <div className="text-gray-700 text-xs md:text-sm break-words">{med.indication || '—'}</div>
+                                                </td>
+                                                <td className="p-2 md:p-4 hidden lg:table-cell">
+                                                    <div className="text-gray-700 text-xs md:text-sm break-words">{med.cycle || '—'}</div>
+                                                </td>
+                                                <td className="p-2 md:p-4 hidden lg:table-cell">
+                                                    <div className="text-gray-700 text-xs md:text-sm break-words">{med.regimen || '—'}</div>
+                                                </td>
+                                            </>
+                                        )}
+                                        <td className="p-2 md:p-4">
+                                            <span className={`px-2 md:px-3 py-1 text-xs rounded-full border ${getStatusColor(med.status)}`}>
+                                                {med.status}
+                                            </span>
+                                        </td>
+                                        <td className="p-2 md:p-4">
+                                            <div className="flex gap-1 md:gap-2">
+                                                <button
+                                                    onClick={() => handleEdit(med)}
+                                                    className="text-blue-500 hover:text-blue-700 p-1 md:p-2 hover:bg-blue-50 rounded transition"
+                                                    title="Edit medication"
+                                                >
+                                                    <FaEdit className="text-sm" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(med.id)}
+                                                    className="text-red-500 hover:text-red-700 p-1 md:p-2 hover:bg-red-50 rounded transition"
+                                                    title="Delete medication"
+                                                >
+                                                    <FaTrash className="text-sm" />
+                                                </button>
                                             </div>
-                                        )}
-                                        {med.cycle && (
-                                            <div className="text-xs text-gray-500 break-words mt-1">
-                                                Cycle: {med.cycle}
-                                            </div>
-                                        )}
-                                        {!med.regimen && !med.cycle && (
-                                            <div className="text-gray-700 text-xs md:text-sm break-words">—</div>
-                                        )}
-                                    </div>
-                                </td>
-                            </>
-                        )}
-                        
-                        <td className="p-2 md:p-4">
-                            <span className={`px-2 md:px-3 py-1 text-xs rounded-full border ${getStatusColor(med.status)}`}>
-                                {med.status}
-                            </span>
-                        </td>
-                        <td className="p-2 md:p-4">
-                            <div className="flex gap-1 md:gap-2">
-                                <button
-                                    onClick={() => handleEdit(med)}
-                                    className="text-blue-500 hover:text-blue-700 p-1 md:p-2 hover:bg-blue-50 rounded transition"
-                                    title="Edit medication"
-                                >
-                                    <FaEdit className="text-sm" />
-                                </button>
-                                <button
-                                    onClick={() => handleDelete(med.id)}
-                                    className="text-red-500 hover:text-red-700 p-1 md:p-2 hover:bg-red-50 rounded transition"
-                                    title="Delete medication"
-                                >
-                                    <FaTrash className="text-sm" />
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                ))}
-            </tbody>
-        </table>
-    </div>
-)}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+
             {/* Medication Reconciliation Section */}
             {isCompanyUser && (
                 <div className="bg-gradient-to-r from-teal-50 to-blue-50 rounded-lg p-6 mb-8 border border-teal-200">
