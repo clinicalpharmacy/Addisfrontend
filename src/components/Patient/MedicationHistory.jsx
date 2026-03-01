@@ -1106,114 +1106,126 @@ const MedicationHistory = ({ patientCode }) => {
                     </div>
                 </div>
 
-                {filteredMedications.length === 0 ? (
-                    <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
-                        <FaPills className="text-4xl mx-auto mb-3 text-gray-300" />
-                        <p className="text-gray-500">No medications found</p>
-                        <p className="text-sm text-gray-400 mt-1">
-                            {medications.length > 0 ? 'Try changing your search or filter' : 'Add medications using the form above'}
-                        </p>
-                    </div>
-                ) : (
-                    <div className="overflow-x-auto rounded-lg border border-gray-200">
-                        <table className="w-full">
-                            <thead className="bg-gray-100">
-                                <tr>
-                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Drug Name</th>
-                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Dose & Route & Frequency</th>
-                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Dates</th>
-                                    {/* Conditionally show Indication, Regimen, Cycle headers only for non-healthcare clients */}
-                                    {!isHealthcareClient && (
-                                        <>
-                                            <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Indication</th>
-                                            <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Regimen & Cycle</th>
-                                        </>
-                                    )}
-                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Status</th>
-                                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredMedications.map((med) => (
-                                    <tr key={med.id} className="border-t hover:bg-gray-50 group">
-                                        <td className="p-2 md:p-4">
-                                            <div className="font-medium text-gray-800 text-xs md:text-sm break-words max-w-[150px] md:max-w-none">{med.drug_name}</div>
-                                            {/* Only show drug class if it exists (for company users) */}
-                                            {med.drug_class && (
-                                                <div className="text-xs text-gray-400 mt-1 break-words">{med.drug_class}</div>
-                                             )}
-                                        </td>
-                                        <td className="p-2 md:p-4">
-                                            <div className="text-gray-700 text-xs md:text-sm break-words">{med.dose} {med.unit}</div>
-                                            <div className="text-xs text-gray-500 uppercase">{med.roa}</div>
-                                        </td>
-                                        <td className="p-2 md:p-4 hidden md:table-cell">
-                                            <div className="text-gray-700 text-xs md:text-sm break-words">{med.frequency}</div>
-                                        </td>
-                                        <td className="p-2 md:p-4 hidden lg:table-cell">
-                                            <div className="space-y-1">
-                                                <div className="flex items-center gap-2 text-xs md:text-sm">
-                                                    <FaCalendar className="text-gray-400 text-xs flex-shrink-0" />
-                                                    <span className="break-words">Start: {med.start_date}</span>
-                                                </div>
-                                                {med.stop_date && (
-                                                    <div className="flex items-center gap-2 text-xs md:text-sm">
-                                                        <FaCalendar className="text-gray-400 text-xs flex-shrink-0" />
-                                                        <span className="break-words">Stop: {med.stop_date}</span>
-                                                    </div>
-                                                )}
-                                                {med.duration && (
-                                                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                                                        <FaClock className="text-gray-400 flex-shrink-0" />
-                                                        <span className="break-words">{med.duration}</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </td>
+{filteredMedications.length === 0 ? (
+    // ... empty state code ...
+) : (
+    <div className="overflow-x-auto rounded-lg border border-gray-200">
+        <table className="w-full">
+            <thead className="bg-gray-100">
+                <tr>
+                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Drug Name</th>
+                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Dose & Route & Frequency</th>
+                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Dates</th>
+                    {/* Conditionally show Indication, Regimen & Cycle headers only for non-healthcare clients */}
+                    {!isHealthcareClient && (
+                        <>
+                            <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Indication</th>
+                            <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm hidden lg:table-cell">Regimen & Cycle</th>
+                        </>
+                    )}
+                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Status</th>
+                    <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {filteredMedications.map((med) => (
+                    <tr key={med.id} className="border-t hover:bg-gray-50 group">
+                        <td className="p-2 md:p-4">
+                            <div className="font-medium text-gray-800 text-xs md:text-sm break-words max-w-[150px] md:max-w-none">{med.drug_name}</div>
+                            {/* Only show drug class if it exists (for company users) */}
+                            {med.drug_class && (
+                                <div className="text-xs text-gray-400 mt-1 break-words">{med.drug_class}</div>
+                            )}
+                        </td>
+                        <td className="p-2 md:p-4">
+                            <div className="space-y-1">
+                                <div className="text-gray-700 text-xs md:text-sm font-medium break-words">
+                                    {med.dose} {med.unit} 
+                                    <span className="text-xs text-gray-500 uppercase ml-1">({med.roa})</span>
+                                </div>
+                                {med.frequency && (
+                                    <div className="text-xs text-gray-500 break-words mt-1">
+                                        {med.frequency}
+                                    </div>
+                                )}
+                            </div>
+                        </td>
+                        <td className="p-2 md:p-4 hidden lg:table-cell">
+                            <div className="space-y-1">
+                                <div className="flex items-center gap-2 text-xs md:text-sm">
+                                    <FaCalendar className="text-gray-400 text-xs flex-shrink-0" />
+                                    <span className="break-words">Start: {med.start_date}</span>
+                                </div>
+                                {med.stop_date && (
+                                    <div className="flex items-center gap-2 text-xs md:text-sm">
+                                        <FaCalendar className="text-gray-400 text-xs flex-shrink-0" />
+                                        <span className="break-words">Stop: {med.stop_date}</span>
+                                    </div>
+                                )}
+                                {med.duration && (
+                                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                                        <FaClock className="text-gray-400 flex-shrink-0" />
+                                        <span className="break-words">{med.duration}</span>
+                                    </div>
+                                )}
+                            </div>
+                        </td>
 
-                                        {!isHealthcareClient && (
-                                            <>
-                                                <td className="p-2 md:p-4 hidden lg:table-cell">
-                                                    <div className="text-gray-700 text-xs md:text-sm break-words">{med.indication || '—'}</div>
-                                                </td>
-                                                <td className="p-2 md:p-4 hidden lg:table-cell">
-                                                    <div className="text-gray-700 text-xs md:text-sm break-words">{med.regimen || '—'}</div>
-                                                </td>
-                                                <td className="p-2 md:p-4 hidden lg:table-cell">
-                                                    <div className="text-gray-700 text-xs md:text-sm break-words">{med.cycle || '—'}</div>
-                                                </td>
-                                            </>
-                                        )}
-                                        <td className="p-2 md:p-4">
-                                            <span className={`px-2 md:px-3 py-1 text-xs rounded-full border ${getStatusColor(med.status)}`}>
-                                                {med.status}
-                                            </span>
-                                        </td>
-                                        <td className="p-2 md:p-4">
-                                            <div className="flex gap-1 md:gap-2">
-                                                <button
-                                                    onClick={() => handleEdit(med)}
-                                                    className="text-blue-500 hover:text-blue-700 p-1 md:p-2 hover:bg-blue-50 rounded transition"
-                                                    title="Edit medication"
-                                                >
-                                                    <FaEdit className="text-sm" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(med.id)}
-                                                    className="text-red-500 hover:text-red-700 p-1 md:p-2 hover:bg-red-50 rounded transition"
-                                                    title="Delete medication"
-                                                >
-                                                    <FaTrash className="text-sm" />
-                                                </button>
+                        {/* Conditionally show Indication, Regimen & Cycle cells only for non-healthcare clients */}
+                        {!isHealthcareClient && (
+                            <>
+                                <td className="p-2 md:p-4 hidden lg:table-cell">
+                                    <div className="text-gray-700 text-xs md:text-sm break-words">{med.indication || '—'}</div>
+                                </td>
+                                <td className="p-2 md:p-4 hidden lg:table-cell">
+                                    <div className="space-y-1">
+                                        {med.regimen && (
+                                            <div className="text-gray-700 text-xs md:text-sm font-medium break-words">
+                                                {med.regimen}
                                             </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-            </div>
+                                        )}
+                                        {med.cycle && (
+                                            <div className="text-xs text-gray-500 break-words mt-1">
+                                                Cycle: {med.cycle}
+                                            </div>
+                                        )}
+                                        {!med.regimen && !med.cycle && (
+                                            <div className="text-gray-700 text-xs md:text-sm break-words">—</div>
+                                        )}
+                                    </div>
+                                </td>
+                            </>
+                        )}
+                        
+                        <td className="p-2 md:p-4">
+                            <span className={`px-2 md:px-3 py-1 text-xs rounded-full border ${getStatusColor(med.status)}`}>
+                                {med.status}
+                            </span>
+                        </td>
+                        <td className="p-2 md:p-4">
+                            <div className="flex gap-1 md:gap-2">
+                                <button
+                                    onClick={() => handleEdit(med)}
+                                    className="text-blue-500 hover:text-blue-700 p-1 md:p-2 hover:bg-blue-50 rounded transition"
+                                    title="Edit medication"
+                                >
+                                    <FaEdit className="text-sm" />
+                                </button>
+                                <button
+                                    onClick={() => handleDelete(med.id)}
+                                    className="text-red-500 hover:text-red-700 p-1 md:p-2 hover:bg-red-50 rounded transition"
+                                    title="Delete medication"
+                                >
+                                    <FaTrash className="text-sm" />
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    </div>
+)}
 
             {/* Medication Reconciliation Section */}
             {isCompanyUser && (
