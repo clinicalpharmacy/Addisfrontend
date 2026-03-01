@@ -835,8 +835,10 @@ const MedicationHistory = ({ patientCode }) => {
                         className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="">Select cycle</option>
-                        {cycleOptions.map(cycle => (
-                          <option key={cycle} value={cycle}>{cycle}</option>
+                        {cycleOptions.map((cycle) => (
+                          <option key={cycle.value} value={cycle.value}>
+                            {cycle.label}
+                          </option>
                         ))}
                       </select>
                     </div>
