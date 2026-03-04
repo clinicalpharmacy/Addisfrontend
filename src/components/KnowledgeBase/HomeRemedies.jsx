@@ -537,7 +537,7 @@ const HomeRemedies = () => {
                                 <FaLeaf className="text-green-600 text-xl md:text-2xl" />
                             </div>
                             <div className="min-w-0 flex-1">
-                                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 truncate">Home Remedies</h1>
+                                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 truncate">የቤት ውስጥ ጤና ክብካቤ መፍትሔዎች</h1>
                                 <p className="text-gray-600 mt-1 text-sm md:text-base">
                                     Traditional and natural remedies for {remedies.length} common conditions
                                     {user?.role === 'company_admin' ? (
