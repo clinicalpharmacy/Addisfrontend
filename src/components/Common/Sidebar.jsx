@@ -295,7 +295,7 @@ const Sidebar = ({ onClose }) => {
                                             }`
                                         }
                                     >
-                                        <FaVial className="text-base opacity-40" /> Home Remedies
+                                        <FaVial className="text-base opacity-40" /> የቤት ውስጥ ጤና ክብካቤ መፍትሔዎች 
                                     </NavLink>
                                     {(!isIndividual || ['pharmacist', 'pharmacy_student'].includes(user?.role)) && (
                                         <>
