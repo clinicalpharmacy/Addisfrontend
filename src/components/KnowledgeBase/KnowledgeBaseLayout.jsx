@@ -111,7 +111,7 @@ const KnowledgeBaseLayout = () => {
                             <NavLink
                                 key={tab.path}
                                 to={tab.path}
-                                end={tab.path === 'medications'}
+                                end={tab.path === 'የመድሃኒት መረጃ'}
                                 className={({ isActive }) =>
                                     `flex items-center gap-2 py-3 md:py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${isActive
                                         ? 'border-blue-500 text-blue-600'
