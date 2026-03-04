@@ -596,7 +596,7 @@ const MedicationInfo = () => {
                                 <FaBookMedical className="text-indigo-600 text-xl md:text-2xl" />
                             </div>
                             <div className="min-w-0 flex-1">
-                                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 truncate">Medications</h1>
+                                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 truncate">የመድሃኒት መረጃ</h1>
                                 <p className="text-gray-600 mt-1 text-sm md:text-base">
                                     Drug information database with {medications.length} medications
                                     {user?.role === 'company_admin' ? (
