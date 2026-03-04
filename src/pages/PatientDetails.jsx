@@ -249,13 +249,13 @@ const PatientDetails = () => {
             { id: 'vitals', label: 'Vitals & Anthropometry', icon: FaHeartbeat },
             { id: 'labs', label: 'Labs', icon: FaVial },
             { id: 'medications', label: 'Medications', icon: FaPills },
-            { id: 'analysis', label: 'Clinical Analysis', icon: FaBrain },
             { id: 'drn', label: 'DRN Assessment', icon: FaBrain },
+            { id: 'analysis', label: 'Clinical Analysis', icon: FaBrain }, // ← Keep in sidebar
             { id: 'plan', label: 'Ph-Asst & Plan', icon: FaFileMedical },
             { id: 'outcome', label: 'Outcome', icon: FaChartLine },
             { id: 'cost', label: 'Cost', icon: FaMoneyBillWave }
         ];
-
+    
         // Core access check: User must be an admin, have an active subscription, or be part of a company
         const hasActiveSubscription = user?.subscription_status === 'active';
         const isCompanyUser = !!user?.company_id ||
@@ -266,18 +266,20 @@ const PatientDetails = () => {
         // Check for specific individual user roles that should have DRN access
         const isPharmacistOrStudent = user?.account_type === 'individual' && 
             (user?.role === 'pharmacist' || user?.role === 'pharmacy_student');
-
+    
         // Basic check for tabs that require at least a subscription
         if (!hasActiveSubscription && !isAdmin) {
+            // ← REMOVE 'analysis' from this filter if you want it to appear for non-subscribers
             return allTabs.filter(tab => !['analysis', 'plan', 'outcome', 'cost', 'drn', 'medications'].includes(tab.id));
         }
-
-        // Tiered restriction: Individual subscribers do NOT get clinical tools (plan, outcome, cost)
-        // BUT they DO get Clinical Analysis (after Medications)
-        // AND pharmacists/pharmacy_students get DRN Assessment
+    
+        // Tiered restriction: Individual subscribers
         if (user?.account_type === 'individual' && !isAdmin) {
-            // Start with all tabs
+            // Start with all tabs EXCEPT clinical tools
             let filteredTabs = allTabs.filter(tab => !['overview', 'plan', 'outcome', 'cost'].includes(tab.id));
+            
+            // ← Add this line to remove Clinical Analysis from tabs
+            filteredTabs = filteredTabs.filter(tab => tab.id !== 'analysis');
             
             // If user is NOT pharmacist or pharmacy_student, also remove DRN
             if (!isPharmacistOrStudent) {
@@ -286,14 +288,16 @@ const PatientDetails = () => {
             
             return filteredTabs;
         }
-
-        // Everyone else (Admins and Company users with active sub) get everything
-        // EXCEPT: Remove Clinical Analysis for Company Users (as requested)
+    
+        // Company users (non-admin)
         if (isCompanyUser && !isAdmin) {
+            // ← Remove Clinical Analysis for company users
             return allTabs.filter(tab => tab.id !== 'analysis');
         }
-
-        return allTabs;
+    
+        // Admins and others - remove Clinical Analysis from tabs
+        // ← Add this for all other cases
+        return allTabs.filter(tab => tab.id !== 'analysis');
     }, [user]);
 
 
