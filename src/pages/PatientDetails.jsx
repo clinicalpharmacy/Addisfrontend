@@ -1023,6 +1023,83 @@ const PatientDetails = () => {
 
             // Log what we're saving
 
+            // Add this function to check patient limits
+            const checkPatientLimit = useCallback(async () => {
+                if (!isNewPatient) return true; // Only check for new patients
+                
+                try {
+                    // Get current patient count for this user
+                    const result = await api.get('/patients/count');
+                    
+                    if (result.success) {
+                        const currentCount = result.count;
+                        
+                        // Check user role and set limit
+                        const isPharmacistOrStudent = user?.account_type === 'individual' && 
+                            (user?.role === 'pharmacist' || user?.role === 'pharmacy_student');
+                        
+                        const limit = isPharmacistOrStudent ? 5 : 1;
+                        
+                        if (currentCount >= limit) {
+                            alert(
+                                `❌ Patient Limit Reached\n\n` +
+                                `You have reached your maximum of ${limit} patient${limit > 1 ? 's' : ''}.\n\n` +
+                                `Current: ${currentCount}/${limit} patients\n\n` +
+                                `${isPharmacistOrStudent ? 
+                                    'As a pharmacist, you can manage up to 5 patients.' : 
+                                    'Individual users are limited to 1 patient. To add more patients, please upgrade to a Company subscription.'}`
+                            );
+                            return false;
+                        }
+                    }
+                    return true;
+                } catch (error) {
+                    console.error('Error checking patient limit:', error);
+                    return true; // Allow if we can't check (fallback)
+                }
+            }, [isNewPatient, user]);
+            
+            // Modify handleSave to include the limit check
+            const handleSave = useCallback(async (section = 'all') => {
+                try {
+                    // For new patients, check patient limit first
+                    if (isNewPatient) {
+                        const canProceed = await checkPatientLimit();
+                        if (!canProceed) {
+                            return;
+                        }
+                    }
+            
+                    // For new patients, validate required fields
+                    if (isNewPatient) {
+                        const isIndividual = user?.account_type === 'individual' && user?.role !== 'admin';
+            
+                        if (!isIndividual) {
+                            if (!formData.full_name || formData.full_name.trim() === '') {
+                                alert('Please enter patient name');
+                                return;
+                            }
+                        }
+                    }
+            
+                    // Rest of your handleSave code remains the same...
+                    let savePatientCode = getCurrentPatientCode();
+            
+                    // ... (rest of your existing handleSave code)
+                } catch (error) {
+                    // Check if it's a patient limit error from backend
+                    if (error.response?.status === 403 && error.response?.data?.error === 'Patient limit reached') {
+                        const errorData = error.response.data;
+                        alert(
+                            `❌ Patient Limit Reached\n\n` +
+                            `${errorData.message}\n\n` +
+                            `Current: ${errorData.current}/${errorData.limit} patients`
+                        );
+                    } else {
+                        alert('Error saving patient: ' + (error.response?.data?.message || error.message || 'Failed'));
+                    }
+                }
+            }, [isNewPatient, formData, getCurrentPatientCode, generatePatientCode, navigate, patientCode, isValidDate, calculateAgeInDays, calculateAge, determinePatientType, customLabs, fetchClinicalHistory, checkPatientLimit]);
 
             // Calculate ages
             let ageInDays = formData.age_in_days;
