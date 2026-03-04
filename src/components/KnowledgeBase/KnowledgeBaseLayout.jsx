@@ -52,7 +52,7 @@ const KnowledgeBaseLayout = () => {
         user?.role === 'pharmacy_student';
 
     const tabs = [
-        { path: 'የመድሃኒት መረጃ', label: 'የመድሃኒት መረጃ', icon: <FaPills /> },
+        { path: 'medications', label: 'የመድሃኒት መረጃ', icon: <FaPills /> },
         { path: 'remedies', label: 'Home Remedies', icon: <FaVial /> },
         ...(hasFullAccess ? [
             { path: 'illnesses', label: 'Minor Illnesses', icon: <FaStethoscope /> },
@@ -111,7 +111,7 @@ const KnowledgeBaseLayout = () => {
                             <NavLink
                                 key={tab.path}
                                 to={tab.path}
-                                end={tab.path === 'የመድሃኒት መረጃ'}
+                                end={tab.path === 'medications'}
                                 className={({ isActive }) =>
                                     `flex items-center gap-2 py-3 md:py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${isActive
                                         ? 'border-blue-500 text-blue-600'
