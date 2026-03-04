@@ -3135,7 +3135,16 @@ const PatientDetails = () => {
                 </div>
 
                 <div className="bg-white rounded-xl shadow-lg p-2 sm:p-4 md:p-6">
-                    {renderTabContent()}
+                    {activeTab === 'overview' && renderOverviewSection()}
+                    {activeTab === 'demographics' && renderDemographicsSection()}
+                    {activeTab === 'vitals' && renderVitalsSection()}
+                    {activeTab === 'labs' && renderLabsSection()}
+                    {activeTab === 'medications' && <MedicationHistory patientCode={getCurrentPatientCode()} />}
+                    {activeTab === 'drn' && <DRNAssessment patientCode={getCurrentPatientCode()} />}
+                    {activeTab === 'analysis' && <CDSSDisplay patientData={formData} onBack={() => {}} />}
+                    {activeTab === 'plan' && <PhAssistPlan patientCode={getCurrentPatientCode()} />}
+                    {activeTab === 'outcome' && <PatientOutcome patientCode={getCurrentPatientCode()} />}
+                    {activeTab === 'cost' && <CostSection patientCode={getCurrentPatientCode()} />}
                 </div>
 
                 {isEditing && (
