@@ -35,8 +35,7 @@ import {
 
     FaSync,
     FaBrain,
-    FaHistory,
-    FaWifi
+    FaHistory
 } from 'react-icons/fa';
 
 // Import components
@@ -243,26 +242,6 @@ const PatientDetails = () => {
         { type: 'adult', minDays: 18 * 365 + 1, maxDays: 99999, label: 'Adult (>18 years)', icon: FaUser }
     ], []);
 
-    // Helper function to check if user is ONLY a pharmacist or pharmacy student (excludes healthcare_client and other individual types)
-    const isPharmacistOrStudentOnly = useCallback(() => {
-        if (!user) return false;
-        
-        // Must be individual account type
-        if (user.account_type !== 'individual') return false;
-        
-        // Exclude admins
-        if (user.role === 'admin') return false;
-        
-        // Explicitly exclude healthcare_client
-        if (user.role === 'healthcare_client' || user.is_healthcare_client === true || user.healthcare_client_id) {
-            return false;
-        }
-        
-        // Only allow pharmacist and pharmacy_student roles
-        const allowedRoles = ['pharmacist', 'pharmacy_student'];
-        return allowedRoles.includes(user.role?.toLowerCase());
-    }, [user]);
-
     const tabs = useMemo(() => {
         const allTabs = [
             { id: 'overview', label: 'Overview', icon: FaUser },
@@ -284,8 +263,9 @@ const PatientDetails = () => {
             ['company_admin', 'company_user'].includes(user?.role);
         const isAdmin = user?.role === 'admin';
         
-        // Check if user is ONLY pharmacist or pharmacy student (excludes healthcare_client)
-        const isPharmacistOrPharmacyStudentOnly = isPharmacistOrStudentOnly();
+        // Check for specific individual user roles that should have DRN access
+        const isPharmacistOrStudent = user?.account_type === 'individual' && 
+            (user?.role === 'pharmacist' || user?.role === 'pharmacy_student');
 
         // Basic check for tabs that require at least a subscription
         if (!hasActiveSubscription && !isAdmin) {
@@ -294,24 +274,17 @@ const PatientDetails = () => {
 
         // Tiered restriction: Individual subscribers do NOT get clinical tools (plan, outcome, cost)
         // BUT they DO get Clinical Analysis (after Medications)
-        // And ONLY pharmacists and pharmacy students (NOT healthcare_client) get DRN Assessment
+        // AND pharmacists/pharmacy_students get DRN Assessment
         if (user?.account_type === 'individual' && !isAdmin) {
-            // Base tabs for individual users - exclude overview, plan, outcome, cost
-            const individualTabs = allTabs.filter(tab => !['overview', 'plan', 'outcome', 'cost'].includes(tab.id));
+            // Start with all tabs
+            let filteredTabs = allTabs.filter(tab => !['overview', 'plan', 'outcome', 'cost'].includes(tab.id));
             
-            // Add DRN Assessment ONLY for pharmacists and pharmacy students
-            // Explicitly excludes healthcare_client and all other individual user types
-            if (isPharmacistOrPharmacyStudentOnly) {
-                // Ensure DRN is included if not already present
-                if (!individualTabs.some(tab => tab.id === 'drn')) {
-                    const drnTab = allTabs.find(tab => tab.id === 'drn');
-                    if (drnTab) {
-                        individualTabs.push(drnTab);
-                    }
-                }
+            // If user is NOT pharmacist or pharmacy_student, also remove DRN
+            if (!isPharmacistOrStudent) {
+                filteredTabs = filteredTabs.filter(tab => tab.id !== 'drn');
             }
             
-            return individualTabs;
+            return filteredTabs;
         }
 
         // Everyone else (Admins and Company users with active sub) get everything
@@ -321,7 +294,7 @@ const PatientDetails = () => {
         }
 
         return allTabs;
-    }, [user, isPharmacistOrStudentOnly]);
+    }, [user]);
 
 
 
