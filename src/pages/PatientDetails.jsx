@@ -988,36 +988,50 @@ const PatientDetails = () => {
     const checkPatientLimit = useCallback(async () => {
         if (!isNewPatient) return true; // Only check for new patients
         
-        try {
-            // Get current patient count for this user
-            const result = await api.get('/patients/count');
-            
-            if (result.success) {
-                const currentCount = result.count;
-                
-                // Check user role and set limit
-                const isPharmacistOrStudent = user?.account_type === 'individual' && 
-                    (user?.role === 'pharmacist' || user?.role === 'pharmacy_student');
-                
-                const limit = isPharmacistOrStudent ? 5 : 1;
-                
-                if (currentCount >= limit) {
-                    alert(
-                        `❌ Patient Limit Reached\n\n` +
-                        `You have reached your maximum of ${limit} patient${limit > 1 ? 's' : ''}.\n\n` +
-                        `Current: ${currentCount}/${limit} patients\n\n` +
-                        `${isPharmacistOrStudent ? 
-                            'As a pharmacist, you can manage up to 5 patients.' : 
-                            'Individual users are limited to 1 patient. To add more patients, please upgrade to a Company subscription.'}`
-                    );
-                    return false;
-                }
-            }
-            return true;
-        } catch (error) {
-            console.error('Error checking patient limit:', error);
-            return true; // Allow if we can't check (fallback)
+        // Company users have no limits - skip check entirely
+        const isCompanyUser = !!user?.company_id ||
+            user?.account_type === 'company' ||
+            ['company_admin', 'company_user'].includes(user?.role);
+        
+        if (isCompanyUser) {
+            return true; // Company users can add unlimited patients
         }
+        
+        // Only check limits for individual users
+        if (user?.account_type === 'individual') {
+            try {
+                // Get current patient count for this user
+                const result = await api.get('/patients/count');
+                
+                if (result.success) {
+                    const currentCount = result.count;
+                    
+                    // Check user role and set limit
+                    const isPharmacistOrStudent = user?.role === 'pharmacist' || user?.role === 'pharmacy_student';
+                    
+                    const limit = isPharmacistOrStudent ? 5 : 1;
+                    
+                    if (currentCount >= limit) {
+                        alert(
+                            `❌ Patient Limit Reached\n\n` +
+                            `You have reached your maximum of ${limit} patient${limit > 1 ? 's' : ''}.\n\n` +
+                            `Current: ${currentCount}/${limit} patients\n\n` +
+                            `${isPharmacistOrStudent ? 
+                                'As a pharmacist or pharmacy student, you can manage up to 5 patients.' : 
+                                'Individual users are limited to 1 patient. To add more patients, please upgrade to a Company subscription.'}`
+                        );
+                        return false;
+                    }
+                }
+                return true;
+            } catch (error) {
+                console.error('Error checking patient limit:', error);
+                return true; // Allow if we can't check (fallback)
+            }
+        }
+        
+        // For any other user types (admins, etc.), allow
+        return true;
     }, [isNewPatient, user]);
     
     // Then fix the handleSave function
