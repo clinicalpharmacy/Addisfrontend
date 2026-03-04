@@ -52,7 +52,7 @@ const KnowledgeBaseLayout = () => {
         user?.role === 'pharmacy_student';
 
     const tabs = [
-        { path: 'medications', label: 'የመድሃኒት መረጃ', icon: <FaPills /> },
+        { path: 'የመድሃኒት መረጃ', label: 'የመድሃኒት መረጃ', icon: <FaPills /> },
         { path: 'remedies', label: 'Home Remedies', icon: <FaVial /> },
         ...(hasFullAccess ? [
             { path: 'illnesses', label: 'Minor Illnesses', icon: <FaStethoscope /> },
