@@ -1013,7 +1013,7 @@ const PatientDetails = () => {
                     
                     if (currentCount >= limit) {
                         alert(
-                            `❌ Patient Limit Reached\n\n` +
+                            `❌ Case Limit Reached\n\n` +
                             `You have reached your maximum of ${limit} case${limit > 1 ? 's' : ''}.\n\n` +
                             `Current: ${currentCount}/${limit} cases\n\n` +
                             `${isPharmacistOrStudent ? 
@@ -1284,10 +1284,10 @@ const PatientDetails = () => {
             console.error('Save error:', error);
     
             // Check if it's a patient limit error
-            if (error.response?.status === 403 && error.response?.data?.error === 'Patient limit reached') {
+            if (error.response?.status === 403 && error.response?.data?.error === 'Case limit reached') {
                 const errorData = error.response.data;
                 alert(
-                    `❌ Patient Limit Reached\n\n` +
+                    `❌ Case Limit Reached\n\n` +
                     `${errorData.message}\n\n` +
                     `Current: ${errorData.current}/${errorData.limit} patients\n\n` +
                     `To add more patients, please upgrade to a Company subscription.`
