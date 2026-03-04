@@ -35,7 +35,8 @@ import {
 
     FaSync,
     FaBrain,
-    FaHistory
+    FaHistory,
+    FaWifi
 } from 'react-icons/fa';
 
 // Import components
@@ -242,6 +243,13 @@ const PatientDetails = () => {
         { type: 'adult', minDays: 18 * 365 + 1, maxDays: 99999, label: 'Adult (>18 years)', icon: FaUser }
     ], []);
 
+    // Helper function to check if user is a pharmacist or pharmacy student
+    const isPharmacistOrStudent = useCallback(() => {
+        if (!user || user.account_type !== 'individual') return false;
+        const allowedRoles = ['pharmacist', 'pharmacy_student'];
+        return allowedRoles.includes(user.role?.toLowerCase());
+    }, [user]);
+
     const tabs = useMemo(() => {
         const allTabs = [
             { id: 'overview', label: 'Overview', icon: FaUser },
@@ -262,16 +270,34 @@ const PatientDetails = () => {
             user?.account_type === 'company' ||
             ['company_admin', 'company_user'].includes(user?.role);
         const isAdmin = user?.role === 'admin';
+        
+        // Check if user is pharmacist or pharmacy student
+        const isPharmacistOrPharmacyStudent = isPharmacistOrStudent();
 
         // Basic check for tabs that require at least a subscription
         if (!hasActiveSubscription && !isAdmin) {
             return allTabs.filter(tab => !['analysis', 'plan', 'outcome', 'cost', 'drn', 'medications'].includes(tab.id));
         }
 
-        // Tiered restriction: Individual subscribers do NOT get clinical tools (plan, outcome, cost, drn)
+        // Tiered restriction: Individual subscribers do NOT get clinical tools (plan, outcome, cost)
         // BUT they DO get Clinical Analysis (after Medications)
+        // AND Pharmacists/Pharmacy Students get DRN Assessment
         if (user?.account_type === 'individual' && !isAdmin) {
-            return allTabs.filter(tab => !['overview', 'plan', 'outcome', 'cost', 'drn'].includes(tab.id));
+            // Base tabs for individual users
+            const individualTabs = allTabs.filter(tab => !['overview', 'plan', 'outcome', 'cost'].includes(tab.id));
+            
+            // Add DRN Assessment for pharmacists and pharmacy students
+            if (isPharmacistOrPharmacyStudent) {
+                // Ensure DRN is included if not already present
+                if (!individualTabs.some(tab => tab.id === 'drn')) {
+                    const drnTab = allTabs.find(tab => tab.id === 'drn');
+                    if (drnTab) {
+                        individualTabs.push(drnTab);
+                    }
+                }
+            }
+            
+            return individualTabs;
         }
 
         // Everyone else (Admins and Company users with active sub) get everything
@@ -281,7 +307,7 @@ const PatientDetails = () => {
         }
 
         return allTabs;
-    }, [user]);
+    }, [user, isPharmacistOrStudent]);
 
 
 
