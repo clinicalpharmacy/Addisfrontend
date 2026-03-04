@@ -283,7 +283,7 @@ const Sidebar = ({ onClose }) => {
                                             }`
                                         }
                                     >
-                                        <FaCapsules className="text-base opacity-40" /> Medications
+                                        <FaCapsules className="text-base opacity-40" /> የመድሃኒት መረጃ
                                     </NavLink>
                                     <NavLink
                                         to="/knowledge/remedies"
