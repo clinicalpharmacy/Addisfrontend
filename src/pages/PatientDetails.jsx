@@ -243,9 +243,22 @@ const PatientDetails = () => {
         { type: 'adult', minDays: 18 * 365 + 1, maxDays: 99999, label: 'Adult (>18 years)', icon: FaUser }
     ], []);
 
-    // Helper function to check if user is a pharmacist or pharmacy student
-    const isPharmacistOrStudent = useCallback(() => {
-        if (!user || user.account_type !== 'individual') return false;
+    // Helper function to check if user is ONLY a pharmacist or pharmacy student (excludes healthcare_client and other individual types)
+    const isPharmacistOrStudentOnly = useCallback(() => {
+        if (!user) return false;
+        
+        // Must be individual account type
+        if (user.account_type !== 'individual') return false;
+        
+        // Exclude admins
+        if (user.role === 'admin') return false;
+        
+        // Explicitly exclude healthcare_client
+        if (user.role === 'healthcare_client' || user.is_healthcare_client === true || user.healthcare_client_id) {
+            return false;
+        }
+        
+        // Only allow pharmacist and pharmacy_student roles
         const allowedRoles = ['pharmacist', 'pharmacy_student'];
         return allowedRoles.includes(user.role?.toLowerCase());
     }, [user]);
@@ -271,8 +284,8 @@ const PatientDetails = () => {
             ['company_admin', 'company_user'].includes(user?.role);
         const isAdmin = user?.role === 'admin';
         
-        // Check if user is pharmacist or pharmacy student
-        const isPharmacistOrPharmacyStudent = isPharmacistOrStudent();
+        // Check if user is ONLY pharmacist or pharmacy student (excludes healthcare_client)
+        const isPharmacistOrPharmacyStudentOnly = isPharmacistOrStudentOnly();
 
         // Basic check for tabs that require at least a subscription
         if (!hasActiveSubscription && !isAdmin) {
@@ -281,13 +294,14 @@ const PatientDetails = () => {
 
         // Tiered restriction: Individual subscribers do NOT get clinical tools (plan, outcome, cost)
         // BUT they DO get Clinical Analysis (after Medications)
-        // AND Pharmacists/Pharmacy Students get DRN Assessment
+        // And ONLY pharmacists and pharmacy students (NOT healthcare_client) get DRN Assessment
         if (user?.account_type === 'individual' && !isAdmin) {
-            // Base tabs for individual users
+            // Base tabs for individual users - exclude overview, plan, outcome, cost
             const individualTabs = allTabs.filter(tab => !['overview', 'plan', 'outcome', 'cost'].includes(tab.id));
             
-            // Add DRN Assessment for pharmacists and pharmacy students
-            if (isPharmacistOrPharmacyStudent) {
+            // Add DRN Assessment ONLY for pharmacists and pharmacy students
+            // Explicitly excludes healthcare_client and all other individual user types
+            if (isPharmacistOrPharmacyStudentOnly) {
                 // Ensure DRN is included if not already present
                 if (!individualTabs.some(tab => tab.id === 'drn')) {
                     const drnTab = allTabs.find(tab => tab.id === 'drn');
@@ -307,7 +321,7 @@ const PatientDetails = () => {
         }
 
         return allTabs;
-    }, [user, isPharmacistOrStudent]);
+    }, [user, isPharmacistOrStudentOnly]);
 
 
 
