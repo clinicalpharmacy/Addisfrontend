@@ -1014,8 +1014,8 @@ const PatientDetails = () => {
                     if (currentCount >= limit) {
                         alert(
                             `❌ Patient Limit Reached\n\n` +
-                            `You have reached your maximum of ${limit} patient${limit > 1 ? 's' : ''}.\n\n` +
-                            `Current: ${currentCount}/${limit} patients\n\n` +
+                            `You have reached your maximum of ${limit} case${limit > 1 ? 's' : ''}.\n\n` +
+                            `Current: ${currentCount}/${limit} cases\n\n` +
                             `${isPharmacistOrStudent ? 
                                 'As a pharmacist or pharmacy student, you can manage up to 5 cases. To review medications for additional cases, you may update or modify the existing data.' : 
                                 'This subscription is limited to 1 case. To review medications for additional cases, you may update or modify the existing data..'}`
