@@ -859,23 +859,6 @@ const MedicationHistory = ({ patientCode }) => {
                           />
                         </div>
                 
-                        {/* Cycle */}
-                        <div className="flex-1">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Cycle</label>
-                          <select
-                            name="cycle"
-                            value={formData.cycle}
-                            onChange={handleInputChange}
-                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
-                          >
-                            <option value="">Select cycle</option>
-                            {cycleOptions.map((cycle) => (
-                              <option key={cycle.value} value={cycle.value}>
-                                {cycle.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
                 
                         {/* Regimen */}
                         <div className="flex-1">
@@ -890,6 +873,24 @@ const MedicationHistory = ({ patientCode }) => {
                           />
                         </div>
                       </div>
+                    </div>
+
+                    {/* Cycle */}
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Cycle</label>
+                      <select
+                        name="cycle"
+                        value={formData.cycle}
+                        onChange={handleInputChange}
+                        className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Select cycle</option>
+                        {cycleOptions.map((cycle) => (
+                          <option key={cycle.value} value={cycle.value}>
+                            {cycle.label}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   )}
                 
