@@ -1806,20 +1806,6 @@ const PatientDetails = () => {
 
 
                 <div className="space-y-8">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
                     {/* --- NON-GLOBAL CUSTOM LABS --- */}
                     {customLabs.filter(l => !l.isGlobal).length > 0 && (
                         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-6 mt-6">
