@@ -11,6 +11,7 @@ const UserAgreement = ({ accountType, onAgree, onBack }) => {
         "Any alerts, contraindication notices, or medication-related information must be independently verified against official prescribing information and evaluated by a licensed healthcare professional before any clinical action is taken.",
         "The platform is not an autonomous clinical decision-making system and is not intended to direct or control patient treatment.",
         "Patients must consult a qualified healthcare professional before starting, stopping, or modifying any medication.",
+        "Do not enter identifiable patient information.",
         "This platform must not be used in emergency medical situations."
     ];
 
@@ -20,6 +21,7 @@ const UserAgreement = ({ accountType, onAgree, onBack }) => {
         "The platform does not independently diagnose, prescribe, recommend specific treatments, or replace professional clinical judgment.",
         "Any alerts, contraindication notices, or medication-related information must be independently verified against official prescribing information and evaluated by a licensed healthcare professional before any clinical action is taken.",
         "The platform is not an autonomous clinical decision-making system and is not intended to direct or control patient treatment.",
+        "Do not enter identifiable patient information.",
         "This platform must not be used in emergency medical situations."
     ];
 
