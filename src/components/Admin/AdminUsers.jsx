@@ -76,11 +76,12 @@ export const AdminUsers = ({
                                 <option value="all">Every Role</option>
                                 <option value="admin">Administrators</option>
                                 <option value="pharmacist">Pharmacists</option>
-                                <option value="doctor">Medical Doctors</option>
-                                <option value="nurse">Nurse Pros</option>
-                                <option value="laboratory">Lab Techs</option>
-                                <option value="student">Health Students</option>
+                                <option value="physician">Physicians</option>
+                                <option value="nurse">Nurses</option>
+                                <option value="other_health_professional">Other Health Professionals</option>
                                 <option value="healthcare_client">Healthcare Clients</option>
+                                <option value="pharmacy_student">Pharmacy Students</option>
+                                <option value="other_health_science_student">Other Health Science Students</option>
                                 <option value="company_admin">Org Admins</option>
                             </select>
                             <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-[10px]">▼</div>
