@@ -15,18 +15,6 @@ export const AdminOverview = ({
     getActivityIcon,
     formatDate
 }) => {
-    // Normalize stats for consistent keys
-    const normalizedStats = {
-        ...stats,
-        physician_count: stats.physician_count ?? stats.physicians ?? 0,
-        pharmacist_count: stats.pharmacist_count ?? stats.pharmacists ?? 0,
-        pharmacy_student_count: stats.pharmacy_student_count ?? stats.pharmacy_students ?? 0,
-        other_health_science_student_count: stats.other_health_science_student_count ?? stats.other_health_science_students ?? 0,
-        other_health_professionals_count: stats.other_health_professionals_count ?? stats.other_health_professionals ?? 0,
-        healthcare_client_count: stats.healthcare_client_count ?? stats.healthcare_clients ?? 0,
-        restricted_users: stats.restricted_users ?? stats.blocked_users ?? 0,
-    };
-
     return (
         <div className="space-y-6 animate-fadeIn">
             {/* Stats Grid */}
@@ -35,7 +23,7 @@ export const AdminOverview = ({
                     <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
                             <p className="text-[10px] md:text-sm text-gray-400 font-bold uppercase tracking-tight truncate">Total Users</p>
-                            <p className="text-xl md:text-3xl font-black text-gray-800 leading-tight">{normalizedStats.total_users ?? usersCount ?? 0}</p>
+                            <p className="text-xl md:text-3xl font-black text-gray-800 leading-tight">{stats.total_users ?? usersCount ?? 0}</p>
                         </div>
                         <div className="p-2 md:p-3 bg-blue-50 rounded-lg flex-shrink-0">
                             <FaUsers className="text-blue-600 text-sm md:text-xl" />
@@ -61,7 +49,7 @@ export const AdminOverview = ({
                         <div className="min-w-0">
                             <p className="text-[10px] md:text-sm text-green-500 font-bold uppercase tracking-tight truncate">Physicians</p>
                             <p className="text-xl md:text-3xl font-black text-green-600 leading-tight">
-                                {normalizedStats.physician_count}
+                                {stats.physician_count ?? stats.physicians ?? 0}
                             </p>
                         </div>
                         <div className="p-2 md:p-3 bg-green-50 rounded-lg flex-shrink-0">
@@ -76,7 +64,7 @@ export const AdminOverview = ({
                         <div className="min-w-0">
                             <p className="text-[10px] md:text-sm text-indigo-500 font-bold uppercase tracking-tight truncate">Pharmacists</p>
                             <p className="text-xl md:text-3xl font-black text-indigo-600 leading-tight">
-                                {normalizedStats.pharmacist_count}
+                                {stats.pharmacist_count ?? stats.pharmacists ?? 0}
                             </p>
                         </div>
                         <div className="p-2 md:p-3 bg-indigo-50 rounded-lg flex-shrink-0">
@@ -90,7 +78,7 @@ export const AdminOverview = ({
                     <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
                             <p className="text-[10px] md:text-sm text-red-500 font-bold uppercase tracking-tight truncate">Nurses</p>
-                            <p className="text-xl md:text-3xl font-black text-red-600 leading-tight">{normalizedStats.nurse_count ?? 0}</p>
+                            <p className="text-xl md:text-3xl font-black text-red-600 leading-tight">{stats.nurse_count ?? 0}</p>
                         </div>
                         <div className="p-2 md:p-3 bg-red-50 rounded-lg flex-shrink-0">
                             <FaVial className="text-red-600 text-sm md:text-xl" />
@@ -98,18 +86,20 @@ export const AdminOverview = ({
                     </div>
                 </div>
 
+
                 {/* Other Health Professionals */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md">
                     <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
                             <p className="text-[10px] md:text-sm text-red-500 font-bold uppercase tracking-tight truncate">Other Health Professionals</p>
-                            <p className="text-xl md:text-3xl font-black text-red-600 leading-tight">{normalizedStats.other_health_professionals_count}</p>
+                            <p className="text-xl md:text-3xl font-black text-red-600 leading-tight">{stats.other_health_professionals_count ?? 0}</p>
                         </div>
                         <div className="p-2 md:p-3 bg-red-50 rounded-lg flex-shrink-0">
                             <FaVial className="text-red-600 text-sm md:text-xl" />
                         </div>
                     </div>
                 </div>
+
 
                 {/* Companies */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md col-span-1 xs:col-span-2 md:col-span-1 xl:col-span-1">
@@ -130,7 +120,7 @@ export const AdminOverview = ({
                         <div className="min-w-0">
                             <p className="text-[10px] md:text-sm text-blue-500 font-bold uppercase tracking-tight truncate">Pharmacy Students</p>
                             <p className="text-xl md:text-3xl font-black text-blue-600 leading-tight">
-                                {normalizedStats.pharmacy_student_count}
+                                {stats.pharmacy_student_count ?? stats.pharmacy_students ?? 0}
                             </p>
                         </div>
                         <div className="p-2 md:p-3 bg-blue-50 rounded-lg flex-shrink-0">
@@ -144,7 +134,7 @@ export const AdminOverview = ({
                     <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
                             <p className="text-[10px] md:text-sm text-blue-500 font-bold uppercase tracking-tight truncate">Other Health Science Students</p>
-                            <p className="text-xl md:text-3xl font-black text-blue-600 leading-tight">{normalizedStats.other_health_science_student_count}</p>
+                            <p className="text-xl md:text-3xl font-black text-blue-600 leading-tight">{stats.other_health_science_student_count ?? 0}</p>
                         </div>
                         <div className="p-2 md:p-3 bg-blue-50 rounded-lg flex-shrink-0">
                             <FaUsers className="text-blue-500 text-sm md:text-xl" />
@@ -157,7 +147,7 @@ export const AdminOverview = ({
                     <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
                             <p className="text-[10px] md:text-sm text-blue-500 font-bold uppercase tracking-tight truncate">Healthcare Clients</p>
-                            <p className="text-xl md:text-3xl font-black text-blue-600 leading-tight">{normalizedStats.healthcare_client_count}</p>
+                            <p className="text-xl md:text-3xl font-black text-blue-600 leading-tight">{stats.healthcare_client_count ?? 0}</p>
                         </div>
                         <div className="p-2 md:p-3 bg-blue-50 rounded-lg flex-shrink-0">
                             <FaUsers className="text-blue-500 text-sm md:text-xl" />
@@ -170,7 +160,7 @@ export const AdminOverview = ({
                     <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
                             <p className="text-[10px] md:text-sm text-red-600 font-bold uppercase tracking-tight truncate">Restricted Users</p>
-                            <p className="text-xl md:text-3xl font-black text-red-600 leading-tight">{normalizedStats.restricted_users}</p>
+                            <p className="text-xl md:text-3xl font-black text-red-600 leading-tight">{stats.restricted_users ?? 0}</p>
                         </div>
                         <div className="p-2 md:p-3 bg-red-50 rounded-lg flex-shrink-0">
                             <FaUsers className="text-red-600 text-sm md:text-xl" />
@@ -178,7 +168,6 @@ export const AdminOverview = ({
                     </div>
                 </div>
             </div>
-
 
             {/* Recent Activities and Quick Actions */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
