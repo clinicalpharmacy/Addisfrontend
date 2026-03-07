@@ -73,18 +73,19 @@ export const AdminOverview = ({
                     </div>
                 </div>
 
-                {/* Companies */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md col-span-1 xs:col-span-2 md:col-span-1 xl:col-span-1">
+                {/* Nurses */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md">
                     <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
-                            <p className="text-[10px] md:text-sm text-purple-500 font-bold uppercase tracking-tight truncate">Companies</p>
-                            <p className="text-xl md:text-3xl font-black text-purple-600 leading-tight">{companiesCount ?? 0}</p>
+                            <p className="text-[10px] md:text-sm text-red-500 font-bold uppercase tracking-tight truncate">Nurses</p>
+                            <p className="text-xl md:text-3xl font-black text-red-600 leading-tight">{stats.nurse_count ?? 0}</p>
                         </div>
-                        <div className="p-2 md:p-3 bg-purple-50 rounded-lg flex-shrink-0">
-                            <FaBuilding className="text-purple-600 text-sm md:text-xl" />
+                        <div className="p-2 md:p-3 bg-red-50 rounded-lg flex-shrink-0">
+                            <FaVial className="text-red-600 text-sm md:text-xl" />
                         </div>
                     </div>
                 </div>
+
 
                 {/* Other Health Professionals */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md">
@@ -95,6 +96,20 @@ export const AdminOverview = ({
                         </div>
                         <div className="p-2 md:p-3 bg-red-50 rounded-lg flex-shrink-0">
                             <FaVial className="text-red-600 text-sm md:text-xl" />
+                        </div>
+                    </div>
+                </div>
+
+
+                {/* Companies */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md col-span-1 xs:col-span-2 md:col-span-1 xl:col-span-1">
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                            <p className="text-[10px] md:text-sm text-purple-500 font-bold uppercase tracking-tight truncate">Companies</p>
+                            <p className="text-xl md:text-3xl font-black text-purple-600 leading-tight">{companiesCount ?? 0}</p>
+                        </div>
+                        <div className="p-2 md:p-3 bg-purple-50 rounded-lg flex-shrink-0">
+                            <FaBuilding className="text-purple-600 text-sm md:text-xl" />
                         </div>
                     </div>
                 </div>
