@@ -16,19 +16,7 @@ export const AdminUsers = ({
     const [filterRole, setFilterRole] = useState('all');
     const [filterStatus, setFilterStatus] = useState('all');
 
-    // Normalize user roles
-    const roleMap = {
-        'physicians': 'physician',
-        'pharmacy_students': 'pharmacy_student',
-        'other_health_science_students': 'other_health_science_student'
-    };
-
-    const normalizedUsers = users.map(user => ({
-        ...user,
-        role: roleMap[user.role] ?? user.role
-    }));
-
-    const filteredUsers = normalizedUsers.filter(user => {
+    const filteredUsers = users.filter(user => {
         const matchesSearch = searchTerm === '' ||
             (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
             (user.full_name && user.full_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -115,7 +103,6 @@ export const AdminUsers = ({
                 </div>
             </div>
 
-            {/* User Cards */}
             {loading && users.length === 0 ? (
                 <div className="py-24 text-center bg-white rounded-[32px] border border-gray-100 shadow-sm">
                     <div className="relative inline-block mb-4">
@@ -127,7 +114,7 @@ export const AdminUsers = ({
             ) : filteredUsers.length > 0 ? (
                 <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {filteredUsers.map((user) => (
-                        <div key={user.id} className="group bg-white rounded-[24px] shadow-sm hover:shadow-xl transition-all border border-gray-100 flex flex-col overflow-hidden hover:-translate-y-1">
+                        <div key={user.id} className="group bg-white rounded-[24px] shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col overflow-hidden hover:-translate-y-1">
                             <div className="p-5 flex-1">
                                 <div className="flex items-start justify-between mb-4">
                                     <div className="w-12 h-12 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-[16px] flex items-center justify-center transition-transform group-hover:scale-110">
@@ -168,7 +155,7 @@ export const AdminUsers = ({
                                         </span>
                                     </div>
                                     <div className="flex justify-between items-center p-2.5 rounded-xl bg-gray-50/50 group-hover:bg-white transition-colors border border-transparent group-hover:border-gray-100">
-                                        <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest shrink-0">Joined On</span>
+                                        <span className="text-[9px] text-gray-400 font-black uppercase tracking-widest shrink-0">Joined On</span>
                                         <span className="text-gray-500 font-bold text-[11px]">{formatDate(user.created_at)}</span>
                                     </div>
                                 </div>
