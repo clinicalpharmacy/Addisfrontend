@@ -46,8 +46,8 @@ export const AdminOverview = ({
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md">
                     <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
-                            <p className="text-[10px] md:text-sm text-green-500 font-bold uppercase tracking-tight truncate">Doctors</p>
-                            <p className="text-xl md:text-3xl font-black text-green-600 leading-tight">{stats.doctor_count || 0}</p>
+                            <p className="text-[10px] md:text-sm text-green-500 font-bold uppercase tracking-tight truncate">Physicians</p>
+                            <p className="text-xl md:text-3xl font-black text-green-600 leading-tight">{stats.physician_count || 0}</p>
                         </div>
                         <div className="p-2 md:p-3 bg-green-50 rounded-lg flex-shrink-0">
                             <FaUserMd className="text-green-600 text-sm md:text-xl" />
@@ -82,8 +82,20 @@ export const AdminOverview = ({
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md">
                     <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
-                            <p className="text-[10px] md:text-sm text-blue-500 font-bold uppercase tracking-tight truncate">Students</p>
-                            <p className="text-xl md:text-3xl font-black text-blue-600 leading-tight">{stats.student_count || 0}</p>
+                            <p className="text-[10px] md:text-sm text-red-500 font-bold uppercase tracking-tight truncate">Other Health Professionals</p>
+                            <p className="text-xl md:text-3xl font-black text-red-600 leading-tight">{stats.other_health_professionals_count || 0}</p>
+                        </div>
+                        <div className="p-2 md:p-3 bg-red-50 rounded-lg flex-shrink-0">
+                            <FaVial className="text-red-600 text-sm md:text-xl" />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md">
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                            <p className="text-[10px] md:text-sm text-blue-500 font-bold uppercase tracking-tight truncate">Pharmacy Students</p>
+                            <p className="text-xl md:text-3xl font-black text-blue-600 leading-tight">{stats.pharmacy_student_count || 0}</p>
                         </div>
                         <div className="p-2 md:p-3 bg-blue-50 rounded-lg flex-shrink-0">
                             <FaUsers className="text-blue-500 text-sm md:text-xl" />
@@ -94,11 +106,23 @@ export const AdminOverview = ({
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md">
                     <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
-                            <p className="text-[10px] md:text-sm text-red-500 font-bold uppercase tracking-tight truncate">Laboratory</p>
-                            <p className="text-xl md:text-3xl font-black text-red-600 leading-tight">{stats.laboratory_count || 0}</p>
+                            <p className="text-[10px] md:text-sm text-blue-500 font-bold uppercase tracking-tight truncate">Other Health Science Students</p>
+                            <p className="text-xl md:text-3xl font-black text-blue-600 leading-tight">{stats.other_health_science_student_count || 0}</p>
                         </div>
-                        <div className="p-2 md:p-3 bg-red-50 rounded-lg flex-shrink-0">
-                            <FaVial className="text-red-600 text-sm md:text-xl" />
+                        <div className="p-2 md:p-3 bg-blue-50 rounded-lg flex-shrink-0">
+                            <FaUsers className="text-blue-500 text-sm md:text-xl" />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md">
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                            <p className="text-[10px] md:text-sm text-blue-500 font-bold uppercase tracking-tight truncate">Healthcare Clients</p>
+                            <p className="text-xl md:text-3xl font-black text-blue-600 leading-tight">{stats.healthcare_client_count || 0}</p>
+                        </div>
+                        <div className="p-2 md:p-3 bg-blue-50 rounded-lg flex-shrink-0">
+                            <FaUsers className="text-blue-500 text-sm md:text-xl" />
                         </div>
                     </div>
                 </div>
@@ -106,8 +130,8 @@ export const AdminOverview = ({
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md border-l-4 border-red-500 cursor-pointer" onClick={() => onTabChange('users')}>
                     <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
-                            <p className="text-[10px] md:text-sm text-red-600 font-bold uppercase tracking-tight truncate">Blocked Users</p>
-                            <p className="text-xl md:text-3xl font-black text-red-600 leading-tight">{stats.blocked_users || 0}</p>
+                            <p className="text-[10px] md:text-sm text-red-600 font-bold uppercase tracking-tight truncate">Restricted Users</p>
+                            <p className="text-xl md:text-3xl font-black text-red-600 leading-tight">{stats.restricted_users || 0}</p>
                         </div>
                         <div className="p-2 md:p-3 bg-red-50 rounded-lg flex-shrink-0">
                             <FaUsers className="text-red-600 text-sm md:text-xl" />
