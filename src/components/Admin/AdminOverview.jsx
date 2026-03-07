@@ -67,6 +67,18 @@ export const AdminOverview = ({
                     </div>
                 </div>
 
+                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md">
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                            <p className="text-[10px] md:text-sm text-indigo-500 font-bold uppercase tracking-tight truncate">Nurses</p>
+                            <p className="text-xl md:text-3xl font-black text-indigo-600 leading-tight">{stats.nurse_count || 0}</p>
+                        </div>
+                        <div className="p-2 md:p-3 bg-indigo-50 rounded-lg flex-shrink-0">
+                            <FaHospital className="text-indigo-600 text-sm md:text-xl" />
+                        </div>
+                    </div>
+                </div>
+
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md col-span-1 xs:col-span-2 md:col-span-1 xl:col-span-1">
                     <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
