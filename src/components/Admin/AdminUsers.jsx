@@ -16,21 +16,16 @@ export const AdminUsers = ({
     const [filterRole, setFilterRole] = useState('all');
     const [filterStatus, setFilterStatus] = useState('all');
 
-    // Normalize user roles for consistent matching
+    // Normalize user roles
+    const roleMap = {
+        'physicians': 'physician',
+        'pharmacy_students': 'pharmacy_student',
+        'other_health_science_students': 'other_health_science_student'
+    };
+
     const normalizedUsers = users.map(user => ({
         ...user,
-        role: (() => {
-            switch (user.role) {
-                case 'physicians':
-                    return 'physician';
-                case 'pharmacy_students':
-                    return 'pharmacy_student';
-                case 'other_health_science_students':
-                    return 'other_health_science_student';
-                default:
-                    return user.role;
-            }
-        })()
+        role: roleMap[user.role] ?? user.role
     }));
 
     const filteredUsers = normalizedUsers.filter(user => {
