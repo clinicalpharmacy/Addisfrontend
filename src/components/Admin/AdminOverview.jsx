@@ -49,7 +49,7 @@ export const AdminOverview = ({
                         <div className="min-w-0">
                             <p className="text-[10px] md:text-sm text-green-500 font-bold uppercase tracking-tight truncate">Physicians</p>
                             <p className="text-xl md:text-3xl font-black text-green-600 leading-tight">
-                                {stats.physician_count ?? stats.physicians ?? 0}
+                                {stats.physician_count ?? stats.physician ?? 0}
                             </p>
                         </div>
                         <div className="p-2 md:p-3 bg-green-50 rounded-lg flex-shrink-0">
@@ -120,7 +120,7 @@ export const AdminOverview = ({
                         <div className="min-w-0">
                             <p className="text-[10px] md:text-sm text-blue-500 font-bold uppercase tracking-tight truncate">Pharmacy Students</p>
                             <p className="text-xl md:text-3xl font-black text-blue-600 leading-tight">
-                                {stats.pharmacy_student_count ?? stats.pharmacy_students ?? 0}
+                                {stats.pharmacy_student_count ?? stats.pharmacy_student ?? 0}
                             </p>
                         </div>
                         <div className="p-2 md:p-3 bg-blue-50 rounded-lg flex-shrink-0">
