@@ -98,7 +98,9 @@ const ClinicalRulesAdmin = () => {
 
     const ruleTypes = [
         { value: 'drug_interaction', label: 'Drug Interaction', icon: FaPills, color: 'bg-red-100 text-red-800', category: 'Safety' },
+        { value: 'drug_interaction', label: 'Drug Interaction', icon: FaPills, color: 'bg-red-100 text-red-800', category: 'Effectiveness' },
         { value: 'dose_check', label: 'Dose Check', icon: FaPills, color: 'bg-blue-100 text-blue-800', category: 'Effectiveness' },
+        { value: 'dose_check', label: 'Dose Check', icon: FaPills, color: 'bg-blue-100 text-blue-800', category: 'Safety' },
         { value: 'contraindication', label: 'Contraindication or Unsafe Drug', icon: FaSkullCrossbones, color: 'bg-purple-100 text-purple-800', category: 'Safety' },
         { value: 'allergy_check', label: 'Allergy Check', icon: FaExclamationTriangle, color: 'bg-orange-100 text-orange-800', category: 'Safety' },
         { value: 'safety_monitoring', label: 'Safety Monitoring', icon: FaVial, color: 'bg-green-100 text-green-800', category: 'Safety' },
@@ -106,8 +108,8 @@ const ClinicalRulesAdmin = () => {
         { value: 'duplicate_therapy', label: 'Duplicate Therapy', icon: FaCopy, color: 'bg-yellow-100 text-yellow-800', category: 'Indication' },
         { value: 'pregnancy_check', label: 'Pregnancy Safety', icon: FaUser, color: 'bg-pink-100 text-pink-800', category: 'Safety' },
         { value: 'lactation_safety', label: 'Lactation Safety', icon: FaCogs, color: 'bg-emerald-100 text-emerald-800', category: 'Safety' },
-        { value: 'renal_adjustment', label: 'Renal Dose Adjustment', icon: FaHeart, color: 'bg-teal-100 text-teal-800', category: 'Effectiveness' },
-        { value: 'hepatic_adjustment', label: 'Hepatic Dose Adjustment', icon: FaHeart, color: 'bg-indigo-100 text-indigo-800', category: 'Effectiveness' },
+        { value: 'renal_adjustment', label: 'Renal Dose Adjustment', icon: FaHeart, color: 'bg-teal-100 text-teal-800', category: 'Safety' },
+        { value: 'hepatic_adjustment', label: 'Hepatic Dose Adjustment', icon: FaHeart, color: 'bg-indigo-100 text-indigo-800', category: 'Safety' },
         { value: 'therapeutic_monitoring', label: 'Therapeutic Monitoring', icon: FaEye, color: 'bg-cyan-100 text-cyan-800', category: 'Effectiveness' },
         { value: 'adherence_check', label: 'Adherence Check', icon: FaUser, color: 'bg-amber-100 text-amber-800', category: 'Adherence' },
         { value: 'quality_check', label: 'Quality Check', icon: FaCogs, color: 'bg-rose-100 text-rose-800', category: 'Product_Quality' },
@@ -115,6 +117,7 @@ const ClinicalRulesAdmin = () => {
         { value: 'expiry_check', label: 'Expiry Check', icon: FaCogs, color: 'bg-fuchsia-100 text-fuchsia-800', category: 'Product_Quality' },
         { value: 'elderly_check', label: 'Elderly Check', icon: FaUser, color: 'bg-lime-100 text-lime-800', category: 'Safety' },
         { value: 'administration', label: 'Administration', icon: FaPills, color: 'bg-amber-100 text-amber-800', category: 'Adherence' },
+        { value: 'administration', label: 'Administration', icon: FaPills, color: 'bg-amber-100 text-amber-800', category: 'Effectiveness' },
         { value: 'pediatric_check', label: 'Pediatric Check', icon: FaBaby, color: 'bg-indigo-100 text-indigo-800', category: 'Safety' }
     ];
 
