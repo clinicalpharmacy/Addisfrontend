@@ -603,6 +603,7 @@ const Login = () => {
                 </div>
 
                 {/* Contact Address - Bottom Right with Multiple Lines */}
+                <div className="fixed bottom-4 right-4 z-20">
                     <div className="flex items-center gap-4 flex-wrap">
                         <div className="flex items-center gap-2">
                             <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
