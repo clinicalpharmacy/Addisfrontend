@@ -3,8 +3,8 @@ import { FaSearch, FaBookmark } from 'react-icons/fa';
 import api from '../utils/api';
 
 const UsefulLinks = ({ userType, userCategory }) => {
-    // Hide for Individual users and Healthcare Client category
-    if (userType === 'Individual' || userCategory === 'Healthcare Client') {
+    // Hide for Individual users and healthcare_client category
+    if (userType === 'Individual' || userCategory === 'healthcare_client') {
         return null;
     }
 
