@@ -111,7 +111,6 @@ const Sidebar = ({ onClose }) => {
     const isCompanyAdmin = user?.role === 'company_admin';
     const isCompanyUser = !!user?.company_id || user?.account_type === 'company' || ['company_admin', 'company_user'].includes(user?.role);
     const isIndividual = !isAdmin && !isCompanyUser;
-    const isHealthCareClient = user?.role === 'health_care_client';
 
     // Check near expiry for subscription (within 7 days)
     const diff = user?.subscription_end_date ? new Date(user.subscription_end_date) - new Date() : null;
@@ -330,8 +329,8 @@ const Sidebar = ({ onClose }) => {
                             )}
                         </li>
 
-                        {/* Public Useful Links Page - Hidden for health care clients */}
-                        {!isHealthCareClient && (
+                        {/* Public Useful Links Page - Hidden only for health care clients */}
+                        {(user?.role !== 'health_care_client' || !isIndividual) && (
                             <li className="mb-2">
                                 <NavLink
                                     to={isSubscribed ? "/useful-links" : "/subscription/plans"}
