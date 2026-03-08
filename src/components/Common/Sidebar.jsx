@@ -282,7 +282,7 @@ const Sidebar = ({ onClose }) => {
                                             }`
                                         }
                                     >
-                                        <FaCapsules className="text-base opacity-40" /> የመድሃኒት መረጃ
+                                        <FaVial className="text-base opacity-40" /> የመድሃኒት መረጃ
                                     </NavLink>
                                     <NavLink
                                         to="/knowledge/remedies"
@@ -328,8 +328,8 @@ const Sidebar = ({ onClose }) => {
                             )}
                         </li>
 
-                        {/* Public Useful Links Page - Hidden only for health care clients */}
-                        {(user?.role !== 'health_care_client' || !isIndividual) && (
+                        {/* Public Useful Links Page - Hidden only for healthcare clients */}
+                        {(user?.role !== 'healthcare_client' || !isIndividual) && (
                             <li className="mb-2">
                                 <NavLink
                                     to={isSubscribed ? "/useful-links" : "/subscription/plans"}
