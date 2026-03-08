@@ -164,7 +164,7 @@ const Sidebar = ({ onClose }) => {
                         </li>
 
                         {/* Patients Section */}
-                        {!isAdmin && user?.role !== 'health_care_client' && (
+                        {!isAdmin && user?.role !== 'health_careclient' && (
                             <li className="mb-2">
                                 <button
                                     onClick={() => isSubscribed ? toggleSection('patients') : navigate('/subscription/plans')}
@@ -180,7 +180,6 @@ const Sidebar = ({ onClose }) => {
                                     </div>
                                 </button>
 
-                                {!isAdmin && user?.role !== 'healthcare_client' && (
                                 {expandedSections.patients && (
                                     <div className="ml-8 mt-2 space-y-1 animate-fadeIn">
                                         <NavLink
