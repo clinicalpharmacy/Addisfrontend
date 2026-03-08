@@ -4,6 +4,9 @@ import {
     FaUserMd, FaLock, FaExclamationTriangle, FaSignInAlt,
     FaSpinner, FaUserCheck, FaBuilding, FaEnvelope, FaEye, FaEyeSlash,
     FaShieldAlt, FaHeartbeat, FaCheckCircle, FaArrowRight, FaIdCard
+    FaMapMarkerAlt,  // For location
+    FaPhone,         // For phone (or FaPhoneAlt)
+    FaShareAlt,      // For social media
 } from 'react-icons/fa';
 
 // IMPORTANT: Update this URL to your actual backend URL
@@ -651,7 +654,6 @@ const Login = () => {
                     </div>
                 </div>
             </div>
-        </div>
 
             <style>{`
                 @keyframes shake {
