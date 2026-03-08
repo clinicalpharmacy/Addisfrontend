@@ -2,12 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaSearch, FaBookmark } from 'react-icons/fa';
 import api from '../utils/api';
 
-const UsefulLinks = ({ userType, userCategory }) => {
-    // Hide for Individual users and healthcare_client category
-    if (userType === 'Individual' || userCategory === 'healthcare_client') {
-        return null;
-    }
-
+const UsefulLinks = () => {
     const [links, setLinks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -47,13 +42,16 @@ const UsefulLinks = ({ userType, userCategory }) => {
             </div>
 
             <div className="mb-6">
-                <input
-                    type="text"
-                    placeholder="Search links..."
-                    className="w-full py-2 border-b border-gray-200 focus:border-indigo-500 outline-none text-sm"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
+                <div className="relative">
+                    <FaSearch className="absolute left-0 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
+                    <input
+                        type="text"
+                        placeholder="Search links..."
+                        className="w-full py-2 pl-6 border-b border-gray-200 focus:border-indigo-500 outline-none text-sm"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
             </div>
 
             {loading ? (
