@@ -6,8 +6,12 @@ const UsefulLinks = () => {
     const [links, setLinks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [userType, setUserType] = useState('');
 
     useEffect(() => {
+        // Get user type from localStorage or your auth context
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        setUserType(user.userType || '');
         fetchLinks();
     }, []);
 
@@ -32,6 +36,15 @@ const UsefulLinks = () => {
 
     const categories = [...new Set(filteredLinks.map(link => link.category))];
 
+    // Check if user is Healthcare Client under Individual user types
+    const isHealthcareClientIndividual = userType === 'Healthcare Client' && 
+                                        userType.includes('Individual');
+
+    // Don't render anything for Healthcare Clients under Individual user types
+    if (isHealthcareClientIndividual) {
+        return null;
+    }
+
     return (
         <div className="p-6 max-w-5xl mx-auto">
             <div className="mb-6">
@@ -42,16 +55,13 @@ const UsefulLinks = () => {
             </div>
 
             <div className="mb-6">
-                <div className="relative">
-                    <FaSearch className="absolute left-0 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
-                    <input
-                        type="text"
-                        placeholder="Search links..."
-                        className="w-full py-2 pl-6 border-b border-gray-200 focus:border-indigo-500 outline-none text-sm"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </div>
+                <input
+                    type="text"
+                    placeholder="Search links..."
+                    className="w-full py-2 border-b border-gray-200 focus:border-indigo-500 outline-none text-sm"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
             </div>
 
             {loading ? (
