@@ -602,35 +602,40 @@ const Login = () => {
                     </div>
                 </div>
 
-                {/* Contact Address - Bottom Right with Multiple Lines */}
-                <div className="fixed bottom-4 right-4 z-20">
+                {/* Contact Address - Bottom with Multiple Lines */}
+                <div className="fixed bottom-4 left-4 z-20">
                     <div className="px-4 py-3 min-w-[220px]">
                         <div className="flex items-center gap-4 flex-wrap">
                             <div className="flex items-center gap-2">
                                 <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                                <span className="text-xs text-white">
-                                    <span className="text-white ml-1 font-mono text-[10px]">Addis Ababa, Ethiopia</span>
+                                <span className="text-xs text-white text-sm">
+                                    <span className="text-white ml-1 font-mono text-[14px]">Addis Ababa, Ethiopia</span>
                                 </span>
                             </div>
                             
                             <div className="flex items-center gap-2">
                                 <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                                <span className="text-xs text-white">
-                                    <span className="text-white ml-1 font-mono text-[10px]">pharmcare2001@yahoo.com</span>
+                                <span className="text-xs text-white text-sm">
+                                    <span className="text-white ml-1 font-mono text-[14px]">pharmcare2001@yahoo.com</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                            
+                <div className="fixed bottom-4 right-4 z-20">
+                    <div className="px-4 py-3 min-w-[220px]">
+                            <div className="flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                                <span className="text-xs text-white text-sm">
+                                    <span className="text-white ml-1 font-mono text-[14px]">+251919519512</span>
                                 </span>
                             </div>
                             
                             <div className="flex items-center gap-2">
                                 <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                                <span className="text-xs text-white">
-                                    <span className="text-white ml-1 font-mono text-[10px]">+251919519512</span>
-                                </span>
-                            </div>
-                            
-                            <div className="flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                                <span className="text-xs text-white">
-                                    <span className="text-white ml-1 font-mono text-[10px]">tiktok.com/@addis.med</span>
+                                <span className="text-xs text-white text-sm">
+                                    <span className="text-white ml-1 font-mono text-[14px]">tiktok.com/@addis.med</span>
                                 </span>
                             </div>
                         </div>
