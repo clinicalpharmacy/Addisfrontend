@@ -180,6 +180,7 @@ const Sidebar = ({ onClose }) => {
                                     </div>
                                 </button>
 
+                                {!isAdmin && user?.role !== 'healthcare_client' && (
                                 {expandedSections.patients && (
                                     <div className="ml-8 mt-2 space-y-1 animate-fadeIn">
                                         <NavLink
