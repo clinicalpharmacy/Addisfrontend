@@ -2,7 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { FaSearch, FaBookmark } from 'react-icons/fa';
 import api from '../utils/api';
 
-const UsefulLinks = () => {
+const UsefulLinks = ({ userType, userCategory }) => {
+    // Hide for Individual users and Healthcare Client category
+    if (userType === 'Individual' || userCategory === 'Healthcare Client') {
+        return null;
+    }
+
     const [links, setLinks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
