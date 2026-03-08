@@ -452,9 +452,12 @@ const Sidebar = ({ onClose }) => {
 
                 {/* Quick Actions */}
                 {!isAdmin && user?.role !== 'healthcare_client' && (
-                <div className="mb-8">
-                    <h3 className="text-xs uppercase text-gray-400 font-black mb-4 tracking-[0.2em] px-3">Quick Actions</h3>
-                    <ul className="space-y-2">
+                    <div className="mb-8">
+                        <h3 className="text-xs uppercase text-gray-400 font-black mb-4 tracking-[0.2em] px-3">
+                            Quick Actions
+                        </h3>
+                
+                        <ul className="space-y-2">
                             <li>
                                 <button
                                     onClick={() => {
@@ -465,7 +468,9 @@ const Sidebar = ({ onClose }) => {
                                         }
                                         onClose?.();
                                     }}
-                                    className={`flex items-center justify-between p-2.5 rounded-xl text-gray-500 hover:bg-blue-50 hover:text-blue-600 w-full text-left transition-all duration-300 font-bold group ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                    className={`flex items-center justify-between p-2.5 rounded-xl text-gray-500 hover:bg-blue-50 hover:text-blue-600 w-full text-left transition-all duration-300 font-bold group ${
+                                        !isSubscribed ? 'opacity-60 cursor-not-allowed' : ''
+                                    }`}
                                 >
                                     <div className="flex items-center gap-2.5">
                                         <div className="p-2 bg-gray-50 text-gray-400 group-hover:bg-blue-100 group-hover:text-blue-600 rounded-lg transition-colors">
@@ -473,12 +478,13 @@ const Sidebar = ({ onClose }) => {
                                         </div>
                                         <span className="text-base">New Patient</span>
                                     </div>
+                
                                     {!isSubscribed && <FaLock className="text-xs opacity-50" />}
                                 </button>
                             </li>
-                        )}
-                    </ul>
-                </div>
+                        </ul>
+                    </div>
+                )}
 
                 {/* Admin Navigation */}
                 {isAdmin && (
