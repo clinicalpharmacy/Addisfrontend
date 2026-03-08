@@ -275,7 +275,6 @@ const Sidebar = ({ onClose }) => {
                                     <NavLink
                                         to="/knowledge"
                                         onClick={onClose}
-                                        end
                                         className={({ isActive }) =>
                                             `flex items-center gap-2.5 px-4 py-2 text-lg rounded-lg transition-all ${isActive
                                                 ? 'text-indigo-600 font-black'
