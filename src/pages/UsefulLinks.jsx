@@ -2,16 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { FaSearch, FaBookmark } from 'react-icons/fa';
 import api from '../utils/api';
 
-const UsefulLinks = () => {
+const UsefulLinks = ({ userRole }) => {
+
+    const isHealthcareClient = userRole === 'healthcare_client';
+
+    // Hide component for healthcare_client users
+    if (isHealthcareClient) {
+        return null;
+    }
+
     const [links, setLinks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [userType, setUserType] = useState('');
 
     useEffect(() => {
-        // Get user type from localStorage or your auth context
-        const user = JSON.parse(localStorage.getItem('user') || '{}');
-        setUserType(user.userType || '');
         fetchLinks();
     }, []);
 
@@ -35,15 +39,6 @@ const UsefulLinks = () => {
     );
 
     const categories = [...new Set(filteredLinks.map(link => link.category))];
-
-    // Check if user is Healthcare Client under Individual user types
-    const isHealthcareClientIndividual = userType === 'Healthcare Client' && 
-                                        userType.includes('Individual');
-
-    // Don't render anything for Healthcare Clients under Individual user types
-    if (isHealthcareClientIndividual) {
-        return null;
-    }
 
     return (
         <div className="p-6 max-w-5xl mx-auto">
