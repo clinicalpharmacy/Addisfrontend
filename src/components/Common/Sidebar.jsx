@@ -451,11 +451,10 @@ const Sidebar = ({ onClose }) => {
                 </div>
 
                 {/* Quick Actions */}
-                {(user?.role !== 'healthcare_client' || !isIndividual) && (
                 <div className="mb-8">
                     <h3 className="text-xs uppercase text-gray-400 font-black mb-4 tracking-[0.2em] px-3">Quick Actions</h3>
                     <ul className="space-y-2">
-                        {!isAdmin && user?.role !== 'health_care_client' && (
+                        {!isAdmin && user?.role !== 'healthcare_client' && (
                             <li>
                                 <button
                                     onClick={() => {
