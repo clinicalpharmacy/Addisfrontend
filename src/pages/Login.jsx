@@ -601,6 +601,24 @@ const Login = () => {
                         </span>
                     </div>
                 </div>
+
+                {/* Contact Address - Bottom Right with Icon */}
+                <div className="fixed bottom-4 right-4 z-20">
+                    <div className="bg-gradient-to-r from-blue-50 to-white backdrop-blur-sm rounded-lg shadow-lg border-l-4 border-blue-500 px-4 py-2.5 hover:shadow-xl transition-all duration-300 group">
+                        <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                                <FaEnvelope className="text-blue-600 text-xs" />
+                            </div>
+                            <span className="text-xs font-medium text-gray-700">
+                                Contact address: 
+                                <span className="text-blue-600 ml-1 font-semibold">
+                                    pharmcare2001@yahoo.com
+                                    tiktok.com/@addis.med
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <style>{`
