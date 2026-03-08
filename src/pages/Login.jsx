@@ -602,44 +602,50 @@ const Login = () => {
                     </div>
                 </div>
 
-                {/* Contact Addresses - Horizontal Bottom Bar */}
+                {/* Contact Addresses - Left and Right Bottom Bar */}
                 <div className="fixed bottom-0 left-0 right-0 z-20 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 shadow-lg border-t border-white/20">
                     <div className="container mx-auto px-4 py-2">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                            {/* Location */}
-                            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                                <FaBuilding className="text-white text-xs" />
-                                <span className="text-xs text-white">
-                                    <span className="font-medium">Location: </span>
-                                    <span className="ml-1 font-light">Addis Ababa, Ethiopia</span>
-                                </span>
+                        <div className="flex items-center justify-between">
+                            {/* Left Side - Location and Email */}
+                            <div className="flex items-center gap-4">
+                                {/* Location */}
+                                <div className="flex items-center gap-2 text-white/90 hover:text-white transition-all duration-300">
+                                    <FaMapMarkerAlt className="text-white text-xs" />
+                                    <span className="text-xs">
+                                        <span className="font-medium hidden sm:inline">Location:</span>
+                                        <span className="ml-1 font-light">Addis Ababa, Ethiopia</span>
+                                    </span>
+                                </div>
+                
+                                {/* Email */}
+                                <div className="flex items-center gap-2 text-white/90 hover:text-white transition-all duration-300">
+                                    <FaEnvelope className="text-white text-xs" />
+                                    <span className="text-xs">
+                                        <span className="font-medium hidden sm:inline">Email:</span>
+                                        <span className="ml-1 font-light">pharmcare2001@yahoo.com</span>
+                                    </span>
+                                </div>
                             </div>
                 
-                            {/* Email */}
-                            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                                <FaBuilding className="text-white text-xs" />
-                                <span className="text-xs text-white">
-                                    <span className="font-medium">Email: </span>
-                                    <span className="ml-1 font-light">pharmcare2001@yahoo.com</span>
-                                </span>
-                            </div>
+                            {/* Right Side - Phone and Social Media */}
+                            <div className="flex items-center gap-4">
+                                {/* Phone */}
+                                <div className="flex items-center gap-2 text-white/90 hover:text-white transition-all duration-300">
+                                    <FaPhoneAlt className="text-white text-xs" />
+                                    <span className="text-xs">
+                                        <span className="font-medium hidden sm:inline">Phone:</span>
+                                        <span className="ml-1 font-light">+251919519512</span>
+                                    </span>
+                                </div>
                 
-                            {/* Phone */}
-                            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                                <FaBuilding className="text-white text-xs" />
-                                <span className="text-xs text-white">
-                                    <span className="font-medium">Phone: </span>
-                                    <span className="ml-1 font-light">+251919519512</span>
-                                </span>
-                            </div>
-                
-                            {/* Social media */}
-                            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                                <FaMapMarkerAlt className="text-white text-xs" />
-                                <span className="text-xs text-white">
-                                    <span className="font-medium">Social media: </span>
-                                    <span className="ml-1 font-light">tiktok.com/@addis.med</span>
-                                </span>
+                                {/* Social Media */}
+                                <div className="flex items-center gap-2 text-white/90 hover:text-white transition-all duration-300">
+                                    <FaTwitter className="text-white text-xs" />
+                                    <span className="text-xs">
+                                        <span className="font-medium hidden sm:inline">Social:</span>
+                                        <span className="ml-1 font-light">tiktok.com/@addis.med</span>
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
