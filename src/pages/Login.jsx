@@ -623,7 +623,7 @@ const Login = () => {
                     </div>
                 </div>
                             
-                <div className="fixed bottom-4 right-4 z-20 w-full max-w-[220px] sm:w-auto">
+                <div className="fixed bottom-4 right-2 sm:right-4 z-20 w-[45%] min-w-[120px]">
                     <div className="px-4 py-3 min-w-[150px] sm:min-w-[220px]">
                         <div className="flex items-center gap-4 flex-wrap">
                             <div className="flex items-center gap-2">
