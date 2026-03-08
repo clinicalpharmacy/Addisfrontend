@@ -602,46 +602,43 @@ const Login = () => {
                     </div>
                 </div>
 
-                {/* Contact Address - Bottom Right with Multiple Lines */}
-                <div className="fixed bottom-4 right-4 z-20">
-                    <div className="bg-gradient-to-r from-blue-50 to-white backdrop-blur-sm rounded-lg shadow-lg border-l-4 border-blue-500 px-4 py-3 hover:shadow-xl transition-all duration-300 group min-w-[220px]">
-                        <div className="flex items-center gap-2 mb-2 pb-1 border-b border-blue-200">
-                            <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                                <FaEnvelope className="text-blue-600 text-xs" />
-                            </div>
-                            <span className="text-xs font-bold text-gray-800">Contact Address</span>
-                        </div>
-                        
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                                <span className="text-xs text-gray-700">
-                                    <span className="font-medium">Location: </span> 
-                                    <span className="text-blue-600 ml-1 font-mono text-[10px]">Addis Ababa, Ethiopia</span>
+                {/* Contact Addresses - Horizontal Bottom Bar */}
+                <div className="fixed bottom-0 left-0 right-0 z-20 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 shadow-lg border-t border-white/20">
+                    <div className="container mx-auto px-4 py-2">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            {/* Location */}
+                            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                                <FaBuilding className="text-white text-xs" />
+                                <span className="text-xs text-white">
+                                    <span className="font-medium">Location: </span>
+                                    <span className="ml-1 font-light">Addis Ababa, Ethiopia</span>
                                 </span>
                             </div>
-                            
-                            <div className="flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                                <span className="text-xs text-gray-700">
-                                    <span className="font-medium">Email: </span> 
-                                    <span className="text-blue-600 ml-1 font-mono text-[10px]">pharmcare2001@yahoo.com</span>
+                
+                            {/* Email */}
+                            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                                <FaBuilding className="text-white text-xs" />
+                                <span className="text-xs text-white">
+                                    <span className="font-medium">Email: </span>
+                                    <span className="ml-1 font-light">pharmcare2001@yahoo.com</span>
                                 </span>
                             </div>
-                            
-                            <div className="flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                                <span className="text-xs text-gray-700">
-                                    <span className="font-medium">Phone: </span> 
-                                    <span className="text-blue-600 ml-1 font-mono text-[10px]">+251919519512</span>
+                
+                            {/* Phone */}
+                            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                                <FaBuilding className="text-white text-xs" />
+                                <span className="text-xs text-white">
+                                    <span className="font-medium">Phone: </span>
+                                    <span className="ml-1 font-light">+251919519512</span>
                                 </span>
                             </div>
-                            
-                            <div className="flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                                <span className="text-xs text-gray-700">
-                                    <span className="font-medium">Social media: </span> 
-                                    <span className="text-blue-600 ml-1 font-mono text-[10px]">tiktok.com/@addis.med</span>
+                
+                            {/* Social media */}
+                            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                                <FaMapMarkerAlt className="text-white text-xs" />
+                                <span className="text-xs text-white">
+                                    <span className="font-medium">Social media: </span>
+                                    <span className="ml-1 font-light">tiktok.com/@addis.med</span>
                                 </span>
                             </div>
                         </div>
