@@ -641,7 +641,6 @@ const Login = () => {
                         </div>
                     </div>
                 </div>
-            </div>
 
             <style>{`
                 @keyframes shake {
