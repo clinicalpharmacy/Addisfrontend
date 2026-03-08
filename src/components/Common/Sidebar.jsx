@@ -195,6 +195,7 @@ const Sidebar = ({ onClose }) => {
                                             <span className="w-2 h-2 rounded-full bg-current opacity-40" />
                                             Patient List
                                         </NavLink>
+                                        {!isAdmin && user?.role !== 'healthcare_client' && (
                                         <NavLink
                                             to="/patients/new"
                                             onClick={onClose}
@@ -208,6 +209,7 @@ const Sidebar = ({ onClose }) => {
                                             <span className="w-2 h-2 rounded-full bg-current opacity-40" />
                                             New Patient
                                         </NavLink>
+                                        )}
                                     </div>
                                 )}
                             </li>
