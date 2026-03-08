@@ -616,7 +616,7 @@ const Login = () => {
                             <div className="flex items-center gap-2">
                                 <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
                                 <span className="text-xs text-gray-700">
-                                    <span className="font-medium">Main Office:</span> 
+                                    <span className="font-medium">Location: </span> 
                                     <span className="text-blue-600 ml-1 font-mono text-[10px]">Addis Ababa, Ethiopia</span>
                                 </span>
                             </div>
@@ -624,23 +624,23 @@ const Login = () => {
                             <div className="flex items-center gap-2">
                                 <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
                                 <span className="text-xs text-gray-700">
-                                    <span className="font-medium">Branch 1:</span> 
-                                    <span className="text-blue-600 ml-1 font-mono text-[10px]">Email: pharmcare2001@yahoo.com</span>
+                                    <span className="font-medium">Email: </span> 
+                                    <span className="text-blue-600 ml-1 font-mono text-[10px]">pharmcare2001@yahoo.com</span>
                                 </span>
                             </div>
                             
                             <div className="flex items-center gap-2">
                                 <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
                                 <span className="text-xs text-gray-700">
-                                    <span className="font-medium">Branch 2:</span> 
-                                    <span className="text-blue-600 ml-1 font-mono text-[10px]">Phone: +251919519512</span>
+                                    <span className="font-medium">Phone: </span> 
+                                    <span className="text-blue-600 ml-1 font-mono text-[10px]">+251919519512</span>
                                 </span>
                             </div>
                             
                             <div className="flex items-center gap-2">
                                 <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
                                 <span className="text-xs text-gray-700">
-                                    <span className="font-medium">Headquarters:</span> 
+                                    <span className="font-medium">Social media: </span> 
                                     <span className="text-blue-600 ml-1 font-mono text-[10px]">tiktok.com/@addis.med</span>
                                 </span>
                             </div>
