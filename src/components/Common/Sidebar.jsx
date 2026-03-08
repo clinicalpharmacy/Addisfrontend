@@ -451,6 +451,7 @@ const Sidebar = ({ onClose }) => {
                 </div>
 
                 {/* Quick Actions */}
+                {!isAdmin && user?.role !== 'healthcare_client' && (
                 <div className="mb-8">
                     <h3 className="text-xs uppercase text-gray-400 font-black mb-4 tracking-[0.2em] px-3">Quick Actions</h3>
                     <ul className="space-y-2">
