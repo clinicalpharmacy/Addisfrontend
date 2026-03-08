@@ -603,8 +603,8 @@ const Login = () => {
                 </div>
 
                 {/* Contact Address - Bottom with Multiple Lines */}
-                <div className="fixed bottom-4 left-4 z-20">
-                    <div className="px-4 py-3 min-w-[220px]">
+                <div className="fixed bottom-4 right-4 z-20 w-full max-w-[220px] sm:w-auto">
+                    <div className="px-4 py-3 min-w-[150px] sm:min-w-[220px]">
                         <div className="flex items-center gap-4 flex-wrap">
                             <div className="flex items-center gap-2">
                                 <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
@@ -623,8 +623,8 @@ const Login = () => {
                     </div>
                 </div>
                             
-                <div className="fixed bottom-4 right-4 z-20">
-                    <div className="px-4 py-3 min-w-[220px]">
+                <div className="fixed bottom-4 right-4 z-20 w-full max-w-[220px] sm:w-auto">
+                    <div className="px-4 py-3 min-w-[150px] sm:min-w-[220px]">
                         <div className="flex items-center gap-4 flex-wrap">
                             <div className="flex items-center gap-2">
                                 <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
