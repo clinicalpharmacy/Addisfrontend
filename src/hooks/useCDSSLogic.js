@@ -249,6 +249,7 @@ export const useCDSSLogic = (patientData) => {
                             },
                             timestamp: new Date().toISOString(),
                             acknowledged: false,
+                            processed: false,
                             patient_code: patientData.patient_code,
                             patient_name: currentPatient.full_name,
                             patient_age_in_days: facts.age_in_days,
@@ -371,6 +372,7 @@ export const useCDSSLogic = (patientData) => {
                         },
                         timestamp: new Date().toISOString(),
                         acknowledged: false,
+                        processed: false,
                         is_test_rule: true
                     });
                 }
@@ -471,10 +473,21 @@ export const useCDSSLogic = (patientData) => {
         }
     }, [alerts]);
 
-    const acknowledgeAlert = useCallback((alertId) => {
-        const updatedAlerts = alerts.map(alert =>
-            alert.id === alertId ? { ...alert, acknowledged: true } : alert
-        );
+    const acknowledgeAlert = useCallback((alertId, isProcessed = null) => {
+        const updatedAlerts = alerts.map(alert => {
+            if (alert.id === alertId) {
+                // If it's being marked as processed, it should also be marked as seen
+                const newProcessed = isProcessed !== null ? isProcessed : alert.processed;
+                const newAcknowledged = isProcessed !== null ? (isProcessed ? true : alert.acknowledged) : true;
+
+                return {
+                    ...alert,
+                    acknowledged: newAcknowledged,
+                    processed: newProcessed
+                };
+            }
+            return alert;
+        });
         setAlerts(updatedAlerts);
         setFilteredAlerts(updatedAlerts.filter(alert =>
             severityFilter === 'all' || alert.severity === severityFilter
@@ -482,7 +495,7 @@ export const useCDSSLogic = (patientData) => {
     }, [alerts, severityFilter]);
 
     const acknowledgeAll = useCallback(() => {
-        const updatedAlerts = alerts.map(alert => ({ ...alert, acknowledged: true }));
+        const updatedAlerts = alerts.map(alert => ({ ...alert, acknowledged: true, processed: true }));
         setAlerts(updatedAlerts);
         setFilteredAlerts(updatedAlerts);
     }, [alerts]);
