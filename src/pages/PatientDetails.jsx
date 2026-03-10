@@ -35,6 +35,7 @@ import {
 
     FaSync,
     FaBrain,
+    FaRobot,
     FaHistory
 } from 'react-icons/fa';
 
@@ -249,55 +250,46 @@ const PatientDetails = () => {
             { id: 'vitals', label: 'Vitals & Anthropometry', icon: FaHeartbeat },
             { id: 'labs', label: 'Labs', icon: FaVial },
             { id: 'medications', label: 'Medications', icon: FaPills },
-            { id: 'drn', label: 'DRN Assessment', icon: FaBrain },
-            { id: 'analysis', label: 'Clinical Analysis', icon: FaBrain }, // ← Keep in sidebar
+            { id: 'drn', label: 'DRN Assessment', icon: FaRobot },
             { id: 'plan', label: 'Ph-Asst & Plan', icon: FaFileMedical },
             { id: 'outcome', label: 'Outcome', icon: FaChartLine },
             { id: 'cost', label: 'Cost', icon: FaMoneyBillWave }
         ];
-    
-        // Core access check: User must be an admin, have an active subscription, or be part of a company
+
         const hasActiveSubscription = user?.subscription_status === 'active';
         const isCompanyUser = !!user?.company_id ||
             user?.account_type === 'company' ||
             ['company_admin', 'company_user'].includes(user?.role);
         const isAdmin = user?.role === 'admin';
-        
-        // Check for specific individual user roles that should have DRN access
-        const isPharmacistOrStudent = user?.account_type === 'individual' && 
+        const isPharmacistOrStudent = user?.account_type === 'individual' &&
             (user?.role === 'pharmacist' || user?.role === 'pharmacy_student');
-    
-        // Basic check for tabs that require at least a subscription
+
+        let result = allTabs;
+
+        // Ensure AI Assistant (analysis) is ALWAYS included for everyone
+        const alwaysVisible = ['overview', 'demographics', 'vitals', 'labs', 'analysis'];
+
         if (!hasActiveSubscription && !isAdmin) {
-            // ← REMOVE 'analysis' from this filter if you want it to appear for non-subscribers
-            return allTabs.filter(tab => !['analysis', 'plan', 'outcome', 'cost', 'drn', 'medications'].includes(tab.id));
-        }
-    
-        // Tiered restriction: Individual subscribers
-        if (user?.account_type === 'individual' && !isAdmin) {
-            // Start with all tabs EXCEPT clinical tools
-            let filteredTabs = allTabs.filter(tab => !['overview', 'plan', 'outcome', 'cost'].includes(tab.id));
-            
-            // ← Add this line to remove Clinical Analysis from tabs
-            filteredTabs = filteredTabs.filter(tab => tab.id !== 'analysis');
-            
-            // If user is NOT pharmacist or pharmacy_student, also remove DRN
+            // Keep alwaysVisible + others except core clinical tools
+            result = allTabs.filter(tab =>
+                alwaysVisible.includes(tab.id) ||
+                !['plan', 'outcome', 'cost', 'drn', 'medications'].includes(tab.id)
+            );
+        } else if (user?.account_type === 'individual' && !isAdmin) {
+            // Individual subscribers - remove some tabs but KEEP analysis
+            result = allTabs.filter(tab =>
+                alwaysVisible.includes(tab.id) ||
+                !['plan', 'outcome', 'cost'].includes(tab.id)
+            );
+
             if (!isPharmacistOrStudent) {
-                filteredTabs = filteredTabs.filter(tab => tab.id !== 'drn');
+                result = result.filter(tab => tab.id !== 'drn');
             }
-            
-            return filteredTabs;
         }
-    
-        // Company users (non-admin)
-        if (isCompanyUser && !isAdmin) {
-            // ← Remove Clinical Analysis for company users
-            return allTabs.filter(tab => tab.id !== 'analysis');
-        }
-    
-        // Admins and others - remove Clinical Analysis from tabs
-        // ← Add this for all other cases
-        return allTabs.filter(tab => tab.id !== 'analysis');
+
+        console.log("🛠️ PatientDetails - Tab Filter Logic - User Role:", user?.role, "Account:", user?.account_type);
+        console.log("🛠️ PatientDetails - Final Tabs:", result.map(t => t.id).join(', '));
+        return result;
     }, [user]);
 
 
@@ -987,37 +979,37 @@ const PatientDetails = () => {
     // Add this function BEFORE handleSave (outside of it)
     const checkPatientLimit = useCallback(async () => {
         if (!isNewPatient) return true; // Only check for new patients
-        
+
         // Company users have no limits - skip check entirely
         const isCompanyUser = !!user?.company_id ||
             user?.account_type === 'company' ||
             ['company_admin', 'company_user'].includes(user?.role);
-        
+
         if (isCompanyUser) {
             return true; // Company users can add unlimited patients
         }
-        
+
         // Only check limits for individual users
         if (user?.account_type === 'individual') {
             try {
                 // Get current patient count for this user
                 const result = await api.get('/patients/count');
-                
+
                 if (result.success) {
                     const currentCount = result.count;
-                    
+
                     // Check user role and set limit
                     const isPharmacistOrStudent = user?.role === 'pharmacist' || user?.role === 'pharmacy_student';
-                    
+
                     const limit = isPharmacistOrStudent ? 5 : 1;
-                    
+
                     if (currentCount >= limit) {
                         alert(
                             `❌ Case Limit Reached\n\n` +
                             `You have reached your maximum of ${limit} case${limit > 1 ? 's' : ''}.\n\n` +
                             `Current: ${currentCount}/${limit} cases\n\n` +
-                            `${isPharmacistOrStudent ? 
-                                'As a pharmacist or pharmacy student, you can manage up to 5 cases. To review medications for additional cases, you may update or modify the existing data.' : 
+                            `${isPharmacistOrStudent ?
+                                'As a pharmacist or pharmacy student, you can manage up to 5 cases. To review medications for additional cases, you may update or modify the existing data.' :
                                 'This subscription is limited to 1 case. To review medications for additional cases, you may update or modify the existing data..'}`
                         );
                         return false;
@@ -1029,11 +1021,11 @@ const PatientDetails = () => {
                 return true; // Allow if we can't check (fallback)
             }
         }
-        
+
         // For any other user types (admins, etc.), allow
         return true;
     }, [isNewPatient, user]);
-    
+
     // Then fix the handleSave function
     const handleSave = useCallback(async (section = 'all') => {
         try {
@@ -1044,11 +1036,11 @@ const PatientDetails = () => {
                     return;
                 }
             }
-    
+
             // For new patients, validate required fields
             if (isNewPatient) {
                 const isIndividual = user?.account_type === 'individual' && user?.role !== 'admin';
-    
+
                 if (!isIndividual) {
                     if (!formData.full_name || formData.full_name.trim() === '') {
                         alert('Please enter patient name');
@@ -1056,15 +1048,15 @@ const PatientDetails = () => {
                     }
                 }
             }
-    
+
             let savePatientCode = getCurrentPatientCode();
-    
+
             // For NEW patients, ALWAYS generate a fresh code
             if (isNewPatient) {
                 savePatientCode = generatePatientCode();
                 setCurrentPatientCode(savePatientCode);
             }
-    
+
             // Validate we have a patient code
             if (!savePatientCode || savePatientCode.trim() === '') {
                 if (isNewPatient) {
@@ -1075,11 +1067,11 @@ const PatientDetails = () => {
                     return;
                 }
             }
-    
+
             // Calculate ages
             let ageInDays = formData.age_in_days;
             let ageInYears = formData.age;
-    
+
             if (formData.date_of_birth) {
                 if (!isValidDate(formData.date_of_birth)) {
                     alert('Invalid date of birth');
@@ -1088,16 +1080,16 @@ const PatientDetails = () => {
                 if (!ageInDays) ageInDays = calculateAgeInDays(formData.date_of_birth);
                 if (!ageInYears) ageInYears = calculateAge(formData.date_of_birth);
             }
-    
+
             const patientType = formData.patient_type || determinePatientType(ageInDays);
-    
+
             // Helper functions
             const cleanNumber = (value) => {
                 if (value === '' || value === null || value === undefined) return null;
                 const num = parseFloat(value);
                 return isNaN(num) ? null : num;
             };
-    
+
             const cleanDate = (value) => {
                 if (!value || value === '' || !isValidDate(value)) return null;
                 try {
@@ -1106,12 +1098,12 @@ const PatientDetails = () => {
                     return null;
                 }
             };
-    
+
             const cleanText = (value) => {
                 if (!value || value.trim() === '') return null;
                 return value.trim();
             };
-    
+
             // COMPLETE section data with ALL fields
             const sectionData = {
                 basic: {
@@ -1143,7 +1135,7 @@ const PatientDetails = () => {
                     special_instructions: cleanText(formData.special_instructions),
                     developmental_milestones: cleanText(formData.developmental_milestones),
                 },
-    
+
                 vitals: {
                     blood_pressure: cleanText(formData.blood_pressure),
                     heart_rate: cleanNumber(formData.heart_rate),
@@ -1161,11 +1153,11 @@ const PatientDetails = () => {
                     head_circumference_percentile: cleanNumber(formData.head_circumference_percentile),
                     bsa_percentile: cleanNumber(formData.bsa_percentile),
                 },
-    
+
                 labs: {
                     labs: (() => {
                         const allLabsData = {};
-    
+
                         // Add dynamic Custom/Global Labs from customLabs state
                         customLabs.forEach(lab => {
                             if (lab.name && lab.name.trim() !== '' && lab.value !== '') {
@@ -1174,16 +1166,16 @@ const PatientDetails = () => {
                                 allLabsData[key] = lab.value;
                             }
                         });
-    
+
                         return allLabsData;
                     })(),
                     last_tested: cleanDate(formData.last_tested)
                 }
             };
-    
+
             // Combine based on section
             let patientData = {};
-    
+
             if (section === 'all' || isNewPatient) {
                 patientData = {
                     ...sectionData.basic,
@@ -1202,7 +1194,7 @@ const PatientDetails = () => {
             } else if (section === 'basic') {
                 patientData = sectionData.basic;
             }
-    
+
             // Clean data
             const cleanedPatientData = {};
             Object.keys(patientData).forEach(key => {
@@ -1210,7 +1202,7 @@ const PatientDetails = () => {
                     cleanedPatientData[key] = patientData[key];
                 }
             });
-    
+
             // API call
             let result;
             if (isNewPatient) {
@@ -1219,34 +1211,34 @@ const PatientDetails = () => {
                 delete cleanedPatientData.patient_code;
                 result = await api.put(`/patients/code/${savePatientCode}`, cleanedPatientData);
             }
-    
+
             if (result.success) {
                 const savedPatient = result.patient || result.data;
-    
+
                 // ✅ CRITICAL FIX: Use loadPatientData to properly unfold the labs JSONB
                 // back into the individual form fields after a successful save.
                 await loadPatientData(savedPatient);
-    
+
                 if (setPatient) setPatient(savedPatient);
                 setCurrentPatientCode(savedPatient.patient_code);
-    
+
                 if (isNewPatient) {
                     setIsNewPatient(false);
                 }
-    
+
                 // Fetch clinical history too
                 fetchClinicalHistory(savePatientCode);
-    
+
                 if (section === 'all' || isNewPatient) {
                     setIsEditing(false);
                 }
-    
+
                 alert(isNewPatient ? 'Patient created successfully!' : 'Patient updated successfully!');
-    
+
                 if (patientCode === 'new' && isNewPatient) {
                     navigate(`/patients/${savedPatient.patient_code}`);
                 }
-    
+
                 // --- PUSH TO HISTORY TABLES ---
                 try {
                     if (section === 'vitals' || section === 'all' || isNewPatient) {
@@ -1275,14 +1267,14 @@ const PatientDetails = () => {
                 } catch (histError) {
                     console.error('Error saving to history:', histError);
                 }
-    
+
             } else {
                 throw new Error(result.error || 'Save failed');
             }
-    
+
         } catch (error) {
             console.error('Save error:', error);
-    
+
             // Check if it's a patient limit error
             if (error.response?.status === 403 && error.response?.data?.error === 'Case limit reached') {
                 const errorData = error.response.data;
@@ -2962,9 +2954,9 @@ const PatientDetails = () => {
             case 'medications':
                 return <MedicationHistory patientCode={getCurrentPatientCode()} />;
             case 'analysis':
-                return <CDSSDisplay 
+                return <CDSSDisplay
                     patientData={formData}
-                    onBack={() => {}} // Empty function since we're already in patient details
+                    onBack={() => { }} // Empty function since we're already in patient details
                 />;
             case 'drn':
                 return <DRNAssessment patientCode={getCurrentPatientCode()} />;
@@ -3118,7 +3110,7 @@ const PatientDetails = () => {
                     {activeTab === 'labs' && renderLabsSection()}
                     {activeTab === 'medications' && <MedicationHistory patientCode={getCurrentPatientCode()} />}
                     {activeTab === 'drn' && <DRNAssessment patientCode={getCurrentPatientCode()} />}
-                    {activeTab === 'analysis' && <CDSSDisplay patientData={formData} onBack={() => {}} />}
+
                     {activeTab === 'plan' && <PhAssistPlan patientCode={getCurrentPatientCode()} />}
                     {activeTab === 'outcome' && <PatientOutcome patientCode={getCurrentPatientCode()} />}
                     {activeTab === 'cost' && <CostSection patientCode={getCurrentPatientCode()} />}

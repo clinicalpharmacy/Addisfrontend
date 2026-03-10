@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import api from '../../utils/api';
 import supabase from '../../utils/supabase';
 import { mapPatientToFacts, evaluateRule } from '../CDSS/RuleEngine';
 import {
     FaStethoscope, FaEdit, FaDatabase, FaChevronUp, FaChevronDown,
     FaPills, FaExclamationTriangle, FaCheckCircle, FaSpinner,
     FaHeartbeat, FaClipboardCheck, FaUserCheck,
-    FaCapsules, FaSync
+    FaCapsules, FaSync, FaBrain, FaRobot, FaLightbulb, FaBookMedical,
+    FaRegLightbulb, FaShieldAlt
 } from 'react-icons/fa';
 
 const DRNAssessment = ({ patientCode }) => {
@@ -16,9 +18,14 @@ const DRNAssessment = ({ patientCode }) => {
     const [timestamps, setTimestamps] = useState({});
     const [isReportable, setIsReportable] = useState(null);
     const [editId, setEditId] = useState(null);
-    const [analysisResults, setAnalysisResults] = useState(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [showAnalysis, setShowAnalysis] = useState(true);
+    const [aiAnalysis, setAiAnalysis] = useState(null);
+    const [analysisResults, setAnalysisResults] = useState(null);
+    const [aiLoading, setAiLoading] = useState(false);
+    const [aiError, setAiError] = useState(null);
+    const [hasAiAcknowledged, setHasAiAcknowledged] = useState(false);
+    const [showAiAck, setShowAiAck] = useState(false);
     const [patientData, setPatientData] = useState(null);
     const [medications, setMedications] = useState([]);
     const [clinicalRules, setClinicalRules] = useState([]);
@@ -31,6 +38,7 @@ const DRNAssessment = ({ patientCode }) => {
     const [showReportablePopup, setShowReportablePopup] = useState(false);
     const [reportableDTPCause, setReportableDTPCause] = useState(null);
     const [showDefectLink, setShowDefectLink] = useState(false);
+    const [pendingAnalysis, setPendingAnalysis] = useState(null); // 'cdss' or 'ai'
 
     // ✅ 9 DRN Categories
     const drnCategories = {
@@ -304,7 +312,7 @@ const DRNAssessment = ({ patientCode }) => {
 
             if (error) {
                 setAuthError(`Patient not found: ${patientCode}`);
-                return;
+                return null;
             }
 
             setPatientData(patient);
@@ -316,10 +324,14 @@ const DRNAssessment = ({ patientCode }) => {
                 .eq('patient_code', patientCode)
                 .eq('is_active', true);
 
-            setMedications(medicationsData || patient.medication_history || []);
+            const medicationsResolved = medicationsData || patient.medication_history || [];
+            setMedications(medicationsResolved);
+
+            return { patient, medications: medicationsResolved };
         } catch (error) {
             console.error('Error loading patient:', error);
             setAuthError('Failed to load patient data.');
+            return null;
         }
     };
 
@@ -373,14 +385,34 @@ const DRNAssessment = ({ patientCode }) => {
         }
     };
 
-    const runCdssAnalysis = async () => {
+
+
+    const runCdssAnalysis = async (skipAck = false) => {
+        if (!patientCode) return;
+
+        if (!hasAiAcknowledged && !skipAck) {
+            setPendingAnalysis('cdss');
+            setShowAiAck(true);
+            return;
+        }
+
         setIsAnalyzing(true);
 
         try {
-            if (!patientData) await loadPatientData();
-            if (!patientData) throw new Error('No patient data');
+            let currentPatient = patientData;
+            let currentMedications = medications;
 
-            const facts = mapPatientToFacts(patientData, medications);
+            if (!currentPatient) {
+                const refreshed = await loadPatientData();
+                if (refreshed) {
+                    currentPatient = refreshed.patient;
+                    currentMedications = refreshed.medications;
+                }
+            }
+
+            if (!currentPatient) throw new Error('No patient data');
+
+            const facts = mapPatientToFacts(currentPatient, currentMedications);
             const triggeredRules = [];
             const findings = [];
 
@@ -503,6 +535,73 @@ const DRNAssessment = ({ patientCode }) => {
             });
         } finally {
             setIsAnalyzing(false);
+        }
+    };
+
+    const runAIAnalysis = async (skipAck = false) => {
+        if (!patientCode) return;
+
+        if (!hasAiAcknowledged && !skipAck) {
+            setPendingAnalysis('ai');
+            setShowAiAck(true);
+            return;
+        }
+
+        try {
+            setAiLoading(true);
+            setAiError(null);
+
+            let currentPatient = patientData;
+            let currentMedications = medications;
+
+            // Ensure patient data is loaded and capture results directly
+            if (!currentPatient) {
+                const refreshed = await loadPatientData();
+                if (refreshed) {
+                    currentPatient = refreshed.patient;
+                    currentMedications = refreshed.medications;
+                }
+            }
+
+            if (!currentPatient) throw new Error('Patient data not found');
+
+            // Collect patient facts for AI using the fresh data
+            const facts = mapPatientToFacts(currentPatient, currentMedications);
+
+            const analysisData = {
+                age: currentPatient?.age,
+                sex: currentPatient?.gender,
+                pregnancy: currentPatient?.is_pregnant,
+                conditions: currentPatient?.diagnosis ? [currentPatient.diagnosis] : [],
+                medications: currentMedications?.map(m => ({
+                    name: m.drug_name,
+                    dose: `${m.dose || ''} ${m.frequency || ''}`.trim()
+                })) || [],
+                labs: currentPatient?.labs || {},
+                vitals: {
+                    bp: currentPatient?.blood_pressure,
+                    hr: currentPatient?.heart_rate,
+                    temp: currentPatient?.temperature,
+                    rr: currentPatient?.respiratory_rate,
+                    spo2: currentPatient?.oxygen_saturation
+                },
+                age_category: facts.patient_type
+            };
+
+            console.log("🚀 Sending data from DRN to Gemini AI:", analysisData);
+            const result = await api.post('/ai/cdss-analysis', analysisData);
+            console.log("🚀 Gemini AI Response (DRN):", result);
+
+            if (result.success && result.analysis) {
+                setAiAnalysis(result.analysis);
+            } else {
+                setAiError(result.error || "Failed to get AI analysis");
+            }
+        } catch (err) {
+            console.error("🚀 AI Analysis API Error:", err);
+            setAiError("Something went wrong with the AI assistant.");
+        } finally {
+            setAiLoading(false);
         }
     };
 
@@ -638,13 +737,13 @@ const DRNAssessment = ({ patientCode }) => {
             }
 
             await fetchAssessments();
-            
+
             // Check if ADE or Product Quality Defect to show reportable popup
             if (causeDetails?.["DTP Type"] === 'ADE' || causeName === 'Product Quality Defect') {
                 setShowReportablePopup(true);
                 setReportableDTPCause(causeName);
             }
-            
+
             setSelectedCauses([]);
             setWriteUps({});
             setTimestamps({});
@@ -699,7 +798,7 @@ const DRNAssessment = ({ patientCode }) => {
     const handleReportableResponse = (response) => {
         setIsReportable(response);
         setShowReportablePopup(false);
-        
+
         if (response) {
             setShowDefectLink(true);
         }
@@ -777,12 +876,12 @@ const DRNAssessment = ({ patientCode }) => {
                     </div>
                 </div>
             </div>
-                    
+
             {/* CDSS Analysis Section */}
             <div className="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-xl font-semibold text-blue-800 flex items-center gap-2">
-                        <FaDatabase /> CDSS clinical analysis
+                        <FaRobot className="text-purple-600" /> Clinical Decision Support & AI Assistant Insights
                     </h3>
                     <button
                         onClick={() => setShowAnalysis(!showAnalysis)}
@@ -794,35 +893,142 @@ const DRNAssessment = ({ patientCode }) => {
 
                 {showAnalysis && (
                     <>
+                        {showAiAck && !hasAiAcknowledged && (
+                            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+                                <div className="bg-white rounded-2xl border border-blue-100 p-6 md:p-8 max-w-lg w-full shadow-2xl animate-in zoom-in-95 duration-300">
+                                    <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                                        <FaShieldAlt className="text-blue-600 text-3xl" />
+                                    </div>
+                                    <h4 className="text-xl font-bold text-gray-800 mb-4 text-center">Clinical analysis acknowledgment</h4>
+                                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-5 rounded-2xl mb-8 text-sm md:text-base border border-blue-100/50">
+                                        <p className="text-gray-700 leading-relaxed mb-4 italic text-center">
+                                            “By continuing, you acknowledge that this supportive clinical information does not replace consultation with a licensed healthcare professional.”
+                                        </p>
+                                        <div className="h-px bg-blue-200/50 w-full mb-4"></div>
+                                        <p className="text-blue-900 font-bold text-center leading-relaxed">
+                                            “በመቀጠልዎ፤ ይህ መልዕክት ፈቃድ ካለው የጤና ባለሙያ ጋር የሚደረገውን የማማከር አገልግሎት የማይተካ መሆኑን ይስማማሉ።”
+                                        </p>
+                                    </div>
+                                    <div className="flex flex-col sm:flex-row gap-3">
+                                        <button
+                                            onClick={() => {
+                                                setShowAiAck(false);
+                                                setPendingAnalysis(null);
+                                            }}
+                                            className="flex-1 px-6 py-3 text-gray-600 hover:bg-gray-100 rounded-xl font-semibold transition-all border border-gray-200"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setHasAiAcknowledged(true);
+                                                setShowAiAck(false);
+                                                if (pendingAnalysis === 'cdss') {
+                                                    setTimeout(() => runCdssAnalysis(true), 100);
+                                                } else {
+                                                    setTimeout(() => runAIAnalysis(true), 100);
+                                                }
+                                            }}
+                                            className="flex-[1.5] bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-blue-200 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-95"
+                                        >
+                                            <FaCheckCircle /> Accept & Continue
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         {isAnalyzing ? (
                             <div className="text-center py-8">
                                 <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto mb-4" />
                                 <p className="text-gray-600">Running CDSS analysis...</p>
                             </div>
-                        ) : analysisResults ? (
+                        ) : (analysisResults || aiAnalysis || aiLoading || aiError) ? (
                             <div className="space-y-4">
                                 <div className="bg-white rounded-lg p-4 border shadow-sm">
-                                    <div className="flex justify-between items-start mb-4">
+                                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                                         <div>
-                                            <h4 className="font-semibold text-gray-800 text-lg">Analysis Results</h4>
-                                            <p className={`text-lg font-medium mt-2 ${analysisResults.totalFindings > 0
-                                                ? 'text-gray-800'
-                                                : 'text-green-600'
-                                                }`}>
-                                                {analysisResults.summary}
-                                            </p>
+                                            <h4 className="font-semibold text-gray-800 text-lg">Analysis Summary</h4>
+                                            {analysisResults && (
+                                                <p className={`text-sm mt-1 ${analysisResults.totalFindings > 0 ? 'text-orange-600' : 'text-green-600'}`}>
+                                                    {analysisResults.summary}
+                                                </p>
+                                            )}
                                         </div>
-                                        <div className="text-right">
+                                        <div className="flex flex-wrap gap-2">
                                             <button
                                                 onClick={runCdssAnalysis}
-                                                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm flex items-center gap-2"
+                                                disabled={isAnalyzing}
+                                                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm flex items-center gap-2 transition-all hover:scale-105"
                                             >
+                                                <FaSync className={isAnalyzing ? 'animate-spin' : ''} />
+                                                <span>{isAnalyzing ? 'Analyzing...' : 'Refresh CDSS Analysis'}</span>
+                                            </button>
+                                            <button
+                                                onClick={runAIAnalysis}
+                                                disabled={aiLoading}
+                                                className={`${aiLoading ? 'bg-gray-400' : 'bg-purple-600 hover:bg-purple-700'} text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 transition-all hover:scale-105 shadow-sm`}
+                                            >
+                                                <FaRobot className={aiLoading ? 'animate-pulse' : ''} />
+                                                <span>{aiLoading ? 'AI Analyzing...' : 'Run AI Clinical Assistant'}</span>
                                             </button>
                                         </div>
                                     </div>
 
-                                    {/* Findings display */}
-                                    {filteredFindings.length > 0 ? (
+                                    {/* AI Analysis Display if exists */}
+                                    {aiAnalysis && (
+                                        <div className="mb-6 animate-in fade-in slide-in-from-top duration-500 bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-200 rounded-xl overflow-hidden shadow-sm">
+                                            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-3 text-white flex justify-between items-center text-sm">
+                                                <div className="flex items-center gap-2">
+                                                    <FaRobot /> <span className="font-bold">Gemini AI Assistant Insights</span>
+                                                </div>
+                                                <button onClick={() => setAiAnalysis(null)} className="hover:bg-white/20 p-1 rounded">
+                                                    <FaSync />
+                                                </button>
+                                            </div>
+                                            <div className="p-4 text-sm space-y-4">
+                                                <div className="bg-white/60 p-3 rounded-lg border border-white">
+                                                    <h5 className="text-purple-700 font-bold mb-1 flex items-center gap-2"><FaLightbulb className="text-xs" /> Summary</h5>
+                                                    <p className="text-gray-700">{aiAnalysis.summary}</p>
+                                                </div>
+
+                                                {aiAnalysis.dtp?.length > 0 && (
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                        <div className="space-y-2">
+                                                            <h5 className="text-red-700 font-bold flex items-center gap-2"><FaExclamationTriangle className="text-xs" /> Potential DTPs</h5>
+                                                            {aiAnalysis.dtp.map((d, i) => (
+                                                                <div key={i} className="bg-red-50 p-2 rounded border border-red-100 text-xs text-red-800">
+                                                                    {d.category}: {d.problem}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <h5 className="text-blue-700 font-bold flex items-center gap-2"><FaHeartbeat className="text-xs" /> Monitoring</h5>
+                                                            <ul className="list-disc list-inside text-xs text-blue-800 bg-blue-50 p-2 rounded border border-blue-100">
+                                                                {aiAnalysis.monitoring?.map((m, i) => <li key={i}>{m}</li>)}
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {aiLoading && (
+                                        <div className="mb-6 p-6 bg-purple-50 rounded-xl border-2 border-dashed border-purple-200 text-center animate-pulse">
+                                            <FaBrain className="text-3xl text-purple-300 mx-auto mb-2 animate-bounce" />
+                                            <h4 className="text-sm font-bold text-purple-600">AI Analysis in progress...</h4>
+                                        </div>
+                                    )}
+
+                                    {aiError && (
+                                        <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 flex items-center gap-2">
+                                            <FaExclamationTriangle /> {aiError}
+                                        </div>
+                                    )}
+
+                                    {/* CDSS results list */}
+                                    {analysisResults && filteredFindings.length > 0 ? (
                                         <div className="space-y-3">
                                             {filteredFindings.map((finding, idx) => (
                                                 <div key={idx} className="p-4 border rounded-lg hover:shadow-md transition">
@@ -843,10 +1049,6 @@ const DRNAssessment = ({ patientCode }) => {
                                                                 )}
                                                             </div>
                                                             <p className="text-sm text-gray-600 mb-2">{finding.message}</p>
-                                                            <div className="flex flex-wrap items-center gap-3 mt-2">
-                                                                <span className="text-xs text-gray-500">
-                                                                </span>
-                                                            </div>
                                                         </div>
                                                         <button
                                                             onClick={() => handleReviewFinding(finding)}
@@ -858,7 +1060,7 @@ const DRNAssessment = ({ patientCode }) => {
                                                 </div>
                                             ))}
                                         </div>
-                                    ) : (
+                                    ) : (aiAnalysis || aiLoading || aiError) ? null : (
                                         <div className="text-center py-8">
                                             <FaCheckCircle className="text-4xl text-green-500 mx-auto mb-3" />
                                             <p className="text-gray-600">No issues found matching current filter</p>
@@ -869,13 +1071,21 @@ const DRNAssessment = ({ patientCode }) => {
                         ) : (
                             <div className="text-center py-6">
                                 <FaDatabase className="text-4xl text-blue-400 mx-auto mb-4" />
-                                <p className="text-gray-600 mb-4">Run CDSS clinical analysis to detect drug-related problems</p>
-                                <button
-                                    onClick={runCdssAnalysis}
-                                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-lg font-medium shadow-md flex items-center gap-2 mx-auto"
-                                >
-                                    <FaDatabase /> Run clinical analysis
-                                </button>
+                                <p className="text-gray-600 mb-4">Run clinical analysis to detect drug-related problems</p>
+                                <div className="flex justify-center gap-4">
+                                    <button
+                                        onClick={runCdssAnalysis}
+                                        className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium shadow-md flex items-center gap-2"
+                                    >
+                                        <FaSync /> Run CDSS Analysis
+                                    </button>
+                                    <button
+                                        onClick={runAIAnalysis}
+                                        className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-lg font-medium shadow-md flex items-center gap-2"
+                                    >
+                                        <FaRobot /> AI Clinical Assistant
+                                    </button>
+                                </div>
                             </div>
                         )}
                     </>

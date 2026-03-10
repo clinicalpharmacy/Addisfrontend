@@ -25,12 +25,18 @@ const CDSSDisplay = ({ patientData, onBack }) => {
         patientFacts
     } = useCDSSLogic(patientData);
 
-    const [aiAnalysis, setAiAnalysis] = useState(null);
-    const [aiLoading, setAiLoading] = useState(false);
-    const [aiError, setAiError] = useState(null);
+    console.log("🛠️ CDSSDisplay Render - patientData:", patientData);
+    console.log("🛠️ CDSSDisplay Render - clinicalRules:", clinicalRules?.length);
+    console.log("🛠️ CDSSDisplay Render - alerts:", alerts?.length);
+    console.log('💊 useCDSSLogic initialized with patientData:', patientData?.patient_code);
 
-    const userRole = localStorage.getItem('userRole') || 'admin';
+
+
+    const rawUserRole = localStorage.getItem('userRole') || 'admin';
+    const userRole = rawUserRole.toLowerCase().trim();
     const isHealthcareClient = userRole === 'healthcare_client';
+
+    console.log("🛠️ CDSSDisplay Auth Status - User Role:", userRole, "isHealthcareClient:", isHealthcareClient);
 
     const severityColors = {
         critical: 'bg-red-50 text-red-800 border-red-200 hover:bg-red-100',
@@ -53,48 +59,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
         low: 'bg-blue-500'
     };
 
-    const runAIAnalysis = async () => {
-        if (!patientData) return;
 
-        try {
-            setAiLoading(true);
-            setAiError(null);
-
-            // Collect patient data for AI (de-identified)
-            const analysisData = {
-                age: patientData.age,
-                sex: patientData.gender,
-                pregnancy: patientData.is_pregnant,
-                conditions: patientData.diagnosis ? [patientData.diagnosis] : [],
-                medications: medications?.map(m => ({
-                    name: m.drug_name,
-                    dose: `${m.dose || ''} ${m.frequency || ''}`.trim()
-                })) || [],
-                labs: patientData.labs || {},
-                vitals: {
-                    bp: patientData.blood_pressure,
-                    hr: patientData.heart_rate,
-                    temp: patientData.temperature,
-                    rr: patientData.respiratory_rate,
-                    spo2: patientData.oxygen_saturation
-                }
-            };
-
-            console.log("🚀 Sending data to Gemini AI:", analysisData);
-            const result = await api.post('/ai/cdss-analysis', analysisData);
-
-            if (result.success && result.analysis) {
-                setAiAnalysis(result.analysis);
-            } else {
-                setAiError(result.error || "Failed to get AI analysis");
-            }
-        } catch (err) {
-            console.error("AI Analysis Error:", err);
-            setAiError(err.message || "Something went wrong with the AI assistant.");
-        } finally {
-            setAiLoading(false);
-        }
-    };
 
     const downloadReport = async () => {
         if (!patientData) return;
@@ -276,7 +241,10 @@ const CDSSDisplay = ({ patientData, onBack }) => {
 
     const [hasAcknowledged, setHasAcknowledged] = useState(false);
 
-    if (!hasAcknowledged && alerts.length > 0) {
+    console.log("🛠️ CDSSDisplay - hasAcknowledged:", hasAcknowledged);
+
+    if (!hasAcknowledged) {
+        console.log("🛠️ Rendering Acknowledgment Screen");
         return (
             <div className="bg-white rounded-xl shadow-lg p-8 md:p-12 text-center">
                 <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -290,7 +258,10 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                     </p>
                 </div>
                 <button
-                    onClick={() => setHasAcknowledged(true)}
+                    onClick={() => {
+                        console.log("🛠️ Accept button clicked!");
+                        setHasAcknowledged(true);
+                    }}
                     className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-10 rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 flex items-center gap-2 mx-auto"
                 >
                     <FaCheckCircle />
@@ -322,27 +293,13 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                 </div>
 
                 <div className="flex flex-wrap gap-2 w-full md:w-auto">
-                    {!isHealthcareClient && (
-                        <button
-                            onClick={runAIAnalysis}
-                            disabled={aiLoading}
-                            className={`${aiLoading ? 'bg-gray-400' : 'bg-purple-600 hover:bg-purple-700'} text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-sm shadow-sm transition-all hover:scale-105`}
-                            title="Run AI Clinical Assistant"
-                        >
-                            <FaBrain className={aiLoading ? 'animate-pulse' : ''} />
-                            <span>{aiLoading ? 'AI Analyzing...' : 'AI Clinical Assistant'}</span>
-                        </button>
-                    )}
-
-                    {!isHealthcareClient && (
-                        <button
-                            onClick={fetchClinicalRules}
-                            className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg flex items-center justify-center gap-2 text-sm border border-gray-200 transition-colors"
-                            title="Refresh Rules"
-                        >
-                            <FaSync /> <span className="hidden sm:inline">Refresh Rules</span>
-                        </button>
-                    )}
+                    <button
+                        onClick={fetchClinicalRules}
+                        className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg flex items-center justify-center gap-2 text-sm border border-gray-200 transition-colors"
+                        title="Refresh Rules"
+                    >
+                        <FaSync /> <span className="hidden sm:inline">Refresh Rules</span>
+                    </button>
 
                     {alerts.length > 0 && (
                         <button
@@ -358,115 +315,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
             </div>
 
             {/* AI Analysis Result Section */}
-            {aiAnalysis && (
-                <div className="mb-8 animate-in fade-in slide-in-from-top duration-500 bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-200 rounded-2xl overflow-hidden shadow-md">
-                    <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-4 text-white flex justify-between items-center">
-                        <div className="flex items-center gap-3">
-                            <FaRobot className="text-2xl" />
-                            <div>
-                                <h3 className="font-bold text-lg">Gemini AI Assistant Insights</h3>
-                                <p className="text-xs opacity-90 italic">Advisory clinical reasoning • Human verification required</p>
-                            </div>
-                        </div>
-                        <button onClick={() => setAiAnalysis(null)} className="hover:bg-white/20 p-1 rounded">
-                            <FaSync />
-                        </button>
-                    </div>
 
-                    <div className="p-6 space-y-6">
-                        {/* Summary */}
-                        <div className="bg-white/60 backdrop-blur-sm p-4 rounded-xl border border-white">
-                            <div className="flex items-center gap-2 mb-2 text-purple-700 font-bold">
-                                <FaLightbulb /> <span>Clinical Summary</span>
-                            </div>
-                            <p className="text-gray-700 leading-relaxed">{aiAnalysis.summary}</p>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* DTPs */}
-                            {aiAnalysis.dtp?.length > 0 && (
-                                <div className="space-y-3">
-                                    <div className="flex items-center gap-2 text-red-600 font-bold px-1">
-                                        <FaExclamationTriangle /> <span>AI Detected Potential DTPs</span>
-                                    </div>
-                                    <div className="space-y-2">
-                                        {aiAnalysis.dtp.map((item, idx) => (
-                                            <div key={idx} className="bg-red-50 p-3 rounded-lg border border-red-100">
-                                                <div className="font-bold text-red-800 text-sm">{item.category}: {item.problem}</div>
-                                                <div className="text-sm text-red-600 mt-1 italic">Recommendation: {item.recommendation}</div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Dose Adjustments */}
-                            {aiAnalysis.dose_adjustments?.length > 0 && (
-                                <div className="space-y-3">
-                                    <div className="flex items-center gap-2 text-orange-600 font-bold px-1">
-                                        <FaCapsules /> <span>Dose Management</span>
-                                    </div>
-                                    <div className="space-y-2">
-                                        {aiAnalysis.dose_adjustments.map((item, idx) => (
-                                            <div key={idx} className="bg-orange-50 p-3 rounded-lg border border-orange-100">
-                                                <div className="font-bold text-orange-800 text-sm">{item.medication}</div>
-                                                <div className="text-xs text-orange-700">{item.reason}</div>
-                                                <div className="text-sm font-semibold text-orange-900 mt-1">Suggested: {item.suggested_dose}</div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Monitoring */}
-                            {aiAnalysis.monitoring?.length > 0 && (
-                                <div className="space-y-3">
-                                    <div className="flex items-center gap-2 text-blue-600 font-bold px-1">
-                                        <FaHeartbeat /> <span>Monitoring Needs</span>
-                                    </div>
-                                    <ul className="list-disc list-inside space-y-1 bg-blue-50 p-4 rounded-xl border border-blue-100 text-sm text-blue-800">
-                                        {aiAnalysis.monitoring.map((m, idx) => <li key={idx} className="mb-1">{m}</li>)}
-                                    </ul>
-                                </div>
-                            )}
-
-                            {/* Citations */}
-                            {aiAnalysis.citations?.length > 0 && (
-                                <div className="space-y-3">
-                                    <div className="flex items-center gap-2 text-gray-600 font-bold px-1">
-                                        <FaBookMedical /> <span>Guidelines & Citations</span>
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                        {aiAnalysis.citations.map((c, idx) => (
-                                            <span key={idx} className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs border border-gray-200">
-                                                {c}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {aiLoading && (
-                <div className="mb-8 p-12 bg-purple-50 rounded-2xl border-2 border-dashed border-purple-200 text-center animate-pulse">
-                    <FaBrain className="text-5xl text-purple-300 mx-auto mb-4 animate-bounce" />
-                    <h3 className="text-lg font-bold text-purple-600">Gemini is analyzing patient record...</h3>
-                    <p className="text-sm text-purple-400">Comparing clinical data with global oncology guidelines</p>
-                </div>
-            )}
-
-            {aiError && (
-                <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 text-red-700">
-                    <FaExclamationCircle className="shrink-0" />
-                    <div className="flex-1 text-sm">{aiError}</div>
-                    <button onClick={runAIAnalysis} className="text-xs font-bold uppercase underline">Retry</button>
-                </div>
-            )}
 
             {/* Test Results Banner */}
             {testResults && (
@@ -488,16 +337,14 @@ const CDSSDisplay = ({ patientData, onBack }) => {
             )}
 
             {/* Status Bar - Simplified */}
-            {!isHealthcareClient && (
-                <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="bg-green-50 p-3 rounded-lg border border-green-200">
-                        <div className="text-sm text-green-700 mb-1 flex items-center gap-1">
-                            <FaCheckCircle /> Available Rules
-                        </div>
-                        <div className="text-xl font-bold text-green-800">{clinicalRules.length || 0}</div>
+            <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                    <div className="text-sm text-green-700 mb-1 flex items-center gap-1">
+                        <FaCheckCircle /> Available Rules
                     </div>
+                    <div className="text-xl font-bold text-green-800">{clinicalRules.length || 0}</div>
                 </div>
-            )}
+            </div>
 
             {/* Error Display */}
             {analysisError && (
