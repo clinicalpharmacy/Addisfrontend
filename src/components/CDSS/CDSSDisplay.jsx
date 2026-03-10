@@ -1,3 +1,4 @@
+// CDSS Display Component - v2.1.0 (Gemini Integration)
 import React, { useState } from 'react';
 import { useCDSSLogic } from '../../hooks/useCDSSLogic';
 import { AlertDetails } from './AlertComponents';
