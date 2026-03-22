@@ -740,7 +740,7 @@ const Dashboard = () => {
                                 </div>
                             </div>
                         )}
-                        <h3 className="text-lg font-bold text-gray-800 mb-4">Recent Patients</h3>
+                        <h3 className="text-lg font-bold text-gray-800 mb-4">Recent Medication Reviews</h3>
                         <div className="space-y-3 max-h-60 overflow-y-auto">
                             {userPatients.length > 0 ? (
                                 userPatients.slice(0, 5).map((patient, index) => (
@@ -810,8 +810,8 @@ const Dashboard = () => {
                                 onClick={() => navigate('/patients')}
                                 className="w-full text-left p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition"
                             >
-                                <p className="font-medium text-blue-800">Manage Patients</p>
-                                <p className="text-sm text-blue-600">View and manage your patient records</p>
+                                <p className="font-medium text-blue-800">Manage Medication Reviews</p>
+                                <p className="text-sm text-blue-600">View and manage medication reviews</p>
                             </button>
                             <button
                                 onClick={() => navigate('/knowledge')}
