@@ -449,27 +449,30 @@ const CDSSDisplay = ({ patientData, onBack }) => {
 
                                                         {/* Medications involved - now visible to everyone */}
                                                         {alert.evidence?.matched_medications?.length > 0 && (
-                                                            <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-gray-300/50 mt-1">
-                                                                <span className="font-black text-purple-600 uppercase text-xs md:text-sm shrink-0">Drug(s) Trigger:</span>
-                                                                <div className="flex flex-wrap gap-2">
-                                                                    {alert.evidence.matched_medications.map((med, i) => (
-                                                                        <span key={i} className="px-3 py-1 bg-purple-100 text-purple-800 rounded-lg text-xs md:text-sm font-black border border-purple-200 shadow-sm flex items-center gap-2">
-                                                                            <FaCapsules className="text-sm" /> {med}
-                                                                        </span>
-                                                                    ))}
+                                                            <>
+                                                                <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-gray-300/50 mt-1">
+                                                                    <span className="font-black text-purple-600 uppercase text-xs md:text-sm shrink-0">Drug(s) Trigger:</span>
+                                                                    <div className="flex flex-wrap gap-2">
+                                                                        {alert.evidence.matched_medications.map((med, i) => (
+                                                                            <span key={i} className="px-3 py-1 bg-purple-100 text-purple-800 rounded-lg text-xs md:text-sm font-black border border-purple-200 shadow-sm flex items-center gap-2">
+                                                                                <FaCapsules className="text-sm" /> {med}
+                                                                            </span>
+                                                                        ))}
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        {/* Secondary Action / Recommendation - Always visible and STATIC */}
-                                                            <div className="bg-green-50 border-l-8 border-green-500 p-4 md:p-5 rounded-r-xl mb-4 shadow-sm">
-                                                                <div className="flex items-center gap-2 mb-2">
-                                                                    <FaCheckCircle className="text-green-600 text-sm" />
-                                                                    <span className="text-xs md:text-sm font-black uppercase tracking-widest text-green-800">Evidence Recommendation</span>
-                                                                </div>
-                                                                <div className="text-sm md:text-base font-black text-gray-900 leading-tight">
-                                                                {(isHealthcareClient ? (alert.client_recommendation || alert.details) : (alert.professional_recommendation || alert.details)) || 'Review clinical guidelines'}
-                                                                </div>
-                                                            </div>
+                                                            </>
                                                         )}
+                                                        
+                                                        {/* Secondary Action / Recommendation - Always visible and STATIC */}
+                                                        <div className="bg-green-50 border-l-8 border-green-500 p-4 md:p-5 rounded-r-xl mb-4 shadow-sm">
+                                                            <div className="flex items-center gap-2 mb-2">
+                                                                <FaCheckCircle className="text-green-600 text-sm" />
+                                                                <span className="text-xs md:text-sm font-black uppercase tracking-widest text-green-800">Evidence Recommendation</span>
+                                                            </div>
+                                                            <div className="text-sm md:text-base font-black text-gray-900 leading-tight">
+                                                                {(isHealthcareClient ? (alert.client_recommendation || alert.details) : (alert.professional_recommendation || alert.details)) || 'Review clinical guidelines'}
+                                                            </div>
+                                                        </div>
                                                     </div>
 
                                                     <div className="flex justify-end items-center gap-4 pt-4 border-t border-gray-100">
