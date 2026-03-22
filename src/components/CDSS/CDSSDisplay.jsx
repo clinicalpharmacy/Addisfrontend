@@ -1,4 +1,4 @@
-// CDSS Display Component - v2.1.0 (Gemini Integration)
+// Clinical Display Component - v2.1.0 (Gemini Integration)
 import React, { useState } from 'react';
 import { useCDSSLogic } from '../../hooks/useCDSSLogic';
 import { AlertDetails } from './AlertComponents';
@@ -281,7 +281,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                         <FaBell className="text-white text-xl" />
                     </div>
                     <div>
-                        <h2 className="text-xl md:text-2xl font-bold text-gray-800">CDSS Analysis</h2>
+                        <h2 className="text-xl md:text-2xl font-bold text-gray-800">Clinical Analysis</h2>
                         {patientData ? (
                             <div className="text-sm text-gray-600 flex flex-wrap items-center gap-2 mt-1">
                                 <span className="font-semibold">{patientData.full_name}</span>
@@ -454,7 +454,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                                     <div className="bg-green-50 border-l-8 border-green-500 p-4 md:p-5 rounded-r-xl mb-4 shadow-sm">
                                                         <div className="flex items-center gap-2 mb-2">
                                                             <FaCheckCircle className="text-green-600 text-sm" />
-                                                            <span className="text-xs md:text-sm font-black uppercase tracking-widest text-green-800">Required Action</span>
+                                                            <span className="text-xs md:text-sm font-black uppercase tracking-widest text-green-800">Evidence Recommendation</span>
                                                         </div>
                                                         <div className="text-lg md:text-2xl font-black text-gray-900 leading-tight">
                                                             {(isHealthcareClient ? (alert.client_recommendation || alert.details) : (alert.professional_recommendation || alert.details)) || 'Review clinical guidelines'}
