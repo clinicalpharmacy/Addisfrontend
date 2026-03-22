@@ -104,8 +104,7 @@ const Home = () => {
                     </div>
                 </Link>
 
-                {/* Minor Illnesses */}
-                {/* Patients - Hidden for Healthcare Client */}
+                {/* Minor Illnesses - Hidden for Healthcare Client*/}
                 {JSON.parse(localStorage.getItem('user'))?.role !== 'healthcare_client' && (
                 <Link to="/knowledge/illnesses" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
                     <div className="flex items-center gap-4 mb-4">
