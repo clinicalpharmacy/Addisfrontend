@@ -139,7 +139,7 @@ const role = user?.role;
                 {['pharmacist', 'pharmacy_student'].includes(
                   JSON.parse(localStorage.getItem('user'))?.role
                 ) && (
-                  <Link to="/knowledge/preparations" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
+                  <Link to="/knowledge/ExtemporaneousPrep" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
                     <div className="flex items-center gap-4 mb-4">
                       <div className="p-3 bg-orange-100 rounded-full">
                         <FaUserMd className="text-orange-600 text-2xl" />
