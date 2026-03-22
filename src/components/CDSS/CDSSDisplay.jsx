@@ -438,18 +438,6 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                                 </div>
 
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="flex justify-between items-start mb-2">
-                                                        <div className="flex flex-wrap items-center gap-3">
-                                                            <span className="text-lg md:text-xl font-black text-gray-900 tracking-tight">{alert.rule_name}</span>
-                                                            <span className={`px-2.5 py-1 rounded text-xs font-bold ${ruleTypeInfo.color}`}>
-                                                                {ruleTypeInfo.label}
-                                                            </span>
-                                                            <span className="text-xs text-gray-500 uppercase font-bold tracking-widest">
-                                                                {getTimeAgo(alert.timestamp)}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-
                                                     {/* Primary Action / Recommendation - Always visible and STATIC */}
                                                     <div className="bg-green-50 border-l-8 border-green-500 p-4 md:p-5 rounded-r-xl mb-4 shadow-sm">
                                                         <div className="flex items-center gap-2 mb-2">
