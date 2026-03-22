@@ -59,7 +59,17 @@ const CDSSDisplay = ({ patientData, onBack }) => {
         low: 'bg-blue-500'
     };
 
-
+    // Helper function to safely encode text for PDF
+    const encodeText = (text) => {
+        if (!text) return '';
+        try {
+            // Convert to string and ensure proper Unicode handling
+            return String(text).normalize('NFKC');
+        } catch (e) {
+            console.error('Text encoding error:', e);
+            return String(text);
+        }
+    };
 
     const downloadReport = async () => {
         if (!patientData) return;
@@ -86,7 +96,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
             doc.text(`Generated on: ${new Date().toLocaleString()}`, 15, 30);
-            doc.text(`Patient Code: ${patientData.patient_code}`, 15, 35);
+            doc.text(`Patient Code: ${encodeText(patientData.patient_code)}`, 15, 35);
 
             // --- PATIENT SUMMARY SECTION ---
             doc.setTextColor(31, 41, 55); // Gray-800
@@ -101,11 +111,11 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                 startY: 55,
                 head: [],
                 body: [
-                    ['Full Name:', patientData.full_name || 'N/A', 'Gender:', patientData.gender || 'N/A'],
-                    ['Age:', `${patientData.age || 'N/A'} (${patientFacts?.patient_type || 'N/A'})`, 'Primary Diagnosis:', patientData.diagnosis || 'None recorded']
+                    ['Full Name:', encodeText(patientData.full_name) || 'N/A', 'Gender:', encodeText(patientData.gender) || 'N/A'],
+                    ['Age:', `${encodeText(patientData.age) || 'N/A'} (${encodeText(patientFacts?.patient_type) || 'N/A'})`, 'Primary Diagnosis:', encodeText(patientData.diagnosis) || 'None recorded']
                 ],
                 theme: 'plain',
-                styles: { fontSize: 10, cellPadding: 2, font: 'helvetica' },
+                styles: { fontSize: 10, cellPadding: 2, font: 'helvetica', textColor: [0, 0, 0] },
                 columnStyles: {
                     0: { fontStyle: 'bold', width: 30 },
                     2: { fontStyle: 'bold', width: 40 }
@@ -131,8 +141,8 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                 head: [['Parameter', 'Count']],
                 body: statsData,
                 theme: 'striped',
-                headStyles: { fillColor: [79, 70, 229], font: 'helvetica', fontStyle: 'bold' },
-                styles: { fontSize: 9, font: 'helvetica' }
+                headStyles: { fillColor: [79, 70, 229], font: 'helvetica', fontStyle: 'bold', textColor: [255, 255, 255] },
+                styles: { fontSize: 9, font: 'helvetica', textColor: [0, 0, 0] }
             });
 
             // --- MEDICATIONS TABLE ---
@@ -147,13 +157,13 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                     head: [['#', 'Drug Name', 'Class', 'Dose/Frequency']],
                     body: medications.map((m, i) => [
                         i + 1,
-                        m.drug_name,
-                        m.drug_class || 'N/A',
-                        `${m.dose || ''} ${m.frequency || ''}`
+                        encodeText(m.drug_name),
+                        encodeText(m.drug_class) || 'N/A',
+                        `${encodeText(m.dose) || ''} ${encodeText(m.frequency) || ''}`
                     ]),
                     theme: 'grid',
-                    headStyles: { fillColor: [107, 114, 128], font: 'helvetica', fontStyle: 'bold' },
-                    styles: { fontSize: 8, font: 'helvetica' }
+                    headStyles: { fillColor: [107, 114, 128], font: 'helvetica', fontStyle: 'bold', textColor: [255, 255, 255] },
+                    styles: { fontSize: 8, font: 'helvetica', textColor: [0, 0, 0] }
                 });
             }
 
@@ -167,19 +177,19 @@ const CDSSDisplay = ({ patientData, onBack }) => {
 
             const alertRows = alerts.map((alert, index) => {
                 // Get the finding/message - using EXACT same logic as shown in Clinical Analysis UI
-                const finding = isHealthcareClient 
+                const finding = encodeText(isHealthcareClient 
                     ? (alert.client_message || alert.message) 
-                    : (alert.professional_message || alert.message);
+                    : (alert.professional_message || alert.message));
                 
                 // Get drug triggers (medications that triggered this alert)
                 const drugTriggers = alert.evidence?.matched_medications?.length > 0 
-                    ? alert.evidence.matched_medications.join(', ')
+                    ? alert.evidence.matched_medications.map(med => encodeText(med)).join(', ')
                     : 'None';
                 
                 // Get evidence recommendation - using EXACT same logic as shown in Clinical Analysis UI
-                const recommendation = (isHealthcareClient 
+                const recommendation = encodeText((isHealthcareClient 
                     ? (alert.client_recommendation || alert.details) 
-                    : (alert.professional_recommendation || alert.details)) || 'Review clinical guidelines';
+                    : (alert.professional_recommendation || alert.details)) || 'Review clinical guidelines');
 
                 return [
                     index + 1,
@@ -198,23 +208,44 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                     fillColor: [220, 38, 38],
                     font: 'helvetica',
                     fontStyle: 'bold',
-                    textColor: [255, 255, 255]
+                    textColor: [255, 255, 255],
+                    halign: 'center'
                 },
                 styles: { 
-                    fontSize: 9, 
+                    fontSize: 8, 
                     font: 'helvetica',
-                    cellPadding: 4,
+                    cellPadding: 5,
                     overflow: 'linebreak',
                     cellWidth: 'wrap',
-                    textColor: [0, 0, 0]
+                    textColor: [0, 0, 0],
+                    valign: 'top'
                 },
                 columnStyles: {
-                    0: { width: 10, cellWidth: 'wrap' },  // # column
-                    1: { width: 55, cellWidth: 'wrap' },  // Finding column
-                    2: { width: 35, cellWidth: 'wrap' },  // Drug(s) Trigger column
-                    3: { width: 70, cellWidth: 'wrap' }   // Evidence Recommendation column
+                    0: { 
+                        width: 8, 
+                        cellWidth: 'wrap',
+                        halign: 'center',
+                        valign: 'middle'
+                    },
+                    1: { 
+                        width: 70, 
+                        cellWidth: 'wrap',
+                        halign: 'left'
+                    },
+                    2: { 
+                        width: 45, 
+                        cellWidth: 'wrap',
+                        halign: 'left'
+                    },
+                    3: { 
+                        width: 65, 
+                        cellWidth: 'wrap',
+                        halign: 'left'
+                    }
                 },
-                margin: { left: 15, right: 15 }
+                margin: { left: 10, right: 10 },
+                pageBreak: 'auto',
+                rowPageBreak: 'auto'
             });
 
             // --- FOOTER ---
@@ -225,13 +256,13 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                 doc.setFont('helvetica', 'normal');
                 doc.setTextColor(156, 163, 175);
                 doc.text(
-                    'DISCLAIMER: This clinical analysis report should be reviewed by a professional.',
+                    'DISCLAIMER: This clinical analysis report should be reviewed by a professional. Patient Information should not contain Protected Health Information.',
                     15, 285
                 );
                 doc.text(`Page ${i} of ${pageCount}`, 180, 285);
             }
 
-            doc.save(`Clinical_Analysis_${patientData.patient_code}_${new Date().toISOString().split('T')[0]}.pdf`);
+            doc.save(`Clinical_Analysis_${encodeText(patientData.patient_code)}_${new Date().toISOString().split('T')[0]}.pdf`);
         } catch (error) {
             console.error('PDF Generation Error:', error);
             alert('PDF generation failed. Library error.');
