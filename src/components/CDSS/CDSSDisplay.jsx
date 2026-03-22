@@ -296,9 +296,9 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                     <button
                         onClick={fetchClinicalRules}
                         className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg flex items-center justify-center gap-2 text-sm border border-gray-200 transition-colors"
-                        title="Refresh Rules"
+                        title="Refresh Analysis"
                     >
-                        <FaSync /> <span className="hidden sm:inline">Refresh Rules</span>
+                        <FaSync /> <span className="hidden sm:inline">Refresh Analysis</span>
                     </button>
 
                     {alerts.length > 0 && (
