@@ -166,31 +166,23 @@ const CDSSDisplay = ({ patientData, onBack }) => {
             doc.text('Clinical Alerts & Recommendations', 15, currentY);
 
             const alertRows = alerts.map((alert, index) => {
-                // Get the finding/message
+                // Get the finding/message (this is the primary clinical finding)
                 const finding = isHealthcareClient 
                     ? (alert.client_message || alert.message) 
                     : (alert.professional_message || alert.message);
                 
-                // Get drug triggers
+                // Get drug triggers (medications that triggered this alert)
                 const drugTriggers = alert.evidence?.matched_medications?.length > 0 
                     ? alert.evidence.matched_medications.join(', ')
                     : 'None';
                 
-                // Get evidence recommendation
+                // Get evidence recommendation (clinical recommendation)
                 const recommendation = (isHealthcareClient 
                     ? (alert.client_recommendation || alert.details) 
                     : (alert.professional_recommendation || alert.details)) || 'Review clinical guidelines';
 
                 return [
                     index + 1,
-                    {
-                        content: `${alert.rule_name}\n[${alert.severity.toUpperCase()}]`,
-                        styles: {
-                            fillColor: alert.severity === 'critical' ? [254, 226, 226] : (alert.severity === 'high' ? [255, 237, 213] : null),
-                            textColor: alert.severity === 'critical' ? [153, 27, 27] : (alert.severity === 'high' ? [154, 52, 18] : null),
-                            fontStyle: 'bold'
-                        }
-                    },
                     finding,
                     drugTriggers,
                     recommendation
@@ -199,16 +191,16 @@ const CDSSDisplay = ({ patientData, onBack }) => {
 
             autoTable(doc, {
                 startY: currentY + 5,
-                head: [['#', 'Finding(s)', 'Drug(s) Trigger', 'Evidence Recommendation']],
+                head: [['#', 'Finding', 'Drug(s) Trigger', 'Evidence Recommendation']],
                 body: alertRows,
                 theme: 'grid',
                 headStyles: { fillColor: [220, 38, 38] }, // Red-600
                 styles: { fontSize: 7, cellPadding: 3 },
                 columnStyles: {
-                    1: { width: 30 },
-                    2: { width: 45 },
-                    3: { width: 40 },
-                    4: { width: 45 }
+                    0: { width: 10 },  // # column
+                    1: { width: 60 },  // Finding column
+                    2: { width: 40 },  // Drug(s) Trigger column
+                    3: { width: 70 }   // Evidence Recommendation column
                 }
             });
 
@@ -219,7 +211,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                 doc.setFontSize(8);
                 doc.setTextColor(156, 163, 175);
                 doc.text(
-                    'DISCLAIMER: This clinical analysis report should be reviewed by a professional. Patient Information should not contain Protected Health Information.',
+                    'DISCLAIMER: This clinical analysis report should be reviewed by a professional.',
                     15, 285
                 );
                 doc.text(`Page ${i} of ${pageCount}`, 180, 285);
