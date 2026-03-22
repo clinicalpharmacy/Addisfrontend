@@ -322,7 +322,7 @@ const Sidebar = ({ onClose }) => {
                                                     }`
                                                 }
                                             >
-                                                <FaVial className="text-base opacity-40" /> Education
+                                                <FaVial className="text-base opacity-40" /> Compounding
                                             </NavLink>
                                             <NavLink
                                                 to="/knowledge/education"
