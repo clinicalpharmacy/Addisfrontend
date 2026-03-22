@@ -49,7 +49,7 @@ const Home = () => {
 
             {/* Quick Access Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 w-full">
-                {/* Patients - Hidden for Admin */}
+                {/* Medicaction Review - Hidden for Admin */}
                 {JSON.parse(localStorage.getItem('user'))?.role !== 'admin' && (
                     <Link to="/patients" className="bg-white rounded-xl shadow p-4 sm:p-6 hover:shadow-md transition w-full">
                         <div className="flex items-center gap-4 mb-4">
@@ -57,7 +57,7 @@ const Home = () => {
                                 <FaUserInjured className="text-blue-600 text-2xl" />
                             </div>
                             <div>
-                                <h2 className="text-xl font-bold text-gray-800">Medicines review</h2>
+                                <h2 className="text-xl font-bold text-gray-800">Medication Review</h2>
                                 <p className="text-sm text-gray-500">Review medication use</p>
                             </div>
                         </div>
@@ -68,6 +68,27 @@ const Home = () => {
                         </div>
                     </Link>
                 )}
+
+                {/* Minor Illnesses - Hidden for Healthcare Client*/}
+                {JSON.parse(localStorage.getItem('user'))?.role !== 'healthcare_client' && (
+                <Link to="/knowledge/illnesses" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
+                    <div className="flex items-center gap-4 mb-4">
+                        <div className="p-3 bg-orange-100 rounded-full">
+                            <FaUserMd className="text-orange-600 text-2xl" />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold text-gray-800">Minor Illnesses</h2>
+                            <p className="text-sm text-gray-500">OTC-based Treatment guides</p>
+                        </div>
+                    </div>
+                    <div className="flex justify-end">
+                        <span className="text-orange-600 flex items-center gap-1">
+                            View <FaArrowRight />
+                        </span>
+                    </div>
+                </Link>
+            )}
+                
                 {/* Home Remedies */}
                 <Link to="/knowledge/remedies" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
                     <div className="flex items-center gap-4 mb-4">
@@ -100,24 +121,6 @@ const Home = () => {
                     <div className="flex justify-end">
                         <span className="text-purple-600 flex items-center gap-1">
                             Search <FaArrowRight />
-                        </span>
-                    </div>
-                </Link>
-
-                {/* Minor Illnesses */}
-                <Link to="/knowledge/illnesses" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="p-3 bg-orange-100 rounded-full">
-                            <FaUserMd className="text-orange-600 text-2xl" />
-                        </div>
-                        <div>
-                            <h2 className="text-xl font-bold text-gray-800">Minor Illnesses</h2>
-                            <p className="text-sm text-gray-500">OTC-based Treatment guides</p>
-                        </div>
-                    </div>
-                    <div className="flex justify-end">
-                        <span className="text-orange-600 flex items-center gap-1">
-                            View <FaArrowRight />
                         </span>
                     </div>
                 </Link>
