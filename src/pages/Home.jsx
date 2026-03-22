@@ -73,14 +73,14 @@ const role = user?.role;
                 </Link>
               )}
             
-              {/* Medication Info */}
+              {/* የመድሃኒት መረጃ */}
               <Link to="/knowledge/medications" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="p-3 bg-purple-100 rounded-full">
                     <FaPills className="text-purple-600 text-2xl" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-gray-800">Medication Info</h2>
+                    <h2 className="text-xl font-bold text-gray-800">የመድሃኒት መረጃ</h2>
                     <p className="text-sm text-gray-500">Database for Medicines information</p>
                   </div>
                 </div>
@@ -98,7 +98,7 @@ const role = user?.role;
                     <FaVial className="text-green-600 text-2xl" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-gray-800">Home Remedies</h2>
+                    <h2 className="text-xl font-bold text-gray-800">የቤት ውስጥ ጤና ክብካቤ</h2>
                     <p className="text-sm text-gray-500">Home made remedies</p>
                   </div>
                 </div>
