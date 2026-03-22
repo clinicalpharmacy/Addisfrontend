@@ -113,7 +113,7 @@ const role = user?.role;
           
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 w-full">
                 {/* Minor Illnesses - Only for Company, Pharmacists & Pharmacy students */}
-                {[company, 'pharmacist', 'pharmacy_student'].includes(
+                {['company_admin', 'company_user', 'pharmacist', 'pharmacy_student'].includes(
                   JSON.parse(localStorage.getItem('user'))?.role
                 ) && (
                   <Link to="/knowledge/illnesses" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
@@ -135,7 +135,7 @@ const role = user?.role;
                 )}
 
                 {/* Compounding - Only for Company, Pharmacists & Pharmacy students */}
-                {[company, 'pharmacist', 'pharmacy_student'].includes(
+                {['company_admin', 'company_user', 'pharmacist', 'pharmacy_student'].includes(
                   JSON.parse(localStorage.getItem('user'))?.role
                 ) && (
                   <Link to="/knowledge/compounding" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
@@ -157,7 +157,7 @@ const role = user?.role;
                 )}
 
                 {/* Educational review - Only for Company, Pharmacists & Pharmacy students */}
-                {[company, 'pharmacist', 'pharmacy_student'].includes(
+                {['company_admin', 'company_user', 'pharmacist', 'pharmacy_student'].includes(
                   JSON.parse(localStorage.getItem('user'))?.role
                 ) && (
                   <Link to="/knowledge/Education" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
