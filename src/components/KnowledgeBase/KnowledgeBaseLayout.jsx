@@ -56,7 +56,8 @@ const KnowledgeBaseLayout = () => {
         { path: 'remedies', label: 'የቤት ውስጥ ጤና ክብካቤ', icon: <FaVial /> },
         ...(hasFullAccess ? [
             { path: 'illnesses', label: 'Minor Illnesses', icon: <FaStethoscope /> },
-            { path: 'compounding', label: 'Compounding', icon: <FaMortarPestle /> }
+            { path: 'compounding', label: 'Compounding', icon: <FaMortarPestle /> },
+            { path: 'education', label: 'Education', icon: <FaMortarPestle /> }
         ] : []),
     ];
 
