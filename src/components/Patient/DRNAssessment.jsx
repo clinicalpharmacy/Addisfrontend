@@ -881,7 +881,7 @@ const DRNAssessment = ({ patientCode }) => {
             <div className="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-xl font-semibold text-blue-800 flex items-center gap-2">
-                        <FaRobot className="text-purple-600" /> Clinical Decision Support & AI Assistant Insights
+                        <FaRobot className="text-purple-600" /> Clinical Analysis & AI Assistant Insights
                     </h3>
                     <button
                         onClick={() => setShowAnalysis(!showAnalysis)}
@@ -941,7 +941,7 @@ const DRNAssessment = ({ patientCode }) => {
                         {isAnalyzing ? (
                             <div className="text-center py-8">
                                 <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto mb-4" />
-                                <p className="text-gray-600">Running CDSS analysis...</p>
+                                <p className="text-gray-600">Running Clinical analysis...</p>
                             </div>
                         ) : (analysisResults || aiAnalysis || aiLoading || aiError) ? (
                             <div className="space-y-4">
@@ -962,7 +962,7 @@ const DRNAssessment = ({ patientCode }) => {
                                                 className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm flex items-center gap-2 transition-all hover:scale-105"
                                             >
                                                 <FaSync className={isAnalyzing ? 'animate-spin' : ''} />
-                                                <span>{isAnalyzing ? 'Analyzing...' : 'Refresh CDSS Analysis'}</span>
+                                                <span>{isAnalyzing ? 'Analyzing...' : 'Refresh Clinical Analysis'}</span>
                                             </button>
                                             <button
                                                 onClick={runAIAnalysis}
@@ -1077,7 +1077,7 @@ const DRNAssessment = ({ patientCode }) => {
                                         onClick={runCdssAnalysis}
                                         className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium shadow-md flex items-center gap-2"
                                     >
-                                        <FaSync /> Run CDSS Analysis
+                                        <FaSync /> Run Clinical Analysis
                                     </button>
                                     <button
                                         onClick={runAIAnalysis}
