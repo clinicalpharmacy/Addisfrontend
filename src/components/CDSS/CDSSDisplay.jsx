@@ -166,26 +166,32 @@ const CDSSDisplay = ({ patientData, onBack }) => {
             doc.text('Clinical Alerts & Recommendations', 15, currentY);
 
             const alertRows = alerts.map((alert, index) => {
-                // Get the finding/message (this is the primary clinical finding)
-                const finding = isHealthcareClient 
+                // Get the finding/message with proper formatting
+                let finding = isHealthcareClient 
                     ? (alert.client_message || alert.message) 
                     : (alert.professional_message || alert.message);
                 
-                // Get drug triggers (medications that triggered this alert)
-                const drugTriggers = alert.evidence?.matched_medications?.length > 0 
-                    ? alert.evidence.matched_medications.join(', ')
-                    : 'None';
+                // Ensure finding is a string and wrap text for better readability
+                finding = finding ? finding.toString() : 'No finding available';
                 
-                // Get evidence recommendation (clinical recommendation)
-                const recommendation = (isHealthcareClient 
+                // Get drug triggers with proper formatting
+                let drugTriggers = 'None';
+                if (alert.evidence?.matched_medications?.length > 0) {
+                    drugTriggers = alert.evidence.matched_medications.join(', ');
+                }
+                
+                // Get evidence recommendation with proper formatting
+                let recommendation = (isHealthcareClient 
                     ? (alert.client_recommendation || alert.details) 
                     : (alert.professional_recommendation || alert.details)) || 'Review clinical guidelines';
+                
+                recommendation = recommendation.toString();
 
                 return [
                     index + 1,
-                    finding,
-                    drugTriggers,
-                    recommendation
+                    { content: finding, styles: { fontSize: 9, cellPadding: 4 } },
+                    { content: drugTriggers, styles: { fontSize: 9, cellPadding: 4 } },
+                    { content: recommendation, styles: { fontSize: 9, cellPadding: 4, fontStyle: 'bold' } }
                 ];
             });
 
@@ -194,14 +200,27 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                 head: [['#', 'Finding', 'Drug(s) Trigger', 'Evidence Recommendation']],
                 body: alertRows,
                 theme: 'grid',
-                headStyles: { fillColor: [220, 38, 38] }, // Red-600
-                styles: { fontSize: 7, cellPadding: 3 },
+                headStyles: { 
+                    fillColor: [220, 38, 38], // Red-600
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold',
+                    fontSize: 10,
+                    cellPadding: 4
+                },
+                styles: { 
+                    fontSize: 9, 
+                    cellPadding: 4,
+                    overflow: 'linebreak',
+                    lineWidth: 0.1
+                },
                 columnStyles: {
-                    0: { width: 10 },  // # column
-                    1: { width: 60 },  // Finding column
-                    2: { width: 40 },  // Drug(s) Trigger column
-                    3: { width: 70 }   // Evidence Recommendation column
-                }
+                    0: { cellWidth: 12, fontSize: 9 },  // # column - narrower
+                    1: { cellWidth: 70, fontSize: 9 },  // Finding column - wider for text
+                    2: { cellWidth: 40, fontSize: 9 },  // Drug(s) Trigger column
+                    3: { cellWidth: 78, fontSize: 9, fontStyle: 'bold' }  // Evidence Recommendation column - widest
+                },
+                margin: { left: 15, right: 15 },
+                pageBreak: 'auto'
             });
 
             // --- FOOTER ---
@@ -211,7 +230,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                 doc.setFontSize(8);
                 doc.setTextColor(156, 163, 175);
                 doc.text(
-                    'DISCLAIMER: This clinical analysis report should be reviewed by a professional.',
+                    'DISCLAIMER: This clinical analysis report should be reviewed by a professional. Patient Information should not contain Protected Health Information.',
                     15, 285
                 );
                 doc.text(`Page ${i} of ${pageCount}`, 180, 285);
