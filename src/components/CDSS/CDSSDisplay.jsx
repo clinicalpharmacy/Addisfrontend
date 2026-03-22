@@ -59,12 +59,31 @@ const CDSSDisplay = ({ patientData, onBack }) => {
         low: 'bg-blue-500'
     };
 
+    // Helper function to decode the text (remove control characters and clean)
+    const decodeText = (text) => {
+        if (!text) return '';
+        try {
+            let cleaned = String(text);
+            // Remove all control characters (ASCII 0-31) except newline and tab
+            cleaned = cleaned.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+            // Remove any remaining non-printable characters
+            cleaned = cleaned.replace(/[^\x20-\x7E\u1200-\u137F\u2000-\u206F]/g, '');
+            // Normalize Unicode
+            cleaned = cleaned.normalize('NFC');
+            return cleaned.trim();
+        } catch (e) {
+            console.error('Text decode error:', e);
+            return String(text);
+        }
+    };
+
     // Helper function to safely encode text for PDF
     const encodeText = (text) => {
         if (!text) return '';
         try {
-            // Convert to string and ensure proper Unicode handling
-            return String(text).normalize('NFKC');
+            // First decode to remove control characters, then normalize
+            let cleaned = decodeText(text);
+            return cleaned;
         } catch (e) {
             console.error('Text encoding error:', e);
             return String(text);
@@ -176,20 +195,28 @@ const CDSSDisplay = ({ patientData, onBack }) => {
             doc.text('Clinical Alerts & Recommendations', 15, currentY);
 
             const alertRows = alerts.map((alert, index) => {
-                // Get the finding/message - using EXACT same logic as shown in Clinical Analysis UI
-                const finding = encodeText(isHealthcareClient 
+                // Get the raw text first
+                let rawFinding = isHealthcareClient 
                     ? (alert.client_message || alert.message) 
-                    : (alert.professional_message || alert.message));
+                    : (alert.professional_message || alert.message);
                 
-                // Get drug triggers (medications that triggered this alert)
-                const drugTriggers = alert.evidence?.matched_medications?.length > 0 
-                    ? alert.evidence.matched_medications.map(med => encodeText(med)).join(', ')
-                    : 'None';
-                
-                // Get evidence recommendation - using EXACT same logic as shown in Clinical Analysis UI
-                const recommendation = encodeText((isHealthcareClient 
+                let rawRecommendation = (isHealthcareClient 
                     ? (alert.client_recommendation || alert.details) 
-                    : (alert.professional_recommendation || alert.details)) || 'Review clinical guidelines');
+                    : (alert.professional_recommendation || alert.details)) || 'Review clinical guidelines';
+                
+                // Clean the text by removing control characters
+                const finding = encodeText(rawFinding);
+                const recommendation = encodeText(rawRecommendation);
+                
+                // Get drug triggers
+                let drugTriggers = 'None';
+                if (alert.evidence?.matched_medications?.length > 0) {
+                    drugTriggers = alert.evidence.matched_medications
+                        .map(med => encodeText(med))
+                        .filter(med => med && med !== '')
+                        .join(', ');
+                    if (!drugTriggers) drugTriggers = 'None';
+                }
 
                 return [
                     index + 1,
