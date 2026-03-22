@@ -51,7 +51,6 @@ const role = user?.role;
             </div>
 
             {/* Quick Access Grid */}
-            {/* Top Row - 3 Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 w-full">
             
               {/* Medication Review */}
@@ -112,7 +111,7 @@ const role = user?.role;
             
             </div>
           
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 w-full">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 w-full">
                 {/* Minor Illnesses - Only for Pharmacists & Pharmacy students */}
                 {['pharmacist', 'pharmacy_student'].includes(
                   JSON.parse(localStorage.getItem('user'))?.role
@@ -147,6 +146,28 @@ const role = user?.role;
                       <div>
                         <h2 className="text-xl font-bold text-gray-800">Compounding</h2>
                         <p className="text-sm text-gray-500">Compounding SOPs</p>
+                      </div>
+                    </div>
+                    <div className="flex justify-end">
+                      <span className="text-orange-600 flex items-center gap-1">
+                        View <FaArrowRight />
+                      </span>
+                    </div>
+                  </Link>
+                )}
+
+                {/* Educational review - Only for Pharmacists & Pharmacy students */}
+                {['pharmacist', 'pharmacy_student'].includes(
+                  JSON.parse(localStorage.getItem('user'))?.role
+                ) && (
+                  <Link to="/knowledge/Education" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="p-3 bg-orange-100 rounded-full">
+                        <FaUserMd className="text-orange-600 text-2xl" />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-800">Education</h2>
+                        <p className="text-sm text-gray-500">Educational reviews</p>
                       </div>
                     </div>
                     <div className="flex justify-end">
