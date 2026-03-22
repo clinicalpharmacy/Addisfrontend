@@ -59,35 +59,41 @@ const CDSSDisplay = ({ patientData, onBack }) => {
         low: 'bg-blue-500'
     };
 
-    // Helper function to decode the text (remove control characters and clean)
-    const decodeText = (text) => {
+    // Helper function to clean text by removing control characters but keeping readable text
+    const cleanText = (text) => {
         if (!text) return '';
         try {
             let cleaned = String(text);
-            // Remove all control characters (ASCII 0-31) except newline and tab
+            // Remove all control characters (ASCII 0-31) but keep printable characters including Unicode
+            // This removes the invisible control characters that appear as symbols
             cleaned = cleaned.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
-            // Remove any remaining non-printable characters
-            cleaned = cleaned.replace(/[^\x20-\x7E\u1200-\u137F\u2000-\u206F]/g, '');
-            // Normalize Unicode
-            cleaned = cleaned.normalize('NFC');
-            return cleaned.trim();
+            // Also remove the specific pattern of control characters that appear in the data
+            cleaned = cleaned.replace(/[\x01-\x1F\x7F]/g, '');
+            // Remove any remaining control characters in the range 128-159
+            cleaned = cleaned.replace(/[\x80-\x9F]/g, '');
+            // Trim whitespace
+            cleaned = cleaned.trim();
+            return cleaned;
         } catch (e) {
-            console.error('Text decode error:', e);
+            console.error('Text clean error:', e);
             return String(text);
         }
     };
 
-    // Helper function to safely encode text for PDF
-    const encodeText = (text) => {
+    // Helper function to get the actual readable text from the alert
+    const getReadableText = (text) => {
         if (!text) return '';
-        try {
-            // First decode to remove control characters, then normalize
-            let cleaned = decodeText(text);
+        // First clean the text to remove control characters
+        let cleaned = cleanText(text);
+        // If after cleaning we have meaningful text, return it
+        if (cleaned && cleaned.length > 0 && cleaned !== ' ') {
             return cleaned;
-        } catch (e) {
-            console.error('Text encoding error:', e);
-            return String(text);
         }
+        // Fallback to original but try to extract readable parts
+        // Sometimes the readable text is mixed with control characters
+        // We'll try to keep only the readable characters (letters, numbers, punctuation, and Amharic range)
+        const readable = String(text).replace(/[^\w\s\u1200-\u137F\u2000-\u206F\u2E80-\u2EFF\u3000-\u303F\uFF00-\uFFEF.,!?;:()-]/g, '');
+        return readable.trim() || 'No readable text';
     };
 
     const downloadReport = async () => {
@@ -115,7 +121,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
             doc.text(`Generated on: ${new Date().toLocaleString()}`, 15, 30);
-            doc.text(`Patient Code: ${encodeText(patientData.patient_code)}`, 15, 35);
+            doc.text(`Patient Code: ${cleanText(patientData.patient_code)}`, 15, 35);
 
             // --- PATIENT SUMMARY SECTION ---
             doc.setTextColor(31, 41, 55); // Gray-800
@@ -130,8 +136,8 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                 startY: 55,
                 head: [],
                 body: [
-                    ['Full Name:', encodeText(patientData.full_name) || 'N/A', 'Gender:', encodeText(patientData.gender) || 'N/A'],
-                    ['Age:', `${encodeText(patientData.age) || 'N/A'} (${encodeText(patientFacts?.patient_type) || 'N/A'})`, 'Primary Diagnosis:', encodeText(patientData.diagnosis) || 'None recorded']
+                    ['Full Name:', cleanText(patientData.full_name) || 'N/A', 'Gender:', cleanText(patientData.gender) || 'N/A'],
+                    ['Age:', `${cleanText(patientData.age) || 'N/A'} (${cleanText(patientFacts?.patient_type) || 'N/A'})`, 'Primary Diagnosis:', cleanText(patientData.diagnosis) || 'None recorded']
                 ],
                 theme: 'plain',
                 styles: { fontSize: 10, cellPadding: 2, font: 'helvetica', textColor: [0, 0, 0] },
@@ -176,9 +182,9 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                     head: [['#', 'Drug Name', 'Class', 'Dose/Frequency']],
                     body: medications.map((m, i) => [
                         i + 1,
-                        encodeText(m.drug_name),
-                        encodeText(m.drug_class) || 'N/A',
-                        `${encodeText(m.dose) || ''} ${encodeText(m.frequency) || ''}`
+                        cleanText(m.drug_name),
+                        cleanText(m.drug_class) || 'N/A',
+                        `${cleanText(m.dose) || ''} ${cleanText(m.frequency) || ''}`
                     ]),
                     theme: 'grid',
                     headStyles: { fillColor: [107, 114, 128], font: 'helvetica', fontStyle: 'bold', textColor: [255, 255, 255] },
@@ -195,7 +201,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
             doc.text('Clinical Alerts & Recommendations', 15, currentY);
 
             const alertRows = alerts.map((alert, index) => {
-                // Get the raw text first
+                // Get the raw text and clean it to remove control characters
                 let rawFinding = isHealthcareClient 
                     ? (alert.client_message || alert.message) 
                     : (alert.professional_message || alert.message);
@@ -204,18 +210,19 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                     ? (alert.client_recommendation || alert.details) 
                     : (alert.professional_recommendation || alert.details)) || 'Review clinical guidelines';
                 
-                // Clean the text by removing control characters
-                const finding = encodeText(rawFinding);
-                const recommendation = encodeText(rawRecommendation);
+                // Clean the text to remove control characters while preserving readable content
+                const finding = getReadableText(rawFinding);
+                const recommendation = getReadableText(rawRecommendation);
                 
-                // Get drug triggers
+                // Get drug triggers - clean each medication name
                 let drugTriggers = 'None';
                 if (alert.evidence?.matched_medications?.length > 0) {
-                    drugTriggers = alert.evidence.matched_medications
-                        .map(med => encodeText(med))
-                        .filter(med => med && med !== '')
-                        .join(', ');
-                    if (!drugTriggers) drugTriggers = 'None';
+                    const cleanedMeds = alert.evidence.matched_medications
+                        .map(med => cleanText(med))
+                        .filter(med => med && med !== '');
+                    if (cleanedMeds.length > 0) {
+                        drugTriggers = cleanedMeds.join(', ');
+                    }
                 }
 
                 return [
@@ -289,7 +296,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                 doc.text(`Page ${i} of ${pageCount}`, 180, 285);
             }
 
-            doc.save(`Clinical_Analysis_${encodeText(patientData.patient_code)}_${new Date().toISOString().split('T')[0]}.pdf`);
+            doc.save(`Clinical_Analysis_${cleanText(patientData.patient_code)}_${new Date().toISOString().split('T')[0]}.pdf`);
         } catch (error) {
             console.error('PDF Generation Error:', error);
             alert('PDF generation failed. Library error.');
