@@ -53,7 +53,7 @@ const KnowledgeBaseLayout = () => {
 
     const tabs = [
         { path: 'medications', label: 'የመድሃኒት መረጃ', icon: <FaPills /> },
-        { path: 'remedies', label: 'Home Remedies', icon: <FaVial /> },
+        { path: 'remedies', label: 'የቤት ውስጥ ጤና ክብካቤ', icon: <FaVial /> },
         ...(hasFullAccess ? [
             { path: 'illnesses', label: 'Minor Illnesses', icon: <FaStethoscope /> },
             { path: 'compounding', label: 'Compounding', icon: <FaMortarPestle /> }
