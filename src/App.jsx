@@ -746,7 +746,7 @@ const Dashboard = () => {
                                 userPatients.slice(0, 5).map((patient, index) => (
                                     <div
                                         key={index}
-                                        onClick={() => handleViewPatient(patient.id || patient._id)}
+                                        onClick={() => handleViewPatient(patient.patient_code || patient.patientCode)}
                                         className="p-3 bg-gray-50 hover:bg-blue-50 rounded-lg cursor-pointer transition border border-gray-100"
                                     >
                                         <div className="flex justify-between items-center">
