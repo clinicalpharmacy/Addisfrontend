@@ -438,18 +438,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                                 </div>
 
                                                 <div className="flex-1 min-w-0">
-                                                    {/* Primary Action / Recommendation - Always visible and STATIC */}
-                                                    <div className="bg-green-50 border-l-8 border-green-500 p-4 md:p-5 rounded-r-xl mb-4 shadow-sm">
-                                                        <div className="flex items-center gap-2 mb-2">
-                                                            <FaCheckCircle className="text-green-600 text-sm" />
-                                                            <span className="text-xs md:text-sm font-black uppercase tracking-widest text-green-800">Evidence Recommendation</span>
-                                                        </div>
-                                                        <div className="text-lg md:text-2xl font-black text-gray-900 leading-tight">
-                                                            {(isHealthcareClient ? (alert.client_recommendation || alert.details) : (alert.professional_recommendation || alert.details)) || 'Review clinical guidelines'}
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Secondary Context / Finding */}
+                                                    {/* Primary Context / Finding */}
                                                     <div className="flex flex-col gap-3 p-4 bg-gray-50/80 rounded-xl border border-gray-200 mb-5 shadow-sm">
                                                         <div className="flex items-start gap-3 text-sm md:text-lg text-gray-700">
                                                             <span className="font-black text-blue-600 uppercase text-xs md:text-sm mt-1 shrink-0 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">Finding:</span>
@@ -468,6 +457,16 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                                                             <FaCapsules className="text-sm" /> {med}
                                                                         </span>
                                                                     ))}
+                                                                </div>
+                                                            </div>
+                                                        {/* Secondary Action / Recommendation - Always visible and STATIC */}
+                                                            <div className="bg-green-50 border-l-8 border-green-500 p-4 md:p-5 rounded-r-xl mb-4 shadow-sm">
+                                                                <div className="flex items-center gap-2 mb-2">
+                                                                    <FaCheckCircle className="text-green-600 text-sm" />
+                                                                    <span className="text-xs md:text-sm font-black uppercase tracking-widest text-green-800">Evidence Recommendation</span>
+                                                                </div>
+                                                                <div className="text-sm md:text-base font-black text-gray-900 leading-tight">
+                                                                {(isHealthcareClient ? (alert.client_recommendation || alert.details) : (alert.professional_recommendation || alert.details)) || 'Review clinical guidelines'}
                                                                 </div>
                                                             </div>
                                                         )}
