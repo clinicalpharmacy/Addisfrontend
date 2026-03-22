@@ -59,52 +59,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
         low: 'bg-blue-500'
     };
 
-    // Helper function to extract only readable text (Amharic, English, numbers, punctuation)
-    const extractReadableText = (text) => {
-        if (!text) return '';
-        try {
-            let str = String(text);
-            
-            // First, try to find if there's readable text mixed with control characters
-            // The readable text in your example is Amharic and English
-            // We'll keep only characters that are:
-            // - Amharic Unicode range: \u1200-\u137F
-            // - Latin letters: a-z A-Z
-            // - Numbers: 0-9
-            // - Common punctuation: .,!?;:()[]{}'"-
-            // - Spaces
-            const readablePattern = /[\u1200-\u137F\u2D80-\u2DDFa-zA-Z0-9\s.,!?;:()\[\]{}\'\"-]/g;
-            const matches = str.match(readablePattern);
-            
-            if (matches && matches.length > 0) {
-                let cleaned = matches.join('');
-                // Clean up extra spaces
-                cleaned = cleaned.replace(/\s+/g, ' ').trim();
-                return cleaned;
-            }
-            
-            // If no readable characters found, try to remove control characters
-            let cleaned = str.replace(/[\x00-\x1F\x7F-\x9F]/g, '');
-            cleaned = cleaned.replace(/[^\w\s\u1200-\u137F\u2D80-\u2DDF.,!?;:()-]/g, '');
-            cleaned = cleaned.replace(/\s+/g, ' ').trim();
-            
-            return cleaned || str;
-        } catch (e) {
-            console.error('Text extraction error:', e);
-            return String(text);
-        }
-    };
 
-    // Helper function to clean medication names
-    const cleanMedication = (med) => {
-        if (!med) return '';
-        let cleaned = String(med);
-        // Remove control characters
-        cleaned = cleaned.replace(/[\x00-\x1F\x7F-\x9F]/g, '');
-        // Keep only letters and spaces
-        cleaned = cleaned.replace(/[^a-zA-Z\s]/g, '');
-        return cleaned.trim();
-    };
 
     const downloadReport = async () => {
         if (!patientData) return;
@@ -120,7 +75,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
             });
 
             // --- HEADER DESIGN ---
-            doc.setFillColor(37, 99, 235);
+            doc.setFillColor(37, 99, 235); // Blue-600
             doc.rect(0, 0, 210, 40, 'F');
 
             doc.setTextColor(255, 255, 255);
@@ -131,26 +86,26 @@ const CDSSDisplay = ({ patientData, onBack }) => {
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
             doc.text(`Generated on: ${new Date().toLocaleString()}`, 15, 30);
-            doc.text(`Patient Code: ${extractReadableText(patientData.patient_code)}`, 15, 35);
+            doc.text(`Patient Code: ${patientData.patient_code}`, 15, 35);
 
             // --- PATIENT SUMMARY SECTION ---
-            doc.setTextColor(31, 41, 55);
+            doc.setTextColor(31, 41, 55); // Gray-800
             doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
             doc.text('Patient Information', 15, 50);
 
-            doc.setDrawColor(229, 231, 235);
+            doc.setDrawColor(229, 231, 235); // Gray-200
             doc.line(15, 52, 195, 52);
 
             autoTable(doc, {
                 startY: 55,
                 head: [],
                 body: [
-                    ['Full Name:', extractReadableText(patientData.full_name) || 'N/A', 'Gender:', extractReadableText(patientData.gender) || 'N/A'],
-                    ['Age:', `${extractReadableText(patientData.age) || 'N/A'} (${extractReadableText(patientFacts?.patient_type) || 'N/A'})`, 'Primary Diagnosis:', extractReadableText(patientData.diagnosis) || 'None recorded']
+                    ['Full Name:', patientData.full_name || 'N/A', 'Gender:', patientData.gender || 'N/A'],
+                    ['Age:', `${patientData.age || 'N/A'} (${patientFacts?.patient_type || 'N/A'})`, 'Primary Diagnosis:', patientData.diagnosis || 'None recorded']
                 ],
                 theme: 'plain',
-                styles: { fontSize: 10, cellPadding: 2, font: 'helvetica', textColor: [0, 0, 0] },
+                styles: { fontSize: 10, cellPadding: 2 },
                 columnStyles: {
                     0: { fontStyle: 'bold', width: 30 },
                     2: { fontStyle: 'bold', width: 40 }
@@ -176,8 +131,8 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                 head: [['Parameter', 'Count']],
                 body: statsData,
                 theme: 'striped',
-                headStyles: { fillColor: [79, 70, 229], font: 'helvetica', fontStyle: 'bold', textColor: [255, 255, 255] },
-                styles: { fontSize: 9, font: 'helvetica', textColor: [0, 0, 0] }
+                headStyles: { fillColor: [79, 70, 229] }, // Indigo-600
+                styles: { fontSize: 9 }
             });
 
             // --- MEDICATIONS TABLE ---
@@ -192,13 +147,13 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                     head: [['#', 'Drug Name', 'Class', 'Dose/Frequency']],
                     body: medications.map((m, i) => [
                         i + 1,
-                        cleanMedication(m.drug_name),
-                        cleanMedication(m.drug_class) || 'N/A',
-                        `${cleanMedication(m.dose) || ''} ${cleanMedication(m.frequency) || ''}`
+                        m.drug_name,
+                        m.drug_class || 'N/A',
+                        `${m.dose || ''} ${m.frequency || ''}`
                     ]),
                     theme: 'grid',
-                    headStyles: { fillColor: [107, 114, 128], font: 'helvetica', fontStyle: 'bold', textColor: [255, 255, 255] },
-                    styles: { fontSize: 8, font: 'helvetica', textColor: [0, 0, 0] }
+                    headStyles: { fillColor: [107, 114, 128] }, // Gray-500
+                    styles: { fontSize: 8 }
                 });
             }
 
@@ -211,29 +166,20 @@ const CDSSDisplay = ({ patientData, onBack }) => {
             doc.text('Clinical Alerts & Recommendations', 15, currentY);
 
             const alertRows = alerts.map((alert, index) => {
-                // Get the raw text
-                let rawFinding = isHealthcareClient 
+                // Get the finding/message (this is the primary clinical finding)
+                const finding = isHealthcareClient 
                     ? (alert.client_message || alert.message) 
                     : (alert.professional_message || alert.message);
                 
-                let rawRecommendation = (isHealthcareClient 
+                // Get drug triggers (medications that triggered this alert)
+                const drugTriggers = alert.evidence?.matched_medications?.length > 0 
+                    ? alert.evidence.matched_medications.join(', ')
+                    : 'None';
+                
+                // Get evidence recommendation (clinical recommendation)
+                const recommendation = (isHealthcareClient 
                     ? (alert.client_recommendation || alert.details) 
                     : (alert.professional_recommendation || alert.details)) || 'Review clinical guidelines';
-                
-                // Extract only readable text
-                const finding = extractReadableText(rawFinding);
-                const recommendation = extractReadableText(rawRecommendation);
-                
-                // Get drug triggers - clean each medication name
-                let drugTriggers = 'None';
-                if (alert.evidence?.matched_medications?.length > 0) {
-                    const cleanedMeds = alert.evidence.matched_medications
-                        .map(med => cleanMedication(med))
-                        .filter(med => med && med !== '');
-                    if (cleanedMeds.length > 0) {
-                        drugTriggers = cleanedMeds.join(', ');
-                    }
-                }
 
                 return [
                     index + 1,
@@ -248,48 +194,14 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                 head: [['#', 'Finding', 'Drug(s) Trigger', 'Evidence Recommendation']],
                 body: alertRows,
                 theme: 'grid',
-                headStyles: { 
-                    fillColor: [220, 38, 38],
-                    font: 'helvetica',
-                    fontStyle: 'bold',
-                    textColor: [255, 255, 255],
-                    halign: 'center'
-                },
-                styles: { 
-                    fontSize: 9, 
-                    font: 'helvetica',
-                    cellPadding: 5,
-                    overflow: 'linebreak',
-                    cellWidth: 'wrap',
-                    textColor: [0, 0, 0],
-                    valign: 'top'
-                },
+                headStyles: { fillColor: [220, 38, 38] }, // Red-600
+                styles: { fontSize: 7, cellPadding: 3 },
                 columnStyles: {
-                    0: { 
-                        width: 8, 
-                        cellWidth: 'wrap',
-                        halign: 'center',
-                        valign: 'middle'
-                    },
-                    1: { 
-                        width: 70, 
-                        cellWidth: 'wrap',
-                        halign: 'left'
-                    },
-                    2: { 
-                        width: 45, 
-                        cellWidth: 'wrap',
-                        halign: 'left'
-                    },
-                    3: { 
-                        width: 65, 
-                        cellWidth: 'wrap',
-                        halign: 'left'
-                    }
-                },
-                margin: { left: 10, right: 10 },
-                pageBreak: 'auto',
-                rowPageBreak: 'auto'
+                    0: { width: 10 },  // # column
+                    1: { width: 60 },  // Finding column
+                    2: { width: 40 },  // Drug(s) Trigger column
+                    3: { width: 70 }   // Evidence Recommendation column
+                }
             });
 
             // --- FOOTER ---
@@ -297,7 +209,6 @@ const CDSSDisplay = ({ patientData, onBack }) => {
             for (let i = 1; i <= pageCount; i++) {
                 doc.setPage(i);
                 doc.setFontSize(8);
-                doc.setFont('helvetica', 'normal');
                 doc.setTextColor(156, 163, 175);
                 doc.text(
                     'DISCLAIMER: This clinical analysis report should be reviewed by a professional. Patient Information should not contain Protected Health Information.',
@@ -306,7 +217,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                 doc.text(`Page ${i} of ${pageCount}`, 180, 285);
             }
 
-            doc.save(`Clinical_Analysis_${extractReadableText(patientData.patient_code)}_${new Date().toISOString().split('T')[0]}.pdf`);
+            doc.save(`Clinical_Analysis_${patientData.patient_code}_${new Date().toISOString().split('T')[0]}.pdf`);
         } catch (error) {
             console.error('PDF Generation Error:', error);
             alert('PDF generation failed. Library error.');
@@ -389,6 +300,9 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                     )}
                 </div>
             </div>
+
+            {/* AI Analysis Result Section */}
+
 
             {/* Test Results Banner */}
             {testResults && (
@@ -497,6 +411,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                 const SeverityIcon = severityIcons[alert.severity] || FaBell;
                                 const severityColor = severityColors[alert.severity];
                                 const severityBgColor = severityBgColors[alert.severity];
+                                const ruleTypeInfo = getRuleTypeInfo(alert.rule_type);
 
                                 return (
                                     <div
@@ -555,6 +470,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
+                                                                    // We'll treat acknowledgement as "Seen" and add a processed toggle
                                                                     acknowledgeAlert(alert.id, !alert.processed);
                                                                 }}
                                                                 className={`p-1.5 rounded-lg transition-all ${alert.processed ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400 hover:text-green-600'}`}
