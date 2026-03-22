@@ -105,7 +105,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                     ['Age:', `${patientData.age || 'N/A'} (${patientFacts?.patient_type || 'N/A'})`, 'Primary Diagnosis:', patientData.diagnosis || 'None recorded']
                 ],
                 theme: 'plain',
-                styles: { fontSize: 10, cellPadding: 2 },
+                styles: { fontSize: 10, cellPadding: 2, font: 'helvetica' },
                 columnStyles: {
                     0: { fontStyle: 'bold', width: 30 },
                     2: { fontStyle: 'bold', width: 40 }
@@ -131,8 +131,8 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                 head: [['Parameter', 'Count']],
                 body: statsData,
                 theme: 'striped',
-                headStyles: { fillColor: [79, 70, 229] }, // Indigo-600
-                styles: { fontSize: 9 }
+                headStyles: { fillColor: [79, 70, 229], font: 'helvetica', fontStyle: 'bold' },
+                styles: { fontSize: 9, font: 'helvetica' }
             });
 
             // --- MEDICATIONS TABLE ---
@@ -152,8 +152,8 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                         `${m.dose || ''} ${m.frequency || ''}`
                     ]),
                     theme: 'grid',
-                    headStyles: { fillColor: [107, 114, 128] }, // Gray-500
-                    styles: { fontSize: 8 }
+                    headStyles: { fillColor: [107, 114, 128], font: 'helvetica', fontStyle: 'bold' },
+                    styles: { fontSize: 8, font: 'helvetica' }
                 });
             }
 
@@ -194,18 +194,27 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                 head: [['#', 'Finding', 'Drug(s) Trigger', 'Evidence Recommendation']],
                 body: alertRows,
                 theme: 'grid',
-                headStyles: { fillColor: [220, 38, 38] }, // Red-600
-                styles: { fontSize: 8, cellPadding: 4 },
+                headStyles: { 
+                    fillColor: [220, 38, 38],
+                    font: 'helvetica',
+                    fontStyle: 'bold',
+                    textColor: [255, 255, 255]
+                },
+                styles: { 
+                    fontSize: 9, 
+                    font: 'helvetica',
+                    cellPadding: 4,
+                    overflow: 'linebreak',
+                    cellWidth: 'wrap',
+                    textColor: [0, 0, 0]
+                },
                 columnStyles: {
                     0: { width: 10, cellWidth: 'wrap' },  // # column
-                    1: { width: 55, cellWidth: 'wrap' },  // Finding column - wider for text wrapping
+                    1: { width: 55, cellWidth: 'wrap' },  // Finding column
                     2: { width: 35, cellWidth: 'wrap' },  // Drug(s) Trigger column
-                    3: { width: 70, cellWidth: 'wrap' }   // Evidence Recommendation column - largest for recommendations
+                    3: { width: 70, cellWidth: 'wrap' }   // Evidence Recommendation column
                 },
-                styles: {
-                    overflow: 'linebreak',
-                    cellWidth: 'wrap'
-                }
+                margin: { left: 15, right: 15 }
             });
 
             // --- FOOTER ---
@@ -213,9 +222,10 @@ const CDSSDisplay = ({ patientData, onBack }) => {
             for (let i = 1; i <= pageCount; i++) {
                 doc.setPage(i);
                 doc.setFontSize(8);
+                doc.setFont('helvetica', 'normal');
                 doc.setTextColor(156, 163, 175);
                 doc.text(
-                    'DISCLAIMER: This clinical analysis report should be reviewed by a professional. Patient Information should not contain Protected Health Information.',
+                    'DISCLAIMER: This clinical analysis report should be reviewed by a professional.',
                     15, 285
                 );
                 doc.text(`Page ${i} of ${pageCount}`, 180, 285);
