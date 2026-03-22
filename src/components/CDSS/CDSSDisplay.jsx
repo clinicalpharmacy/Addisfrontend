@@ -59,41 +59,51 @@ const CDSSDisplay = ({ patientData, onBack }) => {
         low: 'bg-blue-500'
     };
 
-    // Helper function to clean text by removing control characters but keeping readable text
-    const cleanText = (text) => {
+    // Helper function to extract only readable text (Amharic, English, numbers, punctuation)
+    const extractReadableText = (text) => {
         if (!text) return '';
         try {
-            let cleaned = String(text);
-            // Remove all control characters (ASCII 0-31) but keep printable characters including Unicode
-            // This removes the invisible control characters that appear as symbols
-            cleaned = cleaned.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
-            // Also remove the specific pattern of control characters that appear in the data
-            cleaned = cleaned.replace(/[\x01-\x1F\x7F]/g, '');
-            // Remove any remaining control characters in the range 128-159
-            cleaned = cleaned.replace(/[\x80-\x9F]/g, '');
-            // Trim whitespace
-            cleaned = cleaned.trim();
-            return cleaned;
+            let str = String(text);
+            
+            // First, try to find if there's readable text mixed with control characters
+            // The readable text in your example is Amharic and English
+            // We'll keep only characters that are:
+            // - Amharic Unicode range: \u1200-\u137F
+            // - Latin letters: a-z A-Z
+            // - Numbers: 0-9
+            // - Common punctuation: .,!?;:()[]{}'"-
+            // - Spaces
+            const readablePattern = /[\u1200-\u137F\u2D80-\u2DDFa-zA-Z0-9\s.,!?;:()\[\]{}\'\"-]/g;
+            const matches = str.match(readablePattern);
+            
+            if (matches && matches.length > 0) {
+                let cleaned = matches.join('');
+                // Clean up extra spaces
+                cleaned = cleaned.replace(/\s+/g, ' ').trim();
+                return cleaned;
+            }
+            
+            // If no readable characters found, try to remove control characters
+            let cleaned = str.replace(/[\x00-\x1F\x7F-\x9F]/g, '');
+            cleaned = cleaned.replace(/[^\w\s\u1200-\u137F\u2D80-\u2DDF.,!?;:()-]/g, '');
+            cleaned = cleaned.replace(/\s+/g, ' ').trim();
+            
+            return cleaned || str;
         } catch (e) {
-            console.error('Text clean error:', e);
+            console.error('Text extraction error:', e);
             return String(text);
         }
     };
 
-    // Helper function to get the actual readable text from the alert
-    const getReadableText = (text) => {
-        if (!text) return '';
-        // First clean the text to remove control characters
-        let cleaned = cleanText(text);
-        // If after cleaning we have meaningful text, return it
-        if (cleaned && cleaned.length > 0 && cleaned !== ' ') {
-            return cleaned;
-        }
-        // Fallback to original but try to extract readable parts
-        // Sometimes the readable text is mixed with control characters
-        // We'll try to keep only the readable characters (letters, numbers, punctuation, and Amharic range)
-        const readable = String(text).replace(/[^\w\s\u1200-\u137F\u2000-\u206F\u2E80-\u2EFF\u3000-\u303F\uFF00-\uFFEF.,!?;:()-]/g, '');
-        return readable.trim() || 'No readable text';
+    // Helper function to clean medication names
+    const cleanMedication = (med) => {
+        if (!med) return '';
+        let cleaned = String(med);
+        // Remove control characters
+        cleaned = cleaned.replace(/[\x00-\x1F\x7F-\x9F]/g, '');
+        // Keep only letters and spaces
+        cleaned = cleaned.replace(/[^a-zA-Z\s]/g, '');
+        return cleaned.trim();
     };
 
     const downloadReport = async () => {
@@ -110,7 +120,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
             });
 
             // --- HEADER DESIGN ---
-            doc.setFillColor(37, 99, 235); // Blue-600
+            doc.setFillColor(37, 99, 235);
             doc.rect(0, 0, 210, 40, 'F');
 
             doc.setTextColor(255, 255, 255);
@@ -121,23 +131,23 @@ const CDSSDisplay = ({ patientData, onBack }) => {
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
             doc.text(`Generated on: ${new Date().toLocaleString()}`, 15, 30);
-            doc.text(`Patient Code: ${cleanText(patientData.patient_code)}`, 15, 35);
+            doc.text(`Patient Code: ${extractReadableText(patientData.patient_code)}`, 15, 35);
 
             // --- PATIENT SUMMARY SECTION ---
-            doc.setTextColor(31, 41, 55); // Gray-800
+            doc.setTextColor(31, 41, 55);
             doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
             doc.text('Patient Information', 15, 50);
 
-            doc.setDrawColor(229, 231, 235); // Gray-200
+            doc.setDrawColor(229, 231, 235);
             doc.line(15, 52, 195, 52);
 
             autoTable(doc, {
                 startY: 55,
                 head: [],
                 body: [
-                    ['Full Name:', cleanText(patientData.full_name) || 'N/A', 'Gender:', cleanText(patientData.gender) || 'N/A'],
-                    ['Age:', `${cleanText(patientData.age) || 'N/A'} (${cleanText(patientFacts?.patient_type) || 'N/A'})`, 'Primary Diagnosis:', cleanText(patientData.diagnosis) || 'None recorded']
+                    ['Full Name:', extractReadableText(patientData.full_name) || 'N/A', 'Gender:', extractReadableText(patientData.gender) || 'N/A'],
+                    ['Age:', `${extractReadableText(patientData.age) || 'N/A'} (${extractReadableText(patientFacts?.patient_type) || 'N/A'})`, 'Primary Diagnosis:', extractReadableText(patientData.diagnosis) || 'None recorded']
                 ],
                 theme: 'plain',
                 styles: { fontSize: 10, cellPadding: 2, font: 'helvetica', textColor: [0, 0, 0] },
@@ -182,9 +192,9 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                     head: [['#', 'Drug Name', 'Class', 'Dose/Frequency']],
                     body: medications.map((m, i) => [
                         i + 1,
-                        cleanText(m.drug_name),
-                        cleanText(m.drug_class) || 'N/A',
-                        `${cleanText(m.dose) || ''} ${cleanText(m.frequency) || ''}`
+                        cleanMedication(m.drug_name),
+                        cleanMedication(m.drug_class) || 'N/A',
+                        `${cleanMedication(m.dose) || ''} ${cleanMedication(m.frequency) || ''}`
                     ]),
                     theme: 'grid',
                     headStyles: { fillColor: [107, 114, 128], font: 'helvetica', fontStyle: 'bold', textColor: [255, 255, 255] },
@@ -201,7 +211,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
             doc.text('Clinical Alerts & Recommendations', 15, currentY);
 
             const alertRows = alerts.map((alert, index) => {
-                // Get the raw text and clean it to remove control characters
+                // Get the raw text
                 let rawFinding = isHealthcareClient 
                     ? (alert.client_message || alert.message) 
                     : (alert.professional_message || alert.message);
@@ -210,15 +220,15 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                     ? (alert.client_recommendation || alert.details) 
                     : (alert.professional_recommendation || alert.details)) || 'Review clinical guidelines';
                 
-                // Clean the text to remove control characters while preserving readable content
-                const finding = getReadableText(rawFinding);
-                const recommendation = getReadableText(rawRecommendation);
+                // Extract only readable text
+                const finding = extractReadableText(rawFinding);
+                const recommendation = extractReadableText(rawRecommendation);
                 
                 // Get drug triggers - clean each medication name
                 let drugTriggers = 'None';
                 if (alert.evidence?.matched_medications?.length > 0) {
                     const cleanedMeds = alert.evidence.matched_medications
-                        .map(med => cleanText(med))
+                        .map(med => cleanMedication(med))
                         .filter(med => med && med !== '');
                     if (cleanedMeds.length > 0) {
                         drugTriggers = cleanedMeds.join(', ');
@@ -246,7 +256,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                     halign: 'center'
                 },
                 styles: { 
-                    fontSize: 8, 
+                    fontSize: 9, 
                     font: 'helvetica',
                     cellPadding: 5,
                     overflow: 'linebreak',
@@ -296,7 +306,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                 doc.text(`Page ${i} of ${pageCount}`, 180, 285);
             }
 
-            doc.save(`Clinical_Analysis_${cleanText(patientData.patient_code)}_${new Date().toISOString().split('T')[0]}.pdf`);
+            doc.save(`Clinical_Analysis_${extractReadableText(patientData.patient_code)}_${new Date().toISOString().split('T')[0]}.pdf`);
         } catch (error) {
             console.error('PDF Generation Error:', error);
             alert('PDF generation failed. Library error.');
@@ -379,9 +389,6 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                     )}
                 </div>
             </div>
-
-            {/* AI Analysis Result Section */}
-
 
             {/* Test Results Banner */}
             {testResults && (
@@ -490,7 +497,6 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                 const SeverityIcon = severityIcons[alert.severity] || FaBell;
                                 const severityColor = severityColors[alert.severity];
                                 const severityBgColor = severityBgColors[alert.severity];
-                                const ruleTypeInfo = getRuleTypeInfo(alert.rule_type);
 
                                 return (
                                     <div
@@ -549,7 +555,6 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    // We'll treat acknowledgement as "Seen" and add a processed toggle
                                                                     acknowledgeAlert(alert.id, !alert.processed);
                                                                 }}
                                                                 className={`p-1.5 rounded-lg transition-all ${alert.processed ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400 hover:text-green-600'}`}
