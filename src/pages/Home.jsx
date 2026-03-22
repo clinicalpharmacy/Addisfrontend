@@ -69,25 +69,49 @@ const Home = () => {
                     </Link>
                 )}
 
-                {/* Minor Illnesses - Hidden for Healthcare Client*/}
-                {JSON.parse(localStorage.getItem('user'))?.role !== 'healthcare_client' && (
-                <Link to="/knowledge/illnesses" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
+                {/* Minor Illnesses - Only for Pharmacists & Pharmacy students */}
+                {['pharmacist', 'pharmacy_student'].includes(
+                  JSON.parse(localStorage.getItem('user'))?.role
+                ) && (
+                  <Link to="/knowledge/illnesses" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
                     <div className="flex items-center gap-4 mb-4">
-                        <div className="p-3 bg-orange-100 rounded-full">
-                            <FaUserMd className="text-orange-600 text-2xl" />
-                        </div>
-                        <div>
-                            <h2 className="text-xl font-bold text-gray-800">Minor Illnesses</h2>
-                            <p className="text-sm text-gray-500">OTC-based Treatment guides</p>
-                        </div>
+                      <div className="p-3 bg-orange-100 rounded-full">
+                        <FaUserMd className="text-orange-600 text-2xl" />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-800">Minor Illnesses</h2>
+                        <p className="text-sm text-gray-500">OTC-based Treatment guides</p>
+                      </div>
                     </div>
                     <div className="flex justify-end">
-                        <span className="text-orange-600 flex items-center gap-1">
-                            View <FaArrowRight />
-                        </span>
+                      <span className="text-orange-600 flex items-center gap-1">
+                        View <FaArrowRight />
+                      </span>
                     </div>
-                </Link>
-            )}
+                  </Link>
+                )}
+
+                {/* Compounding - Only for Pharmacists & Pharmacy students */}
+                {['student', 'clinician'].includes(
+                  JSON.parse(localStorage.getItem('user'))?.role
+                ) && (
+                  <Link to="/knowledge/illnesses" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="p-3 bg-orange-100 rounded-full">
+                        <FaUserMd className="text-orange-600 text-2xl" />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-800">Compounding</h2>
+                        <p className="text-sm text-gray-500">Compounding SOPs</p>
+                      </div>
+                    </div>
+                    <div className="flex justify-end">
+                      <span className="text-orange-600 flex items-center gap-1">
+                        View <FaArrowRight />
+                      </span>
+                    </div>
+                  </Link>
+                )}
                 
                 {/* Home Remedies */}
                 <Link to="/knowledge/remedies" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
