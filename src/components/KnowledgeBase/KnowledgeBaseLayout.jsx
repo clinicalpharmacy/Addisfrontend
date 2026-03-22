@@ -11,7 +11,8 @@ import {
     FaLock,
     FaBan,
     FaTimes,
-    FaCheckCircle
+    FaCheckCircle,
+    FaBookOpen
 } from 'react-icons/fa';
 import './KnowledgeBase.css';
 
@@ -57,7 +58,7 @@ const KnowledgeBaseLayout = () => {
         ...(hasFullAccess ? [
             { path: 'illnesses', label: 'Minor Illnesses', icon: <FaStethoscope /> },
             { path: 'compounding', label: 'Compounding', icon: <FaMortarPestle /> },
-            { path: 'education', label: 'Education', icon: <FaMortarPestle /> }
+            { path: 'education', label: 'Education', icon: <FaBookOpen /> }
         ] : []),
     ];
 
