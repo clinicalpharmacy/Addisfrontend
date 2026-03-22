@@ -202,8 +202,8 @@ const CDSSDisplay = ({ patientData, onBack }) => {
             autoTable(doc, {
                 startY: currentY + 5,
                 head: [isHealthcareClient
-                    ? ['#', 'Alert/Severity', 'Guidance Message', 'Recommendation', 'Note']
-                    : ['#', 'Alert/Severity', 'Clinical Message', 'Recommendation', 'Evidence']
+                    ? ['#', 'Finding', 'Drug(s) Trigger', 'Evidence Recommendation']
+                    : ['#', 'Finding', 'Drug(s) Trigger', 'Evidence Recommendation']
                 ],
                 body: alertRows,
                 theme: 'grid',
@@ -224,7 +224,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                 doc.setFontSize(8);
                 doc.setTextColor(156, 163, 175);
                 doc.text(
-                    'DISCLAIMER: This decision support tool should be reviewed by a professional. Patient data is confidential.',
+                    'DISCLAIMER: This clinical analysis report should be reviewed by a professional. Patient Information should not contain Protected Health Information.',
                     15, 285
                 );
                 doc.text(`Page ${i} of ${pageCount}`, 180, 285);
