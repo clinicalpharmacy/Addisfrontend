@@ -166,22 +166,20 @@ const CDSSDisplay = ({ patientData, onBack }) => {
             doc.text('Clinical Alerts & Recommendations', 15, currentY);
 
             const alertRows = alerts.map((alert, index) => {
-                let evidence = '';
-                if (alert.evidence) {
-                    const parts = [];
-                    // Medications are now allowed for everyone (including clients)
-                    if (alert.evidence.matched_medications?.length > 0) {
-                        parts.push(`Meds: ${alert.evidence.matched_medications.join(', ')}`);
-                    }
-                    // Other technical evidence (like labs) remains restricted for clients
-                    if (!isHealthcareClient && alert.evidence.labs) {
-                        const labKeys = Object.keys(alert.evidence.labs).filter(k => alert.evidence.labs[k]);
-                        if (labKeys.length > 0) {
-                            parts.push(`Labs: ${labKeys.map(k => `${k}=${alert.evidence.labs[k]}`).join(', ')}`);
-                        }
-                    }
-                    evidence = parts.join(' | ');
-                }
+                // Get the finding/message
+                const finding = isHealthcareClient 
+                    ? (alert.client_message || alert.message) 
+                    : (alert.professional_message || alert.message);
+                
+                // Get drug triggers
+                const drugTriggers = alert.evidence?.matched_medications?.length > 0 
+                    ? alert.evidence.matched_medications.join(', ')
+                    : 'None';
+                
+                // Get evidence recommendation
+                const recommendation = (isHealthcareClient 
+                    ? (alert.client_recommendation || alert.details) 
+                    : (alert.professional_recommendation || alert.details)) || 'Review clinical guidelines';
 
                 return [
                     index + 1,
@@ -193,27 +191,24 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                             fontStyle: 'bold'
                         }
                     },
-                    isHealthcareClient ? (alert.client_message || alert.message) : (alert.professional_message || alert.message),
-                    isHealthcareClient ? (alert.client_recommendation || alert.details || 'N/A') : (alert.professional_recommendation || alert.details || 'N/A'),
-                    isHealthcareClient ? 'General Guidance' : (evidence || 'Matched patterns')
+                    finding,
+                    drugTriggers,
+                    recommendation
                 ];
             });
 
             autoTable(doc, {
                 startY: currentY + 5,
-                head: [isHealthcareClient
-                    ? ['#', 'Finding', 'Drug(s) Trigger', 'Evidence Recommendation']
-                    : ['#', 'Finding', 'Drug(s) Trigger', 'Evidence Recommendation']
-                ],
+                head: [['#', 'Finding(s)', 'Drug(s) Trigger', 'Evidence Recommendation']],
                 body: alertRows,
                 theme: 'grid',
                 headStyles: { fillColor: [220, 38, 38] }, // Red-600
                 styles: { fontSize: 7, cellPadding: 3 },
                 columnStyles: {
-                    1: { width: 35 },
+                    1: { width: 30 },
                     2: { width: 45 },
-                    3: { width: 45 },
-                    4: { width: 30 }
+                    3: { width: 40 },
+                    4: { width: 45 }
                 }
             });
 
