@@ -211,7 +211,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                 doc.setFontSize(8);
                 doc.setTextColor(156, 163, 175);
                 doc.text(
-                    'DISCLAIMER: This clinical analysis report should be reviewed by a professional. Patient Information should not contain Protected Health Information.',
+                    'DISCLAIMER: This report is only informational & cannot be replace a health professional's decision.',
                     15, 285
                 );
                 doc.text(`Page ${i} of ${pageCount}`, 180, 285);
