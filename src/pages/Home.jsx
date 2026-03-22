@@ -125,7 +125,7 @@ const Home = () => {
 
             {/* Simple Footer */}
             <div className="text-center text-gray-500 text-xs sm:text-sm">
-                <p>Addismed - Enhacing patient safety and rational medicines use</p>
+                <p>AddisMed - Enhacing patient safety and rational medicines use</p>
             </div>
         </div>
     );
