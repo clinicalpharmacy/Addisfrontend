@@ -76,7 +76,7 @@ const CDSSAnalysisPage = () => {
                         <div>
                             <h1 className="text-2xl md:text-3xl font-bold text-gray-800 flex items-center gap-3">
                                 <FaBrain className="text-purple-600 shrink-0" />
-                                <span className="truncate">Clinical Decision Support</span>
+                                <span className="truncate">Clinical Analysis</span>
                             </h1>
                             <p className="text-sm md:text-base text-gray-600 mt-1">
                                 {selectedPatient
