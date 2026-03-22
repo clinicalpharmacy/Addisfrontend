@@ -92,7 +92,7 @@ const Home = () => {
                 )}
 
                 {/* Compounding - Only for Pharmacists & Pharmacy students */}
-                {['student', 'clinician'].includes(
+                {['pharmacist', 'pharmacy_student'].includes(
                   JSON.parse(localStorage.getItem('user'))?.role
                 ) && (
                   <Link to="/knowledge/illnesses" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
