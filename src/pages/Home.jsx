@@ -16,6 +16,9 @@ const Home = () => {
         return 'Good evening';
     };
 
+const user = JSON.parse(localStorage.getItem('user'));
+const role = user?.role;
+    
     return (
         <div className="page-container w-full max-w-full overflow-x-hidden px-2 sm:px-4 md:px-6">
             {/* Welcome Section */}
@@ -48,27 +51,68 @@ const Home = () => {
             </div>
 
             {/* Quick Access Grid */}
+            {/* Top Row - 3 Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 w-full">
+            
+              {/* Medication Review */}
+              {role !== 'admin' && (
+                <Link to="/patients" className="bg-white rounded-xl shadow p-4 sm:p-6 hover:shadow-md transition w-full">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="p-3 bg-blue-100 rounded-full">
+                      <FaUserInjured className="text-blue-600 text-2xl" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-gray-800">Medication Review</h2>
+                      <p className="text-sm text-gray-500">Review medication use</p>
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <span className="text-blue-600 flex items-center gap-1">
+                      Open <FaArrowRight />
+                    </span>
+                  </div>
+                </Link>
+              )}
+            
+              {/* Medication Info */}
+              <Link to="/knowledge/medications" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="p-3 bg-purple-100 rounded-full">
+                    <FaPills className="text-purple-600 text-2xl" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-800">Medication Info</h2>
+                    <p className="text-sm text-gray-500">Database for Medicines information</p>
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <span className="text-purple-600 flex items-center gap-1">
+                    Search <FaArrowRight />
+                  </span>
+                </div>
+              </Link>
+            
+              {/* Home Remedies */}
+              <Link to="/knowledge/remedies" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="p-3 bg-green-100 rounded-full">
+                    <FaVial className="text-green-600 text-2xl" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-800">Home Remedies</h2>
+                    <p className="text-sm text-gray-500">Home made remedies</p>
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <span className="text-green-600 flex items-center gap-1">
+                    Browse <FaArrowRight />
+                  </span>
+                </div>
+              </Link>
+            
+            </div>
+          
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 w-full">
-                {/* Medicaction Review - Hidden for Admin */}
-                {JSON.parse(localStorage.getItem('user'))?.role !== 'admin' && (
-                    <Link to="/patients" className="bg-white rounded-xl shadow p-4 sm:p-6 hover:shadow-md transition w-full">
-                        <div className="flex items-center gap-4 mb-4">
-                            <div className="p-3 bg-blue-100 rounded-full">
-                                <FaUserInjured className="text-blue-600 text-2xl" />
-                            </div>
-                            <div>
-                                <h2 className="text-xl font-bold text-gray-800">Medication Review</h2>
-                                <p className="text-sm text-gray-500">Review medication use</p>
-                            </div>
-                        </div>
-                        <div className="flex justify-end">
-                            <span className="text-blue-600 flex items-center gap-1">
-                                Open <FaArrowRight />
-                            </span>
-                        </div>
-                    </Link>
-                )}
-
                 {/* Minor Illnesses - Only for Pharmacists & Pharmacy students */}
                 {['pharmacist', 'pharmacy_student'].includes(
                   JSON.parse(localStorage.getItem('user'))?.role
@@ -95,7 +139,7 @@ const Home = () => {
                 {['pharmacist', 'pharmacy_student'].includes(
                   JSON.parse(localStorage.getItem('user'))?.role
                 ) && (
-                  <Link to="/knowledge/illnesses" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
+                  <Link to="/knowledge/preparations" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
                     <div className="flex items-center gap-4 mb-4">
                       <div className="p-3 bg-orange-100 rounded-full">
                         <FaUserMd className="text-orange-600 text-2xl" />
@@ -112,42 +156,6 @@ const Home = () => {
                     </div>
                   </Link>
                 )}
-                
-                {/* Home Remedies */}
-                <Link to="/knowledge/remedies" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="p-3 bg-green-100 rounded-full">
-                            <FaVial className="text-green-600 text-2xl" />
-                        </div>
-                        <div>
-                            <h2 className="text-xl font-bold text-gray-800">Home Remedies</h2>
-                            <p className="text-sm text-gray-500">Home made remedies</p>
-                        </div>
-                    </div>
-                    <div className="flex justify-end">
-                        <span className="text-green-600 flex items-center gap-1">
-                            Browse <FaArrowRight />
-                        </span>
-                    </div>
-                </Link>
-
-                {/* Medication Info */}
-                <Link to="/knowledge/medications" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="p-3 bg-purple-100 rounded-full">
-                            <FaPills className="text-purple-600 text-2xl" />
-                        </div>
-                        <div>
-                            <h2 className="text-xl font-bold text-gray-800">Medication Info</h2>
-                            <p className="text-sm text-gray-500">Database for Medicines information</p>
-                        </div>
-                    </div>
-                    <div className="flex justify-end">
-                        <span className="text-purple-600 flex items-center gap-1">
-                            Search <FaArrowRight />
-                        </span>
-                    </div>
-                </Link>
             </div>
 
             {/* Simple Footer */}
