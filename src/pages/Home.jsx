@@ -57,8 +57,8 @@ const Home = () => {
                                 <FaUserInjured className="text-blue-600 text-2xl" />
                             </div>
                             <div>
-                                <h2 className="text-xl font-bold text-gray-800">Patients</h2>
-                                <p className="text-sm text-gray-500">Medicines review for individual patients</p>
+                                <h2 className="text-xl font-bold text-gray-800">Medicines review</h2>
+                                <p className="text-sm text-gray-500">Review medication use</p>
                             </div>
                         </div>
                         <div className="flex justify-end">
@@ -105,6 +105,8 @@ const Home = () => {
                 </Link>
 
                 {/* Minor Illnesses */}
+                {/* Patients - Hidden for Healthcare Client */}
+                {JSON.parse(localStorage.getItem('user'))?.role !== 'healthcare_client' && (
                 <Link to="/knowledge/illnesses" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
                     <div className="flex items-center gap-4 mb-4">
                         <div className="p-3 bg-orange-100 rounded-full">
