@@ -97,7 +97,7 @@ export const useDRNLogic = (patientCode) => {
             const patCode = pData.patient_code || patientCode;
 
             // Medications
-            const { data: mData } = await supabase.from('medication_history').select('*').eq('patient_id', patientId).eq('is_active', true);
+            const { data: mData } = await supabase.from('medication_history').select('*').eq('patient_code', patCode).eq('is_active', true);
             setMedications(mData || pData.medication_history || []);
 
             // Rules

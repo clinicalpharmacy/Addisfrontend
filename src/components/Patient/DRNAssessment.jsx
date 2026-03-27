@@ -330,11 +330,11 @@ const DRNAssessment = ({ patientCode }) => {
             setPatientData(patient);
             setPatientId(patient.id);
 
-            // Fetch medications by patient_id (more reliable than patient_code)
+            // Fetch medications by patient_code (since medication_history lacks patient_id)
             const { data: medicationsData } = await supabase
                 .from('medication_history')
                 .select('*')
-                .eq('patient_id', patient.id)
+                .eq('patient_code', patient.patient_code || patientCode)
                 .eq('is_active', true);
 
             const medicationsResolved = medicationsData || patient.medication_history || [];
