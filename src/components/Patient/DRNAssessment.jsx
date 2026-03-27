@@ -304,13 +304,25 @@ const DRNAssessment = ({ patientCode }) => {
 
     const loadPatientData = async () => {
         try {
-            const { data: patient, error } = await supabase
-                .from('patients')
-                .select('*')
-                .eq('patient_code', patientCode)
-                .single();
+            // Use backend API instead of direct Supabase to handle numeric IDs and codes correctly
+            const token = localStorage.getItem('token') || localStorage.getItem('pharmacare_token');
+            const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+            const response = await fetch(`${apiBase}/patients/${patientCode}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
 
-            if (error) {
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                setAuthError(errData.error || `Patient not found: ${patientCode}`);
+                return null;
+            }
+
+            const result = await response.json();
+            const patient = result.patient;
+            if (!patient) {
                 setAuthError(`Patient not found: ${patientCode}`);
                 return null;
             }
@@ -318,10 +330,11 @@ const DRNAssessment = ({ patientCode }) => {
             setPatientData(patient);
             setPatientId(patient.id);
 
+            // Fetch medications by patient_id (more reliable than patient_code)
             const { data: medicationsData } = await supabase
                 .from('medication_history')
                 .select('*')
-                .eq('patient_code', patientCode)
+                .eq('patient_id', patient.id)
                 .eq('is_active', true);
 
             const medicationsResolved = medicationsData || patient.medication_history || [];
