@@ -166,13 +166,17 @@ export const AdminUsers = ({
                                     <span className="text-[9px] text-gray-400 font-black tracking-widest uppercase">ID: ...{user.id.slice(-6)}</span>
                                     {user.role !== 'admin' && (
                                         <button
-                                            onClick={() => onToggleBlock(user.id)}
-                                            className={`text-[9px] font-black uppercase tracking-tighter mt-1 transition-colors ${user.is_blocked
-                                                ? 'text-orange-600 hover:text-orange-700'
-                                                : 'text-gray-400 hover:text-red-500'
+                                            onClick={() => {
+                                                if (window.confirm(`${user.is_blocked ? 'Unblock' : 'Block'} access for ${user.email}?`)) {
+                                                    onToggleBlock(user.id);
+                                                }
+                                            }}
+                                            className={`w-full mt-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all shadow-sm flex items-center justify-center gap-2 ${user.is_blocked
+                                                ? 'bg-orange-50 text-orange-600 hover:bg-orange-100 border border-orange-200'
+                                                : 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200'
                                                 }`}
                                         >
-                                            {user.is_blocked ? 'Emergency Unblock' : 'Restrict Access'}
+                                            {user.is_blocked ? 'Grant Access (Unblock)' : 'Revoke Access (Block)'}
                                         </button>
                                     )}
                                 </div>

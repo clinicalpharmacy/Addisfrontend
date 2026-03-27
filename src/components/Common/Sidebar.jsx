@@ -164,7 +164,7 @@ const Sidebar = ({ onClose }) => {
                         </li>
 
                         {/* Patients Section */}
-                        {!isAdmin && user?.role !== 'health_careclient' && (
+                        {!isAdmin && ( // Show for non-admins, including healthcare_client
                             <li className="mb-2">
                                 <button
                                     onClick={() => isSubscribed ? toggleSection('patients') : navigate('/subscription/plans')}
@@ -195,7 +195,7 @@ const Sidebar = ({ onClose }) => {
                                             <span className="w-2 h-2 rounded-full bg-current opacity-40" />
                                             Patient List
                                         </NavLink>
-                                        {!isAdmin && user?.role !== 'healthcare_client' && (
+                                        {!isAdmin && ( // Show for non-admins, including healthcare_client
                                         <NavLink
                                             to="/patients/new"
                                             onClick={onClose}

@@ -592,7 +592,8 @@ const PatientDetails = () => {
 
 
             try {
-                const result = await api.get(`/patients/code/${patientCode}`);
+                // Use the generic identifier route which supports both ID and Code
+                const result = await api.get(`/patients/${patientCode}`);
 
 
                 if (result.success && result.patient) {
@@ -1050,20 +1051,24 @@ const PatientDetails = () => {
             }
 
             let savePatientCode = getCurrentPatientCode();
+            const isRestrictedIndividual = user?.account_type === 'individual' && !user?.company_id && user?.role !== 'admin';
 
-            // For NEW patients, ALWAYS generate a fresh code
-            if (isNewPatient) {
+            // For NEW patients, generation logic
+            if (isNewPatient && !isRestrictedIndividual) {
                 savePatientCode = generatePatientCode();
                 setCurrentPatientCode(savePatientCode);
             }
 
-            // Validate we have a patient code
+            // Validate we have a patient identifier
             if (!savePatientCode || savePatientCode.trim() === '') {
                 if (isNewPatient) {
-                    savePatientCode = generatePatientCode();
-                    setCurrentPatientCode(savePatientCode);
-                } else {
-                    alert('Patient code missing. Please reload or go back to patient list.');
+                    // For newborns not healthcare client, we use a placeholder or wait for UUID
+                    if (!isRestrictedIndividual) {
+                        savePatientCode = generatePatientCode();
+                        setCurrentPatientCode(savePatientCode);
+                    }
+                } else if (!patient?.id) {
+                    alert('Patient identifier missing. Please reload or go back to patient list.');
                     return;
                 }
             }
@@ -1209,7 +1214,8 @@ const PatientDetails = () => {
                 result = await api.post('/patients', cleanedPatientData);
             } else {
                 delete cleanedPatientData.patient_code;
-                result = await api.put(`/patients/code/${savePatientCode}`, cleanedPatientData);
+                // Use the generic identifier route for updates
+                result = await api.put(`/patients/${savePatientCode}`, cleanedPatientData);
             }
 
             if (result.success) {
@@ -1236,7 +1242,7 @@ const PatientDetails = () => {
                 alert(isNewPatient ? 'Patient created successfully!' : 'Patient updated successfully!');
 
                 if (patientCode === 'new' && isNewPatient) {
-                    navigate(`/patients/${savedPatient.patient_code}`);
+                    navigate(`/patients/${savedPatient.id || savedPatient.patient_code}`);
                 }
 
                 // --- PUSH TO HISTORY TABLES ---
@@ -1245,7 +1251,8 @@ const PatientDetails = () => {
                         const hasVitals = ['blood_pressure', 'heart_rate', 'temperature', 'respiratory_rate', 'oxygen_saturation', 'weight', 'height'].some(k => formData[k]);
                         if (hasVitals) {
                             await api.post('/vitals', {
-                                patient_code: savePatientCode,
+                                patient_id: savedPatient.id,
+                                patient_code: savedPatient.patient_code,
                                 ...sectionData.vitals,
                                 recorded_at: new Date().toISOString()
                             });
@@ -1255,7 +1262,8 @@ const PatientDetails = () => {
                         const hasLabs = Object.keys(sectionData.labs.labs).length > 0;
                         if (hasLabs) {
                             await api.post('/labs-history', {
-                                patient_code: savePatientCode,
+                                patient_id: savedPatient.id,
+                                patient_code: savedPatient.patient_code,
                                 labs: sectionData.labs.labs,
                                 test_date: formData.last_tested || new Date().toISOString().split('T')[0],
                                 recorded_at: new Date().toISOString()
@@ -1263,7 +1271,7 @@ const PatientDetails = () => {
                         }
                     }
                     // Refresh history
-                    fetchClinicalHistory(savePatientCode);
+                    fetchClinicalHistory(savedPatient.id || savedPatient.patient_code);
                 } catch (histError) {
                     console.error('Error saving to history:', histError);
                 }
@@ -2617,13 +2625,15 @@ const PatientDetails = () => {
                             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                                 <div>
                                     <h1 className="text-2xl font-bold text-gray-800">
-                                        {patient?.full_name || `Patient ${patientCodeToDisplay}`}
+                                        {patient?.full_name || (user?.account_type !== 'individual' || user?.role === 'admin' ? `Patient ${patientCodeToDisplay}` : 'Patient Profile')}
                                     </h1>
                                     <div className="flex flex-wrap items-center gap-4 mt-2">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-gray-600">Patient Code:</span>
-                                            <span className="font-semibold text-indigo-600">{patientCodeToDisplay}</span>
-                                        </div>
+                                        {(user?.account_type !== 'individual' || user?.role === 'admin') && (
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-gray-600">Patient Code:</span>
+                                                <span className="font-semibold text-indigo-600">{patientCodeToDisplay || 'N/A'}</span>
+                                            </div>
+                                        )}
                                         {ageDisplay && (
                                             <div className="flex items-center gap-2">
                                                 <span className="text-gray-600">Age:</span>

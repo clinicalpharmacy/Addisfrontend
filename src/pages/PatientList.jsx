@@ -14,7 +14,9 @@ import {
     FaSortDown,
     FaChevronRight,
     FaIdCard,
-    FaClock
+    FaClock,
+    FaUserMinus,
+    FaUserCheck
 } from 'react-icons/fa';
 
 import api from '../utils/api';
@@ -182,21 +184,21 @@ const PatientList = () => {
     const handleEditClick = (patient) => {
         // Store patient data in localStorage instead of sessionStorage
         localStorage.setItem('editPatientData', JSON.stringify(patient));
-        localStorage.setItem('editPatientCode', patient.patient_code);
+        localStorage.setItem('editPatientId', patient.id);
         localStorage.setItem('editMode', 'true');
 
-        // Navigate to patient details with edit mode
-        navigate(`/patients/${patient.patient_code}?edit=true`);
+        // Navigate to patient details with edit mode using UUID
+        navigate(`/patients/${patient.id}?edit=true`);
     };
 
-    const handleViewClick = (patientCode) => {
+    const handleViewClick = (patientId) => {
         // Clear any edit data
         localStorage.removeItem('editPatientData');
-        localStorage.removeItem('editPatientCode');
+        localStorage.removeItem('editPatientId');
         localStorage.removeItem('editMode');
 
-        // Navigate without edit mode
-        navigate(`/patients/${patientCode}`);
+        // Navigate without edit mode using UUID
+        navigate(`/patients/${patientId}`);
     };
 
     // Pagination logic
@@ -207,6 +209,8 @@ const PatientList = () => {
 
     // Check if user is individual account type
     const isIndividual = userAccountType === 'individual' && !userCompanyId;
+    // Determine if the user is an individual (who shouldn't see patient codes)
+    const isRestrictedIndividual = userAccountType === 'individual' && !userCompanyId && userRole !== 'admin';
 
     if (loading) {
         return (
@@ -276,19 +280,21 @@ const PatientList = () => {
 
             {/* Patients Table (Desktop) */}
             <div className="hidden md:block table-wrapper w-full">
-               <div className="overflow-x-auto rounded-lg border border-gray-200">    
+                <div className="overflow-x-auto rounded-lg border border-gray-200">
                     <table className="w-full border-collapse">
                         <thead>
                             <tr className="bg-gray-100 text-gray-700">
-                                <th
-                                    className="border p-3 text-left cursor-pointer hover:bg-gray-200"
-                                    onClick={() => handleSort('patient_code')}
-                                >
-                                    <div className="flex items-center gap-2">
-                                        Patient Code
-                                        {getSortIcon('patient_code')}
-                                    </div>
-                                </th>
+                                {!isRestrictedIndividual && ( // Hide for healthcare_client
+                                    <th
+                                        className="border p-3 text-left cursor-pointer hover:bg-gray-200"
+                                        onClick={() => handleSort('patient_code')}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            Patient Code
+                                            {getSortIcon('patient_code')}
+                                        </div>
+                                    </th>
+                                )}
                                 <th className="border p-3 text-left">Name</th>
                                 <th className="border p-3 text-left">Diagnosis</th>
                                 <th
@@ -300,7 +306,6 @@ const PatientList = () => {
                                         {getSortIcon('created_at')}
                                     </div>
                                 </th>
-                                {/* Status column - hidden for Individual users */}
                                 {!isIndividual && (
                                     <th className="border p-3 text-left">Status</th>
                                 )}
@@ -317,16 +322,18 @@ const PatientList = () => {
 
                                     return (
                                         <tr key={patient.id} className="border-b hover:bg-gray-50 transition-colors">
-                                            <td className="border p-3">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                                        <FaUserInjured className="text-blue-600" />
+                                            {!isRestrictedIndividual && ( // Hide for healthcare_client
+                                                <td className="border p-3">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                                            <FaUserInjured className="text-blue-600" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-medium text-gray-800">{patient.patient_code}</p>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <p className="font-medium text-gray-800">{patient.patient_code}</p>
-                                                    </div>
-                                                </div>
-                                            </td>
+                                                </td>
+                                            )}
                                             <td className="border p-3">
                                                 {patient.full_name || 'No name'}
                                             </td>
@@ -338,7 +345,6 @@ const PatientList = () => {
                                             <td className="border p-3 text-sm text-gray-600">
                                                 {patient.created_at ? new Date(patient.created_at).toLocaleDateString() : 'N/A'}
                                             </td>
-                                            {/* Status cell - hidden for Individual users */}
                                             {!isIndividual && (
                                                 <td className="border p-3">
                                                     <span className={`px-2 py-1 rounded text-xs ${getStatusColor(patient.is_active)}`}>
@@ -349,7 +355,7 @@ const PatientList = () => {
                                             <td className="border p-3">
                                                 <div className="flex gap-2">
                                                     <button
-                                                        onClick={() => handleViewClick(patient.patient_code)}
+                                                        onClick={() => handleViewClick(patient.id)}
                                                         className="text-blue-500 hover:text-blue-700 p-2 hover:bg-blue-50 rounded"
                                                         title="View Patient"
                                                     >
@@ -362,6 +368,7 @@ const PatientList = () => {
                                                     >
                                                         <FaEdit />
                                                     </button>
+
                                                     <button
                                                         onClick={() => handleDelete(patient.id)}
                                                         className={`p-2 rounded ${canDelete ? 'text-red-500 hover:text-red-700 hover:bg-red-50' : 'text-gray-300 cursor-not-allowed'}`}
