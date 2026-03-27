@@ -69,22 +69,50 @@ export const useDRNLogic = (patientCode) => {
         setUserId(uid);
 
         try {
-            // Patient
-            const { data: pData, error: pError } = await supabase.from('patients').select('*').eq('patient_code', patientCode).single();
-            if (pError || !pData) { setAuthError('Patient not found'); return; }
+            // Patient - use backend API to handle both numeric IDs and patient codes
+            const token = localStorage.getItem('token') || localStorage.getItem('pharmacare_token');
+            const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+            const response = await fetch(`${apiBase}/patients/${patientCode}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                setAuthError(errData.error || 'Patient not found');
+                return;
+            }
+
+            const result = await response.json();
+            const pData = result.patient;
+            if (!pData) { setAuthError('Patient not found'); return; }
+
             setPatientData(pData);
             if (pData.labs) setLabs(pData.labs);
 
+            // Use patient's actual patient_code (or id) for related queries
+            const patientId = pData.id;
+            const patCode = pData.patient_code || patientCode;
+
             // Medications
-            const { data: mData } = await supabase.from('medication_history').select('*').eq('patient_code', patientCode).eq('is_active', true);
+            const { data: mData } = await supabase.from('medication_history').select('*').eq('patient_id', patientId).eq('is_active', true);
             setMedications(mData || pData.medication_history || []);
 
             // Rules
             const { data: rData } = await supabase.from('clinical_rules').select('*').eq('is_active', true);
             setClinicalRules(rData || []);
 
-            // Assessments
-            const { data: aData } = await supabase.from('drn_assessments').select('*').eq('patient_code', patientCode).eq('user_id', uid).order('created_at', { ascending: false });
+            // Assessments - try by patient_id first, fallback to patient_code
+            let aData = null;
+            const { data: aById } = await supabase.from('drn_assessments').select('*').eq('patient_id', patientId).eq('user_id', uid).order('created_at', { ascending: false });
+            if (aById && aById.length > 0) {
+                aData = aById;
+            } else {
+                const { data: aByCode } = await supabase.from('drn_assessments').select('*').eq('patient_code', patCode).eq('user_id', uid).order('created_at', { ascending: false });
+                aData = aByCode;
+            }
             setAssessments(aData || []);
             setAuthError(null);
 
