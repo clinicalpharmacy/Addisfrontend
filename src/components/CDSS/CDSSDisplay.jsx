@@ -1,4 +1,4 @@
-// Clinical Display Component - v2.1.0 (Gemini Integration)
+// CDSS Display Component - v2.1.0 (Gemini Integration)
 import React, { useState } from 'react';
 import { useCDSSLogic } from '../../hooks/useCDSSLogic';
 import { AlertDetails } from './AlertComponents';
@@ -81,7 +81,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
             doc.setTextColor(255, 255, 255);
             doc.setFontSize(22);
             doc.setFont('helvetica', 'bold');
-            doc.text('CLINICAL ANALYSIS REPORT', 15, 20);
+            doc.text('CLINICAL DECISION SUPPORT REPORT', 15, 20);
 
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
@@ -166,41 +166,54 @@ const CDSSDisplay = ({ patientData, onBack }) => {
             doc.text('Clinical Alerts & Recommendations', 15, currentY);
 
             const alertRows = alerts.map((alert, index) => {
-                // Get the finding/message (this is the primary clinical finding)
-                const finding = isHealthcareClient 
-                    ? (alert.client_message || alert.message) 
-                    : (alert.professional_message || alert.message);
-                
-                // Get drug triggers (medications that triggered this alert)
-                const drugTriggers = alert.evidence?.matched_medications?.length > 0 
-                    ? alert.evidence.matched_medications.join(', ')
-                    : 'None';
-                
-                // Get evidence recommendation (clinical recommendation)
-                const recommendation = (isHealthcareClient 
-                    ? (alert.client_recommendation || alert.details) 
-                    : (alert.professional_recommendation || alert.details)) || 'Review clinical guidelines';
+                let evidence = '';
+                if (alert.evidence) {
+                    const parts = [];
+                    // Medications are now allowed for everyone (including clients)
+                    if (alert.evidence.matched_medications?.length > 0) {
+                        parts.push(`Meds: ${alert.evidence.matched_medications.join(', ')}`);
+                    }
+                    // Other technical evidence (like labs) remains restricted for clients
+                    if (!isHealthcareClient && alert.evidence.labs) {
+                        const labKeys = Object.keys(alert.evidence.labs).filter(k => alert.evidence.labs[k]);
+                        if (labKeys.length > 0) {
+                            parts.push(`Labs: ${labKeys.map(k => `${k}=${alert.evidence.labs[k]}`).join(', ')}`);
+                        }
+                    }
+                    evidence = parts.join(' | ');
+                }
 
                 return [
                     index + 1,
-                    finding,
-                    drugTriggers,
-                    recommendation
+                    {
+                        content: `${alert.rule_name}\n[${alert.severity.toUpperCase()}]`,
+                        styles: {
+                            fillColor: alert.severity === 'critical' ? [254, 226, 226] : (alert.severity === 'high' ? [255, 237, 213] : null),
+                            textColor: alert.severity === 'critical' ? [153, 27, 27] : (alert.severity === 'high' ? [154, 52, 18] : null),
+                            fontStyle: 'bold'
+                        }
+                    },
+                    isHealthcareClient ? (alert.client_message || alert.message) : (alert.professional_message || alert.message),
+                    isHealthcareClient ? (alert.client_recommendation || alert.details || 'N/A') : (alert.professional_recommendation || alert.details || 'N/A'),
+                    isHealthcareClient ? 'General Guidance' : (evidence || 'Matched patterns')
                 ];
             });
 
             autoTable(doc, {
                 startY: currentY + 5,
-                head: [['#', 'Finding', 'Drug(s) Trigger', 'Evidence Recommendation']],
+                head: [isHealthcareClient
+                    ? ['#', 'Alert/Severity', 'Guidance Message', 'Recommendation', 'Note']
+                    : ['#', 'Alert/Severity', 'Clinical Message', 'Recommendation', 'Evidence']
+                ],
                 body: alertRows,
                 theme: 'grid',
                 headStyles: { fillColor: [220, 38, 38] }, // Red-600
                 styles: { fontSize: 7, cellPadding: 3 },
                 columnStyles: {
-                    0: { width: 10 },  // # column
-                    1: { width: 60 },  // Finding column
-                    2: { width: 40 },  // Drug(s) Trigger column
-                    3: { width: 70 }   // Evidence Recommendation column
+                    1: { width: 35 },
+                    2: { width: 45 },
+                    3: { width: 45 },
+                    4: { width: 30 }
                 }
             });
 
@@ -211,7 +224,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                 doc.setFontSize(8);
                 doc.setTextColor(156, 163, 175);
                 doc.text(
-                    'DISCLAIMER: This clinical analysis report only gives informaton & it cannot replace the decision of health professional.',
+                    'DISCLAIMER: This decision support tool should be reviewed by a professional. Patient data is confidential.',
                     15, 285
                 );
                 doc.text(`Page ${i} of ${pageCount}`, 180, 285);
@@ -268,7 +281,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                         <FaBell className="text-white text-xl" />
                     </div>
                     <div>
-                        <h2 className="text-xl md:text-2xl font-bold text-gray-800">Clinical Analysis</h2>
+                        <h2 className="text-xl md:text-2xl font-bold text-gray-800">CDSS Analysis</h2>
                         {patientData ? (
                             <div className="text-sm text-gray-600 flex flex-wrap items-center gap-2 mt-1">
                                 <span className="font-semibold">{patientData.full_name}</span>
@@ -283,9 +296,9 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                     <button
                         onClick={fetchClinicalRules}
                         className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg flex items-center justify-center gap-2 text-sm border border-gray-200 transition-colors"
-                        title="Refresh Analysis"
+                        title="Refresh Rules"
                     >
-                        <FaSync /> <span className="hidden sm:inline">Refresh Analysis</span>
+                        <FaSync /> <span className="hidden sm:inline">Refresh Rules</span>
                     </button>
 
                     {alerts.length > 0 && (
@@ -425,7 +438,30 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                                 </div>
 
                                                 <div className="flex-1 min-w-0">
-                                                    {/* Primary Context / Finding */}
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <div className="flex flex-wrap items-center gap-3">
+                                                            <span className="text-lg md:text-xl font-black text-gray-900 tracking-tight">{alert.rule_name}</span>
+                                                            <span className={`px-2.5 py-1 rounded text-xs font-bold ${ruleTypeInfo.color}`}>
+                                                                {ruleTypeInfo.label}
+                                                            </span>
+                                                            <span className="text-xs text-gray-500 uppercase font-bold tracking-widest">
+                                                                {getTimeAgo(alert.timestamp)}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Primary Action / Recommendation - Always visible and STATIC */}
+                                                    <div className="bg-green-50 border-l-8 border-green-500 p-4 md:p-5 rounded-r-xl mb-4 shadow-sm">
+                                                        <div className="flex items-center gap-2 mb-2">
+                                                            <FaCheckCircle className="text-green-600 text-sm" />
+                                                            <span className="text-xs md:text-sm font-black uppercase tracking-widest text-green-800">Required Action</span>
+                                                        </div>
+                                                        <div className="text-lg md:text-2xl font-black text-gray-900 leading-tight">
+                                                            {(isHealthcareClient ? (alert.client_recommendation || alert.details) : (alert.professional_recommendation || alert.details)) || 'Review clinical guidelines'}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Secondary Context / Finding */}
                                                     <div className="flex flex-col gap-3 p-4 bg-gray-50/80 rounded-xl border border-gray-200 mb-5 shadow-sm">
                                                         <div className="flex items-start gap-3 text-sm md:text-lg text-gray-700">
                                                             <span className="font-black text-blue-600 uppercase text-xs md:text-sm mt-1 shrink-0 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">Finding:</span>
@@ -436,30 +472,17 @@ const CDSSDisplay = ({ patientData, onBack }) => {
 
                                                         {/* Medications involved - now visible to everyone */}
                                                         {alert.evidence?.matched_medications?.length > 0 && (
-                                                            <>
-                                                                <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-gray-300/50 mt-1">
-                                                                    <span className="font-black text-purple-600 uppercase text-xs md:text-sm shrink-0">Drug(s) Trigger:</span>
-                                                                    <div className="flex flex-wrap gap-2">
-                                                                        {alert.evidence.matched_medications.map((med, i) => (
-                                                                            <span key={i} className="px-3 py-1 bg-purple-100 text-purple-800 rounded-lg text-xs md:text-sm font-black border border-purple-200 shadow-sm flex items-center gap-2">
-                                                                                <FaCapsules className="text-sm" /> {med}
-                                                                            </span>
-                                                                        ))}
-                                                                    </div>
+                                                            <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-gray-300/50 mt-1">
+                                                                <span className="font-black text-purple-600 uppercase text-xs md:text-sm shrink-0">Drug(s) Trigger:</span>
+                                                                <div className="flex flex-wrap gap-2">
+                                                                    {alert.evidence.matched_medications.map((med, i) => (
+                                                                        <span key={i} className="px-3 py-1 bg-purple-100 text-purple-800 rounded-lg text-xs md:text-sm font-black border border-purple-200 shadow-sm flex items-center gap-2">
+                                                                            <FaCapsules className="text-sm" /> {med}
+                                                                        </span>
+                                                                    ))}
                                                                 </div>
-                                                            </>
+                                                            </div>
                                                         )}
-                                                        
-                                                        {/* Secondary Action / Recommendation - Always visible and STATIC */}
-                                                        <div className="bg-green-50 border-l-8 border-green-500 p-4 md:p-5 rounded-r-xl mb-4 shadow-sm">
-                                                            <div className="flex items-center gap-2 mb-2">
-                                                                <FaCheckCircle className="text-green-600 text-sm" />
-                                                                <span className="text-xs md:text-sm font-black uppercase tracking-widest text-green-800">Evidence Recommendation</span>
-                                                            </div>
-                                                            <div className="text-sm md:text-base font-black text-gray-900 leading-tight">
-                                                                {(isHealthcareClient ? (alert.client_recommendation || alert.details) : (alert.professional_recommendation || alert.details)) || 'Review clinical guidelines'}
-                                                            </div>
-                                                        </div>
                                                     </div>
 
                                                     <div className="flex justify-end items-center gap-4 pt-4 border-t border-gray-100">
