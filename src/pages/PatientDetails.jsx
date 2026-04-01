@@ -1174,7 +1174,7 @@ const PatientDetails = () => {
                     diagnosis: cleanText(formData.diagnosis),
                     appointment_date: cleanDate(formData.appointment_date),
                     is_active: formData.is_active !== false,
-                    allergies: Array.isArray(formData.allergies) ? formData.allergies.filter(a => a && a.trim() !== '') : [],
+                    allergies: Array.isArray(formData.allergies) ? formData.allergies.filter(a => a && typeof a === 'string' && a.trim() !== '') : [],
                     patient_type: patientType,
                     is_pregnant: formData.is_pregnant || false,
                     pregnancy_weeks: cleanNumber(formData.pregnancy_weeks),
