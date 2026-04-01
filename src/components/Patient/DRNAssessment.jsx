@@ -304,10 +304,12 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
 
     const loadPatientData = async () => {
         // If we already have patient data and medications from props (e.g., from PatientDetails), use them directly
-        // Benefits: Faster, and handles decrypted data for CDSS/Rule Engine
+        let currentPatient = initialPatient || null;
+        let pId = initialPatient ? initialPatient.id : null;
+
         if (initialPatient) {
             setPatientData(initialPatient);
-            setPatientId(initialPatient.id);
+            setPatientId(pId);
             if (medicationProps && medicationProps.length > 0) {
                 setMedications(medicationProps);
                 return { patient: initialPatient, medications: medicationProps };
@@ -315,48 +317,53 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
         }
 
         try {
-            // Use backend API instead of direct Supabase to handle numeric IDs and codes correctly
-            const token = localStorage.getItem('token') || localStorage.getItem('pharmacare_token');
-            const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-            const response = await fetch(`${apiBase}/patients/${patientCode}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+            // Only fetch patient from API if not provided via props
+            if (!currentPatient) {
+                const token = localStorage.getItem('token') || localStorage.getItem('pharmacare_token');
+                const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+                const response = await fetch(`${apiBase}/patients/${patientCode}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    setAuthError(errData.error || `Patient not found: ${patientCode}`);
+                    return null;
                 }
-            });
 
-            if (!response.ok) {
-                const errData = await response.json().catch(() => ({}));
-                setAuthError(errData.error || `Patient not found: ${patientCode}`);
-                return null;
+                const result = await response.json();
+                currentPatient = result.patient;
+                if (!currentPatient) {
+                    setAuthError(`Patient not found: ${patientCode}`);
+                    return null;
+                }
+
+                pId = currentPatient.id;
+                setPatientData(currentPatient);
+                setPatientId(pId);
             }
 
-            const result = await response.json();
-            const patient = result.patient;
-            if (!patient) {
-                setAuthError(`Patient not found: ${patientCode}`);
-                return null;
-            }
-
-            setPatientData(patient);
-            setPatientId(patient.id);
-
-            // Fetch all medications for the patient (including historical ones for comprehensive analysis)
+            // Fetch all medications for the patient if not provided via props
             const { data: medicationsData } = await supabase
                 .from('medication_history')
                 .select('*')
-                .eq('patient_id', patient.id);
+                .eq('patient_id', pId);
 
-            const medicationsResolved = medicationsData || patient.medication_history || [];
+            const medicationsResolved = medicationsData || currentPatient.medication_history || [];
             setMedications(medicationsResolved);
 
-            return { patient, medications: medicationsResolved };
+            return { patient: currentPatient, medications: medicationsResolved };
         } catch (error) {
             console.error('Error loading patient:', error);
             setAuthError('Failed to load patient data.');
             return null;
         }
     };
+
+
 
     const fetchClinicalRules = async () => {
         try {
