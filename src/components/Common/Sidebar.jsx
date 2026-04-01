@@ -193,7 +193,7 @@ const Sidebar = ({ onClose }) => {
                                             }
                                         >
                                             <span className="w-2 h-2 rounded-full bg-current opacity-40" />
-                                            Patient List
+                                            MR List
                                         </NavLink>
                                         {!isAdmin && ( // Show for non-admins, including healthcare_client
                                         <NavLink
@@ -207,7 +207,7 @@ const Sidebar = ({ onClose }) => {
                                             }
                                         >
                                             <span className="w-2 h-2 rounded-full bg-current opacity-40" />
-                                            New Patient
+                                            New MR
                                         </NavLink>
                                         )}
                                     </div>
@@ -490,7 +490,7 @@ const Sidebar = ({ onClose }) => {
                                         <div className="p-2 bg-gray-50 text-gray-400 group-hover:bg-blue-100 group-hover:text-blue-600 rounded-lg transition-colors">
                                             <FaUserInjured className="text-base" />
                                         </div>
-                                        <span className="text-base">New Patient</span>
+                                        <span className="text-base">New MR</span>
                                     </div>
                 
                                     {!isSubscribed && <FaLock className="text-xs opacity-50" />}

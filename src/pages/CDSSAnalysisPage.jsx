@@ -68,7 +68,7 @@ const CDSSAnalysisPage = () => {
                         <button
                             onClick={() => selectedPatient ? setSelectedPatient(null) : navigate(-1)}
                             className="bg-white p-2.5 rounded-lg shadow-sm hover:bg-gray-100 transition-colors flex items-center gap-2 text-sm font-medium text-gray-600 border border-gray-100 shrink-0"
-                            title={selectedPatient ? 'Back to Patient List' : 'Back to Dashboard'}
+                            title={selectedPatient ? 'Back to MR List' : 'Back to Dashboard'}
                         >
                             <FaArrowLeft />
                             <span className="hidden sm:inline">{selectedPatient ? 'Back' : 'Dashboard'}</span>
@@ -81,7 +81,7 @@ const CDSSAnalysisPage = () => {
                             <p className="text-sm md:text-base text-gray-600 mt-1">
                                 {selectedPatient
                                     ? `Analyzing: ${selectedPatient.full_name}`
-                                    : 'Select a patient to perform clinical analysis'
+                                    : 'Select an MR to perform clinical analysis'
                                 }
                             </p>
                         </div>
@@ -97,7 +97,7 @@ const CDSSAnalysisPage = () => {
                                 type="text"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                placeholder="Search patients by name, code or diagnosis..."
+                                placeholder="Search MRs by name, code or diagnosis..."
                                 className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all text-sm md:text-base"
                             />
                         </div>
@@ -148,7 +148,7 @@ const CDSSAnalysisPage = () => {
                                     ))
                                 ) : (
                                     <div className="col-span-full py-20 text-center bg-white rounded-xl border-2 border-dashed border-gray-100">
-                                        <p className="text-gray-500">No patients found.</p>
+                                        <p className="text-gray-500">No MRs found.</p>
                                     </div>
                                 )}
                             </div>

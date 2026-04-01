@@ -1119,7 +1119,7 @@ const PatientDetails = () => {
                         setCurrentPatientCode(savePatientCode);
                     }
                 } else if (!patient?.id) {
-                    alert('Patient identifier missing. Please reload or go back to patient list.');
+                    alert('Patient identifier missing. Please reload or go back to MR list.');
                     return;
                 }
             }
@@ -3108,13 +3108,13 @@ const PatientDetails = () => {
                             <button
                                 onClick={() => navigate('/patients')}
                                 className="text-gray-600 hover:text-gray-800 p-2 hover:bg-gray-100 rounded-lg flex-shrink-0"
-                                title="Back to Patients"
+                                title="Back to MRs"
                             >
                                 <FaArrowLeft className="text-lg md:text-xl" />
                             </button>
                             <div className="min-w-0 flex-1">
                                 <h1 className="text-xl md:text-2xl font-bold text-gray-800 truncate">
-                                    {isNewPatient ? 'New Patient' : `Patient: ${getCurrentPatientCode()}`}
+                                    {isNewPatient ? 'New MR' : `MR: ${getCurrentPatientCode()}`}
                                 </h1>
                                 {formData.full_name && (
                                     <div className="flex items-center gap-3 mt-1">

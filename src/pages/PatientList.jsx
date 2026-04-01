@@ -131,7 +131,7 @@ const PatientList = () => {
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this patient? This action cannot be undone.')) {
+        if (!window.confirm('Are you sure you want to delete this MR? This action cannot be undone.')) {
             return;
         }
 
@@ -141,11 +141,11 @@ const PatientList = () => {
             if (result.success) {
                 fetchPatients();
             } else {
-                alert('Failed to delete patient');
+                alert('Failed to delete MR');
             }
         } catch (error) {
             console.error('Error deleting patient:', error);
-            alert('Error deleting patient');
+            alert('Error deleting MR');
         }
     };
 
@@ -166,7 +166,7 @@ const PatientList = () => {
         // Individual accounts without a company can only create one patient
         const isIndividual = userAccountType === 'individual' && !userCompanyId;
         if (isIndividual && userRole !== 'admin' && patients.length >= 1) {
-            alert('Individual subscription plan is limited to 1 patient record. Please upgrade to a Company plan to manage more patients.');
+            alert('Individual subscription plan is limited to 1 MR record. Please upgrade to a Company plan to manage more MRs.');
             navigate('/subscription');
             return;
         }
@@ -239,9 +239,9 @@ const PatientList = () => {
                         ? 'bg-gray-400 cursor-not-allowed text-white'
                         : 'bg-blue-500 hover:bg-blue-600 text-white'
                         }`}
-                    title={isIndividual && userRole !== 'admin' && patients.length >= 1 ? "Limit reached for Individual plan" : "Add New Patient"}
+                    title={isIndividual && userRole !== 'admin' && patients.length >= 1 ? "Limit reached for Individual plan" : "Add New MR"}
                 >
-                    <FaPlus /> New Patient
+                    <FaPlus /> New MR
                 </button>
             </div>
 
@@ -255,7 +255,7 @@ const PatientList = () => {
                                 type="text"
                                 value={searchTerm}
                                 onChange={handleSearch}
-                                placeholder="Search patients..."
+                                placeholder="Search MRs..."
                                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             />
                         </div>
@@ -295,7 +295,7 @@ const PatientList = () => {
                                         onClick={() => handleSort('patient_code')}
                                     >
                                         <div className="flex items-center gap-2">
-                                            Patient Code
+                                            MR Code
                                             {getSortIcon('patient_code')}
                                         </div>
                                     </th>
@@ -361,14 +361,14 @@ const PatientList = () => {
                                                     <button
                                                         onClick={() => handleViewClick(patient.id)}
                                                         className="text-blue-500 hover:text-blue-700 p-2 hover:bg-blue-50 rounded"
-                                                        title="View Patient"
+                                                        title="View MR Details"
                                                     >
                                                         <FaEye />
                                                     </button>
                                                     <button
                                                         onClick={() => handleEditClick(patient)}
                                                         className="text-yellow-500 hover:text-yellow-700 p-2 hover:bg-yellow-50 rounded"
-                                                        title="Edit Patient"
+                                                        title="Edit MR"
                                                     >
                                                         <FaEdit />
                                                     </button>
@@ -377,7 +377,7 @@ const PatientList = () => {
                                                         onClick={() => handleDelete(patient.id)}
                                                         className={`p-2 rounded ${canDelete ? 'text-red-500 hover:text-red-700 hover:bg-red-50' : 'text-gray-300 cursor-not-allowed'}`}
                                                         disabled={!canDelete}
-                                                        title={canDelete ? "Delete Patient" : "Delete not allowed for company accounts"}
+                                                        title={canDelete ? "Delete MR" : "Delete not allowed for company accounts"}
                                                     >
                                                         <FaTrash />
                                                     </button>
@@ -392,13 +392,13 @@ const PatientList = () => {
                                         <div className="py-8">
                                             <FaUserInjured className="text-4xl text-gray-300 mx-auto mb-3" />
                                             <p className="text-gray-500">
-                                                {searchTerm ? 'No patients found matching your search.' : 'No patients found.'}
+                                                {searchTerm ? 'No MRs found matching your search.' : 'No MRs found.'}
                                             </p>
                                             <button
                                                 onClick={handleNewPatient}
                                                 className="mt-4 text-blue-600 hover:text-blue-800 font-medium"
                                             >
-                                                + Add New Patient
+                                                + Add New MR
                                             </button>
                                         </div>
                                     </td>
@@ -482,13 +482,13 @@ const PatientList = () => {
                     <div className="bg-white rounded-xl shadow p-8 text-center">
                         <FaUserInjured className="text-4xl text-gray-300 mx-auto mb-3" />
                         <p className="text-gray-500 mb-4">
-                            {searchTerm ? 'No patients found matching your search.' : 'No patients found.'}
+                            {searchTerm ? 'No MRs found matching your search.' : 'No MRs found.'}
                         </p>
                         <button
                             onClick={handleNewPatient}
                             className="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg text-sm font-medium"
                         >
-                            + Add New Patient
+                            + Add New MR
                         </button>
                     </div>
                 )}
@@ -504,7 +504,7 @@ const PatientList = () => {
                         </p>
                     </div>
                     <div className="bg-blue-50 p-3 rounded">
-                        <p className="text-blue-600">Total Patients</p>
+                        <p className="text-blue-600">Total MRs</p>
                         <p className="text-lg font-bold text-blue-800">{patients.length}</p>
                     </div>
                     <div className="bg-green-50 p-3 rounded">
@@ -526,7 +526,7 @@ const PatientList = () => {
             {filteredPatients.length > itemsPerPage && (
                 <div className="bg-white rounded-xl shadow p-4 flex flex-col md:flex-row justify-between items-center gap-4">
                     <div className="text-sm text-gray-600">
-                        Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredPatients.length)} of {filteredPatients.length} patients
+                        Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredPatients.length)} of {filteredPatients.length} MRs
                     </div>
                     <div className="flex items-center gap-2">
                         <button
