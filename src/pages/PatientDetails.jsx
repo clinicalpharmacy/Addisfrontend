@@ -1275,9 +1275,8 @@ const PatientDetails = () => {
             if (isNewPatient) {
                 result = await api.post('/patients', dataToSave);
             } else {
-                delete dataToSave.patient_code;
-                // Use the generic identifier route for updates
-                result = await api.put(`/patients/${savePatientCode}`, dataToSave);
+                // Use the primary identifier (id) for updates
+                result = await api.put(`/patients/${patient.id}`, dataToSave);
             }
 
             if (result.success) {
@@ -1288,7 +1287,8 @@ const PatientDetails = () => {
                 await loadPatientData(savedPatient);
 
                 if (setPatient) setPatient(savedPatient);
-                setCurrentPatientCode(savedPatient.patient_code);
+                // setCurrentPatientCode is legacy but we'll set it to ID to keep UI working
+                setCurrentPatientCode(savedPatient.id);
 
                 if (isNewPatient) {
                     setIsNewPatient(false);
@@ -1304,7 +1304,7 @@ const PatientDetails = () => {
                 alert(isNewPatient ? 'Patient created successfully!' : 'Patient updated successfully!');
 
                 if (patientCode === 'new' && isNewPatient) {
-                    navigate(`/patients/${savedPatient.id || savedPatient.patient_code}`);
+                    navigate(`/patients/${savedPatient.id}`);
                 }
 
                 // --- PUSH TO HISTORY TABLES ---
@@ -1332,8 +1332,8 @@ const PatientDetails = () => {
                             });
                         }
                     }
-                    // Refresh history
-                    fetchClinicalHistory(savedPatient.id || savedPatient.patient_code);
+                    // Refresh history using the primary ID
+                    fetchClinicalHistory(savedPatient.id);
                 } catch (histError) {
                     console.error('Error saving to history:', histError);
                 }
@@ -1378,7 +1378,8 @@ const PatientDetails = () => {
         }
 
         try {
-            const result = await api.delete(`/patients/code/${deletePatientCode}`);
+            // Updated to use the direct ID endpoint for deletion
+            const result = await api.delete(`/patients/${patient.id}`);
 
             if (result.success) {
                 alert('Patient deleted successfully!');

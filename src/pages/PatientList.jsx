@@ -93,7 +93,7 @@ const PatientList = () => {
 
         if (term) {
             filtered = filtered.filter(patient =>
-                (patient.patient_code && patient.patient_code.toLowerCase().includes(term)) ||
+                (patient.id && patient.id.toString().includes(term)) ||
                 (patient.diagnosis && patient.diagnosis.toLowerCase().includes(term)) ||
                 (patient.full_name && patient.full_name.toLowerCase().includes(term)) ||
                 (patient.phone && patient.phone.toLowerCase().includes(term))
@@ -165,8 +165,8 @@ const PatientList = () => {
     const handleNewPatient = () => {
         // Individual accounts without a company can only create one patient
         const isIndividual = userAccountType === 'individual' && !userCompanyId;
-        if (isIndividual && userRole !== 'admin' && patients.length >= 1) {
-            alert('Individual subscription plan is limited to 1 MR record. Please upgrade to a Company plan to manage more MRs.');
+        if (isIndividual && userRole !== 'admin' && patients.length >= 5) {
+            alert('Individual subscription plan is limited to 5 MR records. Please upgrade to a Company plan to manage more MRs.');
             navigate('/subscription');
             return;
         }
@@ -235,11 +235,11 @@ const PatientList = () => {
                 </div>
                 <button
                     onClick={handleNewPatient}
-                    className={`w-full sm:w-auto px-6 py-3 rounded-lg flex items-center justify-center gap-2 transition-colors ${isIndividual && userRole !== 'admin' && patients.length >= 1
+                    className={`w-full sm:w-auto px-6 py-3 rounded-lg flex items-center justify-center gap-2 transition-colors ${isIndividual && userRole !== 'admin' && patients.length >= 5
                         ? 'bg-gray-400 cursor-not-allowed text-white'
                         : 'bg-blue-500 hover:bg-blue-600 text-white'
                         }`}
-                    title={isIndividual && userRole !== 'admin' && patients.length >= 1 ? "Limit reached for Individual plan" : "Add New MR"}
+                    title={isIndividual && userRole !== 'admin' && patients.length >= 5 ? "Limit reached for Individual plan" : "Add New MR"}
                 >
                     <FaPlus /> New MR
                 </button>
@@ -292,11 +292,11 @@ const PatientList = () => {
                                 {!isRestrictedIndividual && ( // Hide for healthcare_client
                                     <th
                                         className="border p-3 text-left cursor-pointer hover:bg-gray-200"
-                                        onClick={() => handleSort('patient_code')}
+                                        onClick={() => handleSort('id')}
                                     >
                                         <div className="flex items-center gap-2">
                                             MR Code
-                                            {getSortIcon('patient_code')}
+                                            {getSortIcon('id')}
                                         </div>
                                     </th>
                                 )}
@@ -333,7 +333,7 @@ const PatientList = () => {
                                                             <FaUserInjured className="text-blue-600" />
                                                         </div>
                                                         <div>
-                                                            <p className="font-medium text-gray-800">{patient.patient_code}</p>
+                                                            <p className="font-medium text-gray-800">{patient.id}</p>
                                                         </div>
                                                     </div>
                                                 </td>
@@ -428,7 +428,7 @@ const PatientList = () => {
                                             <h3 className="font-bold text-gray-800">{patient.full_name || 'No Name'}</h3>
                                             <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
                                                 <FaIdCard />
-                                                <span className="font-mono">{patient.patient_code}</span>
+                                                <span className="font-mono">{patient.id}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -453,7 +453,7 @@ const PatientList = () => {
 
                                 <div className="flex gap-2">
                                     <button
-                                        onClick={() => handleViewClick(patient.patient_code)}
+                                        onClick={() => handleViewClick(patient.id)}
                                         className="flex-1 bg-blue-50 text-blue-700 py-2 rounded-lg flex items-center justify-center gap-2 text-sm font-medium hover:bg-blue-100 transition"
                                     >
                                         <FaEye /> View

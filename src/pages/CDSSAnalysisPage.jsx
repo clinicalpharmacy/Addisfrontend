@@ -124,7 +124,7 @@ const CDSSAnalysisPage = () => {
                                                     <h3 className="font-bold text-gray-800 group-hover:text-purple-700 transition-colors truncate">
                                                         {patient.full_name}
                                                     </h3>
-                                                    <p className="text-sm text-gray-500">{patient.patient_code}</p>
+                                                    <p className="text-sm text-gray-500">{patient.id}</p>
                                                 </div>
                                             </div>
 
