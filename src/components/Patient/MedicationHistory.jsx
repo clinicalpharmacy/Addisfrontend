@@ -356,7 +356,7 @@ const MedicationHistory = ({ patientCode }) => {
 
         // Build medication data object
         const medicationData = {
-            patient_code: patientCode,
+            patient_id: patientCode, // patientCode is the UUID from props
 
             // Required fields
             drug_name: formData.drug_name.trim(),
@@ -560,7 +560,7 @@ const MedicationHistory = ({ patientCode }) => {
 
         try {
             const reconPayload = {
-                patient_code: patientCode,
+                patient_id: patientCode, // patientCode is the UUID from props
                 site: reconciliationData.site.trim(),
                 findings: reconciliationData.findings.trim(),
                 date: reconciliationData.date
