@@ -28,7 +28,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
     console.log("🛠️ CDSSDisplay Render - patientData:", patientData);
     console.log("🛠️ CDSSDisplay Render - clinicalRules:", clinicalRules?.length);
     console.log("🛠️ CDSSDisplay Render - alerts:", alerts?.length);
-    console.log('💊 useCDSSLogic initialized with patientData:', patientData?.patient_code);
+    console.log('💊 useCDSSLogic initialized with patientData:', patientData?.id);
 
 
 
@@ -86,7 +86,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
             doc.text(`Generated on: ${new Date().toLocaleString()}`, 15, 30);
-            doc.text(`Patient Code: ${patientData.patient_code}`, 15, 35);
+            doc.text(`Patient ID: ${patientData.id}`, 15, 35);
 
             // --- PATIENT SUMMARY SECTION ---
             doc.setTextColor(31, 41, 55); // Gray-800
@@ -217,7 +217,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                 doc.text(`Page ${i} of ${pageCount}`, 180, 285);
             }
 
-            doc.save(`Clinical_Analysis_${patientData.patient_code}_${new Date().toISOString().split('T')[0]}.pdf`);
+            doc.save(`Clinical_Analysis_${patientData.id}_${new Date().toISOString().split('T')[0]}.pdf`);
         } catch (error) {
             console.error('PDF Generation Error:', error);
             alert('PDF generation failed. Library error.');

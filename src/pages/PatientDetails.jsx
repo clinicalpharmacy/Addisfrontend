@@ -357,8 +357,8 @@ const PatientDetails = () => {
         if (currentPatientCode) {
             return currentPatientCode;
         }
-        if (patient?.patient_code) {
-            return patient.patient_code;
+        if (patient?.id) {
+            return patient.id;
         }
         if (patientCode && patientCode !== 'new') {
             return patientCode;
@@ -498,8 +498,8 @@ const PatientDetails = () => {
     const loadPatientData = useCallback(async (patientData) => {
         setIsNewPatient(false);
         setPatient(patientData);
-        setCurrentPatientCode(patientData.patient_code);
-        fetchClinicalHistory(patientData.patient_code);
+        setCurrentPatientCode(patientData.id);
+        fetchClinicalHistory(patientData.id);
 
         const data = patientData;
 

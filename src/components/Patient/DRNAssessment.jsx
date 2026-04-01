@@ -330,11 +330,11 @@ const DRNAssessment = ({ patientCode }) => {
             setPatientData(patient);
             setPatientId(patient.id);
 
-            // Fetch medications by patient_code (since medication_history lacks patient_id)
+            // Fetch medications by patient_id
             const { data: medicationsData } = await supabase
                 .from('medication_history')
                 .select('*')
-                .eq('patient_code', patient.patient_code || patientCode)
+                .eq('patient_id', patient.id)
                 .eq('is_active', true);
 
             const medicationsResolved = medicationsData || patient.medication_history || [];
@@ -379,7 +379,7 @@ const DRNAssessment = ({ patientCode }) => {
             const { data, error } = await supabase
                 .from('drn_assessments')
                 .select('*')
-                .eq('patient_code', patientCode)
+                .eq('patient_id', patientId)
                 .eq('user_id', userId)
                 .order('created_at', { ascending: false });
 

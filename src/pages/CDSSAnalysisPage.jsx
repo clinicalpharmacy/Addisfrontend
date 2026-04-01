@@ -36,7 +36,7 @@ const CDSSAnalysisPage = () => {
 
     const filteredPatients = patients.filter(p =>
         (p.full_name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (p.patient_code?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (p.id?.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (p.diagnosis?.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 

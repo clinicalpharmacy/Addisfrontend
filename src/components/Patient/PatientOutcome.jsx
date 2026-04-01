@@ -64,7 +64,7 @@ const PatientOutcome = ({ patientCode }) => {
             setLoading(true);
 
             const outcomeData = {
-                patient_code: patientCode,
+                patient_id: patientCode,
                 outcome_type: 'general',
                 ...formData
             };

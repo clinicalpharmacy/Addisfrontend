@@ -84,12 +84,6 @@ const CostSection = ({ patientCode }) => {
         try {
             setLoading(true);
 
-            // Get patient info first to get patient_id
-            const patientResult = await api.get(`/patients/code/${patientCode}`);
-            const patientId = patientResult.patient?.id;
-
-            if (!patientId) throw new Error('Patient ID not found');
-
             // Calculate totals
             const directCosts = parseFloat(formData.direct_costs) || 0;
             const indirectCosts = parseFloat(formData.indirect_costs) || 0;
@@ -105,12 +99,8 @@ const CostSection = ({ patientCode }) => {
             const roi = savings > 0 && (isReduced ? totalCosts > 0 : true) ?
                 (isReduced && totalCosts > 0 ? ((savings - totalCosts) / totalCosts * 100) : 0) : 0;
 
-            // Validate UUID if provided (some legacy IDs might not be UUIDs)
-            const isUUID = (id) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-
             const costData = {
-                patient_id: isUUID(patientId) ? patientId : null,
-                patient_code: patientCode,
+                patient_id: patientCode,
                 analysis_date: formData.analysis_date,
                 analysis_type: formData.category || 'other',
                 direct_costs: directCosts,

@@ -50,7 +50,7 @@ const PhAssistPlan = ({ patientCode }) => {
             }
 
             const planData = {
-                patient_code: patientCode,
+                patient_id: patientCode,
                 plan_type: planType, // Progress Note (optional free text)
                 goals: pharmacyAssessment,
                 medications: '',

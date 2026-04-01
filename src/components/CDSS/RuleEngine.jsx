@@ -130,7 +130,8 @@ export const mapPatientToFacts = (patientData, medicationHistory = []) => {
         full_name: patientData.full_name || '',
         contact_number: patientData.contact_number || '',
         address: patientData.address || '',
-        patient_code: patientData.patient_code || '',
+        patient_id: patientData.id || '',
+        patient_code: patientData.id || '',
 
         // ===== PREGNANCY INFORMATION =====
         pregnancy: pregnancy,

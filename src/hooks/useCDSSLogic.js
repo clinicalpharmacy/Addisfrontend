@@ -22,7 +22,7 @@ export const useCDSSLogic = (patientData) => {
     const [testResults, setTestResults] = useState(null);
 
     // Use refs to prevent infinite loops
-    const previousPatientCode = useRef(null);
+    const previousPatientId = useRef(null);
     // Stable ref to analyzePatient to avoid it being a useEffect dependency
     const analyzePatientRef = useRef(null);
 
@@ -76,18 +76,18 @@ export const useCDSSLogic = (patientData) => {
             fallbackMedications = patientData.medication_history;
         }
 
-        if (!patientData?.patient_code) {
-            console.log('⚠️ No patient code provided for medication fetch, using fallback if available');
+        if (!patientData?.id) {
+            console.log('⚠️ No patient id provided for medication fetch, using fallback if available');
             setMedications(fallbackMedications);
             return;
         }
 
         try {
-            console.log('💊 Fetching medications for:', patientData.patient_code);
-            let debugText = `💊 Fetching medications for ${patientData.patient_code}...\n`;
+            console.log('💊 Fetching medications for:', patientData.id);
+            let debugText = `💊 Fetching medications for ${patientData.id}...\n`;
             setDebugInfo(prev => prev + debugText);
 
-            const result = await api.get(`/medication-history/patient/${patientData.patient_code}`);
+            const result = await api.get(`/medication-history/patient/${patientData.id}`);
 
             if (!result.success) {
                 console.error('❌ Error fetching medications:', result.error);
@@ -125,7 +125,7 @@ export const useCDSSLogic = (patientData) => {
     }, [patientData?.patient_code, patientData?.medication_history]);
 
     const analyzePatient = useCallback(async () => {
-        if (!patientData?.patient_code) {
+        if (!patientData?.id) {
             alert('❌ Please select a patient first');
             return;
         }
@@ -139,7 +139,7 @@ export const useCDSSLogic = (patientData) => {
         setTestResults(null);
 
         let debug = '🚀 === CDSS ANALYSIS STARTED ===\n';
-        debug += `Patient: ${patientData.patient_code}\n`;
+        debug += `Patient: ${patientData.id}\n`;
         debug += `Time: ${new Date().toLocaleString()}\n`;
         debug += `Active Rules: ${clinicalRules.length}\n`;
         debug += `Active Medications: ${medications.length}\n\n`;
@@ -252,7 +252,7 @@ export const useCDSSLogic = (patientData) => {
                             timestamp: new Date().toISOString(),
                             acknowledged: false,
                             processed: false,
-                            patient_code: patientData.patient_code,
+                            patient_id: patientData.id,
                             patient_name: currentPatient.full_name,
                             patient_age_in_days: facts.age_in_days,
                             patient_type: facts.patient_type,
@@ -287,7 +287,7 @@ export const useCDSSLogic = (patientData) => {
                     low: triggeredAlerts.filter(a => a.severity === 'low').length
                 },
                 timestamp: new Date().toISOString(),
-                patientCode: patientData.patient_code,
+                patientId: patientData.id,
                 medicationCount: medications.length
             };
 
@@ -414,7 +414,7 @@ export const useCDSSLogic = (patientData) => {
 
     // Cleanup effects
     useEffect(() => {
-        if (patientData?.patient_code !== previousPatientCode.current) {
+        if (patientData?.id !== previousPatientId.current) {
             setAlerts([]);
             setFilteredAlerts([]);
             setAnalysisStats(null);
@@ -423,11 +423,11 @@ export const useCDSSLogic = (patientData) => {
             setMedications([]);
             setPatientFacts(null);
             setTestResults(null);
-            previousPatientCode.current = patientData?.patient_code;
+            previousPatientId.current = patientData?.id;
             setIsInitialLoad(true);
         }
 
-        if (patientData && patientData.patient_code) {
+        if (patientData && patientData.id) {
             fetchPatientMedications();
             if (isInitialLoad) {
                 fetchClinicalRules();
@@ -463,7 +463,7 @@ export const useCDSSLogic = (patientData) => {
     // ✅ FIX: Do NOT include `loading` or `analyzePatient` in deps — those change every
     // cycle and caused an infinite loop where alerts were cleared before they could display.
     useEffect(() => {
-        if (patientData?.patient_code && clinicalRules.length > 0) {
+        if (patientData?.id && clinicalRules.length > 0) {
             const timer = setTimeout(() => {
                 console.log('🔄 Data updated, triggering clinical analysis...');
                 analyzePatientRef.current?.();
@@ -471,7 +471,7 @@ export const useCDSSLogic = (patientData) => {
             return () => clearTimeout(timer);
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [patientData?.patient_code, clinicalRules.length, medications.length]);
+    }, [patientData?.id, clinicalRules.length, medications.length]);
 
     const handleFilterChange = useCallback((severity) => {
         setSeverityFilter(severity);
