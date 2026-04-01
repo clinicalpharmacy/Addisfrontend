@@ -3238,7 +3238,11 @@ const PatientDetails = () => {
                                 patientData={{ ...formData, patient_code: getCurrentPatientCode(), id: patient?.id }}
                                 onBack={() => {}}
                             />}
-                            {activeTab === 'drn' && <DRNAssessment patientCode={getCurrentPatientCode()} />}
+                            {activeTab === 'drn' && <DRNAssessment 
+                                patientCode={getCurrentPatientCode()} 
+                                patientData={formData}
+                                medicationHistory={medicationHistory}
+                            />}
                             {activeTab === 'plan' && <PhAssistPlan patientCode={getCurrentPatientCode()} />}
                             {activeTab === 'outcome' && <PatientOutcome patientCode={getCurrentPatientCode()} />}
                             {activeTab === 'cost' && <CostSection patientCode={getCurrentPatientCode()} />}
@@ -3254,7 +3258,11 @@ const PatientDetails = () => {
                                 patientData={{ ...formData, patient_code: getCurrentPatientCode(), id: patient?.id }}
                                 onBack={() => {}}
                             />}
-                            {activeTab === 'drn' && <DRNAssessment patientCode={getCurrentPatientCode()} />}
+                            {activeTab === 'drn' && <DRNAssessment 
+                                patientCode={getCurrentPatientCode()} 
+                                patientData={formData}
+                                medicationHistory={medicationHistory}
+                            />}
                             {activeTab === 'plan' && <PhAssistPlan patientCode={getCurrentPatientCode()} />}
                             {activeTab === 'outcome' && <PatientOutcome patientCode={getCurrentPatientCode()} />}
                             {activeTab === 'cost' && <CostSection patientCode={getCurrentPatientCode()} />}

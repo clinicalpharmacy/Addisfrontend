@@ -10,7 +10,7 @@ import {
     FaRegLightbulb, FaShieldAlt
 } from 'react-icons/fa';
 
-const DRNAssessment = ({ patientCode }) => {
+const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHistory: medicationProps }) => {
     const [assessments, setAssessments] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [selectedCauses, setSelectedCauses] = useState([]);
@@ -26,8 +26,8 @@ const DRNAssessment = ({ patientCode }) => {
     const [aiError, setAiError] = useState(null);
     const [hasAiAcknowledged, setHasAiAcknowledged] = useState(false);
     const [showAiAck, setShowAiAck] = useState(false);
-    const [patientData, setPatientData] = useState(null);
-    const [medications, setMedications] = useState([]);
+    const [patientData, setPatientData] = useState(initialPatient || null);
+    const [medications, setMedications] = useState(medicationProps || []);
     const [clinicalRules, setClinicalRules] = useState([]);
     const [activeRules, setActiveRules] = useState({});
     const [filterSeverity, setFilterSeverity] = useState('all');
@@ -303,6 +303,17 @@ const DRNAssessment = ({ patientCode }) => {
     }, [patientId, userId]);
 
     const loadPatientData = async () => {
+        // If we already have patient data and medications from props (e.g., from PatientDetails), use them directly
+        // Benefits: Faster, and handles decrypted data for CDSS/Rule Engine
+        if (initialPatient) {
+            setPatientData(initialPatient);
+            setPatientId(initialPatient.id);
+            if (medicationProps && medicationProps.length > 0) {
+                setMedications(medicationProps);
+                return { patient: initialPatient, medications: medicationProps };
+            }
+        }
+
         try {
             // Use backend API instead of direct Supabase to handle numeric IDs and codes correctly
             const token = localStorage.getItem('token') || localStorage.getItem('pharmacare_token');
