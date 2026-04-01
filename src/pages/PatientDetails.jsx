@@ -36,7 +36,8 @@ import {
     FaSync,
     FaBrain,
     FaRobot,
-    FaHistory
+    FaHistory,
+    FaShieldAlt
 } from 'react-icons/fa';
 
 // Import components
@@ -46,9 +47,12 @@ import PhAssistPlan from '../components/Patient/PhAssistPlan';
 import PatientOutcome from '../components/Patient/PatientOutcome';
 import CostSection from '../components/Patient/CostSection';
 import CDSSDisplay from '../components/CDSS/CDSSDisplay';
+import PatientUnlocker from '../components/PatientUnlocker';
+import SupportRequestModal from '../components/Security/SupportRequestModal';
 
 import api from '../utils/api';
 import supabase from '../utils/supabase';
+import { encryptPatient, getEncryptionKey } from '../utils/encryptionUtils';
 
 
 // Create memoized LabInputField component
@@ -134,8 +138,55 @@ const PatientDetails = () => {
     const [globalLabDefinitions, setGlobalLabDefinitions] = useState([]);
     const [vitalsHistory, setVitalsHistory] = useState([]);
     const [labsHistory, setLabsHistory] = useState([]);
+    const [patientOwnerSalt, setPatientOwnerSalt] = useState(null);
+    const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
+    const [isSupportActive, setIsSupportActive] = useState(false); // New state
+    const [activeAdminName, setActiveAdminName] = useState(''); // New state
 
-    // Effect to set correct default tab once user is loaded
+    // Effect to fetch initial data
+    useEffect(() => {
+        if (patientCode && !isNewPatient) {
+            fetchPatientData();
+        }
+    }, [patientCode, isNewPatient]);
+
+    // Check support status once patient is loaded
+    useEffect(() => {
+        if (patient?.id && !isNewPatient) {
+            checkSupportStatus();
+        }
+    }, [patient?.id, isNewPatient]);
+
+    const checkSupportStatus = async () => {
+        try {
+            const res = await api.get(`/access/granted?patient_id=${patient?.id || id}`);
+            if (res.success && res.request) {
+                setIsSupportActive(true);
+            } else {
+                setIsSupportActive(false);
+            }
+        } catch (err) {
+            console.warn("Error checking support status:", err);
+        }
+    };
+
+    const handleRevokeSupport = async () => {
+        if (!window.confirm("🔒 Termination Protocol: Are you sure you want to revoke the administrator's access to this patient record?")) {
+            return;
+        }
+
+        try {
+            const res = await api.post('/access/revoke-support', { patient_id: patient.id });
+            if (res.success) {
+                setIsSupportActive(false);
+                alert("✨ Session Terminated: The secure vault for this support session has been destroyed.");
+                checkSupportStatus();
+            }
+        } catch (err) {
+            alert("Revoke failed: " + err.message);
+        }
+    };
+
     useEffect(() => {
         if (user && !defaultTabInitialized) {
             if (user?.account_type === 'individual' && user?.role !== 'admin') {
@@ -597,7 +648,7 @@ const PatientDetails = () => {
 
 
                 if (result.success && result.patient) {
-
+                    setPatientOwnerSalt(result.owner_salt || null);
                     loadPatientData(result.patient);
 
                     const searchParams = new URLSearchParams(location.search);
@@ -1208,14 +1259,25 @@ const PatientDetails = () => {
                 }
             });
 
+            // 🔐 ENCRYPT sensitive fields before sending to server
+            let dataToSave = cleanedPatientData;
+            try {
+                const encKey = await getEncryptionKey();
+                if (encKey) {
+                    dataToSave = await encryptPatient(cleanedPatientData, encKey);
+                }
+            } catch (encErr) {
+                console.warn('⚠️ Encryption failed, saving unencrypted:', encErr.message);
+            }
+
             // API call
             let result;
             if (isNewPatient) {
-                result = await api.post('/patients', cleanedPatientData);
+                result = await api.post('/patients', dataToSave);
             } else {
-                delete cleanedPatientData.patient_code;
+                delete dataToSave.patient_code;
                 // Use the generic identifier route for updates
-                result = await api.put(`/patients/${savePatientCode}`, cleanedPatientData);
+                result = await api.put(`/patients/${savePatientCode}`, dataToSave);
             }
 
             if (result.success) {
@@ -2241,7 +2303,7 @@ const PatientDetails = () => {
                                         <FaPlus /> Add
                                     </button>
                                 </div>
-                                {formData.allergies.length > 0 && (
+                                {formData.allergies && formData.allergies.length > 0 && (
                                     <div className="flex flex-wrap gap-2">
                                         {formData.allergies.map((allergy, index) => (
                                             <div key={index} className="bg-red-100 text-red-800 px-3 py-2 rounded-lg flex items-center gap-2">
@@ -2260,7 +2322,7 @@ const PatientDetails = () => {
                             </div>
                         ) : (
                             <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                {formData.allergies.length > 0 ? (
+                                {formData.allergies && formData.allergies.length > 0 ? (
                                     <div className="flex flex-wrap gap-2">
                                         {formData.allergies.map((allergy, index) => (
                                             <span key={index} className="bg-red-100 text-red-800 px-3 py-1 rounded-lg">
@@ -2996,7 +3058,7 @@ const PatientDetails = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-2 sm:p-4 md:p-6 max-w-full overflow-x-hidden">
+        <div className="page-container w-full max-w-full overflow-x-hidden px-3 sm:px-4 md:px-6 lg:px-8">
             {/* Connection Status Banner */}
             {(!isOnline || backendStatus === 'offline') && (
                 <div className="mb-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-3 md:p-4 rounded-lg shadow">
@@ -3055,10 +3117,20 @@ const PatientDetails = () => {
                                     {isNewPatient ? 'New Patient' : `Patient: ${getCurrentPatientCode()}`}
                                 </h1>
                                 {formData.full_name && (
-                                    <p className="text-gray-600 mt-1 text-xs md:text-base truncate">
-                                        {formData.full_name} • {formatAgeDisplay(formData.age_in_days, formData.date_of_birth)} • {formData.gender || 'Gender not specified'}
-                                        {formData.is_pregnant && ` • Pregnancy: ${formData.pregnancy_weeks} weeks`}
-                                    </p>
+                                    <div className="flex items-center gap-3 mt-1">
+                                        <p className="text-gray-600 text-xs md:text-base truncate">
+                                            {formData.full_name} • {formatAgeDisplay(formData.age_in_days, formData.date_of_birth)} • {formData.gender || 'Gender not specified'}
+                                        </p>
+                                        {formData.full_name?.includes(':') && (
+                                            <PatientUnlocker 
+                                                patientData={patient} 
+                                                userSalt={patientOwnerSalt} 
+                                                onUnlocked={(decrypted) => {
+                                                    loadPatientData(decrypted);
+                                                }} 
+                                            />
+                                        )}
+                                    </div>
                                 )}
                             </div>
                         </div>
@@ -3081,7 +3153,36 @@ const PatientDetails = () => {
                                     <FaSave /> <span className="hidden sm:inline">{isNewPatient ? 'Create' : 'Save'}</span>
                                 </button>
                             )}
-                            {!isNewPatient && (
+
+                            {/* Activate Support Button (Visible to Owner only and if NOT already active) */}
+                            {!isNewPatient && !isSupportActive && (user?.userId === patient?.user_id || user?.id === patient?.user_id) && (
+                                <button
+                                    onClick={() => setIsSupportModalOpen(true)}
+                                    className="bg-white border border-blue-200 text-blue-600 px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm shadow-sm hover:bg-blue-50 transition-all font-bold"
+                                    title="Grant encrypted access to an admin"
+                                >
+                                    <FaShieldAlt /> <span className="hidden sm:inline">Activate Support</span>
+                                </button>
+                            )}
+
+                            {/* Active Support Indicator & Revoke Button */}
+                            {isSupportActive && (user?.userId === patient?.user_id || user?.id === patient?.user_id) && (
+                                <div className="flex items-center gap-2">
+                                    <div className="bg-green-50 border border-green-200 text-green-700 px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-black uppercase tracking-widest">
+                                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                                        Support Active
+                                    </div>
+                                    <button
+                                        onClick={handleRevokeSupport}
+                                        className="bg-red-50 text-red-600 p-2 rounded-lg hover:bg-red-100 transition-colors border border-red-100"
+                                        title="Close the secure vault and revoke access"
+                                    >
+                                        <FaTimes />
+                                    </button>
+                                </div>
+                            )}
+
+                            {!isNewPatient && user?.role !== 'healthcare_client' && (
                                 <button
                                     onClick={handleDelete}
                                     className="bg-red-500 hover:bg-red-600 text-white px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
@@ -3114,16 +3215,48 @@ const PatientDetails = () => {
                 </div>
 
                 <div className="bg-white rounded-xl shadow-lg p-2 sm:p-4 md:p-6">
-                    {activeTab === 'overview' && renderOverviewSection()}
-                    {activeTab === 'demographics' && renderDemographicsSection()}
-                    {activeTab === 'vitals' && renderVitalsSection()}
-                    {activeTab === 'labs' && renderLabsSection()}
-                    {activeTab === 'medications' && <MedicationHistory patientCode={getCurrentPatientCode()} />}
-                    {activeTab === 'drn' && <DRNAssessment patientCode={getCurrentPatientCode()} />}
-
-                    {activeTab === 'plan' && <PhAssistPlan patientCode={getCurrentPatientCode()} />}
-                    {activeTab === 'outcome' && <PatientOutcome patientCode={getCurrentPatientCode()} />}
-                    {activeTab === 'cost' && <CostSection patientCode={getCurrentPatientCode()} />}
+                    {/* 🔐 PATIENT UNLOCKER: Gates all content until decrypted */}
+                    {!isNewPatient && patient ? (
+                        <PatientUnlocker
+                            patientData={patient}
+                            userSalt={patientOwnerSalt}
+                            onUnlocked={(decrypted) => {
+                                setPatient(decrypted);
+                                setFormData(prev => ({ ...prev, ...decrypted }));
+                            }}
+                        >
+                            {/* All content only renders AFTER decryption */}
+                            {activeTab === 'overview' && renderOverviewSection()}
+                            {activeTab === 'demographics' && renderDemographicsSection()}
+                            {activeTab === 'vitals' && renderVitalsSection()}
+                            {activeTab === 'labs' && renderLabsSection()}
+                            {activeTab === 'medications' && <MedicationHistory patientCode={getCurrentPatientCode()} />}
+                            {activeTab === 'analysis' && <CDSSDisplay
+                                patientData={{ ...formData, patient_code: getCurrentPatientCode(), id: patient?.id }}
+                                onBack={() => {}}
+                            />}
+                            {activeTab === 'drn' && <DRNAssessment patientCode={getCurrentPatientCode()} />}
+                            {activeTab === 'plan' && <PhAssistPlan patientCode={getCurrentPatientCode()} />}
+                            {activeTab === 'outcome' && <PatientOutcome patientCode={getCurrentPatientCode()} />}
+                            {activeTab === 'cost' && <CostSection patientCode={getCurrentPatientCode()} />}
+                        </PatientUnlocker>
+                    ) : (
+                        <>
+                            {activeTab === 'overview' && renderOverviewSection()}
+                            {activeTab === 'demographics' && renderDemographicsSection()}
+                            {activeTab === 'vitals' && renderVitalsSection()}
+                            {activeTab === 'labs' && renderLabsSection()}
+                            {activeTab === 'medications' && <MedicationHistory patientCode={getCurrentPatientCode()} />}
+                            {activeTab === 'analysis' && <CDSSDisplay
+                                patientData={{ ...formData, patient_code: getCurrentPatientCode(), id: patient?.id }}
+                                onBack={() => {}}
+                            />}
+                            {activeTab === 'drn' && <DRNAssessment patientCode={getCurrentPatientCode()} />}
+                            {activeTab === 'plan' && <PhAssistPlan patientCode={getCurrentPatientCode()} />}
+                            {activeTab === 'outcome' && <PatientOutcome patientCode={getCurrentPatientCode()} />}
+                            {activeTab === 'cost' && <CostSection patientCode={getCurrentPatientCode()} />}
+                        </>
+                    )}
                 </div>
 
                 {isEditing && (
@@ -3135,6 +3268,21 @@ const PatientDetails = () => {
                             <FaSave /> {isNewPatient ? 'Create Patient' : 'Save All Changes'}
                         </button>
                     </div>
+                )}
+
+                {/* 🔒 SUPPORT ACTIVATION MODAL */}
+                {isSupportModalOpen && (
+                    <SupportRequestModal
+                        isOpen={isSupportModalOpen}
+                        patientId={patient?.id}
+                        ownerSalt={patientOwnerSalt}
+                        onClose={() => setIsSupportModalOpen(false)}
+                        onSuccess={() => {
+                            setIsSupportActive(true);
+                            setIsSupportModalOpen(false);
+                            checkSupportStatus();
+                        }}
+                    />
                 )}
             </div>
         </div>

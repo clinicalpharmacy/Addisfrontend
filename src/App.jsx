@@ -1162,7 +1162,7 @@ function App() {
                 <Route
                     path="/patients"
                     element={
-                        <ProtectedRoute requireSubscription={true} allowAdmin={false}>
+                        <ProtectedRoute requireSubscription={true} allowAdmin={true}>
                             <PatientList />
                         </ProtectedRoute>
                     }
@@ -1171,7 +1171,7 @@ function App() {
                 <Route
                     path="/patients/new"
                     element={
-                        <ProtectedRoute requireSubscription={true} allowAdmin={false}>
+                        <ProtectedRoute requireSubscription={true} allowAdmin={true}>
                             <PatientDetails />
                         </ProtectedRoute>
                     }
@@ -1180,7 +1180,7 @@ function App() {
                 <Route
                     path="/patients/:patientCode"
                     element={
-                        <ProtectedRoute requireSubscription={true} allowAdmin={false}>
+                        <ProtectedRoute requireSubscription={true} allowAdmin={true}>
                             <PatientDetails />
                         </ProtectedRoute>
                     }

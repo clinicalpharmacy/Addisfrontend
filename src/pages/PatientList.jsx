@@ -20,6 +20,7 @@ import {
 } from 'react-icons/fa';
 
 import api from '../utils/api';
+import { getEncryptionKey, decryptPatients } from '../utils/encryptionUtils';
 
 const PatientList = () => {
     const navigate = useNavigate();
@@ -65,8 +66,12 @@ const PatientList = () => {
             const result = await api.get('/patients');
 
             if (result.success && result.patients) {
-                setPatients(result.patients);
-                setFilteredPatients(result.patients);
+                // 🔐 DECRYPT patient list before displaying
+                const key = await getEncryptionKey();
+                const decryptedPatients = await decryptPatients(result.patients, key);
+                
+                setPatients(decryptedPatients);
+                setFilteredPatients(decryptedPatients);
             } else {
                 setPatients([]);
                 setFilteredPatients([]);
@@ -317,8 +322,7 @@ const PatientList = () => {
                                 currentPatients.map((patient) => {
                                     const currentUserId = getCurrentUserId();
                                     const isUserIndividual = isIndividual;
-                                    const isAdmin = userRole === 'admin';
-                                    const canDelete = isAdmin;
+                                    const canDelete = userRole !== 'healthcare_client';
 
                                     return (
                                         <tr key={patient.id} className="border-b hover:bg-gray-50 transition-colors">
@@ -411,8 +415,7 @@ const PatientList = () => {
                     currentPatients.map((patient) => {
                         const currentUserId = getCurrentUserId();
                         const isUserIndividual = isIndividual;
-                        const isAdmin = userRole === 'admin';
-                        const canDelete = isAdmin;
+                        const canDelete = userRole !== 'healthcare_client';
 
                         return (
                             <div key={patient.id} className="bg-white rounded-xl shadow p-4 border border-gray-100">

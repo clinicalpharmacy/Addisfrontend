@@ -10,6 +10,13 @@ import {
 // If using Vercel, it might be: https://pharmacare-backend.vercel.app
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 import api from '../utils/api';
+import { 
+    deriveKey, 
+    persistKeyToSession,
+    generateUserKeyPair,
+    exportPublicKey,
+    wrapPrivateKey
+} from '../utils/encryptionUtils';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -144,6 +151,40 @@ const Login = () => {
                 // Store healthcare client ID if applicable
                 if (data.user.healthcare_client_id) {
                     localStorage.setItem('healthcare_client_id', data.user.healthcare_client_id);
+                }
+            }
+
+            // 🔐 ZERO-KNOWLEDGE ENCRYPTION
+            // Derive the AES-256 key from password + salt (key never sent to server)
+            if (data.encryption_salt) {
+                try {
+                    sessionStorage.setItem('enc_salt', data.encryption_salt);
+                    const cryptoKey = await deriveKey(formData.password.trim(), data.encryption_salt);
+                    
+                    // 🔐 Persist it to session (survives refreshes)
+                    await persistKeyToSession(cryptoKey);
+
+                    // 🛡️ PKI: Sync Public/Private keys if missing from DB
+                    if (!data.user?.public_key) {
+                        try {
+                            console.log("🗝️ Security Upgrade: Generating your unique digital ID (RSA Keypair)...");
+                            const keyPair = await generateUserKeyPair();
+                            const pubBase64 = await exportPublicKey(keyPair.publicKey);
+                            const wrappedPriv = await wrapPrivateKey(keyPair.privateKey, cryptoKey);
+
+                            await api.post('/auth/update-encryption-keys', {
+                                public_key: pubBase64,
+                                private_key_encrypted: wrappedPriv
+                            });
+                            console.log("✅ Security Setup Complete!");
+                        } catch (pkiErr) {
+                            console.error("❌ Failed to sync security keys:", pkiErr);
+                        }
+                    }
+                    
+                    console.log('🔐 Encryption key derived and ready');
+                } catch (encErr) {
+                    console.warn('⚠️ Could not derive encryption key:', encErr.message);
                 }
             }
 

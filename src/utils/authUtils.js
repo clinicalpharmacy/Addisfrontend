@@ -1,3 +1,5 @@
+import { clearEncryptionSession } from './encryptionUtils';
+
 export const clearInvalidAuth = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -6,6 +8,9 @@ export const clearInvalidAuth = () => {
     localStorage.removeItem('has_subscription');
     localStorage.removeItem('subscription_status');
     localStorage.removeItem('user_patients'); // Clear cached patient data
+    
+    // 🔐 Wipe encryption key and salt from session on logout
+    clearEncryptionSession();
 };
 
 export const hasValidSubscription = (user) => {

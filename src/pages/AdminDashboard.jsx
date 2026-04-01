@@ -4,7 +4,7 @@ import {
     FaUserCircle, FaSignOutAlt, FaHome, FaBookMedical,
     FaSync, FaSpinner, FaCheckCircle, FaExclamationTriangle,
     FaUserCheck, FaUsers, FaHospital, FaPills, FaComments, FaCreditCard,
-    FaChartLine, FaBuilding
+    FaChartLine, FaBuilding, FaShieldAlt
 } from 'react-icons/fa';
 
 // Hooks
@@ -26,6 +26,7 @@ import { AdminUsers } from '../components/Admin/AdminUsers';
 import { AdminChats } from '../components/Admin/AdminChats';
 import { AdminSubscriptions } from '../components/Admin/AdminSubscriptions';
 import { AdminFeedback } from '../components/Admin/AdminFeedback';
+import { AdminSupportRequests } from '../components/Admin/AdminSupportRequests';
 import api from '../utils/api';
 
 const AdminDashboard = () => {
@@ -103,6 +104,7 @@ const AdminDashboard = () => {
         { id: 'users', label: 'Users', icon: FaUsers },
         { id: 'companies', label: 'Companies', icon: FaBuilding },
         { id: 'subscriptions', label: 'Subscriptions', icon: FaCreditCard },
+        { id: 'support_access', label: 'Support Access', icon: FaShieldAlt }, // New Tab
         { id: 'feedback', label: 'User Feedback', icon: FaComments },
         { id: 'chats', label: 'Support Chats', icon: FaComments }
     ];
@@ -279,6 +281,10 @@ const AdminDashboard = () => {
                         loading={subscriptionsManager.loading || usersManager.loading || companiesManager.loading}
                         onRefresh={handleRefresh}
                     />
+                )}
+
+                {selectedTab === 'support_access' && (
+                    <AdminSupportRequests />
                 )}
 
                 {selectedTab === 'feedback' && (

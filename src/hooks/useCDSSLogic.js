@@ -23,6 +23,8 @@ export const useCDSSLogic = (patientData) => {
 
     // Use refs to prevent infinite loops
     const previousPatientCode = useRef(null);
+    // Stable ref to analyzePatient to avoid it being a useEffect dependency
+    const analyzePatientRef = useRef(null);
 
     const fetchClinicalRules = useCallback(async () => {
         try {
@@ -452,17 +454,24 @@ export const useCDSSLogic = (patientData) => {
         };
     }, [patientData, isInitialLoad, fetchClinicalRules, fetchPatientMedications]);
 
-    // Auto-analyze when data is ready or updates
+    // Keep the ref up to date with the latest analyzePatient callback
     useEffect(() => {
-        if (patientData && clinicalRules.length > 0 && !loading) {
-            // We use a timeout to debounce slightly and allow states to settle
+        analyzePatientRef.current = analyzePatient;
+    });
+
+    // Auto-analyze ONLY when patient, rules count, or medication count genuinely changes.
+    // ✅ FIX: Do NOT include `loading` or `analyzePatient` in deps — those change every
+    // cycle and caused an infinite loop where alerts were cleared before they could display.
+    useEffect(() => {
+        if (patientData?.patient_code && clinicalRules.length > 0) {
             const timer = setTimeout(() => {
                 console.log('🔄 Data updated, triggering clinical analysis...');
-                analyzePatient();
-            }, 500);
+                analyzePatientRef.current?.();
+            }, 600);
             return () => clearTimeout(timer);
         }
-    }, [analyzePatient, loading, patientData, clinicalRules.length, medications.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [patientData?.patient_code, clinicalRules.length, medications.length]);
 
     const handleFilterChange = useCallback((severity) => {
         setSeverityFilter(severity);

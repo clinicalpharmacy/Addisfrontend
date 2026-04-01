@@ -6,6 +6,13 @@ import {
     isValidDate, calculateAgeInDays, calculateAge, determinePatientType,
     calculateBMI, calculateTrimester
 } from '../utils/patientUtils';
+import { 
+    getEncryptionKey, 
+    encryptPatient, 
+    decryptPatient,
+    loadPrivateKey,
+    decryptWithPrivateKey
+} from '../utils/encryptionUtils';
 
 export const usePatientLogic = (patientCode) => {
     const navigate = useNavigate();
@@ -67,11 +74,48 @@ export const usePatientLogic = (patientCode) => {
 
     const loadPatientData = useCallback(async (data) => {
         setIsNewPatient(false);
-        setPatient(data);
-        fetchClinicalHistory(data.patient_code);
+        
+        // 🔐 DECRYPT patient data before loading into state
+        const key = await getEncryptionKey();
+        let decryptedData = data;
+        let isOwner = false;
+
+        if (key) {
+            try {
+                decryptedData = await decryptPatient(data, key);
+                isOwner = true;
+            } catch (err) {
+                console.log("❌ Not the owner or master key fail, checking for SHARED access...");
+                
+                // 🛡️ CHECK FOR SHARED ACCESS (Invitations/Troubleshooting)
+                try {
+                    const accessRes = await api.get(`/access/granted?patient_id=${data.id}`);
+                    if (accessRes.success && accessRes.request?.encrypted_key) {
+                        const privKey = await loadPrivateKey(key);
+                        if (privKey) {
+                            // 1. Decrypt the shared AES Key using your RSA Private Key
+                            const sharedKeyB64 = await decryptWithPrivateKey(accessRes.request.encrypted_key, privKey);
+                            const sharedKeyRaw = new Uint8Array(atob(sharedKeyB64).split("").map(c => c.charCodeAt(0)));
+                            const sharedKey = await crypto.subtle.importKey(
+                                "raw", sharedKeyRaw, { name: "AES-GCM" }, true, ["encrypt", "decrypt"]
+                            );
+                            
+                            // 2. Decrypt the patient with that shared key
+                            decryptedData = await decryptPatient(data, sharedKey);
+                            console.log("✅ Decrypted via SHARED invitation!");
+                        }
+                    }
+                } catch (shareErr) {
+                    console.error("⚠️ Shared access check failed:", shareErr.message);
+                }
+            }
+        }
+        
+        setPatient(decryptedData);
+        fetchClinicalHistory(decryptedData.patient_code);
 
         // Calculate Ages & Types
-        const dob = data.date_of_birth;
+        const dob = decryptedData.date_of_birth;
         const days = calculateAgeInDays(dob);
         const years = calculateAge(dob);
         const type = determinePatientType(days);
@@ -81,19 +125,19 @@ export const usePatientLogic = (patientCode) => {
         // (Similar logic to original file, condensed)
 
         // 1. Prepare Labs Source
-        const sourceLabs = (data.labs && typeof data.labs === 'object' ? (data.labs.labs || data.labs) : {}) || {};
+        const sourceLabs = (decryptedData.labs && typeof decryptedData.labs === 'object' ? (decryptedData.labs.labs || decryptedData.labs) : {}) || {};
 
         // 2. Set Basic Form Data
         const cleanData = {
             ...initialFormState, // defaults
-            ...data, // API data
+            ...decryptedData, // API data
             ...sourceLabs, // Flattened labs
             age: years,
             age_in_days: days,
             patient_type: type,
             date_of_birth: (dob && isValidDate(dob)) ? dob.split('T')[0] : '',
-            last_measured: (data.last_measured && isValidDate(data.last_measured)) ? data.last_measured.split('T')[0] : new Date().toISOString().split('T')[0],
-            last_tested: (data.last_tested && isValidDate(data.last_tested)) ? data.last_tested.split('T')[0] : new Date().toISOString().split('T')[0]
+            last_measured: (decryptedData.last_measured && isValidDate(decryptedData.last_measured)) ? decryptedData.last_measured.split('T')[0] : new Date().toISOString().split('T')[0],
+            last_tested: (decryptedData.last_tested && isValidDate(decryptedData.last_tested)) ? decryptedData.last_tested.split('T')[0] : new Date().toISOString().split('T')[0]
         };
         setFormData(cleanData);
 
@@ -184,12 +228,13 @@ export const usePatientLogic = (patientCode) => {
     const handleSave = async () => {
         try {
             setLoading(true);
-            const payload = { ...formData };
+            
+            // 🔐 ENCRYPT patient data before sending to server
+            const key = await getEncryptionKey();
+            const payload = await encryptPatient(formData, key);
 
             // Re-nest labs
-            const explicitLabFields = globalLabDefinitions.map(l => l.name?.toLowerCase().replace(/\s/g, '_')); // simplified
-            // Actual saving logic usually sends flattened fields to backend if backend supports it OR nests them
-            // Assuming backend handles the flat structure or we need to ideally nest them into 'labs' jsonb
+            // ... (rest of logic)
 
             let res;
             if (isNewPatient) {
