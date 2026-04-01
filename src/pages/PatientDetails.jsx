@@ -1156,8 +1156,10 @@ const PatientDetails = () => {
             };
 
             const cleanText = (value) => {
-                if (!value || value.trim() === '') return null;
-                return value.trim();
+                if (!value || value === '') return null;
+                if (typeof value !== 'string') return value;
+                const trimmed = value.trim();
+                return trimmed === '' ? null : trimmed;
             };
 
             // COMPLETE section data with ALL fields
