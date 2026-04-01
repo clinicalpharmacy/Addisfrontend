@@ -1111,7 +1111,7 @@ const PatientDetails = () => {
             }
 
             // Validate we have a patient identifier
-            if (!savePatientCode || savePatientCode.trim() === '') {
+            if (!savePatientCode || String(savePatientCode).trim() === '') {
                 if (isNewPatient) {
                     // For newborns not healthcare client, we use a placeholder or wait for UUID
                     if (!isRestrictedIndividual) {
