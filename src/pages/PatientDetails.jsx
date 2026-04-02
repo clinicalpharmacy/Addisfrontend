@@ -1361,16 +1361,16 @@ const PatientDetails = () => {
             console.error('Save error:', error);
 
             // Check if it's a patient limit error
-            if (error.response?.status === 403 && error.response?.data?.error === 'Case limit reached') {
-                const errorData = error.response.data;
+            const errorMsg = error.error || error.message || (error.response?.data?.error) || (error.response?.data?.message) || 'Failed';
+            
+            if (error.status === 403 || error.response?.status === 403) {
                 alert(
                     `❌ Case Limit Reached\n\n` +
-                    `${errorData.message}\n\n` +
-                    `Current: ${errorData.current}/${errorData.limit} patients\n\n` +
+                    `${errorMsg}\n\n` +
                     `To add more patients, please upgrade to a Company subscription.`
                 );
             } else {
-                alert('Error saving patient: ' + (error.response?.data?.message || error.message || 'Failed'));
+                alert('Error saving patient: ' + errorMsg);
             }
         }
     }, [isNewPatient, formData, getCurrentPatientCode, generatePatientCode, navigate, patientCode, isValidDate, calculateAgeInDays, calculateAge, determinePatientType, customLabs, fetchClinicalHistory, checkPatientLimit, loadPatientData, user]);
