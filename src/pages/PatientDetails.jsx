@@ -606,6 +606,9 @@ const PatientDetails = () => {
             setAgeMode('years');
             setShowPediatricLabs(false);
         }
+
+        // 🔗 UPDATE PRIMARY STATE: Ensure the main 'patient' object also reflects these updates
+        setPatient(data);
     }, [isValidDate, calculateAgeInDays, calculateAge, determinePatientType, setCustomLabs, globalLabDefinitions, fetchClinicalHistory]);
 
     // FIXED: fetchPatientData with better error handling
