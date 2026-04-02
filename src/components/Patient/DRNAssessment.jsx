@@ -363,7 +363,7 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
             let medsResult = [];
             try {
                 const { data: reconData } = await supabase
-                    .from('medication_reconciliation')
+                    .from('medication_reconciliations')
                     .select('*')
                     .eq('patient_id', pId);
                 
