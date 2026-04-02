@@ -31,8 +31,8 @@ const CDSSAnalysisPage = () => {
                 setPatients(decryptedPatients);
             }
         } catch (err) {
-            console.error('Error fetching patients:', err);
-            setError('Failed to load patients for analysis');
+            console.error('Error fetching patients for analysis:', err);
+            setError(`Failed to load patients for analysis: ${err.message || 'Unknown error'}`);
         } finally {
             setLoading(false);
         }
