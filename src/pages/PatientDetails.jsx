@@ -2114,8 +2114,7 @@ const PatientDetails = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Full Name */}
-                    {!isIndividual && (
-                        <div className="space-y-2">
+                    <div className="space-y-2">
                             <label className="block text-sm font-medium text-gray-700">
                                 Full Name *
                             </label>
@@ -2134,7 +2133,6 @@ const PatientDetails = () => {
                                 </div>
                             )}
                         </div>
-                    )}
 
                     {/* Age Input */}
                     <div className="space-y-2">
@@ -2184,8 +2182,7 @@ const PatientDetails = () => {
                     </div>
 
                     {/* Date of Birth */}
-                    {!isIndividual && (
-                        <div className="space-y-2">
+                    <div className="space-y-2">
                             <label className="block text-sm font-medium text-gray-700">
                                 Date of Birth
                             </label>
@@ -2207,7 +2204,6 @@ const PatientDetails = () => {
                                 </div>
                             )}
                         </div>
-                    )}
 
                     {/* Gender - FIXED: Only Male and Female */}
                     <div className="space-y-2">
@@ -2258,8 +2254,7 @@ const PatientDetails = () => {
                     </div>
 
                     {/* Contact Number */}
-                    {!isIndividual && (
-                        <div className="space-y-2">
+                    <div className="space-y-2">
                             <label className="block text-sm font-medium text-gray-700">
                                 Contact Number
                             </label>
@@ -2282,11 +2277,9 @@ const PatientDetails = () => {
                                 </div>
                             )}
                         </div>
-                    )}
 
                     {/* Address */}
-                    {!isIndividual && (
-                        <div className="space-y-2 md:col-span-2">
+                    <div className="space-y-2 md:col-span-2">
                             <label className="block text-sm font-medium text-gray-700">
                                 Address
                             </label>
@@ -2304,7 +2297,6 @@ const PatientDetails = () => {
                                 </div>
                             )}
                         </div>
-                    )}
                     {/* Allergies */}
                     <div className="space-y-2 md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
