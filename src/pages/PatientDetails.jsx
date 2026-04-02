@@ -37,7 +37,8 @@ import {
     FaBrain,
     FaRobot,
     FaHistory,
-    FaShieldAlt
+    FaShieldAlt,
+    FaWifi
 } from 'react-icons/fa';
 
 // Import components
