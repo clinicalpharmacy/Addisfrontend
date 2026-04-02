@@ -28,7 +28,8 @@ import {
     FaExternalLinkAlt,
     FaBookmark,
     FaCreditCard,
-    FaComments
+    FaComments,
+    FaCheckCircle
 } from 'react-icons/fa';
 
 // Force rebuild - ensuring all icons are properly bundled
