@@ -20,30 +20,53 @@ const PatientUnlocker = ({ patientData, userSalt, onUnlocked, children }) => {
 
     useEffect(() => {
         init();
-    }, [patientData]);
+    }, [patientData?.id]);
 
     const init = async () => {
         try {
+            // 0. QUICK CHECK: Is it already decrypted? (e.g. by parent)
+            if (patientData?.full_name && !String(patientData.full_name).includes(':')) {
+                setStatus('decrypted');
+                return;
+            }
+
             setStatus('loading');
             setError('');
 
-            // 1. Check if we already have the patient key in the session cache
-            const cachedKey = await getEncryptionKey(patientData.id);
-            if (cachedKey) {
-                const decrypted = await decryptPatient(patientData, cachedKey);
-                if (decrypted) {
+            // 1. MASTER KEY check (for Owner or anyone with session-cached Master Key)
+            const masterKey = await getEncryptionKey();
+            if (masterKey) {
+                const decrypted = await decryptPatient(patientData, masterKey);
+                if (decrypted && decrypted.full_name && !String(decrypted.full_name).includes(':')) {
                     onUnlocked(decrypted);
                     setStatus('decrypted');
                     return;
                 }
             }
 
-            // 2. Check if an admin has a granted key (Support Session)
+            // 2. SUPPORT SESSION check (for Admins)
             try {
                 const res = await api.get(`/access/granted?patient_id=${patientData.id}`);
                 if (res.success && res.request) {
-                    // We have an encrypted administrative key
-                    setGrantedKey(res.request.encrypted_key);
+                    const encryptedKey = res.request.encrypted_key;
+                    
+                    // AUTO-RESTORE: Try silent decryption if identity (Private Key) was already verified this session
+                    const privKey = await loadPrivateKey(); 
+                    if (privKey) {
+                        try {
+                            const pKey = await decryptWithPrivateKey(res.request.encrypted_key, privKey);
+                            const decrypted = await decryptPatient(patientData, pKey);
+                            if (decrypted && !String(decrypted.full_name).includes(':')) {
+                                onUnlocked(decrypted);
+                                setStatus('decrypted');
+                                return;
+                            }
+                        } catch (decErr) {
+                            console.warn("Silent unlock failed:", decErr);
+                        }
+                    }
+
+                    setGrantedKey(encryptedKey);
                     setStatus('prompt');
                     return;
                 }
@@ -51,19 +74,11 @@ const PatientUnlocker = ({ patientData, userSalt, onUnlocked, children }) => {
                 console.warn('Granted check failed:', err);
             }
 
-            // 3. Check if the user has their own security keys (RSA)
-            try {
-                const privKey = await loadPrivateKey(); // Check session/local storage
-                if (privKey) {
-                    // We have the private key! We can decrypt the patient directly if we have the patient_key_encrypted
-                    // Note: This requires the patient record to contain the patient_key_encrypted for the current user.
-                    // If not found, we fallback to asking for the password to derive the master key.
-                    setStatus('prompt');
-                } else {
-                    // No private key found. User needs to generate/restore it.
-                    setStatus('missing_keys');
-                }
-            } catch (err) {
+            // 3. SECURE IDENTITY check (RSA Key availability)
+            const userData = JSON.parse(localStorage.getItem('user') || '{}');
+            if (userData.private_key_encrypted) {
+                setStatus('prompt');
+            } else {
                 setStatus('missing_keys');
             }
 
