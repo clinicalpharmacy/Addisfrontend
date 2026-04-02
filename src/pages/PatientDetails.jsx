@@ -530,12 +530,24 @@ const PatientDetails = () => {
         const ageInYears = hasValidDob ? calculateAge(dob) : data.age;
         const patientType = determinePatientType(ageInDays);
 
+        // 🔐 Ensure collection fields are always arrays (especially after TEXT migration)
+        const ensureArray = (val) => {
+            if (Array.isArray(val)) return val;
+            if (typeof val === 'string' && val.startsWith('[')) {
+                try { return JSON.parse(val); } catch (e) { return []; }
+            }
+            return [];
+        };
+
         // Build complete form data object
         const formDataToSet = {
             ...data,
             age: ageInYears,
             age_in_days: ageInDays,
             patient_type: patientType,
+            allergies: ensureArray(data.allergies),
+            vaccination_status: ensureArray(data.vaccination_status),
+            developmental_milestones: ensureArray(data.developmental_milestones),
             date_of_birth: (dob && isValidDate(dob)) ? dob.split('T')[0] : '',
             appointment_date: (data.appointment_date && isValidDate(data.appointment_date)) ? data.appointment_date.split('T')[0] : '',
             edd: (data.edd && isValidDate(data.edd)) ? data.edd.split('T')[0] : '',
