@@ -5,6 +5,7 @@ import {
     hexToBytes, loadPrivateKey, decryptWithPrivateKey
 } from '../utils/encryptionUtils';
 import api from '../utils/api';
+import SecurityActivator from './Security/SecurityActivator';
 
 /**
  * PatientUnlocker — gates all patient content until decrypted.
@@ -123,6 +124,31 @@ const PatientUnlocker = ({ patientData, userSalt, onUnlocked, children }) => {
         );
     }
 
+    // Prompt for missing security keys (Inline Fix)
+    if (status === 'missing_keys') {
+        return (
+            <div className="flex items-center justify-center min-h-[40vh] p-4 text-center">
+                <div className="max-w-md w-full">
+                    <div className="mb-6 text-center">
+                        <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-100 rounded-full mb-3">
+                            <FaShieldAlt className="text-orange-600 text-2xl animate-pulse" />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900">Security Activation Required</h3>
+                        <p className="text-sm text-gray-500 mt-2">To view this patient's private details, you must first activate your secure digital identity.</p>
+                    </div>
+                    {/* Embedded Activator for extreme convenience */}
+                    <SecurityActivator onActivated={() => init()} />
+                    <button 
+                        onClick={() => setStatus('prompt')}
+                        className="mt-6 text-blue-600 hover:underline text-sm font-bold block mx-auto"
+                    >
+                        Already have keys? Try standard unlock
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     // Password prompt (admin or session expired)
     if (status === 'prompt') {
         return (
@@ -150,7 +176,20 @@ const PatientUnlocker = ({ patientData, userSalt, onUnlocked, children }) => {
                             className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 text-sm"
                             autoFocus
                         />
-                        {error && <p className="text-red-500 text-sm bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
+                        {error && (
+                            <div className="space-y-2">
+                                <p className="text-red-500 text-sm bg-red-50 px-3 py-2 rounded-lg font-medium">{error}</p>
+                                {error.includes('Security key not found') && (
+                                    <button 
+                                        type="button"
+                                        onClick={() => setStatus('missing_keys')}
+                                        className="w-full py-2 bg-orange-600 text-white rounded-xl text-xs font-black shadow-lg shadow-orange-200 hover:brightness-110 active:scale-95 transition-all"
+                                    >
+                                        ONE-CLICK SECURITY ACTIVATION
+                                    </button>
+                                )}
+                            </div>
+                        )}
                         <button
                             type="submit"
                             disabled={isUnlocking || !passphrase.trim()}

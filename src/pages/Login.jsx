@@ -164,7 +164,7 @@ const Login = () => {
                     // 🔐 Persist it to session (survives refreshes)
                     await persistKeyToSession(cryptoKey);
 
-                    // 🛡️ PKI: Sync Public/Private keys if missing from DB
+                    // 🛡️ PKI: Sync or Restore Public/Private keys
                     if (!data.user?.public_key) {
                         try {
                             console.log("🗝️ Security Upgrade: Generating your unique digital ID (RSA Keypair)...");
@@ -178,8 +178,13 @@ const Login = () => {
                             });
                             console.log("✅ Security Setup Complete!");
                         } catch (pkiErr) {
-                            console.error("❌ Failed to sync security keys:", pkiErr);
+                            console.error("❌ Failed to setup security keys:", pkiErr);
                         }
+                    } else {
+                        // 🔄 AUTO-RESTORE: If keys exist in DB but not in current browser, 
+                        // they can now be unwrapped on-demand because we have the cryptoKey (derived from password).
+                        // We store the encrypted private key in user object for later use by PatientUnlocker.
+                        console.log("🔓 Security: Identity verified. Master key derived.");
                     }
                     
                     console.log('🔐 Encryption key derived and ready');

@@ -681,6 +681,32 @@ const Sidebar = ({ onClose }) => {
                     <span className="font-medium">Logout</span>
                 </button>
             </div>
+
+            {/* 🛡️ Modern Security Status Badge (Sidebar Footer Addition) */}
+            <div className="px-4 pb-4 pt-2 border-t border-gray-100 bg-white">
+                <div className={`p-4 rounded-2xl border-2 transition-all duration-500 shadow-sm flex items-center justify-between group cursor-pointer ${user?.public_key ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100 animate-pulse'}`}
+                    onClick={() => navigate('/settings#security')}
+                >
+                    <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-xl text-xs transition-colors ${user?.public_key ? 'bg-green-500 text-white shadow-lg shadow-green-100' : 'bg-red-500 text-white shadow-lg shadow-red-100'}`}>
+                            {user?.public_key ? <FaLock /> : <FaExclamationTriangle className="animate-bounce" />}
+                        </div>
+                        <div className="flex flex-col">
+                            <span className={`text-[10px] font-black uppercase tracking-widest ${user?.public_key ? 'text-green-700' : 'text-red-700'}`}>
+                                Identity: {user?.public_key ? 'Secured' : 'Missing'}
+                            </span>
+                            <span className="text-[9px] text-gray-500 font-bold uppercase tracking-tight group-hover:underline">
+                                {user?.public_key ? 'Zero-Knowledge Active' : 'Setup Required Now'}
+                            </span>
+                        </div>
+                    </div>
+                    {user?.public_key ? (
+                        <FaCheckCircle className="text-green-500 text-sm opacity-50" />
+                    ) : (
+                        <FaChevronRight className="text-red-500 text-sm animate-bounce" />
+                    )}
+                </div>
+            </div>
         </aside>
     );
 };

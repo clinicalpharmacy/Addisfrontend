@@ -1,137 +1,183 @@
-import React, { useState } from 'react';
-import { FaShieldAlt, FaKey, FaLock, FaSpinner, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
-import { generateUserKeyPair, wrapPrivateKey, deriveKey, exportPublicKey } from '../../utils/encryptionUtils';
+import React, { useState, useEffect } from 'react';
+import { FaShieldAlt, FaKey, FaLock, FaSpinner, FaCheckCircle, FaExclamationTriangle, FaSyncAlt } from 'react-icons/fa';
+import { 
+    generateUserKeyPair, 
+    wrapPrivateKey, 
+    deriveKey, 
+    exportPublicKey, 
+    persistKeyToSession,
+    loadPrivateKey
+} from '../../utils/encryptionUtils';
 import api from '../../utils/api';
 
 /**
  * 🗝️ SecurityActivator Component
- * Allows users who haven't generated RSA keys to do so by entering their password.
+ * Simplifies identity setup: 
+ * 1. If keys exist in DB -> RESTORES them (Restore Mode)
+ * 2. If keys missing -> GENERATES them (Activation Mode)
  */
 const SecurityActivator = ({ onActivated }) => {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState({ type: '', message: '' });
+    const [hasExistingKeys, setHasExistingKeys] = useState(false);
 
-    const handleActivate = async (e) => {
+    useEffect(() => {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+            const user = JSON.parse(userStr);
+            setHasExistingKeys(!!user.public_key);
+        }
+    }, []);
+
+    const handleAction = async (e) => {
         e.preventDefault();
         setLoading(true);
         setStatus({ type: '', message: '' });
 
         try {
-            let user = JSON.parse(localStorage.getItem('user'));
+            let userStr = localStorage.getItem('user');
+            let user = JSON.parse(userStr);
             if (!user) throw new Error("Please log in again.");
 
-            // 🛠️ SELF-HEAL: Fetch latest profile if salt is missing
+            // 🛠️ Profile Check: Ensure salt exists
             if (!user.encryption_salt) {
                 const profileRes = await api.get('/auth/me');
                 if (profileRes.success && profileRes.user.encryption_salt) {
                     user = { ...user, ...profileRes.user };
                     localStorage.setItem('user', JSON.stringify(user));
                 } else {
-                    throw new Error("Encryption salt not configured for your account. Please log out and log in again.");
+                    throw new Error("Security salt missing. Logout and log in again.");
                 }
             }
 
-            // 1. Derive Master Key from password
+            // [1] Derive Master Key from password
             const masterKey = await deriveKey(password, user.encryption_salt);
             
-            // 2. Generate RSA Keypair
-            const { publicKey, privateKey } = await generateUserKeyPair();
-            
-            // 3. Wrap Private Key with Master Key
-            const privateKeyEncrypted = await wrapPrivateKey(privateKey, masterKey);
-            
-            // 4. Export Public Key to Base64 String
-            const publicKeyBase64 = await exportPublicKey(publicKey);
-            
-            // 5. Sync to DB
-            const res = await api.post('/auth/update-encryption-keys', {
-                public_key: publicKeyBase64,
-                private_key_encrypted: privateKeyEncrypted
-            });
+            // [2] Cache master key for the current session
+            await persistKeyToSession(masterKey);
 
-            if (res.success) {
-                // Update local storage user info
-                const updatedUser = { ...user, public_key: publicKeyBase64, private_key_encrypted: privateKeyEncrypted };
-                localStorage.setItem('user', JSON.stringify(updatedUser));
+            let updatedUser = { ...user };
+
+            if (!hasExistingKeys) {
+                // [3a] ACTIVATION MODE: Generate New RSA Keypair
+                console.log("🗝️ Generating new secure identity...");
+                const { publicKey, privateKey } = await generateUserKeyPair();
+                const privateKeyEncrypted = await wrapPrivateKey(privateKey, masterKey);
+                const publicKeyBase64 = await exportPublicKey(publicKey);
                 
-                setStatus({ type: 'success', message: 'Security keys successfully activated!' });
-                if (onActivated) onActivated(updatedUser);
+                // Sync to DB
+                const res = await api.post('/auth/update-encryption-keys', {
+                    public_key: publicKeyBase64,
+                    private_key_encrypted: privateKeyEncrypted
+                });
+
+                if (!res.success) throw new Error(res.error || 'Failed to sync keys');
+                
+                updatedUser = { ...updatedUser, public_key: publicKeyBase64, private_key_encrypted: privateKeyEncrypted };
+                setStatus({ type: 'success', message: 'Identity successfully activated!' });
             } else {
-                setStatus({ type: 'error', message: res.error || 'Failed to update security keys from DB' });
+                // [3b] RESTORE MODE: Load existing private key
+                console.log("📂 Restoring existing secure identity...");
+                const privKey = await loadPrivateKey(masterKey);
+                if (!privKey) throw new Error("Could not decrypt security key. Check your password.");
+                
+                setStatus({ type: 'success', message: 'Identity successfully restored!' });
             }
+
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            if (onActivated) onActivated(updatedUser);
+            
         } catch (err) {
-            setStatus({ type: 'error', message: err.error || err.message || 'Key generation failed' });
+            setStatus({ type: 'error', message: err.error || err.message || 'Security setup failed' });
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="bg-gradient-to-br from-indigo-900 to-purple-900 rounded-[2rem] p-10 text-white shadow-2xl relative overflow-hidden">
-            <div className="absolute right-0 top-0 opacity-10 -translate-y-10 translate-x-10">
-                <FaShieldAlt size={280} />
+        <div className="bg-white border-2 border-blue-50 rounded-3xl p-8 shadow-sm relative overflow-hidden">
+            {/* Background design elements */}
+            <div className="absolute -right-10 -top-10 text-gray-50 opacity-50 pointer-events-none">
+                <FaShieldAlt size={180} />
             </div>
             
             <div className="relative z-10">
-                <div className="flex items-center gap-4 mb-8">
-                    <div className="bg-white/20 backdrop-blur-xl p-4 rounded-2xl border border-white/20">
-                        <FaLock className="text-pink-400" size={32} />
+                <div className="flex items-center gap-4 mb-6">
+                    <div className="bg-blue-600 p-3 rounded-2xl shadow-lg shadow-blue-200">
+                        {hasExistingKeys ? <FaSyncAlt className="text-white" /> : <FaLock className="text-white" />}
                     </div>
                     <div>
-                        <h3 className="text-3xl font-black tracking-tight">Activate Secure Identity</h3>
-                        <p className="text-indigo-200 font-medium">One-time setup required for secure support access</p>
+                        <h3 className="text-xl font-black text-gray-900 tracking-tight">
+                            {hasExistingKeys ? 'Restore Secure Identity' : 'Activate Secure Identity'}
+                        </h3>
+                        <p className="text-sm text-gray-500 font-medium">
+                            {hasExistingKeys ? 'Resume secure access on this device' : 'One-time setup for secure support'}
+                        </p>
                     </div>
                 </div>
 
-                <p className="text-indigo-100 text-lg leading-relaxed mb-10 max-w-xl">
-                    To enable troubleshooting and zero-knowledge data sharing, we need to generate your unique **Digital Signature.** Enter your password below to finalize your secure identity setup.
+                <p className="text-gray-600 text-sm leading-relaxed mb-6">
+                    {hasExistingKeys 
+                        ? 'Your secure keys were found in the database. Enter your password to re-activate them for this browser session.'
+                        : 'To enable zero-knowledge patient data sharing, we need to generate your unique Digital Signature. This happens locally in your browser.'}
                 </p>
 
-                {status.message && (
-                    <div className={`mb-8 p-6 rounded-2xl flex items-center gap-4 animate-in slide-in-from-top-4 duration-500 ${
-                        status.type === 'success' ? 'bg-green-500/20 border border-green-400/40 text-green-200' : 'bg-red-500/20 border border-red-400/40 text-red-200'
-                    }`}>
-                        {status.type === 'success' ? <FaCheckCircle size={24} /> : <FaExclamationTriangle size={24} />}
-                        <p className="font-bold">{status.message}</p>
+                {status.message && (status.type !== 'success') && (
+                    <div className="mb-6 p-4 rounded-xl flex items-center gap-3 bg-red-50 text-red-700 border border-red-100 animate-in slide-in-from-top-2 duration-300">
+                        <FaExclamationTriangle size={16} />
+                        <p className="text-sm font-bold">{status.message}</p>
                     </div>
                 )}
 
-                <form onSubmit={handleActivate} className="space-y-6 max-w-md">
-                    <div>
-                        <label className="block text-xs font-black uppercase tracking-widest text-indigo-300 mb-2">Confirm Your Account Password</label>
-                        <input 
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="••••••••"
-                            className="w-full px-6 py-4 bg-white/10 border border-white/20 rounded-2xl focus:ring-4 focus:ring-indigo-500/50 outline-none transition-all placeholder:text-white/20 text-white font-bold"
-                            required
-                        />
+                {status.type === 'success' ? (
+                    <div className="bg-green-50 border border-green-100 p-6 rounded-2xl text-center animate-in zoom-in-95 duration-500">
+                        <FaCheckCircle className="text-green-500 text-4xl mx-auto mb-3" />
+                        <p className="text-green-800 font-black text-lg mb-1">Setup Complete!</p>
+                        <p className="text-green-600/80 text-sm font-medium">Your digital identity is now active.</p>
                     </div>
+                ) : (
+                    <form onSubmit={handleAction} className="space-y-4 max-w-sm">
+                        <div>
+                            <label className="block text-[10px] font-black uppercase tracking-[0.1em] text-gray-400 mb-2">Confirms Your Account Password</label>
+                            <input 
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="Enter password"
+                                className="w-full px-5 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder:text-gray-300 text-sm font-bold text-gray-800"
+                                required
+                            />
+                        </div>
 
-                    <button 
-                        type="submit"
-                        disabled={loading}
-                        className="w-full py-5 bg-gradient-to-r from-pink-500 to-rose-600 text-white text-lg font-black rounded-2xl hover:brightness-110 shadow-xl shadow-pink-900/50 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:grayscale"
-                    >
-                        {loading ? (
-                            <>
-                                <FaSpinner className="animate-spin" />
-                                Synchronizing Keys...
-                            </>
-                        ) : (
-                            <>
-                                <FaKey />
-                                Activate My Keys
-                            </>
-                        )}
-                    </button>
-                    
-                    <p className="text-center text-[10px] text-indigo-300 font-bold uppercase tracking-[0.2em] opacity-50">
-                        Zero-Knowledge Protocol: We never store your password or raw keys
-                    </p>
-                </form>
+                        <button 
+                            type="submit"
+                            disabled={loading}
+                            className={`w-full py-3.5 rounded-xl text-white text-sm font-black transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-blue-200 active:scale-95 ${
+                                loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-100'
+                            }`}
+                        >
+                            {loading ? (
+                                <>
+                                    <FaSpinner className="animate-spin" />
+                                    {hasExistingKeys ? 'Restoring...' : 'Synchronizing...'}
+                                </>
+                            ) : (
+                                <>
+                                    {hasExistingKeys ? <FaSyncAlt /> : <FaKey />}
+                                    {hasExistingKeys ? 'Restore My Keys' : 'Activate My Keys'}
+                                </>
+                            )}
+                        </button>
+                        
+                        <div className="flex items-center justify-center gap-2 mt-4 opacity-40">
+                            <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                            <p className="text-[10px] text-gray-600 font-bold uppercase tracking-[0.1em]">
+                                Zero-Knowledge Protected
+                            </p>
+                        </div>
+                    </form>
+                )}
             </div>
         </div>
     );
