@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaLock, FaKey, FaShieldAlt, FaSpinner } from 'react-icons/fa';
+import { FaLock, FaKey, FaShieldAlt, FaSpinner, FaExclamationTriangle } from 'react-icons/fa';
 import {
     getEncryptionKey, deriveKey, decryptPatient,
     hexToBytes, loadPrivateKey, decryptWithPrivateKey
@@ -9,113 +9,134 @@ import SecurityActivator from './Security/SecurityActivator';
 
 /**
  * PatientUnlocker — gates all patient content until decrypted.
- *
- * For OWNERS: auto-decrypts using the key cached at login (no password prompt).
- * For ADMINS with granted access: shows one password prompt to unwrap the shared key.
- * After first manual unlock the key is cached — all subsequent patients auto-decrypt.
+ * Handles both standard owner decryption and administrative support decryption.
  */
-
-// Admin session cache (cleared on tab close)
-let _adminKey = null;
-
 const PatientUnlocker = ({ patientData, userSalt, onUnlocked, children }) => {
     const [passphrase, setPassphrase] = useState('');
     const [isUnlocking, setIsUnlocking] = useState(false);
-    const [isDecrypted, setIsDecrypted] = useState(false);
-    const [grantedKey, setGrantedKey] = useState(null);
     const [error, setError] = useState('');
-    const [status, setStatus] = useState('checking'); // checking | prompt | done
+    const [status, setStatus] = useState('loading'); // loading, prompt, decrypted, missing_keys
+    const [grantedKey, setGrantedKey] = useState(null);
 
     useEffect(() => {
-        if (!patientData?.id) { setStatus('done'); setIsDecrypted(true); return; }
         init();
-    }, [patientData?.id]);
+    }, [patientData]);
 
     const init = async () => {
-        setStatus('checking');
-
-        // Step 1: Check if admin has a granted (shared) key for this patient
-        let resolvedGrantedKey = null;
         try {
-            const res = await api.get(`/access/granted?patient_id=${patientData.id}`);
-            if (res.success && res.request?.encrypted_key) {
-                resolvedGrantedKey = res.request.encrypted_key;
-                setGrantedKey(resolvedGrantedKey);
-            }
-        } catch (e) { /* not admin or not granted */ }
+            setStatus('loading');
+            setError('');
 
-        if (resolvedGrantedKey) {
-            // Admin flow: need password to unwrap the shared key (unless already cached)
-            if (_adminKey) {
-                // Admin already unlocked once this session — use cached key
-                try {
-                    await decryptAndShow(_adminKey, resolvedGrantedKey);
+            // 1. Check if we already have the patient key in the session cache
+            const cachedKey = await getEncryptionKey(patientData.id);
+            if (cachedKey) {
+                const decrypted = await decryptPatient(patientData, cachedKey);
+                if (decrypted) {
+                    onUnlocked(decrypted);
+                    setStatus('decrypted');
                     return;
-                } catch { _adminKey = null; }
+                }
             }
-            // Need admin to enter their password
-            setStatus('prompt');
-            return;
-        }
 
-        // Step 2: Owner flow — get key from session (set at login)
-        const sessionKey = await getEncryptionKey();
-        if (sessionKey) {
+            // 2. Check if an admin has a granted key (Support Session)
             try {
-                await decryptAndShow(sessionKey, null);
-                return;
-            } catch (e) {
-                console.warn('[Unlocker] Session key failed, showing prompt:', e.message);
+                const res = await api.get(`/access/granted?patient_id=${patientData.id}`);
+                if (res.success && res.request) {
+                    // We have an encrypted administrative key
+                    setGrantedKey(res.request.encrypted_key);
+                    setStatus('prompt');
+                    return;
+                }
+            } catch (err) {
+                console.warn('Granted check failed:', err);
             }
+
+            // 3. Check if the user has their own security keys (RSA)
+            try {
+                const privKey = await loadPrivateKey(); // Check session/local storage
+                if (privKey) {
+                    // We have the private key! We can decrypt the patient directly if we have the patient_key_encrypted
+                    // Note: This requires the patient record to contain the patient_key_encrypted for the current user.
+                    // If not found, we fallback to asking for the password to derive the master key.
+                    setStatus('prompt');
+                } else {
+                    // No private key found. User needs to generate/restore it.
+                    setStatus('missing_keys');
+                }
+            } catch (err) {
+                setStatus('missing_keys');
+            }
+
+        } catch (err) {
+            console.error('Unlocker Init Error:', err);
+            setStatus('prompt');
         }
-
-        // Step 3: No cached key — show password prompt
-        setStatus('prompt');
-    };
-
-    const decryptAndShow = async (masterKey, encryptedAdminKey) => {
-        let finalKey = masterKey;
-
-        if (encryptedAdminKey) {
-            // RSA-unwrap the patient key using the admin's private key
-            const privateKey = await loadPrivateKey(masterKey);
-            if (!privateKey) throw new Error('Security key not found. Go to Settings → activate security keys.');
-            const rawHex = await decryptWithPrivateKey(encryptedAdminKey, privateKey);
-            finalKey = await crypto.subtle.importKey(
-                'raw', hexToBytes(rawHex),
-                { name: 'AES-GCM' }, true, ['decrypt']
-            );
-        }
-
-        const decrypted = await decryptPatient(patientData, finalKey);
-        onUnlocked(decrypted);
-        setIsDecrypted(true);
-        setStatus('done');
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!passphrase.trim()) return;
-        setError('');
         setIsUnlocking(true);
+        setError('');
+
         try {
-            const user = JSON.parse(localStorage.getItem('user'));
-            const salt = userSalt || user?.encryption_salt;
-            if (!salt) throw new Error('Encryption salt missing. Please re-login.');
+            const salt = userSalt;
+            if (!salt) throw new Error("Security salt not found for this patient owner.");
+
+            // A. Derive Master Key from password
             const masterKey = await deriveKey(passphrase.trim(), salt);
 
-            if (grantedKey) _adminKey = masterKey; // cache for admin
+            // B. If it's a support session, decrypt the granted administrative key
+            if (grantedKey) {
+                await decryptAndShow(masterKey, grantedKey);
+            } else {
+                // C. Standard Owner Unlock: Load private key using master key
+                const privateKey = await loadPrivateKey(masterKey); 
+                if (!privateKey) throw new Error("Security key not found. Go to Settings → activate security keys.");
 
-            await decryptAndShow(masterKey, grantedKey);
+                // For the owner, we find the request record where they are the requester (or owner) 
+                // but usually, owners decrypt via their own key stored in the patient record.
+                // Assuming patient record has the key:
+                const decrypted = await decryptPatient(patientData, null, masterKey);
+                if (decrypted) {
+                    onUnlocked(decrypted);
+                    setStatus('decrypted');
+                } else {
+                    throw new Error("Decryption failed. Check your password.");
+                }
+            }
         } catch (err) {
-            setError(err.message || 'Wrong password. Please try again.');
+            setError(err.message || "Failed to unlock record.");
         } finally {
             setIsUnlocking(false);
         }
     };
 
-    // Auto-checking — show spinner
-    if (status === 'checking') {
+    const decryptAndShow = async (masterKey, encryptedAdminKey) => {
+        try {
+            // 1. Unwrap the user's private key using the Master Key (derived from password)
+            const privateKey = await loadPrivateKey(masterKey);
+            if (!privateKey) throw new Error("Could not restore your secure identity.");
+
+            // 2. Decrypt the patient's AES key using the user's private key
+            const patientKey = await decryptWithPrivateKey(privateKey, encryptedAdminKey);
+            if (!patientKey) throw new Error("This support session has expired or is invalid.");
+
+            // 3. Decrypt the patient data using the AES key
+            const decrypted = await decryptPatient(patientData, patientKey);
+            if (decrypted) {
+                onUnlocked(decrypted);
+                setStatus('decrypted');
+            } else {
+                throw new Error("Failed to decrypt record.");
+            }
+        } catch (err) {
+            throw err;
+        }
+    };
+
+    if (status === 'decrypted') return null;
+
+    if (status === 'loading') {
         return (
             <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3 text-gray-400">
                 <FaSpinner className="text-3xl text-blue-500 animate-spin" />
@@ -136,7 +157,6 @@ const PatientUnlocker = ({ patientData, userSalt, onUnlocked, children }) => {
                         <h3 className="text-xl font-bold text-gray-900">Security Activation Required</h3>
                         <p className="text-sm text-gray-500 mt-2">To view this patient's private details, you must first activate your secure digital identity.</p>
                     </div>
-                    {/* Embedded Activator for extreme convenience */}
                     <SecurityActivator onActivated={() => init()} />
                     <button 
                         onClick={() => setStatus('prompt')}
@@ -152,61 +172,74 @@ const PatientUnlocker = ({ patientData, userSalt, onUnlocked, children }) => {
     // Password prompt (admin or session expired)
     if (status === 'prompt') {
         return (
-            <div className="flex items-center justify-center min-h-[40vh] p-4">
-                <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm border border-gray-100 overflow-hidden">
-                    <div className={`p-8 text-white text-center ${grantedKey ? 'bg-gradient-to-br from-green-600 to-emerald-700' : 'bg-gradient-to-br from-blue-600 to-indigo-700'}`}>
-                        <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                            {grantedKey ? <FaKey className="text-xl" /> : <FaShieldAlt className="text-xl" />}
+            <div className="flex items-center justify-center min-h-[40vh] p-2 sm:p-4">
+                <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm border border-gray-100 overflow-hidden transform transition-all">
+                    <div className={`p-6 sm:p-8 text-white text-center ${grantedKey ? 'bg-gradient-to-br from-green-600 to-emerald-700' : 'bg-gradient-to-br from-blue-600 to-indigo-700'}`}>
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/10">
+                            {grantedKey ? <FaKey className="text-xl sm:text-2xl" /> : <FaShieldAlt className="text-xl sm:text-2xl" />}
                         </div>
-                        <h2 className="text-lg font-bold">
-                            {grantedKey ? 'Admin Support Access' : 'Enter Your Password'}
+                        <h2 className="text-lg sm:text-xl font-black tracking-tight">
+                            {grantedKey ? 'Support Access' : 'Secure Unlock'}
                         </h2>
-                        <p className="text-white/80 text-sm mt-1">
+                        <p className="text-white/80 text-xs sm:text-sm mt-2 font-medium leading-relaxed max-w-[220px] mx-auto">
                             {grantedKey
-                                ? 'Enter your own login password to view this patient.'
-                                : 'Enter your password to decrypt this patient record.'}
+                                ? 'Confirm your identity to proceed with troubleshooting.'
+                                : 'Enter your password to safely decrypt this clinical record.'}
                         </p>
                     </div>
-                    <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                        <input
-                            type="password"
-                            value={passphrase}
-                            onChange={e => setPassphrase(e.target.value)}
-                            placeholder="Your password..."
-                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 text-sm"
-                            autoFocus
-                        />
+                    <form onSubmit={handleSubmit} className="p-5 sm:p-7 space-y-5">
+                        <div className="space-y-2">
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Your Login Password</label>
+                            <input
+                                type="password"
+                                value={passphrase}
+                                onChange={e => setPassphrase(e.target.value)}
+                                placeholder="••••••••"
+                                className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder:text-gray-300 text-sm font-bold"
+                                autoFocus
+                            />
+                        </div>
+                        
                         {error && (
-                            <div className="space-y-2">
-                                <p className="text-red-500 text-sm bg-red-50 px-3 py-2 rounded-lg font-medium">{error}</p>
+                            <div className="space-y-3">
+                                <div className="p-3 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3 text-red-700 animate-in shake duration-500">
+                                    <FaExclamationTriangle className="shrink-0" />
+                                    <p className="text-xs font-bold leading-tight">{error}</p>
+                                </div>
                                 {error.includes('Security key not found') && (
                                     <button 
                                         type="button"
                                         onClick={() => setStatus('missing_keys')}
-                                        className="w-full py-2 bg-orange-600 text-white rounded-xl text-xs font-black shadow-lg shadow-orange-200 hover:brightness-110 active:scale-95 transition-all"
+                                        className="w-full py-3 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100 hover:brightness-110 active:scale-95 transition-all"
                                     >
-                                        ONE-CLICK SECURITY ACTIVATION
+                                        Setup Identity Now
                                     </button>
                                 )}
                             </div>
                         )}
+                        
                         <button
                             type="submit"
                             disabled={isUnlocking || !passphrase.trim()}
-                            className={`w-full py-3 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${
+                            className={`w-full py-4 text-white font-black text-sm rounded-2xl transition-all flex items-center justify-center gap-3 shadow-xl hover:shadow-blue-200 active:scale-95 ${
                                 isUnlocking || !passphrase.trim()
-                                    ? 'bg-gray-300 cursor-not-allowed'
-                                    : grantedKey ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
+                                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
+                                    : grantedKey ? 'bg-green-600 hover:bg-green-700 shadow-green-100' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-100'
                             }`}
                         >
                             {isUnlocking
-                                ? <><FaSpinner className="animate-spin" /> Decrypting...</>
-                                : <><FaLock /> View Patient Record</>
+                                ? <><FaSpinner className="animate-spin" /> Unlocking...</>
+                                : <><FaLock /> Decrypt & View</>
                             }
                         </button>
-                        <p className="text-center text-[11px] text-gray-400">
-                            🔒 Decrypted only in your browser. Never sent to server.
-                        </p>
+                        
+                        <div className="flex flex-col items-center gap-2 opacity-50">
+                            <div className="flex items-center gap-2">
+                                <div className="w-1 h-1 rounded-full bg-green-500" />
+                                <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest leading-none"> Private decryption in browser </p>
+                            </div>
+                            <p className="text-[8px] text-gray-400 font-medium">AddisMed Zero-Knowledge Infrastructure v2.1</p>
+                        </div>
                     </form>
                 </div>
             </div>

@@ -3140,15 +3140,6 @@ const PatientDetails = () => {
                                         <p className="text-gray-600 text-xs md:text-base truncate">
                                             {formData.full_name} • {formatAgeDisplay(formData.age_in_days, formData.date_of_birth)} • {formData.gender || 'Gender not specified'}
                                         </p>
-                                        {formData.full_name?.includes(':') && (
-                                            <PatientUnlocker 
-                                                patientData={patient} 
-                                                userSalt={patientOwnerSalt} 
-                                                onUnlocked={(decrypted) => {
-                                                    loadPatientData(decrypted);
-                                                }} 
-                                            />
-                                        )}
                                     </div>
                                 )}
                             </div>
@@ -3240,8 +3231,7 @@ const PatientDetails = () => {
                             patientData={patient}
                             userSalt={patientOwnerSalt}
                             onUnlocked={(decrypted) => {
-                                setPatient(decrypted);
-                                setFormData(prev => ({ ...prev, ...decrypted }));
+                                loadPatientData(decrypted);
                             }}
                         >
                             {/* All content only renders AFTER decryption */}
