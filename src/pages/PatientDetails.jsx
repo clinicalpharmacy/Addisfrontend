@@ -52,7 +52,7 @@ import SupportRequestModal from '../components/Security/SupportRequestModal';
 
 import api from '../utils/api';
 import supabase from '../utils/supabase';
-import { encryptPatient, getEncryptionKey } from '../utils/encryptionUtils';
+import { encryptPatient, getEncryptionKey, decryptPatient } from '../utils/encryptionUtils';
 
 
 // Create memoized LabInputField component
@@ -649,7 +649,20 @@ const PatientDetails = () => {
 
                 if (result.success && result.patient) {
                     setPatientOwnerSalt(result.owner_salt || null);
-                    loadPatientData(result.patient);
+                    
+                    // 🔐 ZERO-KNOWLEDGE: Decrypt the patient before loading
+                    let patientToLoad = result.patient;
+                    const encKey = await getEncryptionKey();
+                    if (encKey) {
+                        try {
+                            patientToLoad = await decryptPatient(result.patient, encKey);
+                            console.log('💎 [PatientDetails] Patient data decrypted successfully');
+                        } catch (decErr) {
+                            console.error('❌ [PatientDetails] Decryption failed:', decErr);
+                        }
+                    }
+                    
+                    loadPatientData(patientToLoad);
 
                     const searchParams = new URLSearchParams(location.search);
                     if (searchParams.get('edit') === 'true') {

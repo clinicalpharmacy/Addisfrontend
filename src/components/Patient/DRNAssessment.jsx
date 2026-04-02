@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import api from '../../utils/api';
 import supabase from '../../utils/supabase';
 import { mapPatientToFacts, evaluateRule, formatAlertMessage } from '../CDSS/RuleEngine';
+import { getEncryptionKey, decryptPatient } from '../../utils/encryptionUtils';
 import {
     FaStethoscope, FaEdit, FaDatabase, FaChevronUp, FaChevronDown,
     FaPills, FaExclamationTriangle, FaCheckCircle, FaSpinner,
@@ -341,18 +342,47 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
                     return null;
                 }
 
+                // 🔐 ZERO-KNOWLEDGE: Decrypt the patient before setting in state
+                const encKey = await getEncryptionKey();
+                if (encKey) {
+                    try {
+                        currentPatient = await decryptPatient(currentPatient, encKey);
+                        console.log('💎 [DRN] Patient data decrypted for analysis');
+                    } catch (decErr) {
+                        console.error('❌ [DRN] Failed to decrypt patient:', decErr);
+                    }
+                }
+
                 pId = currentPatient.id;
                 setPatientData(currentPatient);
                 setPatientId(pId);
             }
 
             // Fetch all medications for the patient if not provided via props
-            const { data: medicationsData } = await supabase
-                .from('medication_history')
-                .select('*')
-                .eq('patient_id', pId);
+            // 🔄 Check both tables to be safe, prioritizing reconciliation
+            let medsResult = [];
+            try {
+                const { data: reconData } = await supabase
+                    .from('medication_reconciliation')
+                    .select('*')
+                    .eq('patient_id', pId);
+                
+                if (reconData && reconData.length > 0) {
+                    medsResult = reconData;
+                } else {
+                    const { data: historyData } = await supabase
+                        .from('medication_history')
+                        .select('*')
+                        .eq('patient_id', pId);
+                    medsResult = historyData || [];
+                }
+            } catch (supErr) {
+                console.warn('⚠️ Supabase medication fetch failed, attempting API fallback...', supErr);
+                const apiRes = await api.get(`/medication-reconciliation/patient/${pId}`);
+                if (apiRes.success) medsResult = apiRes.medications || [];
+            }
 
-            const medicationsResolved = medicationsData || currentPatient.medication_history || [];
+            const medicationsResolved = medsResult.length > 0 ? medsResult : (currentPatient.medication_history || []);
             setMedications(medicationsResolved);
 
             return { patient: currentPatient, medications: medicationsResolved };

@@ -151,12 +151,153 @@ export async function decryptValue(cipherText, cryptoKey) {
 /** Which patient fields should be encrypted */
 const SENSITIVE_PATIENT_FIELDS = [
     'full_name',
+    'age',
+    'age_in_days',
+    'date_of_birth',
+    'gender',
     'contact_number',
     'address',
+    'patient_type',
     'diagnosis',
-    'notes',
     'allergies',
-    'emergency_contact'
+    'appointment_date',
+    'is_active',
+    'is_pregnant',
+    'pregnancy_weeks',
+    'pregnancy_trimester',
+    'pregnancy_notes',
+    'edd',
+    'birth_weight',
+    'birth_length',
+    'feeding_method',
+    'vaccination_status',
+    'developmental_milestones',
+    'special_instructions',
+    'blood_pressure',
+    'heart_rate',
+    'temperature',
+    'respiratory_rate',
+    'oxygen_saturation',
+    'weight',
+    'height',
+    'bmi',
+    'last_measured',
+    'hemoglobin',
+    'hematocrit',
+    'rbc',
+    'mcv',
+    'mch',
+    'mchc',
+    'rdw',
+    'platelets',
+    'wbc',
+    'neutrophils',
+    'lymphocytes',
+    'monocytes',
+    'eosinophils',
+    'basophils',
+    'sodium',
+    'potassium',
+    'chloride',
+    'bicarbonate',
+    'anion_gap',
+    'alt',
+    'ast',
+    'alkaline_phosphatase',
+    'total_bilirubin',
+    'direct_bilirubin',
+    'indirect_bilirubin',
+    'total_protein',
+    'albumin',
+    'globulin',
+    'ag_ratio',
+    'ggt',
+    'creatinine',
+    'blood_urea_nitrogen',
+    'bun_creatinine_ratio',
+    'egfr',
+    'troponin_i',
+    'troponin_t',
+    'ck_mb',
+    'nt_pro_bnp',
+    'myoglobin',
+    'tsh',
+    'free_t3',
+    'free_t4',
+    'crp',
+    'esr',
+    'ferritin',
+    'procalcitonin',
+    'pt',
+    'inr',
+    'aptt',
+    'd_dimer',
+    'fibrinogen',
+    'urine_color',
+    'urine_appearance',
+    'urine_ph',
+    'urine_specific_gravity',
+    'urine_protein',
+    'urine_glucose',
+    'urine_ketones',
+    'urine_blood',
+    'urine_leucocytes',
+    'urine_nitrites',
+    'urine_bilirubin',
+    'urine_urobilinogen',
+    'urine_rbc',
+    'urine_wbc',
+    'urine_epithelial_cells',
+    'urine_casts',
+    'urine_crystals',
+    'urine_bacteria',
+    'fasting_glucose',
+    'postprandial_glucose',
+    'random_glucose',
+    'insulin',
+    'c_peptide',
+    'hba1c',
+    'total_cholesterol',
+    'hdl_cholesterol',
+    'ldl_cholesterol',
+    'triglycerides',
+    'vldl_cholesterol',
+    'last_tested',
+    'alp',
+    'bilirubin_direct',
+    'wbc_count',
+    'rbc_count',
+    'platelet_count',
+    'blood_sugar',
+    'urea',
+    'uric_acid',
+    'calcium',
+    'magnesium',
+    'phosphate',
+    'bilirubin_total',
+    'bilirubin_indirect',
+    'troponin',
+    'ldh',
+    'total_t4',
+    'total_t3',
+    'ptt',
+    'bun',
+    'bilirubin_neonatal',
+    'glucose_neonatal',
+    'calcium_neonatal',
+    'pku_result',
+    'thyroid_screening',
+    'urine_leukocytes',
+    'urine_nitrite',
+    'weight_percentile',
+    'height_percentile',
+    'head_circumference_percentile',
+    'bmi_percentile',
+    'labs',
+    'is_lactating',
+    'lactation_notes',
+    'emergency_contact',
+    'notes'
 ];
 
 /**
@@ -170,9 +311,16 @@ export async function encryptPatient(patient, cryptoKey) {
     const encrypted = { ...patient };
     for (const field of SENSITIVE_PATIENT_FIELDS) {
         const val = encrypted[field];
-        // Only encrypt non-null string values — skip arrays, objects, numbers
-        if (val !== null && val !== undefined && typeof val === 'string' && val.trim() !== '') {
-            encrypted[field] = await encryptValue(val, cryptoKey);
+        
+        // Encrypt any non-null value that is not an object/array
+        if (val !== null && val !== undefined && typeof val !== 'object') {
+            const strVal = String(val);
+            if (strVal.trim() !== '') {
+                encrypted[field] = await encryptValue(strVal, cryptoKey);
+            }
+        } else if (val && typeof val === 'object') {
+            // Also encrypt JSON objects like 'labs'
+            encrypted[field] = await encryptValue(JSON.stringify(val), cryptoKey);
         }
     }
     return encrypted;
@@ -188,8 +336,22 @@ export async function decryptPatient(patient, cryptoKey) {
     if (!cryptoKey || !patient) return patient;
     const decrypted = { ...patient };
     for (const field of SENSITIVE_PATIENT_FIELDS) {
-        if (decrypted[field]) {
-            decrypted[field] = await decryptValue(decrypted[field], cryptoKey);
+        let val = decrypted[field];
+        if (val && typeof val === 'string' && val.includes(':')) {
+            const dec = await decryptValue(val, cryptoKey);
+            
+            // Attempt to restore original types
+            if (dec === 'true') val = true;
+            else if (dec === 'false') val = false;
+            else if (!isNaN(dec) && dec.trim() !== '' && !field.includes('date') && !field.includes('measured') && !field.includes('tested')) {
+                val = Number(dec);
+            } else if ((dec.startsWith('{') && dec.endsWith('}')) || (dec.startsWith('[') && dec.endsWith(']'))) {
+                try { val = JSON.parse(dec); } catch { val = dec; }
+            } else {
+                val = dec;
+            }
+            
+            decrypted[field] = val;
         }
     }
     return decrypted;

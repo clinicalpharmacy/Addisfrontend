@@ -6,6 +6,7 @@ import {
 } from 'react-icons/fa';
 import api from '../utils/api';
 import CDSSDisplay from '../components/CDSS/CDSSDisplay';
+import { getEncryptionKey, decryptPatients } from '../utils/encryptionUtils';
 
 const CDSSAnalysisPage = () => {
     const navigate = useNavigate();
@@ -24,7 +25,10 @@ const CDSSAnalysisPage = () => {
             setLoading(true);
             const result = await api.get('/patients');
             if (result.success && result.patients) {
-                setPatients(result.patients);
+                // 🔐 ZERO-KNOWLEDGE: Decrypt the patient list
+                const encKey = await getEncryptionKey();
+                const decryptedPatients = await decryptPatients(result.patients, encKey);
+                setPatients(decryptedPatients);
             }
         } catch (err) {
             console.error('Error fetching patients:', err);
