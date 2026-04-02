@@ -149,7 +149,8 @@ const PatientUnlocker = ({ patientData, userSalt, onUnlocked, children }) => {
         }
     };
 
-    if (status === 'decrypted') return null;
+    // If already decrypted or just unlocked, render the patient content
+    if (status === 'decrypted') return <>{children}</>;
 
     if (status === 'loading') {
         return (
