@@ -19,13 +19,18 @@ export const AdminSupportRequests = () => {
 
     const fetchSupportPatients = async () => {
         setLoading(true);
+        setError(''); // Reset error
         try {
             const res = await api.get('/access/active-support');
+            console.log("🔐 [SupportVault] API Response:", res);
             if (res.success) {
                 setRequests(res.support_patients || []);
+            } else {
+                setError(res.error || 'Failed to sync vault.');
             }
         } catch (err) {
-            setError('Failed to load support assignments.');
+            console.error("❌ [SupportVault] Sync Error:", err);
+            setError(err.error || err.message || 'Vault connection lost.');
         } finally {
             setLoading(false);
         }
