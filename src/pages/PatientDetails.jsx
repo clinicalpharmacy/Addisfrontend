@@ -2114,7 +2114,8 @@ const PatientDetails = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Full Name */}
-                    <div className="space-y-2">
+                    {!isIndividual && (
+                        <div className="space-y-2">
                             <label className="block text-sm font-medium text-gray-700">
                                 Full Name *
                             </label>
@@ -2133,6 +2134,7 @@ const PatientDetails = () => {
                                 </div>
                             )}
                         </div>
+                    )}
 
                     {/* Age Input */}
                     <div className="space-y-2">
