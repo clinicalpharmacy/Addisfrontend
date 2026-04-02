@@ -456,8 +456,8 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                                                 <FaCheckCircle className="text-green-600 text-sm" />
                                                                 <span className="text-xs md:text-sm font-black uppercase tracking-widest text-green-800">Evidence Recommendation</span>
                                                             </div>
-                                                            <div className="text-sm md:text-base font-black text-gray-900 leading-tight">
-                                                                {(isHealthcareClient ? (alert.client_recommendation || alert.details) : (alert.professional_recommendation || alert.details)) || 'Review clinical guidelines'}
+                                                            <div className="text-sm md:text-base font-black text-gray-900 leading-relaxed whitespace-pre-wrap">
+                                                                {(isHealthcareClient ? (alert.client_recommendation || alert.recommendation || alert.details) : (alert.professional_recommendation || alert.recommendation || alert.details)) || 'Review clinical guidelines'}
                                                             </div>
                                                         </div>
                                                     </div>

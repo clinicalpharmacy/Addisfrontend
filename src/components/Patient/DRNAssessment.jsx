@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import api from '../../utils/api';
 import supabase from '../../utils/supabase';
-import { mapPatientToFacts, evaluateRule } from '../CDSS/RuleEngine';
+import { mapPatientToFacts, evaluateRule, formatAlertMessage } from '../CDSS/RuleEngine';
 import {
     FaStethoscope, FaEdit, FaDatabase, FaChevronUp, FaChevronDown,
     FaPills, FaExclamationTriangle, FaCheckCircle, FaSpinner,
@@ -471,16 +471,24 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
                                 const clientRecommendation = action.recommendation_client || action.recommendation || recommendation;
 
                                 severity = action.severity || rule.severity || 'moderate';
+                                
+                                // ✅ DYNAMIC FORMATTING - Wrap messages and recommendations
+                                message = formatAlertMessage(message, facts);
+                                recommendation = formatAlertMessage(recommendation, facts);
 
                                 // Store client view data for reference if needed
-                                rule.client_message = clientMessage;
-                                rule.client_recommendation = clientRecommendation;
+                                rule.client_message = formatAlertMessage(clientMessage, facts);
+                                rule.client_recommendation = formatAlertMessage(clientRecommendation, facts);
                             } catch (e) {
-                                recommendation = getDefaultRecommendation(rule.rule_type);
+                                recommendation = formatAlertMessage(getDefaultRecommendation(rule.rule_type), facts);
                             }
                         } else {
-                            recommendation = getDefaultRecommendation(rule.rule_type);
+                            recommendation = formatAlertMessage(getDefaultRecommendation(rule.rule_type), facts);
                         }
+                        
+                        // Ensure final formatting just in case
+                        message = formatAlertMessage(message, facts);
+                        recommendation = formatAlertMessage(recommendation, facts);
 
                         // Map rule to DRN category
                         let drnCategory = 'Safety';
@@ -674,6 +682,7 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
             'more_cost_effective_drug_available': 'Review medication costs and consider cost-effective alternatives.',
             'cannot_afford_drug': 'Review medication costs and consider alternative option like health insurance coverage.',
             'product_quality_defect': 'Verify quality of the medication by physical inspection.',
+            'elderly_check': 'Review appropriate medication guidelines for geriatric patients (e.g., Beers Criteria or STOPP/START rules). Consider safer alternatives for potentially inappropriate medication.',
         };
         return recommendations[ruleType] || 'Review and consider appropriate clinical action.';
     };
@@ -1078,7 +1087,20 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
                                                                     </span>
                                                                 )}
                                                             </div>
-                                                            <p className="text-sm text-gray-600 mb-2">{finding.message}</p>
+                                                            <p className="text-sm text-gray-700 font-medium mb-3 bg-gray-50 p-2 rounded border border-gray-100 italic">Finding: {finding.message}</p>
+                                                            
+                                                            {/* Added Recommendation Display */}
+                                                            {finding.recommendation && (
+                                                                <div className="bg-green-50/50 border-l-4 border-green-400 p-3 rounded-r-lg mb-2">
+                                                                    <div className="flex items-center gap-2 mb-1">
+                                                                        <FaCheckCircle className="text-green-500 text-xs" />
+                                                                        <span className="text-[10px] font-black uppercase tracking-wider text-green-700">Recommendation</span>
+                                                                    </div>
+                                                                    <p className="text-sm text-gray-800 leading-relaxed font-semibold">
+                                                                        {finding.recommendation}
+                                                                    </p>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                         <button
                                                             onClick={() => handleReviewFinding(finding)}
