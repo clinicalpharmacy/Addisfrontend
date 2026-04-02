@@ -191,6 +191,21 @@ const MedicationHistory = ({ patientCode }) => {
         }
     };
 
+    const handleDeleteReconciliation = async (id) => {
+        if (!window.confirm('Are you sure you want to delete this reconciliation record?')) return;
+        try {
+            const result = await api.delete(`/reconciliations/${id}`);
+            if (result.success) {
+                setReconciliations(prev => prev.filter(recon => recon.id !== id));
+            } else {
+                alert(result.error || 'Failed to delete reconciliation');
+            }
+        } catch (error) {
+            console.error('Error deleting reconciliation:', error);
+            alert('Failed to delete reconciliation');
+        }
+    };
+
 
     const fetchMedications = async () => {
         try {
@@ -1393,8 +1408,17 @@ const MedicationHistory = ({ patientCode }) => {
                                                 <FaHospital className="text-teal-500 text-xs" />
                                                 {recon.site}
                                             </div>
-                                            <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
-                                                {new Date(recon.date).toLocaleDateString()}
+                                            <div className="flex gap-2">
+                                                <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
+                                                    {new Date(recon.date).toLocaleDateString()}
+                                                </div>
+                                                <button
+                                                    onClick={() => handleDeleteReconciliation(recon.id)}
+                                                    className="text-gray-400 hover:text-red-500 transition-colors"
+                                                    title="Delete record"
+                                                >
+                                                    <FaTrash size={12} />
+                                                </button>
                                             </div>
                                         </div>
                                         <p className="text-gray-600 text-sm italic">{recon.findings}</p>
