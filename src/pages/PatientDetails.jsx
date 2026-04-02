@@ -338,8 +338,6 @@ const PatientDetails = () => {
             }
         }
 
-        console.log("🛠️ PatientDetails - Tab Filter Logic - User Role:", user?.role, "Account:", user?.account_type);
-        console.log("🛠️ PatientDetails - Final Tabs:", result.map(t => t.id).join(', '));
         return result;
     }, [user]);
 
@@ -668,7 +666,6 @@ const PatientDetails = () => {
                     if (encKey) {
                         try {
                             patientToLoad = await decryptPatient(result.patient, encKey);
-                            console.log('💎 [PatientDetails] Patient data decrypted successfully');
                         } catch (decErr) {
                             console.error('❌ [PatientDetails] Decryption failed:', decErr);
                         }
@@ -2331,7 +2328,7 @@ const PatientDetails = () => {
                                         <FaPlus /> Add
                                     </button>
                                 </div>
-                                {formData.allergies && formData.allergies.length > 0 && (
+                                {Array.isArray(formData.allergies) && formData.allergies.length > 0 && (
                                     <div className="flex flex-wrap gap-2">
                                         {formData.allergies.map((allergy, index) => (
                                             <div key={index} className="bg-red-100 text-red-800 px-3 py-2 rounded-lg flex items-center gap-2">
@@ -2350,7 +2347,7 @@ const PatientDetails = () => {
                             </div>
                         ) : (
                             <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                {formData.allergies && formData.allergies.length > 0 ? (
+                                {Array.isArray(formData.allergies) && formData.allergies.length > 0 ? (
                                     <div className="flex flex-wrap gap-2">
                                         {formData.allergies.map((allergy, index) => (
                                             <span key={index} className="bg-red-100 text-red-800 px-3 py-1 rounded-lg">
@@ -2885,7 +2882,7 @@ const PatientDetails = () => {
                 )}
 
                 {/* Allergies Display */}
-                {formData.allergies && formData.allergies.length > 0 && (
+                {Array.isArray(formData.allergies) && formData.allergies.length > 0 && (
                     <div className="bg-white rounded-lg border border-red-200 p-6">
                         <h3 className="text-lg font-semibold text-red-800 mb-4 flex items-center gap-2">
                             <FaAllergies /> Allergies

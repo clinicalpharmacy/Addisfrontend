@@ -25,10 +25,6 @@ const CDSSDisplay = ({ patientData, onBack }) => {
         patientFacts
     } = useCDSSLogic(patientData);
 
-    console.log("🛠️ CDSSDisplay Render - patientData:", patientData);
-    console.log("🛠️ CDSSDisplay Render - clinicalRules:", clinicalRules?.length);
-    console.log("🛠️ CDSSDisplay Render - alerts:", alerts?.length);
-    console.log('💊 useCDSSLogic initialized with patientData:', patientData?.id);
 
 
 
@@ -36,7 +32,6 @@ const CDSSDisplay = ({ patientData, onBack }) => {
     const userRole = rawUserRole.toLowerCase().trim();
     const isHealthcareClient = userRole === 'healthcare_client';
 
-    console.log("🛠️ CDSSDisplay Auth Status - User Role:", userRole, "isHealthcareClient:", isHealthcareClient);
 
     const severityColors = {
         critical: 'bg-red-50 text-red-800 border-red-200 hover:bg-red-100',
@@ -228,10 +223,8 @@ const CDSSDisplay = ({ patientData, onBack }) => {
 
     const [hasAcknowledged, setHasAcknowledged] = useState(false);
 
-    console.log("🛠️ CDSSDisplay - hasAcknowledged:", hasAcknowledged);
 
     if (!hasAcknowledged) {
-        console.log("🛠️ Rendering Acknowledgment Screen");
         return (
             <div className="bg-white rounded-xl shadow-lg p-8 md:p-12 text-center">
                 <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -246,7 +239,6 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                 </div>
                 <button
                     onClick={() => {
-                        console.log("🛠️ Accept button clicked!");
                         setHasAcknowledged(true);
                     }}
                     className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-10 rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 flex items-center gap-2 mx-auto"
