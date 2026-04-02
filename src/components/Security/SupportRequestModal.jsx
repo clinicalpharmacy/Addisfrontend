@@ -119,45 +119,49 @@ const SupportRequestModal = ({ isOpen, onClose, patientId, ownerSalt, onSuccess 
 
                 {step === 1 ? (
                     <div className="p-8 space-y-6">
-                        {/* 🛠️ DEBUG DIAGNOSTIC BOX */}
-                        <div className="bg-gray-900 text-green-400 p-4 rounded-xl text-[10px] font-mono leading-relaxed border border-gray-700 shadow-inner">
-                            <div className="flex items-center gap-2 mb-2 text-white border-b border-gray-700 pb-1">
-                                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                                <span>Security Handshake Pulse</span>
+                        {/* 🛡️ SECURITY STATUS (Togglable for advanced users) */}
+                        <div className="bg-gray-50 border border-gray-200 p-4 rounded-xl">
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 bg-green-500 rounded-full" />
+                                    <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Active Security Protocol</span>
+                                </div>
+                                <button 
+                                    type="button"
+                                    onClick={() => setLoading(!loading)} // Reusing loading for toggle
+                                    className="text-[9px] font-bold text-blue-600 hover:underline px-2"
+                                >
+                                    {loading ? 'Hide Details' : 'View Diagnostics'}
+                                </button>
                             </div>
-                            <div className="space-y-1">
-                                <div className="flex justify-between">
-                                    <span>[01] SYSTEM_IDENTITY:</span>
-                                    <span className={patientId ? 'text-green-400' : 'text-red-500'}>
-                                        {patientId ? 'VERIFIED' : 'MISSING_ID'}
-                                    </span>
+                            
+                            {loading && (
+                                <div className="bg-gray-900 text-green-400 p-3 rounded-lg text-[9px] font-mono leading-relaxed border border-gray-700 shadow-inner mb-3">
+                                    <div className="space-y-1">
+                                        <div className="flex justify-between uppercase">
+                                            <span>[01] ID:</span>
+                                            <span className={patientId ? 'text-green-400' : 'text-red-500 font-black'}>{patientId ? 'VERIFIED' : 'ERR'}</span>
+                                        </div>
+                                        <div className="flex justify-between uppercase">
+                                            <span>[02] ANCHOR:</span>
+                                            <span className={ownerSalt ? 'text-green-400' : 'text-red-500 font-black'}>{ownerSalt ? 'READY' : 'ERR'}</span>
+                                        </div>
+                                        <div className="flex justify-between uppercase">
+                                            <span>[03] TARGET:</span>
+                                            <span className={selectedAdminId ? 'text-green-400' : 'text-red-500 font-black'}>{selectedAdminId ? 'LOCKED' : 'WAIT'}</span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="flex justify-between">
-                                    <span>[02] CRYPTO_ANCHOR:</span>
-                                    <span className={ownerSalt ? 'text-green-400' : 'text-red-500'}>
-                                        {ownerSalt ? 'VERIFIED_OK' : 'SALT_NOT_SYNCED'}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span>[03] ADMIN_TARGET:</span>
-                                    <span className={selectedAdminId ? 'text-green-400' : 'text-red-500'}>
-                                        {selectedAdminId ? 'TARGET_LOCKED' : 'AWAITING_SELECT'}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span>[04] CLIENT_KEYDRIVE:</span>
-                                    <span className={password ? 'text-green-400' : 'text-red-500'}>
-                                        {password ? 'DRIVER_READY' : 'AWAITING_AUTH'}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
+                            )}
 
-                        <div className="bg-blue-50/50 border border-blue-100 p-4 rounded-xl flex gap-4">
-                            <FaExclamationTriangle className="text-blue-600 mt-1 flex-shrink-0" />
-                            <p className="text-xs leading-relaxed text-blue-800 font-medium">
-                                By activating support, you are sharing an <span className="font-bold underline">encrypted copy</span> of your access key with a specific administrator. This allows the administrator to view this patient's records for troubleshooting.
-                            </p>
+                            <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 text-blue-600">
+                                    <FaLock size={14} />
+                                </div>
+                                <p className="text-[11px] leading-relaxed text-gray-500 font-medium">
+                                    You are about to share a <span className="font-bold text-gray-700">temporary, encrypted copy</span> of this record's access key. The specialist can only view data while this session is active.
+                                </p>
+                            </div>
                         </div>
 
                         <form onSubmit={handleActivateSupport} className="space-y-5">
@@ -166,7 +170,7 @@ const SupportRequestModal = ({ isOpen, onClose, patientId, ownerSalt, onSuccess 
                                 <label className="text-sm font-bold text-gray-700 ml-1 flex items-center gap-2">
                                     <FaUserShield className="text-blue-500" /> Assigned Specialist
                                 </label>
-                                {loading ? (
+                                {loading && !selectedAdminId ? (
                                     <div className="h-14 bg-gray-50 animate-pulse rounded-xl" />
                                 ) : (
                                     <div className="relative group">
@@ -209,7 +213,7 @@ const SupportRequestModal = ({ isOpen, onClose, patientId, ownerSalt, onSuccess 
                             </div>
 
                             {error && (
-                                <div className="bg-red-50 text-red-600 p-4 rounded-xl text-xs font-bold border border-red-100 animate-shake">
+                                <div className="bg-red-50 text-red-600 p-4 rounded-xl text-xs font-bold border border-red-100">
                                     ⚠️ {error}
                                 </div>
                             )}
@@ -226,7 +230,7 @@ const SupportRequestModal = ({ isOpen, onClose, patientId, ownerSalt, onSuccess 
                                     type="submit"
                                     disabled={isSubmitting || !selectedAdminId || !password || !ownerSalt}
                                     className={`flex-1 h-16 bg-blue-600 text-white font-black rounded-2xl shadow-2xl transition-all active:scale-95 flex flex-col items-center justify-center gap-1 ${
-                                        (isSubmitting || !selectedAdminId || !password || !ownerSalt) ? 'opacity-50 grayscale' : 'hover:bg-blue-700 hov:shadow-blue-500/30'
+                                        (isSubmitting || !selectedAdminId || !password || !ownerSalt) ? 'opacity-50 grayscale' : 'hover:bg-blue-700 hover:shadow-blue-500/30'
                                     }`}
                                 >
                                     {isSubmitting ? (
@@ -248,7 +252,7 @@ const SupportRequestModal = ({ isOpen, onClose, patientId, ownerSalt, onSuccess 
                     </div>
                 ) : (
                     <div className="p-12 text-center space-y-6">
-                        <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce-short">
+                        <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                             <FaCheckCircle className="text-4xl text-green-600" />
                         </div>
                         <div className="space-y-2">
