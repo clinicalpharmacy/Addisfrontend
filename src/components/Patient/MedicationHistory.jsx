@@ -194,7 +194,7 @@ const MedicationHistory = ({ patientCode }) => {
     const handleDeleteReconciliation = async (id) => {
         if (!window.confirm('Are you sure you want to delete this reconciliation record?')) return;
         try {
-            const result = await api.delete(`/reconciliations/${id}`);
+            const result = await api.delete(`/medication-reconciliation/${id}`);
             if (result.success) {
                 setReconciliations(prev => prev.filter(recon => recon.id !== id));
             } else {
