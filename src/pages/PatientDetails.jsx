@@ -322,8 +322,8 @@ const PatientDetails = () => {
 
         let result = allTabs;
 
-        // Ensure AI Assistant (analysis) is ALWAYS included for everyone
-        const alwaysVisible = ['overview', 'demographics', 'vitals', 'labs', 'analysis'];
+        // Ensure core tabs are ALWAYS included for everyone
+        const alwaysVisible = ['overview', 'demographics', 'vitals', 'labs', 'analysis', 'cost'];
 
         if (!hasActiveSubscription && !isAdmin) {
             // Keep alwaysVisible + others except core clinical tools
