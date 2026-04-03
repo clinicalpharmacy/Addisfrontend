@@ -51,11 +51,11 @@ export const useCDSSLogic = (patientData) => {
 
             if (data && data.length > 0) {
                 setClinicalRules(data);
-                debugText += `\n📋 Available Rules: ${data.length}\n`;
+                debugText += `\n✅ Loaded ${data.length} rules from database\n`;
             } else {
                 console.log('⚠️ No rules in database, using sample test rules');
                 setClinicalRules(sampleTestRules);
-                debugText += `⚠️ Using sample test rules (Database returned ${data ? '0' : 'null'} rules)\n`;
+                debugText += `⚠️ Using ${sampleTestRules.length} sample test rules (Database returned ${data ? '0' : 'null'} rules)\n`;
             }
 
             setDebugInfo(prev => prev + debugText);
@@ -410,8 +410,14 @@ export const useCDSSLogic = (patientData) => {
     }, [patientData, medications]);
 
     // Cleanup effects
+    // 1. Initial global rules load - only once
     useEffect(() => {
-        // Only clear if we have a GENUINE patient change and the new ID is valid
+        fetchClinicalRules();
+    }, [fetchClinicalRules]);
+
+    // 2. Patient-specific data updates
+    useEffect(() => {
+        // Only clear analysis if we have a GENUINE patient change and the new ID is valid
         if (patientData?.id && patientData?.id !== previousPatientId.current) {
             console.log('🔄 Patient ID changed, clearing analysis state');
             setAlerts([]);
@@ -423,15 +429,10 @@ export const useCDSSLogic = (patientData) => {
             setPatientFacts(null);
             setTestResults(null);
             previousPatientId.current = patientData?.id;
-            setIsInitialLoad(true);
         }
 
         if (patientData && patientData.id) {
             fetchPatientMedications();
-            if (isInitialLoad) {
-                fetchClinicalRules();
-                setIsInitialLoad(false);
-            }
         }
 
         // ✅ REAL-TIME RULES INTEGRATION:
@@ -451,7 +452,7 @@ export const useCDSSLogic = (patientData) => {
         return () => {
             supabase.removeChannel(rulesSubscription);
         };
-    }, [patientData, isInitialLoad, fetchClinicalRules, fetchPatientMedications]);
+    }, [patientData?.id, fetchClinicalRules, fetchPatientMedications]);
 
     // Keep the ref up to date with the latest analyzePatient callback
     useEffect(() => {
