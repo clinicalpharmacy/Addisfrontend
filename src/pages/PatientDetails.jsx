@@ -52,9 +52,9 @@ import SupportRequestModal from '../components/Security/SupportRequestModal';
 
 import api from '../utils/api';
 import supabase from '../utils/supabase';
-import { 
-    encryptPatient, getEncryptionKey, decryptPatient, 
-    loadPrivateKey, decryptWithPrivateKey, hexToBytes 
+import {
+    encryptPatient, getEncryptionKey, decryptPatient,
+    loadPrivateKey, decryptWithPrivateKey, hexToBytes
 } from '../utils/encryptionUtils';
 
 
@@ -328,20 +328,20 @@ const PatientDetails = () => {
             // Keep alwaysVisible + others except core clinical tools
             result = allTabs.filter(tab =>
                 alwaysVisible.includes(tab.id) ||
-                !['plan', 'outcome', 'cost', 'drn', 'medications'].includes(tab.id)
+                !['plan', 'outcome', 'drn', 'medications'].includes(tab.id)
             );
         } else if (user?.account_type === 'individual' && !isAdmin) {
-            // Individual subscribers - remove some tabs but KEEP analysis
+            // Individual subscribers - remove some tabs but KEEP analysis and cost
             result = allTabs.filter(tab =>
                 alwaysVisible.includes(tab.id) ||
-                !['plan', 'outcome', 'cost'].includes(tab.id)
+                !['plan', 'outcome'].includes(tab.id)
             );
 
             if (!isPharmacistOrStudent) {
                 result = result.filter(tab => tab.id !== 'drn');
             }
         }
-        
+
         return result;
     }, [user]);
 
@@ -499,7 +499,7 @@ const PatientDetails = () => {
 
     const loadPatientData = useCallback(async (patientData) => {
         if (!patientData) return;
-        
+
         setIsNewPatient(false);
         setLoading(true);
 
@@ -509,7 +509,7 @@ const PatientDetails = () => {
             const masterKey = await getEncryptionKey();
             const currentRole = user?.role || '';
             const privateKey = (currentRole === 'healthcare_client' || currentRole === 'admin') ? await loadPrivateKey(masterKey) : null;
-            
+
             if (masterKey) {
                 decryptedData = await decryptPatient(decryptedData, masterKey);
             } else if (privateKey && decryptedData.shared_encryption_key) {
@@ -690,7 +690,7 @@ const PatientDetails = () => {
 
                 if (result.success && result.patient) {
                     setPatientOwnerSalt(result.owner_salt || null);
-                    
+
                     // 🔐 ZERO-KNOWLEDGE: Decrypt the patient before loading
                     let patientToLoad = result.patient;
                     const encKey = await getEncryptionKey();
@@ -701,7 +701,7 @@ const PatientDetails = () => {
                             console.error('❌ [PatientDetails] Decryption failed:', decErr);
                         }
                     }
-                    
+
                     loadPatientData(patientToLoad);
 
                     const searchParams = new URLSearchParams(location.search);
@@ -1402,7 +1402,7 @@ const PatientDetails = () => {
 
             // Check if it's a patient limit error
             const errorMsg = error.error || error.message || (error.response?.data?.error) || (error.response?.data?.message) || 'Failed';
-            
+
             if (error.status === 403 || error.response?.status === 403) {
                 alert(
                     `❌ Case Limit Reached\n\n` +
@@ -2216,27 +2216,27 @@ const PatientDetails = () => {
 
                     {/* Date of Birth */}
                     <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-700">
-                                Date of Birth
-                            </label>
-                            {isEditing ? (
-                                <input
-                                    type="date"
-                                    value={formData.date_of_birth || ''}
-                                    onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-3"
-                                />
-                            ) : (
-                                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                    {patient?.date_of_birth ? (
-                                        <div className="flex items-center gap-2">
-                                            <FaBirthdayCake className="text-gray-400" />
-                                            {new Date(patient.date_of_birth).toLocaleDateString()}
-                                        </div>
-                                    ) : <span className="text-gray-500 italic">Not specified</span>}
-                                </div>
-                            )}
-                        </div>
+                        <label className="block text-sm font-medium text-gray-700">
+                            Date of Birth
+                        </label>
+                        {isEditing ? (
+                            <input
+                                type="date"
+                                value={formData.date_of_birth || ''}
+                                onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
+                                className="w-full border border-gray-300 rounded-lg p-3"
+                            />
+                        ) : (
+                            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                {patient?.date_of_birth ? (
+                                    <div className="flex items-center gap-2">
+                                        <FaBirthdayCake className="text-gray-400" />
+                                        {new Date(patient.date_of_birth).toLocaleDateString()}
+                                    </div>
+                                ) : <span className="text-gray-500 italic">Not specified</span>}
+                            </div>
+                        )}
+                    </div>
 
                     {/* Gender - FIXED: Only Male and Female */}
                     <div className="space-y-2">
@@ -2288,48 +2288,48 @@ const PatientDetails = () => {
 
                     {/* Contact Number */}
                     <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-700">
-                                Contact Number
-                            </label>
-                            {isEditing ? (
-                                <input
-                                    type="tel"
-                                    value={formData.contact_number || ''}
-                                    onChange={(e) => handleInputChange('contact_number', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-3"
-                                    placeholder="Phone number"
-                                />
-                            ) : (
-                                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                    {patient?.contact_number ? (
-                                        <div className="flex items-center gap-2">
-                                            <FaPhone className="text-gray-400" />
-                                            {patient.contact_number}
-                                        </div>
-                                    ) : <span className="text-gray-500 italic">Not specified</span>}
-                                </div>
-                            )}
-                        </div>
+                        <label className="block text-sm font-medium text-gray-700">
+                            Contact Number
+                        </label>
+                        {isEditing ? (
+                            <input
+                                type="tel"
+                                value={formData.contact_number || ''}
+                                onChange={(e) => handleInputChange('contact_number', e.target.value)}
+                                className="w-full border border-gray-300 rounded-lg p-3"
+                                placeholder="Phone number"
+                            />
+                        ) : (
+                            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                {patient?.contact_number ? (
+                                    <div className="flex items-center gap-2">
+                                        <FaPhone className="text-gray-400" />
+                                        {patient.contact_number}
+                                    </div>
+                                ) : <span className="text-gray-500 italic">Not specified</span>}
+                            </div>
+                        )}
+                    </div>
 
                     {/* Address */}
                     <div className="space-y-2 md:col-span-2">
-                            <label className="block text-sm font-medium text-gray-700">
-                                Address
-                            </label>
-                            {isEditing ? (
-                                <textarea
-                                    value={formData.address || ''}
-                                    onChange={(e) => handleInputChange('address', e.target.value)}
-                                    rows="2"
-                                    className="w-full border border-gray-300 rounded-lg p-3"
-                                    placeholder="Patient's address"
-                                />
-                            ) : (
-                                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                    {patient?.address || <span className="text-gray-500 italic">Not specified</span>}
-                                </div>
-                            )}
-                        </div>
+                        <label className="block text-sm font-medium text-gray-700">
+                            Address
+                        </label>
+                        {isEditing ? (
+                            <textarea
+                                value={formData.address || ''}
+                                onChange={(e) => handleInputChange('address', e.target.value)}
+                                rows="2"
+                                className="w-full border border-gray-300 rounded-lg p-3"
+                                placeholder="Patient's address"
+                            />
+                        ) : (
+                            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                {patient?.address || <span className="text-gray-500 italic">Not specified</span>}
+                            </div>
+                        )}
+                    </div>
                     {/* Allergies */}
                     <div className="space-y-2 md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
@@ -3273,10 +3273,10 @@ const PatientDetails = () => {
                             {activeTab === 'medications' && <MedicationHistory patientCode={getCurrentPatientCode()} />}
                             {activeTab === 'analysis' && <CDSSDisplay
                                 patientData={{ ...formData, patient_code: getCurrentPatientCode(), id: patient?.id }}
-                                onBack={() => {}}
+                                onBack={() => { }}
                             />}
-                            {activeTab === 'drn' && <DRNAssessment 
-                                patientCode={getCurrentPatientCode()} 
+                            {activeTab === 'drn' && <DRNAssessment
+                                patientCode={getCurrentPatientCode()}
                                 patientData={formData}
                             />}
                             {activeTab === 'plan' && <PhAssistPlan patientCode={getCurrentPatientCode()} />}
@@ -3292,10 +3292,10 @@ const PatientDetails = () => {
                             {activeTab === 'medications' && <MedicationHistory patientCode={getCurrentPatientCode()} />}
                             {activeTab === 'analysis' && <CDSSDisplay
                                 patientData={{ ...formData, patient_code: getCurrentPatientCode(), id: patient?.id }}
-                                onBack={() => {}}
+                                onBack={() => { }}
                             />}
-                            {activeTab === 'drn' && <DRNAssessment 
-                                patientCode={getCurrentPatientCode()} 
+                            {activeTab === 'drn' && <DRNAssessment
+                                patientCode={getCurrentPatientCode()}
                                 patientData={formData}
                             />}
                             {activeTab === 'plan' && <PhAssistPlan patientCode={getCurrentPatientCode()} />}
