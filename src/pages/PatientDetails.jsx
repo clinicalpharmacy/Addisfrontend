@@ -302,7 +302,8 @@ const PatientDetails = () => {
             { id: 'vitals', label: 'Vitals & Anthropometry', icon: FaHeartbeat },
             { id: 'labs', label: 'Labs', icon: FaVial },
             { id: 'medications', label: 'Medications', icon: FaPills },
-            { id: 'drn', label: 'DRN Assessment', icon: FaRobot },
+            { id: 'analysis', label: user?.role === 'healthcare_client' ? 'Clinical Analysis' : 'Guard-AI Analysis', icon: user?.role === 'healthcare_client' ? FaShieldAlt : FaBrain },
+            { id: 'drn', label: 'DRN Assessment', icon: user?.role === 'healthcare_client' ? FaShieldAlt : FaRobot },
             { id: 'plan', label: 'Ph-Asst & Plan', icon: FaFileMedical },
             { id: 'outcome', label: 'Outcome', icon: FaChartLine },
             { id: 'cost', label: 'Cost', icon: FaMoneyBillWave }
@@ -334,9 +335,16 @@ const PatientDetails = () => {
                 !['plan', 'outcome', 'cost'].includes(tab.id)
             );
 
-            if (!isPharmacistOrStudent) {
+            if (!isPharmacistOrStudent && user?.role !== 'healthcare_client') {
                 result = result.filter(tab => tab.id !== 'drn');
             }
+        }
+        
+        // For Healthcare Clients - Ensure they can see clinical tools if authorized
+        if (user?.role === 'healthcare_client') {
+            // Keep analysis and drn, but maybe not create buttons (handled in components)
+            // But they should DEFINITELY see Plan, Outcome, Cost if they are authorized
+            // Actually, for now let's just make sure they see clinical stuff
         }
 
         return result;

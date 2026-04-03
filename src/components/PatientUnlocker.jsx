@@ -200,10 +200,51 @@ const PatientUnlocker = ({ patientData, userSalt, onUnlocked, children }) => {
                         <p className="text-white/80 text-xs sm:text-sm mt-2 font-medium leading-relaxed max-w-[220px] mx-auto">
                             {grantedKey
                                 ? 'Confirm your identity to proceed with troubleshooting.'
-                                : 'Enter your password to safely decrypt this clinical record.'}
+                                : 'You do not have active access to this clinical record.'}
                         </p>
                     </div>
-                    <form onSubmit={handleSubmit} className="p-5 sm:p-7 space-y-5">
+
+                    
+                    {!grantedKey ? (
+                        <div className="p-7 space-y-4 text-center">
+                            <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex gap-3 text-left">
+                                <FaShieldAlt className="text-blue-600 shrink-0 mt-1" />
+                                <p className="text-xs text-blue-800 font-medium leading-relaxed">
+                                    Administrators must be <span className="font-bold">granted access</span> by the record owner before data can be decrypted.
+                                </p>
+                            </div>
+                            <button
+                                onClick={async () => {
+                                    setIsUnlocking(true);
+                                    try {
+                                        const res = await api.post('/access/request', { 
+                                            patient_id: patientData.id,
+                                            owner_id: patientData.user_id 
+                                        });
+                                        if (res.success) {
+                                            alert("Access request sent to the record owner. You'll be notified once approved.");
+                                        }
+                                    } catch (err) {
+                                        setError("Failed to send access request.");
+                                    } finally {
+                                        setIsUnlocking(false);
+                                    }
+                                }}
+                                disabled={isUnlocking}
+                                className="w-full py-4 bg-blue-600 text-white font-black rounded-2xl shadow-xl hover:bg-blue-700 active:scale-95 transition-all flex items-center justify-center gap-2"
+                            >
+                                {isUnlocking ? <FaSpinner className="animate-spin" /> : <FaUserShield />}
+                                Request Access from Owner
+                            </button>
+                            <button 
+                                onClick={() => window.history.back()}
+                                className="text-gray-400 text-xs font-bold hover:text-gray-600 transition-colors"
+                            >
+                                Return to Dashboard
+                            </button>
+                        </div>
+                    ) : (
+                        <form onSubmit={handleSubmit} className="p-5 sm:p-7 space-y-5">
                         <div className="space-y-2">
                             <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Your Login Password</label>
                             <input
@@ -257,6 +298,7 @@ const PatientUnlocker = ({ patientData, userSalt, onUnlocked, children }) => {
                             <p className="text-[8px] text-gray-400 font-medium">AddisMed Zero-Knowledge Infrastructure v2.1</p>
                         </div>
                     </form>
+                    )}
                 </div>
             </div>
         );
