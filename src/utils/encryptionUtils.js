@@ -358,14 +358,54 @@ export async function decryptPatient(patient, cryptoKey) {
 }
 
 /**
- * Decrypts a list of patients.
+ * Decrypts a list of patients using either a master key or shared keys.
+ * Handles owners (Master Key) and authorized support (Private Key + Shared Keys).
  * @param {object[]} patients
- * @param {CryptoKey} cryptoKey
+ * @param {CryptoKey} masterKey — Optional master AES key
+ * @param {CryptoKey} privateKey — Optional user RSA private key
  * @returns {Promise<object[]>}
  */
+export async function decryptPatientList(patients, masterKey, privateKey) {
+    if (!Array.isArray(patients)) return patients;
+    if (!masterKey && !privateKey) return patients;
+
+    return Promise.all(patients.map(async (patient) => {
+        // 1. If we have a Master Key (Owner / Admin with session), try direct decryption
+        if (masterKey) {
+            return decryptPatient(patient, masterKey);
+        }
+
+        // 2. If we have a Private Key (Support Staff), and the patient has a shared key
+        if (privateKey && patient.shared_encryption_key) {
+            try {
+                // Unwrapped shared key is the patient's Master AES Key
+                const decryptedMasterKeyHex = await decryptWithPrivateKey(patient.shared_encryption_key, privateKey);
+                const rawKeyBytes = hexToBytes(decryptedMasterKeyHex);
+                
+                const sharedMasterKey = await crypto.subtle.importKey(
+                    'raw',
+                    rawKeyBytes,
+                    { name: 'AES-GCM' },
+                    true,
+                    ['decrypt']
+                );
+                
+                return decryptPatient(patient, sharedMasterKey);
+            } catch (err) {
+                console.warn(`⚠️ [Decryption] Failed to decrypt shared key for patient ${patient.id}:`, err);
+                return patient; // Return encrypted if shared decryption fails
+            }
+        }
+
+        return patient; // Return as-is if no applicable key
+    }));
+}
+
+/**
+ * @deprecated Use decryptPatientList instead
+ */
 export async function decryptPatients(patients, cryptoKey) {
-    if (!cryptoKey || !Array.isArray(patients)) return patients;
-    return Promise.all(patients.map(p => decryptPatient(p, cryptoKey)));
+    return decryptPatientList(patients, cryptoKey, null);
 }
 
 // ─────────────────────────────────────────────────────────

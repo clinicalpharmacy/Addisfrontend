@@ -20,7 +20,7 @@ import {
 } from 'react-icons/fa';
 
 import api from '../utils/api';
-import { getEncryptionKey, decryptPatients } from '../utils/encryptionUtils';
+import { getEncryptionKey, decryptPatientList, loadPrivateKey } from '../utils/encryptionUtils';
 
 const PatientList = () => {
     const navigate = useNavigate();
@@ -66,9 +66,11 @@ const PatientList = () => {
             const result = await api.get('/patients');
 
             if (result.success && result.patients) {
-                // 🔐 DECRYPT patient list before displaying
-                const key = await getEncryptionKey();
-                const decryptedPatients = await decryptPatients(result.patients, key);
+                // 🔐 HYBRID DECRYPTION: Support both Master Key (Owners) and Private Key (Support Staff)
+                const masterKey = await getEncryptionKey();
+                const privateKey = (userRole === 'healthcare_client' || userRole === 'admin') ? await loadPrivateKey(masterKey) : null;
+                
+                const decryptedPatients = await decryptPatientList(result.patients, masterKey, privateKey);
                 
                 setPatients(decryptedPatients);
                 setFilteredPatients(decryptedPatients);

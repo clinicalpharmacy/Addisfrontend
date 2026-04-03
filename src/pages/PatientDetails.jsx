@@ -53,7 +53,10 @@ import SupportRequestModal from '../components/Security/SupportRequestModal';
 
 import api from '../utils/api';
 import supabase from '../utils/supabase';
-import { encryptPatient, getEncryptionKey, decryptPatient } from '../utils/encryptionUtils';
+import { 
+    encryptPatient, getEncryptionKey, decryptPatient, 
+    loadPrivateKey, decryptWithPrivateKey, hexToBytes 
+} from '../utils/encryptionUtils';
 
 
 // Create memoized LabInputField component
@@ -496,15 +499,38 @@ const PatientDetails = () => {
     }, []);
 
     const loadPatientData = useCallback(async (patientData) => {
+        if (!patientData) return;
+        
         setIsNewPatient(false);
-        setPatient(patientData);
-        setCurrentPatientCode(patientData.id);
-        fetchClinicalHistory(patientData.id);
+        setLoading(true);
 
-        const data = patientData;
+        // 🔐 ZERO-KNOWLEDGE DECRYPTION
+        let decryptedData = { ...patientData };
+        try {
+            const masterKey = await getEncryptionKey();
+            const privateKey = (userRole === 'healthcare_client' || userRole === 'admin') ? await loadPrivateKey(masterKey) : null;
+            
+            if (masterKey) {
+                decryptedData = await decryptPatient(decryptedData, masterKey);
+            } else if (privateKey && decryptedData.shared_encryption_key) {
+                // Decrypt shared key to get Master Key
+                const decryptedMasterKeyHex = await decryptWithPrivateKey(decryptedData.shared_encryption_key, privateKey);
+                const rawKeyBytes = hexToBytes(decryptedMasterKeyHex);
+                const sharedMasterKey = await crypto.subtle.importKey('raw', rawKeyBytes, { name: 'AES-GCM' }, true, ['decrypt']);
+                decryptedData = await decryptPatient(decryptedData, sharedMasterKey);
+            }
+        } catch (err) {
+            console.error('❌ [Decryption] Failed to decrypt patient data:', err);
+        }
+
+        setPatient(decryptedData);
+        setCurrentPatientCode(decryptedData.id);
+        fetchClinicalHistory(decryptedData.id);
+
+        const data = decryptedData;
 
         // Consistently load labs from JSONB labs object
-        let rawLabs = patientData.labs;
+        let rawLabs = decryptedData.labs;
         if (typeof rawLabs === 'string') {
             try {
                 rawLabs = JSON.parse(rawLabs);
