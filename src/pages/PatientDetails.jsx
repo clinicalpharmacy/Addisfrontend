@@ -30,7 +30,6 @@ import {
     FaWeight,
     FaRulerVertical,
     FaCapsules,
-    FaProcedures,
     FaPrescriptionBottleAlt,
 
     FaSync,
@@ -508,7 +507,8 @@ const PatientDetails = () => {
         let decryptedData = { ...patientData };
         try {
             const masterKey = await getEncryptionKey();
-            const privateKey = (userRole === 'healthcare_client' || userRole === 'admin') ? await loadPrivateKey(masterKey) : null;
+            const currentRole = user?.role || '';
+            const privateKey = (currentRole === 'healthcare_client' || currentRole === 'admin') ? await loadPrivateKey(masterKey) : null;
             
             if (masterKey) {
                 decryptedData = await decryptPatient(decryptedData, masterKey);

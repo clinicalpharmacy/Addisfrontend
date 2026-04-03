@@ -233,7 +233,7 @@ const PatientUnlocker = ({ patientData, userSalt, onUnlocked, children }) => {
                                 disabled={isUnlocking}
                                 className="w-full py-4 bg-blue-600 text-white font-black rounded-2xl shadow-xl hover:bg-blue-700 active:scale-95 transition-all flex items-center justify-center gap-2"
                             >
-                                {isUnlocking ? <FaSpinner className="animate-spin" /> : <FaUserShield />}
+                                {isUnlocking ? <FaSpinner className="animate-spin" /> : <FaShieldAlt />}
                                 Request Access from Owner
                             </button>
                             <button 
