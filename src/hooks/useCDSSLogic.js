@@ -51,14 +51,11 @@ export const useCDSSLogic = (patientData) => {
 
             if (data && data.length > 0) {
                 setClinicalRules(data);
-                debugText += '\n📋 Available Rules:\n';
-                data.forEach((rule, index) => {
-                    debugText += `  ${index + 1}. "${rule.rule_name}" (${rule.rule_type}) - ${rule.severity}\n`;
-                });
+                debugText += `\n📋 Available Rules: ${data.length}\n`;
             } else {
                 console.log('⚠️ No rules in database, using sample test rules');
                 setClinicalRules(sampleTestRules);
-                debugText += '⚠️ Using sample test rules (no rules in database)\n';
+                debugText += `⚠️ Using sample test rules (Database returned ${data ? '0' : 'null'} rules)\n`;
             }
 
             setDebugInfo(prev => prev + debugText);
@@ -414,7 +411,9 @@ export const useCDSSLogic = (patientData) => {
 
     // Cleanup effects
     useEffect(() => {
-        if (patientData?.id !== previousPatientId.current) {
+        // Only clear if we have a GENUINE patient change and the new ID is valid
+        if (patientData?.id && patientData?.id !== previousPatientId.current) {
+            console.log('🔄 Patient ID changed, clearing analysis state');
             setAlerts([]);
             setFilteredAlerts([]);
             setAnalysisStats(null);
