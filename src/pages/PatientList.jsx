@@ -373,17 +373,17 @@ const PatientList = () => {
                                                 </p>
                                             </div>
                                             
-                                            {/* Discreet Audit Box */}
                                             <div className="bg-gray-50 p-5 rounded-2xl border border-gray-200 text-[11px] font-mono text-left w-full shadow-sm">
                                                 <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-3">
-                                                    <span className="font-bold text-gray-800 uppercase tracking-widest">🔍 System Visibility Audit</span>
-                                                    <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                                                    <span className="font-bold text-gray-800 uppercase tracking-widest">🔍 Clinical Engine Synchronization Audit</span>
+                                                    <div className={`h-2 w-2 rounded-full ${loading ? 'bg-amber-500' : 'bg-green-500'}`}></div>
                                                 </div>
                                                 <div className="space-y-1.5 text-gray-600">
+                                                    <p>USER_IDENTITY: <span className="text-blue-600 font-bold">{localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).email : 'Guest'}</span></p>
                                                     <p>ACCESS_ROLE: <span className="text-blue-600 font-bold">{userRole || 'pharmacist'}</span></p>
-                                                    <p>KEY_LIFECYCLE: <span className="text-green-600 font-bold">{sessionStorage.getItem('enc_key_raw') ? "STABLE (ACTIVE)" : "RE-AUTH REQ"}</span></p>
-                                                    <p>ACCOUNT_SCOPE: <span className="text-amber-600 font-bold">{userCompanyId ? `ORG(${userCompanyId})` : "PERSONAL"}</span></p>
-                                                    <p>TOTAL_HITS: <span className="text-red-600 font-bold">{patients.length}</span></p>
+                                                    <p>KEY_STATUS: <span className="text-green-600 font-bold">{sessionStorage.getItem('enc_key_raw') ? "√ OK (AES-256 ACTIVE)" : "× MISSING (RE-AUTH REQ)"}</span></p>
+                                                    <p>ACTIVE_ID_MAP: <span className="text-amber-600 font-bold">{localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).id : 'N/A'} {userCompanyId ? `| ORG(${userCompanyId})` : ""}</span></p>
+                                                    <p>DATABASE_HITS: <span className="text-red-600 font-bold">{patients.length} records found in query</span></p>
                                                 </div>
                                             </div>
 
