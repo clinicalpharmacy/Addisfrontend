@@ -86,7 +86,8 @@ const PatientList = () => {
                     const masterKey = await getEncryptionKey();
                     let privateKey = null;
                     
-                    if (currentRole === 'healthcare_client' || currentRole === 'admin') {
+                    const authorizedSupportRoles = ['healthcare_client', 'admin', 'pharmacist', 'company_admin', 'company_user'];
+                    if (authorizedSupportRoles.includes(currentRole)) {
                         // Only attempt to load private key if we have a master key to unwrap it
                         if (masterKey) {
                             privateKey = await loadPrivateKey(masterKey);
@@ -244,131 +245,151 @@ const PatientList = () => {
     return (
         <div className="page-container w-full max-w-full overflow-x-hidden px-3 sm:px-4 md:px-6 lg:px-8 space-y-4">
             {/* Standard Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                <div>
-                    <h1 className="text-xl md:text-2xl font-bold text-gray-800 tracking-tight">Clinical Analysis Dashboard</h1>
-                    <p className="text-sm text-gray-500">Manage and track your patient medication safety records</p>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <div className="flex items-center gap-4">
+                    <div className="p-3 bg-blue-50 rounded-xl">
+                        <FaUserInjured className="text-2xl text-blue-600" />
+                    </div>
+                    <div>
+                        <h1 className="text-xl md:text-2xl font-bold text-gray-800 tracking-tight">Clinical Monitoring Dashboard</h1>
+                        <p className="text-sm text-gray-500 font-medium">Manage patient medication safety and effectiveness</p>
+                    </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                     <button
                         onClick={handleManualRefresh}
-                        className="p-2.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                        title="Sync List"
+                        className="p-3 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all border border-gray-100"
+                        title="Synchronize Data"
                     >
                         <FaSync className={loading ? 'animate-spin' : ''} />
                     </button>
                     <button
                         onClick={handleNewPatient}
-                        className={`px-5 py-2.5 rounded-lg font-bold flex items-center gap-2 transition-all shadow-sm ${
+                        className={`px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-md ${
                             isIndividual && userRole !== 'admin' && patients.length >= 5
                             ? 'bg-gray-400 cursor-not-allowed text-white'
-                            : 'bg-blue-600 hover:bg-blue-700 text-white'
+                            : 'bg-blue-600 hover:bg-blue-700 text-white transform hover:-translate-y-0.5 active:translate-y-0'
                         }`}
                     >
-                        <FaPlus /> New MR
+                        <FaPlus /> New MR Case
                     </button>
                 </div>
             </div>
 
-            {/* Simple Search & Global Sync Refresh */}
-            {!isIndividual && (
-                <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="relative">
-                            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                            <input
-                                type="text"
-                                value={searchTerm}
-                                onChange={handleSearch}
-                                placeholder="Search by name, code or diagnosis..."
-                                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20"
-                            />
-                        </div>
+            {/* Search & Filtering for All Users */}
+            <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="relative">
+                        <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                            type="text"
+                            value={searchTerm}
+                            onChange={handleSearch}
+                            placeholder="Find by name, record ID or diagnosis..."
+                            className="w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500/20 text-sm font-medium"
+                        />
+                    </div>
+                    <div className="relative">
+                        <FaFilter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <select
                             value={statusFilter}
                             onChange={(e) => {
                                 setStatusFilter(e.target.value);
                                 handleSearch({ target: { value: searchTerm } });
                             }}
-                            className="w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500/20"
+                            className="w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500/20 text-sm font-medium appearance-none"
                         >
-                            <option value="all">All MR Status</option>
-                            <option value="active">Active Cases Only</option>
-                            <option value="inactive">Inactive Cases Only</option>
+                            <option value="all">Record Status: All Items</option>
+                            <option value="active">Active Monitoring</option>
+                            <option value="inactive">Monitoring Paused</option>
                         </select>
                     </div>
                 </div>
-            )}
+            </div>
 
-            {/* Standard Patients Table */}
+            {/* Standard Data Table */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full border-collapse">
                         <thead>
-                            <tr className="bg-gray-50 text-gray-700 text-xs font-bold uppercase border-b border-gray-200">
-                                <th className="px-4 py-3 text-left cursor-pointer hover:bg-gray-100" onClick={() => handleSort('id')}>
-                                    <div className="flex items-center gap-2">MR Code {getSortIcon('id')}</div>
+                            <tr className="bg-blue-50 text-blue-900 text-xs font-bold uppercase border-b border-gray-200">
+                                <th className="px-6 py-4 text-left cursor-pointer hover:bg-blue-100" onClick={() => handleSort('id')}>
+                                    <div className="flex items-center gap-2">MR CODE {getSortIcon('id')}</div>
                                 </th>
-                                <th className="px-4 py-3 text-left">Patient Name</th>
-                                <th className="px-4 py-3 text-left">Diagnosis</th>
-                                <th className="px-4 py-3 text-left cursor-pointer hover:bg-gray-100" onClick={() => handleSort('created_at')}>
-                                    <div className="flex items-center gap-2">Created {getSortIcon('created_at')}</div>
+                                <th className="px-6 py-4 text-left">PATIENT DETAILS</th>
+                                <th className="px-6 py-4 text-left">CLINICAL STATUS</th>
+                                <th className="px-6 py-4 text-left cursor-pointer hover:bg-blue-100" onClick={() => handleSort('created_at')}>
+                                    <div className="flex items-center gap-2">LOGGED ON {getSortIcon('created_at')}</div>
                                 </th>
-                                <th className="px-4 py-3 text-right">Actions</th>
+                                <th className="px-6 py-4 text-right">CONTROLS</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {currentPatients.length > 0 ? (
                                 currentPatients.map((patient) => (
-                                    <tr key={patient.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-4 py-4 font-mono text-xs font-bold text-blue-700">{patient.id}</td>
-                                        <td className="px-4 py-4">
+                                    <tr key={patient.id} className="hover:bg-blue-50/20 transition-colors group">
+                                        <td className="px-6 py-5">
+                                            <span className="font-mono text-xs font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded">{patient.id}</span>
+                                        </td>
+                                        <td className="px-6 py-5">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs uppercase">
+                                                <div className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm shadow-sm group-hover:scale-110 transition-transform">
                                                     {patient.full_name ? patient.full_name.charAt(0) : '?'}
                                                 </div>
-                                                <span className="font-semibold text-gray-800">{patient.full_name || 'Anonymous User'}</span>
+                                                <div>
+                                                    <div className="font-bold text-gray-800 text-sm leading-none mb-1">{patient.full_name || 'Anonymous User'}</div>
+                                                    <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Clinical Identifier</div>
+                                                </div>
                                             </div>
                                         </td>
-                                        <td className="px-4 py-4 text-sm text-gray-600 max-w-xs truncate">{patient.diagnosis || 'No Diagnosis'}</td>
-                                        <td className="px-4 py-4 text-xs text-gray-500">
+                                        <td className="px-6 py-5">
+                                            <div className="text-sm font-medium text-gray-700 italic max-w-xs truncate">"{patient.diagnosis || 'Diagnosis Pending'}"</div>
+                                        </td>
+                                        <td className="px-6 py-5 text-xs text-gray-500 font-bold">
                                             {patient.created_at ? new Date(patient.created_at).toLocaleDateString() : 'N/A'}
                                         </td>
-                                        <td className="px-4 py-4 text-right">
-                                            <div className="flex justify-end gap-1">
-                                                <button onClick={() => handleViewClick(patient.id)} className="p-2 text-blue-500 hover:bg-blue-50 rounded" title="View Detail"><FaEye /></button>
-                                                <button onClick={() => handleEditClick(patient)} className="p-2 text-amber-500 hover:bg-amber-50 rounded" title="Edit MR"><FaEdit /></button>
-                                                <button onClick={() => handleDelete(patient.id)} disabled={userRole === 'healthcare_client'} className="p-2 text-red-400 hover:bg-red-50 rounded disabled:opacity-30" title="Delete"><FaTrash /></button>
+                                        <td className="px-6 py-5 text-right">
+                                            <div className="flex justify-end gap-2">
+                                                <button onClick={() => handleViewClick(patient.id)} className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-all" title="View Case"><FaEye /></button>
+                                                <button onClick={() => handleEditClick(patient)} className="p-2 text-amber-600 hover:bg-amber-100 rounded-lg transition-all" title="Edit Case"><FaEdit /></button>
+                                                <button onClick={() => handleDelete(patient.id)} disabled={userRole === 'healthcare_client'} className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-all disabled:opacity-20" title="Remove Case"><FaTrash /></button>
                                             </div>
                                         </td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="5" className="px-8 py-20 text-center">
-                                        <div className="flex flex-col items-center gap-4">
-                                            <FaUserInjured className="text-5xl text-gray-200" />
-                                            <h3 className="text-lg font-bold text-gray-700">
-                                                {searchTerm ? 'No results for your search' : 'No MRs found.'}
-                                            </h3>
-                                            <p className="text-gray-400 text-sm max-w-sm mb-4">
-                                                Records are currently empty. If you've created patients, try a refresh or synchronization.
-                                            </p>
+                                    <td colSpan="5" className="px-8 py-24 text-center">
+                                        <div className="flex flex-col items-center gap-6 max-w-lg mx-auto">
+                                            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100">
+                                                <FaUserInjured className="text-4xl text-gray-200" />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <h3 className="text-xl font-bold text-gray-700">
+                                                    {searchTerm ? `No matches for "${searchTerm}"` : 'No Clinical Cases Found'}
+                                                </h3>
+                                                <p className="text-gray-400 text-sm leading-relaxed font-medium">
+                                                    Database returned zero records for your current profile. If this is unexpected, ensure your company affiliation is active.
+                                                </p>
+                                            </div>
                                             
-                                            {/* Discreet Diagnostic Info */}
-                                            <div className="bg-red-50 p-4 rounded-lg border border-red-100 text-[10px] font-mono text-left max-w-md w-full">
-                                                <p className="font-bold text-red-600 border-b border-red-100 pb-1 mb-2">🔍 Visibility Audit (Clinical Engine):</p>
-                                                <div className="space-y-1 text-red-800">
-                                                    <p>ROLE: {userRole || 'UNDETECTED'}</p>
-                                                    <p>KEY_STATUS: {sessionStorage.getItem('enc_key_raw') ? "√ OK (SESSION ACTIVE)" : "× MISSING (RE-LOGIN REQUIRED)"}</p>
-                                                    <p>ID_MAP: {userCompanyId ? `Company(${userCompanyId})` : "Individual-Scoped"}</p>
-                                                    <p>DB_HITS: {patients.length} records</p>
+                                            {/* Discreet Audit Box */}
+                                            <div className="bg-gray-50 p-5 rounded-2xl border border-gray-200 text-[11px] font-mono text-left w-full shadow-sm">
+                                                <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-3">
+                                                    <span className="font-bold text-gray-800 uppercase tracking-widest">🔍 System Visibility Audit</span>
+                                                    <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                                                </div>
+                                                <div className="space-y-1.5 text-gray-600">
+                                                    <p>ACCESS_ROLE: <span className="text-blue-600 font-bold">{userRole || 'pharmacist'}</span></p>
+                                                    <p>KEY_LIFECYCLE: <span className="text-green-600 font-bold">{sessionStorage.getItem('enc_key_raw') ? "STABLE (ACTIVE)" : "RE-AUTH REQ"}</span></p>
+                                                    <p>ACCOUNT_SCOPE: <span className="text-amber-600 font-bold">{userCompanyId ? `ORG(${userCompanyId})` : "PERSONAL"}</span></p>
+                                                    <p>TOTAL_HITS: <span className="text-red-600 font-bold">{patients.length}</span></p>
                                                 </div>
                                             </div>
 
-                                            <div className="flex gap-3">
-                                                <button onClick={handleNewPatient} className="bg-blue-600 text-white px-6 py-2.5 rounded-lg font-bold flex items-center gap-2"><FaPlus /> New MR</button>
-                                                <button onClick={handleManualRefresh} className="bg-gray-100 text-gray-700 px-6 py-2.5 rounded-lg border border-gray-200"><FaSync className={loading ? 'animate-spin' : ''} /> Sync Now</button>
+                                            <div className="flex items-center gap-4 pt-2">
+                                                <button onClick={handleNewPatient} className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-xl font-black shadow-lg shadow-blue-200 transition-all transform hover:-translate-y-1">Start New Case</button>
+                                                <button onClick={handleManualRefresh} className="bg-white hover:bg-gray-50 text-gray-700 px-8 py-3.5 rounded-xl font-bold border border-gray-200 transition-all">Retry Link</button>
                                             </div>
                                         </div>
                                     </td>
@@ -379,18 +400,20 @@ const PatientList = () => {
                 </div>
             </div>
 
-            {/* Standard Pagination */}
+            {/* Clean Pagination */}
             {filteredPatients.length > itemsPerPage && (
-                <div className="flex flex-col md:flex-row justify-between items-center bg-white p-4 rounded-xl border border-gray-200 gap-4">
-                    <div className="text-xs font-bold text-gray-400 uppercase">
-                        Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredPatients.length)} of {filteredPatients.length} records
+                <div className="flex flex-col md:flex-row justify-between items-center bg-white p-5 rounded-xl border border-gray-200 gap-4 shadow-sm">
+                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                        Case Inventory: Record {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredPatients.length)} of {filteredPatients.length}
                     </div>
-                    <div className="flex items-center gap-1">
-                        <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="p-2 border rounded hover:bg-gray-50 disabled:opacity-50">Prev</button>
-                        {[...Array(totalPages)].map((_, i) => (
-                            <button key={i + 1} onClick={() => setCurrentPage(i + 1)} className={`w-8 h-8 rounded border text-xs font-bold ${currentPage === i + 1 ? 'bg-blue-600 text-white' : 'hover:bg-gray-50'}`}>{i + 1}</button>
-                        ))}
-                        <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="p-2 border rounded hover:bg-gray-50 disabled:opacity-50">Next</button>
+                    <div className="flex items-center gap-2">
+                        <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 text-gray-500 hover:bg-blue-50 hover:text-blue-600 disabled:opacity-30 border border-transparent hover:border-blue-100 transition-all font-bold tracking-tighter">PREV</button>
+                        <div className="flex items-center gap-1.5">
+                            {[...Array(totalPages)].map((_, i) => (
+                                <button key={i + 1} onClick={() => setCurrentPage(i + 1)} className={`w-8 h-8 rounded-lg text-[10px] font-black tracking-widest transition-all ${currentPage === i + 1 ? 'bg-blue-600 text-white shadow-md' : 'text-gray-400 hover:bg-gray-50'}`}>{i + 1}</button>
+                            ))}
+                        </div>
+                        <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 text-gray-500 hover:bg-blue-50 hover:text-blue-600 disabled:opacity-30 border border-transparent hover:border-blue-100 transition-all font-bold tracking-tighter">NEXT</button>
                     </div>
                 </div>
             )}
