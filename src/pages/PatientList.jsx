@@ -313,9 +313,7 @@ const PatientList = () => {
                     <table className="w-full border-collapse">
                         <thead>
                             <tr className="bg-blue-50 text-blue-900 text-xs font-bold uppercase border-b border-gray-200">
-                                <th className="px-6 py-4 text-left cursor-pointer hover:bg-blue-100" onClick={() => handleSort('id')}>
-                                    <div className="flex items-center gap-2">MR CODE {getSortIcon('id')}</div>
-                                </th>
+                                <th className="px-6 py-4 text-left w-16">#</th>
                                 <th className="px-6 py-4 text-left">PATIENT DETAILS</th>
                                 <th className="px-6 py-4 text-left">CLINICAL STATUS</th>
                                 <th className="px-6 py-4 text-left cursor-pointer hover:bg-blue-100" onClick={() => handleSort('created_at')}>
@@ -326,10 +324,12 @@ const PatientList = () => {
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {currentPatients.length > 0 ? (
-                                currentPatients.map((patient) => (
+                                currentPatients.map((patient, index) => (
                                     <tr key={patient.id} className="hover:bg-blue-50/20 transition-colors group">
                                         <td className="px-6 py-5">
-                                            <span className="font-mono text-xs font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded">{patient.id}</span>
+                                            <span className="font-mono text-sm font-black text-gray-400">
+                                                {indexOfFirstItem + index + 1}
+                                            </span>
                                         </td>
                                         <td className="px-6 py-5">
                                             <div className="flex items-center gap-3">
