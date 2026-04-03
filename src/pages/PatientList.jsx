@@ -63,14 +63,34 @@ const PatientList = () => {
                 return;
             }
 
+            // Extract role directly from token to avoid state race conditions
+            let currentRole = '';
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                currentRole = payload.role || '';
+            } catch (e) {}
+
             const result = await api.get('/patients');
 
             if (result.success && result.patients) {
                 // 🔐 HYBRID DECRYPTION: Support both Master Key (Owners) and Private Key (Support Staff)
-                const masterKey = await getEncryptionKey();
-                const privateKey = (userRole === 'healthcare_client' || userRole === 'admin') ? await loadPrivateKey(masterKey) : null;
-                
-                const decryptedPatients = await decryptPatientList(result.patients, masterKey, privateKey);
+                let decryptedPatients = result.patients;
+                try {
+                    const masterKey = await getEncryptionKey();
+                    let privateKey = null;
+                    
+                    if (currentRole === 'healthcare_client' || currentRole === 'admin') {
+                        // Only attempt to load private key if we have a master key to unwrap it
+                        if (masterKey) {
+                            privateKey = await loadPrivateKey(masterKey);
+                        }
+                    }
+                    
+                    decryptedPatients = await decryptPatientList(result.patients, masterKey, privateKey);
+                } catch (encErr) {
+                    console.error('❌ [Decryption Error] List decryption failed:', encErr);
+                    // Continue with original (encrypted) list if decryption crashes
+                }
                 
                 setPatients(decryptedPatients);
                 setFilteredPatients(decryptedPatients);
