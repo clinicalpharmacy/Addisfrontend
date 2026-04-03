@@ -305,11 +305,11 @@ const PatientDetails = () => {
             { id: 'vitals', label: 'Vitals & Anthropometry', icon: FaHeartbeat },
             { id: 'labs', label: 'Labs', icon: FaVial },
             { id: 'medications', label: 'Medications', icon: FaPills },
-            { id: 'analysis', label: user?.role === 'healthcare_client' ? 'Clinical Analysis' : 'Guard-AI Analysis', icon: user?.role === 'healthcare_client' ? FaShieldAlt : FaBrain },
-            { id: 'drn', label: 'DRN Assessment', icon: FaRobot },
-            { id: 'plan', label: 'Ph-Asst & Plan', icon: FaFileMedical },
-            { id: 'outcome', label: 'Outcome', icon: FaChartLine },
-            { id: 'cost', label: 'Cost', icon: FaMoneyBillWave }
+            { id: 'analysis', label: 'Clinical Case Review', icon: FaShieldAlt },
+            { id: 'drn', label: 'Risk Assessment', icon: FaHistory },
+            { id: 'plan', label: 'Clinical Plan', icon: FaFileMedical },
+            { id: 'outcome', label: 'Patient Outcome', icon: FaChartLine },
+            { id: 'cost', label: 'Cost Analysis', icon: FaMoneyBillWave }
         ];
 
         const hasActiveSubscription = user?.subscription_status === 'active';
