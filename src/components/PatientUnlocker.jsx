@@ -24,7 +24,8 @@ const PatientUnlocker = ({ patientData, userSalt, onUnlocked, children }) => {
 
     const init = async () => {
         try {
-            // 0. QUICK CHECK: Is it already decrypted? (e.g. by parent)
+            // 0. QUICK CHECK: Is it already decrypted or missing?
+            if (!patientData || !patientData.id) return;
             if (patientData?.full_name && !String(patientData.full_name).includes(':')) {
                 setStatus('decrypted');
                 return;
@@ -33,9 +34,13 @@ const PatientUnlocker = ({ patientData, userSalt, onUnlocked, children }) => {
             setStatus('loading');
             setError('');
 
-            // 1. MASTER KEY check (for Owner or anyone with session-cached Master Key)
+            // 1. SILENT AUTO-DECRYPTION (Owner's Master Key or Cache)
             const masterKey = await getEncryptionKey();
+            const userData = JSON.parse(localStorage.getItem('user') || '{}');
+            const isOwner = userData?.id === patientData?.user_id || userData?.email === patientData?.user_id;
+
             if (masterKey) {
+                // Try silent decryption path
                 const decrypted = await decryptPatient(patientData, masterKey);
                 if (decrypted && decrypted.full_name && !String(decrypted.full_name).includes(':')) {
                     onUnlocked(decrypted);
@@ -47,7 +52,7 @@ const PatientUnlocker = ({ patientData, userSalt, onUnlocked, children }) => {
             // 2. SUPPORT SESSION check (for Admins)
             try {
                 const res = await api.get(`/access/granted?patient_id=${patientData.id}`);
-                if (res.success && res.request) {
+                if (res?.success && res?.request) {
                     const encryptedKey = res.request.encrypted_key;
                     
                     // AUTO-RESTORE: Try silent decryption if identity (Private Key) was already verified this session
@@ -75,8 +80,7 @@ const PatientUnlocker = ({ patientData, userSalt, onUnlocked, children }) => {
             }
 
             // 3. SECURE IDENTITY check (RSA Key availability)
-            const userData = JSON.parse(localStorage.getItem('user') || '{}');
-            if (userData.private_key_encrypted) {
+            if (userData?.private_key_encrypted) {
                 setStatus('prompt');
             } else {
                 setStatus('missing_keys');
