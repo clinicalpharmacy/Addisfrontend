@@ -110,28 +110,15 @@ const PatientList = () => {
     const handleSearch = (e) => {
         const term = e.target.value.toLowerCase();
         setSearchTerm(term);
-
-        let filtered = patients;
-
-        if (term) {
-            filtered = filtered.filter(patient =>
-                (patient.id && patient.id.toString().includes(term)) ||
-                (patient.diagnosis && patient.diagnosis.toLowerCase().includes(term)) ||
-                (patient.full_name && patient.full_name.toLowerCase().includes(term)) ||
-                (patient.phone && patient.phone.toLowerCase().includes(term))
-            );
-        }
-
-        if (statusFilter !== 'all') {
-            filtered = filtered.filter(patient =>
-                statusFilter === 'active'
-                    ? patient.is_active !== false
-                    : patient.is_active === false
-            );
-        }
+        
+        const filtered = (patients || []).filter(patient => 
+            (patient.full_name && patient.full_name.toLowerCase().includes(term)) ||
+            (patient.diagnosis && patient.diagnosis.toLowerCase().includes(term)) ||
+            (patient.id && String(patient.id).toLowerCase().includes(term))
+        );
 
         setFilteredPatients(filtered);
-        setCurrentPage(1); // Reset to first page on search
+        setCurrentPage(1);
     };
 
     const handleSort = (key) => {
