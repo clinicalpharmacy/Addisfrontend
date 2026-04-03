@@ -304,17 +304,14 @@ const PatientDetails = () => {
             { id: 'vitals', label: 'Vitals & Anthropometry', icon: FaHeartbeat },
             { id: 'labs', label: 'Labs', icon: FaVial },
             { id: 'medications', label: 'Medications', icon: FaPills },
+            ...(isCompanyUser ? [{ id: 'cost', label: 'Cost', icon: FaMoneyBillWave }] : []),
             ...(user?.role === 'healthcare_client' ? [{ id: 'analysis', label: 'Clinical Case Review', icon: FaShieldAlt }] : []),
             { id: 'drn', label: 'DRN Assessment', icon: FaRobot },
             { id: 'plan', label: 'Ph-Asst & Plan', icon: FaFileMedical },
-            { id: 'outcome', label: 'Outcome', icon: FaChartLine },
-            { id: 'cost', label: 'Cost', icon: FaMoneyBillWave }
+            { id: 'outcome', label: 'Outcome', icon: FaChartLine }
         ];
 
         const hasActiveSubscription = user?.subscription_status === 'active';
-        const isCompanyUser = !!user?.company_id ||
-            user?.account_type === 'company' ||
-            ['company_admin', 'company_user'].includes(user?.role);
         const isAdmin = user?.role === 'admin';
         const isPharmacistOrStudent = user?.account_type === 'individual' &&
             (user?.role === 'pharmacist' || user?.role === 'pharmacy_student');
