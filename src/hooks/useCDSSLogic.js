@@ -3,6 +3,7 @@ import api from '../utils/api';
 import supabase from '../utils/supabase';
 import { mapPatientToFacts, evaluateRule, formatAlertMessage } from '../components/CDSS/RuleEngine';
 import { sampleTestRules } from '../constants/cdssRules';
+import { getEncryptionKey, decryptPatient, decryptValue } from '../utils/encryptionUtils';
 
 export const useCDSSLogic = (patientData) => {
     const [alerts, setAlerts] = useState([]);
@@ -97,10 +98,32 @@ export const useCDSSLogic = (patientData) => {
             const data = result.medications || [];
             console.log(`✅ Loaded ${data.length} medications from API`);
             debugText += `✅ Loaded ${data.length} medications from API\n`;
+            
+            // 🔐 ZERO-KNOWLEDGE: Decrypt medications for display and analysis
+            let medsResult = data;
+            const encKey = await getEncryptionKey();
+            if (encKey && medsResult.length > 0) {
+                try {
+                    medsResult = await Promise.all(medsResult.map(async (m) => {
+                        const decryptedMed = { ...m };
+                        const sensitiveMedsFields = ['drug_name', 'dose', 'frequency', 'route', 'indication', 'notes', 'medical_condition'];
+                        for (const field of sensitiveMedsFields) {
+                            if (decryptedMed[field] && typeof decryptedMed[field] === 'string' && decryptedMed[field].includes(':')) {
+                                decryptedMed[field] = await decryptValue(decryptedMed[field], encKey);
+                            }
+                        }
+                        return decryptedMed;
+                    }));
+                    console.log('💎 [CDSS] Medications decrypted for UI');
+                    debugText += '💎 Medications decrypted for display\n';
+                } catch (decErr) {
+                    console.error('❌ [CDSS] Medication decryption failed:', decErr);
+                }
+            }
 
             // Use API data if available, otherwise fallback
-            if (data.length > 0) {
-                setMedications(data);
+            if (medsResult.length > 0) {
+                setMedications(medsResult);
             } else {
                 console.log('⚠️ No medications in history table, checking patient record...');
                 debugText += '⚠️ No medications in history table, checking patient record...\n';
@@ -143,12 +166,36 @@ export const useCDSSLogic = (patientData) => {
         setDebugInfo(debug);
 
         try {
-            // Use provided patient data
-            const currentPatient = patientData;
+            // 🔐 ZERO-KNOWLEDGE: Decrypt data before analysis
+            let currentPatient = patientData;
+            let currentMedications = [...medications];
+            
+            const encKey = await getEncryptionKey();
+            if (encKey) {
+                try {
+                    // Decrypt patient demographic and lab fields
+                    currentPatient = await decryptPatient(currentPatient, encKey);
+                    
+                    // Decrypt medications (drug_name, dose, frequency, etc.)
+                    currentMedications = await Promise.all(currentMedications.map(async (m) => {
+                        const decryptedMed = { ...m };
+                        const sensitiveMedsFields = ['drug_name', 'dose', 'frequency', 'route', 'indication', 'notes', 'medical_condition'];
+                        for (const field of sensitiveMedsFields) {
+                            if (decryptedMed[field]) {
+                                decryptedMed[field] = await decryptValue(decryptedMed[field], encKey);
+                            }
+                        }
+                        return decryptedMed;
+                    }));
+                    console.log('💎 [CDSS] Clinical data decrypted for analysis');
+                } catch (decErr) {
+                    console.error('❌ [CDSS] Decryption failed:', decErr);
+                }
+            }
 
             // Map to facts
             debug += '\n🔍 === CREATING PATIENT FACTS ===\n';
-            const facts = mapPatientToFacts(currentPatient, medications);
+            const facts = mapPatientToFacts(currentPatient, currentMedications);
             setPatientFacts(facts);
 
             debug += `  Age: ${facts.age} years\n`;
