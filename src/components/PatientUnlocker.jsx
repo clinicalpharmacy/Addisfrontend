@@ -37,12 +37,20 @@ const PatientUnlocker = ({ patientData, userSalt, onUnlocked, children }) => {
             // 1. SILENT AUTO-DECRYPTION (Owner's Master Key or Cache)
             const masterKey = await getEncryptionKey();
             const userData = JSON.parse(localStorage.getItem('user') || '{}');
-            const isOwner = userData?.id === patientData?.user_id || userData?.email === patientData?.user_id;
+            const userCompanyId = localStorage.getItem('company_id');
+            const hccId = localStorage.getItem('healthcare_client_id');
+            
+            // Inclusive owner check: UUID, Email, Clinic ID, or HCC ID
+            const isOwner = userData?.id === patientData?.user_id || 
+                            userData?.email === patientData?.user_id ||
+                            userCompanyId === patientData?.user_id ||
+                            hccId === patientData?.user_id;
 
             if (masterKey) {
                 // Try silent decryption path
                 const decrypted = await decryptPatient(patientData, masterKey);
                 if (decrypted && decrypted.full_name && !String(decrypted.full_name).includes(':')) {
+                    console.log("✨ Silent Unlock: Security vault bypassed for record owner.");
                     onUnlocked(decrypted);
                     setStatus('decrypted');
                     return;
