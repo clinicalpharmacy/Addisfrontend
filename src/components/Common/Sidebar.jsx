@@ -457,7 +457,7 @@ const Sidebar = ({ onClose }) => {
                             >
                                 <div className="flex items-center gap-2.5 w-full">
                                     <FaComments className="text-xl group-hover:scale-110 transition-transform" />
-                                    <span className="text-base">Feedback</span>
+                                    <span className="text-base">Feedback/ አስተያየት መስጫ</span>
                                     {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
                                 </div>
                             </NavLink>
