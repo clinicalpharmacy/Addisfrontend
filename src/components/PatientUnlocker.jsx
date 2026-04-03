@@ -205,100 +205,113 @@ const PatientUnlocker = ({ patientData, userSalt, onUnlocked, children }) => {
                     </div>
 
                     
-                    {!grantedKey ? (
-                        <div className="p-7 space-y-4 text-center">
-                            <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex gap-3 text-left">
-                                <FaShieldAlt className="text-blue-600 shrink-0 mt-1" />
-                                <p className="text-xs text-blue-800 font-medium leading-relaxed">
-                                    Administrators must be <span className="font-bold">granted access</span> by the record owner before data can be decrypted.
-                                </p>
-                            </div>
-                            <button
-                                onClick={async () => {
-                                    setIsUnlocking(true);
-                                    try {
-                                        const res = await api.post('/access/request', { 
-                                            patient_id: patientData.id,
-                                            owner_id: patientData.user_id 
-                                        });
-                                        if (res.success) {
-                                            alert("Access request sent to the record owner. You'll be notified once approved.");
-                                        }
-                                    } catch (err) {
-                                        setError("Failed to send access request.");
-                                    } finally {
-                                        setIsUnlocking(false);
-                                    }
-                                }}
-                                disabled={isUnlocking}
-                                className="w-full py-4 bg-blue-600 text-white font-black rounded-2xl shadow-xl hover:bg-blue-700 active:scale-95 transition-all flex items-center justify-center gap-2"
-                            >
-                                {isUnlocking ? <FaSpinner className="animate-spin" /> : <FaShieldAlt />}
-                                Request Access from Owner
-                            </button>
-                            <button 
-                                onClick={() => window.history.back()}
-                                className="text-gray-400 text-xs font-bold hover:text-gray-600 transition-colors"
-                            >
-                                Return to Dashboard
-                            </button>
-                        </div>
-                    ) : (
-                        <form onSubmit={handleSubmit} className="p-5 sm:p-7 space-y-5">
-                        <div className="space-y-2">
-                            <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Your Login Password</label>
-                            <input
-                                type="password"
-                                value={passphrase}
-                                onChange={e => setPassphrase(e.target.value)}
-                                placeholder="••••••••"
-                                className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder:text-gray-300 text-sm font-bold"
-                                autoFocus
-                            />
-                        </div>
+                    {/* Improved Access Logic: Differentiate between Owner and Support Staff */}
+                    {(() => {
+                        const userData = JSON.parse(localStorage.getItem('user') || '{}');
+                        const isOwner = userData.id === patientData?.user_id || userData.email === patientData?.user_id;
                         
-                        {error && (
-                            <div className="space-y-3">
-                                <div className="p-3 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3 text-red-700 animate-in shake duration-500">
-                                    <FaExclamationTriangle className="shrink-0" />
-                                    <p className="text-xs font-bold leading-tight">{error}</p>
-                                </div>
-                                {error.includes('Security key not found') && (
-                                    <button 
-                                        type="button"
-                                        onClick={() => setStatus('missing_keys')}
-                                        className="w-full py-3 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100 hover:brightness-110 active:scale-95 transition-all"
+                        if (grantedKey || isOwner) {
+                            return (
+                                <form onSubmit={handleSubmit} className="p-5 sm:p-7 space-y-5">
+                                    <div className="space-y-2">
+                                        <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">
+                                            {isOwner ? 'Vault Password' : 'Your Login Password'}
+                                        </label>
+                                        <input
+                                            type="password"
+                                            value={passphrase}
+                                            onChange={e => setPassphrase(e.target.value)}
+                                            placeholder="••••••••"
+                                            className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder:text-gray-300 text-sm font-bold"
+                                            autoFocus
+                                        />
+                                    </div>
+                                    
+                                    {error && (
+                                        <div className="space-y-3">
+                                            <div className="p-3 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3 text-red-700 animate-in shake duration-500">
+                                                <FaExclamationTriangle className="shrink-0" />
+                                                <p className="text-xs font-bold leading-tight">{error}</p>
+                                            </div>
+                                            {error.includes('Security key not found') && (
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => setStatus('missing_keys')}
+                                                    className="w-full py-3 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100 hover:brightness-110 active:scale-95 transition-all"
+                                                >
+                                                    Setup Identity Now
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                    
+                                    <button
+                                        type="submit"
+                                        disabled={isUnlocking || !passphrase.trim()}
+                                        className={`w-full py-4 text-white font-black text-sm rounded-2xl transition-all flex items-center justify-center gap-3 shadow-xl hover:shadow-blue-200 active:scale-95 ${
+                                            isUnlocking || !passphrase.trim()
+                                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
+                                                : (grantedKey ? 'bg-green-600 hover:bg-green-700 shadow-green-100' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-100')
+                                        }`}
                                     >
-                                        Setup Identity Now
+                                        {isUnlocking
+                                            ? <><FaSpinner className="animate-spin" /> Unlocking...</>
+                                            : <><FaLock /> Decrypt & View</>
+                                        }
                                     </button>
-                                )}
+                                    
+                                    <div className="flex flex-col items-center gap-2 opacity-50">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-1 h-1 rounded-full bg-green-500" />
+                                            <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest leading-none"> Private decryption in browser </p>
+                                        </div>
+                                        <p className="text-[8px] text-gray-400 font-medium tracking-tight">AddisMed Zero-Knowledge Infrastructure v2.1</p>
+                                    </div>
+                                </form>
+                            );
+                        }
+
+                        // Otherwise, show the Request Access UI for Support Staff
+                        return (
+                            <div className="p-7 space-y-4 text-center">
+                                <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex gap-3 text-left">
+                                    <FaShieldAlt className="text-blue-600 shrink-0 mt-1" />
+                                    <p className="text-xs text-blue-800 font-medium leading-relaxed">
+                                        Administrators must be <span className="font-bold">granted access</span> by the record owner before data can be decrypted.
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={async () => {
+                                        setIsUnlocking(true);
+                                        try {
+                                            const res = await api.post('/access/request', { 
+                                                patient_id: patientData.id,
+                                                owner_id: patientData.user_id 
+                                            });
+                                            if (res.success) {
+                                                alert("Access request sent to the record owner. You'll be notified once approved.");
+                                            }
+                                        } catch (err) {
+                                            setError("Failed to send access request.");
+                                        } finally {
+                                            setIsUnlocking(false);
+                                        }
+                                    }}
+                                    disabled={isUnlocking}
+                                    className="w-full py-4 bg-blue-600 text-white font-black rounded-2xl shadow-xl hover:bg-blue-700 active:scale-95 transition-all flex items-center justify-center gap-2"
+                                >
+                                    {isUnlocking ? <FaSpinner className="animate-spin" /> : <FaShieldAlt />}
+                                    Request Access from Owner
+                                </button>
+                                <button 
+                                    onClick={() => window.history.back()}
+                                    className="text-gray-400 text-xs font-bold hover:text-gray-600 transition-colors"
+                                >
+                                    Return to Dashboard
+                                </button>
                             </div>
-                        )}
-                        
-                        <button
-                            type="submit"
-                            disabled={isUnlocking || !passphrase.trim()}
-                            className={`w-full py-4 text-white font-black text-sm rounded-2xl transition-all flex items-center justify-center gap-3 shadow-xl hover:shadow-blue-200 active:scale-95 ${
-                                isUnlocking || !passphrase.trim()
-                                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
-                                    : grantedKey ? 'bg-green-600 hover:bg-green-700 shadow-green-100' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-100'
-                            }`}
-                        >
-                            {isUnlocking
-                                ? <><FaSpinner className="animate-spin" /> Unlocking...</>
-                                : <><FaLock /> Decrypt & View</>
-                            }
-                        </button>
-                        
-                        <div className="flex flex-col items-center gap-2 opacity-50">
-                            <div className="flex items-center gap-2">
-                                <div className="w-1 h-1 rounded-full bg-green-500" />
-                                <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest leading-none"> Private decryption in browser </p>
-                            </div>
-                            <p className="text-[8px] text-gray-400 font-medium">AddisMed Zero-Knowledge Infrastructure v2.1</p>
-                        </div>
-                    </form>
-                    )}
+                        );
+                    })()}
                 </div>
             </div>
         );
