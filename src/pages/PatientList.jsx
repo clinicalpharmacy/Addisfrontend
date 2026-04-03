@@ -16,7 +16,8 @@ import {
     FaIdCard,
     FaClock,
     FaUserMinus,
-    FaUserCheck
+    FaUserCheck,
+    FaSync
 } from 'react-icons/fa';
 
 import api from '../utils/api';
@@ -35,6 +36,12 @@ const PatientList = () => {
     const [userCompanyId, setUserCompanyId] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+    const handleManualRefresh = () => {
+        setRefreshTrigger(prev => prev + 1);
+        fetchPatients();
+    };
 
     useEffect(() => {
         // Get user role from token
@@ -235,343 +242,236 @@ const PatientList = () => {
     }
 
     return (
-        <div className="page-container w-full max-w-full overflow-x-hidden px-3 sm:px-4 md:px-6 lg:px-8">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full">
-                <div>
-                    <h1 className="text-xl md:text-2xl font-bold text-gray-800">Comprehensive Medication Management</h1>
-                    <p className="text-sm md:text-base text-gray-600">Manage medication safety and effectiveness</p>
+        <div className="page-container w-full max-w-full overflow-x-hidden px-3 sm:px-4 md:px-6 lg:px-8 space-y-6">
+            {/* 🏥 Premium Header: Clinical Analysis */}
+            <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100 transition-all hover:shadow-md">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div className="space-y-1">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-blue-50 rounded-lg">
+                                <FaUserInjured className="text-blue-600 text-xl" />
+                            </div>
+                            <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">Clinical Analysis</h1>
+                        </div>
+                        <p className="text-gray-500 font-medium">Manage and track patient medication safety profiles</p>
+                        <div className="flex items-center gap-2 pt-1">
+                            <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
+                            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">System Status: Refresh Active</span>
+                        </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={handleManualRefresh}
+                            disabled={loading}
+                            className="p-3 text-gray-500 hover:bg-gray-50 hover:text-blue-600 rounded-xl transition-all border border-gray-200 flex items-center gap-2 group"
+                            title="Synchronize Patient List"
+                        >
+                            <FaSync className={`${loading ? 'animate-spin' : ''} transition-transform group-hover:rotate-180`} />
+                            <span className="hidden sm:inline text-sm font-semibold">Sync</span>
+                        </button>
+                        
+                        <button
+                            onClick={handleNewPatient}
+                            className={`px-6 py-3 rounded-xl font-bold flex items-center gap-3 shadow-lg shadow-blue-200/50 transition-all transform active:scale-95 ${
+                                isIndividual && userRole !== 'admin' && patients.length >= 5
+                                ? 'bg-gray-400 cursor-not-allowed text-white'
+                                : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white'
+                            }`}
+                        >
+                            <FaPlus className="text-sm" />
+                            <span>New Case MR</span>
+                        </button>
+                    </div>
                 </div>
-                <button
-                    onClick={handleNewPatient}
-                    className={`w-full sm:w-auto px-6 py-3 rounded-lg flex items-center justify-center gap-2 transition-colors ${isIndividual && userRole !== 'admin' && patients.length >= 5
-                        ? 'bg-gray-400 cursor-not-allowed text-white'
-                        : 'bg-blue-500 hover:bg-blue-600 text-white'
-                        }`}
-                    title={isIndividual && userRole !== 'admin' && patients.length >= 5 ? "Limit reached for Individual plan" : "Add New MR"}
-                >
-                    <FaPlus /> New MR
-                </button>
             </div>
 
-            {/* Search and Filters - Only for non-Individual users */}
+            {/* 🔍 Advanced Search & Filters (Visible for Teams/Admins) */}
             {!isIndividual && (
-                <div className="bg-white rounded-xl shadow p-4 md:p-6 border border-gray-100">
+                <div className="bg-white rounded-2xl shadow-sm p-4 border border-gray-100">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div className="relative">
-                            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                        <div className="relative group">
+                            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
                             <input
                                 type="text"
                                 value={searchTerm}
                                 onChange={handleSearch}
-                                placeholder="Search MRs..."
-                                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Search by name, ID or diagnosis..."
+                                className="w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-gray-700"
                             />
                         </div>
 
-                        <select
-                            value={statusFilter}
-                            onChange={(e) => {
-                                setStatusFilter(e.target.value);
-                                handleSearch({ target: { value: searchTerm } });
-                            }}
-                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        >
-                            <option value="all">All Status</option>
-                            <option value="active">Active Only</option>
-                            <option value="inactive">Inactive Only</option>
-                        </select>
-
-                        <button
-                            onClick={fetchPatients}
-                            className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-6 py-3 rounded-lg flex items-center justify-center gap-2 transition-colors md:col-span-2 lg:col-span-1"
-                        >
-                            <FaFilter /> Refresh
-                        </button>
+                        <div className="relative">
+                            <FaFilter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => {
+                                    setStatusFilter(e.target.value);
+                                    handleSearch({ target: { value: searchTerm } });
+                                }}
+                                className="w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-gray-700 appearance-none"
+                            >
+                                <option value="all">Active & Inactive Cases</option>
+                                <option value="active">Active Only</option>
+                                <option value="inactive">Inactive Only</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             )}
 
-            {/* Patients Table (Desktop) */}
-            <div className="hidden md:block table-wrapper w-full">
-                <div className="overflow-x-auto rounded-lg border border-gray-200">
-                    <table className="w-full border-collapse">
-                        <thead>
-                            <tr className="bg-gray-100 text-gray-700">
-                                {!isRestrictedIndividual && ( // Hide for healthcare_client
-                                    <th
-                                        className="border p-3 text-left cursor-pointer hover:bg-gray-200"
-                                        onClick={() => handleSort('id')}
-                                    >
-                                        <div className="flex items-center gap-2">
-                                            MR Code
-                                            {getSortIcon('id')}
-                                        </div>
-                                    </th>
-                                )}
-                                <th className="border p-3 text-left">Name</th>
-                                <th className="border p-3 text-left">Diagnosis</th>
-                                <th
-                                    className="border p-3 text-left cursor-pointer hover:bg-gray-200"
-                                    onClick={() => handleSort('created_at')}
-                                >
-                                    <div className="flex items-center gap-2">
-                                        Created
-                                        {getSortIcon('created_at')}
-                                    </div>
-                                </th>
-                                {!isIndividual && (
-                                    <th className="border p-3 text-left">Status</th>
-                                )}
-                                <th className="border p-3 text-left">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {currentPatients.length > 0 ? (
-                                currentPatients.map((patient) => {
-                                    const currentUserId = getCurrentUserId();
-                                    const isUserIndividual = isIndividual;
-                                    const canDelete = userRole !== 'healthcare_client';
-
-                                    return (
-                                        <tr key={patient.id} className="border-b hover:bg-gray-50 transition-colors">
-                                            {!isRestrictedIndividual && ( // Hide for healthcare_client
-                                                <td className="border p-3">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                                            <FaUserInjured className="text-blue-600" />
-                                                        </div>
-                                                        <div>
-                                                            <p className="font-medium text-gray-800">{patient.id}</p>
-                                                        </div>
-                                                    </div>
+            {/* 📊 Main Content Area: Patients Table/List */}
+            <div className="w-full">
+                {currentPatients.length > 0 ? (
+                    <>
+                        {/* Desktop Table View */}
+                        <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="bg-gray-50/50 text-gray-500 text-xs font-bold uppercase tracking-wider border-b border-gray-100">
+                                        {!isRestrictedIndividual && (
+                                            <th className="px-6 py-4 text-left cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => handleSort('id')}>
+                                                <div className="flex items-center gap-2">MR Code {getSortIcon('id')}</div>
+                                            </th>
+                                        )}
+                                        <th className="px-6 py-4 text-left">Patient Details</th>
+                                        <th className="px-6 py-4 text-left">Clinical Diagnosis</th>
+                                        <th className="px-6 py-4 text-left cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => handleSort('created_at')}>
+                                            <div className="flex items-center gap-2">Record Date {getSortIcon('created_at')}</div>
+                                        </th>
+                                        {!isIndividual && <th className="px-6 py-4 text-left">Status</th>}
+                                        <th className="px-6 py-4 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {currentPatients.map((patient) => (
+                                        <tr key={patient.id} className="hover:bg-blue-50/30 transition-colors group">
+                                            {!isRestrictedIndividual && (
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <span className="font-mono text-sm font-bold text-gray-900 bg-gray-100 px-2 py-1 rounded">{patient.id}</span>
                                                 </td>
                                             )}
-                                            <td className="border p-3">
-                                                {patient.full_name || 'No name'}
-                                            </td>
-                                            <td className="border p-3">
-                                                <div className="max-w-xs truncate" title={patient.diagnosis}>
-                                                    {patient.diagnosis || 'No diagnosis'}
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs">
+                                                        {patient.full_name ? patient.full_name.charAt(0) : '?'}
+                                                    </div>
+                                                    <span className="font-bold text-gray-800">{patient.full_name || 'Anonymous Patient'}</span>
                                                 </div>
                                             </td>
-                                            <td className="border p-3 text-sm text-gray-600">
+                                            <td className="px-6 py-4">
+                                                <p className="text-sm text-gray-600 max-w-xs truncate" title={patient.diagnosis}>{patient.diagnosis || 'No Diagnosis Recorded'}</p>
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-gray-500">
                                                 {patient.created_at ? new Date(patient.created_at).toLocaleDateString() : 'N/A'}
                                             </td>
                                             {!isIndividual && (
-                                                <td className="border p-3">
-                                                    <span className={`px-2 py-1 rounded text-xs ${getStatusColor(patient.is_active)}`}>
+                                                <td className="px-6 py-4">
+                                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest ${getStatusColor(patient.is_active)}`}>
                                                         {getStatusText(patient.is_active)}
                                                     </span>
                                                 </td>
                                             )}
-                                            <td className="border p-3">
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        onClick={() => handleViewClick(patient.id)}
-                                                        className="text-blue-500 hover:text-blue-700 p-2 hover:bg-blue-50 rounded"
-                                                        title="View MR Details"
-                                                    >
-                                                        <FaEye />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleEditClick(patient)}
-                                                        className="text-yellow-500 hover:text-yellow-700 p-2 hover:bg-yellow-50 rounded"
-                                                        title="Edit MR"
-                                                    >
-                                                        <FaEdit />
-                                                    </button>
-
-                                                    <button
-                                                        onClick={() => handleDelete(patient.id)}
-                                                        className={`p-2 rounded ${canDelete ? 'text-red-500 hover:text-red-700 hover:bg-red-50' : 'text-gray-300 cursor-not-allowed'}`}
-                                                        disabled={!canDelete}
-                                                        title={canDelete ? "Delete MR" : "Delete not allowed for company accounts"}
-                                                    >
-                                                        <FaTrash />
-                                                    </button>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button onClick={() => handleViewClick(patient.id)} className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors" title="View Details"><FaEye /></button>
+                                                    <button onClick={() => handleEditClick(patient)} className="p-2 text-amber-600 hover:bg-amber-100 rounded-lg transition-colors" title="Edit Record"><FaEdit /></button>
+                                                    <button onClick={() => handleDelete(patient.id)} disabled={userRole === 'healthcare_client'} className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors disabled:opacity-20" title="Delete"><FaTrash /></button>
                                                 </div>
                                             </td>
                                         </tr>
-                                    );
-                                })
-                            ) : (
-                                <tr>
-                                    <td colSpan={isIndividual ? "5" : "6"} className="border p-8 text-center">
-                                        <div className="py-8">
-                                            <FaUserInjured className="text-4xl text-gray-300 mx-auto mb-3" />
-                                            <p className="text-gray-500">
-                                                {searchTerm ? 'No MRs found matching your search.' : 'No MRs found.'}
-                                            </p>
-                                            <button
-                                                onClick={handleNewPatient}
-                                                className="mt-4 text-blue-600 hover:text-blue-800 font-medium"
-                                            >
-                                                + Add New MR
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
 
-            {/* Patients List (Mobile) */}
-            <div className="md:hidden space-y-4">
-                {currentPatients.length > 0 ? (
-                    currentPatients.map((patient) => {
-                        const currentUserId = getCurrentUserId();
-                        const isUserIndividual = isIndividual;
-                        const canDelete = userRole !== 'healthcare_client';
-
-                        return (
-                            <div key={patient.id} className="bg-white rounded-xl shadow p-4 border border-gray-100">
-                                <div className="flex justify-between items-start mb-3">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                            <FaUserInjured className="text-blue-600 text-xl" />
-                                        </div>
-                                        <div>
-                                            <h3 className="font-bold text-gray-800">{patient.full_name || 'No Name'}</h3>
-                                            <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
-                                                <FaIdCard />
-                                                <span className="font-mono">{patient.id}</span>
+                        {/* Mobile Grid View */}
+                        <div className="md:hidden space-y-4">
+                            {currentPatients.map((patient) => (
+                                <div key={patient.id} className="bg-white rounded-2xl shadow-sm p-5 border border-gray-100">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600"><FaUserInjured /></div>
+                                            <div>
+                                                <h3 className="font-bold text-gray-900">{patient.full_name || 'Anonymous'}</h3>
+                                                <span className="text-[10px] font-mono font-bold text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">{patient.id}</span>
                                             </div>
                                         </div>
                                     </div>
-                                    {/* Status badge - hidden for Individual users */}
-                                    {!isIndividual && (
-                                        <div className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(patient.is_active)}`}>
-                                            {getStatusText(patient.is_active)}
+                                    <div className="space-y-3">
+                                        <p className="text-sm bg-gray-50 p-3 rounded-xl text-gray-700 italic">" {patient.diagnosis || 'No Diagnosis' } "</p>
+                                        <div className="flex items-center justify-between pt-3 border-t border-gray-50">
+                                            <div className="flex gap-2">
+                                                <button onClick={() => handleViewClick(patient.id)} className="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold">View</button>
+                                                <button onClick={() => handleEditClick(patient)} className="bg-amber-50 text-amber-700 px-4 py-2 rounded-xl text-xs font-bold">Edit</button>
+                                            </div>
+                                            <span className="text-[10px] text-gray-400 font-bold uppercase">{new Date(patient.created_at).toLocaleDateString()}</span>
                                         </div>
-                                    )}
-                                </div>
-
-                                <div className="space-y-2 mb-4">
-                                    {patient.diagnosis && (
-                                        <div className="text-sm text-gray-700 bg-gray-50 p-2 rounded">
-                                            <span className="font-medium">Diagnosis:</span> {patient.diagnosis}
-                                        </div>
-                                    )}
-                                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                                        <FaClock /> Created: {patient.created_at ? new Date(patient.created_at).toLocaleDateString() : 'N/A'}
                                     </div>
                                 </div>
-
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => handleViewClick(patient.id)}
-                                        className="flex-1 bg-blue-50 text-blue-700 py-2 rounded-lg flex items-center justify-center gap-2 text-sm font-medium hover:bg-blue-100 transition"
-                                    >
-                                        <FaEye /> View
-                                    </button>
-                                    <button
-                                        onClick={() => handleEditClick(patient)}
-                                        className="flex-1 bg-yellow-50 text-yellow-700 py-2 rounded-lg flex items-center justify-center gap-2 text-sm font-medium hover:bg-yellow-100 transition"
-                                    >
-                                        <FaEdit /> Edit
-                                    </button>
-                                    <button
-                                        onClick={() => handleDelete(patient.id)}
-                                        disabled={!canDelete}
-                                        className={`w-10 flex items-center justify-center rounded-lg transition ${canDelete
-                                            ? 'bg-red-50 text-red-600 hover:bg-red-100'
-                                            : 'bg-gray-100 text-gray-300 cursor-not-allowed'
-                                            }`}
-                                    >
-                                        <FaTrash />
-                                    </button>
-                                </div>
-                            </div>
-                        );
-                    })
+                            ))}
+                        </div>
+                    </>
                 ) : (
-                    <div className="bg-white rounded-xl shadow p-8 text-center">
-                        <FaUserInjured className="text-4xl text-gray-300 mx-auto mb-3" />
-                        <p className="text-gray-500 mb-4">
-                            {searchTerm ? 'No MRs found matching your search.' : 'No MRs found.'}
+                    /* 🏜️ Empty State & Diagnostics */
+                    <div className="bg-white rounded-3xl shadow-sm p-16 text-center border border-gray-100">
+                        <div className="mx-auto w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mb-8 relative">
+                            <FaUserInjured className="text-blue-200 text-5xl" />
+                            <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm">
+                                <FaSearch className="text-blue-500 text-xs animate-bounce" />
+                            </div>
+                        </div>
+                        <h3 className="text-2xl font-black text-gray-900 mb-3 tracking-tight">No Patients Identified</h3>
+                        <p className="text-gray-500 font-medium mb-10 max-w-md mx-auto leading-relaxed">
+                            {searchTerm ? `No records matching "${searchTerm}" were detected in your clinical database.` : 'The analysis engine is ready but no patient profiles have been established yet.'}
                         </p>
-                        <button
-                            onClick={handleNewPatient}
-                            className="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg text-sm font-medium"
-                        >
-                            + Add New MR
-                        </button>
+                        
+                        {/* 🛠️ Diagnostic "X-Ray" View */}
+                        <div className="mt-4 mb-10 p-6 bg-slate-900 text-slate-300 text-[11px] rounded-2xl border border-slate-800 shadow-2xl max-w-lg mx-auto overflow-hidden text-left font-mono">
+                           <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
+                               <span className="text-blue-400 font-bold uppercase tracking-widest text-[9px]">🔍 Patient Visibility Diagnostic</span>
+                               <span className="h-2 w-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></span>
+                           </div>
+                           <div className="space-y-1.5 opacity-80">
+                                <p><span className="text-slate-500">AUTH_ROLE:</span> <span className="text-amber-400">"{userRole || 'UNKNOWN'}"</span></p>
+                                <p><span className="text-slate-500">ACC_TYPE:</span> <span className="text-emerald-400">"{userAccountType || 'INDIVIDUAL'}"</span></p>
+                                <p><span className="text-slate-500">MASTER_KEY:</span> <span className={localStorage.getItem('enc_key_raw') ? "text-emerald-400" : "text-rose-400"}>{localStorage.getItem('enc_key_raw') ? "INSTALLED (SECURE)" : "MISSING (ACTION REQUIRED)"}</span></p>
+                                <p><span className="text-slate-500">COMPANY_ID:</span> <span className="text-blue-400">{userCompanyId ? `"${userCompanyId}"` : "NULL (PERSONAL SCOPE)"}</span></p>
+                           </div>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row justify-center gap-4">
+                            <button
+                                onClick={handleNewPatient}
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl shadow-blue-200/50 transition-all hover:-translate-y-1"
+                            >
+                                <FaPlus /> Start New Clinical Case
+                            </button>
+                            <button
+                                onClick={handleManualRefresh}
+                                className="bg-gray-50 hover:bg-gray-100 text-gray-700 px-8 py-4 rounded-2xl font-bold border border-gray-200 transition-all"
+                            >
+                                <FaSync className={loading ? 'animate-spin' : ''} /> Force Sync Cloud
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>
 
-            {/* Stats - Only for non-Individual users */}
-            {!isIndividual && (
-                <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                    <div className="bg-purple-50 p-3 rounded">
-                        <p className="text-purple-600">Access Level</p>
-                        <p className="text-lg font-bold text-purple-800">
-                            {userRole === 'admin' ? 'Full' : userRole === 'company_admin' ? 'Company' : 'Personal'}
-                        </p>
-                    </div>
-                    <div className="bg-blue-50 p-3 rounded">
-                        <p className="text-blue-600">Total MRs</p>
-                        <p className="text-lg font-bold text-blue-800">{patients.length}</p>
-                    </div>
-                    <div className="bg-green-50 p-3 rounded">
-                        <p className="text-green-600">Active</p>
-                        <p className="text-lg font-bold text-green-800">
-                            {patients.filter(p => p.is_active !== false).length}
-                        </p>
-                    </div>
-                    <div className="bg-yellow-50 p-3 rounded">
-                        <p className="text-yellow-600">With Appointments</p>
-                        <p className="text-lg font-bold text-yellow-800">
-                            {patients.filter(p => p.appointmentDate).length}
-                        </p>
-                    </div>
-                </div>
-            )}
-
-            {/* Pagination Controls - Only show if there's more than one page or for non-individual users */}
+            {/* 📈 Pagination (Only if records exist) */}
             {filteredPatients.length > itemsPerPage && (
-                <div className="bg-white rounded-xl shadow p-4 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div className="text-sm text-gray-600">
-                        Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredPatients.length)} of {filteredPatients.length} MRs
+                <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col md:flex-row justify-between items-center gap-4 border border-gray-100">
+                    <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                        Displaying {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredPatients.length)} of {filteredPatients.length} Cases
                     </div>
                     <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                            disabled={currentPage === 1}
-                            className={`px-4 py-2 border rounded-lg text-sm transition-colors ${currentPage === 1
-                                ? 'bg-gray-50 text-gray-400 cursor-not-allowed'
-                                : 'hover:bg-gray-100 text-gray-700'}`}
-                        >
-                            ← Previous
-                        </button>
-
+                        <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 text-gray-500 hover:bg-blue-50 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed">←</button>
                         <div className="flex items-center gap-1">
                             {[...Array(totalPages)].map((_, i) => (
-                                <button
-                                    key={i + 1}
-                                    onClick={() => setCurrentPage(i + 1)}
-                                    className={`w-8 h-8 rounded-lg text-sm font-medium transition-all ${currentPage === i + 1
-                                        ? 'bg-blue-600 text-white shadow-md'
-                                        : 'text-gray-600 hover:bg-gray-100'
-                                        }`}
-                                >
-                                    {i + 1}
-                                </button>
+                                <button key={i + 1} onClick={() => setCurrentPage(i + 1)} className={`w-8 h-8 rounded-lg text-[10px] font-black uppercase transition-all ${currentPage === i + 1 ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-100'}`}>{i + 1}</button>
                             ))}
                         </div>
-
-                        <button
-                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                            disabled={currentPage === totalPages}
-                            className={`px-4 py-2 border rounded-lg text-sm transition-colors ${currentPage === totalPages
-                                ? 'bg-gray-50 text-gray-400 cursor-not-allowed'
-                                : 'hover:bg-gray-100 text-gray-700'}`}
-                        >
-                            Next →
-                        </button>
+                        <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 text-gray-500 hover:bg-blue-50 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed">→</button>
                     </div>
                 </div>
             )}
