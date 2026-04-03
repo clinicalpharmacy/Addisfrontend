@@ -298,6 +298,10 @@ const PatientDetails = () => {
     ], []);
 
     const tabs = useMemo(() => {
+        const isCompanyUser = !!user?.company_id ||
+            user?.account_type === 'company' ||
+            ['company_admin', 'company_user'].includes(user?.role);
+
         const allTabs = [
             { id: 'overview', label: 'Overview', icon: FaUser },
             { id: 'demographics', label: 'Demographics', icon: FaUser },
