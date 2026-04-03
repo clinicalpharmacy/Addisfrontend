@@ -265,11 +265,10 @@ const PatientUnlocker = ({ patientData, userSalt, onUnlocked, children }) => {
                                     </button>
                                     
                                     <div className="flex flex-col items-center gap-2 opacity-50">
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2 pt-2">
                                             <div className="w-1 h-1 rounded-full bg-green-500" />
-                                            <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest leading-none"> Private decryption in browser </p>
+                                            <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest leading-none"> Secured Session Active </p>
                                         </div>
-                                        <p className="text-[8px] text-gray-400 font-medium tracking-tight">AddisMed Zero-Knowledge Infrastructure v2.1</p>
                                     </div>
                                 </form>
                             );
