@@ -61,10 +61,10 @@ const LoadingSpinner = () => (
 
 // Main Layout Wrapper
 const MainLayout = ({ children, showSidebar = true, showNavbar = true }) => {
-    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(false);           // Mobile overlay
+    const [desktopCollapsed, setDesktopCollapsed] = useState(false); // Desktop collapse
 
     return (
-
         <div className="min-h-screen bg-gray-50 flex flex-col">
             {/* Navbar */}
             {showNavbar && <Navbar onMenuClick={() => setSidebarOpen(true)} />}
@@ -77,19 +77,43 @@ const MainLayout = ({ children, showSidebar = true, showNavbar = true }) => {
                 />
             )}
 
-            <div className="flex flex-1">
+            <div className="flex flex-1 overflow-hidden">
                 {/* Sidebar */}
                 {showSidebar && (
                     <>
-                        <div className={`fixed inset-y-0 left-0 z-50 w-72 bg-white transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-                            } md:relative md:translate-x-0 border-r border-gray-200`}>
+                        {/* Mobile: slide-in overlay */}
+                        <div className={`fixed inset-y-0 left-0 z-50 w-72 bg-white transform transition-transform duration-300 ease-in-out ${
+                            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+                        } md:hidden border-r border-gray-200`}>
                             <Sidebar onClose={() => setSidebarOpen(false)} />
                         </div>
+
+                        {/* Desktop: collapsible sidebar */}
+                        <div className={`hidden md:flex flex-col relative flex-shrink-0 transition-all duration-300 ease-in-out border-r border-gray-200 bg-white ${
+                            desktopCollapsed ? 'w-0 overflow-hidden' : 'w-72'
+                        }`}>
+                            <Sidebar onClose={() => {}} />
+                        </div>
+
+                        {/* Desktop collapse toggle button */}
+                        <button
+                            onClick={() => setDesktopCollapsed(!desktopCollapsed)}
+                            className="hidden md:flex items-center justify-center w-5 h-12 bg-white border border-gray-200 rounded-r-lg shadow-sm hover:bg-blue-50 hover:text-blue-600 transition-all z-30 self-start mt-20 flex-shrink-0 -ml-px"
+                            title={desktopCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                            style={{ position: 'sticky', top: '80px' }}
+                        >
+                            <svg
+                                className={`w-3 h-3 text-gray-400 transition-transform duration-300 ${desktopCollapsed ? 'rotate-0' : 'rotate-180'}`}
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </button>
                     </>
                 )}
 
                 {/* Main Content Area */}
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                     <main className="p-4 md:p-6 min-h-screen">
                         <div className="w-full">
                             {children}
