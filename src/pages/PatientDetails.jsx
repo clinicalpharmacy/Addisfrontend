@@ -3237,19 +3237,21 @@ const PatientDetails = () => {
                 </div>
 
                 <div className="bg-white rounded-xl shadow-lg p-2 md:p-4 mb-4 md:mb-6">
-                    <nav className="flex space-x-1 overflow-x-auto scrollbar-hide">
+                    {/* Mobile: wrap grid so all tabs visible; Desktop: horizontal scroll */}
+                    <nav className="flex flex-wrap gap-1 md:flex-nowrap md:overflow-x-auto md:scrollbar-thin md:scrollbar-thumb-gray-200 md:pb-1">
                         {tabs.map((tab) => {
                             const Icon = tab.icon;
                             return (
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
-                                    className={`py-2 px-3 md:px-4 rounded-lg font-medium text-xs md:text-sm flex items-center gap-2 whitespace-nowrap ${activeTab === tab.id
-                                        ? 'bg-blue-500 text-white'
+                                    className={`py-2 px-2.5 md:px-4 rounded-lg font-medium text-xs flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 transition-all ${activeTab === tab.id
+                                        ? 'bg-blue-500 text-white shadow-sm'
                                         : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
                                         }`}
                                 >
-                                    <Icon className="text-sm md:text-base" /> <span className="hidden sm:inline">{tab.label}</span>
+                                    <Icon className="text-sm flex-shrink-0" />
+                                    <span>{tab.label}</span>
                                 </button>
                             );
                         })}
