@@ -3094,20 +3094,6 @@ const PatientDetails = () => {
         }
     }, [activeTab, renderOverviewSection, renderDemographicsSection, renderVitalsSection, renderLabsSection, getCurrentPatientCode, formData]);
 
-    if (loading) {
-        return (
-            <div className="flex flex-col items-center justify-center h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-                <span className="text-gray-600 mb-2">Loading patient data...</span>
-                {!isOnline && (
-                    <div className="text-yellow-600 text-sm flex items-center gap-1">
-                        <FaExclamationTriangle /> You are currently offline
-                    </div>
-                )}
-            </div>
-        );
-    }
-
     return (
         <div className="page-container w-full max-w-full overflow-x-hidden px-3 sm:px-4 md:px-6 lg:px-8">
             {/* Connection Status Banner */}
