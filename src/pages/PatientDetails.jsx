@@ -2216,6 +2216,7 @@ const PatientDetails = () => {
                     </div>
 
                     {/* Date of Birth */}
+                    {!isIndividual && (
                     <div className="space-y-2">
                         <label className="block text-sm font-medium text-gray-700">
                             Date of Birth
@@ -2288,6 +2289,7 @@ const PatientDetails = () => {
                     </div>
 
                     {/* Contact Number */}
+                    {!isIndividual && (
                     <div className="space-y-2">
                         <label className="block text-sm font-medium text-gray-700">
                             Contact Number
@@ -2313,6 +2315,7 @@ const PatientDetails = () => {
                     </div>
 
                     {/* Address */}
+                    {!isIndividual && (
                     <div className="space-y-2 md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700">
                             Address
