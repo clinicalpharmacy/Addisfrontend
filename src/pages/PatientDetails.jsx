@@ -206,7 +206,7 @@ const PatientDetails = () => {
     const [formData, setFormData] = useState({
         full_name: '', age: '', age_in_days: '', gender: '', date_of_birth: '',
         contact_number: '', address: '', diagnosis: '', appointment_date: '',
-        is_active: true, allergies: [], patient_type: 'adult',
+        is_active: true, allergies: [], age_type: 'adult',
         is_pregnant: false, pregnancy_weeks: '', pregnancy_trimester: '', edd: '', pregnancy_notes: '',
         is_lactating: false, lactation_notes: '',
         weight_percentile: '', height_percentile: '', head_circumference_percentile: '', bsa_percentile: '',
@@ -412,7 +412,7 @@ const PatientDetails = () => {
         }
     }, [isValidDate]);
 
-    const determinePatientType = useCallback((ageInDays) => {
+    const determineAgeType = useCallback((ageInDays) => {
         if (!ageInDays || ageInDays === '' || isNaN(parseInt(ageInDays))) {
             return 'adult';
         }
@@ -555,7 +555,7 @@ const PatientDetails = () => {
         const hasValidDob = dob && isValidDate(dob);
         const ageInDays = hasValidDob ? calculateAgeInDays(dob) : data.age_in_days;
         const ageInYears = hasValidDob ? calculateAge(dob) : data.age;
-        const patientType = determinePatientType(ageInDays);
+        const ageType = determineAgeType(ageInDays);
 
         // 🔐 Ensure collection fields are always arrays (especially after TEXT migration)
         const ensureArray = (val) => {
@@ -571,7 +571,7 @@ const PatientDetails = () => {
             ...data,
             age: ageInYears,
             age_in_days: ageInDays,
-            patient_type: patientType,
+            age_type: ageType,
             allergies: ensureArray(data.allergies),
             vaccination_status: ensureArray(data.vaccination_status),
             developmental_milestones: ensureArray(data.developmental_milestones),
@@ -637,7 +637,7 @@ const PatientDetails = () => {
 
         // 🔗 UPDATE PRIMARY STATE: Ensure the main 'patient' object also reflects these updates
         setPatient(data);
-    }, [isValidDate, calculateAgeInDays, calculateAge, determinePatientType, setCustomLabs, globalLabDefinitions, fetchClinicalHistory]);
+    }, [isValidDate, calculateAgeInDays, calculateAge, determineAgeType, setCustomLabs, globalLabDefinitions, fetchClinicalHistory]);
 
     // FIXED: fetchPatientData with better error handling
     const fetchPatientData = useCallback(async () => {
@@ -665,7 +665,7 @@ const PatientDetails = () => {
                     last_tested: today,
                     is_active: true,
                     allergies: [],
-                    patient_type: 'adult'
+                    age_type: 'adult'
                 }));
 
                 setLoading(false);
@@ -858,14 +858,14 @@ const PatientDetails = () => {
 
             const ageInDays = calculateAgeInDays(value);
             const ageInYears = calculateAge(value);
-            const patientType = determinePatientType(ageInDays);
+            const ageType = determineAgeType(ageInDays);
 
             setFormData(prev => ({
                 ...prev,
                 [field]: value,
                 age_in_days: ageInDays,
                 age: ageInYears,
-                patient_type: patientType
+                age_type: ageType
             }));
 
             if (ageInDays && parseInt(ageInDays) < 365) {
@@ -879,14 +879,14 @@ const PatientDetails = () => {
         }
 
         if (field === 'age_in_days') {
-            const patientType = determinePatientType(value);
+            const ageType = determineAgeType(value);
             const years = value ? Math.floor(parseInt(value) / 365) : '';
 
             setFormData(prev => ({
                 ...prev,
                 [field]: value,
                 age: years.toString(),
-                patient_type: patientType
+                age_type: ageType
             }));
 
             if (value && parseInt(value) < 365) {
@@ -901,13 +901,13 @@ const PatientDetails = () => {
 
         if (field === 'age') {
             const days = value ? parseInt(value) * 365 : '';
-            const patientType = determinePatientType(days.toString());
+            const ageType = determineageType(days.toString());
 
             setFormData(prev => ({
                 ...prev,
                 [field]: value,
                 age_in_days: days.toString(),
-                patient_type: patientType
+                age_type: ageType
             }));
 
             if (value && parseInt(value) < 1) {
@@ -943,7 +943,7 @@ const PatientDetails = () => {
             ...prev,
             [field]: value
         }));
-    }, [isValidDate, calculateAgeInDays, calculateAge, determinePatientType, calculateTrimester]);
+    }, [isValidDate, calculateAgeInDays, calculateAge, determineageType, calculateTrimester]);
 
     const handleAddAllergy = useCallback(() => {
         if (newAllergy.trim() === '') return;
@@ -1191,7 +1191,7 @@ const PatientDetails = () => {
                 if (!ageInYears) ageInYears = calculateAge(formData.date_of_birth);
             }
 
-            const patientType = formData.patient_type || determinePatientType(ageInDays);
+            const ageType = formData.age_type || determineageType(ageInDays);
 
             // Helper functions
             const cleanNumber = (value) => {
@@ -1231,7 +1231,7 @@ const PatientDetails = () => {
                     appointment_date: cleanDate(formData.appointment_date),
                     is_active: formData.is_active !== false,
                     allergies: Array.isArray(formData.allergies) ? formData.allergies.filter(a => a && typeof a === 'string' && a.trim() !== '') : [],
-                    patient_type: patientType,
+                    age_type: ageType,
                     is_pregnant: formData.is_pregnant || false,
                     pregnancy_weeks: cleanNumber(formData.pregnancy_weeks),
                     pregnancy_trimester: cleanText(formData.pregnancy_trimester),
@@ -1414,7 +1414,7 @@ const PatientDetails = () => {
                 alert('Error saving patient: ' + errorMsg);
             }
         }
-    }, [isNewPatient, formData, getCurrentPatientCode, generatePatientCode, navigate, patientCode, isValidDate, calculateAgeInDays, calculateAge, determinePatientType, customLabs, fetchClinicalHistory, checkPatientLimit, loadPatientData, user]);
+    }, [isNewPatient, formData, getCurrentPatientCode, generatePatientCode, navigate, patientCode, isValidDate, calculateAgeInDays, calculateAge, determineageType, customLabs, fetchClinicalHistory, checkPatientLimit, loadPatientData, user]);
 
     // Helper functions
     const handleSaveAll = useCallback(() => handleSave('all'), [handleSave]);
@@ -1456,7 +1456,7 @@ const PatientDetails = () => {
 
     // Memoize the render functions to prevent infinite re-renders
     const renderVitalsSection = useCallback(() => {
-        const isPediatric = formData.patient_type && formData.patient_type !== 'adult';
+        const isPediatric = formData.age_type && formData.age_type !== 'adult';
         const ageInDays = parseInt(formData.age_in_days) || 0;
 
         return (
@@ -1490,16 +1490,16 @@ const PatientDetails = () => {
                 {isPediatric && (
                     <div className="bg-gradient-to-r from-pink-50 to-purple-50 rounded-xl p-4 mb-6 border border-pink-200">
                         <div className="flex items-center gap-3">
-                            {formData.patient_type === 'neonate' ? (
+                            {formData.age_type === 'neonate' ? (
                                 <FaBaby className="text-pink-600 text-2xl" />
-                            ) : formData.patient_type === 'infant' ? (
+                            ) : formData.age_type === 'infant' ? (
                                 <FaBabyCarriage className="text-pink-600 text-2xl" />
                             ) : (
                                 <FaChild className="text-pink-600 text-2xl" />
                             )}
                             <div>
                                 <h3 className="font-bold text-pink-800">
-                                    {formData.patient_type ? formData.patient_type.toUpperCase() : 'Pediatric'} Patient
+                                    {formData.age_type ? formData.age_type.toUpperCase() : 'Pediatric'} Patient
                                 </h3>
                                 <p className="text-pink-700 text-sm">
                                     Age: {formatAgeDisplay(formData.age_in_days, formData.date_of_birth)}
@@ -1904,7 +1904,7 @@ const PatientDetails = () => {
     }, [formData, isEditing, handleSaveVitals, formatAgeDisplay, getPediatricNormalRange, handleVitalsInputChange, handleInputChange, vitalsHistory, isNewPatient]);
 
     const renderLabsSection = useCallback(() => {
-        const isPediatric = formData.patient_type && formData.patient_type !== 'adult';
+        const isPediatric = formData.age_type && formData.age_type !== 'adult';
 
         return (
             <div className="space-y-6">
@@ -2100,7 +2100,7 @@ const PatientDetails = () => {
 
     const renderDemographicsSection = useCallback(() => {
         const ageDisplay = formatAgeDisplay(formData.age_in_days, formData.date_of_birth);
-        const isPediatric = formData.patient_type && formData.patient_type !== 'adult';
+        const isPediatric = formData.age_type && formData.age_type !== 'adult';
         const patientCodeToDisplay = getCurrentPatientCode();
         const isIndividual = user?.account_type === 'individual' && user?.role !== 'admin';
 
@@ -2130,8 +2130,8 @@ const PatientDetails = () => {
                     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg mb-4">
                         <div className="flex items-center gap-3">
                             {isPediatric ? (
-                                formData.patient_type === 'neonate' ? <FaBaby className="text-blue-600 text-2xl" /> :
-                                    formData.patient_type === 'infant' ? <FaBabyCarriage className="text-blue-600 text-2xl" /> :
+                                formData.age_type === 'neonate' ? <FaBaby className="text-blue-600 text-2xl" /> :
+                                    formData.age_type === 'infant' ? <FaBabyCarriage className="text-blue-600 text-2xl" /> :
                                         <FaChild className="text-blue-600 text-2xl" />
                             ) : (
                                 <FaUser className="text-blue-600 text-2xl" />
@@ -2268,20 +2268,20 @@ const PatientDetails = () => {
                             Age Category
                         </label>
                         <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                            {formData.patient_type ? (
+                            {formData.age_type ? (
                                 <div className="flex items-center gap-2">
-                                    {formData.patient_type === 'neonate' && <FaBaby className="text-pink-500" />}
-                                    {formData.patient_type === 'infant' && <FaBabyCarriage className="text-purple-500" />}
-                                    {formData.patient_type === 'child' && <FaChild className="text-blue-500" />}
-                                    {formData.patient_type === 'adolescent' && <FaUser className="text-green-500" />}
-                                    {formData.patient_type === 'adult' && <FaUser className="text-indigo-500" />}
+                                    {formData.age_type === 'neonate' && <FaBaby className="text-pink-500" />}
+                                    {formData.age_type === 'infant' && <FaBabyCarriage className="text-purple-500" />}
+                                    {formData.age_type === 'child' && <FaChild className="text-blue-500" />}
+                                    {formData.age_type === 'adolescent' && <FaUser className="text-green-500" />}
+                                    {formData.age_type === 'adult' && <FaUser className="text-indigo-500" />}
                                     <span className="font-medium capitalize">
-                                        {formData.patient_type}
-                                        {formData.patient_type === 'neonate' && ' (0-28 days)'}
-                                        {formData.patient_type === 'infant' && ' (29 days - 1 year)'}
-                                        {formData.patient_type === 'child' && ' (1-12 years)'}
-                                        {formData.patient_type === 'adolescent' && ' (13-18 years)'}
-                                        {formData.patient_type === 'adult' && ' (>18 years)'}
+                                        {formData.age_type}
+                                        {formData.age_type === 'neonate' && ' (0-28 days)'}
+                                        {formData.age_type === 'infant' && ' (29 days - 1 year)'}
+                                        {formData.age_type === 'child' && ' (1-12 years)'}
+                                        {formData.age_type === 'adolescent' && ' (13-18 years)'}
+                                        {formData.age_type === 'adult' && ' (>18 years)'}
                                     </span>
                                 </div>
                             ) : <span className="text-gray-500 italic">Not determined</span>}
@@ -2715,7 +2715,7 @@ const PatientDetails = () => {
 
     const renderOverviewSection = useCallback(() => {
         const ageDisplay = formatAgeDisplay(formData.age_in_days, formData.date_of_birth);
-        const isPediatric = formData.patient_type && formData.patient_type !== 'adult';
+        const isPediatric = formData.age_type && formData.age_type !== 'adult';
         const patientCodeToDisplay = getCurrentPatientCode();
 
         return (
@@ -2729,8 +2729,8 @@ const PatientDetails = () => {
                                 : 'bg-gradient-to-br from-blue-500 to-indigo-600'
                                 }`}>
                                 {isPediatric ? (
-                                    formData.patient_type === 'neonate' ? <FaBaby className="text-white text-4xl" /> :
-                                        formData.patient_type === 'infant' ? <FaBabyCarriage className="text-white text-4xl" /> :
+                                    formData.age_type === 'neonate' ? <FaBaby className="text-white text-4xl" /> :
+                                        formData.age_type === 'infant' ? <FaBabyCarriage className="text-white text-4xl" /> :
                                             <FaChild className="text-white text-4xl" />
                                 ) : (
                                     <FaUser className="text-white text-4xl" />
@@ -2765,10 +2765,10 @@ const PatientDetails = () => {
                                         )}
                                         {isPediatric && (
                                             <div className="bg-pink-100 text-pink-800 px-3 py-1 rounded-full flex items-center gap-1">
-                                                {formData.patient_type === 'neonate' ? <FaBaby /> :
-                                                    formData.patient_type === 'infant' ? <FaBabyCarriage /> :
+                                                {formData.age_type === 'neonate' ? <FaBaby /> :
+                                                    formData.age_type === 'infant' ? <FaBabyCarriage /> :
                                                         <FaChild />}
-                                                {formData.patient_type.toUpperCase()}
+                                                {formData.age_type.toUpperCase()}
                                             </div>
                                         )}
                                         {formData.is_pregnant && (
