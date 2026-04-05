@@ -2742,7 +2742,7 @@ const PatientDetails = () => {
                             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                                 <div>
                                     <h1 className="text-2xl font-bold text-gray-800">
-                                        {patient?.full_name || (user?.account_type !== 'individual' || user?.role === 'admin' ? `Patient ${patientCodeToDisplay}` : 'Patient Profile')}
+                                        {patient?.full_name || (user?.account_type !== 'individual' || user?.role === 'admin' ? `Patient ${patientCodeToDisplay}` : 'MR Profile')}
                                     </h1>
                                     <div className="flex flex-wrap items-center gap-4 mt-2">
                                         {(user?.account_type !== 'individual' || user?.role === 'admin') && (
