@@ -251,7 +251,7 @@ const PatientList = () => {
                         <FaUserInjured className="text-2xl text-blue-600" />
                     </div>
                     <div>
-                        <h1 className="text-xl md:text-2xl font-bold text-gray-800 tracking-tight">Clinical Monitoring Dashboard</h1>
+                        <h1 className="text-xl md:text-2xl font-bold text-gray-800 tracking-tight">Medication Review Dashboard</h1>
                         <p className="text-sm text-gray-500 font-medium">Manage patient medication safety and effectiveness</p>
                     </div>
                 </div>
@@ -314,7 +314,7 @@ const PatientList = () => {
                         <thead>
                             <tr className="bg-blue-50 text-blue-900 text-xs font-bold uppercase border-b border-gray-200">
                                 <th className="px-6 py-4 text-left w-16">#</th>
-                                <th className="px-6 py-4 text-left">PATIENT DETAILS</th>
+                                <th className="px-6 py-4 text-left">REVIEW DETAILS</th>
                                 <th className="px-6 py-4 text-left">CLINICAL STATUS</th>
                                 <th className="px-6 py-4 text-left cursor-pointer hover:bg-blue-100" onClick={() => handleSort('created_at')}>
                                     <div className="flex items-center gap-2">LOGGED ON {getSortIcon('created_at')}</div>
