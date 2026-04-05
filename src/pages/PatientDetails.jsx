@@ -2239,7 +2239,7 @@ const PatientDetails = () => {
                                 </div>
                             )}
                         </div>
-
+                    )}
                     {/* Gender - FIXED: Only Male and Female */}
                     <div className="space-y-2">
                         <label className="block text-sm font-medium text-gray-700">
@@ -2313,7 +2313,7 @@ const PatientDetails = () => {
                                 </div>
                             )}
                         </div>
-
+                    )}
                     {/* Address */}
                     {!isIndividual && (
                         <div className="space-y-2 md:col-span-2">
@@ -2334,6 +2334,7 @@ const PatientDetails = () => {
                                 </div>
                             )}
                         </div>
+                    )}
                     {/* Allergies */}
                     <div className="space-y-2 md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
