@@ -338,7 +338,6 @@ const PatientList = () => {
                                                 </div>
                                                 <div>
                                                     <div className="font-bold text-gray-800 text-sm leading-none mb-1">{patient.full_name || 'Anonymous User'}</div>
-                                                    <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Clinical Identifier</div>
                                                 </div>
                                             </div>
                                         </td>
