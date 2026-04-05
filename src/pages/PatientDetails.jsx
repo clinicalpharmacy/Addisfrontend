@@ -2217,28 +2217,28 @@ const PatientDetails = () => {
 
                     {/* Date of Birth */}
                     {!isIndividual && (
-                    <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                            Date of Birth
-                        </label>
-                        {isEditing ? (
-                            <input
-                                type="date"
-                                value={formData.date_of_birth || ''}
-                                onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
-                                className="w-full border border-gray-300 rounded-lg p-3"
-                            />
-                        ) : (
-                            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                {patient?.date_of_birth ? (
-                                    <div className="flex items-center gap-2">
-                                        <FaBirthdayCake className="text-gray-400" />
-                                        {new Date(patient.date_of_birth).toLocaleDateString()}
-                                    </div>
-                                ) : <span className="text-gray-500 italic">Not specified</span>}
-                            </div>
-                        )}
-                    </div>
+                        <div className="space-y-2">
+                            <label className="block text-sm font-medium text-gray-700">
+                                Date of Birth
+                            </label>
+                            {isEditing ? (
+                                <input
+                                    type="date"
+                                    value={formData.date_of_birth || ''}
+                                    onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
+                                    className="w-full border border-gray-300 rounded-lg p-3"
+                                />
+                            ) : (
+                                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                    {patient?.date_of_birth ? (
+                                        <div className="flex items-center gap-2">
+                                            <FaBirthdayCake className="text-gray-400" />
+                                            {new Date(patient.date_of_birth).toLocaleDateString()}
+                                        </div>
+                                    ) : <span className="text-gray-500 italic">Not specified</span>}
+                                </div>
+                            )}
+                        </div>
 
                     {/* Gender - FIXED: Only Male and Female */}
                     <div className="space-y-2">
@@ -2290,50 +2290,50 @@ const PatientDetails = () => {
 
                     {/* Contact Number */}
                     {!isIndividual && (
-                    <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                            Contact Number
-                        </label>
-                        {isEditing ? (
-                            <input
-                                type="tel"
-                                value={formData.contact_number || ''}
-                                onChange={(e) => handleInputChange('contact_number', e.target.value)}
-                                className="w-full border border-gray-300 rounded-lg p-3"
-                                placeholder="Phone number"
-                            />
-                        ) : (
-                            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                {patient?.contact_number ? (
-                                    <div className="flex items-center gap-2">
-                                        <FaPhone className="text-gray-400" />
-                                        {patient.contact_number}
-                                    </div>
-                                ) : <span className="text-gray-500 italic">Not specified</span>}
-                            </div>
-                        )}
-                    </div>
+                        <div className="space-y-2">
+                            <label className="block text-sm font-medium text-gray-700">
+                                Contact Number
+                            </label>
+                            {isEditing ? (
+                                <input
+                                    type="tel"
+                                    value={formData.contact_number || ''}
+                                    onChange={(e) => handleInputChange('contact_number', e.target.value)}
+                                    className="w-full border border-gray-300 rounded-lg p-3"
+                                    placeholder="Phone number"
+                                />
+                            ) : (
+                                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                    {patient?.contact_number ? (
+                                        <div className="flex items-center gap-2">
+                                            <FaPhone className="text-gray-400" />
+                                            {patient.contact_number}
+                                        </div>
+                                    ) : <span className="text-gray-500 italic">Not specified</span>}
+                                </div>
+                            )}
+                        </div>
 
                     {/* Address */}
                     {!isIndividual && (
-                    <div className="space-y-2 md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                            Address
-                        </label>
-                        {isEditing ? (
-                            <textarea
-                                value={formData.address || ''}
-                                onChange={(e) => handleInputChange('address', e.target.value)}
-                                rows="2"
-                                className="w-full border border-gray-300 rounded-lg p-3"
-                                placeholder="Patient's address"
-                            />
-                        ) : (
-                            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                {patient?.address || <span className="text-gray-500 italic">Not specified</span>}
-                            </div>
-                        )}
-                    </div>
+                        <div className="space-y-2 md:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700">
+                                Address
+                            </label>
+                            {isEditing ? (
+                                <textarea
+                                    value={formData.address || ''}
+                                    onChange={(e) => handleInputChange('address', e.target.value)}
+                                    rows="2"
+                                    className="w-full border border-gray-300 rounded-lg p-3"
+                                    placeholder="Patient's address"
+                                />
+                            ) : (
+                                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                    {patient?.address || <span className="text-gray-500 italic">Not specified</span>}
+                                </div>
+                            )}
+                        </div>
                     {/* Allergies */}
                     <div className="space-y-2 md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
