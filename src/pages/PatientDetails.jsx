@@ -1473,7 +1473,7 @@ const PatientDetails = () => {
                             <p className="text-gray-600">
                                 {isPediatric
                                     ? 'Pediatric vital signs with age-appropriate ranges'
-                                    : 'Record and monitor patient vital signs'}
+                                    : 'Record and monitor vital signs'}
                             </p>
                         </div>
                     </div>
@@ -2112,8 +2112,8 @@ const PatientDetails = () => {
                             <FaUser className="text-indigo-600 text-xl" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-gray-800">Patient Demographics</h2>
-                            <p className="text-gray-600">Basic patient information</p>
+                            <h2 className="text-xl font-bold text-gray-800">Demographics</h2>
+                            <p className="text-gray-600">Basic information</p>
                         </div>
                     </div>
                     {isEditing && (
@@ -2262,10 +2262,10 @@ const PatientDetails = () => {
                         )}
                     </div>
 
-                    {/* Patient Type */}
+                    {/* Age Type */}
                     <div className="space-y-2">
                         <label className="block text-sm font-medium text-gray-700">
-                            Patient Category
+                            Age Category
                         </label>
                         <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
                             {formData.patient_type ? (
