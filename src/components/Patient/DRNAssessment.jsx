@@ -99,7 +99,7 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
         }
     };
 
-    // ✅ Menu items with DTP Type included
+    // Menu items with DTP Type included
     const menuItemsData = {
         Indication: [
             { name: 'Duplicate Therapy', ruleType: 'duplicate_therapy', "DTP Type": 'Unnecessary Drug Therapy', drn: 'Indication' },
@@ -359,7 +359,6 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
             }
 
             // Fetch all medications for the patient if not provided via props
-            // 🔄 Check both tables to be safe, prioritizing reconciliation
             let medsResult = [];
             try {
                 const { data: reconData } = await supabase
@@ -393,8 +392,6 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
         }
     };
 
-
-
     const fetchClinicalRules = async () => {
         try {
             const { data, error } = await supabase
@@ -423,6 +420,7 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
 
         setIsLoading(true);
         try {
+            // FIXED: Use patient_id instead of patient_code
             const { data, error } = await supabase
                 .from('drn_assessments')
                 .select('*')
@@ -444,8 +442,6 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
             setIsLoading(false);
         }
     };
-
-
 
     const runCdssAnalysis = async (skipAck = false) => {
         if (!patientCode) return;
@@ -493,7 +489,6 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
                                     ? JSON.parse(rule.rule_action)
                                     : rule.rule_action;
 
-                                // Prefer professional message/recommendation in this component
                                 message = action.message_professional || action.message || rule.rule_name;
                                 recommendation = action.recommendation_professional || action.recommendation || getDefaultRecommendation(rule.rule_type);
 
@@ -502,11 +497,9 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
 
                                 severity = action.severity || rule.severity || 'moderate';
                                 
-                                // ✅ DYNAMIC FORMATTING - Wrap messages and recommendations
                                 message = formatAlertMessage(message, facts);
                                 recommendation = formatAlertMessage(recommendation, facts);
 
-                                // Store client view data for reference if needed
                                 rule.client_message = formatAlertMessage(clientMessage, facts);
                                 rule.client_recommendation = formatAlertMessage(clientRecommendation, facts);
                             } catch (e) {
@@ -516,16 +509,13 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
                             recommendation = formatAlertMessage(getDefaultRecommendation(rule.rule_type), facts);
                         }
                         
-                        // Ensure final formatting just in case
                         message = formatAlertMessage(message, facts);
                         recommendation = formatAlertMessage(recommendation, facts);
 
-                        // Map rule to DRN category
                         let drnCategory = 'Safety';
                         let causeName = rule.rule_name;
                         let dtpType = '';
 
-                        // Find matching category and DTP type
                         for (const [category, data] of Object.entries(drnCategories)) {
                             if (data.ruleTypes.includes(rule.rule_type)) {
                                 drnCategory = category;
@@ -622,7 +612,6 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
             let currentPatient = patientData;
             let currentMedications = medications;
 
-            // Ensure patient data is loaded and capture results directly
             if (!currentPatient) {
                 const refreshed = await loadPatientData();
                 if (refreshed) {
@@ -633,7 +622,6 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
 
             if (!currentPatient) throw new Error('Patient data not found');
 
-            // Collect patient facts for AI using the fresh data
             const facts = mapPatientToFacts(currentPatient, currentMedications);
 
             const analysisData = {
@@ -743,6 +731,7 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
         }));
     };
 
+    // FIXED: saveAssessment now uses patient_id instead of patient_code
     const saveAssessment = async (causeName) => {
         if (!userId || !patientData) {
             alert('User ID or patient data not available');
@@ -763,9 +752,9 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
         }
 
         try {
+            // FIXED: Removed patient_code field - using only patient_id
             const assessmentData = {
-                patient_id: patientData.id,
-                patient_code: patientCode,
+                patient_id: patientData.id,  // Use patient_id (UUID) instead of patient_code
                 user_id: userId,
                 drn_assessment_activity_category: selectedCategory,
                 cause: causeName,
@@ -776,19 +765,16 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
                 medication: writeUp.medication,
                 drn: causeDetails?.drn,
                 is_reportable: isReportable,
-                created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
             };
 
+            // Add created_at only for new records
             let result;
 
             if (editId !== null) {
                 const { data, error } = await supabase
                     .from('drn_assessments')
-                    .update({
-                        ...assessmentData,
-                        updated_at: new Date().toISOString()
-                    })
+                    .update(assessmentData)
                     .eq('id', editId)
                     .eq('user_id', userId)
                     .select();
@@ -796,9 +782,15 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
                 if (error) throw error;
                 result = data[0];
             } else {
+                // Add created_at for new records
+                const insertData = {
+                    ...assessmentData,
+                    created_at: new Date().toISOString()
+                };
+                
                 const { data, error } = await supabase
                     .from('drn_assessments')
-                    .insert([assessmentData])
+                    .insert([insertData])
                     .select();
 
                 if (error) throw error;
@@ -1119,7 +1111,6 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
                                                             </div>
                                                             <p className="text-sm text-gray-700 font-medium mb-3 bg-gray-50 p-2 rounded border border-gray-100 italic">Finding: {finding.message}</p>
                                                             
-                                                            {/* Added Recommendation Display */}
                                                             {finding.recommendation && (
                                                                 <div className="bg-green-50/50 border-l-4 border-green-400 p-3 rounded-r-lg mb-2">
                                                                     <div className="flex items-center gap-2 mb-1">
