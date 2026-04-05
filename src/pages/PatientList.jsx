@@ -312,7 +312,7 @@ const PatientList = () => {
                 <div className="overflow-x-auto">
                     <table className="w-full border-collapse">
                         <thead>
-                            <tr className="bg-blue-50 text-blue-900 text-xs font-bold uppercase border-b border-gray-200">
+                            <tr className="bg-blue-50 text-blue-900 text-xs font-bold border-b border-gray-200">
                                 <th className="px-6 py-4 text-left w-16">#</th>
                                 <th className="px-6 py-4 text-left">Review Details</th>
                                 <th className="px-6 py-4 text-left">Medical Condition</th>
