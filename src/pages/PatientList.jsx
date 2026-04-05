@@ -314,12 +314,12 @@ const PatientList = () => {
                         <thead>
                             <tr className="bg-blue-50 text-blue-900 text-xs font-bold uppercase border-b border-gray-200">
                                 <th className="px-6 py-4 text-left w-16">#</th>
-                                <th className="px-6 py-4 text-left">REVIEW DETAILS</th>
-                                <th className="px-6 py-4 text-left">CLINICAL STATUS</th>
+                                <th className="px-6 py-4 text-left">Review Details</th>
+                                <th className="px-6 py-4 text-left">Medical Condition</th>
                                 <th className="px-6 py-4 text-left cursor-pointer hover:bg-blue-100" onClick={() => handleSort('created_at')}>
-                                    <div className="flex items-center gap-2">LOGGED ON {getSortIcon('created_at')}</div>
+                                    <div className="flex items-center gap-2">Logged On {getSortIcon('created_at')}</div>
                                 </th>
-                                <th className="px-6 py-4 text-right">CONTROLS</th>
+                                <th className="px-6 py-4 text-right">Controls</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
