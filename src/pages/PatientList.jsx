@@ -252,7 +252,7 @@ const PatientList = () => {
                     </div>
                     <div>
                         <h1 className="text-xl md:text-2xl font-bold text-gray-800 tracking-tight">Medication Review Dashboard</h1>
-                        <p className="text-sm text-gray-500 font-medium">Manage patient medication safety and effectiveness</p>
+                        <p className="text-sm text-gray-500 font-medium">Manage medication safety and effectiveness</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
