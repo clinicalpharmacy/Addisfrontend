@@ -48,6 +48,7 @@ import PatientOutcome from '../components/Patient/PatientOutcome';
 import CostSection from '../components/Patient/CostSection';
 import CDSSDisplay from '../components/CDSS/CDSSDisplay';
 import PatientUnlocker from '../components/PatientUnlocker';
+import SupportRequestModal from '../components/Security/SupportRequestModal';
 
 import api from '../utils/api';
 import supabase from '../utils/supabase';
@@ -141,6 +142,7 @@ const PatientDetails = () => {
     const [vitalsHistory, setVitalsHistory] = useState([]);
     const [labsHistory, setLabsHistory] = useState([]);
     const [patientOwnerSalt, setPatientOwnerSalt] = useState(null);
+    const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
 
     // Effect to fetch initial data
     useEffect(() => {
@@ -3141,7 +3143,15 @@ const PatientDetails = () => {
                                     <FaSave /> <span className="hidden sm:inline">{isNewPatient ? 'Create' : 'Save'}</span>
                                 </button>
                             )}
-
+                             {/* 🛡️ Support Activation Button */}
+                            {!isNewPatient && (user?.userId === patient?.user_id || user?.id === patient?.user_id || ['admin', 'superadmin', 'specialist', 'support'].includes(String(user?.role || '').toLowerCase())) && (
+                                <button
+                                    onClick={() => setIsSupportModalOpen(true)}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
+                                >
+                                    <FaUserShield /> <span className="hidden sm:inline">Activate Support</span>
+                                </button>
+                            )}
 
                             {!isNewPatient && user?.role !== 'healthcare_client' && (
                                 <button
@@ -3238,6 +3248,18 @@ const PatientDetails = () => {
                     </div>
                 )}
 
+                {/* 🔒 SUPPORT ACTIVATION MODAL */}
+                {isSupportModalOpen && (
+                    <SupportRequestModal
+                        isOpen={isSupportModalOpen}
+                        patientId={patient?.id}
+                        ownerSalt={patientOwnerSalt}
+                        onClose={() => setIsSupportModalOpen(false)}
+                        onSuccess={() => {
+                            setIsSupportModalOpen(false);
+                        }}
+                    />
+                )}
             </div>
         </div>
     );
