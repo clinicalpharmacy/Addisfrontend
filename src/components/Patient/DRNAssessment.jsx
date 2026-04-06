@@ -8,7 +8,7 @@ import {
     FaPills, FaExclamationTriangle, FaCheckCircle, FaSpinner,
     FaHeartbeat, FaClipboardCheck, FaUserCheck,
     FaCapsules, FaSync, FaBrain, FaRobot, FaLightbulb, FaBookMedical,
-    FaRegLightbulb, FaUserShield, FaClipboardList, FaCheckCircle, FaExclamationTriangle
+    FaRegLightbulb, FaUserShield, FaClipboardList
 } from 'react-icons/fa';
 
 const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHistory: medicationProps }) => {
