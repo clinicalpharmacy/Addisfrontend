@@ -7,7 +7,7 @@ import {
     FaUserMd,
     FaArrowRight,
     FaExclamationTriangle,
-    FaShield,
+    FaUserShield,
     FaLockOpen,
     FaCheckCircle
 } from 'react-icons/fa';
@@ -33,7 +33,7 @@ const Home = () => {
                     <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                         <div className="flex items-center gap-5">
                             <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center shadow-inner border border-amber-200">
-                                <FaShield className="text-amber-600 text-3xl animate-pulse" />
+                                <FaUserShield className="text-amber-600 text-3xl animate-pulse" />
                             </div>
                             <div>
                                 <h3 className="text-xl font-black text-amber-900 tracking-tight">Security Identity Required</h3>

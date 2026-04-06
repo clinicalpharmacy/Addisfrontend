@@ -36,7 +36,7 @@ import {
     FaBrain,
     FaRobot,
     FaHistory,
-    FaShield,
+    FaUserShield,
     FaWifi
 } from 'react-icons/fa';
 
@@ -353,7 +353,7 @@ const PatientDetails = () => {
             { id: 'vitals', label: 'Vitals & Anthropometry', icon: FaHeartbeat },
             { id: 'labs', label: 'Labs', icon: FaVial },
             { id: 'medications', label: 'Medications', icon: FaPills },
-            ...(user?.role === 'healthcare_client' ? [{ id: 'analysis', label: 'Clinical Case Review', icon: FaShield }] : []),
+            ...(user?.role === 'healthcare_client' ? [{ id: 'analysis', label: 'Clinical Case Review', icon: FaUserShield }] : []),
             { id: 'drn', label: 'DRN Assessment', icon: FaRobot },
             { id: 'plan', label: 'Ph-Asst & Plan', icon: FaFileMedical },
             { id: 'outcome', label: 'Outcome', icon: FaChartLine },
@@ -2776,7 +2776,7 @@ const PatientDetails = () => {
                                 {isPediatric ? (
                                     formData.patient_type === 'neonate' ? <FaBaby className="text-white text-4xl" /> :
                                         formData.patient_type === 'infant' ? <FaBabyCarriage className="text-white text-4xl" /> :
-                                            <FaChild className="text-white text-4xl" />
+                                            <FaUserShield className="text-white text-3xl" />
                                 ) : (
                                     <FaUser className="text-white text-4xl" />
                                 )}
