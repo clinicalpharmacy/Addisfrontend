@@ -3212,10 +3212,11 @@ const PatientDetails = () => {
                             )}
 
                             {/* 🛡️ MASTER TROUBLESHOOTING TOGGLE */}
-                            {!isNewPatient && (user?.userId === patient?.user_id || user?.id === patient?.user_id) && (
+                            {!isNewPatient && (user?.userId === patient?.user_id || user?.id === patient?.user_id || ['admin', 'superadmin', 'specialist', 'support'].includes(String(user?.role || '').toLowerCase())) && (
                                 <SupportActivationPortal 
                                     patientId={patient?.id} 
                                     recipient={specialist} 
+                                    onRefresh={checkSupportStatus}
                                 />
                             )}
 
