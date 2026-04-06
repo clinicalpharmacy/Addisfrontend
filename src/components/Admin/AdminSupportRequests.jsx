@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
     FaShieldAlt, FaUserMd, FaCalendarAlt, FaChevronRight,
     FaSpinner, FaUnlock, FaLock, FaBell, FaCheck, FaTimes,
-    FaUser, FaEnvelope, FaSync, FaInbox
+    FaUser, FaEnvelope, FaSync, FaInbox, FaUserShield
 } from 'react-icons/fa';
 import api from '../../utils/api';
 
