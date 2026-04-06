@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
     FaUserMd, FaLock, FaEnvelope, FaUser, FaPhone,
     FaBuilding, FaMapMarker, FaFileInvoiceDollar,
-    FaArrowRight, FaArrowLeft, FaCheck, FaCreditCard, FaShieldAlt,
+    FaArrowRight, FaArrowLeft, FaCheck, FaCreditCard, FaShield,
     FaUserTie, FaUsers, FaStore, FaBriefcase, FaIdCard,
     FaExclamationTriangle, FaInfoCircle, FaEye, FaEyeSlash,
     FaCalendarAlt, FaChartLine, FaDatabase, FaCapsules,

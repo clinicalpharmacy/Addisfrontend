@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  FaCheck, FaTimes, FaUserTie, FaBuilding, FaShieldAlt,
+  FaCheck, FaTimes, FaUserTie, FaBuilding, FaShield,
   FaHeadset, FaCalendarAlt, FaMoneyBillWave, FaCreditCard,
   FaBuilding as FaBuildingIcon, FaUsers,
   FaArrowRight,
