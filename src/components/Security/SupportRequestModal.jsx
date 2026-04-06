@@ -106,11 +106,11 @@ const SupportRequestModal = ({ isOpen, onClose, patientId, ownerSalt, onSuccess 
                 {/* Header */}
                 <div className="bg-gradient-to-br from-blue-700 via-indigo-800 to-blue-900 p-8 text-white relative">
                     <div className="absolute top-4 right-4 text-white/40">
-                        <FaShieldAlt size={80} className="rotate-12 opacity-10" />
+                        <FaUserShield size={80} className="rotate-12 opacity-10" />
                     </div>
                     <div className="flex items-center gap-4 mb-2">
                         <div className="bg-white/20 p-3 rounded-xl backdrop-blur-md border border-white/30">
-                            <FaShieldAlt className="text-2xl text-blue-200" />
+                            <FaUserShield className="text-2xl text-blue-200" />
                         </div>
                         <h2 className="text-2xl font-black tracking-tight">Support Activation</h2>
                     </div>
@@ -241,7 +241,7 @@ const SupportRequestModal = ({ isOpen, onClose, patientId, ownerSalt, onSuccess 
                                     ) : (
                                         <>
                                             <div className="flex items-center gap-2">
-                                                <FaShieldAlt /> ACTIVATE SUPPORT
+                                                <FaUserShield /> ACTIVATE SUPPORT
                                             </div>
                                             <span className="text-[8px] opacity-70 uppercase font-black">Starts Encrypted Tunnel</span>
                                         </>
