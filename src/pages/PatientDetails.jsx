@@ -187,14 +187,18 @@ const PatientDetails = () => {
 
                 // 🌐 GLOBAL FALLBACK: Search for the system default admin
                 try {
+                    console.log("🌐 [Support] Attempting global admin fallback for: admin@pharmacare.com");
                     const searchRes = await api.get('/auth/search?email=admin@pharmacare.com');
                     if (searchRes.success && searchRes.user) {
                         console.log("📍 [Support] Using default system admin: admin@pharmacare.com");
                         setSpecialist(searchRes.user);
+                        return;
                     }
                 } catch (searchErr) {
-                    console.warn("Global support fallback failed", searchErr);
+                    console.warn("Global support fallback failed (Route likely not active or user missing):", searchErr);
                 }
+
+                console.warn("❌ [Support] ALL specialist fallbacks exhausted. Registry is empty.");
             }
         } catch (err) {
             console.warn("Failed to discover support personnel", err);

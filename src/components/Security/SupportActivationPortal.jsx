@@ -47,17 +47,12 @@ const SupportActivationPortal = ({ recipient, patientId, onRefresh }) => {
 
     const handleToggleOn = async () => {
         const target = manualRecipient || recipient;
-        if (!target?.id) {
-            alert("🔒 Secure Gateway Error: No authorized specialists found. You can try searching by specialist email below.");
-            return;
-        }
-        if (!patientId) {
-            alert("❌ Patient Context Lost: Cannot activate troubleshooting without a valid patient record identification.");
-            return;
-        }
+        if (!target?.id) return;
+        if (!patientId) return;
 
         console.log("🚀 [Support] Activating tunnel for patient:", patientId, "with specialist:", target.id);
         setGranting(true);
+        setStatusMessage(null);
         try {
             const masterKey = await getEncryptionKey();
             if (!masterKey) {
@@ -168,10 +163,10 @@ const SupportActivationPortal = ({ recipient, patientId, onRefresh }) => {
                         </div>
                         <div>
                             <p className={`text-lg font-black leading-none ${activeAccess ? 'text-green-800' : ((manualRecipient || recipient) ? 'text-gray-400' : 'text-gray-300')}`}>
-                                {!(manualRecipient || recipient) ? 'Gateway Synchronizing...' : (activeAccess ? 'Tunnel Active' : 'Tunnel Closed')}
+                                {!(manualRecipient || recipient) ? 'Gateway Locked' : (activeAccess ? 'Tunnel Active' : 'Tunnel Ready')}
                             </p>
                             <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mt-1 flex items-center gap-1">
-                                {activeAccess ? <><FaCheckCircle className="text-green-500" /> Specialist Authorised</> : ((manualRecipient || recipient) ? ((manualRecipient || recipient).public_key ? 'Secure Encryption Ready' : 'Support Specialist Setup Required') : 'Authenticating Route...')}
+                                {activeAccess ? <><FaCheckCircle className="text-green-500" /> Specialist Authorised</> : ((manualRecipient || recipient) ? ((manualRecipient || recipient).public_key ? 'Encrypted Link Ready' : 'Security Setup Required') : 'No Specialists Found')}
                             </p>
                         </div>
                     </div>
