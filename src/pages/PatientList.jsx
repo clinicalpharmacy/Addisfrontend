@@ -75,7 +75,7 @@ const PatientList = () => {
             try {
                 const payload = JSON.parse(atob(token.split('.')[1]));
                 currentRole = payload.role || '';
-            } catch (e) {}
+            } catch (e) { }
 
             const result = await api.get('/patients');
 
@@ -85,7 +85,7 @@ const PatientList = () => {
                 try {
                     const masterKey = await getEncryptionKey();
                     let privateKey = null;
-                    
+
                     const authorizedSupportRoles = ['healthcare_client', 'admin', 'pharmacist', 'company_admin', 'company_user'];
                     if (authorizedSupportRoles.includes(currentRole)) {
                         // Only attempt to load private key if we have a master key to unwrap it
@@ -93,13 +93,13 @@ const PatientList = () => {
                             privateKey = await loadPrivateKey(masterKey);
                         }
                     }
-                    
+
                     decryptedPatients = await decryptPatientList(result.patients, masterKey, privateKey);
                 } catch (encErr) {
                     console.error('❌ [Decryption Error] List decryption failed:', encErr);
                     // Continue with original (encrypted) list if decryption crashes
                 }
-                
+
                 setPatients(decryptedPatients);
                 setFilteredPatients(decryptedPatients);
             } else {
@@ -118,8 +118,8 @@ const PatientList = () => {
     const handleSearch = (e) => {
         const term = e.target.value.toLowerCase();
         setSearchTerm(term);
-        
-        const filtered = (patients || []).filter(patient => 
+
+        const filtered = (patients || []).filter(patient =>
             (patient.full_name && patient.full_name.toLowerCase().includes(term)) ||
             (patient.diagnosis && patient.diagnosis.toLowerCase().includes(term)) ||
             (patient.id && String(patient.id).toLowerCase().includes(term))
@@ -265,11 +265,10 @@ const PatientList = () => {
                     </button>
                     <button
                         onClick={handleNewPatient}
-                        className={`px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-md ${
-                            isIndividual && userRole !== 'admin' && patients.length >= 5
-                            ? 'bg-gray-400 cursor-not-allowed text-white'
-                            : 'bg-blue-600 hover:bg-blue-700 text-white transform hover:-translate-y-0.5 active:translate-y-0'
-                        }`}
+                        className={`px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-md ${isIndividual && userRole !== 'admin' && patients.length >= 5
+                                ? 'bg-gray-400 cursor-not-allowed text-white'
+                                : 'bg-blue-600 hover:bg-blue-700 text-white transform hover:-translate-y-0.5 active:translate-y-0'
+                            }`}
                     >
                         <FaPlus /> New MR Case
                     </button>
@@ -334,15 +333,20 @@ const PatientList = () => {
                                         <td className="px-6 py-5">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm shadow-sm group-hover:scale-110 transition-transform">
-                                                    {patient.full_name ? patient.full_name.charAt(0) : '?'}
+                                                    {userRole === 'healthcare_client'
+                                                        ? 'P'
+                                                        : (patient.full_name && typeof patient.full_name === 'string' && !patient.full_name.startsWith('{') ? patient.full_name.charAt(0) : '?')}
                                                 </div>
                                                 <div>
                                                     <div className="font-bold text-gray-800 text-sm leading-none mb-1">{patient.full_name || 'Anonymous User'}</div>
+                                                    <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Clinical Identifier</div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-5">
-                                            <div className="text-sm font-medium text-gray-700 italic max-w-xs truncate">"{patient.diagnosis || 'Diagnosis Pending'}"</div>
+                                            <div className="text-sm font-medium text-gray-700 italic max-w-xs truncate">
+                                                "{userRole === 'healthcare_client' ? 'Clinical Data' : (patient.diagnosis && typeof patient.diagnosis === 'string' && !patient.diagnosis.startsWith('{') ? patient.diagnosis : 'Diagnosis Pending')}"
+                                            </div>
                                         </td>
                                         <td className="px-6 py-5 text-xs text-gray-500 font-bold">
                                             {patient.created_at ? new Date(patient.created_at).toLocaleDateString() : 'N/A'}
@@ -371,7 +375,7 @@ const PatientList = () => {
                                                     Database returned zero records for your current profile. If this is unexpected, ensure your company affiliation is active.
                                                 </p>
                                             </div>
-                                            
+
                                             <div className="bg-gray-50 p-5 rounded-2xl border border-gray-200 text-[11px] font-mono text-left w-full shadow-sm">
                                                 <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-3">
                                                     <span className="font-bold text-gray-800 uppercase tracking-widest">🔍 Clinical Engine Synchronization Audit</span>

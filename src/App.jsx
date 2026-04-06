@@ -183,6 +183,12 @@ const RootRedirector = () => {
                     return <Navigate to="/company/dashboard" replace />;
                 case 'pharmacist':
                     return <Navigate to="/dashboard" replace />;
+                case 'healthcare_client':
+                    const clientId = localStorage.getItem('healthcare_client_id') || (user.email && user.email.startsWith('hcc-') ? user.email.split('@')[0].toUpperCase() : null);
+                    if (clientId) {
+                        return <Navigate to={`/patients/${clientId}`} replace />;
+                    }
+                    return <Navigate to="/dashboard" replace />;
                 default:
                     return <Navigate to="/dashboard" replace />;
             }

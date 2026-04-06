@@ -203,6 +203,13 @@ const Login = () => {
                 navigate('/admin/dashboard');
             } else if (accountType === 'company_user' || data.user_type === 'company_user') {
                 navigate('/company/dashboard');
+            } else if (role === 'healthcare_client') {
+                const clientId = data.user.healthcare_client_id || (data.user.email && data.user.email.startsWith('hcc-') ? data.user.email.split('@')[0].toUpperCase() : null);
+                if (clientId) {
+                    navigate(`/patients/${clientId}`);
+                } else {
+                    navigate('/dashboard');
+                }
             } else {
                 navigate('/dashboard');
             }
