@@ -144,7 +144,7 @@ const SupportActivationPortal = ({ recipient, patientId }) => {
                                 {!recipient ? 'Seeking Specialist...' : (activeAccess ? 'Tunnel Active' : 'Tunnel Closed')}
                             </p>
                             <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mt-1 flex items-center gap-1">
-                                {activeAccess ? <><FaCheckCircle className="text-green-500" /> Specialist Authorised</> : (recipient ? (recipient.public_key ? 'Secure Encryption Ready' : 'Security Setup Required') : 'Authenticating Route...')}
+                                {activeAccess ? <><FaCheckCircle className="text-green-500" /> Specialist Authorised</> : (recipient ? (recipient.public_key ? 'Secure Encryption Ready' : 'Admin: One-Time Security Setup Required') : 'Authenticating Route...')}
                             </p>
                         </div>
                     </div>

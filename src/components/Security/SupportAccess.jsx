@@ -58,6 +58,12 @@ const SupportAccess = () => {
 
         setGranting(true);
         try {
+            if (!admin.public_key) {
+                alert("⚠️ Specialist Security Offline: This administrator has not yet initialized their end-to-end security keys. They must go to the Support Vault and click 'Activate Specialist Credentials' before they can receive troubleshooting access.");
+                setGranting(false);
+                return;
+            }
+
             const masterKey = await getEncryptionKey();
             if (!masterKey) throw new Error("Identity verification failed. Please re-login.");
 
@@ -166,7 +172,9 @@ const SupportAccess = () => {
                                     </div>
                                     <div>
                                         <p className="font-black text-gray-800 text-sm">{admin.full_name}</p>
-                                        <p className="text-[9px] text-green-600 font-black uppercase tracking-tight">Verified Official</p>
+                                        <p className={`text-[9px] font-black uppercase tracking-tight ${admin.public_key ? 'text-green-600' : 'text-amber-600 animate-pulse'}`}>
+                                            {admin.public_key ? 'Verified Official' : 'Security Setup Required'}
+                                        </p>
                                     </div>
                                 </div>
                                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedAdminId === admin.id ? 'border-blue-600 bg-white' : 'border-gray-200'}`}>
