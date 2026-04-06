@@ -1,150 +1,162 @@
-import React from 'react';
-import { FaUserShield, FaUnlock, FaShieldAlt, FaHandshake, FaCheckCircle, FaExclamationTriangle, FaSpinner } from 'react-icons/fa';
+import React, { useState, useEffect, useCallback } from 'react';
+import { 
+    FaShieldAlt, FaUserShield, FaCheckCircle, 
+    FaSpinner, FaPowerOff, FaHandshake, FaExclamationTriangle 
+} from 'react-icons/fa';
 import api from '../../utils/api';
 import { getEncryptionKey, encryptForRecipient } from '../../utils/encryptionUtils';
 
 /**
- * 🛡️ SupportActivationPortal Component
- * Busts browser cache and provides the most updated support activation flow.
+ * 🛡️ SupportActivationPortal (Patient-Specific)
+ * Upgraded with the ON/OFF Master Toggle.
  */
-const SupportActivationPortal = () => {
-    const defaultAdminEmail = 'admin@pharmacare.com';
-    const [loading, setLoading] = React.useState(true);
-    const [granting, setGranting] = React.useState(false);
-    const [recipient, setRecipient] = React.useState(null);
-    const [error, setError] = React.useState('');
+const SupportActivationPortal = ({ recipient, patientId, ownerSalt }) => {
+    const [loading, setLoading] = useState(true);
+    const [isGranting, setIsGranting] = useState(false);
+    const [activeAccess, setActiveAccess] = useState(null);
 
-    // 🗝️ Verified Registry Fallback Key
-    const masterOfficialPublicKey = `MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAy8Dbv8PrF/096tS9W812Yp1H7P7f+L1u4H/K7v90I8j2v7o8`;
-
-    React.useEffect(() => {
-        const prepareAdmin = async () => {
-            try {
-                const res = await api.get(`/auth/search?email=${defaultAdminEmail}`);
-                if (res.success && res.user) {
-                    // Cache-Busting logic: Accept user even if keys are pending on server
-                    if (res.user.public_key || defaultAdminEmail === 'admin@pharmacare.com') {
-                        setRecipient({
-                            ...res.user,
-                            public_key: res.user.public_key || masterOfficialPublicKey
-                        });
-                        setError('');
-                    } else {
-                        setError("Security keys pending activation for this administrator.");
-                    }
-                } else {
-                    setError(res.error || "Support registry connection refused.");
-                }
-            } catch (err) {
-                console.error("Critical Connection Error:", err);
-                setError(err.error || err.message || "Establishing secure tunnel failed.");
-            } finally {
-                setLoading(false);
+    const checkCurrentAccess = useCallback(async () => {
+        if (!patientId) return;
+        setLoading(true);
+        try {
+            // Check if this specific patient already has an active grant for this specialist
+            const res = await api.get(`/access/granted?patient_id=${patientId}`);
+            if (res.success && res.request) {
+                setActiveAccess(res.request);
+            } else {
+                setActiveAccess(null);
             }
-        };
+        } catch (err) {
+            console.error("Failed to check patient access status", err);
+        } finally {
+            setLoading(false);
+        }
+    }, [patientId]);
 
-        prepareAdmin();
-    }, []);
+    useEffect(() => {
+        checkCurrentAccess();
+    }, [checkCurrentAccess]);
 
-    const handleGrantAccess = async () => {
-        if (!recipient) return;
-        setGranting(true);
+    const handleToggleOn = async () => {
+        if (!recipient?.id || !patientId || !ownerSalt) {
+            alert("❌ Missing security anchor (salt). Please reload.");
+            return;
+        }
+
+        setIsGranting(true);
         try {
             const masterKey = await getEncryptionKey();
-            if (!masterKey) throw new Error("Verification failed. Please refresh and log in.");
+            if (!masterKey) throw new Error("Verification required. Please re-login.");
 
             const rawKey = await crypto.subtle.exportKey("raw", masterKey);
-            const rawKeyBase = btoa(String.fromCharCode(...new Uint8Array(rawKey)));
-            const encryptedKey = await encryptForRecipient(rawKeyBase, recipient.public_key);
+            const rawKeyHex = Array.from(new Uint8Array(rawKey)).map(b => b.toString(16).padStart(2, '0')).join('');
+            
+            // Encrypt for the specific recipient (admin)
+            const encryptedKey = await encryptForRecipient(rawKeyHex, recipient.public_key);
 
-            const res = await api.post('/access/request', {
-                patient_id: null,
-                owner_id: JSON.parse(localStorage.getItem('user')).id,
-                requester_id: recipient.id,
-                encrypted_key: encryptedKey,
-                status: 'granted'
+            const res = await api.post('/access/support-activate', {
+                patient_id: patientId,
+                admin_id: recipient.id,
+                encrypted_key: encryptedKey
             });
 
             if (res.success) {
-                alert(`✅ Troubleshooting access SUCCESSFUL! Support session activated.`);
+                checkCurrentAccess();
             }
         } catch (err) {
-            alert("❌ Grant Failed: " + (err.error || err.message));
+            alert("❌ Activation Failed: " + err.message);
         } finally {
-            setGranting(false);
+            setIsGranting(false);
         }
     };
 
-    if (loading) return (
-        <div className="flex flex-col items-center justify-center py-20 bg-gray-50/50 rounded-[2.5rem] animate-pulse">
-            <FaSpinner className="animate-spin text-blue-600 mb-6" size={32} />
-            <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Locking Secure Socket...</p>
-        </div>
-    );
+    const handleToggleOff = async () => {
+        if (!activeAccess) return;
+        
+        setIsGranting(true);
+        try {
+            // Using the global reject/revoke logic
+            await api.post('/access/reject', { request_id: activeAccess.id });
+            setActiveAccess(null);
+            checkCurrentAccess();
+        } catch (err) {
+            alert("❌ Revoking Access Failed: " + err.message);
+        } finally {
+            setIsGranting(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center p-12 bg-white rounded-3xl animate-pulse">
+                <FaSpinner className="text-2xl text-blue-500 animate-spin mb-3" />
+                <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-[8px]">Verifying Vault Integrity...</p>
+            </div>
+        );
+    }
 
     return (
-        <div className="space-y-6 animate-fadeIn">
-            <div className="bg-gradient-to-br from-blue-700 to-indigo-900 rounded-[2.5rem] p-10 text-white shadow-2xl relative overflow-hidden">
-                <div className="absolute right-0 top-0 opacity-10">
-                    <FaShieldAlt size={280} />
-                </div>
-                <h3 className="text-3xl font-black mb-3 flex items-center gap-2">
-                    <FaUserShield /> Support Activation
-                </h3>
-                <p className="text-blue-100 font-medium max-w-lg text-lg">
-                    Authorize the official **Verified Administrator** to assist you with secure, zero-knowledge troubleshooting.
-                </p>
-                <div className="mt-10 p-5 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 inline-flex items-center gap-4">
-                    <FaCheckCircle className="text-green-300" />
-                    <span className="text-sm font-bold uppercase tracking-widest text-blue-100">Verified official: <b className="text-white">{defaultAdminEmail}</b></span>
-                </div>
+        <div className="bg-white border-2 border-blue-50 rounded-[2.5rem] p-8 shadow-sm relative overflow-hidden transition-all hover:border-blue-100">
+            {/* Background design elements */}
+            <div className="absolute -right-10 -top-10 text-blue-50 opacity-50 pointer-events-none group-hover:rotate-12 transition-transform duration-700">
+                <FaShieldAlt size={160} />
             </div>
 
-            {error ? (
-                <div className="p-10 bg-white border-2 border-dashed border-red-100 rounded-[2.5rem] flex flex-col items-center text-center shadow-sm">
-                    <FaExclamationTriangle className="text-red-500 mb-6" size={44} />
-                    <h4 className="text-xl font-black text-gray-900 mb-3">Connection Interrupted</h4>
-                    <p className="text-gray-500 font-medium max-w-sm mb-10">{error}</p>
-                    <button 
-                        onClick={() => window.location.reload()}
-                        className="px-8 py-3 bg-blue-600 text-white font-black rounded-xl hover:bg-blue-700 shadow-xl shadow-blue-100 transition-all"
-                    >
-                        Retry Security Sync
-                    </button>
-                </div>
-            ) : (
-                <div className="bg-white rounded-[2.5rem] border border-gray-100 p-10 shadow-xl shadow-blue-50/50 text-center relative overflow-hidden">
-                    <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-10 text-blue-600 shadow-inner">
-                        <FaHandshake size={48} />
+            <div className="relative z-10">
+                {/* Header Context */}
+                <div className="flex items-center gap-4 mb-8">
+                    <div className={`p-3 rounded-2xl shadow-xl transition-all ${activeAccess ? 'bg-green-600 shadow-green-100 text-white' : 'bg-blue-600 shadow-blue-100 text-white'}`}>
+                        <FaUserShield size={24} />
                     </div>
-                    <h4 className="text-2xl font-black text-gray-900 mb-4">Grant Troubleshooting Access</h4>
-                    <p className="text-gray-500 font-medium mb-10 max-w-md mx-auto text-lg leading-relaxed">
-                        By clicking below, you securely authorize **{recipient.full_name}** to assist you with a live troubleshooting session. Your data remains encrypted at all times.
-                    </p>
+                    <div>
+                        <h3 className="text-2xl font-black text-gray-900 leading-none tracking-tight">Troubleshooting Access</h3>
+                        <p className="text-gray-400 font-bold text-[10px] uppercase tracking-widest mt-1.5 flex items-center gap-2">
+                            Assigned to: <span className="text-blue-600">{recipient?.full_name || 'System Administrator'}</span>
+                        </p>
+                    </div>
+                </div>
 
-                    <button 
-                        onClick={handleGrantAccess}
-                        disabled={granting}
-                        className="w-full py-6 bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 text-white text-xl font-black rounded-3xl hover:brightness-110 shadow-2xl shadow-blue-200 active:scale-[0.98] transition-all flex items-center justify-center gap-4"
+                <p className="text-gray-500 font-medium text-xs leading-relaxed mb-8 max-w-md">
+                    Authorizing a specialist creates a secure, temporary decryption session for this patient record.
+                    Flip the toggle to <span className="text-gray-900 font-black">ON</span> to grant access now.
+                </p>
+
+                {/* THE MASTER TOGGLE CARD */}
+                <div className={`p-6 rounded-[2rem] flex items-center justify-between transition-all duration-500 border-2 ${activeAccess ? 'bg-green-50/50 border-green-200' : 'bg-gray-50 border-gray-100'}`}>
+                    <div className="flex items-center gap-4">
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${activeAccess ? 'bg-green-600 text-white shadow-lg' : 'bg-white text-gray-300 shadow-inner'}`}>
+                            <FaPowerOff size={20} className={activeAccess ? 'animate-pulse' : ''} />
+                        </div>
+                        <div>
+                            <p className={`text-lg font-black leading-none ${activeAccess ? 'text-green-800' : 'text-gray-400'}`}>
+                                {activeAccess ? 'Access Authorized' : 'Access Revoked'}
+                            </p>
+                            <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mt-1 flex items-center gap-1">
+                                {activeAccess ? <><FaCheckCircle className="text-green-500" /> Active Session Ready</> : 'Secure Encryption Priority'}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* TOGGLE SWITCH */}
+                    <button
+                        onClick={activeAccess ? handleToggleOff : handleToggleOn}
+                        disabled={isGranting || !recipient?.public_key}
+                        className={`relative w-20 h-10 rounded-full transition-all duration-300 p-1 flex items-center shadow-inner ${activeAccess ? 'bg-green-500 shadow-green-200' : 'bg-gray-300'} ${isGranting ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
-                        {granting ? (
-                            <>
-                                <FaSpinner className="animate-spin" />
-                                Opening Secure Tunnel...
-                            </>
-                        ) : (
-                            <>
-                                <FaUnlock size={24} />
-                                Authorize Support Now
-                            </>
-                        )}
+                        <div className={`w-8 h-8 bg-white rounded-full shadow-lg transform transition-transform duration-500 flex items-center justify-center ${activeAccess ? 'translate-x-10' : 'translate-x-0'}`}>
+                            {isGranting ? <FaSpinner className="animate-spin text-blue-500 text-xs" /> : <div className="w-1.5 h-1.5 bg-gray-200 rounded-full" />}
+                        </div>
                     </button>
-                    
-                    <p className="mt-8 text-[11px] text-gray-400 font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-3">
-                         <FaShieldAlt className="text-blue-100" /> Secure PKI Connection
+                </div>
+
+                {/* Warning Footer */}
+                <div className="mt-8 flex items-start gap-4 opacity-70 group-hover:opacity-100 transition-opacity">
+                    <FaExclamationTriangle className="text-amber-500 shrink-0 mt-0.5" />
+                    <p className="text-[10px] text-gray-400 italic font-medium leading-relaxed">
+                        Encryption Warning: Only authorized System Personnel with certified keys can access the decryption matrix while the toggle is active.
                     </p>
                 </div>
-            )}
+            </div>
         </div>
     );
 };

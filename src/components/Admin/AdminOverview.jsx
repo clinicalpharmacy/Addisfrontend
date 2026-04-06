@@ -34,7 +34,7 @@ export const AdminOverview = ({
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md">
                     <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
-                            <p className="text-[10px] md:text-sm text-amber-500 font-bold uppercase tracking-tight truncate">Pending</p>
+                            <p className="text-[10px] md:text-sm text-amber-500 font-bold uppercase tracking-tight truncate">Registrations</p>
                             <p className="text-xl md:text-3xl font-black text-gray-800 leading-tight">{pendingApprovalsCount || 0}</p>
                         </div>
                         <div className="p-2 md:p-3 bg-amber-50 rounded-lg flex-shrink-0">
@@ -203,8 +203,8 @@ export const AdminOverview = ({
                                 <div className="flex items-center gap-3">
                                     <FaUserCheck />
                                     <div className="text-left font-bold">
-                                        <p className="text-sm">Review Approvals</p>
-                                        <p className="text-[10px] opacity-80">Process pending nodes</p>
+                                        <p className="text-sm">Account Signups</p>
+                                        <p className="text-[10px] opacity-80">Verify new applications</p>
                                     </div>
                                 </div>
                                 {pendingApprovalsCount > 0 && (
