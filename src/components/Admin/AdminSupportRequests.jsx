@@ -208,9 +208,15 @@ export const AdminSupportRequests = () => {
                                             </p>
                                         </div>
                                         <div className="bg-gray-50 rounded-2xl p-3">
-                                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 flex items-center gap-1">
-                                                <FaCalendarAlt size={8} /> Requested
-                                            </p>
+                                            {req.patient ? (
+                                                <span className="text-[10px] bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-black uppercase flex items-center gap-1">
+                                                    <FaUnlock className="text-[8px]" /> Patient Access
+                                                </span>
+                                            ) : (
+                                                <span className="text-[10px] bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-black uppercase flex items-center gap-1">
+                                                    <FaShieldAlt className="text-[8px]" /> Global Specialist
+                                                </span>
+                                            )}
                                             <p className="text-sm font-black text-gray-700">
                                                 {req.created_at
                                                     ? new Date(req.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
@@ -345,7 +351,12 @@ export const AdminSupportRequests = () => {
                                     <button
                                         onClick={() => {
                                             const pId = req.patient?.patient_code || req.patient_id || req.patient?.id;
-                                            if (pId) navigate(`/patients/${pId}`);
+                                            if (pId) {
+                                                navigate(`/patients/${pId}`);
+                                            } else {
+                                                // Global access fallback: Navigate to patient list
+                                                navigate('/patients');
+                                            }
                                         }}
                                         className="w-full h-16 bg-gray-900 group-hover:bg-blue-600 text-white rounded-2xl font-black text-sm transition-all duration-300 flex items-center justify-center gap-3 shadow-xl shadow-gray-200 group-hover:shadow-blue-200"
                                     >
