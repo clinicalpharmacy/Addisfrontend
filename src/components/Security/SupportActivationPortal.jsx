@@ -62,11 +62,11 @@ const SupportActivationPortal = () => {
                 owner_id: JSON.parse(localStorage.getItem('user')).id,
                 requester_id: recipient.id,
                 encrypted_key: encryptedKey,
-                status: 'granted'
+                status: 'pending'
             });
 
             if (res.success) {
-                alert(`✅ Troubleshooting access SUCCESSFUL! Support session activated.`);
+                alert(`✅ Request sent successfully! An administrator will review and accept your troubleshooting request soon.`);
             }
         } catch (err) {
             alert("❌ Grant Failed: " + (err.error || err.message));
@@ -117,9 +117,9 @@ const SupportActivationPortal = () => {
                     <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-10 text-blue-600 shadow-inner">
                         <FaHandshake size={48} />
                     </div>
-                    <h4 className="text-2xl font-black text-gray-900 mb-4">Start Secure Support Session</h4>
+                    <h4 className="text-2xl font-black text-gray-900 mb-4">Request Troubleshooting Assistance</h4>
                     <p className="text-gray-500 font-medium mb-10 max-w-md mx-auto text-lg leading-relaxed">
-                        By clicking below, you grant troubleshooting access to **{recipient.full_name}**. This link is end-to-end encrypted for your safety.
+                        By clicking below, you send a secure **troubleshooting request** to **{recipient.full_name}**. The admin will review and accept your request.
                     </p>
 
                     <button 
@@ -130,12 +130,12 @@ const SupportActivationPortal = () => {
                         {granting ? (
                             <>
                                 <FaSpinner className="animate-spin" />
-                                Processing Secure Grant...
+                                Transmitting Secure Request...
                             </>
                         ) : (
                             <>
-                                <FaUnlock size={24} />
-                                Activate Troubleshooting Now
+                                <FaShieldAlt size={24} />
+                                Request Troubleshooting Now
                             </>
                         )}
                     </button>
