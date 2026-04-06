@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
     FaUserMd, FaLock, FaExclamationTriangle, FaSignInAlt,
     FaSpinner, FaUserCheck, FaBuilding, FaEnvelope, FaEye, FaEyeSlash,
-    FaShieldAlt, FaHeartbeat, FaCheckCircle, FaArrowRight, FaIdCard
+    FaShield, FaHeartbeat, FaCheckCircle, FaArrowRight, FaIdCard
 } from 'react-icons/fa';
 
 // IMPORTANT: Update this URL to your actual backend URL
@@ -40,7 +40,7 @@ const Login = () => {
     // Carousel messages for dynamic background
     const carouselMessages = [
         { icon: FaHeartbeat, text: "Digital Health", color: "from-blue-600 to-cyan-600" },
-        { icon: FaShieldAlt, text: "Enhance Patient Safety", color: "from-purple-600 to-pink-600" },
+        { icon: FaShield, text: "Enhance Patient Safety", color: "from-purple-600 to-pink-600" },
         { icon: FaCheckCircle, text: "Optimize Medicines Use", color: "from-green-600 to-teal-600" }
     ];
 
@@ -332,7 +332,7 @@ const Login = () => {
 
                 {/* Floating medical icons */}
                 <FaHeartbeat className="absolute top-20 left-20 text-white opacity-10 text-6xl animate-bounce" />
-                <FaShieldAlt className="absolute bottom-20 right-20 text-white opacity-10 text-6xl animate-bounce delay-700" />
+                <FaShield className="absolute bottom-20 right-20 text-white opacity-10 text-6xl animate-bounce delay-700" />
                 <FaUserMd className="absolute top-40 right-40 text-white opacity-10 text-6xl animate-bounce delay-300" />
             </div>
 

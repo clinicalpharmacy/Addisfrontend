@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { FaCog, FaUser, FaLock, FaShieldAlt, FaSave, FaSpinner, FaCheckCircle, FaExclamationTriangle, FaBell, FaInfoCircle, FaUnlock, FaLifeRing } from 'react-icons/fa';
+import { FaCog, FaUser, FaLock, FaShield, FaSave, FaSpinner, FaCheckCircle, FaExclamationTriangle, FaBell, FaInfoCircle, FaUnlock, FaLifeRing } from 'react-icons/fa';
 import api from '../utils/api';
 import SupportActivationPortal from '../components/Security/SupportActivationPortal';
 import SupportAccess from '../components/Security/SupportAccess';
@@ -91,7 +91,7 @@ const Settings = () => {
                         onClick={() => setActiveTab('security')}
                         className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all duration-200 ${activeTab === 'security' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-600 hover:bg-gray-100'}`}
                     >
-                        <FaShieldAlt /> <span className="font-semibold">Security</span>
+                        <FaShield /> <span className="font-semibold">Security</span>
                     </button>
                     <button
                         onClick={() => setActiveTab('access')}

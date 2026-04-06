@@ -4,7 +4,7 @@ import {
     FaUserCircle, FaSignOutAlt, FaHome, FaBookMedical,
     FaSync, FaSpinner, FaCheckCircle, FaExclamationTriangle,
     FaUserCheck, FaUsers, FaHospital, FaPills, FaComments, FaCreditCard,
-    FaChartLine, FaBuilding, FaShieldAlt
+    FaChartLine, FaBuilding, FaShield
 } from 'react-icons/fa';
 
 // Hooks
@@ -106,7 +106,7 @@ const AdminDashboard = () => {
         { id: 'users', label: 'Users', icon: FaUsers, iconColor: 'text-indigo-500' },
         { id: 'companies', label: 'Companies', icon: FaBuilding, iconColor: 'text-purple-500' },
         { id: 'subscriptions', label: 'Subscriptions', icon: FaCreditCard, iconColor: 'text-green-500' },
-        { id: 'support_access', label: 'Support Access', icon: FaShieldAlt, iconColor: 'text-amber-500' },
+        { id: 'support_access', label: 'Support Access', icon: FaShield, iconColor: 'text-amber-500' },
         { id: 'feedback', label: 'User Feedback', icon: FaComments, iconColor: 'text-pink-500' },
         { id: 'chats', label: 'Support Chats', icon: FaComments, iconColor: 'text-teal-500' }
     ];

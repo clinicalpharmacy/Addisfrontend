@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    FaShieldAlt, FaUserMd, FaCalendarAlt, 
+    FaShield, FaUserMd, FaCalendarAlt, 
     FaSpinner, FaUnlock, FaLock, FaCheck, FaTimes,
     FaEnvelope, FaSync, FaUserShield
 } from 'react-icons/fa';
@@ -191,7 +191,7 @@ export const AdminSupportRequests = () => {
                                         }}
                                         className="flex-[2] h-14 bg-gray-950 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-3 hover:bg-blue-600 hover:shadow-2xl hover:shadow-blue-200 active:scale-95 shadow-lg shadow-gray-200 hover:shadow-blue-200"
                                     >
-                                        <FaUnlock className="text-blue-400 group-hover:text-white" /> Access Data Stream
+                                        <FaShield className="text-blue-400 text-sm md:text-xl" /> Access Data Stream
                                     </button>
                                     <button
                                         onClick={() => handleRevoke(req)}

@@ -1,7 +1,7 @@
 import React from 'react';
 import {
     FaUsers, FaHospital, FaClock,
-    FaHistory, FaCog, FaUserCheck, FaUserMd, FaBuilding, FaVial, FaBriefcase
+    FaHistory, FaCog, FaUserCheck, FaUserMd, FaBuilding, FaVial, FaBriefcase, FaShield
 } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
@@ -146,7 +146,7 @@ export const AdminOverview = ({
                             <p className="text-xl md:text-3xl font-black leading-tight animate-pulse text-blue-400">SYNCED</p>
                         </div>
                         <div className="p-3 bg-white/10 backdrop-blur-md rounded-xl flex-shrink-0 border border-white/10">
-                            <FaShieldAlt className="text-blue-400 text-sm md:text-xl" />
+                            <FaShield className="text-blue-400 text-sm md:text-xl" />
                         </div>
                     </div>
                 </div>

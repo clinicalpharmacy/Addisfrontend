@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    FaShieldAlt, FaUserMd, FaCalendarAlt, 
+    FaShield, FaUserMd, FaCalendarAlt, 
     FaSpinner, FaUnlock, FaLock, FaCheck, FaTimes,
     FaEnvelope, FaSync, FaUserShield, FaSignal
 } from 'react-icons/fa';
@@ -177,7 +177,7 @@ export const SupportVault = () => {
                 /* 🛡️ SECURITY INITIALIZATION PROMPT */
                 <div className="bg-gradient-to-br from-blue-600 to-indigo-900 rounded-[3rem] p-12 text-center shadow-2xl relative overflow-hidden">
                     <div className="absolute top-0 right-0 opacity-10 scale-150 rotate-12">
-                        <FaShieldAlt size={200} />
+                        <FaShield size={200} />
                     </div>
                     <div className="relative z-10">
                         <div className="w-20 h-20 bg-white/20 backdrop-blur-xl border border-white/30 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-2xl">
