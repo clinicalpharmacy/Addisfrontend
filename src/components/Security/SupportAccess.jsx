@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-    FaLifeRing, FaShieldAlt, FaKey, FaHandshake, FaCheckCircle, 
+    FaLifeRing, FaShield, FaKey, FaHandshake, FaCheckCircle, 
     FaExclamationTriangle, FaLock, FaUserShield, FaSpinner, FaPowerOff 
 } from 'react-icons/fa';
 import api from '../../utils/api';
@@ -145,8 +145,8 @@ const SupportAccess = () => {
         <div className="space-y-8 animate-in fade-in duration-500">
              {/* Header */}
              <div className="bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm relative overflow-hidden group">
-                <div className="absolute -right-12 -top-12 text-blue-50 opacity-40 group-hover:rotate-12 transition-transform duration-1000">
-                    <FaShieldAlt size={220} />
+                <div className="absolute -left-20 -top-20 text-blue-50 opacity-10 pointer-events-none group-hover:rotate-12 transition-transform duration-1000">
+                    <FaShield size={240} />
                 </div>
                 
                 <div className="relative z-10 max-w-xl">
