@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-    FaShieldAlt, FaUserShield, FaCheckCircle, 
+    FaShieldAlt, FaUserShield, FaCheckCircle, FaLock,
     FaSpinner, FaPowerOff, FaHandshake, FaExclamationTriangle 
 } from 'react-icons/fa';
 import api from '../../utils/api';
