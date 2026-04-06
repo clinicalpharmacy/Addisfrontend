@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaUserShield, FaUnlock, FaShield, FaHandshake, FaCheckCircle, FaExclamationTriangle, FaSpinner } from 'react-icons/fa';
+import { FaUserShield, FaUnlock, FaHandshake, FaCheckCircle, FaExclamationTriangle, FaSpinner } from 'react-icons/fa';
 import api from '../../utils/api';
 import { getEncryptionKey, encryptForRecipient } from '../../utils/encryptionUtils';
 
@@ -99,7 +99,7 @@ CwIDAQAB
             {/* Header Card */}
             <div className="bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-800 rounded-[2.5rem] p-10 text-white shadow-2xl relative overflow-hidden">
                 <div className="absolute right-0 top-0 opacity-10 -translate-y-10 translate-x-10">
-                    <FaShieldAlt size={280} />
+                    <FaUserShield size={280} />
                 </div>
                 <div className="relative z-10">
                     <div className="bg-white/20 backdrop-blur-xl w-14 h-14 rounded-2xl flex items-center justify-center mb-6 border border-white/30 shadow-xl">
@@ -130,7 +130,7 @@ CwIDAQAB
                         onClick={forceInitializeDemo}
                         className="px-6 py-3 bg-blue-100 text-blue-700 font-bold rounded-2xl hover:bg-blue-200 transition-all flex items-center gap-2"
                     >
-                        <FaShieldAlt /> Initialize Support Registry (Testing Mode)
+                        <FaUserShield /> Initialize Support Registry (Testing Mode)
                     </button>
 
                     <button 
@@ -171,7 +171,7 @@ CwIDAQAB
                     </button>
                     
                     <p className="mt-8 text-[11px] text-gray-400 font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3">
-                         <FaShieldAlt className="text-blue-200" /> End-to-end Encrypted Session
+                         <FaUserShield className="text-blue-200" /> End-to-end Encrypted Session
                     </p>
                 </div>
             )}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-    FaLifeRing, FaUserShield, FaKey, FaHandshake, FaCheckCircle, 
-    FaExclamationTriangle, FaLock, FaUserShield, FaSpinner, FaPowerOff 
+    FaUserShield, FaCheckCircle, FaLock,
+    FaSpinner, FaPowerOff, FaHandshake, FaExclamationTriangle 
 } from 'react-icons/fa';
 import api from '../../utils/api';
 import { 

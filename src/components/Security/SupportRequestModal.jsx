@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaShield, FaUserShield, FaLock, FaCheckCircle, FaExclamationTriangle, FaSearch } from 'react-icons/fa';
+import { FaUserShield, FaLock, FaCheckCircle, FaExclamationTriangle, FaSearch } from 'react-icons/fa';
 import api from '../../utils/api';
 import { deriveKey, encryptForRecipient } from '../../utils/encryptionUtils';
 
