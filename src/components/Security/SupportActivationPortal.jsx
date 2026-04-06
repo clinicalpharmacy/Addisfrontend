@@ -193,12 +193,15 @@ const SupportActivationPortal = ({ recipient, patientId, onRefresh }) => {
                     </button>
                 </div>
 
-                {!(manualRecipient || recipient) && !activeAccess && (
-                    <div className="mt-8 animate-in slide-in-from-top-4 duration-500">
-                        <form onSubmit={handleManualSearch} className="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-2xl p-2 pl-5 focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white transition-all">
+                {!activeAccess && (
+                    <div className="mt-8 animate-in slide-in-from-top-4 duration-500 bg-gray-50/50 rounded-3xl p-6 border border-dashed border-gray-200">
+                        <h4 className="text-[9px] font-black uppercase text-gray-400 tracking-widest mb-4 flex items-center gap-2">
+                             <FaHandshake className="text-blue-500" /> Alternative Specialist Selection
+                        </h4>
+                        <form onSubmit={handleManualSearch} className="flex items-center gap-3 bg-white border border-gray-100 rounded-2xl p-2 pl-5 focus-within:ring-2 focus-within:ring-blue-500 shadow-sm transition-all">
                             <input
                                 type="email"
-                                placeholder="Search analyst by email..."
+                                placeholder="Link specialist via email..."
                                 value={manualEmail}
                                 onChange={(e) => setManualEmail(e.target.value)}
                                 className="flex-1 bg-transparent border-none outline-none text-xs font-medium text-gray-700"
@@ -209,7 +212,7 @@ const SupportActivationPortal = ({ recipient, patientId, onRefresh }) => {
                                 disabled={searching || !manualEmail}
                                 className="bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-blue-700 active:scale-95 transition-all"
                             >
-                                {searching ? <FaSpinner className="animate-spin" /> : 'Link Tunnel'}
+                                {searching ? <FaSpinner className="animate-spin" /> : 'Override'}
                             </button>
                         </form>
                     </div>
