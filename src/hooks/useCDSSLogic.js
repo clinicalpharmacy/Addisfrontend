@@ -22,6 +22,8 @@ export const useCDSSLogic = (patientData) => {
     const [isTestingRules, setIsTestingRules] = useState(false);
     const [testResults, setTestResults] = useState(null);
     const [rulesLoading, setRulesLoading] = useState(false);
+    // Incrementing this triggers a forced re-analysis after state commits
+    const [forceReanalysisKey, setForceReanalysisKey] = useState(0);
 
     // Use refs to prevent infinite loops
     const previousPatientId = useRef(null);
@@ -514,7 +516,11 @@ export const useCDSSLogic = (patientData) => {
         analyzePatientRef.current = analyzePatient;
     });
 
-    // Full refresh: fetch fresh rules + meds, then run analysis via the always-current ref
+    // Full refresh: fetch fresh rules + meds, then signal for forced re-analysis.
+    // We increment forceReanalysisKey AFTER both fetches complete.
+    // React will commit all state updates (rules + meds + key) and THEN run the
+    // forceReanalysisKey effect below — at which point analyzePatientRef.current
+    // already captures the freshly committed rules and medications.
     const runFullAnalysis = useCallback(async () => {
         if (!patientData?.id) {
             alert('❌ Please select a patient first');
@@ -522,11 +528,20 @@ export const useCDSSLogic = (patientData) => {
         }
         await fetchClinicalRules();
         await fetchPatientMedications();
-        // Give React time to commit the new state before running analysis
-        setTimeout(() => {
-            analyzePatientRef.current?.();
-        }, 700);
+        // Increment key → triggers the forced-analysis effect below
+        setForceReanalysisKey(k => k + 1);
     }, [patientData?.id, fetchClinicalRules, fetchPatientMedications]);
+
+    // Runs ONLY when runFullAnalysis signals a forced re-analysis.
+    // By this point React has committed the latest clinicalRules and medications,
+    // and analyzePatientRef.current points to the fresh analyzePatient closure.
+    useEffect(() => {
+        if (forceReanalysisKey === 0) return; // skip initial mount
+        if (!patientData?.id) return;
+        console.log('🚀 [CDSS] Forced re-analysis triggered (key:', forceReanalysisKey, ')');
+        analyzePatientRef.current?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [forceReanalysisKey]);
 
     // Auto-analyze ONLY when patient, rules count, or medication count genuinely changes.
     // ✅ FIX: Do NOT include `loading` or `analyzePatient` in deps — those change every
