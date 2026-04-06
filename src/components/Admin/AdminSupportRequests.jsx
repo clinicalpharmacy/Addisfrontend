@@ -92,13 +92,12 @@ export const AdminSupportRequests = () => {
         if (!window.confirm(`Reject data sharing request from ${req.owner?.full_name || 'this user'}?`)) return;
         setProcessingId(req.id);
         try {
-            await api.post('/access/revoke-support', { patient_id: req.patient_id || req.owner?.id });
-            // Soft-delete by deleting the access_request row directly
-            await api.delete?.(`/access/request/${req.id}`) || await api.post('/access/reject', { request_id: req.id });
+            await api.post('/access/reject', { request_id: req.id });
+            setSuccessMsg(`🗑️ Request from ${req.owner?.full_name || 'user'} rejected.`);
+            setTimeout(() => setSuccessMsg(''), 4000);
             fetchPendingRequests();
         } catch (err) {
-            // Even if reject endpoint doesn't exist, refresh
-            fetchPendingRequests();
+            alert('❌ Reject failed: ' + (err.error || err.message));
         } finally {
             setProcessingId(null);
         }
