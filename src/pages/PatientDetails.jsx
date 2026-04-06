@@ -48,8 +48,6 @@ import PatientOutcome from '../components/Patient/PatientOutcome';
 import CostSection from '../components/Patient/CostSection';
 import CDSSDisplay from '../components/CDSS/CDSSDisplay';
 import PatientUnlocker from '../components/PatientUnlocker';
-import SupportRequestModal from '../components/Security/SupportRequestModal';
-import SupportActivationPortal from '../components/Security/SupportActivationPortal';
 
 import api from '../utils/api';
 import supabase from '../utils/supabase';
@@ -143,10 +141,6 @@ const PatientDetails = () => {
     const [vitalsHistory, setVitalsHistory] = useState([]);
     const [labsHistory, setLabsHistory] = useState([]);
     const [patientOwnerSalt, setPatientOwnerSalt] = useState(null);
-    const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
-    const [isSupportActive, setIsSupportActive] = useState(false); // New state
-    const [activeAdminName, setActiveAdminName] = useState(''); // New state
-    const [specialist, setSpecialist] = useState(null);
 
     // Effect to fetch initial data
     useEffect(() => {
@@ -155,85 +149,6 @@ const PatientDetails = () => {
         }
     }, [patientCode, isNewPatient]);
 
-    // Check support status once patient is loaded
-    useEffect(() => {
-        if (patient?.id && !isNewPatient) {
-            checkSupportStatus();
-            fetchSupportSpecialist();
-        }
-    }, [patient?.id, isNewPatient]);
-
-    const fetchSupportSpecialist = async () => {
-        try {
-            const res = await api.get('/admin/security-users');
-            if (res.success && res.users?.length > 0) {
-                // Find someone with a key, or first one
-                const bestMatch = res.users.find(u => u.public_key) || res.users[0];
-                setSpecialist(bestMatch);
-            } else {
-                // 🛡️ FALLBACK: Robust check for CURRENT user admin identity
-                const userData = localStorage.getItem('user');
-                if (userData) {
-                    try {
-                        const localUser = JSON.parse(userData);
-                        const role = String(localUser.role || '').toLowerCase();
-                        if (['admin', 'superadmin', 'specialist', 'support'].includes(role)) {
-                            console.log(`🛡️ [Support] Discovery empty. Falling back to identity: ${localUser.full_name} (${role})`);
-                            setSpecialist(localUser);
-                            return;
-                        }
-                    } catch (e) { }
-                }
-
-                // 🌐 GLOBAL FALLBACK: Search for the system default admin
-                try {
-                    console.log("🌐 [Support] Attempting global admin fallback for: admin@pharmacare.com");
-                    const searchRes = await api.get('/auth/search?email=admin@pharmacare.com');
-                    if (searchRes.success && searchRes.user) {
-                        console.log("📍 [Support] Using default system admin: admin@pharmacare.com");
-                        setSpecialist(searchRes.user);
-                        return;
-                    }
-                } catch (searchErr) {
-                    console.warn("Global support fallback failed (Route likely not active or user missing):", searchErr);
-                }
-
-                console.warn("❌ [Support] ALL specialist fallbacks exhausted. Registry is empty.");
-            }
-        } catch (err) {
-            console.warn("Failed to discover support personnel", err);
-        }
-    };
-
-    const checkSupportStatus = async () => {
-        try {
-            const res = await api.get(`/access/granted?patient_id=${patient?.id || id}`);
-            if (res.success && res.request) {
-                setIsSupportActive(true);
-            } else {
-                setIsSupportActive(false);
-            }
-        } catch (err) {
-            console.warn("Error checking support status:", err);
-        }
-    };
-
-    const handleRevokeSupport = async () => {
-        if (!window.confirm("🔒 Termination Protocol: Are you sure you want to revoke the administrator's access to this patient record?")) {
-            return;
-        }
-
-        try {
-            const res = await api.post('/access/revoke-support', { patient_id: patient.id });
-            if (res.success) {
-                setIsSupportActive(false);
-                alert("✨ Session Terminated: The secure vault for this support session has been destroyed.");
-                checkSupportStatus();
-            }
-        } catch (err) {
-            alert("Revoke failed: " + err.message);
-        }
-    };
 
     useEffect(() => {
         if (user && !defaultTabInitialized) {
@@ -3227,14 +3142,6 @@ const PatientDetails = () => {
                                 </button>
                             )}
 
-                            {/* 🛡️ MASTER TROUBLESHOOTING TOGGLE */}
-                            {!isNewPatient && (user?.userId === patient?.user_id || user?.id === patient?.user_id || ['admin', 'superadmin', 'specialist', 'support'].includes(String(user?.role || '').toLowerCase())) && (
-                                <SupportActivationPortal 
-                                    patientId={patient?.id} 
-                                    recipient={specialist} 
-                                    onRefresh={checkSupportStatus}
-                                />
-                            )}
 
                             {!isNewPatient && user?.role !== 'healthcare_client' && (
                                 <button
@@ -3331,20 +3238,6 @@ const PatientDetails = () => {
                     </div>
                 )}
 
-                {/* 🔒 SUPPORT ACTIVATION MODAL */}
-                {isSupportModalOpen && (
-                    <SupportRequestModal
-                        isOpen={isSupportModalOpen}
-                        patientId={patient?.id}
-                        ownerSalt={patientOwnerSalt}
-                        onClose={() => setIsSupportModalOpen(false)}
-                        onSuccess={() => {
-                            setIsSupportActive(true);
-                            setIsSupportModalOpen(false);
-                            checkSupportStatus();
-                        }}
-                    />
-                )}
             </div>
         </div>
     );
