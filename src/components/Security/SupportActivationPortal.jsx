@@ -43,7 +43,17 @@ const SupportActivationPortal = ({ recipient, patientId, onRefresh }) => {
     useEffect(() => {
         setLoading(true);
         checkAccess();
-    }, [checkAccess]);
+        
+        // 🧪 RESCUE FALLBACK: Check for manually injected specialist
+        const forceSpecialist = localStorage.getItem('support_fallback_specialist');
+        if (forceSpecialist && !manualRecipient && !recipient) {
+            try {
+                const parsed = JSON.parse(forceSpecialist);
+                console.log("📍 [Support] Using manual rescue specialist:", parsed.full_name);
+                setManualRecipient(parsed);
+            } catch (e) { }
+        }
+    }, [checkAccess, manualRecipient, recipient]);
 
     const handleToggleOn = async () => {
         const target = manualRecipient || recipient;
