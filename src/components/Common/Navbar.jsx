@@ -12,7 +12,7 @@ import {
     FaSignOutAlt,
     FaBars,
     FaTimes,
-    FaShield,
+    FaUserShield,
     FaSearch,
     FaPlus
 } from 'react-icons/fa';
@@ -116,7 +116,7 @@ const Navbar = ({ onMenuClick }) => {
                                 to="/admin/dashboard"
                                 className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-purple-100 text-purple-700 hover:bg-purple-200"
                             >
-                                <FaShield />
+                                <FaUserShield />
                                 Admin
                             </Link>
                         )}
@@ -176,7 +176,7 @@ const Navbar = ({ onMenuClick }) => {
                                                 className="block px-4 py-2 text-sm text-purple-700 hover:bg-purple-50 flex items-center gap-2"
                                                 onClick={() => setShowUserMenu(false)}
                                             >
-                                                <FaShieldAlt /> Admin Dashboard
+                                                <FaUserShield /> Admin Dashboard
                                             </Link>
                                         )}
 
