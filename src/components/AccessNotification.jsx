@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaBell, FaCheck, FaTimes, FaUnlock, FaUserShield, FaExclamationCircle } from 'react-icons/fa';
 import api from '../utils/api';
-import { getEncryptionKey, encryptValue, hexToBytes, bytesToHex } from '../utils/encryptionUtils';
+import { getEncryptionKey, encryptValue, hexToBytes, bytesToHex, encryptForRecipient } from '../utils/encryptionUtils';
 
 /**
  * 🔔 AccessNotification Component
@@ -33,20 +33,26 @@ const AccessNotification = () => {
         setProcessingId(request.id);
         try {
             console.log("🛡️ [Access] Approving request for:", request.requester.full_name);
-            
             // 1. Get the current active encryption key (must be logged in)
             const masterKey = await getEncryptionKey();
             if (!masterKey) throw new Error("Key not in memory. Please log in again.");
 
-            // 2. We need to "share" access. In a true RSA system, we'd use the admin's public key.
-            // For this version, we'll mark it as approved and allow the admin to see it 
-            // if we provide a "token" derived from the patient's record.
-            
-            // SIMULATION: In this phase, we'll just approve it on the server.
-            // (Real PKI coming in next step if needed)
+            // 2. Export the Master Key to hex string format
+            const rawKey = await crypto.subtle.exportKey("raw", masterKey);
+            const masterKeyHex = Array.from(new Uint8Array(rawKey)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+            // 3. Obtain admin's public key from the request record
+            if (!request.requester?.public_key) {
+               throw new Error("Cannot share securely: Requester has no public security key.");
+            }
+
+            // 4. Encrypt the Master Key with the Admin's RSA Public Key
+            const encryptedKeyForAdmin = await encryptForRecipient(masterKeyHex, request.requester.public_key);
+
+            // 5. Submit approved ticket to the backend
             const res = await api.post('/access/approve', {
                 request_id: request.id,
-                encrypted_key: "APPROVED_BY_OWNER" 
+                encrypted_key: encryptedKeyForAdmin 
             });
 
             if (res.success) {

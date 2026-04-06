@@ -271,41 +271,18 @@ const PatientUnlocker = ({ patientData, userSalt, onUnlocked, children }) => {
                             );
                         }
 
-                        // Otherwise, show the Request Access UI for Support Staff
+                        // Otherwise, show the Restrict Access UI for Support Staff
                         return (
                             <div className="p-7 space-y-4 text-center">
-                                <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex gap-3 text-left">
-                                    <FaShieldAlt className="text-blue-600 shrink-0 mt-1" />
-                                    <p className="text-xs text-blue-800 font-medium leading-relaxed">
-                                        Administrators must be <span className="font-bold">granted access</span> by the record owner before data can be decrypted.
+                                <div className="bg-red-50 p-4 rounded-2xl border border-red-100 flex gap-3 text-left">
+                                    <FaShieldAlt className="text-red-600 shrink-0 mt-1" />
+                                    <p className="text-xs text-red-800 font-medium leading-relaxed">
+                                        This record is encrypted. You do not have permission to view it. The record owner must proactively grant you Support Access from their dashboard to generate an encrypted tunnel key.
                                     </p>
                                 </div>
-                                <button
-                                    onClick={async () => {
-                                        setIsUnlocking(true);
-                                        try {
-                                            const res = await api.post('/access/request', { 
-                                                patient_id: patientData.id,
-                                                owner_id: patientData.user_id 
-                                            });
-                                            if (res.success) {
-                                                alert("Access request sent to the record owner. You'll be notified once approved.");
-                                            }
-                                        } catch (err) {
-                                            setError("Failed to send access request.");
-                                        } finally {
-                                            setIsUnlocking(false);
-                                        }
-                                    }}
-                                    disabled={isUnlocking}
-                                    className="w-full py-4 bg-blue-600 text-white font-black rounded-2xl shadow-xl hover:bg-blue-700 active:scale-95 transition-all flex items-center justify-center gap-2"
-                                >
-                                    {isUnlocking ? <FaSpinner className="animate-spin" /> : <FaShieldAlt />}
-                                    Request Access from Owner
-                                </button>
                                 <button 
                                     onClick={() => window.history.back()}
-                                    className="text-gray-400 text-xs font-bold hover:text-gray-600 transition-colors"
+                                    className="w-full py-4 bg-gray-900 text-white font-black rounded-2xl shadow-xl hover:bg-black active:scale-95 transition-all text-sm"
                                 >
                                     Return to Dashboard
                                 </button>
