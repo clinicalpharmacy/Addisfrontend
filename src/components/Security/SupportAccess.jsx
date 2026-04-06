@@ -25,7 +25,13 @@ const SupportAccess = () => {
                 api.get('/access/my-active-grants')
             ]);
 
-            if (adminRes.success) setAdmins(adminRes.users || []);
+            if (adminRes.success) {
+                const fetchedAdmins = adminRes.users || [];
+                setAdmins(fetchedAdmins);
+                if (fetchedAdmins.length > 0) {
+                    setSelectedAdminId(fetchedAdmins[0].id);
+                }
+            }
             
             if (accessRes.success && accessRes.grants?.length > 0) {
                 const globalGrant = accessRes.grants.find(g => !g.patient_id);

@@ -49,6 +49,7 @@ import CostSection from '../components/Patient/CostSection';
 import CDSSDisplay from '../components/CDSS/CDSSDisplay';
 import PatientUnlocker from '../components/PatientUnlocker';
 import SupportRequestModal from '../components/Security/SupportRequestModal';
+import SupportActivationPortal from '../components/Security/SupportActivationPortal';
 
 import api from '../utils/api';
 import supabase from '../utils/supabase';
@@ -145,6 +146,7 @@ const PatientDetails = () => {
     const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
     const [isSupportActive, setIsSupportActive] = useState(false); // New state
     const [activeAdminName, setActiveAdminName] = useState(''); // New state
+    const [specialist, setSpecialist] = useState(null);
 
     // Effect to fetch initial data
     useEffect(() => {
@@ -157,8 +159,22 @@ const PatientDetails = () => {
     useEffect(() => {
         if (patient?.id && !isNewPatient) {
             checkSupportStatus();
+            fetchSupportSpecialist();
         }
     }, [patient?.id, isNewPatient]);
+
+    const fetchSupportSpecialist = async () => {
+        try {
+            const res = await api.get('/admin/security-users');
+            if (res.success && res.users?.length > 0) {
+                // Find a specialist or default to the first admin
+                const bestMatch = res.users.find(u => u.public_key) || res.users[0];
+                setSpecialist(bestMatch);
+            }
+        } catch (err) {
+            console.warn("Failed to discover support personnel", err);
+        }
+    };
 
     const checkSupportStatus = async () => {
         try {
@@ -3182,32 +3198,12 @@ const PatientDetails = () => {
                                 </button>
                             )}
 
-                            {/* Activate Support Button (Visible to Owner only and if NOT already active) */}
-                            {!isNewPatient && !isSupportActive && (user?.userId === patient?.user_id || user?.id === patient?.user_id) && (
-                                <button
-                                    onClick={() => setIsSupportModalOpen(true)}
-                                    className="bg-white border border-blue-200 text-blue-600 px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm shadow-sm hover:bg-blue-50 transition-all font-bold"
-                                    title="Grant encrypted access to an admin"
-                                >
-                                    <FaShieldAlt /> <span className="hidden sm:inline">Activate Support</span>
-                                </button>
-                            )}
-
-                            {/* Active Support Indicator & Revoke Button */}
-                            {isSupportActive && (user?.userId === patient?.user_id || user?.id === patient?.user_id) && (
-                                <div className="flex items-center gap-2">
-                                    <div className="bg-green-50 border border-green-200 text-green-700 px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-black uppercase tracking-widest">
-                                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                                        Support Active
-                                    </div>
-                                    <button
-                                        onClick={handleRevokeSupport}
-                                        className="bg-red-50 text-red-600 p-2 rounded-lg hover:bg-red-100 transition-colors border border-red-100"
-                                        title="Close the secure vault and revoke access"
-                                    >
-                                        <FaTimes />
-                                    </button>
-                                </div>
+                            {/* 🛡️ MASTER TROUBLESHOOTING TOGGLE */}
+                            {!isNewPatient && (user?.userId === patient?.user_id || user?.id === patient?.user_id) && (
+                                <SupportActivationPortal 
+                                    patientId={patient?.id} 
+                                    recipient={specialist} 
+                                />
                             )}
 
                             {!isNewPatient && user?.role !== 'healthcare_client' && (

@@ -108,17 +108,17 @@ const SupportActivationPortal = ({ recipient, patientId }) => {
                     </div>
                 </div>
 
-                <div className={`p-6 rounded-[2rem] flex items-center justify-between transition-all duration-500 border-2 ${activeAccess ? 'bg-green-50/50 border-green-200' : 'bg-gray-50 border-gray-100'}`}>
+                <div className={`p-6 rounded-[2rem] flex items-center justify-between transition-all duration-500 border-2 ${activeAccess ? 'bg-green-50/50 border-green-200' : (recipient ? 'bg-gray-50 border-gray-100' : 'bg-gray-50/50 border-gray-100 italic opacity-60')}`}>
                     <div className="flex items-center gap-4">
                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${activeAccess ? 'bg-green-600 text-white shadow-lg' : 'bg-white text-gray-300 shadow-inner'}`}>
-                            <FaPowerOff size={20} className={activeAccess ? 'animate-pulse' : ''} />
+                            {recipient ? <FaPowerOff size={20} className={activeAccess ? 'animate-pulse' : ''} /> : <FaSpinner className="animate-spin" />}
                         </div>
                         <div>
-                            <p className={`text-lg font-black leading-none ${activeAccess ? 'text-green-800' : 'text-gray-400'}`}>
-                                {activeAccess ? 'Tunnel Active' : 'Tunnel Closed'}
+                            <p className={`text-lg font-black leading-none ${activeAccess ? 'text-green-800' : (recipient ? 'text-gray-400' : 'text-gray-300')}`}>
+                                {!recipient ? 'Seeking Specialist...' : (activeAccess ? 'Tunnel Active' : 'Tunnel Closed')}
                             </p>
                             <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mt-1 flex items-center gap-1">
-                                {activeAccess ? <><FaCheckCircle className="text-green-500" /> Specialist Authorised</> : 'Secure Encryption Mode'}
+                                {activeAccess ? <><FaCheckCircle className="text-green-500" /> Specialist Authorised</> : (recipient ? 'Secure Encryption Mode' : 'Authenticating Route...')}
                             </p>
                         </div>
                     </div>
@@ -126,7 +126,7 @@ const SupportActivationPortal = ({ recipient, patientId }) => {
                     <button
                         onClick={activeAccess ? handleToggleOff : handleToggleOn}
                         disabled={granting || !recipient?.public_key}
-                        className={`relative w-20 h-10 rounded-full transition-all duration-300 p-1 flex items-center shadow-inner ${activeAccess ? 'bg-green-500' : 'bg-gray-300'} ${granting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className={`relative w-20 h-10 rounded-full transition-all duration-300 p-1 flex items-center shadow-inner ${activeAccess ? 'bg-green-500' : 'bg-gray-300'} ${granting || !recipient ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                         <div className={`w-8 h-8 bg-white rounded-full shadow-lg transform transition-transform duration-500 flex items-center justify-center ${activeAccess ? 'translate-x-10' : 'translate-x-0'}`}>
                             {granting ? <FaSpinner className="animate-spin text-blue-500 text-[10px]" /> : <div className="w-1.5 h-1.5 bg-gray-200 rounded-full" />}
