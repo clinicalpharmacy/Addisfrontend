@@ -21,6 +21,7 @@ export const useCDSSLogic = (patientData) => {
     const [isInitialLoad, setIsInitialLoad] = useState(true);
     const [isTestingRules, setIsTestingRules] = useState(false);
     const [testResults, setTestResults] = useState(null);
+    const [rulesLoading, setRulesLoading] = useState(false);
 
     // Use refs to prevent infinite loops
     const previousPatientId = useRef(null);
@@ -32,6 +33,7 @@ export const useCDSSLogic = (patientData) => {
             console.log('📋 Fetching clinical rules from backend API...');
             let debugText = '📋 Fetching clinical rules...\n';
             setDebugInfo(prev => prev + debugText);
+            setRulesLoading(true);
 
             const result = await api.get('/clinical-rules');
 
@@ -64,6 +66,8 @@ export const useCDSSLogic = (patientData) => {
             console.error('❌ Error fetching rules:', error);
             setDebugInfo(prev => prev + `❌ Exception fetching rules: ${error.message}\n`);
             setClinicalRules(sampleTestRules);
+        } finally {
+            setRulesLoading(false);
         }
     }, []);
 
@@ -581,6 +585,7 @@ export const useCDSSLogic = (patientData) => {
         toggleExpandAlert,
         expandedAlert,
         lastAnalysisTime,
-        patientFacts
+        patientFacts,
+        rulesLoading
     };
 };
