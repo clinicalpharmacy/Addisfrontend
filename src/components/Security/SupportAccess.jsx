@@ -178,10 +178,10 @@ const SupportAccess = () => {
                         <button
                             onClick={activeAccess ? handleToggleOff : handleToggleOn}
                             disabled={granting || (!activeAccess && !selectedAdminId && !manualRecipient)}
-                            className={`relative w-20 h-10 rounded-full transition-all duration-500 p-1 flex items-center shadow-inner ${activeAccess ? 'bg-green-500' : ((manualRecipient || admins.find(a => a.id === selectedAdminId))?.public_key ? 'bg-blue-500' : 'bg-gray-300')} ${granting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            className={`relative w-20 h-10 rounded-full transition-all duration-500 p-1 flex items-center shadow-inner ${activeAccess ? 'bg-green-500' : ((manualRecipient || admins.find(a => a.id === selectedAdminId)) ? 'bg-blue-600 shadow-[0_0_15px_rgba(59,130,246,0.2)]' : 'bg-gray-300')} ${granting ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                             <div className={`w-8 h-8 bg-white rounded-full shadow-lg transform transition-transform duration-500 flex items-center justify-center ${activeAccess ? 'translate-x-10' : 'translate-x-0'}`}>
-                                {granting ? <FaSpinner className="animate-spin text-blue-500 text-[10px]" /> : ((manualRecipient || admins.find(a => a.id === selectedAdminId))?.public_key ? <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" /> : <div className="w-1.5 h-1.5 bg-gray-200 rounded-full" />)}
+                                {granting ? <FaSpinner className="animate-spin text-blue-500 text-[10px]" /> : ((manualRecipient || admins.find(a => a.id === selectedAdminId))?.public_key ? <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" /> : <div className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse" />)}
                             </div>
                         </button>
                     </div>
