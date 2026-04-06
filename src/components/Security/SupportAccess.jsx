@@ -188,15 +188,20 @@ const SupportAccess = () => {
                 </div>
             </div>
 
-            {/* 🛠️ SECURITY REPAIR PROTOCOL */}
-            {!activeAccess && !admins.length && !manualRecipient && (
-                <div className="bg-amber-50 border border-amber-100 rounded-[2.5rem] p-8 space-y-4">
+            {/* 🛠️ SECURITY REPAIR PROTOCOL: Show if registry empty OR specialist needs keys */}
+            {!activeAccess && (!(manualRecipient || admins.find(a => a.id === selectedAdminId))?.public_key) && (
+                <div className="bg-amber-50 border border-amber-100 rounded-[2.5rem] p-8 space-y-4 animate-in fade-in zoom-in duration-500 shadow-sm">
                     <div className="flex items-center gap-3">
                         <FaExclamationTriangle className="text-amber-500" size={20} />
-                        <h4 className="font-black text-amber-900">Security Handshake Required</h4>
+                        <h4 className="font-black text-amber-900">
+                             {!(manualRecipient || admins.find(a => a.id === selectedAdminId)) ? 'Registry Offline' : 'Security Setup Required'}
+                        </h4>
                     </div>
-                    <p className="text-xs font-medium text-amber-800/70 leading-relaxed">
-                        The troubleshooting registry is currently offline. To enable the privacy toggle, you must first initialize your own security credentials to act as your own support specialist.
+                    <p className="text-xs font-medium text-amber-800/70 leading-relaxed max-w-lg">
+                        {!(manualRecipient || admins.find(a => a.id === selectedAdminId)) 
+                           ? "The troubleshooting registry is currently offline. To enable the privacy toggle, you must first initialize your own security credentials to act as your own support specialist."
+                           : "The selected specialist was found, but their security vault is not yet initialized. You can fix this immediately by initializing your own gateway credentials below."
+                        }
                     </p>
                     <button
                         onClick={async () => {
@@ -232,7 +237,7 @@ const SupportAccess = () => {
                             }
                         }}
                         disabled={searching}
-                        className="bg-amber-600 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-amber-700 active:scale-95 transition-all"
+                        className="bg-amber-600 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-amber-700 active:scale-95 transition-all shadow-lg shadow-amber-200"
                     >
                         {searching ? <FaSpinner className="animate-spin" /> : <><FaKey /> Initialize System Access</>}
                     </button>
