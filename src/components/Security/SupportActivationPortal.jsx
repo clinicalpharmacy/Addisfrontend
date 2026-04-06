@@ -16,7 +16,10 @@ const SupportActivationPortal = ({ recipient, patientId }) => {
     const [activeAccess, setActiveAccess] = useState(null);
 
     const checkAccess = useCallback(async () => {
-        if (!patientId) return;
+        if (!patientId) {
+            setLoading(false);
+            return;
+        }
         try {
             const res = await api.get(`/access/granted?patient_id=${patientId}`);
             if (res.success && res.request) {

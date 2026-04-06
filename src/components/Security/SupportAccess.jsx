@@ -35,6 +35,7 @@ const SupportAccess = () => {
             }
         } catch (err) {
             console.error("Troubleshooting sync error", err);
+            setActiveAccess(null);
         } finally {
             setLoading(false);
         }
