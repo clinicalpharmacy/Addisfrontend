@@ -171,14 +171,17 @@ const PatientDetails = () => {
                 const bestMatch = res.users.find(u => u.public_key) || res.users[0];
                 setSpecialist(bestMatch);
             } else {
-                // 🛡️ FALLBACK: If discovery fails, check if CURRENT user is an admin
+                // 🛡️ FALLBACK: Robust check for CURRENT user admin identity
                 const userData = localStorage.getItem('user');
                 if (userData) {
-                    const localUser = JSON.parse(userData);
-                    if (localUser.role === 'admin') {
-                        console.log("🛡️ [Support] Discovery empty. Falling back to current admin user identity.");
-                        setSpecialist(localUser);
-                    }
+                    try {
+                        const localUser = JSON.parse(userData);
+                        const role = String(localUser.role || '').toLowerCase();
+                        if (['admin', 'superadmin', 'specialist', 'support'].includes(role)) {
+                            console.log(`🛡️ [Support] Discovery empty. Falling back to identity: ${localUser.full_name} (${role})`);
+                            setSpecialist(localUser);
+                        }
+                    } catch (e) { console.warn("Failed to parse local user for specialist fallback"); }
                 }
             }
         } catch (err) {
