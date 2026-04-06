@@ -6,6 +6,10 @@ import {
     FaEnvelope, FaSync, FaUserShield, FaSignal
 } from 'react-icons/fa';
 import api from '../../utils/api';
+import { 
+    deriveKey, generateUserKeyPair, exportPublicKey, 
+    wrapPrivateKey, persistKeyToSession 
+} from '../../utils/encryptionUtils';
 
 /**
  * 🔐 SupportVault Component
@@ -19,6 +23,13 @@ export const SupportVault = () => {
     const [activeLoading, setActiveLoading] = useState(true);
     const [activeError, setActiveError] = useState('');
     const [successMsg, setSuccessMsg] = useState('');
+    
+    // Security Init state
+    const [currentUser, setCurrentUser] = useState(null);
+    const [isInitializing, setIsInitializing] = useState(false);
+    const [showInitModal, setShowInitModal] = useState(false);
+    const [password, setPassword] = useState('');
+    const [initError, setInitError] = useState('');
 
     const fetchActivePatients = useCallback(async () => {
         setActiveLoading(true);
@@ -38,8 +49,66 @@ export const SupportVault = () => {
     }, []);
 
     useEffect(() => {
+        const userData = localStorage.getItem('user');
+        if (userData) {
+            const user = JSON.parse(userData);
+            setCurrentUser(user);
+        }
         fetchActivePatients();
     }, [fetchActivePatients]);
+
+    const handleInitializeSecurity = async (e) => {
+        if (e) e.preventDefault();
+        setIsInitializing(true);
+        setInitError('');
+        
+        try {
+            const salt = currentUser?.encryption_salt || localStorage.getItem('enc_salt');
+            if (!salt) throw new Error("Security seed (salt) is missing. Please re-login.");
+            
+            // 1. Derive Master AES Key from password
+            const masterKey = await deriveKey(password, salt);
+            
+            // 2. Generate RSA Keypair
+            const keyPair = await generateUserKeyPair();
+            
+            // 3. Export Public Key (Base64)
+            const pubKeyBase64 = await exportPublicKey(keyPair.publicKey);
+            
+            // 4. Wrap (Encrypt) Private Key with Master AES Key
+            const wrappedPrivKey = await wrapPrivateKey(keyPair.privateKey, masterKey);
+            
+            // 5. Sync to Backend
+            const res = await api.post('/auth/update-encryption-keys', {
+                public_key: pubKeyBase64,
+                private_key_encrypted: wrappedPrivKey
+            });
+            
+            if (res.success) {
+                // Update local user object
+                const updatedUser = { 
+                    ...currentUser, 
+                    public_key: pubKeyBase64, 
+                    private_key_encrypted: wrappedPrivKey 
+                };
+                setCurrentUser(updatedUser);
+                localStorage.setItem('user', JSON.stringify(updatedUser));
+                
+                // Cache the master key for this session
+                await persistKeyToSession(masterKey);
+                
+                setSuccessMsg("🛡️ Security Initialized! You are now an active specialist.");
+                setShowInitModal(false);
+                setTimeout(() => setSuccessMsg(''), 5000);
+            } else {
+                throw new Error(res.error || "Remote sync failed.");
+            }
+        } catch (err) {
+            setInitError(err.message || "Key generation failed.");
+        } finally {
+            setIsInitializing(false);
+        }
+    };
 
     const handleRevoke = async (req) => {
         if (!window.confirm(`Terminate session with ${req.owner?.full_name || 'this user'}?`)) return;
@@ -103,6 +172,28 @@ export const SupportVault = () => {
             ) : activeError ? (
                 <div className="p-8 bg-red-50/50 rounded-[2rem] border border-red-100 text-center">
                     <p className="text-red-500 font-bold text-xs">{activeError}</p>
+                </div>
+            ) : !currentUser?.public_key ? (
+                /* 🛡️ SECURITY INITIALIZATION PROMPT */
+                <div className="bg-gradient-to-br from-blue-600 to-indigo-900 rounded-[3rem] p-12 text-center shadow-2xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 opacity-10 scale-150 rotate-12">
+                        <FaShieldAlt size={200} />
+                    </div>
+                    <div className="relative z-10">
+                        <div className="w-20 h-20 bg-white/20 backdrop-blur-xl border border-white/30 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-2xl">
+                            <FaUserShield className="text-white text-3xl" />
+                        </div>
+                        <h3 className="text-3xl font-black text-white mb-2 tracking-tight">Security Setup Required</h3>
+                        <p className="text-blue-100/70 font-medium max-w-sm mx-auto leading-relaxed text-sm mb-10">
+                            To view troubleshooting sessions and shared data, you must initialize your end-to-end security keys.
+                        </p>
+                        <button
+                            onClick={() => setShowInitModal(true)}
+                            className="bg-white text-blue-900 px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl hover:scale-105 active:scale-95 transition-all"
+                        >
+                            Activate Specialist Credentials
+                        </button>
+                    </div>
                 </div>
             ) : activePatients.length === 0 ? (
                 <div className="bg-white/40 border-2 border-dashed border-gray-100 rounded-[3rem] p-24 text-center group hover:border-blue-100 transition-all duration-500">
@@ -203,6 +294,66 @@ export const SupportVault = () => {
                             </div>
                         </div>
                     ))}
+                </div>
+            )}
+
+            {/* 🔒 INITIALIZATION MODAL */}
+            {showInitModal && (
+                <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 bg-gray-950/40 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden border border-gray-100 animate-in zoom-in-95 duration-300">
+                        <div className="p-10 space-y-8">
+                            <div className="text-center">
+                                <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-blue-600">
+                                    <FaLock size={24} />
+                                </div>
+                                <h3 className="text-2xl font-black text-gray-900 tracking-tight">Security Authorization</h3>
+                                <p className="text-gray-400 font-medium text-[11px] uppercase tracking-widest mt-2 px-6 leading-relaxed">
+                                    Enter your password to derive the master encryption key locally.
+                                </p>
+                            </div>
+
+                            <form onSubmit={handleInitializeSecurity} className="space-y-6">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Account Password</label>
+                                    <input
+                                        type="password"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        className="w-full h-14 px-6 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none text-gray-800 font-medium shadow-inner"
+                                        placeholder="••••••••"
+                                        required
+                                    />
+                                </div>
+
+                                {initError && (
+                                    <div className="bg-red-50 text-red-500 p-4 rounded-xl text-[10px] font-bold border border-red-100 animate-shake">
+                                        ⚠️ {initError}
+                                    </div>
+                                )}
+
+                                <div className="flex gap-4 pt-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowInitModal(false)}
+                                        className="flex-1 h-14 text-gray-400 font-bold text-xs uppercase tracking-widest hover:text-gray-600 transition-all"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={isInitializing || !password}
+                                        className={`flex-[2] h-14 bg-gray-950 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${isInitializing ? 'opacity-50' : 'hover:bg-blue-600 hover:shadow-xl hover:shadow-blue-200'}`}
+                                    >
+                                        {isInitializing ? (
+                                            <FaSpinner className="animate-spin mx-auto text-lg" />
+                                        ) : (
+                                            'Initialise Sector'
+                                        )}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

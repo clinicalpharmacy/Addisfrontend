@@ -139,6 +139,18 @@ export const AdminOverview = ({
                     </div>
                 </div>
 
+                <div className="bg-gradient-to-br from-gray-900 to-blue-900 rounded-xl shadow-lg border border-blue-800/10 p-4 md:p-6 transition-all hover:scale-[1.02] cursor-pointer" onClick={() => onTabChange('support_access')}>
+                    <div className="flex items-center justify-between gap-2 text-white">
+                        <div className="min-w-0">
+                            <p className="text-[10px] md:text-sm text-blue-200/60 font-black uppercase tracking-widest truncate">Active Vaults</p>
+                            <p className="text-xl md:text-3xl font-black leading-tight animate-pulse text-blue-400">SYNCED</p>
+                        </div>
+                        <div className="p-3 bg-white/10 backdrop-blur-md rounded-xl flex-shrink-0 border border-white/10">
+                            <FaShieldAlt className="text-blue-400 text-sm md:text-xl" />
+                        </div>
+                    </div>
+                </div>
+
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md border-l-4 border-red-500 cursor-pointer" onClick={() => onTabChange('users')}>
                     <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
