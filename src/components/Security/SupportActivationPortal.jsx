@@ -17,6 +17,7 @@ const SupportActivationPortal = ({ recipient, patientId, onRefresh }) => {
     const [manualEmail, setManualEmail] = useState('');
     const [manualRecipient, setManualRecipient] = useState(null);
     const [activeAccess, setActiveAccess] = useState(null);
+    const [globalActive, setGlobalActive] = useState(false); // 🌐 Global Gateway status
 
     const checkAccess = useCallback(async () => {
         if (!patientId) {
@@ -24,6 +25,7 @@ const SupportActivationPortal = ({ recipient, patientId, onRefresh }) => {
             return;
         }
         try {
+            // 1. Check patient-specific access
             const res = await api.get(`/access/granted?patient_id=${patientId}`);
             if (res.success && res.request) {
                 setActiveAccess(res.request);
@@ -33,12 +35,19 @@ const SupportActivationPortal = ({ recipient, patientId, onRefresh }) => {
             } else {
                 setActiveAccess(null);
             }
+
+            // 2. Check GLOBAL access for the recipient (Gateway Status)
+            const target = manualRecipient || recipient;
+            if (target?.id) {
+                const globalRes = await api.get(`/access/granted?admin_id=${target.id}`);
+                setGlobalActive(!!(globalRes.success && globalRes.request));
+            }
         } catch (err) {
             console.error("Patient access sync error", err);
         } finally {
             setLoading(false);
         }
-    }, [patientId]);
+    }, [patientId, manualRecipient, recipient]);
 
     useEffect(() => {
         setLoading(true);
@@ -172,33 +181,31 @@ const SupportActivationPortal = ({ recipient, patientId, onRefresh }) => {
                             {(manualRecipient || recipient) ? <FaPowerOff size={20} className={activeAccess ? 'animate-pulse' : ''} /> : <FaSpinner className="animate-spin" />}
                         </div>
                         <div>
-                            <p className={`text-lg font-black leading-none ${activeAccess ? 'text-green-800' : ((manualRecipient || recipient) ? 'text-gray-400' : 'text-gray-300')}`}>
-                                {!(manualRecipient || recipient) ? 'Gateway Locked' : (activeAccess ? 'Tunnel Active' : 'Tunnel Ready')}
+                            <p className={`text-lg font-black leading-none ${activeAccess ? 'text-green-800' : (!globalActive ? 'text-rose-600' : ((manualRecipient || recipient) ? 'text-gray-400' : 'text-gray-300'))}`}>
+                                {!globalActive ? 'Gateway Locked' : (!(manualRecipient || recipient) ? 'Gateway Ready' : (activeAccess ? 'Tunnel Active' : 'Tunnel Ready'))}
                             </p>
                             <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mt-1 flex items-center gap-1">
-                                {activeAccess ? <><FaCheckCircle className="text-green-500" /> Specialist Authorised</> : ((manualRecipient || recipient) ? ((manualRecipient || recipient).public_key ? 'Encrypted Link Ready' : 'Security Setup Required') : 'No Specialists Found')}
+                                {activeAccess ? <><FaCheckCircle className="text-green-500" /> Specialist Authorised</> : (!globalActive ? <><FaLock className="text-rose-500" /> Master Connection Closed</> : ((manualRecipient || recipient) ? ((manualRecipient || recipient).public_key ? 'Encrypted Link Ready' : 'Security Setup Required') : 'Waiting for Specialist...'))}
                             </p>
                         </div>
                     </div>
 
                     <button
                         onClick={() => {
+                            if (!globalActive) {
+                                alert("🔒 Master Gateway Locked: The troubleshoot specialist must first activate their global connection before you can grant them access to this record.");
+                                return;
+                            }
                             const target = manualRecipient || recipient;
-                            if (!target) {
-                                alert("🔒 Secure Gateway Error: No authorized specialists found in the registry. Troubleshooting cannot be activated until a support specialist initializes the Secure Vault.");
-                                return;
-                            }
-                            if (!target.public_key) {
-                                alert("🛡️ Specialist Handshake Required: The authorized specialist is found, but their security credentials are not yet initialized. Please contact technical support to activate the Gateway.");
-                                return;
-                            }
+                            if (!target) return;
+                            if (!target.public_key) return;
                             activeAccess ? handleToggleOff() : handleToggleOn();
                         }}
-                        disabled={granting}
-                        className={`relative w-20 h-10 rounded-full transition-all duration-300 p-1 flex items-center shadow-inner ${activeAccess ? 'bg-green-500' : ((manualRecipient || recipient)?.public_key ? 'bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'bg-gray-300')} ${granting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        disabled={granting || (!activeAccess && !globalActive)}
+                        className={`relative w-20 h-10 rounded-full transition-all duration-300 p-1 flex items-center shadow-inner ${activeAccess ? 'bg-green-500' : (!globalActive ? 'bg-gray-300' : ((manualRecipient || recipient)?.public_key ? 'bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'bg-gray-300'))} ${granting ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                         <div className={`w-8 h-8 bg-white rounded-full shadow-lg transform transition-transform duration-500 flex items-center justify-center ${activeAccess ? 'translate-x-10' : 'translate-x-0'}`}>
-                            {granting ? <FaSpinner className="animate-spin text-blue-500 text-[10px]" /> : ((manualRecipient || recipient)?.public_key ? <div className="w-1.5 h-1.5 bg-blue-500 rounded-full shadow-[0_0_5px_rgba(59,130,246,0.5)]" /> : <div className="w-1.5 h-1.5 bg-gray-200 rounded-full" />)}
+                            {granting ? <FaSpinner className="animate-spin text-blue-500 text-[10px]" /> : (!globalActive ? <FaLock className="text-gray-300 text-[10px]" /> : ((manualRecipient || recipient)?.public_key ? <div className="w-1.5 h-1.5 bg-blue-500 rounded-full shadow-[0_0_5px_rgba(59,130,246,0.5)]" /> : <div className="w-1.5 h-1.5 bg-gray-200 rounded-full" />))}
                         </div>
                     </button>
                 </div>
@@ -225,6 +232,18 @@ const SupportActivationPortal = ({ recipient, patientId, onRefresh }) => {
                                 {searching ? <FaSpinner className="animate-spin" /> : 'Override'}
                             </button>
                         </form>
+                    </div>
+                )}
+
+                {!globalActive && (
+                    <div className="mt-8 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-4">
+                        <FaExclamationTriangle className="text-rose-500 shrink-0 mt-0.5" />
+                        <div>
+                            <p className="text-xs font-black text-rose-900 leading-none mb-1">Master Connection Required</p>
+                            <p className="text-[10px] text-rose-800/60 font-medium leading-relaxed">
+                                This specialist is currently non-addressable. They must open their global troubleshoot connection in settings before you can establish an encrypted tunnel.
+                            </p>
+                        </div>
                     </div>
                 )}
 
