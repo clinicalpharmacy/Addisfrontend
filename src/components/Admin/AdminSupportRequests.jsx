@@ -303,72 +303,79 @@ export const AdminSupportRequests = () => {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-                        {activePatients.map(req => (
-                            <div
-                                key={req.id}
-                                className="bg-white rounded-[32px] border border-gray-100 shadow-sm hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-500 group relative overflow-hidden"
-                            >
-                                <div className="absolute -top-12 -right-12 w-32 h-32 bg-blue-50/30 rounded-full blur-3xl group-hover:bg-blue-100/50 transition-colors" />
-                                <div className="p-8 relative">
-                                    <div className="flex items-start justify-between mb-8">
-                                        <div className="w-14 h-14 bg-blue-600/5 rounded-2xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all duration-500 shadow-inner">
-                                            <FaUserMd size={24} />
-                                        </div>
-                                        <div className="text-right">
-                                            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 text-green-600 rounded-full border border-green-100">
-                                                <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                                                <span className="text-[10px] font-black uppercase tracking-wider">Vault Active</span>
-                                            </div>
+                        {activePatients.map((req) => (
+                            <div key={req.id} className="group relative bg-white border border-gray-100 rounded-[2.5rem] p-8 transition-all duration-500 hover:shadow-[0_40px_80px_-20px_rgba(37,99,235,0.15)] hover:-translate-y-2 overflow-hidden">
+                                {/* Session Status Overlay */}
+                                <div className="absolute top-0 right-0 p-6">
+                                    <div className="flex items-center gap-2 bg-green-50 text-green-600 px-3 py-1.5 rounded-full border border-green-100 scale-90 group-hover:scale-100 transition-transform">
+                                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                                        <span className="text-[9px] font-black uppercase tracking-widest">Live Session</span>
+                                    </div>
+                                </div>
+
+                                {/* Identity Section */}
+                                <div className="flex items-center gap-6 mb-8 mt-4">
+                                    <div className="w-16 h-16 bg-blue-600 rounded-3xl flex items-center justify-center text-white shadow-xl shadow-blue-200 group-hover:rotate-6 transition-all duration-500">
+                                        <FaUserShield size={28} />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <h4 className="text-xl font-black text-gray-900 truncate">
+                                            {req.patient?.full_name || 'Global Account'}
+                                        </h4>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest truncate max-w-[120px]">
+                                                {req.owner?.full_name || 'Anonymous User'}
+                                            </span>
+                                            <div className="w-1 h-1 bg-gray-200 rounded-full" />
+                                            <span className="text-[10px] font-bold text-blue-500">
+                                                {req.patient ? 'Patient-Link' : 'Global Access'}
+                                            </span>
                                         </div>
                                     </div>
-                                    <div className="space-y-2 mb-8">
-                                        <h3 className="text-2xl font-black text-gray-900 tracking-tight group-hover:text-blue-600 transition-colors">
-                                            {req.patient?.full_name || 'Anonymous Record'}
-                                        </h3>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em]">Patient Code</span>
-                                            <code className="text-xs font-black bg-gray-100 px-2 py-0.5 rounded text-gray-800">{req.patient?.patient_code || '---'}</code>
-                                        </div>
+                                </div>
+
+                                {/* Security Details */}
+                                <div className="grid grid-cols-2 gap-4 mb-8">
+                                    <div className="bg-gray-50/80 rounded-2xl p-4 border border-gray-100 transition-colors group-hover:border-blue-100 group-hover:bg-blue-50/20">
+                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 flex items-center gap-1">
+                                            <FaLock size={8} className="text-blue-500" /> Patient Code
+                                        </p>
+                                        <p className="text-xs font-black text-gray-700 tracking-tight">
+                                            {req.patient?.patient_code || '--- ---'}
+                                        </p>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4 mb-8">
-                                        <div className="p-4 bg-gray-50/50 rounded-2xl border border-gray-100/50">
-                                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
-                                                <FaCalendarAlt size={10} /> Granted On
-                                            </p>
-                                            <p className="text-sm font-black text-gray-800">
-                                                {req.approved_at
-                                                    ? new Date(req.approved_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
-                                                    : '—'}
-                                            </p>
-                                        </div>
-                                        <div className="p-4 bg-gray-50/50 rounded-2xl border border-gray-100/50">
-                                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
-                                                <FaShieldAlt size={10} /> Originator
-                                            </p>
-                                            <p className="text-sm font-black text-gray-800 truncate">{req.owner?.full_name?.split(' ')[0] || 'System'}</p>
-                                        </div>
+                                    <div className="bg-gray-50/80 rounded-2xl p-4 border border-gray-100 transition-colors group-hover:border-blue-100 group-hover:bg-blue-50/20">
+                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 flex items-center gap-1">
+                                            <FaCalendarAlt size={8} className="text-indigo-500" /> Access Starts
+                                        </p>
+                                        <p className="text-xs font-black text-gray-700">
+                                            {req.approved_at ? new Date(req.approved_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'Pending'}
+                                        </p>
                                     </div>
+                                </div>
+
+                                {/* Action Tunnel */}
+                                <div className="flex gap-3">
                                     <button
                                         onClick={() => {
                                             const pId = req.patient?.patient_code || req.patient_id || req.patient?.id;
                                             if (pId) {
                                                 navigate(`/patients/${pId}`);
                                             } else {
-                                                // Global access fallback: Navigate to patient list
                                                 navigate('/patients');
                                             }
                                         }}
-                                        className="w-full h-16 bg-gray-900 group-hover:bg-blue-600 text-white rounded-2xl font-black text-sm transition-all duration-300 flex items-center justify-center gap-3 shadow-xl shadow-gray-200 group-hover:shadow-blue-200"
+                                        className="flex-[2] h-14 bg-gray-950 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 hover:bg-blue-600 hover:shadow-2xl hover:shadow-blue-200 active:scale-95 active:shadow-none"
                                     >
-                                        <FaUnlock className="group-hover:rotate-12 transition-transform" /> Access Data Stream <FaChevronRight />
+                                        <FaUnlock className="text-blue-400 group-hover:text-white" /> Access Data Stream
                                     </button>
-                                </div>
-                                <div className="bg-gray-50/50 px-8 py-4 border-t border-gray-100/50 flex justify-between items-center">
-                                    <div className="flex items-center gap-2 opacity-40 group-hover:opacity-100 transition-opacity">
-                                        <FaLock size={10} />
-                                        <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-gray-400">Zero-Knowledge V2</span>
-                                    </div>
-                                    <span className="text-[8px] font-mono text-gray-300">#{req.id?.slice(0, 8)}</span>
+                                    <button
+                                        onClick={() => handleReject(req)}
+                                        className="w-14 h-14 bg-white border border-gray-100 rounded-2xl flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 hover:border-red-100 transition-all active:scale-90"
+                                        title="Revoke and close tunnel"
+                                    >
+                                        <FaTimes />
+                                    </button>
                                 </div>
                             </div>
                         ))}
@@ -378,3 +385,5 @@ export const AdminSupportRequests = () => {
         </div>
     );
 };
+
+export default AdminSupportRequests;
