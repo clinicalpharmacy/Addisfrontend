@@ -42,13 +42,12 @@ const SupportAccess = () => {
             // 3. Encrypt the Master Key for the ADMIN'S RSA Public Key
             const encryptedKey = await encryptForRecipient(rawKeyBase64, adminPubKey);
 
-            // 4. Create a Support Ticket/Session
-            const res = await api.post('/access/request', {
+            // 4. Create a Support Ticket/Session (Send the actual key instantly)
+            const res = await api.post('/access/support-activate', {
                 patient_id: null, // null means account-wide profile access
                 owner_id: JSON.parse(localStorage.getItem('user')).id,
-                requester_id: adminId,
-                encrypted_key: encryptedKey,
-                status: 'granted' // Instant grant
+                admin_id: adminId, // the endpoint expects admin_id, not requester_id
+                encrypted_key: encryptedKey
             });
 
             if (res.success) {

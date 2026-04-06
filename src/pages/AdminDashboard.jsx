@@ -36,6 +36,7 @@ const AdminDashboard = () => {
     const [successMessage, setSuccessMessage] = useState('');
     const [generalError, setGeneralError] = useState('');
     const [refreshing, setRefreshing] = useState(false);
+    const [pendingDataShareCount, setPendingDataShareCount] = useState(0);
 
     // Initialize Hooks
     const dashboardData = useAdminDashboardData(currentUser);
@@ -60,6 +61,14 @@ const AdminDashboard = () => {
         } catch (e) { navigate('/login'); }
     }, [navigate]);
 
+    // Load pending data-sharing count
+    const loadPendingDataShareCount = useCallback(async () => {
+        try {
+            const res = await api.get('/access/pending-admin');
+            if (res.success) setPendingDataShareCount((res.requests || []).length);
+        } catch (_) {}
+    }, []);
+
     // Data Loading Logic based on Tab
     useEffect(() => {
         if (!currentUser) return;
@@ -81,6 +90,7 @@ const AdminDashboard = () => {
         };
 
         loadTabData();
+        loadPendingDataShareCount();
     }, [selectedTab, currentUser]);
 
     // Force Refresh Handler
