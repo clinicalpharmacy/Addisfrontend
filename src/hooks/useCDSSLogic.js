@@ -510,6 +510,20 @@ export const useCDSSLogic = (patientData) => {
         analyzePatientRef.current = analyzePatient;
     });
 
+    // Full refresh: fetch fresh rules + meds, then run analysis via the always-current ref
+    const runFullAnalysis = useCallback(async () => {
+        if (!patientData?.id) {
+            alert('❌ Please select a patient first');
+            return;
+        }
+        await fetchClinicalRules();
+        await fetchPatientMedications();
+        // Give React time to commit the new state before running analysis
+        setTimeout(() => {
+            analyzePatientRef.current?.();
+        }, 700);
+    }, [patientData?.id, fetchClinicalRules, fetchPatientMedications]);
+
     // Auto-analyze ONLY when patient, rules count, or medication count genuinely changes.
     // ✅ FIX: Do NOT include `loading` or `analyzePatient` in deps — those change every
     // cycle and caused an infinite loop where alerts were cleared before they could display.
@@ -580,6 +594,7 @@ export const useCDSSLogic = (patientData) => {
         fetchPatientMedications,
         testSampleRules,
         analyzePatient,
+        runFullAnalysis,
         acknowledgeAlert,
         acknowledgeAll,
         toggleExpandAlert,
