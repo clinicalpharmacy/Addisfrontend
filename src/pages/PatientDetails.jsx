@@ -180,8 +180,20 @@ const PatientDetails = () => {
                         if (['admin', 'superadmin', 'specialist', 'support'].includes(role)) {
                             console.log(`🛡️ [Support] Discovery empty. Falling back to identity: ${localUser.full_name} (${role})`);
                             setSpecialist(localUser);
+                            return;
                         }
-                    } catch (e) { console.warn("Failed to parse local user for specialist fallback"); }
+                    } catch (e) { }
+                }
+
+                // 🌐 GLOBAL FALLBACK: Search for the system default admin
+                try {
+                    const searchRes = await api.get('/auth/search?email=admin@pharmacare.com');
+                    if (searchRes.success && searchRes.user) {
+                        console.log("📍 [Support] Using default system admin: admin@pharmacare.com");
+                        setSpecialist(searchRes.user);
+                    }
+                } catch (searchErr) {
+                    console.warn("Global support fallback failed", searchErr);
                 }
             }
         } catch (err) {
