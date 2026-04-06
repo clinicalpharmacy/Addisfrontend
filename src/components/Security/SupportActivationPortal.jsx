@@ -8,7 +8,7 @@ import { getEncryptionKey, encryptForRecipient, bytesToHex } from '../../utils/e
 
 /**
  * 🛡️ SupportActivationPortal (Patient-Specific)
- * Refined implementation with unified Hex format and no loops.
+ * Hierarchical implementation with Global Gateway detection.
  */
 const SupportActivationPortal = ({ recipient, patientId, onRefresh }) => {
     const [loading, setLoading] = useState(true);
@@ -17,7 +17,7 @@ const SupportActivationPortal = ({ recipient, patientId, onRefresh }) => {
     const [manualEmail, setManualEmail] = useState('');
     const [manualRecipient, setManualRecipient] = useState(null);
     const [activeAccess, setActiveAccess] = useState(null);
-    const [globalActive, setGlobalActive] = useState(false); // 🌐 Global Gateway status
+    const [globalActive, setGlobalActive] = useState(false);
 
     const checkAccess = useCallback(async () => {
         if (!patientId) {
@@ -58,7 +58,6 @@ const SupportActivationPortal = ({ recipient, patientId, onRefresh }) => {
         if (forceSpecialist && !manualRecipient && !recipient) {
             try {
                 const parsed = JSON.parse(forceSpecialist);
-                console.log("📍 [Support] Using manual rescue specialist:", parsed.full_name);
                 setManualRecipient(parsed);
             } catch (e) { }
         }
@@ -71,7 +70,6 @@ const SupportActivationPortal = ({ recipient, patientId, onRefresh }) => {
 
         console.log("🚀 [Support] Activating tunnel for patient:", patientId, "with specialist:", target.id);
         setGranting(true);
-        setStatusMessage(null);
         try {
             const masterKey = await getEncryptionKey();
             if (!masterKey) {
@@ -85,7 +83,7 @@ const SupportActivationPortal = ({ recipient, patientId, onRefresh }) => {
             const rawKeyHex = bytesToHex(new Uint8Array(rawKey));
             
             if (!target.public_key) {
-                alert("🛡️ Specialist Handshake Required: The authorized specialist is found, but their security credentials are not yet initialized. Please contact technical support to activate the Gateway.");
+                alert("🛡️ Specialist Handshake Required: Handshake found but security vault needs initialization.");
                 setGranting(false);
                 return;
             }
@@ -108,7 +106,7 @@ const SupportActivationPortal = ({ recipient, patientId, onRefresh }) => {
             }
         } catch (err) {
             console.error("❌ [Support] Activation error:", err);
-            alert("🚨 Security Handshake Failed: " + (err.message || "An unexpected error occurred while establishing the encrypted tunnel. Check your internet connection."));
+            alert("🚨 Security Handshake Failed: " + (err.message || "An unexpected error occurred while establishing the encrypted tunnel."));
         } finally {
             setGranting(false);
         }
@@ -116,7 +114,6 @@ const SupportActivationPortal = ({ recipient, patientId, onRefresh }) => {
 
     const handleToggleOff = async () => {
         if (!activeAccess) return;
-        
         setGranting(true);
         try {
             await api.post('/access/reject', { request_id: activeAccess.id });
@@ -175,7 +172,7 @@ const SupportActivationPortal = ({ recipient, patientId, onRefresh }) => {
                     </div>
                 </div>
 
-                <div className={`p-6 rounded-[2rem] flex items-center justify-between transition-all duration-500 border-2 ${activeAccess ? 'bg-green-50/50 border-green-200' : ((manualRecipient || recipient) ? 'bg-gray-50 border-gray-100' : 'bg-gray-50/50 border-gray-100 italic opacity-60')}`}>
+                <div className={`p-6 rounded-[2rem] flex items-center justify-between transition-all duration-500 border-2 ${activeAccess ? 'bg-green-50/50 border-green-200' : (!globalActive ? 'bg-rose-50 border-rose-100' : ((manualRecipient || recipient) ? 'bg-gray-50 border-gray-100' : 'bg-gray-50/50 border-gray-100 italic opacity-60'))}`}>
                     <div className="flex items-center gap-4">
                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${activeAccess ? 'bg-green-600 text-white shadow-lg' : 'bg-white text-gray-300 shadow-inner'}`}>
                             {(manualRecipient || recipient) ? <FaPowerOff size={20} className={activeAccess ? 'animate-pulse' : ''} /> : <FaSpinner className="animate-spin" />}
@@ -198,7 +195,10 @@ const SupportActivationPortal = ({ recipient, patientId, onRefresh }) => {
                             }
                             const target = manualRecipient || recipient;
                             if (!target) return;
-                            if (!target.public_key) return;
+                            if (!target.public_key) {
+                                alert("🛡️ Setup Required: The specialist must initialize their vault first.");
+                                return;
+                            }
                             activeAccess ? handleToggleOff() : handleToggleOn();
                         }}
                         disabled={granting || (!activeAccess && !globalActive)}
