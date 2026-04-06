@@ -4,7 +4,10 @@ import {
     FaExclamationTriangle, FaLock, FaUserShield, FaSpinner, FaPowerOff 
 } from 'react-icons/fa';
 import api from '../../utils/api';
-import { getEncryptionKey, encryptForRecipient, bytesToHex } from '../../utils/encryptionUtils';
+import { 
+    getEncryptionKey, encryptForRecipient, bytesToHex,
+    generateUserKeyPair, exportPublicKey, wrapPrivateKey
+} from '../../utils/encryptionUtils';
 
 /**
  * 🛠️ SupportAccess Component (User Side)
@@ -173,6 +176,57 @@ const SupportAccess = () => {
                     </div>
                 </div>
             </div>
+
+            {/* 🛠️ SECURITY REPAIR PROTOCOL */}
+            {!activeAccess && !admins.length && !manualRecipient && (
+                <div className="bg-amber-50 border border-amber-100 rounded-[2.5rem] p-8 space-y-4">
+                    <div className="flex items-center gap-3">
+                        <FaExclamationTriangle className="text-amber-500" size={20} />
+                        <h4 className="font-black text-amber-900">Security Handshake Required</h4>
+                    </div>
+                    <p className="text-xs font-medium text-amber-800/70 leading-relaxed">
+                        The troubleshooting registry is currently offline. To enable the privacy toggle, you must first initialize your own security credentials to act as your own support specialist.
+                    </p>
+                    <button
+                        onClick={async () => {
+                            setSearching(true);
+                            try {
+                                const password = window.prompt("🛡️ Secure Authorization: Please enter your login password to initialize your RSA keys:");
+                                if (!password) { setSearching(false); return; }
+
+                                const salt = localStorage.getItem('user_salt') || 'default-salt';
+                                const { publicKey, privateKey } = await generateUserKeyPair(password, salt);
+                                const publicKeyBase64 = await exportPublicKey(publicKey);
+                                const privateKeyWrapped = await wrapPrivateKey(privateKey, password, salt);
+
+                                await api.post('/auth/update-encryption-keys', {
+                                    public_key: publicKeyBase64,
+                                    private_key_encrypted: privateKeyWrapped
+                                });
+
+                                // Update local user
+                                const userData = localStorage.getItem('user');
+                                if (userData) {
+                                    const user = JSON.parse(userData);
+                                    user.public_key = publicKeyBase64;
+                                    localStorage.setItem('user', JSON.stringify(user));
+                                }
+
+                                alert("✅ Security Initialized! Your master gateway is now ready.");
+                                window.location.reload();
+                            } catch (err) {
+                                alert("Initialization failed: " + err.message);
+                            } finally {
+                                setSearching(false);
+                            }
+                        }}
+                        disabled={searching}
+                        className="bg-amber-600 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-amber-700 active:scale-95 transition-all"
+                    >
+                        {searching ? <FaSpinner className="animate-spin" /> : <><FaKey /> Initialize System Access</>}
+                    </button>
+                </div>
+            )}
 
             {!activeAccess && (
                 <div className="bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm space-y-8">
