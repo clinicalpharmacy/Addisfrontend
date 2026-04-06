@@ -40,27 +40,53 @@ const SupportActivationPortal = ({ recipient, patientId }) => {
     }, [checkAccess]);
 
     const handleToggleOn = async () => {
-        if (!recipient?.id || !patientId) return;
+        if (!recipient?.id) {
+            alert("❌ Specialist Identity Missing: The system hasn't found an authorized specialist to link with yet. Please wait or refresh.");
+            return;
+        }
+        if (!patientId) {
+            alert("❌ Patient Context Lost: Cannot activate troubleshooting without a valid patient record identification.");
+            return;
+        }
 
+        console.log("🚀 [Support] Activating tunnel for patient:", patientId, "with specialist:", recipient.id);
         setGranting(true);
         try {
             const masterKey = await getEncryptionKey();
-            if (!masterKey) throw new Error("Please re-login to verify identity.");
+            if (!masterKey) {
+                alert("🔐 Authentication Timeout: Your local session key has expired. Please log out and log back in to verify your identity.");
+                setGranting(false);
+                return;
+            }
 
+            console.log("🔑 [Support] Master Key derived. Wrapping for recipient...");
             const rawKey = await crypto.subtle.exportKey("raw", masterKey);
-            // UNIFIED: Use HEX for the raw key string
             const rawKeyHex = bytesToHex(new Uint8Array(rawKey));
             
-            const encryptedKey = await encryptForRecipient(rawKeyHex, recipient.public_key);
+            if (!recipient.public_key) {
+                alert("⚠️ Specialist Security Offline: The selected specialist has not initialized their security keys. They cannot receive encrypted data yet.");
+                setGranting(false);
+                return;
+            }
 
-            await api.post('/access/support-activate', {
+            const encryptedKey = await encryptForRecipient(rawKeyHex, recipient.public_key);
+            console.log("🛰️ [Support] Requesting backend sync...");
+
+            const res = await api.post('/access/support-activate', {
                 patient_id: patientId,
                 admin_id: recipient.id,
                 encrypted_key: encryptedKey
             });
-            await checkAccess();
+
+            if (res.success) {
+                console.log("✅ [Support] Tunnel established.");
+                if (onRefresh) onRefresh();
+            } else {
+                alert("❌ Remote Sync Failed: " + (res.error || "The server rejected the security tunnel request. Please try again."));
+            }
         } catch (err) {
-            alert("Activation Error: " + err.message);
+            console.error("❌ [Support] Activation error:", err);
+            alert("🚨 Security Handshake Failed: " + (err.message || "An unexpected error occurred while establishing the encrypted tunnel. Check your internet connection."));
         } finally {
             setGranting(false);
         }
@@ -118,18 +144,28 @@ const SupportActivationPortal = ({ recipient, patientId }) => {
                                 {!recipient ? 'Seeking Specialist...' : (activeAccess ? 'Tunnel Active' : 'Tunnel Closed')}
                             </p>
                             <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mt-1 flex items-center gap-1">
-                                {activeAccess ? <><FaCheckCircle className="text-green-500" /> Specialist Authorised</> : (recipient ? 'Secure Encryption Mode' : 'Authenticating Route...')}
+                                {activeAccess ? <><FaCheckCircle className="text-green-500" /> Specialist Authorised</> : (recipient ? (recipient.public_key ? 'Secure Encryption Ready' : 'Security Setup Required') : 'Authenticating Route...')}
                             </p>
                         </div>
                     </div>
 
                     <button
-                        onClick={activeAccess ? handleToggleOff : handleToggleOn}
-                        disabled={granting || !recipient?.public_key}
-                        className={`relative w-20 h-10 rounded-full transition-all duration-300 p-1 flex items-center shadow-inner ${activeAccess ? 'bg-green-500' : 'bg-gray-300'} ${granting || !recipient ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        onClick={() => {
+                            if (!recipient) {
+                                alert("❌ No specialists found. Please ensure a system admin has activated their security credentials in the Support Vault.");
+                                return;
+                            }
+                            if (!recipient.public_key) {
+                                alert("⚠️ Specialist Security Offline: This administrator has not yet initialized their end-to-end security keys. They must go to the Admin Dashboard > Support Vault and click 'Activate Specialist Credentials' before they can receive encrypted troubleshooting access.");
+                                return;
+                            }
+                            activeAccess ? handleToggleOff() : handleToggleOn();
+                        }}
+                        disabled={granting}
+                        className={`relative w-20 h-10 rounded-full transition-all duration-300 p-1 flex items-center shadow-inner ${activeAccess ? 'bg-green-500' : (recipient?.public_key ? 'bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'bg-gray-300')} ${granting ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                         <div className={`w-8 h-8 bg-white rounded-full shadow-lg transform transition-transform duration-500 flex items-center justify-center ${activeAccess ? 'translate-x-10' : 'translate-x-0'}`}>
-                            {granting ? <FaSpinner className="animate-spin text-blue-500 text-[10px]" /> : <div className="w-1.5 h-1.5 bg-gray-200 rounded-full" />}
+                            {granting ? <FaSpinner className="animate-spin text-blue-500 text-[10px]" /> : (recipient?.public_key ? <div className="w-1.5 h-1.5 bg-blue-500 rounded-full shadow-[0_0_5px_rgba(59,130,246,0.5)]" /> : <div className="w-1.5 h-1.5 bg-gray-200 rounded-full" />)}
                         </div>
                     </button>
                 </div>
