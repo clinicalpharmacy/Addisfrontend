@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaShield, FaCheck, FaExclamationTriangle, FaFileContract } from 'react-icons/fa';
+import { FaUserShield, FaCheck, FaExclamationTriangle, FaFileContract } from 'react-icons/fa';
 
 const UserAgreement = ({ accountType, onAgree, onBack }) => {
     const isIndividual = accountType === 'individual';
@@ -59,6 +59,7 @@ const UserAgreement = ({ accountType, onAgree, onBack }) => {
                     onClick={() => setChecked(!checked)}
                 >
                     <div className="flex items-start gap-4">
+                        <FaUserShield className="text-xl" />
                         <div className="mt-1">
                             <input
                                 type="checkbox"
@@ -91,7 +92,7 @@ const UserAgreement = ({ accountType, onAgree, onBack }) => {
                                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                             }`}
                     >
-                        <FaCheck />
+                        <FaUserShield />
                         I Agree & Continue
                     </button>
                 </div>

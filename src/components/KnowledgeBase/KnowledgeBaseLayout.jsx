@@ -7,7 +7,7 @@ import {
     FaMortarPestle,
     FaBookMedical,
     FaHome,
-    FaShieldAlt,
+    FaUserShield,
     FaLock,
     FaBan,
     FaTimes,
@@ -97,7 +97,7 @@ const KnowledgeBaseLayout = () => {
                                     }`}
                                 title={protectionEnabled ? "Disable Protection" : "Enable Protection"}
                             >
-                                {protectionEnabled ? <FaLock /> : <FaShieldAlt />}
+                                {protectionEnabled ? <FaLock /> : <FaUserShield />}
                                 <span className="hidden sm:inline font-bold">
                                     {protectionEnabled ? 'Strict Mode' : 'Allow Copy'}
                                 </span>

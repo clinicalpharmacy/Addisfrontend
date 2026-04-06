@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    FaShield, FaUserMd, FaCalendarAlt, 
+    FaUserMd, FaCalendarAlt, 
     FaSpinner, FaUnlock, FaLock, FaCheck, FaTimes,
     FaEnvelope, FaSync, FaUserShield, FaSignal
 } from 'react-icons/fa';
@@ -282,7 +282,7 @@ export const SupportVault = () => {
                                     }}
                                     className="flex-[3] h-12 bg-gray-950 text-white rounded-[1.2rem] font-black text-[10px] uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 hover:bg-blue-600 hover:shadow-xl hover:shadow-blue-200 active:scale-95 shadow-lg shadow-gray-200 hover:scale-[1.02]"
                                 >
-                                    <FaUnlock size={10} className="text-blue-400 group-hover:text-white" /> Access Stream
+                                    <FaUserShield className="text-blue-400 text-sm md:text-xl" /> Access Data Stream
                                 </button>
                                 <button
                                     onClick={() => handleRevoke(req)}

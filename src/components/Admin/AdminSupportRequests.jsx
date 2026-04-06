@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    FaShield, FaUserMd, FaCalendarAlt, 
+    FaUserMd, FaCalendarAlt, 
     FaSpinner, FaUnlock, FaLock, FaCheck, FaTimes,
     FaEnvelope, FaSync, FaUserShield
 } from 'react-icons/fa';
@@ -162,7 +162,7 @@ export const AdminSupportRequests = () => {
                                 <div className="grid grid-cols-2 gap-4 mb-8">
                                     <div className="bg-gray-50/80 rounded-2xl p-4 border border-gray-100 transition-colors group-hover:border-blue-100 group-hover:bg-blue-50/20">
                                         <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 flex items-center gap-1">
-                                            <FaLock size={8} className="text-blue-500" /> Secure ID
+                                            <FaUserShield size={8} className="text-blue-500" /> Secure ID
                                         </p>
                                         <p className="text-xs font-black text-gray-700 tracking-tight">
                                             {req.patient?.patient_code || 'Account Global'}
@@ -191,7 +191,7 @@ export const AdminSupportRequests = () => {
                                         }}
                                         className="flex-[2] h-14 bg-gray-950 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-3 hover:bg-blue-600 hover:shadow-2xl hover:shadow-blue-200 active:scale-95 shadow-lg shadow-gray-200 hover:shadow-blue-200"
                                     >
-                                        <FaShield className="text-blue-400 text-sm md:text-xl" /> Access Data Stream
+                                        <FaUserShield className="text-blue-400 text-sm md:text-xl" /> Access Data Stream
                                     </button>
                                     <button
                                         onClick={() => handleRevoke(req)}

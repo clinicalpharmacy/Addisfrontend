@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-    FaShield, FaUserShield, FaCheckCircle, FaLock,
+    FaUserShield, FaCheckCircle, FaLock,
     FaSpinner, FaPowerOff, FaHandshake, FaExclamationTriangle 
 } from 'react-icons/fa';
 import api from '../../utils/api';
@@ -156,7 +156,7 @@ const SupportActivationPortal = ({ recipient, patientId, onRefresh }) => {
     return (
         <div className="bg-white border-2 border-blue-50 rounded-[2.5rem] p-8 shadow-sm relative overflow-hidden transition-all group">
             <div className="absolute -right-10 -top-10 text-blue-50 opacity-40 pointer-events-none group-hover:rotate-12 transition-transform duration-1000">
-                <FaShield size={160} />
+                <FaUserShield size={160} />
             </div>
 
             <div className="relative z-10">
