@@ -10,9 +10,12 @@ import { getEncryptionKey, encryptForRecipient, bytesToHex } from '../../utils/e
  * 🛡️ SupportActivationPortal (Patient-Specific)
  * Refined implementation with unified Hex format and no loops.
  */
-const SupportActivationPortal = ({ recipient, patientId }) => {
+const SupportActivationPortal = ({ recipient, patientId, onRefresh }) => {
     const [loading, setLoading] = useState(true);
     const [granting, setGranting] = useState(false);
+    const [searching, setSearching] = useState(false);
+    const [manualEmail, setManualEmail] = useState('');
+    const [manualRecipient, setManualRecipient] = useState(null);
     const [activeAccess, setActiveAccess] = useState(null);
 
     const checkAccess = useCallback(async () => {
@@ -24,6 +27,9 @@ const SupportActivationPortal = ({ recipient, patientId }) => {
             const res = await api.get(`/access/granted?patient_id=${patientId}`);
             if (res.success && res.request) {
                 setActiveAccess(res.request);
+                if (res.request.requester) {
+                    setManualRecipient(res.request.requester);
+                }
             } else {
                 setActiveAccess(null);
             }
@@ -40,8 +46,9 @@ const SupportActivationPortal = ({ recipient, patientId }) => {
     }, [checkAccess]);
 
     const handleToggleOn = async () => {
-        if (!recipient?.id) {
-            alert("❌ Specialist Identity Missing: The system hasn't found an authorized specialist to link with yet. Please wait or refresh.");
+        const target = manualRecipient || recipient;
+        if (!target?.id) {
+            alert("🔒 Secure Gateway Error: No authorized specialists found. You can try searching by specialist email below.");
             return;
         }
         if (!patientId) {
@@ -49,7 +56,7 @@ const SupportActivationPortal = ({ recipient, patientId }) => {
             return;
         }
 
-        console.log("🚀 [Support] Activating tunnel for patient:", patientId, "with specialist:", recipient.id);
+        console.log("🚀 [Support] Activating tunnel for patient:", patientId, "with specialist:", target.id);
         setGranting(true);
         try {
             const masterKey = await getEncryptionKey();
@@ -63,24 +70,25 @@ const SupportActivationPortal = ({ recipient, patientId }) => {
             const rawKey = await crypto.subtle.exportKey("raw", masterKey);
             const rawKeyHex = bytesToHex(new Uint8Array(rawKey));
             
-            if (!recipient.public_key) {
-                alert("⚠️ Specialist Security Offline: The selected specialist has not initialized their security keys. They cannot receive encrypted data yet.");
+            if (!target.public_key) {
+                alert("🛡️ Specialist Handshake Required: The authorized specialist is found, but their security credentials are not yet initialized. Please contact technical support to activate the Gateway.");
                 setGranting(false);
                 return;
             }
 
-            const encryptedKey = await encryptForRecipient(rawKeyHex, recipient.public_key);
+            const encryptedKey = await encryptForRecipient(rawKeyHex, target.public_key);
             console.log("🛰️ [Support] Requesting backend sync...");
 
             const res = await api.post('/access/support-activate', {
                 patient_id: patientId,
-                admin_id: recipient.id,
+                admin_id: target.id,
                 encrypted_key: encryptedKey
             });
 
             if (res.success) {
                 console.log("✅ [Support] Tunnel established.");
                 if (onRefresh) onRefresh();
+                await checkAccess();
             } else {
                 alert("❌ Remote Sync Failed: " + (res.error || "The server rejected the security tunnel request. Please try again."));
             }
@@ -98,11 +106,30 @@ const SupportActivationPortal = ({ recipient, patientId }) => {
         setGranting(true);
         try {
             await api.post('/access/reject', { request_id: activeAccess.id });
+            if (onRefresh) onRefresh();
+            setManualRecipient(null);
             await checkAccess();
         } catch (err) {
-            alert("Error: " + err.message);
+            alert("Revoke Failed: " + err.message);
         } finally {
             setGranting(false);
+        }
+    };
+
+    const handleManualSearch = async (e) => {
+        if (e) e.preventDefault();
+        setSearching(true);
+        try {
+            const res = await api.get(`/auth/search?email=${manualEmail}`);
+            if (res.success && res.user) {
+                setManualRecipient(res.user);
+            } else {
+                alert("❌ Specialist not found in registry.");
+            }
+        } catch (err) {
+            alert("❌ Search failed: " + (err.error || err.message));
+        } finally {
+            setSearching(false);
         }
     };
 
@@ -129,46 +156,69 @@ const SupportActivationPortal = ({ recipient, patientId }) => {
                     <div>
                         <h3 className="text-2xl font-black text-gray-900 leading-none tracking-tight">Troubleshooting Access</h3>
                         <p className="text-gray-400 font-bold text-[10px] uppercase tracking-widest mt-1.5 flex items-center gap-2">
-                            Specialist: <span className="text-blue-600">{recipient?.full_name || 'Authorized Admin'}</span>
+                            Specialist: <span className="text-blue-600">{(manualRecipient || recipient)?.full_name || 'Authorized Admin'}</span>
                         </p>
                     </div>
                 </div>
 
-                <div className={`p-6 rounded-[2rem] flex items-center justify-between transition-all duration-500 border-2 ${activeAccess ? 'bg-green-50/50 border-green-200' : (recipient ? 'bg-gray-50 border-gray-100' : 'bg-gray-50/50 border-gray-100 italic opacity-60')}`}>
+                <div className={`p-6 rounded-[2rem] flex items-center justify-between transition-all duration-500 border-2 ${activeAccess ? 'bg-green-50/50 border-green-200' : ((manualRecipient || recipient) ? 'bg-gray-50 border-gray-100' : 'bg-gray-50/50 border-gray-100 italic opacity-60')}`}>
                     <div className="flex items-center gap-4">
                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${activeAccess ? 'bg-green-600 text-white shadow-lg' : 'bg-white text-gray-300 shadow-inner'}`}>
-                            {recipient ? <FaPowerOff size={20} className={activeAccess ? 'animate-pulse' : ''} /> : <FaSpinner className="animate-spin" />}
+                            {(manualRecipient || recipient) ? <FaPowerOff size={20} className={activeAccess ? 'animate-pulse' : ''} /> : <FaSpinner className="animate-spin" />}
                         </div>
                         <div>
-                            <p className={`text-lg font-black leading-none ${activeAccess ? 'text-green-800' : (recipient ? 'text-gray-400' : 'text-gray-300')}`}>
-                                {!recipient ? 'Gateway Synchronizing...' : (activeAccess ? 'Tunnel Active' : 'Tunnel Closed')}
+                            <p className={`text-lg font-black leading-none ${activeAccess ? 'text-green-800' : ((manualRecipient || recipient) ? 'text-gray-400' : 'text-gray-300')}`}>
+                                {!(manualRecipient || recipient) ? 'Gateway Synchronizing...' : (activeAccess ? 'Tunnel Active' : 'Tunnel Closed')}
                             </p>
                             <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mt-1 flex items-center gap-1">
-                                {activeAccess ? <><FaCheckCircle className="text-green-500" /> Specialist Authorised</> : (recipient ? (recipient.public_key ? 'Secure Encryption Ready' : 'Support Specialist Setup Required') : 'Authenticating Route...')}
+                                {activeAccess ? <><FaCheckCircle className="text-green-500" /> Specialist Authorised</> : ((manualRecipient || recipient) ? ((manualRecipient || recipient).public_key ? 'Secure Encryption Ready' : 'Support Specialist Setup Required') : 'Authenticating Route...')}
                             </p>
                         </div>
                     </div>
 
                     <button
                         onClick={() => {
-                            if (!recipient) {
+                            const target = manualRecipient || recipient;
+                            if (!target) {
                                 alert("🔒 Secure Gateway Error: No authorized specialists found in the registry. Troubleshooting cannot be activated until a support specialist initializes the Secure Vault.");
                                 return;
                             }
-                            if (!recipient.public_key) {
+                            if (!target.public_key) {
                                 alert("🛡️ Specialist Handshake Required: The authorized specialist is found, but their security credentials are not yet initialized. Please contact technical support to activate the Gateway.");
                                 return;
                             }
                             activeAccess ? handleToggleOff() : handleToggleOn();
                         }}
                         disabled={granting}
-                        className={`relative w-20 h-10 rounded-full transition-all duration-300 p-1 flex items-center shadow-inner ${activeAccess ? 'bg-green-500' : (recipient?.public_key ? 'bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'bg-gray-300')} ${granting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className={`relative w-20 h-10 rounded-full transition-all duration-300 p-1 flex items-center shadow-inner ${activeAccess ? 'bg-green-500' : ((manualRecipient || recipient)?.public_key ? 'bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'bg-gray-300')} ${granting ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                         <div className={`w-8 h-8 bg-white rounded-full shadow-lg transform transition-transform duration-500 flex items-center justify-center ${activeAccess ? 'translate-x-10' : 'translate-x-0'}`}>
-                            {granting ? <FaSpinner className="animate-spin text-blue-500 text-[10px]" /> : (recipient?.public_key ? <div className="w-1.5 h-1.5 bg-blue-500 rounded-full shadow-[0_0_5px_rgba(59,130,246,0.5)]" /> : <div className="w-1.5 h-1.5 bg-gray-200 rounded-full" />)}
+                            {granting ? <FaSpinner className="animate-spin text-blue-500 text-[10px]" /> : ((manualRecipient || recipient)?.public_key ? <div className="w-1.5 h-1.5 bg-blue-500 rounded-full shadow-[0_0_5px_rgba(59,130,246,0.5)]" /> : <div className="w-1.5 h-1.5 bg-gray-200 rounded-full" />)}
                         </div>
                     </button>
                 </div>
+
+                {!(manualRecipient || recipient) && !activeAccess && (
+                    <div className="mt-8 animate-in slide-in-from-top-4 duration-500">
+                        <form onSubmit={handleManualSearch} className="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-2xl p-2 pl-5 focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white transition-all">
+                            <input
+                                type="email"
+                                placeholder="Search analyst by email..."
+                                value={manualEmail}
+                                onChange={(e) => setManualEmail(e.target.value)}
+                                className="flex-1 bg-transparent border-none outline-none text-xs font-medium text-gray-700"
+                                required
+                            />
+                            <button
+                                type="submit"
+                                disabled={searching || !manualEmail}
+                                className="bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-blue-700 active:scale-95 transition-all"
+                            >
+                                {searching ? <FaSpinner className="animate-spin" /> : 'Link Tunnel'}
+                            </button>
+                        </form>
+                    </div>
+                )}
 
                 <div className="mt-8 flex items-start gap-4">
                     <FaExclamationTriangle className="text-amber-500 shrink-0 mt-0.5 opacity-50" />
