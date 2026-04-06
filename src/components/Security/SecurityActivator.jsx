@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaShield, FaKey, FaLock, FaSpinner, FaCheckCircle, FaExclamationTriangle, FaSyncAlt } from 'react-icons/fa';
+import { FaUserShield, FaKey, FaLock, FaSpinner, FaCheckCircle, FaExclamationTriangle, FaSyncAlt } from 'react-icons/fa';
 import { 
     generateUserKeyPair, 
     wrapPrivateKey, 
@@ -99,7 +99,7 @@ const SecurityActivator = ({ onActivated }) => {
         <div className="bg-white border-2 border-blue-50 rounded-3xl p-8 shadow-sm relative overflow-hidden">
             {/* Background design elements */}
             <div className="absolute -right-10 -top-10 text-gray-50 opacity-50 pointer-events-none">
-                <FaShieldAlt size={180} />
+                <FaUserShield size={180} />
             </div>
             
             <div className="relative z-10">

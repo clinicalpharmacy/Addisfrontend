@@ -128,7 +128,7 @@ export const SupportVault = () => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/40 backdrop-blur-md p-6 rounded-[2rem] border border-white/60 shadow-sm">
                 <div>
                     <div className="flex items-center gap-2 mb-1">
-                        <FaShieldAlt className="text-blue-500 text-xs" />
+                        <FaUserShield className="text-blue-500 text-xs" />
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Security Sector</span>
                     </div>
                     <h2 className="text-3xl font-black text-gray-900 leading-none tracking-tight">

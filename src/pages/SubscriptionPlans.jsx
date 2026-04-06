@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  FaCheck, FaTimes, FaUserTie, FaBuilding, FaShield,
+  FaCheck, FaTimes, FaUserTie, FaBuilding, FaUserShield,
   FaHeadset, FaCalendarAlt, FaMoneyBillWave, FaCreditCard,
   FaBuilding as FaBuildingIcon, FaUsers,
   FaArrowRight,
@@ -455,7 +455,7 @@ const SubscriptionPlans = () => {
                       Pay securely online via Chapa payment gateway. After payment, wait for admin approval.
                     </p>
                     <div className="mt-3 ml-8 p-2 bg-green-50 border border-green-200 rounded text-sm text-green-700">
-                      <FaShieldAlt className="inline mr-2" />
+                      <FaUserShield className="inline mr-2" />
                       Secure online payment - Account activation after admin approval
                     </div>
                   </div>
@@ -509,7 +509,7 @@ const SubscriptionPlans = () => {
                           </span>
                         </li>
                         <li className="flex items-start gap-2">
-                          <FaShieldAlt className="text-blue-600 mt-0.5" />
+                          <FaUserShield className="text-blue-600 mt-0.5" />
                           <span>
                             Payment Method: <strong>Chapa (Secure Online)</strong>
                           </span>

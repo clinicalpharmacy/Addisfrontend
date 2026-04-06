@@ -8,7 +8,7 @@ import {
     FaPills, FaExclamationTriangle, FaCheckCircle, FaSpinner,
     FaHeartbeat, FaClipboardCheck, FaUserCheck,
     FaCapsules, FaSync, FaBrain, FaRobot, FaLightbulb, FaBookMedical,
-    FaRegLightbulb, FaShieldAlt
+    FaRegLightbulb, FaUserShield, FaClipboardList, FaCheckCircle, FaExclamationTriangle
 } from 'react-icons/fa';
 
 const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHistory: medicationProps }) => {
@@ -958,7 +958,7 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
                             <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-300">
                                 <div className="bg-white rounded-2xl border border-blue-100 p-6 md:p-8 max-w-lg w-full shadow-2xl animate-in zoom-in-95 duration-300">
                                     <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
-                                        <FaShieldAlt className="text-blue-600 text-3xl" />
+                                        <FaUserShield className="text-blue-600 text-3xl" />
                                     </div>
                                     <h4 className="text-xl font-bold text-gray-800 mb-4 text-center">Clinical analysis acknowledgment</h4>
                                     <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-5 rounded-2xl mb-8 text-sm md:text-base border border-blue-100/50">

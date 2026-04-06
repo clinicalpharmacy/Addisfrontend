@@ -9,7 +9,7 @@ import {
     FaDatabase, FaEye, FaEyeSlash,
     FaClock, FaUser, FaCapsules, FaRedo, FaRocket,
     FaCalendarDay, FaUserTag, FaVial, FaBaby, FaChevronDown, FaChevronUp,
-    FaExclamationCircle, FaHeartbeat, FaBrain, FaRobot, FaLightbulb, FaShield,
+    FaExclamationCircle, FaHeartbeat, FaBrain, FaRobot, FaLightbulb, FaUserShield,
     FaBookMedical, FaListUl, FaToggleOn, FaToggleOff
 } from 'react-icons/fa';
 import api from '../../utils/api';
@@ -228,7 +228,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
         return (
             <div className="bg-white rounded-xl shadow-lg p-8 md:p-12 text-center">
                 <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <FaShield className="text-blue-600 text-3xl" />
+                                <FaUserShield className="text-blue-600 text-3xl" />
                 </div>
                 <h2 className="text-2xl font-bold text-gray-800 mb-4">User Acknowledgment</h2>
                 <div className="bg-blue-50 border-1 border-blue-200 p-6 rounded-2xl mb-8 max-w-2xl mx-auto">

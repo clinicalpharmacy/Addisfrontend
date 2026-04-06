@@ -180,7 +180,7 @@ const PatientUnlocker = ({ patientData, userSalt, onUnlocked, children }) => {
                 <div className="max-w-md w-full">
                     <div className="mb-6 text-center">
                         <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-100 rounded-full mb-3">
-                            <FaShieldAlt className="text-orange-600 text-2xl animate-pulse" />
+                            <FaUserShield className="text-orange-600 text-2xl animate-pulse" />
                         </div>
                         <h3 className="text-xl font-bold text-gray-900">Security Activation Required</h3>
                         <p className="text-sm text-gray-500 mt-2">To view this patient's private details, you must first activate your secure digital identity.</p>
@@ -275,7 +275,7 @@ const PatientUnlocker = ({ patientData, userSalt, onUnlocked, children }) => {
                         return (
                             <div className="p-7 space-y-4 text-center">
                                 <div className="bg-red-50 p-4 rounded-2xl border border-red-100 flex gap-3 text-left">
-                                    <FaShieldAlt className="text-red-600 shrink-0 mt-1" />
+                                    <FaUserShield className="text-red-600 shrink-0 mt-1" />
                                     <p className="text-xs text-red-800 font-medium leading-relaxed">
                                         This record is encrypted. You do not have permission to view it. The record owner must proactively grant you Support Access from their dashboard to generate an encrypted tunnel key.
                                     </p>
