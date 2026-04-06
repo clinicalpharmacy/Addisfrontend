@@ -141,10 +141,10 @@ const SupportActivationPortal = ({ recipient, patientId }) => {
                         </div>
                         <div>
                             <p className={`text-lg font-black leading-none ${activeAccess ? 'text-green-800' : (recipient ? 'text-gray-400' : 'text-gray-300')}`}>
-                                {!recipient ? 'Seeking Specialist...' : (activeAccess ? 'Tunnel Active' : 'Tunnel Closed')}
+                                {!recipient ? 'Gateway Synchronizing...' : (activeAccess ? 'Tunnel Active' : 'Tunnel Closed')}
                             </p>
                             <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mt-1 flex items-center gap-1">
-                                {activeAccess ? <><FaCheckCircle className="text-green-500" /> Specialist Authorised</> : (recipient ? (recipient.public_key ? 'Secure Encryption Ready' : 'Admin: One-Time Security Setup Required') : 'Authenticating Route...')}
+                                {activeAccess ? <><FaCheckCircle className="text-green-500" /> Specialist Authorised</> : (recipient ? (recipient.public_key ? 'Secure Encryption Ready' : 'Support Specialist Setup Required') : 'Authenticating Route...')}
                             </p>
                         </div>
                     </div>
@@ -152,11 +152,11 @@ const SupportActivationPortal = ({ recipient, patientId }) => {
                     <button
                         onClick={() => {
                             if (!recipient) {
-                                alert("❌ No specialists found. Please ensure a system admin has activated their security credentials in the Support Vault.");
+                                alert("🔒 Secure Gateway Error: No authorized specialists found in the registry. Troubleshooting cannot be activated until a support specialist initializes the Secure Vault.");
                                 return;
                             }
                             if (!recipient.public_key) {
-                                alert("⚠️ Specialist Security Offline: This administrator has not yet initialized their end-to-end security keys. They must go to the Admin Dashboard > Support Vault and click 'Activate Specialist Credentials' before they can receive encrypted troubleshooting access.");
+                                alert("🛡️ Specialist Handshake Required: The authorized specialist is found, but their security credentials are not yet initialized. Please contact technical support to activate the Gateway.");
                                 return;
                             }
                             activeAccess ? handleToggleOff() : handleToggleOn();
