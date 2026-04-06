@@ -21,7 +21,7 @@ import {
     FaIndent,
     FaOutdent,
     FaHashtag,
-    FaShield,
+    FaUserShield,
     FaLanguage
 } from 'react-icons/fa';
 import { useOutletContext } from 'react-router-dom';
@@ -523,7 +523,7 @@ const HomeRemedies = () => {
             {protectionMsg && (
                 <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[100] w-full max-w-md px-4">
                     <div className="bg-red-600/90 text-white p-3 rounded-lg shadow-2xl flex items-center justify-center gap-3 animate-pulse border border-red-400 backdrop-blur-sm">
-                        <FaShield className="text-xl" />
+                        <FaUserShield className="text-xl" />
                         <span className="font-bold text-sm md:text-base">{protectionMsg}</span>
                     </div>
                 </div>
