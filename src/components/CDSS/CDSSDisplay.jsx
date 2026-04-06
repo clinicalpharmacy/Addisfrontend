@@ -21,13 +21,10 @@ const CDSSDisplay = ({ patientData, onBack }) => {
         alerts, filteredAlerts, loading, analysisStats,
         clinicalRules, medications, analysisError, testResults,
         severityFilter, setSeverityFilter,
-        fetchClinicalRules, testSampleRules, analyzePatient,
+        fetchClinicalRules, testSampleRules, analyzePatient, runFullAnalysis,
         acknowledgeAlert, acknowledgeAll, toggleExpandAlert, expandedAlert,
         patientFacts, lastAnalysisTime
     } = useCDSSLogic(patientData);
-
-    const [aiLoading, setAiLoading] = useState(false);
-    const [aiResult, setAiResult] = useState(null);
 
     const rawUserRole = localStorage.getItem('userRole') || 'admin';
     const userRole = rawUserRole.toLowerCase().trim();
@@ -54,17 +51,10 @@ const CDSSDisplay = ({ patientData, onBack }) => {
         low: 'bg-blue-500'
     };
 
-    const handleRunAI = async () => {
-        setAiLoading(true);
-        setAiResult(null);
-        try {
-            await analyzePatient();
-            setAiResult('Analysis complete.');
-        } catch (e) {
-            setAiResult('AI analysis encountered an issue.');
-        } finally {
-            setAiLoading(false);
-        }
+    const handleRunAI = () => {
+        // runFullAnalysis: re-fetches rules + medications, then triggers analysis
+        // via analyzePatientRef.current — which always has fresh state.
+        runFullAnalysis();
     };
 
     const downloadReport = async () => {
@@ -296,11 +286,11 @@ const CDSSDisplay = ({ patientData, onBack }) => {
 
                         <button
                             onClick={handleRunAI}
-                            disabled={aiLoading || loading || !patientData}
+                            disabled={loading || !patientData}
                             className="flex-1 md:flex-none bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm shadow-sm transition-all font-medium"
                             title="Run AI Clinical Assistant"
                         >
-                            {aiLoading ? (
+                            {loading ? (
                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
                             ) : (
                                 <FaRobot />

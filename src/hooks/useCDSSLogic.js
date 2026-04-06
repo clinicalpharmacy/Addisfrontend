@@ -340,7 +340,11 @@ export const useCDSSLogic = (patientData) => {
             };
 
             setAlerts(triggeredAlerts);
-            setFilteredAlerts(triggeredAlerts);
+            // Respect the current severity filter when setting filtered alerts
+            const filtered = severityFilter === 'all'
+                ? triggeredAlerts
+                : triggeredAlerts.filter(a => a.severity === severityFilter);
+            setFilteredAlerts(filtered);
             setDebugInfo(debug);
             setAnalysisStats(stats);
             setLastAnalysisTime(new Date().toISOString());
@@ -353,7 +357,7 @@ export const useCDSSLogic = (patientData) => {
         } finally {
             setLoading(false);
         }
-    }, [patientData, clinicalRules, medications]);
+    }, [patientData, clinicalRules, medications, severityFilter]);
 
     const testSampleRules = useCallback(() => {
         if (!patientData) {
