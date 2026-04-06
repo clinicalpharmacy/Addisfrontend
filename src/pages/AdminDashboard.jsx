@@ -101,14 +101,14 @@ const AdminDashboard = () => {
     };
 
     const navigationTabs = [
-        { id: 'overview', label: 'Overview', icon: FaChartLine },
-        { id: 'approvals', label: 'Approvals', icon: FaUserCheck, count: dashboardData.stats.pending_approvals, color: 'bg-red-500' },
-        { id: 'users', label: 'Users', icon: FaUsers },
-        { id: 'companies', label: 'Companies', icon: FaBuilding },
-        { id: 'subscriptions', label: 'Subscriptions', icon: FaCreditCard },
-        { id: 'support_access', label: 'Support Access', icon: FaShieldAlt }, // New Tab
-        { id: 'feedback', label: 'User Feedback', icon: FaComments },
-        { id: 'chats', label: 'Support Chats', icon: FaComments }
+        { id: 'overview', label: 'Overview', icon: FaChartLine, iconColor: 'text-blue-500' },
+        { id: 'approvals', label: 'Approvals', icon: FaUserCheck, count: dashboardData.stats.pending_approvals, color: 'bg-red-500', iconColor: 'text-orange-500' },
+        { id: 'users', label: 'Users', icon: FaUsers, iconColor: 'text-indigo-500' },
+        { id: 'companies', label: 'Companies', icon: FaBuilding, iconColor: 'text-purple-500' },
+        { id: 'subscriptions', label: 'Subscriptions', icon: FaCreditCard, iconColor: 'text-green-500' },
+        { id: 'support_access', label: 'Support Access', icon: FaShieldAlt, iconColor: 'text-amber-500' },
+        { id: 'feedback', label: 'User Feedback', icon: FaComments, iconColor: 'text-pink-500' },
+        { id: 'chats', label: 'Support Chats', icon: FaComments, iconColor: 'text-teal-500' }
     ];
 
     // Logout
@@ -193,7 +193,7 @@ const AdminDashboard = () => {
                                     : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
                                     }`}
                             >
-                                <tab.icon className={selectedTab === tab.id ? 'scale-110' : 'opacity-70'} />
+                                <tab.icon className={`${selectedTab === tab.id ? 'scale-110 text-white' : `${tab.iconColor} opacity-90`} transition-all`} />
                                 {tab.label}
                                 {tab.count > 0 && (
                                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full text-white font-black ${tab.color || 'bg-gray-500'}`}>

@@ -3,14 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import {
     FaShieldAlt, FaUserMd, FaCalendarAlt, 
     FaSpinner, FaUnlock, FaLock, FaCheck, FaTimes,
-    FaEnvelope, FaSync, FaUserShield
+    FaEnvelope, FaSync, FaUserShield, FaSignal
 } from 'react-icons/fa';
 import api from '../../utils/api';
 
 /**
  * 🔐 SupportVault Component
- * This is the ONLY component and it ONLY shows active sessions.
- * Approvals are gone.
+ * High-security, compact UI for active troubleshooting sessions.
  */
 export const SupportVault = () => {
     const navigate = useNavigate();
@@ -43,11 +42,11 @@ export const SupportVault = () => {
     }, [fetchActivePatients]);
 
     const handleRevoke = async (req) => {
-        if (!window.confirm(`Terminate secure session with ${req.owner?.full_name || 'this user'}?`)) return;
+        if (!window.confirm(`Terminate session with ${req.owner?.full_name || 'this user'}?`)) return;
         try {
             await api.post('/access/reject', { request_id: req.id });
-            setSuccessMsg(`🚫 Session with ${req.owner?.full_name || 'user'} terminated.`);
-            setTimeout(() => setSuccessMsg(''), 4000);
+            setSuccessMsg(`🚫 Session terminated.`);
+            setTimeout(() => setSuccessMsg(''), 3000);
             fetchActivePatients();
         } catch (err) {
             alert('❌ Revoke failed: ' + (err.error || err.message));
@@ -55,124 +54,157 @@ export const SupportVault = () => {
     };
 
     return (
-        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Compact Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/40 backdrop-blur-md p-6 rounded-[2rem] border border-white/60 shadow-sm">
+                <div>
+                    <div className="flex items-center gap-2 mb-1">
+                        <FaShieldAlt className="text-blue-500 text-xs" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Security Sector</span>
+                    </div>
+                    <h2 className="text-3xl font-black text-gray-900 leading-none tracking-tight">
+                        Support <span className="text-blue-600">Vault</span>
+                    </h2>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                     <button
+                        onClick={fetchActivePatients}
+                        className="bg-white border border-gray-100 p-3 rounded-xl text-gray-400 hover:text-blue-600 transition-all active:scale-95 shadow-sm"
+                    >
+                        <FaSync className={activeLoading ? 'animate-spin' : ''} size={14} />
+                    </button>
+                    <div className="flex items-center gap-4 bg-gray-900 px-5 py-2.5 rounded-2xl border border-gray-800 shadow-2xl">
+                        <div className="flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+                            <span className="text-[9px] font-black text-white uppercase tracking-widest">TLS 1.3</span>
+                        </div>
+                        <div className="w-[1px] h-3 bg-gray-700" />
+                        <div className="text-center">
+                            <span className="text-[8px] font-black text-gray-500 uppercase block leading-none mb-0.5">Active Keys</span>
+                            <span className="text-sm font-black text-blue-400 leading-none">{activePatients.length}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {/* Success Toast */}
             {successMsg && (
-                <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white px-6 py-3 rounded-2xl shadow-xl flex items-center gap-3 font-bold text-sm border border-gray-800">
-                    <FaCheck className="text-green-400" /> {successMsg}
+                <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-gray-900/90 backdrop-blur-xl text-white px-5 py-2.5 rounded-2xl shadow-2xl flex items-center gap-3 font-bold text-xs border border-white/10 animate-in slide-in-from-top-4">
+                    <div className="w-2 h-2 bg-green-400 rounded-full" /> {successMsg}
                 </div>
             )}
 
-            {/* ─── ACTIVE SUPPORT VAULT ─── */}
-            <section className="min-h-[600px]">
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-                    <div>
-                        <div className="flex items-center gap-3 mb-3">
-                            <div className="h-[2px] w-12 bg-blue-600 rounded-full" />
-                            <span className="text-[11px] font-black uppercase tracking-[0.3em] text-blue-500">Security Sector</span>
-                        </div>
-                        <h2 className="text-5xl font-black text-gray-900 leading-none">
-                            Support <span className="text-blue-600">Vault</span>
-                        </h2>
-                    </div>
+            {activeLoading ? (
+                <div className="flex flex-col items-center justify-center p-16 bg-white/50 rounded-[2.5rem] border border-dashed border-gray-200">
+                    <FaSpinner className="text-2xl text-blue-500 animate-spin mb-3" />
+                    <p className="text-gray-400 font-bold uppercase tracking-widest text-[9px]">Decrypting Access Matrix...</p>
                 </div>
-
-                {activeLoading ? (
-                    <div className="flex flex-col items-center justify-center p-20 bg-white rounded-3xl shadow-sm border border-gray-100">
-                        <FaSpinner className="text-3xl text-blue-600 animate-spin mb-4" />
-                        <p className="text-gray-500 font-bold uppercase tracking-widest text-[10px]">Filtering Vault Access...</p>
+            ) : activeError ? (
+                <div className="p-8 bg-red-50/50 rounded-[2rem] border border-red-100 text-center">
+                    <p className="text-red-500 font-bold text-xs">{activeError}</p>
+                </div>
+            ) : activePatients.length === 0 ? (
+                <div className="bg-white/40 border-2 border-dashed border-gray-100 rounded-[3rem] p-24 text-center group hover:border-blue-100 transition-all duration-500">
+                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-6 text-gray-200 group-hover:scale-110 group-hover:text-blue-200 group-hover:shadow-xl transition-all">
+                        <FaLock size={24} />
                     </div>
-                ) : activeError ? (
-                    <div className="p-8 bg-red-50 rounded-3xl border border-red-100 text-center">
-                        <p className="text-red-500 font-bold text-sm">{activeError}</p>
-                    </div>
-                ) : activePatients.length === 0 ? (
-                    <div className="bg-white border-2 border-dashed border-gray-100 rounded-[3rem] p-24 text-center group hover:border-blue-100 transition-colors">
-                        <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-8 text-gray-300 transition-transform">
-                            <FaLock size={32} />
-                        </div>
-                        <h3 className="text-2xl font-black text-gray-900 mb-2">Vault Empty</h3>
-                        <p className="text-gray-400 font-medium max-w-sm mx-auto leading-relaxed">
-                            Authorized troubleshooting sessions will appear here automatically when users grant you access.
-                        </p>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-                        {activePatients.map((req) => (
-                            <div key={req.id} className="group relative bg-white border border-gray-100 rounded-[2.5rem] p-8 transition-all duration-500 hover:shadow-[0_40px_80px_-20px_rgba(37,99,235,0.15)] hover:-translate-y-2 overflow-hidden">
-                                <div className="absolute top-0 right-0 p-6">
-                                    <div className="flex items-center gap-2 bg-green-50 text-green-600 px-3 py-1.5 rounded-full border border-green-100 scale-90 group-hover:scale-100 transition-transform">
-                                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                                        <span className="text-[9px] font-black uppercase tracking-widest">Live Session</span>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-6 mb-8 mt-4">
-                                    <div className="w-16 h-16 bg-blue-600 rounded-3xl flex items-center justify-center text-white shadow-xl shadow-blue-200 group-hover:rotate-6 transition-all duration-500">
-                                        <FaUserShield size={28} />
+                    <h3 className="text-xl font-black text-gray-800 mb-1">Vault Offline</h3>
+                    <p className="text-gray-400 font-medium max-w-xs mx-auto leading-relaxed text-xs">
+                        Awaiting troubleshooting authorization from users.
+                    </p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {activePatients.map((req) => (
+                        <div key={req.id} className="group relative bg-white border border-gray-100 rounded-[2rem] p-6 transition-all duration-500 hover:shadow-[0_30px_60px_-12px_rgba(37,99,235,0.12)] hover:-translate-y-1.5 overflow-hidden active:scale-[0.98]">
+                            
+                            {/* Status Header */}
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-100 group-hover:rotate-12 transition-all">
+                                        <FaUserShield size={20} />
                                     </div>
                                     <div className="min-w-0">
-                                        <h4 className="text-xl font-black text-gray-900 truncate">
+                                        <h4 className="text-base font-black text-gray-900 truncate tracking-tight">
                                             {req.patient?.full_name || 'Global Account'}
                                         </h4>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest truncate max-w-[120px]">
-                                                {req.owner?.full_name || 'Authorized User'}
-                                            </span>
-                                            <div className="w-1 h-1 bg-gray-200 rounded-full" />
-                                            <span className="text-[10px] font-bold text-blue-500">
-                                                {req.patient ? 'Patient-Link' : 'Global Access'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4 mb-8">
-                                    <div className="bg-gray-50/80 rounded-2xl p-4 border border-gray-100 transition-colors group-hover:border-blue-100 group-hover:bg-blue-50/20">
-                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 flex items-center gap-1">
-                                            <FaLock size={8} className="text-blue-500" /> Secure ID
-                                        </p>
-                                        <p className="text-xs font-black text-gray-700 tracking-tight">
-                                            {req.patient?.patient_code || '--- ---'}
-                                        </p>
-                                    </div>
-                                    <div className="bg-gray-50/80 rounded-2xl p-4 border border-gray-100 transition-colors group-hover:border-blue-100 group-hover:bg-blue-50/20">
-                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 flex items-center gap-1">
-                                            <FaCalendarAlt size={8} className="text-indigo-500" /> Access Started
-                                        </p>
-                                        <p className="text-xs font-black text-gray-700">
-                                            {req.approved_at ? new Date(req.approved_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'Recent'}
+                                        <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest">
+                                            {req.patient ? 'Patient-Bound' : 'Full Specialist Access'}
                                         </p>
                                     </div>
                                 </div>
-
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={() => {
-                                            const pId = req.patient?.patient_code || req.patient_id || req.patient?.id;
-                                            if (pId) {
-                                                navigate(`/patients/${pId}`);
-                                            } else {
-                                                navigate('/patients');
-                                            }
-                                        }}
-                                        className="flex-[2] h-14 bg-gray-950 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 hover:bg-blue-600 hover:shadow-2xl hover:shadow-blue-200 active:scale-95 active:shadow-none"
-                                    >
-                                        <FaUnlock className="text-blue-400 group-hover:text-white" /> Access Data Stream
-                                    </button>
-                                    <button
-                                        onClick={() => handleRevoke(req)}
-                                        className="w-14 h-14 bg-white border border-gray-100 rounded-2xl flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 hover:border-red-100 transition-all active:scale-90"
-                                        title="Revoke session"
-                                    >
-                                        <FaTimes />
-                                    </button>
+                                <div className="bg-green-50 text-green-600 px-2.5 py-1.5 rounded-xl border border-green-100 flex items-center gap-1.5 shadow-sm group-hover:bg-green-600 group-hover:text-white transition-colors duration-300">
+                                    <FaSignal size={10} className="animate-pulse" />
+                                    <span className="text-[8px] font-black uppercase tracking-widest">Active</span>
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                )}
-            </section>
+
+                            {/* User Context */}
+                            <div className="bg-gray-50/80 rounded-2xl p-4 border border-gray-100 mb-6 group-hover:bg-blue-50/30 group-hover:border-blue-100/50 transition-colors">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center border border-gray-100 group-hover:border-blue-200">
+                                        <FaUserMd className="text-blue-500 text-xs" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5 leading-none">Owner Identity</p>
+                                        <p className="text-[11px] font-black text-gray-700 truncate leading-none">{req.owner?.full_name || 'Authorized User'}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5 leading-none">Granted On</p>
+                                        <p className="text-[11px] font-black text-gray-700 leading-none">
+                                            {req.approved_at ? new Date(req.approved_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'Today'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Info Grid */}
+                            <div className="grid grid-cols-2 gap-3 mb-6">
+                                <div className="bg-white border border-gray-100 rounded-xl p-3 shadow-inner shadow-gray-50/50">
+                                    <div className="flex items-center gap-1.5 mb-1 opacity-40">
+                                        <FaLock size={8} />
+                                        <span className="text-[8px] font-black uppercase tracking-widest">Vault ID</span>
+                                    </div>
+                                    <p className="text-[11px] font-black text-gray-800 tracking-tight">
+                                        {req.patient?.patient_code || 'Account Global'}
+                                    </p>
+                                </div>
+                                <div className="bg-white border border-gray-100 rounded-xl p-3 shadow-inner shadow-gray-50/50">
+                                    <div className="flex items-center gap-1.5 mb-1 opacity-40">
+                                        <FaCalendarAlt size={8} />
+                                        <span className="text-[8px] font-black uppercase tracking-widest">Last Access</span>
+                                    </div>
+                                    <p className="text-[11px] font-black text-gray-800">
+                                        {req.updated_at ? new Date(req.updated_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'Just Now'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Compact Buttons */}
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => {
+                                        const pId = req.patient?.patient_code || req.patient_id || req.patient?.id;
+                                        if (pId) navigate(`/patients/${pId}`);
+                                        else navigate('/patients');
+                                    }}
+                                    className="flex-[3] h-12 bg-gray-950 text-white rounded-[1.2rem] font-black text-[10px] uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 hover:bg-blue-600 hover:shadow-xl hover:shadow-blue-200 active:scale-95 shadow-lg shadow-gray-200 hover:scale-[1.02]"
+                                >
+                                    <FaUnlock size={10} className="text-blue-400 group-hover:text-white" /> Access Stream
+                                </button>
+                                <button
+                                    onClick={() => handleRevoke(req)}
+                                    className="flex-1 h-12 bg-white border border-gray-100 rounded-[1.2rem] flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 hover:border-red-100 transition-all active:scale-90"
+                                    title="Close Vault"
+                                >
+                                    <FaTimes size={14} />
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
     );
 };
