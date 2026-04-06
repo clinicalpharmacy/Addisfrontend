@@ -211,25 +211,6 @@ const PatientUnlocker = ({ patientData, userSalt, onUnlocked, children }) => {
                                         userCompanyId === patientData?.user_id ||
                                         hccId === patientData?.user_id;
 
-                        // 🤫 SILENT MODE FOR OWNERS: No password prompt should be visible
-                        if (isOwner && !grantedKey && !error) {
-                            return (
-                                <div className="p-10 flex flex-col items-center justify-center gap-4 text-center">
-                                    <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center">
-                                        <FaSpinner className="text-3xl text-blue-600 animate-spin" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-sm font-black text-gray-800 uppercase tracking-widest mb-1">Synchronizing Clinical Vault</h3>
-                                        <p className="text-xs text-gray-400 font-medium">Bypassing security gate for record owner...</p>
-                                    </div>
-                                    <div className="pt-4 opacity-50 flex items-center gap-2">
-                                        <div className="w-1 h-1 rounded-full bg-green-500" />
-                                        <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest"> Secured Active Session </p>
-                                    </div>
-                                </div>
-                            );
-                        }
-
                         if (grantedKey || isOwner) {
                             return (
                                 <form onSubmit={handleSubmit} className="p-5 sm:p-7 space-y-5">

@@ -335,17 +335,21 @@ const PatientList = () => {
                                                 <div className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm shadow-sm group-hover:scale-110 transition-transform">
                                                     {userRole === 'healthcare_client'
                                                         ? 'P'
-                                                        : (patient.full_name && typeof patient.full_name === 'string' && !patient.full_name.startsWith('{') ? patient.full_name.charAt(0) : '?')}
+                                                        : (patient.full_name && typeof patient.full_name === 'string' && !patient.full_name.includes(':') && !patient.full_name.startsWith('{') ? patient.full_name.charAt(0) : '?')}
                                                 </div>
                                                 <div>
-                                                    <div className="font-bold text-gray-800 text-sm leading-none mb-1">{patient.full_name || 'Anonymous User'}</div>
+                                                    <div className="font-bold text-gray-800 text-sm leading-none mb-1">
+                                                        {userRole === 'healthcare_client' 
+                                                            ? 'Patient Profile' 
+                                                            : (patient.full_name && typeof patient.full_name === 'string' && !patient.full_name.includes(':') && !patient.full_name.startsWith('{') ? patient.full_name : 'Anonymous User')}
+                                                    </div>
                                                     <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Clinical Identifier</div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-5">
                                             <div className="text-sm font-medium text-gray-700 italic max-w-xs truncate">
-                                                "{userRole === 'healthcare_client' ? 'Clinical Data' : (patient.diagnosis && typeof patient.diagnosis === 'string' && !patient.diagnosis.startsWith('{') ? patient.diagnosis : 'Diagnosis Pending')}"
+                                                "{userRole === 'healthcare_client' ? 'Clinical Data' : (patient.diagnosis && typeof patient.diagnosis === 'string' && !patient.diagnosis.includes(':') && !patient.diagnosis.startsWith('{') ? patient.diagnosis : 'Diagnosis Pending')}"
                                             </div>
                                         </td>
                                         <td className="px-6 py-5 text-xs text-gray-500 font-bold">
