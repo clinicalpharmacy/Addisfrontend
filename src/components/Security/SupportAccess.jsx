@@ -16,6 +16,9 @@ const SupportAccess = () => {
     const [admins, setAdmins] = useState([]);
     const [activeAccess, setActiveAccess] = useState(null);
     const [selectedAdminId, setSelectedAdminId] = useState('');
+    const [manualEmail, setManualEmail] = useState('');
+    const [searching, setSearching] = useState(false);
+    const [manualRecipient, setManualRecipient] = useState(null);
 
     const fetchData = useCallback(async () => {
         // Only set loading on mount, use granting state for toggles
@@ -52,9 +55,8 @@ const SupportAccess = () => {
     }, [fetchData]);
 
     const handleToggleOn = async () => {
-        if (!selectedAdminId) return alert("Select a specialist.");
-        const admin = admins.find(a => a.id === selectedAdminId);
-        if (!admin) return;
+        const admin = manualRecipient || admins.find(a => a.id === selectedAdminId);
+        if (!admin) return alert("Please select or search for a specialist.");
 
         setGranting(true);
         try {
@@ -82,6 +84,24 @@ const SupportAccess = () => {
             alert("Activation Error: " + err.message);
         } finally {
             setGranting(false);
+        }
+    };
+
+    const handleManualSearch = async (e) => {
+        if (e) e.preventDefault();
+        setSearching(true);
+        try {
+            const res = await api.get(`/auth/search?email=${manualEmail}`);
+            if (res.success && res.user) {
+                setManualRecipient(res.user);
+                setSelectedAdminId(res.user.id);
+            } else {
+                alert("❌ Specialist not found in registry.");
+            }
+        } catch (err) {
+            alert("❌ Search failed: " + (err.error || err.message));
+        } finally {
+            setSearching(false);
         }
     };
 
@@ -143,11 +163,11 @@ const SupportAccess = () => {
 
                         <button
                             onClick={activeAccess ? handleToggleOff : handleToggleOn}
-                            disabled={granting || (!activeAccess && !selectedAdminId)}
-                            className={`relative w-20 h-10 rounded-full transition-all duration-500 p-1 flex items-center shadow-inner ${activeAccess ? 'bg-green-500' : 'bg-gray-300'} ${granting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            disabled={granting || (!activeAccess && !selectedAdminId && !manualRecipient)}
+                            className={`relative w-20 h-10 rounded-full transition-all duration-500 p-1 flex items-center shadow-inner ${activeAccess ? 'bg-green-500' : ((manualRecipient || admins.find(a => a.id === selectedAdminId))?.public_key ? 'bg-blue-500' : 'bg-gray-300')} ${granting ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                             <div className={`w-8 h-8 bg-white rounded-full shadow-lg transform transition-transform duration-500 flex items-center justify-center ${activeAccess ? 'translate-x-10' : 'translate-x-0'}`}>
-                                {granting ? <FaSpinner className="animate-spin text-blue-500 text-[10px]" /> : <div className="w-1.5 h-1.5 bg-gray-200 rounded-full" />}
+                                {granting ? <FaSpinner className="animate-spin text-blue-500 text-[10px]" /> : ((manualRecipient || admins.find(a => a.id === selectedAdminId))?.public_key ? <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" /> : <div className="w-1.5 h-1.5 bg-gray-200 rounded-full" />)}
                             </div>
                         </button>
                     </div>
@@ -155,34 +175,65 @@ const SupportAccess = () => {
             </div>
 
             {!activeAccess && (
-                <div className="bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm">
-                    <h4 className="font-black text-[11px] uppercase tracking-widest text-gray-400 mb-6 flex items-center gap-2">
-                        <FaHandshake className="text-blue-500" /> Select Authorized Personnel
-                    </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {admins.map(admin => (
-                            <div 
-                                key={admin.id} 
-                                onClick={() => setSelectedAdminId(admin.id)}
-                                className={`group p-5 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${selectedAdminId === admin.id ? 'border-blue-600 bg-blue-50/30' : 'border-gray-50 bg-gray-50 hover:bg-gray-100'}`}
+                <div className="bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm space-y-8">
+                    {/* Manual Search */}
+                    <div className="bg-gray-50/50 rounded-3xl p-6 border border-dashed border-gray-200">
+                        <h4 className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-4 flex items-center gap-2">
+                             <FaHandshake className="text-blue-500" /> Specialist Email Discovery
+                        </h4>
+                        <form onSubmit={handleManualSearch} className="flex items-center gap-3 bg-white border border-gray-100 rounded-2xl p-2 pl-5 focus-within:ring-2 focus-within:ring-blue-500 shadow-sm transition-all">
+                            <input
+                                type="email"
+                                placeholder="Locate specialist by email..."
+                                value={manualEmail}
+                                onChange={(e) => setManualEmail(e.target.value)}
+                                className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-gray-700"
+                                required
+                            />
+                            <button
+                                type="submit"
+                                disabled={searching || !manualEmail}
+                                className="bg-blue-600 text-white px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-blue-700 active:scale-95 transition-all"
                             >
-                                <div className="flex items-center gap-4">
-                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black transition-all ${selectedAdminId === admin.id ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-gray-300'}`}>
-                                        {admin.full_name?.charAt(0)}
-                                    </div>
-                                    <div>
-                                        <p className="font-black text-gray-800 text-sm">{admin.full_name}</p>
-                                        <p className={`text-[9px] font-black uppercase tracking-tight ${admin.public_key ? 'text-green-600' : 'text-amber-600 animate-pulse'}`}>
-                                            {admin.public_key ? 'Verified Official' : 'Security Setup Required'}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedAdminId === admin.id ? 'border-blue-600 bg-white' : 'border-gray-200'}`}>
-                                    {selectedAdminId === admin.id && <div className="w-2 h-2 bg-blue-600 rounded-full" />}
-                                </div>
-                            </div>
-                        ))}
+                                {searching ? <FaSpinner className="animate-spin" /> : 'Link Tunnel'}
+                            </button>
+                        </form>
                     </div>
+
+                    {admins.length > 0 && (
+                        <div>
+                            <h4 className="font-black text-[11px] uppercase tracking-widest text-gray-400 mb-6 flex items-center gap-2">
+                                <FaHandshake className="text-blue-500" /> Registry Verified Personnel
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {admins.map(admin => (
+                                    <div 
+                                        key={admin.id} 
+                                        onClick={() => {
+                                            setSelectedAdminId(admin.id);
+                                            setManualRecipient(null);
+                                        }}
+                                        className={`group p-5 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${selectedAdminId === admin.id ? 'border-blue-600 bg-blue-50/30' : 'border-gray-50 bg-gray-50 hover:bg-gray-100'}`}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black transition-all ${selectedAdminId === admin.id ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-gray-300'}`}>
+                                                {admin.full_name?.charAt(0)}
+                                            </div>
+                                            <div>
+                                                <p className="font-black text-gray-800 text-sm">{admin.full_name}</p>
+                                                <p className={`text-[9px] font-black uppercase tracking-tight ${admin.public_key ? 'text-green-600' : 'text-amber-600 animate-pulse'}`}>
+                                                    {admin.public_key ? 'Verified Official' : 'Security Setup Required'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedAdminId === admin.id ? 'border-blue-600 bg-white' : 'border-gray-200'}`}>
+                                            {selectedAdminId === admin.id && <div className="w-2 h-2 bg-blue-600 rounded-full" />}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 
