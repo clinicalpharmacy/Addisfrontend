@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FaEnvelope, FaArrowLeft, FaCheckCircle, FaExclamationTriangle, FaSpinner, FaKey, FaShield } from 'react-icons/fa';
+import { FaEnvelope, FaArrowLeft, FaCheckCircle, FaExclamationTriangle, FaSpinner, FaKey } from 'react-icons/fa';
 import api from '../utils/api';
 
 const ForgotPassword = () => {
