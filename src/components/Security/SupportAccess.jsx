@@ -229,27 +229,33 @@ const SupportAccess = () => {
             )}
 
             {!activeAccess && (
-                <div className="bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm space-y-8">
-                    {/* Manual Search */}
-                    <div className="bg-gray-50/50 rounded-3xl p-6 border border-dashed border-gray-200">
-                        <h4 className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-4 flex items-center gap-2">
-                             <FaHandshake className="text-blue-500" /> Specialist Email Discovery
-                        </h4>
-                        <form onSubmit={handleManualSearch} className="flex items-center gap-3 bg-white border border-gray-100 rounded-2xl p-2 pl-5 focus-within:ring-2 focus-within:ring-blue-500 shadow-sm transition-all">
+                <div className="bg-white border-2 border-blue-100 rounded-[2.5rem] p-8 shadow-xl space-y-8 animate-in slide-in-from-bottom-10 duration-700">
+                    {/* Manual Search (PROMINENT FALLBACK) */}
+                    <div className="bg-blue-50/50 rounded-3xl p-8 border-2 border-dashed border-blue-200">
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+                                <FaHandshake size={20} />
+                            </div>
+                            <div>
+                                <h4 className="font-black text-gray-900 leading-tight">Can't see your specialist?</h4>
+                                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mt-0.5">Link anyone by their email address</p>
+                            </div>
+                        </div>
+                        <form onSubmit={handleManualSearch} className="flex items-center gap-3 bg-white border border-gray-100 rounded-2xl p-2 pl-6 focus-within:ring-4 focus-within:ring-blue-100 shadow-sm transition-all focus-within:scale-[1.02] transform duration-300">
                             <input
                                 type="email"
-                                placeholder="Locate specialist by email..."
+                                placeholder="Enter specialist email address (e.g. admin@pharmacare.com)..."
                                 value={manualEmail}
                                 onChange={(e) => setManualEmail(e.target.value)}
-                                className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-gray-700"
+                                className="flex-1 bg-transparent border-none outline-none text-sm font-bold text-gray-700 placeholder:text-gray-300"
                                 required
                             />
                             <button
                                 type="submit"
                                 disabled={searching || !manualEmail}
-                                className="bg-blue-600 text-white px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-blue-700 active:scale-95 transition-all"
+                                className="bg-blue-600 text-white px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 hover:bg-blue-700 active:scale-95 transition-all shadow-lg shadow-blue-100"
                             >
-                                {searching ? <FaSpinner className="animate-spin" /> : 'Link Tunnel'}
+                                {searching ? <FaSpinner className="animate-spin" /> : 'Link Official'}
                             </button>
                         </form>
                     </div>
