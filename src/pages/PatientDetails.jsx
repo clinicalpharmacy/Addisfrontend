@@ -167,9 +167,19 @@ const PatientDetails = () => {
         try {
             const res = await api.get('/admin/security-users');
             if (res.success && res.users?.length > 0) {
-                // Find a specialist or default to the first admin
+                // Find someone with a key, or first one
                 const bestMatch = res.users.find(u => u.public_key) || res.users[0];
                 setSpecialist(bestMatch);
+            } else {
+                // 🛡️ FALLBACK: If discovery fails, check if CURRENT user is an admin
+                const userData = localStorage.getItem('user');
+                if (userData) {
+                    const localUser = JSON.parse(userData);
+                    if (localUser.role === 'admin') {
+                        console.log("🛡️ [Support] Discovery empty. Falling back to current admin user identity.");
+                        setSpecialist(localUser);
+                    }
+                }
             }
         } catch (err) {
             console.warn("Failed to discover support personnel", err);
