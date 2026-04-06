@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaShieldAlt, FaKey, FaLock, FaSpinner, FaCheckCircle, FaExclamationTriangle, FaSyncAlt } from 'react-icons/fa';
+import { FaShield, FaKey, FaLock, FaSpinner, FaCheckCircle, FaExclamationTriangle, FaSyncAlt } from 'react-icons/fa';
 import { 
     generateUserKeyPair, 
     wrapPrivateKey, 

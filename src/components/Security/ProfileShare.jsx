@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaUserShield, FaUnlock, FaShieldAlt, FaHandshake, FaCheckCircle, FaExclamationTriangle, FaSpinner } from 'react-icons/fa';
+import { FaUserShield, FaUnlock, FaShield, FaHandshake, FaCheckCircle, FaExclamationTriangle, FaSpinner } from 'react-icons/fa';
 import api from '../../utils/api';
 import { getEncryptionKey, encryptForRecipient } from '../../utils/encryptionUtils';
 

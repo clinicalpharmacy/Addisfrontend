@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaShieldAlt, FaCheck, FaExclamationTriangle, FaFileContract } from 'react-icons/fa';
+import { FaShield, FaCheck, FaExclamationTriangle, FaFileContract } from 'react-icons/fa';
 
 const UserAgreement = ({ accountType, onAgree, onBack }) => {
     const isIndividual = accountType === 'individual';

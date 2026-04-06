@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaLock, FaKey, FaShieldAlt, FaSpinner, FaExclamationTriangle } from 'react-icons/fa';
+import { FaLock, FaKey, FaShield, FaSpinner, FaExclamationTriangle } from 'react-icons/fa';
 import {
     getEncryptionKey, deriveKey, decryptPatient,
     hexToBytes, loadPrivateKey, decryptWithPrivateKey
