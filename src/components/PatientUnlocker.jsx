@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaLock, FaKey, FaShield, FaSpinner, FaExclamationTriangle } from 'react-icons/fa';
+import { FaLock, FaKey, FaShield, FaSpinner, FaExclamationTriangle, FaUserShield } from 'react-icons/fa';
 import {
     getEncryptionKey, deriveKey, decryptPatient,
     hexToBytes, loadPrivateKey, decryptWithPrivateKey
@@ -261,12 +261,7 @@ const PatientUnlocker = ({ patientData, userSalt, onUnlocked, children }) => {
                                         }
                                     </button>
                                     
-                                    <div className="flex flex-col items-center gap-2 opacity-50">
-                                        <div className="flex items-center gap-2 pt-2">
-                                            <div className="w-1 h-1 rounded-full bg-green-500" />
-                                            <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest leading-none"> Secured Session Active </p>
-                                        </div>
-                                    </div>
+
                                 </form>
                             );
                         }
