@@ -35,7 +35,7 @@ const LabSettings = ({ onUpdate }) => {
         is_active: true,
         description: '',
         reference_range: '',
-        gender: 'Both'
+        gender: 'Male'
     });
 
     const categories = [
@@ -96,9 +96,6 @@ const LabSettings = ({ onUpdate }) => {
             } else if (formData.gender === 'Female') {
                 payload.range_male = null;
                 payload.range_female = formData.reference_range;
-            } else {
-                payload.range_male = formData.reference_range;
-                payload.range_female = formData.reference_range;
             }
 
             if (editingLab) {
@@ -141,19 +138,12 @@ const LabSettings = ({ onUpdate }) => {
     const handleEdit = (lab) => {
         setEditingLab(lab);
         
-        let initialGender = 'Both';
-        let initialRange = lab.range_male || lab.range_female || '';
+        let initialGender = 'Male';
+        let initialRange = lab.range_male || '';
         
-        if (lab.range_male && !lab.range_female) {
-            initialGender = 'Male';
-            initialRange = lab.range_male;
-        } else if (!lab.range_male && lab.range_female) {
+        if (!lab.range_male && lab.range_female) {
             initialGender = 'Female';
             initialRange = lab.range_female;
-        } else if (lab.range_male && lab.range_female && lab.range_male !== lab.range_female) {
-            // If they are strictly different, default to Both but maybe show male as default text
-            initialGender = 'Both';
-            initialRange = lab.range_male + ' (M), ' + lab.range_female + ' (F)';
         }
 
         setFormData({
@@ -251,7 +241,7 @@ const LabSettings = ({ onUpdate }) => {
                     <button
                         onClick={() => {
                             setEditingLab(null);
-                            setFormData({ name: '', unit: '', category: 'General', is_active: true, description: '', reference_range: '', gender: 'Both' });
+                            setFormData({ name: '', unit: '', category: 'General', is_active: true, description: '', reference_range: '', gender: 'Male' });
                             setShowAddForm(true);
                         }}
                         className="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-all shadow-sm font-bold text-xs active:scale-95 whitespace-nowrap"
@@ -461,9 +451,8 @@ const LabSettings = ({ onUpdate }) => {
                                             onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
                                             className="w-full border-2 border-gray-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all appearance-none bg-gray-50/50 font-black cursor-pointer"
                                         >
-                                            <option value="Both">Both / Universal</option>
-                                            <option value="Male">Male Only</option>
-                                            <option value="Female">Female Only</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
                                         </select>
                                     </div>
                                 </div>
