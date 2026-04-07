@@ -24,6 +24,8 @@ export const useCDSSLogic = (patientData) => {
     const [rulesLoading, setRulesLoading] = useState(false);
     // Incrementing this triggers a forced re-analysis after state commits
     const [forceReanalysisKey, setForceReanalysisKey] = useState(0);
+    // Gate: prevents auto-analysis from firing before medications are fetched
+    const [medicationsFetched, setMedicationsFetched] = useState(false);
 
     // Use refs to prevent infinite loops
     const previousPatientId = useRef(null);
@@ -83,6 +85,7 @@ export const useCDSSLogic = (patientData) => {
         if (!patientData?.id) {
             console.log('⚠️ No patient id provided for medication fetch, using fallback if available');
             setMedications(fallbackMedications);
+            setMedicationsFetched(true); // gate: mark done even with no id
             return;
         }
 
@@ -147,6 +150,9 @@ export const useCDSSLogic = (patientData) => {
             console.error('❌ Error in fetchPatientMedications:', error);
             setDebugInfo(prev => prev + `❌ Exception fetching medications: ${error.message}\n`);
             setMedications(fallbackMedications);
+        } finally {
+            // Always mark medications as fetched so auto-analysis can proceed
+            setMedicationsFetched(true);
         }
     }, [patientData?.patient_code, patientData?.medication_history]);
 
@@ -485,6 +491,7 @@ export const useCDSSLogic = (patientData) => {
             setMedications([]);
             setPatientFacts(null);
             setTestResults(null);
+            setMedicationsFetched(false); // reset gate for new patient
             previousPatientId.current = patientData?.id;
         }
 
@@ -543,19 +550,18 @@ export const useCDSSLogic = (patientData) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [forceReanalysisKey]);
 
-    // Auto-analyze ONLY when patient, rules count, or medication count genuinely changes.
-    // ✅ FIX: Do NOT include `loading` or `analyzePatient` in deps — those change every
-    // cycle and caused an infinite loop where alerts were cleared before they could display.
+    // Auto-analyze only when BOTH rules AND medications are fully fetched.
+    // medicationsFetched gate prevents premature analysis with empty medication list.
     useEffect(() => {
-        if (patientData?.id && clinicalRules.length > 0) {
+        if (patientData?.id && clinicalRules.length > 0 && medicationsFetched) {
             const timer = setTimeout(() => {
-                console.log('🔄 Data updated, triggering clinical analysis...');
+                console.log('🔄 Data ready, triggering clinical analysis...');
                 analyzePatientRef.current?.();
-            }, 600);
+            }, 300);
             return () => clearTimeout(timer);
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [patientData?.id, clinicalRules.length, medications.length]);
+    }, [patientData?.id, clinicalRules.length, medications.length, medicationsFetched]);
 
     const handleFilterChange = useCallback((severity) => {
         setSeverityFilter(severity);
