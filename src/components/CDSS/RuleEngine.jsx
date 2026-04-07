@@ -526,6 +526,32 @@ export const mapPatientToFacts = (patientData, medicationHistory = []) => {
         return findValue(source, key);
     };
 
+    const getULNFromRange = (rangeText) => {
+        if (!rangeText) return null;
+        const text = String(rangeText).trim();
+
+        // Patterns: "0-40", "< 40", "10 - 45", "Up to 40"
+        const matches = text.match(/[-\s]([0-9.]+)\s*$/) ||
+            text.match(/<\s*([0-9.]+)/) ||
+            text.match(/(\d+\.?\d*)\s*$/);
+
+        if (matches && matches[1]) {
+            const val = parseFloat(matches[1]);
+            return !isNaN(val) ? val : null;
+        }
+        return null;
+    };
+
+    // Fallback registry for standard lab limits. Clinicians can refine these in LabSettings.
+    const labDefinitions = {
+        creatinine: { name: 'Creatinine', range_male: '0.7-1.3', range_female: '0.6-1.1', unit: 'mg/dL' },
+        hemoglobin: { name: 'Hemoglobin', range_male: '13.8-17.2', range_female: '12.1-15.1', unit: 'g/dL' },
+        alt: { name: 'ALT', range_male: '0-40', range_female: '0-40', unit: 'U/L' },
+        ast: { name: 'AST', range_male: '0-40', range_female: '0-40', unit: 'U/L' },
+        alp: { name: 'ALP', range_male: '44-147', range_female: '44-147', unit: 'U/L' },
+        bilirubin_total: { name: 'Total Bilirubin', range_male: '0.1-1.2', range_female: '0.1-1.2', unit: 'mg/dL' }
+    };
+
     // COMPLETE list of ALL lab tests from your PatientDetails form
     const allLabs = [
         // ===== COMPLETE BLOOD COUNT (CBC) =====
@@ -609,40 +635,83 @@ export const mapPatientToFacts = (patientData, medicationHistory = []) => {
                 'blood_urea_nitrogen': 'bun',
                 'low_density_lipoprotein': 'ldl_cholesterol', 'ldl': 'ldl_cholesterol',
                 'high_density_lipoprotein': 'hdl_cholesterol', 'hdl': 'hdl_cholesterol',
-                'total_cholesterol_count': 'total_cholesterol'
+                'total_cholesterol_count': 'total_cholesterol',
+                'alanine_aminotransferase': 'alt', 'sgpt': 'alt',
+                'aspartate_aminotransferase': 'ast', 'sgot': 'ast'
             };
 
             Object.keys(sourceLabs).forEach(lab => {
-                const value = extractLabValue(patientData.labs, lab);
-                if (value !== null && value !== '') {
-                    // Determine if value is numeric or string
-                    const numVal = parseFloat(value);
+                const entry = extractLabValue(patientData.labs, lab);
+                if (entry !== null && entry !== '') {
+                    let val = null;
+                    let uln = null;
+
+                    // Handle object-style lab entry { result: 120, unit: 'U/L', reference_range: '0-40' }
+                    if (typeof entry === 'object' && entry !== null) {
+                        val = parseFloat(entry.result || entry.value || entry.val);
+                        const range = entry.reference_range || entry.range || entry.ref_range;
+                        uln = getULNFromRange(range);
+                    } else {
+                        val = parseFloat(entry);
+                    }
+
                     const normalizedLab = lab.toLowerCase().trim();
-                    const factValue = !isNaN(numVal) ? numVal : value;
+                    const snakeCaseLab = normalizedLab.replace(/[ -]/g, '_');
+                    const factValue = !isNaN(val) ? val : entry;
 
                     // 1. Store normalized key
                     facts.labs[normalizedLab] = factValue;
 
                     // 2. Store snake_case key (replacing spaces and hyphens)
-                    const snakeCaseLab = normalizedLab.replace(/[ -]/g, '_');
                     if (snakeCaseLab !== normalizedLab) {
                         facts.labs[snakeCaseLab] = factValue;
                     }
 
                     // 3. Check Aliases and store standard key
+                    const stdKey = labAliases[snakeCaseLab] || snakeCaseLab;
                     if (labAliases[snakeCaseLab]) {
                         const alias = labAliases[snakeCaseLab];
                         facts.labs[alias] = factValue;
                         if (facts[alias] === undefined) facts[alias] = factValue;
-                        console.log(`🧪 Lab Alias Mapped: ${snakeCaseLab} -> ${alias} =`, factValue);
                     }
 
                     // 4. Also set as top-level fact if not conflicting
-                    if (facts[normalizedLab] === undefined) {
-                        facts[normalizedLab] = factValue;
+                    if (facts[stdKey] === undefined) {
+                        facts[stdKey] = factValue;
                     }
                     if (facts[snakeCaseLab] === undefined) {
                         facts[snakeCaseLab] = factValue;
+                    }
+
+                    // 5. Auto-calculate [lab]_x_uln if ULN is found or defined for common labs
+                    if (!isNaN(val) && val !== null) {
+                        let activeULN = uln;
+                        
+                        // Fallback: If no ULN in data, use the range from labDefinitions based on gender
+                        if (!activeULN && labDefinitions[stdKey]) {
+                            const defs = labDefinitions[stdKey];
+                            const isFemale = facts.gender && ['female', 'f'].includes(facts.gender.toLowerCase());
+                            const defRange = isFemale && defs.range_female ? defs.range_female : defs.range_male;
+                            
+                            // If a range isn't gendered, it'll be defined simply as 'range'
+                            const finalRange = defRange || defs.range;
+                            
+                            if (finalRange) {
+                                activeULN = getULNFromRange(finalRange);
+                            }
+                        }
+
+                        if (activeULN > 0) {
+                            const multiplier = val / activeULN;
+                            facts[`${stdKey}_x_uln`] = multiplier;
+                            facts.labs[`${stdKey}_x_uln`] = multiplier;
+                            
+                            // Also map the original key with suffix
+                            if (stdKey !== lab) {
+                                facts[`${lab}_x_uln`] = multiplier;
+                                facts.labs[`${lab}_x_uln`] = multiplier;
+                            }
+                        }
                     }
                 }
             });
@@ -819,10 +888,24 @@ export const mapPatientToFacts = (patientData, medicationHistory = []) => {
         facts.labs.bilirubin_ratio = facts.bilirubin_ratio;
     }
 
-    // Calculate AST/ALT ratio
-    if (facts.ast > 0 && facts.alt > 0) {
-        facts.ast_alt_ratio = facts.ast / facts.alt;
-        facts.labs.ast_alt_ratio = facts.ast_alt_ratio;
+    // Calculate AST/ALT ratio and ULN multipliers
+    if (facts.ast > 0 || facts.alt > 0) {
+        const ULN = 40; // Standard Upper Limit of Normal
+
+        if (facts.ast > 0 && facts.alt > 0) {
+            facts.ast_alt_ratio = facts.ast / facts.alt;
+            facts.labs.ast_alt_ratio = facts.ast_alt_ratio;
+        }
+
+        if (facts.alt > 0) {
+            facts.alt_x_uln = facts.alt / ULN;
+            facts.labs.alt_x_uln = facts.alt_x_uln;
+        }
+
+        if (facts.ast > 0) {
+            facts.ast_x_uln = facts.ast / ULN;
+            facts.labs.ast_x_uln = facts.ast_x_uln;
+        }
     }
 
     // Calculate Cholesterol ratios

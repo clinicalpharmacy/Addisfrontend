@@ -128,5 +128,65 @@ export const sampleTestRules = [
         dtp_category: 'monitoring_needed',
         is_active: true,
         applies_to: ['all_patients']
+    },
+    {
+        id: 'HEPATIC_01',
+        rule_name: 'Hepatic Monitoring: ALT > 3x ULN',
+        rule_type: 'hepatotoxicity_check',
+        rule_description: 'ALT exceeds 3 times the upper limit of normal',
+        rule_condition: {
+            all: [
+                { fact: 'alt_x_uln', operator: '>=', value: 3 }
+            ]
+        },
+        rule_action: {
+            message: 'Critical Hepatotoxicity Alert: ALT Elevated (> 3x ULN)',
+            recommendation: 'ALT is dangerously elevated at {{alt}} U/L ({{alt_x_uln}}x ULN). Evaluate for drug-induced liver injury (DILI). Consider withholding or adjusting dose of hepatotoxic medications.',
+            severity: 'critical'
+        },
+        severity: 'critical',
+        dtp_category: 'adverse_drug_reaction',
+        is_active: true,
+        applies_to: ['all_patients']
+    },
+    {
+        id: 'HEPATIC_02',
+        rule_name: 'Hepatic Monitoring: AST > 3x ULN',
+        rule_type: 'hepatotoxicity_check',
+        rule_description: 'AST exceeds 3 times the upper limit of normal',
+        rule_condition: {
+            all: [
+                { fact: 'ast_x_uln', operator: '>=', value: 3 }
+            ]
+        },
+        rule_action: {
+            message: 'Critical Hepatotoxicity Alert: AST Elevated (> 3x ULN)',
+            recommendation: 'AST is dangerously elevated at {{ast}} U/L ({{ast_x_uln}}x ULN). Evaluate for liver injury. Check for concurrent symptoms (jaundice, nausea).',
+            severity: 'critical'
+        },
+        severity: 'critical',
+        dtp_category: 'adverse_drug_reaction',
+        is_active: true,
+        applies_to: ['all_patients']
+    },
+    {
+        id: 'HEPATIC_03',
+        rule_name: 'Hepatic Monitoring: Bilirubin > 2x ULN',
+        rule_type: 'hepatotoxicity_check',
+        rule_description: 'Total Bilirubin exceeds 2 times the upper limit of normal',
+        rule_condition: {
+            all: [
+                { fact: 'bilirubin_total_x_uln', operator: '>=', value: 2 }
+            ]
+        },
+        rule_action: {
+            message: 'Hepatotoxicity Alert: Total Bilirubin Elevated (> 2x ULN)',
+            recommendation: 'Total Bilirubin is elevated at {{bilirubin_total}} ({{bilirubin_total_x_uln}}x ULN). When combined with elevated transaminases, this may indicate Hy\'s Law (high risk of severe DILI).',
+            severity: 'critical'
+        },
+        severity: 'critical',
+        dtp_category: 'adverse_drug_reaction',
+        is_active: true,
+        applies_to: ['all_patients']
     }
 ];
