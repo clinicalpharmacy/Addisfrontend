@@ -109,7 +109,7 @@ const MedicationHistory = ({ patientCode }) => {
     const frequencyOptions = [
         'Once daily', 'Twice daily', 'Three times daily', 'Four times daily',
         'Every morning', 'Every evening', 'Every night', 'At bedtime', 'Every other day',
-        'Three times per week', 'Weekly', 'Every two weeks', 'Every 4 hours', 
+        'Three times per week', 'Weekly', 'Q2weeks', 'Every 4 hours', 
         'Every 6 hours', 'Every 8 hours', 'Every 12 hours', 'Before meals', 
         'After meals', 'With meals', 'On empty stomach', 'As needed (PRN)'
     ];
