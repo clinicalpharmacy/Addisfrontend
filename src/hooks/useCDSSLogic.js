@@ -398,23 +398,68 @@ export const useCDSSLogic = (patientData) => {
         analyzePatientRef.current = analyzePatient;
     });
 
-    // Effect: Initial fetch of rules and medications
+    const initializeCDSS = useCallback(async () => {
+        if (!patientData?.id) return;
+        setLoading(true);
+        console.log('🔄 Initializing CDSS data (Single-Pass)...');
+        setHasAnalyzed(true);
+
+        try {
+            const [rulesRes, medsRes] = await Promise.all([
+                api.get('/clinical-rules'),
+                api.get(`/medication-history/patient/${patientData.id}`)
+            ]);
+
+            const freshRules = rulesRes.success ? (rulesRes.rules || []) : sampleTestRules;
+            const freshMeds = medsRes.success ? (medsRes.medications || []) : (patientData?.medication_history || []);
+
+            // Set state
+            if (rulesRes.success && freshRules.length > 0) {
+                setClinicalRules(freshRules);
+            } else {
+                setClinicalRules(sampleTestRules);
+            }
+
+            let decryptedMeds = freshMeds;
+            const encKey = await getEncryptionKey();
+            if (encKey && freshMeds.length > 0) {
+                try {
+                    decryptedMeds = await Promise.all(freshMeds.map(async (m) => {
+                        const d = { ...m };
+                        const fields = ['drug_name', 'dose', 'frequency', 'roa', 'route', 'indication', 'notes', 'medical_condition'];
+                        for (const f of fields) {
+                            if (d[f] && typeof d[f] === 'string' && d[f].includes(':')) {
+                                try { d[f] = await decryptValue(d[f], encKey); } catch (e) {}
+                            }
+                        }
+                        return d;
+                    }));
+                } catch (e) {
+                    console.error('Decryption failed on init', e);
+                }
+            }
+            
+            setMedications(decryptedMeds);
+            setMedicationsFetched(true);
+
+            // Force analysis immediately identically to runFullAnalysis
+            await analyzePatient(rulesRes.success && freshRules.length > 0 ? freshRules : sampleTestRules, decryptedMeds);
+
+        } catch (error) {
+            console.error('❌ Error during CDSS initialization:', error);
+            setAnalysisError('Initialization failed.');
+        } finally {
+            setLoading(false);
+        }
+    }, [patientData, analyzePatient]);
+
+    // Effect: Initialize once
     useEffect(() => {
         if (isInitialLoad && patientData?.id) {
-            console.log('🔄 Initializing CDSS data...');
-            fetchClinicalRules();
-            fetchPatientMedications();
             setIsInitialLoad(false);
+            initializeCDSS();
         }
-    }, [isInitialLoad, patientData?.id, fetchClinicalRules, fetchPatientMedications]);
-
-    // Effect: Auto-analyze when data arrives
-    useEffect(() => {
-        if (patientData?.id && clinicalRules.length > 0 && medicationsFetched && !hasAnalyzed && !loading) {
-            console.log('⚡ Auto-triggering analysis with', clinicalRules.length, 'rules and', medications.length, 'medications');
-            analyzePatient(clinicalRules, medications);
-        }
-    }, [patientData?.id, clinicalRules, medicationsFetched, medications, analyzePatient, hasAnalyzed, loading]);
+    }, [isInitialLoad, patientData?.id, initializeCDSS]);
 
     const testSampleRules = useCallback(() => {
         if (!patientData) {
