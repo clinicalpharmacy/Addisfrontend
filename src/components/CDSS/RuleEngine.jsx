@@ -409,8 +409,24 @@ export const mapPatientToFacts = (patientData, medicationHistory = []) => {
     // ✅ FIXED: EXTRACT MEDICATIONS
     facts.medication_data = {};
     if (Array.isArray(medicationHistory)) {
+        let allIndications = [];
+        let allConditions = facts.conditions || [];
+
         medicationHistory.forEach(med => {
             if (med && typeof med === 'object') {
+                // Add indication to global collection if present
+                if (med.indication) {
+                    const ind = med.indication.toLowerCase().trim();
+                    allIndications.push(ind);
+                    allConditions.push(ind);
+                }
+
+                // Add medical_condition to global collection if present
+                if (med.medical_condition) {
+                    const cond = med.medical_condition.toLowerCase().trim();
+                    allConditions.push(cond);
+                }
+
                 if (med.drug_name) {
                     const drugName = med.drug_name.toLowerCase().trim();
                     const drugKey = drugName.replace(/\s+/g, '_');
@@ -443,6 +459,7 @@ export const mapPatientToFacts = (patientData, medicationHistory = []) => {
                         stop_date: med.stop_date,
                         status: med.status,
                         indication: med.indication,
+                        medical_condition: med.medical_condition,
                         drug_name: med.drug_name,
                         drug_class: med.drug_class
                     };
@@ -471,6 +488,8 @@ export const mapPatientToFacts = (patientData, medicationHistory = []) => {
         facts.medications = [...new Set(facts.medications)];
         facts.medication_names = [...new Set(facts.medication_names)];
         facts.medication_classes = [...new Set(facts.medication_classes)];
+        facts.indication_names = [...new Set(allIndications)];
+        facts.conditions = [...new Set(allConditions.filter(c => c))];
         facts.medication_count = facts.medication_names.length;
     }
 

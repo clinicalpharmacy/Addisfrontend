@@ -156,184 +156,120 @@ export const useCDSSLogic = (patientData) => {
         }
     }, [patientData?.patient_code, patientData?.medication_history]);
 
-    const analyzePatient = useCallback(async () => {
+    const analyzePatient = useCallback(async (overrideRules = null, overrideMedications = null) => {
         if (!patientData?.id) {
-            alert('❌ Please select a patient first');
+            console.warn('⚠️ Cannot analyze: Patient ID missing');
             return;
         }
 
         setLoading(true);
+        setAnalysisError(null);
+        
+        // Reset results but keep old ones if refresh is requested? 
+        // Actually, user wants immediate feedback, so we clear.
         setAlerts([]);
         setFilteredAlerts([]);
         setAnalysisStats(null);
-        setAnalysisError(null);
-        setExpandedAlert(null);
-        setTestResults(null);
 
         let debug = '🚀 === CDSS ANALYSIS STARTED ===\n';
+        const rulesToUse = overrideRules || clinicalRules || [];
+        const medsToUse = overrideMedications || medications || [];
+
         debug += `Patient: ${patientData.id}\n`;
-        debug += `Time: ${new Date().toLocaleString()}\n`;
-        debug += `Active Rules: ${clinicalRules.length}\n`;
-        debug += `Active Medications: ${medications.length}\n\n`;
+        debug += `Rules: ${rulesToUse.length}\n`;
+        debug += `Meds: ${medsToUse.length}\n\n`;
         setDebugInfo(debug);
 
         try {
             // 🔐 ZERO-KNOWLEDGE: Decrypt data before analysis
-            let currentPatient = patientData;
-            let currentMedications = [...medications];
+            let currentPatient = { ...patientData };
+            let currentMedications = [...medsToUse];
             
             const encKey = await getEncryptionKey();
             if (encKey) {
                 try {
-                    // Decrypt patient demographic and lab fields
                     currentPatient = await decryptPatient(currentPatient, encKey);
-                    
-                    // Decrypt medications (drug_name, dose, frequency, etc.)
                     currentMedications = await Promise.all(currentMedications.map(async (m) => {
                         const decryptedMed = { ...m };
-                        const sensitiveMedsFields = ['drug_name', 'dose', 'frequency', 'route', 'indication', 'notes', 'medical_condition'];
+                        const sensitiveMedsFields = ['drug_name', 'dose', 'frequency', 'roa', 'route', 'indication', 'notes', 'medical_condition'];
                         for (const field of sensitiveMedsFields) {
-                            if (decryptedMed[field]) {
-                                decryptedMed[field] = await decryptValue(decryptedMed[field], encKey);
+                            const val = decryptedMed[field];
+                            if (val && typeof val === 'string' && val.includes(':')) {
+                                try { decryptedMed[field] = await decryptValue(val, encKey); } catch (e) {}
                             }
                         }
                         return decryptedMed;
                     }));
-                    console.log('💎 [CDSS] Clinical data decrypted for analysis');
-                } catch (decErr) {
-                    console.error('❌ [CDSS] Decryption failed:', decErr);
-                }
+                } catch (decErr) { console.error('Decryption failed', decErr); }
             }
 
-            // Map to facts
-            debug += '\n🔍 === CREATING PATIENT FACTS ===\n';
             const facts = mapPatientToFacts(currentPatient, currentMedications);
             setPatientFacts(facts);
 
-            debug += `  Age: ${facts.age} years\n`;
-            debug += `  Age in Days: ${facts.age_in_days || 'N/A'}\n`;
-            debug += `  Medications: ${facts.medication_names.length} drugs\n`;
-
-            if (clinicalRules.length === 0) {
-                debug += '\n⚠️ === NO ACTIVE RULES FOUND ===\n';
-                debug += 'Using sample test rules for demonstration.\n';
-            }
-
-            // Evaluate rules
-            debug += '\n⚡ === EVALUATING CLINICAL RULES ===\n';
             const triggeredAlerts = [];
             let rulesEvaluated = 0;
             let rulesTriggered = 0;
 
-            const rulesToEvaluate = clinicalRules.length > 0 ? clinicalRules : sampleTestRules;
+            const rulesSrc = rulesToUse.length > 0 ? rulesToUse : sampleTestRules;
 
-            for (const rule of rulesToEvaluate) {
+            for (const rule of rulesSrc) {
                 rulesEvaluated++;
-
                 try {
-                    console.log(`🎯 Evaluating rule: "${rule.rule_name}"`);
                     const evalResult = evaluateRule(rule, facts, true);
-
                     if (evalResult.triggered) {
                         rulesTriggered++;
-                        debug += `[${rulesEvaluated}] "${rule.rule_name}": ✅ TRIGGERED\n`;
-                        if (evalResult.matchedMedications.length > 0) {
-                            debug += `    💊 Matched: ${evalResult.matchedMedications.join(', ')}\n`;
-                        }
+                        
+                        // Parse action
+                        let action = {};
+                        try {
+                            action = typeof rule.rule_action === 'string' ? JSON.parse(rule.rule_action) : (rule.rule_action || {});
+                        } catch (e) { action = {}; }
 
-                        // Create alert
-                        let professional_message = '';
-                        let client_message = '';
-                        let professional_recommendation = '';
-                        let client_recommendation = '';
-                        let details = '';
-                        let severity = rule.severity || 'moderate';
+                        const profMsg = formatAlertMessage(action.message_professional || action.message || rule.rule_name, facts);
+                        const clientMsg = formatAlertMessage(action.message_client || action.message || rule.rule_name, facts);
+                        const profRec = formatAlertMessage(action.recommendation_professional || action.recommendation || rule.rule_description || '', facts);
+                        const clientRec = formatAlertMessage(action.recommendation_client || action.recommendation || rule.rule_description || '', facts);
 
-                        if (rule.rule_action) {
-                            try {
-                                const actionData = typeof rule.rule_action === 'string'
-                                    ? JSON.parse(rule.rule_action)
-                                    : rule.rule_action;
-
-                                professional_message = actionData.message_professional || actionData.message || rule.rule_name;
-                                client_message = actionData.message_client || actionData.message || rule.rule_name;
-                                professional_recommendation = actionData.recommendation_professional || actionData.recommendation || '';
-                                client_recommendation = actionData.recommendation_client || actionData.recommendation || '';
-                                details = professional_recommendation || actionData.recommendation || '';
-                                severity = actionData.severity || rule.severity || 'moderate';
-                            } catch (e) {
-                                debug += `    ⚠️ Could not parse rule_action: ${e.message}\n`;
-                                if (rule.rule_description) {
-                                    details = rule.rule_description;
-                                }
-                            }
-                        } else if (rule.rule_description) {
-                            details = rule.rule_description;
-                        }
-
-                        // Format messages with actual values
-                        professional_message = formatAlertMessage(professional_message, facts);
-                        client_message = formatAlertMessage(client_message, facts);
-                        professional_recommendation = formatAlertMessage(professional_recommendation, facts);
-                        client_recommendation = formatAlertMessage(client_recommendation, facts);
-                        details = formatAlertMessage(details, facts);
-
-                        // Append matched medications to professional message
-                        if (evalResult.matchedMedications.length > 0) {
-                            professional_message += ` [Drug(s): ${evalResult.matchedMedications.join(', ')}]`;
-                        }
-
-                        const alert = {
-                            id: `${rule.id}-${Date.now()}`,
+                        triggeredAlerts.push({
+                            id: `${rule.id}-${Date.now()}-${rulesEvaluated}`,
                             rule_id: rule.id,
                             rule_name: rule.rule_name,
                             rule_type: rule.rule_type,
-                            rule_description: rule.rule_description,
-                            severity: severity,
-                            message: professional_message || rule.rule_name, // Fallback for list view
-                            professional_message,
-                            client_message,
-                            details: details,
-                            professional_recommendation: professional_recommendation,
-                            client_recommendation: client_recommendation,
+                            severity: action.severity || rule.severity || 'moderate',
+                            message: profMsg,
+                            professional_message: profMsg + (evalResult.matchedMedications.length > 0 ? ` [Matched: ${evalResult.matchedMedications.join(', ')}]` : ''),
+                            client_message: clientMsg,
+                            professional_recommendation: profRec,
+                            client_recommendation: clientRec,
+                            details: profRec || rule.rule_description,
                             evidence: {
-                                facts: facts,
-                                age_in_days: facts.age_in_days,
-                                patient_type: facts.patient_type,
-                                is_pediatric: facts.is_pediatric,
-                                medications: facts.medication_names,
-                                matched_medications: evalResult.matchedMedications,
-                                labs: facts.labs
+                                facts,
+                                matched_medications: evalResult.matchedMedications
                             },
                             timestamp: new Date().toISOString(),
                             acknowledged: false,
                             processed: false,
-                            patient_id: patientData.id,
-                            patient_name: currentPatient.full_name,
-                            patient_age_in_days: facts.age_in_days,
-                            patient_type: facts.patient_type,
-                            is_pediatric: facts.is_pediatric,
-                            is_test_rule: clinicalRules.length === 0
-                        };
-
-                        triggeredAlerts.push(alert);
-                    } else {
-                        debug += `[${rulesEvaluated}] "${rule.rule_name}": ❌ Not triggered\n`;
+                            patient_id: patientData.id
+                        });
                     }
-                } catch (ruleError) {
-                    debug += `[${rulesEvaluated}] "${rule.rule_name}": ❌ Error: ${ruleError.message}\n`;
-                    console.error(`Rule evaluation error:`, ruleError, rule);
-                }
+                } catch (e) { console.error(`Rule ${rule.id} failed`, e); }
             }
 
-            // Sort alerts by severity
+            // Finalize
             const severityOrder = { critical: 0, high: 1, moderate: 2, low: 3 };
             triggeredAlerts.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
 
-            // Calculate statistics
-            const stats = {
-                totalRules: rulesToEvaluate.length,
-                rulesEvaluated,
+            setAlerts(triggeredAlerts);
+            
+            // Sync Filtered Alerts Immediately
+            if (severityFilter === 'all') {
+                setFilteredAlerts(triggeredAlerts);
+            } else {
+                setFilteredAlerts(triggeredAlerts.filter(a => a.severity === severityFilter));
+            }
+
+            setAnalysisStats({
+                totalRules: rulesSrc.length,
                 rulesTriggered,
                 alertsGenerated: triggeredAlerts.length,
                 bySeverity: {
@@ -341,31 +277,111 @@ export const useCDSSLogic = (patientData) => {
                     high: triggeredAlerts.filter(a => a.severity === 'high').length,
                     moderate: triggeredAlerts.filter(a => a.severity === 'moderate').length,
                     low: triggeredAlerts.filter(a => a.severity === 'low').length
-                },
-                timestamp: new Date().toISOString(),
-                patientId: patientData.id,
-                medicationCount: medications.length
-            };
-
-            setAlerts(triggeredAlerts);
-            // Respect the current severity filter when setting filtered alerts
-            const filtered = severityFilter === 'all'
-                ? triggeredAlerts
-                : triggeredAlerts.filter(a => a.severity === severityFilter);
-            setFilteredAlerts(filtered);
-            setDebugInfo(debug);
-            setAnalysisStats(stats);
+                }
+            });
             setLastAnalysisTime(new Date().toISOString());
+            console.log(`✅ CDSS: Analysis complete. ${triggeredAlerts.length} issues found.`);
 
         } catch (error) {
-            console.error('❌ Analysis error:', error);
-            debug += `\n❌ ERROR: ${error.message}\n`;
-            setDebugInfo(debug);
             setAnalysisError(error.message);
         } finally {
             setLoading(false);
         }
     }, [patientData, clinicalRules, medications, severityFilter]);
+
+    const runFullAnalysis = useCallback(async () => {
+        if (!patientData?.id) return;
+        setLoading(true);
+        console.log('🚀 Running full clinical analysis refresh...');
+        
+        try {
+            // Fetch everything fresh
+            const [rulesRes, medsRes] = await Promise.all([
+                api.get('/clinical-rules'),
+                api.get(`/medication-history/patient/${patientData.id}`)
+            ]);
+            
+            const freshRules = rulesRes.success ? (rulesRes.rules || []) : clinicalRules;
+            const freshMeds = medsRes.success ? (medsRes.medications || []) : medications;
+
+            // Update state for next cycle
+            if (rulesRes.success) setClinicalRules(freshRules);
+            if (medsRes.success) {
+                // Decrypt meds before setting state to keep UI consistent
+                let decrypted = freshMeds;
+                const encKey = await getEncryptionKey();
+                if (encKey && freshMeds.length > 0) {
+                    decrypted = await Promise.all(freshMeds.map(async (m) => {
+                        const d = { ...m };
+                        const fields = ['drug_name', 'dose', 'frequency', 'roa', 'indication'];
+                        for (const f of fields) {
+                            if (d[f] && d[f].includes(':')) {
+                                try { d[f] = await decryptValue(d[f], encKey); } catch (e) {}
+                            }
+                        }
+                        return d;
+                    }));
+                }
+                setMedications(decrypted);
+                setMedicationsFetched(true);
+            }
+
+            // TRIGGER ANALYSIS IMMEDIATELY with the fresh data we just got
+            // This avoids waiting for React's async setState cycle
+            await analyzePatient(freshRules, freshMeds);
+            
+        } catch (error) {
+            console.error('Refresh analysis failed', error);
+        } finally {
+            setLoading(false);
+        }
+    }, [patientData?.id, clinicalRules, medications, analyzePatient]);
+
+    const handleFilterChange = useCallback((severity) => {
+        setSeverityFilter(severity);
+        if (severity === 'all') {
+            setFilteredAlerts(alerts);
+        } else {
+            setFilteredAlerts(alerts.filter(alert => alert.severity === severity));
+        }
+    }, [alerts]);
+
+    const acknowledgeAlert = useCallback((alertId, isProcessed = null) => {
+        setAlerts(prev => {
+            const updated = prev.map(a => a.id === alertId ? { 
+                ...a, 
+                processed: isProcessed !== null ? isProcessed : a.processed,
+                acknowledged: isProcessed !== null ? (isProcessed ? true : a.acknowledged) : true
+            } : a);
+            
+            // Sync filtered list too
+            const filtered = severityFilter === 'all' ? updated : updated.filter(u => u.severity === severityFilter);
+            setFilteredAlerts(filtered);
+            return updated;
+        });
+    }, [severityFilter]);
+
+    const acknowledgeAll = useCallback(() => {
+        const updated = alerts.map(a => ({ ...a, acknowledged: true, processed: true }));
+        setAlerts(updated);
+        setFilteredAlerts(updated);
+    }, [alerts]);
+
+    const toggleExpandAlert = useCallback((alertId) => {
+        setExpandedAlert(prev => prev === alertId ? null : alertId);
+    }, []);
+
+    // Effect: Sync analyzePatientRef
+    useEffect(() => {
+        analyzePatientRef.current = analyzePatient;
+    });
+
+    // Effect: Auto-analyze when data arrives
+    useEffect(() => {
+        if (patientData?.id && clinicalRules.length > 0 && medicationsFetched && alerts.length === 0 && !loading) {
+            analyzePatient();
+        }
+    }, [patientData?.id, clinicalRules.length, medicationsFetched, medications.length, analyzePatient, alerts.length, loading]);
 
     const testSampleRules = useCallback(() => {
         if (!patientData) {
@@ -472,137 +488,6 @@ export const useCDSSLogic = (patientData) => {
         }
     }, [patientData, medications]);
 
-    // Cleanup effects
-    // 1. Initial global rules load - only once
-    useEffect(() => {
-        fetchClinicalRules();
-    }, [fetchClinicalRules]);
-
-    // 2. Patient-specific data updates
-    useEffect(() => {
-        // Only clear analysis if we have a GENUINE patient change and the new ID is valid
-        if (patientData?.id && patientData?.id !== previousPatientId.current) {
-            console.log('🔄 Patient ID changed, clearing analysis state');
-            setAlerts([]);
-            setFilteredAlerts([]);
-            setAnalysisStats(null);
-            setDebugInfo('');
-            setAnalysisError(null);
-            setMedications([]);
-            setPatientFacts(null);
-            setTestResults(null);
-            setMedicationsFetched(false); // reset gate for new patient
-            previousPatientId.current = patientData?.id;
-        }
-
-        if (patientData && patientData.id) {
-            fetchPatientMedications();
-        }
-
-        // ✅ REAL-TIME RULES INTEGRATION:
-        // Automatically trigger rules refresh when admin changes rules
-        const rulesSubscription = supabase
-            .channel('clinical_rules_changes')
-            .on('postgres_changes', {
-                event: '*', // Listen to all changes (INSERT, UPDATE, DELETE)
-                schema: 'public',
-                table: 'clinical_rules'
-            }, (payload) => {
-                console.log('🔔 Clinical rules changed in real-time, refreshing...', payload);
-                fetchClinicalRules();
-            })
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(rulesSubscription);
-        };
-    }, [patientData?.id, fetchClinicalRules, fetchPatientMedications]);
-
-    // Keep the ref up to date with the latest analyzePatient callback
-    useEffect(() => {
-        analyzePatientRef.current = analyzePatient;
-    });
-
-    // Full refresh: fetch fresh rules + meds, then signal for forced re-analysis.
-    // We increment forceReanalysisKey AFTER both fetches complete.
-    // React will commit all state updates (rules + meds + key) and THEN run the
-    // forceReanalysisKey effect below — at which point analyzePatientRef.current
-    // already captures the freshly committed rules and medications.
-    const runFullAnalysis = useCallback(async () => {
-        if (!patientData?.id) {
-            alert('❌ Please select a patient first');
-            return;
-        }
-        await fetchClinicalRules();
-        await fetchPatientMedications();
-        // Increment key → triggers the forced-analysis effect below
-        setForceReanalysisKey(k => k + 1);
-    }, [patientData?.id, fetchClinicalRules, fetchPatientMedications]);
-
-    // Runs ONLY when runFullAnalysis signals a forced re-analysis.
-    // By this point React has committed the latest clinicalRules and medications,
-    // and analyzePatientRef.current points to the fresh analyzePatient closure.
-    useEffect(() => {
-        if (forceReanalysisKey === 0) return; // skip initial mount
-        if (!patientData?.id) return;
-        console.log('🚀 [CDSS] Forced re-analysis triggered (key:', forceReanalysisKey, ')');
-        analyzePatientRef.current?.();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [forceReanalysisKey]);
-
-    // Auto-analyze only when BOTH rules AND medications are fully fetched.
-    // medicationsFetched gate prevents premature analysis with empty medication list.
-    useEffect(() => {
-        if (patientData?.id && clinicalRules.length > 0 && medicationsFetched) {
-            const timer = setTimeout(() => {
-                console.log('🔄 Data ready, triggering clinical analysis...');
-                analyzePatientRef.current?.();
-            }, 300);
-            return () => clearTimeout(timer);
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [patientData?.id, clinicalRules.length, medications.length, medicationsFetched]);
-
-    const handleFilterChange = useCallback((severity) => {
-        setSeverityFilter(severity);
-        if (severity === 'all') {
-            setFilteredAlerts(alerts);
-        } else {
-            setFilteredAlerts(alerts.filter(alert => alert.severity === severity));
-        }
-    }, [alerts]);
-
-    const acknowledgeAlert = useCallback((alertId, isProcessed = null) => {
-        const updatedAlerts = alerts.map(alert => {
-            if (alert.id === alertId) {
-                // If it's being marked as processed, it should also be marked as seen
-                const newProcessed = isProcessed !== null ? isProcessed : alert.processed;
-                const newAcknowledged = isProcessed !== null ? (isProcessed ? true : alert.acknowledged) : true;
-
-                return {
-                    ...alert,
-                    acknowledged: newAcknowledged,
-                    processed: newProcessed
-                };
-            }
-            return alert;
-        });
-        setAlerts(updatedAlerts);
-        setFilteredAlerts(updatedAlerts.filter(alert =>
-            severityFilter === 'all' || alert.severity === severityFilter
-        ));
-    }, [alerts, severityFilter]);
-
-    const acknowledgeAll = useCallback(() => {
-        const updatedAlerts = alerts.map(alert => ({ ...alert, acknowledged: true, processed: true }));
-        setAlerts(updatedAlerts);
-        setFilteredAlerts(updatedAlerts);
-    }, [alerts]);
-
-    const toggleExpandAlert = useCallback((alertId) => {
-        setExpandedAlert(expandedAlert === alertId ? null : alertId);
-    }, [expandedAlert]);
-
     return {
         alerts,
         filteredAlerts,
@@ -626,6 +511,6 @@ export const useCDSSLogic = (patientData) => {
         expandedAlert,
         lastAnalysisTime,
         patientFacts,
-        rulesLoading
+        rulesLoading: loading
     };
 };
