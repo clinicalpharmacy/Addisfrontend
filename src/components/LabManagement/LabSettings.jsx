@@ -85,17 +85,33 @@ const LabSettings = ({ onUpdate }) => {
         setError('');
 
         try {
+            // Map the UI fields back to DB schema format
+            let payload = { ...formData };
+            delete payload.reference_range;
+            delete payload.gender;
+            
+            if (formData.gender === 'Male') {
+                payload.range_male = formData.reference_range;
+                payload.range_female = null;
+            } else if (formData.gender === 'Female') {
+                payload.range_male = null;
+                payload.range_female = formData.reference_range;
+            } else {
+                payload.range_male = formData.reference_range;
+                payload.range_female = formData.reference_range;
+            }
+
             if (editingLab) {
                 const { error } = await supabase
                     .from('lab_tests')
-                    .update(formData)
+                    .update(payload)
                     .eq('id', editingLab.id);
                 if (error) throw error;
                 setSuccess('Lab definition updated!');
             } else {
                 const { error } = await supabase
                     .from('lab_tests')
-                    .insert([formData]);
+                    .insert([payload]);
                 if (error) throw error;
                 setSuccess('New lab definition created!');
             }
@@ -124,14 +140,30 @@ const LabSettings = ({ onUpdate }) => {
 
     const handleEdit = (lab) => {
         setEditingLab(lab);
+        
+        let initialGender = 'Both';
+        let initialRange = lab.range_male || lab.range_female || '';
+        
+        if (lab.range_male && !lab.range_female) {
+            initialGender = 'Male';
+            initialRange = lab.range_male;
+        } else if (!lab.range_male && lab.range_female) {
+            initialGender = 'Female';
+            initialRange = lab.range_female;
+        } else if (lab.range_male && lab.range_female && lab.range_male !== lab.range_female) {
+            // If they are strictly different, default to Both but maybe show male as default text
+            initialGender = 'Both';
+            initialRange = lab.range_male + ' (M), ' + lab.range_female + ' (F)';
+        }
+
         setFormData({
             name: lab.name,
             unit: lab.unit || '',
             category: lab.category || 'General',
             is_active: lab.is_active,
             description: lab.description || '',
-            reference_range: lab.reference_range || '',
-            gender: lab.gender || 'Both'
+            reference_range: initialRange,
+            gender: initialGender
         });
         setShowAddForm(true);
     };
@@ -317,11 +349,12 @@ const LabSettings = ({ onUpdate }) => {
                                         <div className="text-xs font-bold text-gray-800">{lab.unit || "N/A"}</div>
                                     </div>
                                     <div className="bg-gray-50 p-2.5 rounded-xl border border-gray-100 group-hover:bg-indigo-50/50 transition-colors">
-                                        <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Ref. Range</div>
+                                        <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Ref. Range (M/F)</div>
                                         <div className="text-xs font-bold text-gray-800">
-                                            {lab.reference_range ? (
+                                            {lab.range_male || lab.range_female ? (
                                                 <div className="flex flex-col gap-0.5 leading-tight">
-                                                    <span>{lab.reference_range} <span className="text-gray-400 font-medium">({lab.gender || 'Both'})</span></span>
+                                                    {lab.range_male && <span><span className="text-blue-500 font-black">M:</span> {lab.range_male}</span>}
+                                                    {lab.range_female && <span><span className="text-pink-500 font-black">F:</span> {lab.range_female}</span>}
                                                 </div>
                                             ) : "N/A"}
                                         </div>
