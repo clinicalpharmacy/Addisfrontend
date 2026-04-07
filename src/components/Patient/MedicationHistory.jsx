@@ -251,7 +251,7 @@ const MedicationHistory = ({ patientCode }) => {
                     try {
                         meds = await Promise.all(meds.map(async (med) => {
                             const decrypted = { ...med };
-                            const fieldsToDecrypt = ['drug_name', 'dose', 'frequency', 'roa', 'indication', 'notes', 'drug_class', 'regimen', 'cycle', 'brand_name', 'diagnosis', 'pharmacy_name', 'prescriber_name'];
+                            const fieldsToDecrypt = ['drug_name', 'indication', 'notes', 'diagnosis'];
                             
                             for (const field of fieldsToDecrypt) {
                                 if (decrypted[field] && typeof decrypted[field] === 'string' && decrypted[field].includes(':')) {
@@ -426,7 +426,7 @@ const MedicationHistory = ({ patientCode }) => {
 
         // 🔐 ZERO-KNOWLEDGE: Encrypt sensitive clinical data before saving
         const encKey = await getEncryptionKey();
-        const sensitiveFields = ['drug_name', 'dose', 'frequency', 'roa', 'indication', 'notes', 'drug_class', 'regimen', 'cycle', 'brand_name', 'diagnosis', 'pharmacy_name', 'prescriber_name'];
+        const sensitiveFields = ['drug_name', 'indication', 'notes', 'diagnosis'];
         
         // Build medication data object
         const medicationData = {

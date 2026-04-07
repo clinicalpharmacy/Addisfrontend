@@ -34,8 +34,8 @@ const LabSettings = ({ onUpdate }) => {
         category: 'General',
         is_active: true,
         description: '',
-        range_male: '',
-        range_female: ''
+        reference_range: '',
+        gender: 'Both'
     });
 
     const categories = [
@@ -106,8 +106,8 @@ const LabSettings = ({ onUpdate }) => {
                 category: 'General',
                 is_active: true,
                 description: '',
-                range_male: '',
-                range_female: ''
+                reference_range: '',
+                gender: 'Both'
             });
             setShowAddForm(false);
             setEditingLab(null);
@@ -130,8 +130,8 @@ const LabSettings = ({ onUpdate }) => {
             category: lab.category || 'General',
             is_active: lab.is_active,
             description: lab.description || '',
-            range_male: lab.range_male || '',
-            range_female: lab.range_female || ''
+            reference_range: lab.reference_range || '',
+            gender: lab.gender || 'Both'
         });
         setShowAddForm(true);
     };
@@ -219,7 +219,7 @@ const LabSettings = ({ onUpdate }) => {
                     <button
                         onClick={() => {
                             setEditingLab(null);
-                            setFormData({ name: '', unit: '', category: 'General', is_active: true, description: '', range_male: '', range_female: '' });
+                            setFormData({ name: '', unit: '', category: 'General', is_active: true, description: '', reference_range: '', gender: 'Both' });
                             setShowAddForm(true);
                         }}
                         className="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-all shadow-sm font-bold text-xs active:scale-95 whitespace-nowrap"
@@ -317,12 +317,11 @@ const LabSettings = ({ onUpdate }) => {
                                         <div className="text-xs font-bold text-gray-800">{lab.unit || "N/A"}</div>
                                     </div>
                                     <div className="bg-gray-50 p-2.5 rounded-xl border border-gray-100 group-hover:bg-indigo-50/50 transition-colors">
-                                        <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Ref. Range (M/F)</div>
+                                        <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Ref. Range</div>
                                         <div className="text-xs font-bold text-gray-800">
-                                            {lab.range_male || lab.range_female ? (
+                                            {lab.reference_range ? (
                                                 <div className="flex flex-col gap-0.5 leading-tight">
-                                                    {lab.range_male && <span><span className="text-blue-500 font-black">M:</span> {lab.range_male}</span>}
-                                                    {lab.range_female && <span><span className="text-pink-500 font-black">F:</span> {lab.range_female}</span>}
+                                                    <span>{lab.reference_range} <span className="text-gray-400 font-medium">({lab.gender || 'Both'})</span></span>
                                                 </div>
                                             ) : "N/A"}
                                         </div>
@@ -410,27 +409,29 @@ const LabSettings = ({ onUpdate }) => {
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
-                                            Male Reference Range
+                                            Reference Range
                                         </label>
                                         <input
                                             type="text"
-                                            value={formData.range_male}
-                                            onChange={(e) => setFormData({ ...formData, range_male: e.target.value })}
+                                            value={formData.reference_range}
+                                            onChange={(e) => setFormData({ ...formData, reference_range: e.target.value })}
                                             placeholder="e.g. 0.7-1.3"
                                             className="w-full border-2 border-gray-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-indigo-500 bg-gray-50/30 outline-none transition-all font-bold"
                                         />
                                     </div>
                                     <div>
                                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
-                                            Female Reference Range
+                                            Applicable Gender
                                         </label>
-                                        <input
-                                            type="text"
-                                            value={formData.range_female}
-                                            onChange={(e) => setFormData({ ...formData, range_female: e.target.value })}
-                                            placeholder="e.g. 0.6-1.1"
-                                            className="w-full border-2 border-gray-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-indigo-500 bg-gray-50/30 outline-none transition-all font-bold"
-                                        />
+                                        <select
+                                            value={formData.gender}
+                                            onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                                            className="w-full border-2 border-gray-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all appearance-none bg-gray-50/50 font-black cursor-pointer"
+                                        >
+                                            <option value="Both">Both / Universal</option>
+                                            <option value="Male">Male Only</option>
+                                            <option value="Female">Female Only</option>
+                                        </select>
                                     </div>
                                 </div>
 
