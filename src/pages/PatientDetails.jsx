@@ -2120,7 +2120,6 @@ const PatientDetails = () => {
                                     onChange={(e) => handleInputChange('full_name', e.target.value)}
                                     className="w-full border border-gray-300 rounded-lg p-3"
                                     placeholder="Enter patient's full name"
-                                    required
                                 />
                             ) : (
                                 <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
