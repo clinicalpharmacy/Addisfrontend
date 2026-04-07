@@ -28,37 +28,7 @@ const Home = () => {
     return (
         <div className="page-container w-full max-w-full overflow-x-hidden px-2 sm:px-4 md:px-6">
             {/* 🛡️ Security Identity Banner (New) */}
-            {!isSecurityActive && (
-                <div className="mb-6 bg-amber-50 border-2 border-amber-100 rounded-2xl p-6 shadow-sm animate-in slide-in-from-top-4 duration-500">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                        <div className="flex items-center gap-5">
-                            <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center shadow-inner border border-amber-200">
-                                <FaUserShield className="text-amber-600 text-3xl animate-pulse" />
-                            </div>
-                            <div>
-                                <h3 className="text-xl font-black text-amber-900 tracking-tight">Security Identity Required</h3>
-                                <p className="text-amber-700 text-sm font-medium max-w-md">
-                                    Your secure troubleshooting identity is not yet active. Activate it now to enable secure support access and patient data restoration.
-                                </p>
-                            </div>
-                        </div>
-                        
-                        <button 
-                            onClick={() => setShowSecuritySetup(!showSecuritySetup)}
-                            className="w-full md:w-auto px-8 py-3.5 bg-amber-600 hover:bg-amber-700 text-white font-black rounded-xl shadow-lg shadow-amber-200 transition-all active:scale-95 flex items-center justify-center gap-2"
-                        >
-                            <FaLockOpen />
-                            {showSecuritySetup ? 'Close Setup' : 'Activate Identity Now'}
-                        </button>
-                    </div>
 
-                    {showSecuritySetup && (
-                        <div className="mt-8 pt-8 border-t-2 border-amber-100 animate-in zoom-in-95 duration-300">
-                            <SecurityActivator onActivated={() => window.location.reload()} />
-                        </div>
-                    )}
-                </div>
-            )}
             {/* Welcome Section */}
             <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-4 sm:p-6 text-white shadow-lg w-full">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

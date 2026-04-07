@@ -94,12 +94,7 @@ const Settings = () => {
                         <FaUserShield /> <span className="font-semibold">Security</span>
                     </button>
 
-                    <button
-                        onClick={() => setActiveTab('support')}
-                        className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all duration-200 ${activeTab === 'support' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-600 hover:bg-gray-100'}`}
-                    >
-                        <FaLifeRing /> <span className="font-semibold">Troubleshooting</span>
-                    </button>
+
                 </div>
 
                 {/* Main Content Area */}
@@ -132,10 +127,7 @@ const Settings = () => {
                                 </div>
                             </div>
 
-                        ) : activeTab === 'support' ? (
-                            <div className="p-8">
-                                <SupportAccess />
-                            </div>
+
                         ) : (
                             <div className="p-8">
                                 <h2 className="text-xl font-bold text-gray-900 mb-6">Security & Password</h2>
