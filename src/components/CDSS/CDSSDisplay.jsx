@@ -57,6 +57,13 @@ const CDSSDisplay = ({ patientData, onBack }) => {
         runFullAnalysis();
     };
 
+    const formatEncValue = (val, fallback = 'Not specified') => {
+        if (!val) return fallback;
+        const strVal = String(val);
+        if (strVal.includes(':') && strVal.length > 30) return '[Encrypted]';
+        return val;
+    };
+
     const downloadReport = async () => {
         if (!patientData) return;
 
@@ -256,7 +263,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                             <h2 className="text-xl md:text-2xl font-bold text-gray-800">Clinical Analysis</h2>
                             {patientData ? (
                                 <div className="text-sm text-gray-500 flex flex-wrap items-center gap-2 mt-0.5">
-                                    <span className="font-semibold text-gray-700">{patientData.full_name}</span>
+                                    <span className="font-semibold text-gray-700">{formatEncValue(patientData.full_name)}</span>
                                     {lastAnalysisTime && (
                                         <>
                                             <span className="text-gray-300">·</span>
