@@ -959,19 +959,6 @@ const MedicationHistory = ({ patientCode }) => {
                               required
                             />
                           </div>
-                    
-                          {/* Regimen */}
-                          <div className="flex-1">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Regimen</label>
-                            <input
-                              type="text"
-                              name="regimen"
-                              value={formData.regimen}
-                              onChange={handleInputChange}
-                              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
-                              placeholder="e.g., FOLFOX"
-                            />
-                          </div>
 
                           {/* Administration */}
                           <div className="flex-1">
@@ -983,6 +970,19 @@ const MedicationHistory = ({ patientCode }) => {
                               onChange={handleInputChange}
                               className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
                               placeholder="e.g., D1 over 3 hrs"
+                            />
+                          </div>
+                            
+                          {/* Regimen */}
+                          <div className="flex-1">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Regimen</label>
+                            <input
+                              type="text"
+                              name="regimen"
+                              value={formData.regimen}
+                              onChange={handleInputChange}
+                              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                              placeholder="e.g., FOLFOX"
                             />
                           </div>
                     
@@ -1310,7 +1310,10 @@ const MedicationHistory = ({ patientCode }) => {
                                     {/* Conditionally show Indication header only for non-healthcare clients */}
                                     {!isHealthcareClient && (
                                         <>
-                                            <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">Indication</th>
+                                            <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">
+                                                <div>Indication</div>
+                                                <div>Administration</div>
+                                            </th>
                                         </>
                                     )}
                                     {/* Conditionally show Regimen & Cycle header only for non-healthcare clients */}
@@ -1318,7 +1321,6 @@ const MedicationHistory = ({ patientCode }) => {
                                         <>
                                             <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">
                                                 <div>Regimen</div>
-                                                <div>Administration</div>
                                                 <div>Cycle</div>
                                             </th>
                                         </>
@@ -1349,6 +1351,7 @@ const MedicationHistory = ({ patientCode }) => {
                                             <>
                                                 <td className="p-2 md:p-4">
                                                     <div className="text-gray-700 text-xs md:text-sm break-words">{formatEncValue(med.indication, '—')}</div>
+                                                    <div className="text-gray-700 text-xs md:text-sm break-words font-medium">{formatEncValue(med.administration, '—')}</div>
                                                 </td>
                                             </>
                                         )}
@@ -1356,7 +1359,6 @@ const MedicationHistory = ({ patientCode }) => {
                                             <>
                                                 <td className="p-2 md:p-4">
                                                     <div className="text-gray-700 text-xs md:text-sm break-words font-medium">{formatEncValue(med.regimen, '—')}</div>
-                                                    <div className="text-gray-700 text-xs md:text-sm break-words font-medium">{formatEncValue(med.administration, '—')}</div>
                                                     <div className="text-xs text-gray-500">{formatEncValue(med.cycle, '—')}</div>
                                                 </td>
                                             </>
