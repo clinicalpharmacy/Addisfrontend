@@ -381,7 +381,33 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
                 if (apiRes.success) medsResult = apiRes.medications || [];
             }
 
-            const medicationsResolved = medsResult.length > 0 ? medsResult : (currentPatient.medication_history || []);
+            let medicationsResolved = medsResult.length > 0 ? medsResult : (currentPatient.medication_history || []);
+            
+            // 🔐 ZERO-KNOWLEDGE: Decrypt medications before setting in state
+            const encKey = await getEncryptionKey();
+            if (encKey && medicationsResolved.length > 0) {
+                try {
+                    medicationsResolved = await Promise.all(medicationsResolved.map(async (m) => {
+                        const d = { ...m };
+                        const fields = ['drug_name', 'dose', 'frequency', 'roa', 'indication', 'medical_condition'];
+                        for (const f of fields) {
+                            if (d[f] && typeof d[f] === 'string' && d[f].includes(':')) {
+                                try {
+                                    const decrypted = await decryptValue(d[f], encKey);
+                                    if (decrypted) d[f] = decrypted;
+                                } catch (e) {
+                                    console.warn(`[DRN] Failed to decrypt field ${f}:`, e);
+                                }
+                            }
+                        }
+                        return d;
+                    }));
+                    console.log(`💎 [DRN] ${medicationsResolved.length} medications decrypted`);
+                } catch (decErr) {
+                    console.error('❌ [DRN] Medication decryption error:', decErr);
+                }
+            }
+
             setMedications(medicationsResolved);
 
             return { patient: currentPatient, medications: medicationsResolved };
@@ -1011,9 +1037,14 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
                                         <div>
                                             <h4 className="font-semibold text-gray-800 text-lg">Analysis Summary</h4>
                                             {analysisResults && (
-                                                <p className={`text-sm mt-1 ${analysisResults.totalFindings > 0 ? 'text-orange-600' : 'text-green-600'}`}>
-                                                    {analysisResults.summary}
-                                                </p>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <p className={`text-sm ${analysisResults.totalFindings > 0 ? 'text-orange-600 font-bold' : 'text-green-600'}`}>
+                                                        {analysisResults.summary}
+                                                    </p>
+                                                    <span className="text-[10px] text-gray-400 border border-gray-200 px-1.5 py-0.5 rounded">
+                                                        {analysisResults.metadata?.rulesEvaluated || clinicalRules.length} rules checked
+                                                    </span>
+                                                </div>
                                             )}
                                         </div>
                                         <div className="flex flex-wrap gap-2">
@@ -1133,10 +1164,43 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
                                                 </div>
                                             ))}
                                         </div>
-                                    ) : (aiAnalysis || aiLoading || aiError) ? null : (
-                                        <div className="text-center py-8">
-                                            <FaCheckCircle className="text-4xl text-green-500 mx-auto mb-3" />
-                                            <p className="text-gray-600">No issues found matching current filter</p>
+                                    ) : (aiAnalysis || aiLoading || aiError) ? null : analysisResults ? (
+                                        <div className="text-center py-10 border-2 border-dashed border-gray-100 rounded-xl bg-gray-50/30">
+                                            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-gray-100">
+                                                {analysisResults.totalFindings === 0 ? (
+                                                    <FaCheckCircle className="text-green-500 text-3xl" />
+                                                ) : (
+                                                    <FaFilter className="text-gray-400 text-2xl" />
+                                                )}
+                                            </div>
+                                            <h5 className="text-gray-800 font-bold mb-1">
+                                                {analysisResults.totalFindings === 0 
+                                                    ? 'No drug-related problems detected' 
+                                                    : 'No issues found matching current filter'
+                                                }
+                                            </h5>
+                                            <p className="text-gray-500 text-sm max-w-xs mx-auto">
+                                                {analysisResults.totalFindings === 0 
+                                                    ? `Based on ${analysisResults.metadata?.rulesEvaluated || clinicalRules.length} clinical safety rules, the current profile appears safe.`
+                                                    : `There are ${analysisResults.totalFindings} findings, but none match the "${filterSeverity}" severity filter.`
+                                                }
+                                            </p>
+                                            {analysisResults.totalFindings > 0 && filterSeverity !== 'all' && (
+                                                <button
+                                                    onClick={() => setFilterSeverity('all')}
+                                                    className="mt-4 text-blue-600 hover:text-blue-800 text-sm font-bold underline"
+                                                >
+                                                    Show all {analysisResults.totalFindings} findings
+                                                </button>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-10">
+                                            <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-100">
+                                                <FaRocket className="text-blue-400 text-2xl animate-pulse" />
+                                            </div>
+                                            <h5 className="text-gray-800 font-bold mb-1">Ready for analysis</h5>
+                                            <p className="text-gray-500 text-sm">Click "Run Clinical Analysis" to scan for DRPs</p>
                                         </div>
                                     )}
                                 </div>

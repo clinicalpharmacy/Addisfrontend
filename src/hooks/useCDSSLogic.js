@@ -136,10 +136,30 @@ export const useCDSSLogic = (patientData) => {
             } else {
                 console.log('⚠️ No medications in history table, checking patient record...');
                 debugText += '⚠️ No medications in history table, checking patient record...\n';
+                
                 if (fallbackMedications.length > 0) {
-                    console.log(`✅ Found ${fallbackMedications.length} medications in patient record`);
-                    debugText += `✅ Found ${fallbackMedications.length} medications in patient record\n`;
-                    setMedications(fallbackMedications);
+                    console.log(`✅ Found ${fallbackMedications.length} medications in patient record. Decrypting...`);
+                    
+                    // Decrypt fallback meds too
+                    let decryptedFallback = fallbackMedications;
+                    if (encKey) {
+                        try {
+                            decryptedFallback = await Promise.all(fallbackMedications.map(async (m) => {
+                                const d = { ...m };
+                                const sensitiveMedsFields = ['drug_name', 'dose', 'frequency', 'route', 'indication', 'notes', 'medical_condition'];
+                                for (const field of sensitiveMedsFields) {
+                                    if (d[field] && typeof d[field] === 'string' && d[field].includes(':')) {
+                                        d[field] = await decryptValue(d[field], encKey);
+                                    }
+                                }
+                                return d;
+                            }));
+                            debugText += `💎 Fallback medications (${decryptedFallback.length}) decrypted\n`;
+                        } catch (e) {
+                            console.error('Fallback decryption failed', e);
+                        }
+                    }
+                    setMedications(decryptedFallback);
                 } else {
                     setMedications([]);
                 }

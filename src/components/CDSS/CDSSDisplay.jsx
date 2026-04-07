@@ -345,6 +345,9 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                         : 'No drug-related problems detected'
                                 }
                             </p>
+                            <p className="text-[10px] text-blue-600/80 font-medium">
+                                {clinicalRules.length} safety rules evaluated
+                            </p>
                         </div>
                     </div>
 
