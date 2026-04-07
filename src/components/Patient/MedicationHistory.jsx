@@ -27,6 +27,7 @@ const MedicationHistory = ({ patientCode }) => {
         drug_class: '',
         cycle: '',
         regimen: '',
+        administration: '',
         initiated_at: 'Hospital',
 
         // Additional Information
@@ -251,7 +252,7 @@ const MedicationHistory = ({ patientCode }) => {
                     try {
                         meds = await Promise.all(meds.map(async (med) => {
                             const decrypted = { ...med };
-                            const fieldsToDecrypt = ['drug_name', 'dose', 'frequency', 'roa', 'indication', 'notes', 'drug_class', 'regimen', 'cycle', 'brand_name', 'diagnosis', 'pharmacy_name', 'prescriber_name'];
+                            const fieldsToDecrypt = ['drug_name', 'dose', 'frequency', 'roa', 'indication', 'notes', 'drug_class', 'regimen', 'administration', 'cycle', 'brand_name', 'diagnosis', 'pharmacy_name', 'prescriber_name'];
                             
                             for (const field of fieldsToDecrypt) {
                                 if (decrypted[field] && typeof decrypted[field] === 'string' && decrypted[field].includes(':')) {
@@ -444,6 +445,7 @@ const MedicationHistory = ({ patientCode }) => {
             indication: formData.indication || null, 
             cycle: formData.cycle || null,
             regimen: formData.regimen || null,
+            administration: formData.administration || null,
             drug_class: formData.drug_class,
             initiated_at: formData.initiated_at,
 
@@ -529,6 +531,7 @@ const MedicationHistory = ({ patientCode }) => {
             indication: '',
             cycle: '',
             regimen: '',
+            administration: '',
             drug_class: '',
             initiated_at: 'Hospital',
             dosage_form: 'Tablet',
@@ -969,6 +972,19 @@ const MedicationHistory = ({ patientCode }) => {
                               placeholder="e.g., FOLFOX"
                             />
                           </div>
+
+                          {/* Administration */}
+                          <div className="flex-1">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Administration</label>
+                            <input
+                              type="text"
+                              name="administration"
+                              value={formData.administration}
+                              onChange={handleInputChange}
+                              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                              placeholder="e.g., D1 over 3 hrs"
+                            />
+                          </div>
                     
                           {/* Cycle - Moved inside the same container */}
                           <div className="flex-1">
@@ -1302,6 +1318,7 @@ const MedicationHistory = ({ patientCode }) => {
                                         <>
                                             <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">
                                                 <div>Regimen</div>
+                                                <div>Administration</div>
                                                 <div>Cycle</div>
                                             </th>
                                         </>
@@ -1339,6 +1356,7 @@ const MedicationHistory = ({ patientCode }) => {
                                             <>
                                                 <td className="p-2 md:p-4">
                                                     <div className="text-gray-700 text-xs md:text-sm break-words font-medium">{formatEncValue(med.regimen, '—')}</div>
+                                                    <div className="text-gray-700 text-xs md:text-sm break-words font-medium">{formatEncValue(med.administration, '—')}</div>
                                                     <div className="text-xs text-gray-500">{formatEncValue(med.cycle, '—')}</div>
                                                 </td>
                                             </>
