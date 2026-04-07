@@ -2081,7 +2081,7 @@ const PatientDetails = () => {
                             <FaUser className="text-indigo-600 text-xl" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-gray-800">Demographics</h2>
+                            <h2 className="text-xl font-bold text-gray-800">Demographics & DX</h2>
                             <p className="text-gray-600">Basic information</p>
                         </div>
                     </div>
