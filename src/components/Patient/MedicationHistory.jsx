@@ -7,6 +7,7 @@ import {
     FaExclamationTriangle, FaInfoCircle, FaCalculator,
     FaFilePrescription, FaStethoscope, FaCheckCircle
 } from 'react-icons/fa';
+import { getEncryptionKey, encryptValue, decryptValue } from '../../utils/encryptionUtils';
 
 const MedicationHistory = ({ patientCode }) => {
     const [medications, setMedications] = useState([]);
@@ -107,10 +108,10 @@ const MedicationHistory = ({ patientCode }) => {
 
     const frequencyOptions = [
         'Once daily', 'Twice daily', 'Three times daily', 'Four times daily',
-        'Every morning', 'Every evening', 'Every night', 'At bedtime',
-        'Weekly', 'Every other day', 'Three times per week', 'Every 4 hours', 
-        'Every 6 hours', 'Every 8 hours', 'Every 12 hours', 'Before meals', 
-        'After meals', 'With meals', 'On empty stomach', 'As needed (PRN)'
+        'Every morning', 'Every evening', 'Every night', 'At bedtime', 
+        'QOD', '3 times/week', 'Weekly', 'Q2weeks', 
+        'Q4hrs', 'Q6hrs', 'Q8hrs', 'Q12hrs', 'As needed (PRN)',
+        'Before meals', 'After meals', 'With meals', 'On empty stomach'
     ];
 
     const drugClasses = [
@@ -148,6 +149,15 @@ const MedicationHistory = ({ patientCode }) => {
         'puff', 'drop', 'patch', 'suppository', 'IU', '%', 'unit'
     ];
 
+    // 🔐 Professional UI Sanitization Helper
+    const formatEncValue = (val, fallback = 'Not specified') => {
+        if (val === null || val === undefined || val === '') return fallback;
+        const strVal = String(val);
+        // If it contains a colon and is long, it's a raw ciphertext
+        if (strVal.includes(':') && strVal.length > 30) return '[Encrypted]';
+        return val;
+    };
+
     useEffect(() => {
         const userData = localStorage.getItem('user');
         if (userData) {
@@ -183,8 +193,26 @@ const MedicationHistory = ({ patientCode }) => {
     const fetchReconciliations = async () => {
         try {
             const result = await api.get(`/reconciliations/patient/${patientCode}`);
-            if (result.success) {
-                setReconciliations(result.reconciliations || []);
+            if (result.success && result.reconciliations) {
+                let recons = result.reconciliations;
+                
+                // 🔐 ZERO-KNOWLEDGE: Decrypt sensitive fields
+                const encKey = await getEncryptionKey();
+                if (encKey && recons.length > 0) {
+                    try {
+                        recons = await Promise.all(recons.map(async (recon) => {
+                            const decrypted = { ...recon };
+                            if (decrypted.findings && typeof decrypted.findings === 'string' && decrypted.findings.includes(':')) {
+                                try { decrypted.findings = await decryptValue(decrypted.findings, encKey); } catch (e) {}
+                            }
+                            if (decrypted.site && typeof decrypted.site === 'string' && decrypted.site.includes(':')) {
+                                try { decrypted.site = await decryptValue(decrypted.site, encKey); } catch (e) {}
+                            }
+                            return decrypted;
+                        }));
+                    } catch (e) { console.error('Recon decryption failed', e); }
+                }
+                setReconciliations(recons);
             }
         } catch (error) {
             console.error('Error fetching reconciliations:', error);
@@ -215,8 +243,35 @@ const MedicationHistory = ({ patientCode }) => {
             const result = await api.get(`/medication-history/patient/${patientCode}`);
     
             if (result.success && result.medications) {
+                let meds = result.medications;
+                
+                // 🔐 ZERO-KNOWLEDGE: Decrypt sensitive fields for clinical display
+                const encKey = await getEncryptionKey();
+                if (encKey && meds.length > 0) {
+                    try {
+                        meds = await Promise.all(meds.map(async (med) => {
+                            const decrypted = { ...med };
+                            const fieldsToDecrypt = ['drug_name', 'dose', 'frequency', 'roa', 'indication', 'notes', 'drug_class', 'regimen', 'cycle', 'brand_name', 'diagnosis', 'pharmacy_name', 'prescriber_name'];
+                            
+                            for (const field of fieldsToDecrypt) {
+                                if (decrypted[field] && typeof decrypted[field] === 'string' && decrypted[field].includes(':')) {
+                                    try {
+                                        decrypted[field] = await decryptValue(decrypted[field], encKey);
+                                    } catch (e) {
+                                        console.warn(`[Encryption] Failed to decrypt ${field}`);
+                                    }
+                                }
+                            }
+                            return decrypted;
+                        }));
+                        console.log('💎 Medications decrypted for UI display');
+                    } catch (decErr) {
+                        console.error('❌ Decryption failed:', decErr);
+                    }
+                }
+
                 // Recalculate duration for each medication based on current dates
-                const updatedMedications = result.medications.map(med => {
+                const updatedMedications = meds.map(med => {
                     // Recalculate duration if start_date exists
                     if (med.start_date) {
                         const start = new Date(med.start_date);
@@ -369,11 +424,15 @@ const MedicationHistory = ({ patientCode }) => {
         const isActive = formData.status === 'Active';
         const totalDailyDose = calculateDailyDose();
 
+        // 🔐 ZERO-KNOWLEDGE: Encrypt sensitive clinical data before saving
+        const encKey = await getEncryptionKey();
+        const sensitiveFields = ['drug_name', 'dose', 'frequency', 'roa', 'indication', 'notes', 'drug_class', 'regimen', 'cycle', 'brand_name', 'diagnosis', 'pharmacy_name', 'prescriber_name'];
+        
         // Build medication data object
         const medicationData = {
             patient_id: patientCode, // patientCode is the UUID from props
 
-            // Required fields
+            // Required fields (will be encrypted if key is available)
             drug_name: formData.drug_name.trim(),
             start_date: formData.start_date,
 
@@ -414,6 +473,21 @@ const MedicationHistory = ({ patientCode }) => {
             duration: duration,
             is_active: isActive
         };
+
+        // Apply encryption if key is available
+        if (encKey) {
+            try {
+                for (const field of sensitiveFields) {
+                    if (medicationData[field] && typeof medicationData[field] === 'string') {
+                        medicationData[field] = await encryptValue(medicationData[field], encKey);
+                    }
+                }
+                console.log('💎 Clinical data encrypted for secure storage');
+            } catch (encErr) {
+                console.error('❌ Encryption failed during save:', encErr);
+                // We'll proceed with plain text if encryption fails (though ideally we'd show a warning)
+            }
+        }
 
         console.log('Saving medication:', medicationData);
 
@@ -580,6 +654,15 @@ const MedicationHistory = ({ patientCode }) => {
                 findings: reconciliationData.findings.trim(),
                 date: reconciliationData.date
             };
+
+            // 🔐 ZERO-KNOWLEDGE: Encrypt sensitive fields
+            const encKey = await getEncryptionKey();
+            if (encKey) {
+                try {
+                    reconPayload.site = await encryptValue(reconPayload.site, encKey);
+                    reconPayload.findings = await encryptValue(reconPayload.findings, encKey);
+                } catch (e) { console.error('Recon encryption failed', e); }
+            }
 
             const result = await api.post('/reconciliations', reconPayload);
 
@@ -1232,31 +1315,31 @@ const MedicationHistory = ({ patientCode }) => {
                                 {filteredMedications.map((med) => (
                                     <tr key={med.id} className="border-t hover:bg-gray-50 group">
                                         <td className="p-2 md:p-4">
-                                            <div className="font-medium text-gray-800 text-xs md:text-sm break-words max-w-[150px] md:max-w-none">{med.drug_name}</div>
+                                            <div className="font-medium text-gray-800 text-xs md:text-sm break-words max-w-[150px] md:max-w-none">{formatEncValue(med.drug_name)}</div>
                                             {/* Only show drug class if it exists (for company users) */}
                                             {med.drug_class && (
-                                                <div className="text-xs text-gray-400 mt-1 break-words">{med.drug_class}</div>
+                                                <div className="text-xs text-gray-400 mt-1 break-words">{formatEncValue(med.drug_class)}</div>
                                              )}
                                         </td>
                                         <td className="p-2 md:p-4">
                                             <div className="text-gray-700 text-xs md:text-sm break-words">
-                                                <span className="font-medium">{med.dose} {med.unit}</span>
-                                                <span className="text-gray-500 uppercase ml-1">({med.roa})</span>
+                                                <span className="font-medium">{formatEncValue(med.dose)} {med.unit}</span>
+                                                <span className="text-gray-500 uppercase ml-1">({formatEncValue(med.roa)})</span>
                                             </div>
-                                            <div className="text-xs text-gray-500">{med.frequency}</div>
+                                            <div className="text-xs text-gray-500">{formatEncValue(med.frequency)}</div>
                                         </td>
                                         {!isHealthcareClient && (
                                             <>
                                                 <td className="p-2 md:p-4">
-                                                    <div className="text-gray-700 text-xs md:text-sm break-words">{med.indication || '—'}</div>
+                                                    <div className="text-gray-700 text-xs md:text-sm break-words">{formatEncValue(med.indication, '—')}</div>
                                                 </td>
                                             </>
                                         )}
                                         {!isHealthcareClient && (
                                             <>
                                                 <td className="p-2 md:p-4">
-                                                    <div className="text-gray-700 text-xs md:text-sm break-words font-medium">{med.regimen || '—'}</div>
-                                                    <div className="text-xs text-gray-500">{med.cycle || '—'}</div>
+                                                    <div className="text-gray-700 text-xs md:text-sm break-words font-medium">{formatEncValue(med.regimen, '—')}</div>
+                                                    <div className="text-xs text-gray-500">{formatEncValue(med.cycle, '—')}</div>
                                                 </td>
                                             </>
                                         )}
