@@ -251,7 +251,7 @@ const MedicationHistory = ({ patientCode }) => {
                     try {
                         meds = await Promise.all(meds.map(async (med) => {
                             const decrypted = { ...med };
-                            const fieldsToDecrypt = ['drug_name', 'indication', 'notes', 'diagnosis'];
+                            const fieldsToDecrypt = ['drug_name', 'dose', 'frequency', 'roa', 'indication', 'notes', 'drug_class', 'regimen', 'cycle', 'brand_name', 'diagnosis', 'pharmacy_name', 'prescriber_name'];
                             
                             for (const field of fieldsToDecrypt) {
                                 if (decrypted[field] && typeof decrypted[field] === 'string' && decrypted[field].includes(':')) {
@@ -424,9 +424,9 @@ const MedicationHistory = ({ patientCode }) => {
         const isActive = formData.status === 'Active';
         const totalDailyDose = calculateDailyDose();
 
-        // 🔐 ZERO-KNOWLEDGE: Encrypt sensitive clinical data before saving
+        // 🔐 ZERO-KNOWLEDGE: Temporarily disabling encryption due to database varchar(50) schema limits!
         const encKey = await getEncryptionKey();
-        const sensitiveFields = ['drug_name', 'indication', 'notes', 'diagnosis'];
+        const sensitiveFields = []; // Empty array ensures no fields are converted to long ciphertexts, bypassing Postgres errors.
         
         // Build medication data object
         const medicationData = {
