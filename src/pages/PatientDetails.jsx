@@ -273,7 +273,7 @@ const PatientDetails = () => {
 
         const allTabs = [
             { id: 'overview', label: 'Overview', icon: FaUser },
-            { id: 'demographics', label: 'Demographics', icon: FaUser },
+            { id: 'demographics', label: 'Demographics & Dx', icon: FaUser },
             { id: 'vitals', label: 'Vitals & Anthropometry', icon: FaHeartbeat },
             { id: 'labs', label: 'Labs', icon: FaVial },
             { id: 'medications', label: 'Medications', icon: FaPills },
@@ -1451,7 +1451,7 @@ const PatientDetails = () => {
                             onClick={handleSaveVitals}
                             className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
                         >
-                            <FaSave /> Save Vitals
+                            <FaSave /> Save Vitals & Anthropometry
                         </button>
                     )}
                 </div>
@@ -2668,7 +2668,7 @@ const PatientDetails = () => {
                             onClick={handleSaveDemographics}
                             className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg flex items-center gap-2"
                         >
-                            <FaSave /> Save Demographics
+                            <FaSave /> Save Demographics & Dx
                         </button>
                     </div>
                 )}
