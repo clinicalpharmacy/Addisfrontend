@@ -181,6 +181,13 @@ const PatientDetails = () => {
     });
 
     // --- 2. HELPERS & UTILS ---
+    const formatEncValue = useCallback((val, fallback = 'Not specified') => {
+        if (val === null || val === undefined || val === '') return fallback;
+        const strVal = String(val);
+        if (strVal.includes(':') && strVal.length > 30) return '[Encrypted]';
+        return val;
+    }, []);
+
 
 
     // --- 3. EFFECTS ---
@@ -597,15 +604,8 @@ const PatientDetails = () => {
             setShowPediatricLabs(false);
         }
 
-
-    const formatEncValue = useCallback((val, fallback = 'Not specified') => {
-        if (val === null || val === undefined || val === '') return fallback;
-        const strVal = String(val);
-        if (strVal.includes(':') && strVal.length > 30) return '[Encrypted]';
-        return val;
-    }, []);
-
-        setPatient(data);
+        setPatient(decryptedData);
+        setCurrentPatientCode(decryptedData.id);
     }, [isValidDate, calculateAgeInDays, calculateAge, determinePatientType, setCustomLabs, globalLabDefinitions, fetchClinicalHistory]);
 
     // FIXED: fetchPatientData with better error handling
