@@ -93,12 +93,7 @@ const Settings = () => {
                     >
                         <FaUserShield /> <span className="font-semibold">Security</span>
                     </button>
-                    <button
-                        onClick={() => setActiveTab('access')}
-                        className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all duration-200 ${activeTab === 'access' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-600 hover:bg-gray-100'}`}
-                    >
-                        <FaUnlock /> <span className="font-semibold">Data Sharing</span>
-                    </button>
+
                     <button
                         onClick={() => setActiveTab('support')}
                         className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all duration-200 ${activeTab === 'support' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-600 hover:bg-gray-100'}`}
@@ -136,10 +131,7 @@ const Settings = () => {
                                     <p className="text-sm text-blue-800">Your profile is currently protected by Zero-Knowledge encryption.</p>
                                 </div>
                             </div>
-                        ) : activeTab === 'access' ? (
-                            <div className="p-8">
-                                <SupportActivationPortal />
-                            </div>
+
                         ) : activeTab === 'support' ? (
                             <div className="p-8">
                                 <SupportAccess />
