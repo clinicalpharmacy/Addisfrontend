@@ -3119,7 +3119,7 @@ const PatientDetails = () => {
                                 {formData.full_name && (
                                     <div className="flex items-center gap-3 mt-1">
                                         <p className="text-gray-600 text-xs md:text-base truncate">
-                                            {formData.full_name} • {formatAgeDisplay(formData.age_in_days, formData.date_of_birth)} • {formData.gender || 'Gender not specified'}
+                                            {formatEncValue(formData.full_name, 'MR Profile')} • {formatAgeDisplay(formData.age_in_days, formData.date_of_birth)} • {formData.gender || 'Gender not specified'}
                                         </p>
                                     </div>
                                 )}
