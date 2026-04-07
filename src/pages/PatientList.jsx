@@ -341,14 +341,16 @@ const PatientList = () => {
                                                     <div className="font-bold text-gray-800 text-sm leading-none mb-1">
                                                         {userRole === 'healthcare_client' 
                                                             ? 'Patient Profile' 
-                                                            : (patient.full_name && typeof patient.full_name === 'string' && !patient.full_name.includes(':') && !patient.full_name.startsWith('{') ? patient.full_name : 'Anonymous User')}
+                                                            : (patient.full_name && typeof patient.full_name === 'string' && !patient.full_name.includes(':') && !patient.full_name.startsWith('{') 
+                                                                ? patient.full_name 
+                                                                : 'Locked Profile')}
                                                     </div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-5">
                                             <div className="text-sm font-medium text-gray-700 italic max-w-xs truncate">
-                                                "{userRole === 'healthcare_client' ? 'Clinical Data' : (patient.diagnosis && typeof patient.diagnosis === 'string' && !patient.diagnosis.includes(':') && !patient.diagnosis.startsWith('{') ? patient.diagnosis : 'Diagnosis Pending')}"
+                                                "{userRole === 'healthcare_client' ? 'Clinical Data' : (patient.diagnosis && typeof patient.diagnosis === 'string' && !patient.diagnosis.includes(':') && !patient.diagnosis.startsWith('{') ? patient.diagnosis : 'Data Encrypted')}"
                                             </div>
                                         </td>
                                         <td className="px-6 py-5 text-xs text-gray-500 font-bold">

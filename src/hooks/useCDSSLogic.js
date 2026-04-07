@@ -23,6 +23,8 @@ export const useCDSSLogic = (patientData) => {
     const [testResults, setTestResults] = useState(null);
     const [rulesLoading, setRulesLoading] = useState(false);
     const [hasAnalyzed, setHasAnalyzed] = useState(false);
+    const [decryptionFailed, setDecryptionFailed] = useState(false);
+    const [decryptedPatient, setDecryptedPatient] = useState(null);
     // Incrementing this triggers a forced re-analysis after state commits
     const [forceReanalysisKey, setForceReanalysisKey] = useState(0);
     // Gate: prevents auto-analysis from firing before medications are fetched
@@ -211,18 +213,26 @@ export const useCDSSLogic = (patientData) => {
             if (encKey) {
                 try {
                     currentPatient = await decryptPatient(currentPatient, encKey);
-                    currentMedications = await Promise.all(currentMedications.map(async (m) => {
-                        const decryptedMed = { ...m };
-                        const sensitiveMedsFields = ['drug_name', 'dose', 'frequency', 'roa', 'route', 'indication', 'notes', 'medical_condition'];
-                        for (const field of sensitiveMedsFields) {
-                            const val = decryptedMed[field];
-                            if (val && typeof val === 'string' && val.includes(':')) {
-                                try { decryptedMed[field] = await decryptValue(val, encKey); } catch (e) {}
+                    setDecryptedPatient(currentPatient);
+                    setDecryptionFailed(false);
+
+                    // Decrypt medications
+                    currentMedications = await Promise.all(medsToUse.map(async (m) => {
+                        const d = { ...m };
+                        const fields = ['drug_name', 'dose', 'frequency', 'roa', 'route', 'indication', 'notes', 'medical_condition'];
+                        for (const f of fields) {
+                            if (d[f] && typeof d[f] === 'string' && d[f].includes(':')) {
+                                try { d[f] = await decryptValue(d[f], encKey); } catch (e) {}
                             }
                         }
-                        return decryptedMed;
+                        return d;
                     }));
-                } catch (decErr) { console.error('Decryption failed', decErr); }
+                } catch (decErr) { 
+                    console.error('Decryption failed', decErr); 
+                    setDecryptionFailed(true);
+                }
+            } else {
+                setDecryptionFailed(true);
             }
 
             const facts = mapPatientToFacts(currentPatient, currentMedications);
@@ -421,22 +431,36 @@ export const useCDSSLogic = (patientData) => {
             }
 
             let decryptedMeds = freshMeds;
+            let currentPatient = { ...patientData };
             const encKey = await getEncryptionKey();
-            if (encKey && freshMeds.length > 0) {
+            
+            if (encKey) {
                 try {
-                    decryptedMeds = await Promise.all(freshMeds.map(async (m) => {
-                        const d = { ...m };
-                        const fields = ['drug_name', 'dose', 'frequency', 'roa', 'route', 'indication', 'notes', 'medical_condition'];
-                        for (const f of fields) {
-                            if (d[f] && typeof d[f] === 'string' && d[f].includes(':')) {
-                                try { d[f] = await decryptValue(d[f], encKey); } catch (e) {}
+                    // Decrypt Patient data for display
+                    currentPatient = await decryptPatient(currentPatient, encKey);
+                    setDecryptedPatient(currentPatient);
+
+                    // Decrypt medications
+                    if (freshMeds.length > 0) {
+                        decryptedMeds = await Promise.all(freshMeds.map(async (m) => {
+                            const d = { ...m };
+                            const fields = ['drug_name', 'dose', 'frequency', 'roa', 'route', 'indication', 'notes', 'medical_condition'];
+                            for (const f of fields) {
+                                if (d[f] && typeof d[f] === 'string' && d[f].includes(':')) {
+                                    try { d[f] = await decryptValue(d[f], encKey); } catch (e) {}
+                                }
                             }
-                        }
-                        return d;
-                    }));
+                            return d;
+                        }));
+                    }
+                    setDecryptionFailed(false);
                 } catch (e) {
                     console.error('Decryption failed on init', e);
+                    setDecryptionFailed(true);
                 }
+            } else {
+                console.warn('⚠️ No encryption key found during initialization');
+                setDecryptionFailed(true);
             }
             
             setMedications(decryptedMeds);

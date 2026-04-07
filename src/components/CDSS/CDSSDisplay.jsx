@@ -23,7 +23,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
         severityFilter, setSeverityFilter,
         fetchClinicalRules, testSampleRules, analyzePatient, runFullAnalysis,
         acknowledgeAlert, acknowledgeAll, toggleExpandAlert, expandedAlert,
-        patientFacts, lastAnalysisTime
+        patientFacts, lastAnalysisTime, decryptedPatient, decryptionFailed
     } = useCDSSLogic(patientData);
 
     const rawUserRole = localStorage.getItem('userRole') || 'admin';
@@ -259,23 +259,30 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                         <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 rounded-xl shrink-0 shadow-md">
                             <FaShieldAlt className="text-white text-xl" />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                             <h2 className="text-xl md:text-2xl font-bold text-gray-800">Clinical Analysis</h2>
-                            {patientData ? (
+                            {decryptedPatient || patientData ? (
                                 <div className="text-sm text-gray-500 flex flex-wrap items-center gap-2 mt-0.5">
-                                    <span className="font-semibold text-gray-700">{formatEncValue(patientData.full_name)}</span>
+                                    <span className="font-semibold text-gray-700 truncate">
+                                        {formatEncValue((decryptedPatient || patientData).full_name, 'MR Profile')}
+                                    </span>
+                                    {decryptionFailed && (
+                                        <span className="bg-amber-100 text-amber-700 text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1 border border-amber-200">
+                                            <FaEyeSlash size={10} /> Profile Locked
+                                        </span>
+                                    )}
                                     {lastAnalysisTime && (
                                         <>
                                             <span className="text-gray-300">·</span>
-                                            <span className="flex items-center gap-1">
+                                            <span className="flex items-center gap-1 whitespace-nowrap">
                                                 <FaClock className="text-xs" />
-                                                Last run: {getTimeAgo ? getTimeAgo(lastAnalysisTime) : new Date(lastAnalysisTime).toLocaleTimeString()}
+                                                Run: {getTimeAgo ? getTimeAgo(lastAnalysisTime) : new Date(lastAnalysisTime).toLocaleTimeString()}
                                             </span>
                                         </>
                                     )}
                                 </div>
                             ) : (
-                                <p className="text-sm text-gray-500">Select a patient to begin</p>
+                                <p className="text-sm text-gray-500">Retrieving patient record...</p>
                             )}
                         </div>
                     </div>
