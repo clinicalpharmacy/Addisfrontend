@@ -1351,7 +1351,7 @@ const MedicationHistory = ({ patientCode }) => {
                                             <>
                                                 <td className="p-2 md:p-4">
                                                     <div className="text-gray-700 text-xs md:text-sm break-words">{formatEncValue(med.indication, '—')}</div>
-                                                    <div className="text-gray-700 text-xs md:text-sm break-words font-medium">{formatEncValue(med.administration, '—')}</div>
+                                                    <div className="text-xs text-gray-500">{formatEncValue(med.administration, '—')}</div>
                                                 </td>
                                             </>
                                         )}
