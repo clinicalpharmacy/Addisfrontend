@@ -22,6 +22,7 @@ export const useCDSSLogic = (patientData) => {
     const [isTestingRules, setIsTestingRules] = useState(false);
     const [testResults, setTestResults] = useState(null);
     const [rulesLoading, setRulesLoading] = useState(false);
+    const [hasAnalyzed, setHasAnalyzed] = useState(false);
     // Incrementing this triggers a forced re-analysis after state commits
     const [forceReanalysisKey, setForceReanalysisKey] = useState(0);
     // Gate: prevents auto-analysis from firing before medications are fetched
@@ -201,6 +202,7 @@ export const useCDSSLogic = (patientData) => {
         setDebugInfo(debug);
 
         try {
+            setHasAnalyzed(true); // Mark as analyzed right away to prevent loops
             // 🔐 ZERO-KNOWLEDGE: Decrypt data before analysis
             let currentPatient = { ...patientData };
             let currentMedications = [...medsToUse];
@@ -408,10 +410,11 @@ export const useCDSSLogic = (patientData) => {
 
     // Effect: Auto-analyze when data arrives
     useEffect(() => {
-        if (patientData?.id && clinicalRules.length > 0 && medicationsFetched && alerts.length === 0 && !loading) {
-            analyzePatient();
+        if (patientData?.id && clinicalRules.length > 0 && medicationsFetched && !hasAnalyzed && !loading) {
+            console.log('⚡ Auto-triggering analysis with', clinicalRules.length, 'rules and', medications.length, 'medications');
+            analyzePatient(clinicalRules, medications);
         }
-    }, [patientData?.id, clinicalRules.length, medicationsFetched, medications.length, analyzePatient, alerts.length, loading]);
+    }, [patientData?.id, clinicalRules, medicationsFetched, medications, analyzePatient, hasAnalyzed, loading]);
 
     const testSampleRules = useCallback(() => {
         if (!patientData) {
