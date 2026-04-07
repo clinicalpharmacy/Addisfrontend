@@ -1,295 +1,65 @@
-import React, { useState, useEffect } from 'react';
-import { FaLock, FaKey, FaShield, FaSpinner, FaExclamationTriangle, FaUserShield } from 'react-icons/fa';
+import React, { useEffect } from 'react';
 import {
-    getEncryptionKey, deriveKey, decryptPatient,
-    hexToBytes, loadPrivateKey, decryptWithPrivateKey
+    getEncryptionKey, decryptPatient,
+    loadPrivateKey, decryptWithPrivateKey
 } from '../utils/encryptionUtils';
 import api from '../utils/api';
-import SecurityActivator from './Security/SecurityActivator';
 
 /**
- * PatientUnlocker — gates all patient content until decrypted.
- * Handles both standard owner decryption and administrative support decryption.
+ * PatientUnlocker — silently attempts decryption using cached keys.
+ * No vault password prompt is shown; children are always rendered.
  */
 const PatientUnlocker = ({ patientData, userSalt, onUnlocked, children }) => {
-    const [passphrase, setPassphrase] = useState('');
-    const [isUnlocking, setIsUnlocking] = useState(false);
-    const [error, setError] = useState('');
-    const [status, setStatus] = useState('loading'); // loading, prompt, decrypted, missing_keys
-    const [grantedKey, setGrantedKey] = useState(null);
 
     useEffect(() => {
-        init();
+        if (!patientData?.id) return;
+        silentUnlock();
     }, [patientData?.id]);
 
-    const init = async () => {
+    const silentUnlock = async () => {
         try {
-            // 0. QUICK CHECK: Is it already decrypted or missing?
-            if (!patientData || !patientData.id) return;
+            // Already decrypted (no IV prefix)
             if (patientData?.full_name && !String(patientData.full_name).includes(':')) {
-                setStatus('decrypted');
+                onUnlocked(patientData);
                 return;
             }
 
-            setStatus('loading');
-            setError('');
-
-            // 1. SILENT AUTO-DECRYPTION (Owner's Master Key or Cache)
+            // Try owner master key
             const masterKey = await getEncryptionKey();
-            const userData = JSON.parse(localStorage.getItem('user') || '{}');
-            const userCompanyId = localStorage.getItem('company_id');
-            const hccId = localStorage.getItem('healthcare_client_id');
-            
-            // Inclusive owner check: UUID, Email, Clinic ID, or HCC ID
-            const isOwner = userData?.id === patientData?.user_id || 
-                            userData?.email === patientData?.user_id ||
-                            userCompanyId === patientData?.user_id ||
-                            hccId === patientData?.user_id;
-
             if (masterKey) {
-                // Try silent decryption path
                 const decrypted = await decryptPatient(patientData, masterKey);
-                if (decrypted && decrypted.full_name && !String(decrypted.full_name).includes(':')) {
-                    console.log("✨ Silent Unlock: Security vault bypassed for record owner.");
+                if (decrypted?.full_name && !String(decrypted.full_name).includes(':')) {
                     onUnlocked(decrypted);
-                    setStatus('decrypted');
                     return;
                 }
             }
 
-            // 2. SUPPORT SESSION check (for Admins)
+            // Try admin support session key
             try {
                 const res = await api.get(`/access/granted?patient_id=${patientData.id}`);
-                if (res?.success && res?.request) {
-                    const encryptedKey = res.request.encrypted_key;
-                    
-                    // AUTO-RESTORE: Try silent decryption if identity (Private Key) was already verified this session
-                    const privKey = await loadPrivateKey(); 
+                if (res?.success && res?.request?.encrypted_key) {
+                    const privKey = await loadPrivateKey(masterKey);
                     if (privKey) {
-                        try {
-                            const pKey = await decryptWithPrivateKey(res.request.encrypted_key, privKey);
-                            const decrypted = await decryptPatient(patientData, pKey);
-                            if (decrypted && !String(decrypted.full_name).includes(':')) {
-                                onUnlocked(decrypted);
-                                setStatus('decrypted');
-                                return;
-                            }
-                        } catch (decErr) {
-                            console.warn("Silent unlock failed:", decErr);
+                        const patientKey = await decryptWithPrivateKey(res.request.encrypted_key, privKey);
+                        const decrypted = await decryptPatient(patientData, patientKey);
+                        if (decrypted?.full_name && !String(decrypted.full_name).includes(':')) {
+                            onUnlocked(decrypted);
+                            return;
                         }
                     }
-
-                    setGrantedKey(encryptedKey);
-                    setStatus('prompt');
-                    return;
                 }
-            } catch (err) {
-                console.warn('Granted check failed:', err);
-            }
+            } catch (_) {}
 
-            // 3. SECURE IDENTITY check (RSA Key availability)
-            if (userData?.private_key_encrypted) {
-                setStatus('prompt');
-            } else {
-                setStatus('missing_keys');
-            }
+            // Fallback: pass through as-is
+            onUnlocked(patientData);
 
         } catch (err) {
-            console.error('Unlocker Init Error:', err);
-            setStatus('prompt');
+            console.warn('PatientUnlocker silent decrypt failed:', err);
+            onUnlocked(patientData);
         }
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setIsUnlocking(true);
-        setError('');
-
-        try {
-            const salt = userSalt;
-            if (!salt) throw new Error("Security salt not found for this patient owner.");
-
-            // A. Derive Master Key from password
-            const masterKey = await deriveKey(passphrase.trim(), salt);
-
-            // B. If it's a support session, decrypt the granted administrative key
-            if (grantedKey) {
-                await decryptAndShow(masterKey, grantedKey);
-            } else {
-                // C. Standard Owner Unlock: Load private key using master key
-                const privateKey = await loadPrivateKey(masterKey); 
-                if (!privateKey) throw new Error("Security key not found. Go to Settings → activate security keys.");
-
-                // For the owner, we find the request record where they are the requester (or owner) 
-                // but usually, owners decrypt via their own key stored in the patient record.
-                // Assuming patient record has the key:
-                const decrypted = await decryptPatient(patientData, null, masterKey);
-                if (decrypted) {
-                    onUnlocked(decrypted);
-                    setStatus('decrypted');
-                } else {
-                    throw new Error("Decryption failed. Check your password.");
-                }
-            }
-        } catch (err) {
-            setError(err.message || "Failed to unlock record.");
-        } finally {
-            setIsUnlocking(false);
-        }
-    };
-
-    const decryptAndShow = async (masterKey, encryptedAdminKey) => {
-        try {
-            // 1. Unwrap the user's private key using the Master Key (derived from password)
-            const privateKey = await loadPrivateKey(masterKey);
-            if (!privateKey) throw new Error("Could not restore your secure identity.");
-
-            // 2. Decrypt the patient's AES key using the user's private key
-            const patientKey = await decryptWithPrivateKey(privateKey, encryptedAdminKey);
-            if (!patientKey) throw new Error("This support session has expired or is invalid.");
-
-            // 3. Decrypt the patient data using the AES key
-            const decrypted = await decryptPatient(patientData, patientKey);
-            if (decrypted) {
-                onUnlocked(decrypted);
-                setStatus('decrypted');
-            } else {
-                throw new Error("Failed to decrypt record.");
-            }
-        } catch (err) {
-            throw err;
-        }
-    };
-
-    // If already decrypted or just unlocked, render the patient content
-    if (status === 'decrypted') return <>{children}</>;
-
-    if (status === 'loading') {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3 text-gray-400">
-                <FaSpinner className="text-3xl text-blue-500 animate-spin" />
-                <p className="text-sm font-medium">Loading record...</p>
-            </div>
-        );
-    }
-
-    // Prompt for missing security keys (Inline Fix)
-    if (status === 'missing_keys') {
-        return (
-            <div className="flex items-center justify-center min-h-[40vh] p-4 text-center">
-                <div className="max-w-md w-full">
-                    <div className="mb-6 text-center">
-                        <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-100 rounded-full mb-3">
-                            <FaUserShield className="text-orange-600 text-2xl animate-pulse" />
-                        </div>
-                        <h3 className="text-xl font-bold text-gray-900">Security Activation Required</h3>
-                        <p className="text-sm text-gray-500 mt-2">To view this patient's private details, you must first activate your secure digital identity.</p>
-                    </div>
-                    <SecurityActivator onActivated={() => init()} />
-                    <button 
-                        onClick={() => setStatus('prompt')}
-                        className="mt-6 text-blue-600 hover:underline text-sm font-bold block mx-auto"
-                    >
-                        Already have keys? Try standard unlock
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
-    // Password prompt (admin or session expired)
-    if (status === 'prompt') {
-        return (
-            <div className="flex items-center justify-center min-h-[40vh] p-2 sm:p-4">
-                <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm border border-gray-100 overflow-hidden transform transition-all">
-                    {(() => {
-                        const userData = JSON.parse(localStorage.getItem('user') || '{}');
-                        const userCompanyId = localStorage.getItem('company_id');
-                        const hccId = localStorage.getItem('healthcare_client_id');
-                        const isOwner = userData?.id === patientData?.user_id || 
-                                        userData?.email === patientData?.user_id ||
-                                        userCompanyId === patientData?.user_id ||
-                                        hccId === patientData?.user_id;
-
-                        if (grantedKey || isOwner) {
-                            return (
-                                <form onSubmit={handleSubmit} className="p-5 sm:p-7 space-y-5">
-                                    <div className="space-y-2">
-                                        <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">
-                                            {isOwner ? 'Vault Password' : 'Your Login Password'}
-                                        </label>
-                                        <input
-                                            type="password"
-                                            value={passphrase}
-                                            onChange={e => setPassphrase(e.target.value)}
-                                            placeholder="••••••••"
-                                            className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder:text-gray-300 text-sm font-bold"
-                                            autoFocus
-                                        />
-                                    </div>
-                                    
-                                    {error && (
-                                        <div className="space-y-3">
-                                            <div className="p-3 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3 text-red-700 animate-in shake duration-500">
-                                                <FaExclamationTriangle className="shrink-0" />
-                                                <p className="text-xs font-bold leading-tight">{error}</p>
-                                            </div>
-                                            {error.includes('Security key not found') && (
-                                                <button 
-                                                    type="button"
-                                                    onClick={() => setStatus('missing_keys')}
-                                                    className="w-full py-3 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100 hover:brightness-110 active:scale-95 transition-all"
-                                                >
-                                                    Setup Identity Now
-                                                </button>
-                                            )}
-                                        </div>
-                                    )}
-                                    
-                                    <button
-                                        type="submit"
-                                        disabled={isUnlocking || !passphrase.trim()}
-                                        className={`w-full py-4 text-white font-black text-sm rounded-2xl transition-all flex items-center justify-center gap-3 shadow-xl hover:shadow-blue-200 active:scale-95 ${
-                                            isUnlocking || !passphrase.trim()
-                                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
-                                                : (grantedKey ? 'bg-green-600 hover:bg-green-700 shadow-green-100' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-100')
-                                        }`}
-                                    >
-                                        {isUnlocking
-                                            ? <><FaSpinner className="animate-spin" /> Unlocking...</>
-                                            : <><FaLock /> Decrypt & View</>
-                                        }
-                                    </button>
-                                    
-
-                                </form>
-                            );
-                        }
-
-                        // Otherwise, show the Restrict Access UI for Support Staff
-                        return (
-                            <div className="p-7 space-y-4 text-center">
-                                <div className="bg-red-50 p-4 rounded-2xl border border-red-100 flex gap-3 text-left">
-                                    <FaUserShield className="text-red-600 shrink-0 mt-1" />
-                                    <p className="text-xs text-red-800 font-medium leading-relaxed">
-                                        This record is encrypted. You do not have permission to view it. The record owner must proactively grant you Support Access from their dashboard to generate an encrypted tunnel key.
-                                    </p>
-                                </div>
-                                <button 
-                                    onClick={() => window.history.back()}
-                                    className="w-full py-4 bg-gray-900 text-white font-black rounded-2xl shadow-xl hover:bg-black active:scale-95 transition-all text-sm"
-                                >
-                                    Return to Dashboard
-                                </button>
-                            </div>
-                        );
-                    })()}
-                </div>
-            </div>
-        );
-    }
-
-    // Decrypted — render all patient content
+    // Always render children — no blocking prompt
     return <>{children}</>;
 };
 
