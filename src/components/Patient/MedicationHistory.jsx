@@ -108,10 +108,10 @@ const MedicationHistory = ({ patientCode }) => {
 
     const frequencyOptions = [
         'Once daily', 'Twice daily', 'Three times daily', 'Four times daily',
-        'Every morning', 'Every evening', 'Every night', 'At bedtime', 'Every other day',
-        'Three times per week', 'Weekly', 'Q2weeks', 'Every 4 hours', 
-        'Every 6 hours', 'Every 8 hours', 'Every 12 hours', 'Before meals', 
-        'After meals', 'With meals', 'On empty stomach', 'As needed (PRN)'
+        'Every morning', 'Every evening', 'Every night', 'At bedtime', 
+        'QOD', '3 times/week', 'Weekly', 'Q2weeks', 
+        'Q4hrs', 'Q6hrs', 'Q8hrs', 'Q12hrs', 'As needed (PRN)',
+        'Before meals', 'After meals', 'With meals', 'On empty stomach'
     ];
 
     const drugClasses = [
