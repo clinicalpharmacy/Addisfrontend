@@ -343,7 +343,6 @@ const PatientList = () => {
                                                             ? 'Patient Profile' 
                                                             : (patient.full_name && typeof patient.full_name === 'string' && !patient.full_name.includes(':') && !patient.full_name.startsWith('{') ? patient.full_name : 'Anonymous User')}
                                                     </div>
-                                                    <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Clinical Identifier</div>
                                                 </div>
                                             </div>
                                         </td>
