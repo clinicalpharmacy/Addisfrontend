@@ -219,14 +219,16 @@ export const useCDSSLogic = (patientData) => {
                     // Decrypt medications
                     currentMedications = await Promise.all(medsToUse.map(async (m) => {
                         const d = { ...m };
-                        const fields = ['drug_name', 'dose', 'frequency', 'roa', 'route', 'indication', 'notes', 'medical_condition'];
-                        for (const f of fields) {
-                            if (d[f] && typeof d[f] === 'string' && d[f].includes(':')) {
-                                try { d[f] = await decryptValue(d[f], encKey); } catch (e) {}
+                        const sensitiveMedsFields = ['drug_name', 'dose', 'frequency', 'roa', 'route', 'indication', 'notes', 'medical_condition'];
+                        for (const field of sensitiveMedsFields) {
+                            const val = d[field];
+                            if (val && typeof val === 'string' && val.includes(':')) {
+                                try { d[field] = await decryptValue(val, encKey); } catch (e) {}
                             }
                         }
                         return d;
                     }));
+                    setDecryptionFailed(false);
                 } catch (decErr) { 
                     console.error('Decryption failed', decErr); 
                     setDecryptionFailed(true);
@@ -477,13 +479,30 @@ export const useCDSSLogic = (patientData) => {
         }
     }, [patientData, analyzePatient]);
 
-    // Effect: Initialize once
+    // Effect: Initialize/Re-fetch when patient changes
     useEffect(() => {
-        if (isInitialLoad && patientData?.id) {
-            setIsInitialLoad(false);
-            initializeCDSS();
+        if (patientData?.id) {
+            // If the ID changed, we need a full reset and re-fetch
+            if (isInitialLoad) {
+                setIsInitialLoad(false);
+                initializeCDSS();
+            }
         }
-    }, [isInitialLoad, patientData?.id, initializeCDSS]);
+    }, [patientData?.id, isInitialLoad, initializeCDSS]);
+
+    // Effect: High-performance facts synchronization
+    // This ensures that if PatientDetails updates formData (age/gender) 
+    // after the initial mount, the CDSS logic stays in sync.
+    useEffect(() => {
+        if (patientData && medicationsFetched) {
+            const hasDemographics = patientData.gender || patientData.age || patientData.age_in_days;
+            if (hasDemographics) {
+                // Perform a 'soft' analysis refresh without re-fetching rules/meds
+                // if we already have them but the demographics just updated.
+                analyzePatient(clinicalRules, medications);
+            }
+        }
+    }, [patientData?.gender, patientData?.age, patientData?.age_in_days, medicationsFetched]);
 
     const testSampleRules = useCallback(() => {
         if (!patientData) {
