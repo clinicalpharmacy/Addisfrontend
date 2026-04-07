@@ -396,6 +396,16 @@ export const useCDSSLogic = (patientData) => {
         analyzePatientRef.current = analyzePatient;
     });
 
+    // Effect: Initial fetch of rules and medications
+    useEffect(() => {
+        if (isInitialLoad && patientData?.id) {
+            console.log('🔄 Initializing CDSS data...');
+            fetchClinicalRules();
+            fetchPatientMedications();
+            setIsInitialLoad(false);
+        }
+    }, [isInitialLoad, patientData?.id, fetchClinicalRules, fetchPatientMedications]);
+
     // Effect: Auto-analyze when data arrives
     useEffect(() => {
         if (patientData?.id && clinicalRules.length > 0 && medicationsFetched && alerts.length === 0 && !loading) {
