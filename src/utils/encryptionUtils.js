@@ -38,18 +38,9 @@ export function bytesToHex(bytes) {
 //  1. Key Derivation  (PBKDF2-SHA-256)
 // ─────────────────────────────────────────────────────────
 
-// 🔒 SESSION-BASED KEY CACHING
-// Keeps the derived Master Key in memory for the current tab only.
-// This allows a "1-Click" experience after the first successful unlock.
-let _sessionMasterKey = null;
-
-export function setSessionKey(key) {
-    _sessionMasterKey = key;
-}
-
-export function getSessionKey() {
-    return _sessionMasterKey;
-}
+// 🔒 MASTER KEY CACHE
+// Uses _cachedKey (singleton) + sessionStorage to survive refreshes.
+// Access via getEncryptionKey() and set via persistKeyToSession().
 
 /**
  * Derives an AES-256-GCM CryptoKey from a password + salt.

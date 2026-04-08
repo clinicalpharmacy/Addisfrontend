@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import {
-    getSessionKey, decryptPatient,
+    getEncryptionKey, decryptPatient,
     loadPrivateKey, decryptWithPrivateKey, hexToBytes
 } from '../utils/encryptionUtils';
 import api from '../utils/api';
@@ -25,7 +25,7 @@ const PatientUnlocker = ({ patientData, userSalt, onUnlocked, children }) => {
             }
 
             // Try owner master key
-            const masterKey = getSessionKey();
+            const masterKey = await getEncryptionKey();
             if (masterKey) {
                 const decrypted = await decryptPatient(patientData, masterKey);
                 if (decrypted?.full_name && !String(decrypted.full_name).includes(':')) {

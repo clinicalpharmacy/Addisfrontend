@@ -7,7 +7,7 @@ import {
 import api from '../../utils/api';
 import { 
     deriveKey, generateUserKeyPair, exportPublicKey, 
-    wrapPrivateKey, setSessionKey, getSessionKey 
+    wrapPrivateKey, persistKeyToSession, getEncryptionKey 
 } from '../../utils/encryptionUtils';
 
 /**
@@ -31,7 +31,7 @@ export const SupportVault = () => {
     const [showUnlockModal, setShowUnlockModal] = useState(false);
     const [password, setPassword] = useState('');
     const [initError, setInitError] = useState('');
-    const [isVaultUnlocked, setIsVaultUnlocked] = useState(!!getSessionKey());
+    const [isVaultUnlocked, setIsVaultUnlocked] = useState(false); // Will check in useEffect
 
     const fetchActivePatients = useCallback(async () => {
         setActiveLoading(true);
@@ -51,13 +51,17 @@ export const SupportVault = () => {
     }, []);
 
     useEffect(() => {
-        const userData = localStorage.getItem('user');
-        if (userData) {
-            const user = JSON.parse(userData);
-            setCurrentUser(user);
-        }
+        const checkVaultStatus = async () => {
+            const userData = localStorage.getItem('user');
+            if (userData) {
+                const user = JSON.parse(userData);
+                setCurrentUser(user);
+            }
+            const key = await getEncryptionKey();
+            setIsVaultUnlocked(!!key);
+        };
+        checkVaultStatus();
         fetchActivePatients();
-        setIsVaultUnlocked(!!getSessionKey());
     }, [fetchActivePatients]);
 
     const handleInitializeSecurity = async (e) => {
@@ -88,7 +92,7 @@ export const SupportVault = () => {
                 setCurrentUser(updatedUser);
                 localStorage.setItem('user', JSON.stringify(updatedUser));
                 
-                setSessionKey(masterKey);
+                await persistKeyToSession(masterKey);
                 setIsVaultUnlocked(true);
                 setSuccessMsg("🛡️ Security Initialized! Vault is now open.");
                 setShowInitModal(false);
@@ -116,7 +120,7 @@ export const SupportVault = () => {
             const masterKey = await deriveKey(password, salt);
             
             // 2. Cache it in session memory
-            setSessionKey(masterKey);
+            await persistKeyToSession(masterKey);
             setIsVaultUnlocked(true);
             setSuccessMsg("🔓 Specialist Vault Unlocked.");
             setShowUnlockModal(false);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaUserShield, FaLock, FaCheckCircle, FaExclamationTriangle, FaSearch } from 'react-icons/fa';
 import api from '../../utils/api';
-import { deriveKey, encryptForRecipient } from '../../utils/encryptionUtils';
+import { deriveKey, encryptForRecipient, persistKeyToSession } from '../../utils/encryptionUtils';
 
 /**
  * 🛡️ SupportRequestModal
@@ -65,6 +65,9 @@ const SupportRequestModal = ({ isOpen, onClose, patientId, ownerSalt, onSuccess 
             // 2. Derive User's Master AES Key from password + salt
             console.log('🔑 [SupportModal] Deriving master key...');
             const masterKey = await deriveKey(password, ownerSalt);
+            
+            // 🔥 Persist for the rest of the session (refresh-proof)
+            await persistKeyToSession(masterKey);
             
             // 3. Export the Master Key to a format we can encrypt (hex string)
             const rawKey = await crypto.subtle.exportKey('raw', masterKey);
