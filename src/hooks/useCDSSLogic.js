@@ -31,7 +31,7 @@ export const useCDSSLogic = (patientData) => {
     const [medicationsFetched, setMedicationsFetched] = useState(false);
 
     // Use refs to prevent infinite loops
-    const previousPatientId = useRef(null);
+    const previousPatientIdRef = useRef(null);
     // Stable ref to analyzePatient to avoid it being a useEffect dependency
     const analyzePatientRef = useRef(null);
 
@@ -481,28 +481,42 @@ export const useCDSSLogic = (patientData) => {
 
     // Effect: Initialize/Re-fetch when patient changes
     useEffect(() => {
-        if (patientData?.id) {
-            // If the ID changed, we need a full reset and re-fetch
-            if (isInitialLoad) {
-                setIsInitialLoad(false);
-                initializeCDSS();
-            }
+        const currentId = patientData?.id;
+        
+        if (currentId && currentId !== previousPatientIdRef.current) {
+            console.log(`🎯 Patient switched to ${currentId}. Resetting and initializing CDSS...`);
+            
+            // 1. Reset states to prevent "ghost" data from previous patient
+            setAlerts([]);
+            setFilteredAlerts([]);
+            setMedications([]);
+            setMedicationsFetched(false);
+            setAnalysisStats(null);
+            setHasAnalyzed(false);
+            
+            // 2. Clear debug info
+            setDebugInfo(`🔄 Loading clinical rules for Patient ${currentId}...\n`);
+            
+            // 3. Update ref immediately
+            previousPatientIdRef.current = currentId;
+            
+            // 4. Trigger fresh fetch
+            initializeCDSS();
         }
-    }, [patientData?.id, isInitialLoad, initializeCDSS]);
+    }, [patientData?.id, initializeCDSS]);
 
     // Effect: High-performance facts synchronization
-    // This ensures that if PatientDetails updates formData (age/gender) 
+    // This ensures that if PatientDetails updates formData (age/gender/labs/diagnosis) 
     // after the initial mount, the CDSS logic stays in sync.
     useEffect(() => {
-        if (patientData && medicationsFetched) {
-            const hasDemographics = patientData.gender || patientData.age || patientData.age_in_days;
-            if (hasDemographics) {
-                // Perform a 'soft' analysis refresh without re-fetching rules/meds
-                // if we already have them but the demographics just updated.
+        if (patientData && medicationsFetched && hasAnalyzed) {
+            const hasKeyData = patientData.gender || patientData.age || patientData.age_in_days || patientData.diagnosis;
+            if (hasKeyData) {
+                console.log('⚡ Facts update detected (Demographics/Dx). Re-analyzing...');
                 analyzePatient(clinicalRules, medications);
             }
         }
-    }, [patientData?.gender, patientData?.age, patientData?.age_in_days, medicationsFetched]);
+    }, [patientData?.gender, patientData?.age, patientData?.age_in_days, patientData?.diagnosis, medicationsFetched, hasAnalyzed]);
 
     const testSampleRules = useCallback(() => {
         if (!patientData) {
