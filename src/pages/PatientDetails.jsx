@@ -198,7 +198,13 @@ const PatientDetails = () => {
     useEffect(() => {
         const userData = localStorage.getItem('user');
         if (userData) {
-            try { setUser(JSON.parse(userData)); } catch (e) { }
+            try { 
+                const parsedUser = JSON.parse(userData);
+                setUser(parsedUser);
+                // Also initialize the salt for support requests
+                const salt = parsedUser.encryption_salt || localStorage.getItem('enc_salt');
+                if (salt) setPatientOwnerSalt(salt);
+            } catch (e) { }
         }
     }, []);
 
