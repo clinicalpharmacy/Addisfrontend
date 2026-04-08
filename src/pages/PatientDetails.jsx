@@ -149,6 +149,7 @@ const PatientDetails = () => {
     useEffect(() => {
         if (patientCode && !isNewPatient) {
             fetchPatientData();
+            checkSupportStatus();
         }
     }, [patientCode, isNewPatient]);
 
@@ -930,6 +931,41 @@ const PatientDetails = () => {
         setNewAllergy('');
     }, [newAllergy, formData.allergies]);
 
+    const checkSupportStatus = useCallback(async () => {
+        if (!patientCode || isNewPatient) return;
+        try {
+            const res = await api.get(`/access/granted?patient_id=${patientCode}`);
+            if (res.success && res.request) {
+                setSupportActivated(true);
+            } else {
+                setSupportActivated(false);
+            }
+        } catch (err) {
+            console.error('Failed to check support status:', err);
+        }
+    }, [patientCode, isNewPatient]);
+
+    const handleDeactivateSupport = async () => {
+        if (!window.confirm('Are you sure you want to terminate the active support session? The specialist will lose all access to this record immediately.')) return;
+        
+        try {
+            setLoading(true);
+            const res = await api.post('/access/revoke-support', { patient_id: patientCode });
+            if (res.success) {
+                setSupportActivated(false);
+                alert('Support access revoked successfully.');
+            }
+        } catch (err) {
+            alert('Failed to revoke support: ' + (err.error || err.message));
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleBack = useCallback(() => {
+        navigate('/patients');
+    }, [navigate]);
+
     // Network and backend status monitoring
     useEffect(() => {
         const handleOnline = () => {
@@ -943,15 +979,10 @@ const PatientDetails = () => {
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);
 
-        // Check backend status periodically
         const checkBackendStatus = async () => {
             try {
                 const result = await api.get('/health');
-                if (result) {
-                    setBackendStatus('online');
-                } else {
-                    setBackendStatus('offline');
-                }
+                setBackendStatus(result ? 'online' : 'offline');
             } catch (error) {
                 setBackendStatus('offline');
             }
@@ -3150,15 +3181,15 @@ const PatientDetails = () => {
                              {/* 🛡️ Support Activation Button */}
                             {!isNewPatient && (user?.userId === patient?.user_id || user?.id === patient?.user_id || ['admin', 'superadmin', 'specialist', 'support'].includes(String(user?.role || '').toLowerCase())) && (
                                 <button
-                                    onClick={() => !supportActivated && setIsSupportModalOpen(true)}
-                                    className={`px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-all duration-300 ${
+                                    onClick={() => supportActivated ? handleDeactivateSupport() : setIsSupportModalOpen(true)}
+                                    className={`px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-all duration-300 shadow-md active:scale-95 border ${
                                         supportActivated 
-                                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-200 cursor-default' 
-                                        : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-md active:scale-95'
+                                        ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' 
+                                        : 'bg-indigo-600 hover:bg-indigo-700 text-white border-transparent'
                                     }`}
                                 >
                                     {supportActivated ? (
-                                        <><FaCheckCircle /> <span className="hidden sm:inline">Support Access Active</span></>
+                                        <><FaTimes /> <span className="hidden sm:inline font-bold">Revoke Support Access</span></>
                                     ) : (
                                         <><FaUserShield /> <span className="hidden sm:inline">Activate Support</span></>
                                     )}

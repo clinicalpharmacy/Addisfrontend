@@ -286,10 +286,11 @@ export const SupportVault = () => {
                                 </button>
                                 <button
                                     onClick={() => handleRevoke(req)}
-                                    className="flex-1 h-12 bg-white border border-gray-100 rounded-[1.2rem] flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 hover:border-red-100 transition-all active:scale-90"
+                                    className="flex-1 h-12 bg-white border border-red-100 rounded-[1.2rem] flex items-center justify-center gap-2 text-red-400 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition-all active:scale-90 font-bold text-[10px] uppercase tracking-widest shadow-sm"
                                     title="Close Vault"
                                 >
-                                    <FaTimes size={14} />
+                                    <FaTimes size={12} />
+                                    <span>End Session</span>
                                 </button>
                             </div>
                         </div>
