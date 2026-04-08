@@ -4,11 +4,11 @@ import {
     FaUserMd, FaCalendarAlt, FaSpinner, FaUnlock, FaLock, FaCheck, FaTimes,
     FaEnvelope, FaSync, FaUserShield, FaSignal, FaSearch, FaShieldAlt
 } from 'react-icons/fa';
-import api from '../utils/api';
+import api from '../../utils/api';
 import { 
     deriveKey, generateUserKeyPair, exportPublicKey, 
     wrapPrivateKey, setSessionKey, getSessionKey 
-} from '../utils/encryptionUtils';
+} from '../../utils/encryptionUtils';
 
 /**
  * 🔐 SupportVault Component
