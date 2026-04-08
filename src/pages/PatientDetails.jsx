@@ -324,6 +324,11 @@ const PatientDetails = () => {
         return result;
     }, [user]);
 
+    // Helper to get the primary patient identifier for display and sub-components
+    const getCurrentPatientCode = useCallback(() => {
+        return patient?.id || patientCode || '';
+    }, [patient, patientCode]);
+
 
 
 
