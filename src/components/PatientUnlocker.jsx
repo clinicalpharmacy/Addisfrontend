@@ -44,7 +44,7 @@ const PatientUnlocker = ({ patientData, userSalt, onUnlocked, children }) => {
             const ownerDecrypted = await decryptPatient(patientData, masterKey);
             if (ownerDecrypted?.full_name && !String(ownerDecrypted.full_name).includes(':')) {
                 setIsDecrypted(true);
-                onUnlocked(ownerDecrypted);
+                onUnlocked(ownerDecrypted, masterKey);
                 return true;
             }
 
@@ -62,7 +62,7 @@ const PatientUnlocker = ({ patientData, userSalt, onUnlocked, children }) => {
                     const specDecrypted = await decryptPatient(patientData, sharedKey);
                     if (specDecrypted?.full_name && !String(specDecrypted.full_name).includes(':')) {
                         setIsDecrypted(true);
-                        onUnlocked(specDecrypted);
+                        onUnlocked(specDecrypted, sharedKey);
                         return true;
                     }
                 }

@@ -123,6 +123,7 @@ const PatientDetails = () => {
 
     // --- 1. PRIMARY STATE INITIALIZATION ---
     const [patient, setPatient] = useState(null);
+    const [activeKey, setActiveKey] = useState(null); // Working decryption key (master or shared)
     const [loading, setLoading] = useState(true);
     const [isNewPatient, setIsNewPatient] = useState(false);
     const [activeTab, setActiveTab] = useState('demographics');
@@ -469,7 +470,7 @@ const PatientDetails = () => {
         }
     }, []);
 
-    const loadPatientData = useCallback(async (patientData) => {
+    const loadPatientData = useCallback(async (patientData, workingKey = null) => {
         if (!patientData) return;
 
         setIsNewPatient(false);
@@ -484,14 +485,41 @@ const PatientDetails = () => {
             const canLoadPrivateKey = ['healthcare_client', 'admin', 'superadmin', 'specialist', 'support'].includes(currentRole);
             const privateKey = canLoadPrivateKey ? await loadPrivateKey(masterKey) : null;
 
-            if (masterKey) {
+            if (workingKey) {
+                decryptedData = patientData; // assume already decrypted if key provided
+                setActiveKey(workingKey);
+            } else if (masterKey) {
                 decryptedData = await decryptPatient(decryptedData, masterKey);
+                // If it actually decrypted (full_name doesn't contain ':'), we're done
+                if (decryptedData.full_name && typeof decryptedData.full_name === 'string' && !decryptedData.full_name.includes(':')) {
+                    // Success, no need for shared key flow
+                    setActiveKey(masterKey);
+                } else if (privateKey && decryptedData.shared_encryption_key) {
+                    // Still encrypted, try shared specialist decryption
+                    try {
+                        const decryptedMasterKeyHex = await decryptWithPrivateKey(decryptedData.shared_encryption_key, privateKey);
+                        const rawKeyBytes = hexToBytes(decryptedMasterKeyHex);
+                        const sharedMasterKey = await crypto.subtle.importKey('raw', rawKeyBytes, { name: 'AES-GCM' }, true, ['decrypt']);
+                        decryptedData = await decryptPatient(decryptedData, sharedMasterKey);
+                        setActiveKey(sharedMasterKey);
+                    } catch (sharedErr) {
+                        console.warn('❌ [Shared Decryption] Failed in loadPatientData:', sharedErr);
+                    }
+                }
             } else if (privateKey && decryptedData.shared_encryption_key) {
-                // Decrypt shared key to get Master Key
-                const decryptedMasterKeyHex = await decryptWithPrivateKey(decryptedData.shared_encryption_key, privateKey);
-                const rawKeyBytes = hexToBytes(decryptedMasterKeyHex);
-                const sharedMasterKey = await crypto.subtle.importKey('raw', rawKeyBytes, { name: 'AES-GCM' }, true, ['decrypt']);
-                decryptedData = await decryptPatient(decryptedData, sharedMasterKey);
+                // No master key but has private key
+                try {
+                    const decryptedMasterKeyHex = await decryptWithPrivateKey(decryptedData.shared_encryption_key, privateKey);
+                    const rawKeyBytes = hexToBytes(decryptedMasterKeyHex);
+                    const sharedMasterKey = await crypto.subtle.importKey('raw', rawKeyBytes, { name: 'AES-GCM' }, true, ['decrypt']);
+                    decryptedData = await decryptPatient(decryptedData, sharedMasterKey);
+                    setActiveKey(sharedMasterKey);
+                } catch (sharedErr) {
+                    console.warn('❌ [Shared Decryption] Failed in loadPatientData:', sharedErr);
+                }
+            } else {
+                // No keys, just use masterKey if available anyway (as default)
+                if (masterKey) setActiveKey(masterKey);
             }
         } catch (err) {
             console.error('❌ [Decryption] Failed to decrypt patient data:', err);
@@ -666,17 +694,8 @@ const PatientDetails = () => {
                     setPatientOwnerSalt(result.owner_salt || null);
 
                     // 🔐 ZERO-KNOWLEDGE: Decrypt the patient before loading
-                    let patientToLoad = result.patient;
-                    const encKey = await getEncryptionKey();
-                    if (encKey) {
-                        try {
-                            patientToLoad = await decryptPatient(result.patient, encKey);
-                        } catch (decErr) {
-                            console.error('❌ [PatientDetails] Decryption failed:', decErr);
-                        }
-                    }
-
-                    loadPatientData(patientToLoad);
+                    // We let loadPatientData handle all decryption logic (Single Source of Truth)
+                    loadPatientData(result.patient);
 
                     const searchParams = new URLSearchParams(location.search);
                     if (searchParams.get('edit') === 'true') {
@@ -3072,10 +3091,11 @@ const PatientDetails = () => {
             case 'labs':
                 return renderLabsSection();
             case 'medications':
-                return <MedicationHistory patientCode={getCurrentPatientCode()} />;
+                return <MedicationHistory patientCode={getCurrentPatientCode()} encryptionKey={activeKey} />;
             case 'analysis':
                 return <CDSSDisplay
                     patientData={formData}
+                    encryptionKey={activeKey}
                     onBack={() => { }} // Empty function since we're already in patient details
                 />;
             case 'drn':
@@ -3238,8 +3258,8 @@ const PatientDetails = () => {
                         <PatientUnlocker
                             patientData={patient}
                             userSalt={patientOwnerSalt}
-                            onUnlocked={(decrypted) => {
-                                loadPatientData(decrypted);
+                            onUnlocked={(decrypted, workingKey) => {
+                                loadPatientData(decrypted, workingKey);
                             }}
                         >
                             {/* All content only renders AFTER decryption */}

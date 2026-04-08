@@ -363,7 +363,13 @@ export async function decryptPatientList(patients, masterKey, privateKey) {
     return Promise.all(patients.map(async (patient) => {
         // 1. If we have a Master Key (Owner / Admin with session), try direct decryption
         if (masterKey) {
-            return decryptPatient(patient, masterKey);
+            const decrypted = await decryptPatient(patient, masterKey);
+            // If it actually decrypted (full_name doesn't contain ':'), return it
+            // We check full_name as a reliable indicator of encryption status
+            if (decrypted.full_name && typeof decrypted.full_name === 'string' && !decrypted.full_name.includes(':')) {
+                return decrypted;
+            }
+            // Otherwise, falling through to try shared key if available
         }
 
         // 2. If we have a Private Key (Support Staff), and the patient has a shared key
@@ -386,6 +392,12 @@ export async function decryptPatientList(patients, masterKey, privateKey) {
                 console.warn(`⚠️ [Decryption] Failed to decrypt shared key for patient ${patient.id}:`, err);
                 return patient; // Return encrypted if shared decryption fails
             }
+        }
+
+        // 3. Last fallback: try masterKey anyway if we didn't return yet 
+        // (handles case where patient had no full_name but was decrypted)
+        if (masterKey) {
+            return decryptPatient(patient, masterKey);
         }
 
         return patient; // Return as-is if no applicable key
