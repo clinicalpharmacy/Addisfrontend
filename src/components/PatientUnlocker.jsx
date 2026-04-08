@@ -269,11 +269,7 @@ const PatientUnlocker = ({ patientData, userSalt, onUnlocked, children }) => {
             )}
 
             {/* Success toast */}
-            {isDecrypted && (
-                <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[5000] bg-emerald-600 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 font-black text-[10px] uppercase tracking-widest animate-in fade-in duration-300 slide-out-to-top-4 fill-mode-forwards delay-2000">
-                    <FaCheckCircle className="text-emerald-200" /> Clinical Data Stream Decrypted
-                </div>
-            )}
+            {/* Success toast removed as requested */}
 
             {children}
         </div>
