@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import api from '../utils/api';
 
 // Hook for Dashboard Overview Data
@@ -16,23 +16,28 @@ export const useAdminDashboardData = (currentUser) => {
     });
     const [recentActivities, setRecentActivities] = useState([]);
     const [error, setError] = useState('');
+    const isFetchingRef = useRef(false);
 
     const loadDashboardData = useCallback(async () => {
         if (!currentUser) return;
+        // Prevent concurrent duplicate requests
+        if (isFetchingRef.current) return;
+        isFetchingRef.current = true;
 
         try {
             setLoading(true);
             setError('');
 
-            // Parallel fetching for dashboard data
+            // Parallel fetching — NOTE: active-support is intentionally excluded here.
+            // It has N+1 DB queries and is only needed for the Support Access tab.
+            // It is loaded lazily by SupportVault itself.
             const results = await Promise.allSettled([
                 api.get('/admin/pending-approvals'),
                 api.get('/admin/stats'),
-                api.get('/admin/recent-activities'),
-                api.get('/access/active-support')
+                api.get('/admin/recent-activities')
             ]);
 
-            const [pendingData, statsData, activityData, supportData] = results;
+            const [pendingData, statsData, activityData] = results;
 
             // Handle Stats
             if (statsData.status === 'fulfilled' && statsData.value.stats) {
@@ -42,11 +47,6 @@ export const useAdminDashboardData = (currentUser) => {
             // Handle Pending Approvals
             if (pendingData.status === 'fulfilled' && pendingData.value.users) {
                 setStats(prev => ({ ...prev, pending_approvals: pendingData.value.users.length }));
-            }
-
-            // Handle Support Count
-            if (supportData.status === 'fulfilled' && supportData.value.support_patients) {
-                setStats(prev => ({ ...prev, active_support_count: supportData.value.support_patients.length }));
             }
 
             // Handle Activities
@@ -59,10 +59,21 @@ export const useAdminDashboardData = (currentUser) => {
             setError('Failed to load dashboard overview.');
         } finally {
             setLoading(false);
+            isFetchingRef.current = false;
         }
     }, [currentUser]);
 
-    return { loading, stats, recentActivities, error, loadDashboardData, setStats, setRecentActivities };
+    // Separate loader for support count (called only when support tab is active)
+    const loadSupportCount = useCallback(async () => {
+        try {
+            const res = await api.get('/access/active-support');
+            if (res?.success && res?.support_patients) {
+                setStats(prev => ({ ...prev, active_support_count: res.support_patients.length }));
+            }
+        } catch (_) {}
+    }, []);
+
+    return { loading, stats, recentActivities, error, loadDashboardData, loadSupportCount, setStats, setRecentActivities };
 };
 
 // Hook for User Management (Approvals & List)

@@ -79,11 +79,13 @@ const AdminDashboard = () => {
                     usersManager.loadUsers(),
                     companiesManager.loadCompanies()
                 ]);
+            } else if (selectedTab === 'support_access') {
+                await dashboardData.loadSupportCount();
             }
         };
 
         loadTabData();
-    }, [selectedTab, currentUser]);
+    }, [selectedTab, currentUser, dashboardData.loadDashboardData, dashboardData.loadSupportCount, usersManager.loadUsers, companiesManager.loadCompanies, subscriptionsManager.loadSubscriptions]);
 
     // Force Refresh Handler
     const handleRefresh = async () => {
