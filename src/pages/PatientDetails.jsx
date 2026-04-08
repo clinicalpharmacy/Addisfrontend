@@ -477,8 +477,10 @@ const PatientDetails = () => {
         let decryptedData = { ...patientData };
         try {
             const masterKey = await getEncryptionKey();
-            const currentRole = user?.role || '';
-            const privateKey = (currentRole === 'healthcare_client' || currentRole === 'admin') ? await loadPrivateKey(masterKey) : null;
+            const currentRole = String(user?.role || '').toLowerCase();
+            // Specialists and Support staff MUST be able to load their private keys to use shared sessions
+            const canLoadPrivateKey = ['healthcare_client', 'admin', 'superadmin', 'specialist', 'support'].includes(currentRole);
+            const privateKey = canLoadPrivateKey ? await loadPrivateKey(masterKey) : null;
 
             if (masterKey) {
                 decryptedData = await decryptPatient(decryptedData, masterKey);

@@ -603,14 +603,53 @@ export const mapPatientToFacts = (patientData, medicationHistory = []) => {
         'bilirubin_neonatal', 'glucose_neonatal', 'calcium_neonatal'
     ];
 
-    // ✅ FIXED: Handle patientData.labs if it's a string (JSONB)
+    // ✅ COMPLETE: EXTRACT ALL LAB VALUES FROM PATIENT FORM (INCLUDING FLATTENED)
+    allLabs.forEach(lab => {
+        // Search in top-level, nested 'labs', and aliases
+        const value = extractLabValue(patientData, lab);
+        
+        if (value !== null && value !== '') {
+            let val = parseFloat(value);
+            const factValue = !isNaN(val) ? val : value;
+            
+            // Populate facts.labs and top-level facts
+            facts.labs[lab] = factValue;
+            if (facts[lab] === undefined || facts[lab] === 0 || facts[lab] === null) {
+                facts[lab] = factValue;
+            }
+
+            // Auto-calculate ULN multipliers for standard labs
+            const stdKey = lab;
+            if (!isNaN(val) && val !== null) {
+                let activeULN = null;
+                
+                // Fallback: Use the range from labDefinitions based on gender
+                if (labDefinitions[stdKey]) {
+                    const defs = labDefinitions[stdKey];
+                    const isFemale = facts.gender && ['female', 'f'].includes(facts.gender.toLowerCase());
+                    const defRange = isFemale && defs.range_female ? defs.range_female : defs.range_male;
+                    const finalRange = defRange || defs.range;
+                    if (finalRange) {
+                        activeULN = getULNFromRange(finalRange);
+                    }
+                }
+
+                if (activeULN > 0) {
+                    const multiplier = val / activeULN;
+                    facts[`${stdKey}_x_uln`] = multiplier;
+                    facts.labs[`${stdKey}_x_uln`] = multiplier;
+                }
+            }
+        }
+    });
+
+    // ✅ FIXED: Handle patientData.labs if it's a string (JSONB) or nested object
     if (patientData.labs) {
         let sourceLabs = patientData.labs;
         if (typeof sourceLabs === 'string') {
             try {
                 sourceLabs = JSON.parse(sourceLabs);
-            } catch (e) {
-                console.warn('❌ Could not parse patient labs string:', e);
+            } catch {
                 sourceLabs = {};
             }
         }
@@ -618,7 +657,6 @@ export const mapPatientToFacts = (patientData, medicationHistory = []) => {
         sourceLabs = sourceLabs.labs || sourceLabs;
 
         if (sourceLabs && typeof sourceLabs === 'object') {
-
             // Common mappings for System Labs -> Standard Keys
             const labAliases = {
                 'c_reactive_protein': 'crp', 'c-reactive_protein': 'crp',
@@ -641,16 +679,11 @@ export const mapPatientToFacts = (patientData, medicationHistory = []) => {
             };
 
             Object.keys(sourceLabs).forEach(lab => {
-                const entry = extractLabValue(patientData.labs, lab);
+                const entry = sourceLabs[lab];
                 if (entry !== null && entry !== '') {
                     let val = null;
-                    let uln = null;
-
-                    // Handle object-style lab entry { result: 120, unit: 'U/L', reference_range: '0-40' }
                     if (typeof entry === 'object' && entry !== null) {
                         val = parseFloat(entry.result || entry.value || entry.val);
-                        const range = entry.reference_range || entry.range || entry.ref_range;
-                        uln = getULNFromRange(range);
                     } else {
                         val = parseFloat(entry);
                     }
@@ -659,15 +692,7 @@ export const mapPatientToFacts = (patientData, medicationHistory = []) => {
                     const snakeCaseLab = normalizedLab.replace(/[ -]/g, '_');
                     const factValue = !isNaN(val) ? val : entry;
 
-                    // 1. Store normalized key
-                    facts.labs[normalizedLab] = factValue;
-
-                    // 2. Store snake_case key (replacing spaces and hyphens)
-                    if (snakeCaseLab !== normalizedLab) {
-                        facts.labs[snakeCaseLab] = factValue;
-                    }
-
-                    // 3. Check Aliases and store standard key
+                    // Apply aliases
                     const stdKey = labAliases[snakeCaseLab] || snakeCaseLab;
                     if (labAliases[snakeCaseLab]) {
                         const alias = labAliases[snakeCaseLab];
@@ -675,59 +700,16 @@ export const mapPatientToFacts = (patientData, medicationHistory = []) => {
                         if (facts[alias] === undefined) facts[alias] = factValue;
                     }
 
-                    // 4. Also set as top-level fact if not conflicting
-                    if (facts[stdKey] === undefined) {
-                        facts[stdKey] = factValue;
+                    if (facts.labs[normalizedLab] === undefined) {
+                        facts.labs[normalizedLab] = factValue;
                     }
-                    if (facts[snakeCaseLab] === undefined) {
-                        facts[snakeCaseLab] = factValue;
-                    }
-
-                    // 5. Auto-calculate [lab]_x_uln if ULN is found or defined for common labs
-                    if (!isNaN(val) && val !== null) {
-                        let activeULN = uln;
-                        
-                        // Fallback: If no ULN in data, use the range from labDefinitions based on gender
-                        if (!activeULN && labDefinitions[stdKey]) {
-                            const defs = labDefinitions[stdKey];
-                            const isFemale = facts.gender && ['female', 'f'].includes(facts.gender.toLowerCase());
-                            const defRange = isFemale && defs.range_female ? defs.range_female : defs.range_male;
-                            
-                            // If a range isn't gendered, it'll be defined simply as 'range'
-                            const finalRange = defRange || defs.range;
-                            
-                            if (finalRange) {
-                                activeULN = getULNFromRange(finalRange);
-                            }
-                        }
-
-                        if (activeULN > 0) {
-                            const multiplier = val / activeULN;
-                            facts[`${stdKey}_x_uln`] = multiplier;
-                            facts.labs[`${stdKey}_x_uln`] = multiplier;
-                            
-                            // Also map the original key with suffix
-                            if (stdKey !== lab) {
-                                facts[`${lab}_x_uln`] = multiplier;
-                                facts.labs[`${lab}_x_uln`] = multiplier;
-                            }
-                        }
+                    if (facts[normalizedLab] === undefined || facts[normalizedLab] === 0) {
+                        facts[normalizedLab] = factValue;
                     }
                 }
             });
         }
     }
-
-    // Also check patientData directly for labs
-    allLabs.forEach(lab => {
-        if (facts[lab] === 0 || facts[lab] === '' || facts[lab] === null) {
-            const value = extractLabValue(patientData, lab);
-            if (value !== null) {
-                facts.labs[lab] = value;
-                facts[lab] = value;
-            }
-        }
-    });
 
     // ✅ COMPLETE: EXTRACT URINALYSIS TEXT VALUES
     const urinalysisTextFields = [
