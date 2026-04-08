@@ -143,6 +143,7 @@ const PatientDetails = () => {
     const [labsHistory, setLabsHistory] = useState([]);
     const [patientOwnerSalt, setPatientOwnerSalt] = useState(null);
     const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
+    const [supportActivated, setSupportActivated] = useState(false);
 
     // Effect to fetch initial data
     useEffect(() => {
@@ -3149,10 +3150,18 @@ const PatientDetails = () => {
                              {/* 🛡️ Support Activation Button */}
                             {!isNewPatient && (user?.userId === patient?.user_id || user?.id === patient?.user_id || ['admin', 'superadmin', 'specialist', 'support'].includes(String(user?.role || '').toLowerCase())) && (
                                 <button
-                                    onClick={() => setIsSupportModalOpen(true)}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
+                                    onClick={() => !supportActivated && setIsSupportModalOpen(true)}
+                                    className={`px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-all duration-300 ${
+                                        supportActivated 
+                                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-200 cursor-default' 
+                                        : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-md active:scale-95'
+                                    }`}
                                 >
-                                    <FaUserShield /> <span className="hidden sm:inline">Activate Support</span>
+                                    {supportActivated ? (
+                                        <><FaCheckCircle /> <span className="hidden sm:inline">Support Access Active</span></>
+                                    ) : (
+                                        <><FaUserShield /> <span className="hidden sm:inline">Activate Support</span></>
+                                    )}
                                 </button>
                             )}
 
@@ -3259,7 +3268,9 @@ const PatientDetails = () => {
                         ownerSalt={patientOwnerSalt}
                         onClose={() => setIsSupportModalOpen(false)}
                         onSuccess={() => {
-                            setIsSupportModalOpen(false);
+                            setSupportActivated(true);
+                            // Brief delay to let the modal's internal success message show before closing
+                            setTimeout(() => setIsSupportModalOpen(false), 2000);
                         }}
                     />
                 )}

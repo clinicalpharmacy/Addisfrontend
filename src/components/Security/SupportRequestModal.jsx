@@ -252,18 +252,18 @@ const SupportRequestModal = ({ isOpen, onClose, patientId, ownerSalt, onSuccess 
                     </div>
                 ) : (
                     <div className="p-12 text-center space-y-6">
-                        <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <FaCheckCircle className="text-4xl text-green-600" />
+                        <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 scale-110 shadow-lg border border-green-200">
+                            <FaCheckCircle className="text-5xl text-green-600 animate-in zoom-in duration-500" />
                         </div>
                         <div className="space-y-2">
-                            <h3 className="text-2xl font-black text-gray-900">Support Activated!</h3>
+                            <h3 className="text-2xl font-black text-gray-900 tracking-tight">Support Activated Successfully!</h3>
                             <p className="text-gray-500 font-medium">The assigned specialist can now securely view the patient data you've shared.</p>
                         </div>
                         <button
                             onClick={onClose}
-                            className="w-full h-14 bg-gray-900 text-white font-bold rounded-2xl hover:bg-black transition-all active:scale-95 shadow-xl"
+                            className="w-full h-14 bg-gray-900 text-white font-bold rounded-2xl hover:bg-black transition-all active:scale-95 shadow-xl mt-4"
                         >
-                            Back to Patient
+                            Return to Patient Profile
                         </button>
                     </div>
                 )}
