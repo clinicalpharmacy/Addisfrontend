@@ -3161,15 +3161,17 @@ const PatientDetails = () => {
                         </div>
                         <div className="flex flex-wrap gap-2">
 
-                            <button
-                                onClick={() => setIsEditing(!isEditing)}
-                                className={`px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm ${isEditing
-                                    ? 'bg-gray-300 hover:bg-gray-400 text-gray-800'
-                                    : 'bg-yellow-500 hover:bg-yellow-600 text-white'
-                                    }`}
-                            >
-                                <FaEdit /> <span className="hidden sm:inline">{isEditing ? 'Cancel' : 'Edit'}</span>
-                            </button>
+                            {(isNewPatient || user?.id === patient?.user_id || user?.userId === patient?.user_id) && (
+                                <button
+                                    onClick={() => setIsEditing(!isEditing)}
+                                    className={`px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm ${isEditing
+                                        ? 'bg-gray-300 hover:bg-gray-400 text-gray-800'
+                                        : 'bg-yellow-500 hover:bg-yellow-600 text-white'
+                                        }`}
+                                >
+                                    <FaEdit /> <span className="hidden sm:inline">{isEditing ? 'Cancel' : 'Edit'}</span>
+                                </button>
+                            )}
                             {isEditing && (
                                 <button
                                     onClick={handleSaveAll}
@@ -3196,7 +3198,7 @@ const PatientDetails = () => {
                                 </button>
                             )}
 
-                            {!isNewPatient && user?.role !== 'healthcare_client' && (
+                            {!isNewPatient && (user?.id === patient?.user_id || user?.userId === patient?.user_id) && (
                                 <button
                                     onClick={handleDelete}
                                     className="bg-red-500 hover:bg-red-600 text-white px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
