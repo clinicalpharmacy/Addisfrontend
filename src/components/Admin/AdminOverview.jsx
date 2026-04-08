@@ -143,7 +143,9 @@ export const AdminOverview = ({
                     <div className="flex items-center justify-between gap-2 text-white">
                         <div className="min-w-0">
                             <p className="text-[10px] md:text-sm text-blue-200/60 font-black uppercase tracking-widest truncate">Active Vaults</p>
-                            <p className="text-xl md:text-3xl font-black leading-tight animate-pulse text-blue-400">SYNCED</p>
+                            <p className="text-xl md:text-3xl font-black leading-tight animate-pulse text-blue-400">
+                                {stats.active_support_count || 0} ACTIVE
+                            </p>
                         </div>
                         <div className="p-3 bg-white/10 backdrop-blur-md rounded-xl flex-shrink-0 border border-white/10">
                             <FaUserShield className="text-blue-400 text-sm md:text-xl" />

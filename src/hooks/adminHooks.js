@@ -9,6 +9,7 @@ export const useAdminDashboardData = (currentUser) => {
         pending_approvals: 0,
         total_companies: 0,
         active_subscriptions: 0,
+        active_support_count: 0,
         total_revenue: 0,
         currency: 'ETB',
         last_updated: null
@@ -24,20 +25,28 @@ export const useAdminDashboardData = (currentUser) => {
             setError('');
 
             // Parallel fetching for dashboard data
-            const [pendingData, statsData, activityData] = await Promise.allSettled([
+            const results = await Promise.allSettled([
                 api.get('/admin/pending-approvals'),
                 api.get('/admin/stats'),
-                api.get('/admin/recent-activities')
+                api.get('/admin/recent-activities'),
+                api.get('/access/active-support')
             ]);
+
+            const [pendingData, statsData, activityData, supportData] = results;
 
             // Handle Stats
             if (statsData.status === 'fulfilled' && statsData.value.stats) {
                 setStats(prev => ({ ...prev, ...statsData.value.stats }));
             }
 
-            // Handle Pending Approvals Count override
+            // Handle Pending Approvals
             if (pendingData.status === 'fulfilled' && pendingData.value.users) {
                 setStats(prev => ({ ...prev, pending_approvals: pendingData.value.users.length }));
+            }
+
+            // Handle Support Count
+            if (supportData.status === 'fulfilled' && supportData.value.support_patients) {
+                setStats(prev => ({ ...prev, active_support_count: supportData.value.support_patients.length }));
             }
 
             // Handle Activities
