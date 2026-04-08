@@ -326,26 +326,6 @@ const PatientDetails = () => {
 
 
 
-    const generatePatientCode = useCallback(() => {
-        const timestamp = Date.now().toString().slice(-6);
-        const randomNum = Math.floor(Math.random() * 9000) + 1000; // 1000-9999
-        const code = `PAT${timestamp}${randomNum}`;
-
-        return code;
-    }, []);
-
-    const getCurrentPatientCode = useCallback(() => {
-        if (currentPatientCode) {
-            return currentPatientCode;
-        }
-        if (patient?.id) {
-            return patient.id;
-        }
-        if (patientCode && patientCode !== 'new') {
-            return patientCode;
-        }
-        return '';
-    }, [currentPatientCode, patient, patientCode]);
 
     // FIXED: Date validation
     const isValidDate = useCallback((dateString) => {
@@ -662,9 +642,6 @@ const PatientDetails = () => {
                 setIsNewPatient(true);
                 setIsEditing(true);
 
-                const newCode = generatePatientCode();
-                setCurrentPatientCode(newCode);
-
                 const today = new Date().toISOString().split('T')[0];
                 setFormData(prev => ({
                     ...prev,
@@ -731,7 +708,7 @@ const PatientDetails = () => {
         } finally {
             setLoading(false);
         }
-    }, [patientCode, navigate, generatePatientCode, location.search, location.pathname, loadPatientData]);
+    }, [patientCode, navigate, location.search, location.pathname, loadPatientData]);
 
     // Create a memoized change handler for lab inputs
     const handleLabInputChange = useCallback((field, value) => {
@@ -1183,27 +1160,17 @@ const PatientDetails = () => {
                 }
             }
 
-            let savePatientCode = getCurrentPatientCode();
+            let saveIdentifier = currentPatientCode || patientCode;
             const isRestrictedIndividual = user?.account_type === 'individual' && !user?.company_id && user?.role !== 'admin';
 
-            // For NEW patients, generation logic
-            if (isNewPatient && !isRestrictedIndividual) {
-                savePatientCode = generatePatientCode();
-                setCurrentPatientCode(savePatientCode);
+            if (isNewPatient && isRestrictedIndividual) {
+                formData.full_name = 'MR profile';
             }
 
-            // Validate we have a patient identifier
-            if (!savePatientCode || String(savePatientCode).trim() === '') {
-                if (isNewPatient) {
-                    // For newborns not healthcare client, we use a placeholder or wait for UUID
-                    if (!isRestrictedIndividual) {
-                        savePatientCode = generatePatientCode();
-                        setCurrentPatientCode(savePatientCode);
-                    }
-                } else if (!patient?.id) {
-                    alert('Patient identifier missing. Please reload or go back to MR list.');
-                    return;
-                }
+            // Validate we have a patient identifier for updates
+            if (!isNewPatient && !patient?.id) {
+                alert('Patient identifier missing. Please reload or go back to MR list.');
+                return;
             }
 
             // Calculate ages
@@ -1247,7 +1214,6 @@ const PatientDetails = () => {
             // COMPLETE section data with ALL fields
             const sectionData = {
                 basic: {
-                    patient_code: savePatientCode,
                     full_name: cleanText(formData.full_name),
                     age: cleanNumber(ageInYears),
                     age_in_days: cleanNumber(ageInDays),
@@ -1379,7 +1345,7 @@ const PatientDetails = () => {
                 }
 
                 // Fetch clinical history too
-                fetchClinicalHistory(savePatientCode);
+                fetchClinicalHistory(savedPatient.id);
 
                 if (section === 'all' || isNewPatient) {
                     setIsEditing(false);
@@ -1398,7 +1364,6 @@ const PatientDetails = () => {
                         if (hasVitals) {
                             await api.post('/vitals', {
                                 patient_id: savedPatient.id,
-                                patient_code: savedPatient.patient_code,
                                 ...sectionData.vitals,
                                 recorded_at: new Date().toISOString()
                             });
@@ -1409,7 +1374,6 @@ const PatientDetails = () => {
                         if (hasLabs) {
                             await api.post('/labs-history', {
                                 patient_id: savedPatient.id,
-                                patient_code: savedPatient.patient_code,
                                 labs: sectionData.labs.labs,
                                 test_date: formData.last_tested || new Date().toISOString().split('T')[0],
                                 recorded_at: new Date().toISOString()
@@ -1442,7 +1406,7 @@ const PatientDetails = () => {
                 alert('Error saving patient: ' + errorMsg);
             }
         }
-    }, [isNewPatient, formData, getCurrentPatientCode, generatePatientCode, navigate, patientCode, isValidDate, calculateAgeInDays, calculateAge, determinePatientType, customLabs, fetchClinicalHistory, checkPatientLimit, loadPatientData, user]);
+    }, [isNewPatient, formData, navigate, patientCode, isValidDate, calculateAgeInDays, calculateAge, determinePatientType, customLabs, fetchClinicalHistory, checkPatientLimit, loadPatientData, user]);
 
     // Helper functions
     const handleSaveAll = useCallback(() => handleSave('all'), [handleSave]);
@@ -1455,9 +1419,8 @@ const PatientDetails = () => {
             return;
         }
 
-        const deletePatientCode = getCurrentPatientCode();
-        if (!deletePatientCode) {
-            alert('Error: Patient code is missing');
+        if (!patient?.id) {
+            alert('Error: Patient ID is missing');
             return;
         }
 
