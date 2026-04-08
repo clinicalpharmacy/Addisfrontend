@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import {
-    getEncryptionKey, decryptPatient,
-    loadPrivateKey, decryptWithPrivateKey
+    getSessionKey, decryptPatient,
+    loadPrivateKey, decryptWithPrivateKey, hexToBytes
 } from '../utils/encryptionUtils';
 import api from '../utils/api';
 
@@ -25,7 +25,7 @@ const PatientUnlocker = ({ patientData, userSalt, onUnlocked, children }) => {
             }
 
             // Try owner master key
-            const masterKey = await getEncryptionKey();
+            const masterKey = getSessionKey();
             if (masterKey) {
                 const decrypted = await decryptPatient(patientData, masterKey);
                 if (decrypted?.full_name && !String(decrypted.full_name).includes(':')) {
@@ -36,15 +36,29 @@ const PatientUnlocker = ({ patientData, userSalt, onUnlocked, children }) => {
 
             // Try admin support session key
             try {
-                const res = await api.get(`/access/granted?patient_id=${patientData.id}`);
-                if (res?.success && res?.request?.encrypted_key) {
-                    const privKey = await loadPrivateKey(masterKey);
-                    if (privKey) {
-                        const patientKey = await decryptWithPrivateKey(res.request.encrypted_key, privKey);
-                        const decrypted = await decryptPatient(patientData, patientKey);
-                        if (decrypted?.full_name && !String(decrypted.full_name).includes(':')) {
-                            onUnlocked(decrypted);
-                            return;
+                // We need the admin's master key to unwrap their private key
+                if (masterKey) {
+                    const res = await api.get(`/access/granted?patient_id=${patientData.id}`);
+                    if (res?.success && res?.request?.encrypted_key) {
+                        const privKey = await loadPrivateKey(masterKey);
+                        if (privKey) {
+                            const patientKeyHex = await decryptWithPrivateKey(res.request.encrypted_key, privKey);
+                            
+                            // IMPORT HEX AS CRYPTOKEY
+                            const rawKeyBytes = hexToBytes(patientKeyHex);
+                            const sharedMasterKey = await crypto.subtle.importKey(
+                                'raw',
+                                rawKeyBytes,
+                                { name: 'AES-GCM' },
+                                true,
+                                ['decrypt']
+                            );
+
+                            const decrypted = await decryptPatient(patientData, sharedMasterKey);
+                            if (decrypted?.full_name && !String(decrypted.full_name).includes(':')) {
+                                onUnlocked(decrypted);
+                                return;
+                            }
                         }
                     }
                 }
