@@ -183,7 +183,12 @@ const PatientUnlocker = ({ patientData, userSalt, onUnlocked, children }) => {
     };
 
     // --- UI CONDITIONS ---
-    const isActuallyEncrypted = patientData?.full_name && String(patientData.full_name).includes(':');
+    const isActuallyEncrypted = (
+        (patientData?.full_name && String(patientData.full_name).includes(':')) ||
+        (patientData?.gender && String(patientData.gender).includes(':')) ||
+        (patientData?.diagnosis && String(patientData.diagnosis).includes(':')) ||
+        (patientData?.address && String(patientData.address).includes(':'))
+    );
     const showGrantBanner = isActuallyEncrypted && isGrantAuthorized && !isDecrypted && autoDecryptAttempted;
 
     return (

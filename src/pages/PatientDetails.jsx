@@ -2157,7 +2157,7 @@ const PatientDetails = () => {
                                 />
                             ) : (
                                 <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                    {formatEncValue(patient?.full_name)}
+                                    {formatEncValue(formData.full_name || patient?.full_name)}
                                 </div>
                             )}
                         </div>
@@ -2225,10 +2225,10 @@ const PatientDetails = () => {
                                 />
                             ) : (
                                 <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                    {patient?.date_of_birth ? (
+                                    {formData.date_of_birth ? (
                                         <div className="flex items-center gap-2">
                                             <FaBirthdayCake className="text-gray-400" />
-                                            {new Date(patient.date_of_birth).toLocaleDateString()}
+                                            {isValidDate(formData.date_of_birth) ? new Date(formData.date_of_birth).toLocaleDateString() : formatEncValue(formData.date_of_birth)}
                                         </div>
                                     ) : <span className="text-gray-500 italic">Not specified</span>}
                                 </div>
@@ -2252,7 +2252,7 @@ const PatientDetails = () => {
                             </select>
                         ) : (
                             <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                {patient?.gender || <span className="text-gray-500 italic">Not specified</span>}
+                                {formatEncValue(formData.gender || patient?.gender)}
                             </div>
                         )}
                     </div>
@@ -2299,7 +2299,7 @@ const PatientDetails = () => {
                                 />
                             ) : (
                                 <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                    {formatEncValue(patient?.contact_number)}
+                                    {formatEncValue(formData.contact_number || patient?.contact_number)}
                                 </div>
                             )}
                         </div>
@@ -2320,7 +2320,7 @@ const PatientDetails = () => {
                                 />
                             ) : (
                                 <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                    {formatEncValue(patient?.address)}
+                                    {formatEncValue(formData.address || patient?.address)}
                                 </div>
                             )}
                         </div>
@@ -2397,7 +2397,7 @@ const PatientDetails = () => {
                             />
                         ) : (
                             <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                {formatEncValue(formData.diagnosis)}
+                                {formatEncValue(formData.diagnosis || patient?.diagnosis)}
                             </div>
                         )}
                     </div>
@@ -2732,7 +2732,7 @@ const PatientDetails = () => {
                             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                                 <div>
                                     <h1 className="text-2xl font-bold text-gray-800">
-                                        {formatEncValue(patient?.full_name, user?.account_type !== 'individual' || user?.role === 'admin' ? `Patient ${patientCodeToDisplay}` : 'MR Profile')}
+                                        {formatEncValue(formData.full_name || patient?.full_name, user?.account_type !== 'individual' || user?.role === 'admin' ? `Patient ${patientCodeToDisplay}` : 'MR Profile')}
                                     </h1>
                                     <div className="flex flex-wrap items-center gap-4 mt-2">
                                         {(user?.account_type !== 'individual' || user?.role === 'admin') && (
@@ -2750,7 +2750,7 @@ const PatientDetails = () => {
                                         {formData.gender && (
                                             <div className="flex items-center gap-2">
                                                 <FaVenusMars className="text-gray-400" />
-                                                <span className="font-semibold">{formData.gender}</span>
+                                                <span className="font-semibold">{formatEncValue(formData.gender)}</span>
                                             </div>
                                         )}
                                         {isPediatric && (
@@ -2785,13 +2785,13 @@ const PatientDetails = () => {
                                         {formData.contact_number && (
                                             <div className="flex items-center gap-2">
                                                 <FaPhone className="text-blue-500" />
-                                                <span className="text-gray-700">{formatEncValue(formData.contact_number)}</span>
+                                                <span className="text-gray-700">{formatEncValue(formData.contact_number || patient?.contact_number)}</span>
                                             </div>
                                         )}
                                         {formData.address && (
                                             <div className="flex items-center gap-2">
                                                 <FaHome className="text-blue-500" />
-                                                <span className="text-gray-700">{formatEncValue(formData.address)}</span>
+                                                <span className="text-gray-700">{formatEncValue(formData.address || patient?.address)}</span>
                                             </div>
                                         )}
                                     </div>
@@ -3175,7 +3175,12 @@ const PatientDetails = () => {
                                 </button>
                             )}
                              {/* 🛡️ Support Activation Button */}
-                            {!isNewPatient && (user?.userId === patient?.user_id || user?.id === patient?.user_id || ['admin', 'superadmin', 'specialist', 'support'].includes(String(user?.role || '').toLowerCase())) && (
+                            {!isNewPatient && (
+                                (supportActivated 
+                                    ? (user?.userId === patient?.user_id || user?.id === patient?.user_id) 
+                                    : (user?.role !== 'admin' && (user?.userId === patient?.user_id || user?.id === patient?.user_id || ['superadmin', 'specialist', 'support'].includes(String(user?.role || '').toLowerCase())))
+                                )
+                            ) && (
                                 <button
                                     onClick={() => supportActivated ? handleDeactivateSupport() : setIsSupportModalOpen(true)}
                                     className={`px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-all duration-300 shadow-md active:scale-95 border ${

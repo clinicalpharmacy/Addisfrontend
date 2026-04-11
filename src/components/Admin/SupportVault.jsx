@@ -7,7 +7,8 @@ import {
 import api from '../../utils/api';
 import { 
     deriveKey, generateUserKeyPair, exportPublicKey, 
-    wrapPrivateKey, persistKeyToSession, getEncryptionKey 
+    wrapPrivateKey, persistKeyToSession, getEncryptionKey,
+    decryptPatientList, loadPrivateKey 
 } from '../../utils/encryptionUtils';
 
 /**
@@ -31,7 +32,37 @@ export const SupportVault = () => {
     const [showUnlockModal, setShowUnlockModal] = useState(false);
     const [password, setPassword] = useState('');
     const [initError, setInitError] = useState('');
-    const [isVaultUnlocked, setIsVaultUnlocked] = useState(false); // Will check in useEffect
+    const [isVaultUnlocked, setIsVaultUnlocked] = useState(false); 
+    const [decryptedPatients, setDecryptedPatients] = useState({}); // Track decrypted patient objects
+
+    /**
+     * Attempts to decrypt raw patient data for support sessions.
+     */
+    const decryptSessions = useCallback(async (rawSessions, masterKey) => {
+        if (!rawSessions?.length || !masterKey) return;
+        
+        try {
+            const privKey = await loadPrivateKey(masterKey);
+            
+            // Map records to a format decryptPatientList expects (shared_encryption_key on patient)
+            const patientsToDecrypt = rawSessions.map(s => {
+                if (!s.patient) return null;
+                return {
+                    ...s.patient,
+                    shared_encryption_key: s.encrypted_key // Move the key to the patient object
+                };
+            }).filter(Boolean);
+
+            const decryptedList = await decryptPatientList(patientsToDecrypt, null, privKey);
+            
+            // Create a map for easy lookup during render
+            const decMap = {};
+            decryptedList.forEach(p => { decMap[p.id] = p; });
+            setDecryptedPatients(decMap);
+        } catch (err) {
+            console.error("Failed to decrypt vault sessions:", err);
+        }
+    }, []);
 
     const fetchActivePatients = useCallback(async () => {
         setActiveLoading(true);
@@ -39,7 +70,12 @@ export const SupportVault = () => {
         try {
             const res = await api.get('/access/active-support');
             if (res.success) {
-                setActivePatients(res.support_patients || []);
+                const sessions = res.support_patients || [];
+                setActivePatients(sessions);
+                
+                // Attempt proactive decryption if already unlocked
+                const key = await getEncryptionKey();
+                if (key) decryptSessions(sessions, key);
             } else {
                 setActiveError(res.error || 'Failed to sync vault.');
             }
@@ -48,7 +84,7 @@ export const SupportVault = () => {
         } finally {
             setActiveLoading(false);
         }
-    }, []);
+    }, [decryptSessions]);
 
     useEffect(() => {
         const checkVaultStatus = async () => {
@@ -125,6 +161,9 @@ export const SupportVault = () => {
             setSuccessMsg("🔓 Specialist Vault Unlocked.");
             setShowUnlockModal(false);
             setPassword('');
+            
+            // Trigger decryption immediately
+            decryptSessions(activePatients, masterKey);
         } catch (err) {
             setInitError("Authentication failed. Invalid master password.");
         } finally {
@@ -252,7 +291,7 @@ export const SupportVault = () => {
                                     </div>
                                     <div className="min-w-0">
                                         <h4 className="text-base font-black text-gray-900 truncate tracking-tight">
-                                            {req.patient?.full_name || 'Global Account'}
+                                            {decryptedPatients[req.patient?.id]?.full_name || req.patient?.full_name || 'Global Account'}
                                         </h4>
                                         <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest">
                                             {req.patient ? 'Encrypted Stream' : 'Limited Access'}
