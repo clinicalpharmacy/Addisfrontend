@@ -162,7 +162,8 @@ const PatientUnlocker = ({ patientData, userSalt, onUnlocked, children }) => {
 
         try {
             const userData = JSON.parse(localStorage.getItem('user'));
-            const salt = userData?.encryption_salt || localStorage.getItem('enc_salt');
+            // 🔐 ZERO-KNOWLEDGE: Anchor must match what was used at signup (sessionStorage is primary)
+            const salt = userData?.encryption_salt || sessionStorage.getItem('enc_salt') || localStorage.getItem('enc_salt');
             if (!salt) throw new Error('Security seed missing. Re-login required.');
 
             const masterKey = await deriveKey(password, salt);
