@@ -34,8 +34,8 @@ const LabSettings = ({ onUpdate }) => {
         category: 'General',
         is_active: true,
         description: '',
-        reference_range: '',
-        gender: 'Male'
+        range_male: '',
+        range_female: ''
     });
 
     const categories = [
@@ -87,16 +87,13 @@ const LabSettings = ({ onUpdate }) => {
         try {
             // Map the UI fields back to DB schema format
             let payload = { ...formData };
-            delete payload.reference_range;
-            delete payload.gender;
             
-            if (formData.gender === 'Male') {
-                payload.range_male = formData.reference_range;
-                payload.range_female = null;
-            } else if (formData.gender === 'Female') {
-                payload.range_male = null;
-                payload.range_female = formData.reference_range;
-            }
+            // Set male and female ranges directly from form data
+            payload.range_male = formData.range_male || null;
+            payload.range_female = formData.range_female || null;
+            
+            // Remove any fields that shouldn't be sent to the database if needed
+            // (keeping the structure clean)
 
             if (editingLab) {
                 const { error } = await supabase
@@ -119,8 +116,8 @@ const LabSettings = ({ onUpdate }) => {
                 category: 'General',
                 is_active: true,
                 description: '',
-                reference_range: '',
-                gender: 'Both'
+                range_male: '',
+                range_female: ''
             });
             setShowAddForm(false);
             setEditingLab(null);
@@ -138,22 +135,14 @@ const LabSettings = ({ onUpdate }) => {
     const handleEdit = (lab) => {
         setEditingLab(lab);
         
-        let initialGender = 'Male';
-        let initialRange = lab.range_male || '';
-        
-        if (!lab.range_male && lab.range_female) {
-            initialGender = 'Female';
-            initialRange = lab.range_female;
-        }
-
         setFormData({
             name: lab.name,
             unit: lab.unit || '',
             category: lab.category || 'General',
             is_active: lab.is_active,
             description: lab.description || '',
-            reference_range: initialRange,
-            gender: initialGender
+            range_male: lab.range_male || '',
+            range_female: lab.range_female || ''
         });
         setShowAddForm(true);
     };
@@ -241,7 +230,7 @@ const LabSettings = ({ onUpdate }) => {
                     <button
                         onClick={() => {
                             setEditingLab(null);
-                            setFormData({ name: '', unit: '', category: 'General', is_active: true, description: '', reference_range: '', gender: 'Male' });
+                            setFormData({ name: '', unit: '', category: 'General', is_active: true, description: '', range_male: '', range_female: '' });
                             setShowAddForm(true);
                         }}
                         className="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-all shadow-sm font-bold text-xs active:scale-95 whitespace-nowrap"
@@ -432,28 +421,27 @@ const LabSettings = ({ onUpdate }) => {
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
-                                            Reference Range
+                                            Reference Range (Male)
                                         </label>
                                         <input
                                             type="text"
-                                            value={formData.reference_range}
-                                            onChange={(e) => setFormData({ ...formData, reference_range: e.target.value })}
-                                            placeholder="e.g. 0.7-1.3"
+                                            value={formData.range_male}
+                                            onChange={(e) => setFormData({ ...formData, range_male: e.target.value })}
+                                            placeholder="e.g. 13.5-17.5 g/dL"
                                             className="w-full border-2 border-gray-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-indigo-500 bg-gray-50/30 outline-none transition-all font-bold"
                                         />
                                     </div>
                                     <div>
                                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
-                                            Applicable Gender
+                                            Reference Range (Female)
                                         </label>
-                                        <select
-                                            value={formData.gender}
-                                            onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                                            className="w-full border-2 border-gray-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all appearance-none bg-gray-50/50 font-black cursor-pointer"
-                                        >
-                                            <option value="Male">Male</option>
-                                            <option value="Female">Female</option>
-                                        </select>
+                                        <input
+                                            type="text"
+                                            value={formData.range_female}
+                                            onChange={(e) => setFormData({ ...formData, range_female: e.target.value })}
+                                            placeholder="e.g. 12.0-15.5 g/dL"
+                                            className="w-full border-2 border-gray-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-indigo-500 bg-gray-50/30 outline-none transition-all font-bold"
+                                        />
                                     </div>
                                 </div>
 
