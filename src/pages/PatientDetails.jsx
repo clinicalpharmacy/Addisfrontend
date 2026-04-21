@@ -101,12 +101,18 @@ const LabInputField = React.memo(({
                             {unit}
                         </div>
                     </div>
-                    <input
-                        type="date"
-                        value={labDate || new Date().toISOString().split('T')[0]}
-                        onChange={(e) => handleDateChange(e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg p-2 text-sm"
-                    />
+                    <div className="relative">
+                        <input
+                            type="date"
+                            value={labDate || ''}
+                            onChange={(e) => handleDateChange(e.target.value)}
+                            className={`w-full border rounded-lg p-2 text-sm ${!labDate && value ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
+                            required={value && value.trim() !== ''}
+                        />
+                        {!labDate && value && (
+                            <p className="text-xs text-red-500 mt-1">Test date required</p>
+                        )}
+                    </div>
                 </div>
             ) : (
                 <div>
@@ -121,8 +127,14 @@ const LabInputField = React.memo(({
                         </div>
                     </div>
                     {labDate && (
-                        <div className="mt-1 text-xs text-gray-500">
+                        <div className="mt-1 text-xs text-gray-500 flex items-center gap-1">
+                            <FaCalendarAlt className="text-gray-400 text-[10px]" />
                             Tested: {new Date(labDate).toLocaleDateString()}
+                        </div>
+                    )}
+                    {!labDate && value && (
+                        <div className="mt-1 text-xs text-red-500">
+                            No test date recorded
                         </div>
                     )}
                 </div>
@@ -197,7 +209,7 @@ const PatientDetails = () => {
         developmental_milestones: '', feeding_method: '', birth_weight: '', birth_length: '',
         vaccination_status: '', special_instructions: '',
         // Labs (Now dynamic via customLabs/GlobalDefinitions)
-        lab_test_date: new Date().toISOString().split('T')[0]
+        lab_test_date: null
     });
 
     // --- 2. HELPERS & UTILS ---
@@ -599,7 +611,7 @@ const PatientDetails = () => {
             appointment_date: (data.appointment_date && isValidDate(data.appointment_date)) ? data.appointment_date.split('T')[0] : '',
             edd: (data.edd && isValidDate(data.edd)) ? data.edd.split('T')[0] : '',
             last_measured: (data.last_measured && isValidDate(data.last_measured)) ? data.last_measured.split('T')[0] : new Date().toISOString().split('T')[0],
-            lab_test_date: (data.lab_test_date && isValidDate(data.lab_test_date)) ? data.lab_test_date.split('T')[0] : new Date().toISOString().split('T')[0],
+            lab_test_date: null,
             // Explicitly convert is_lactating to boolean
             is_lactating: data.is_lactating === true || data.is_lactating === 'true' || data.is_lactating === 1,
             is_pregnant: data.is_pregnant === true || data.is_pregnant === 'true' || data.is_pregnant === 1
@@ -680,7 +692,7 @@ const PatientDetails = () => {
                 setFormData(prev => ({
                     ...prev,
                     last_measured: today,
-                    lab_test_date: today,
+                    lab_test_date: null,
                     is_active: true,
                     allergies: [],
                     patient_type: 'adult'
@@ -940,7 +952,7 @@ const PatientDetails = () => {
         }
 
         // Handle date fields
-        if (field.includes('date') || field === 'edd' || field === 'appointment_date' || field === 'lab_test_date') {
+        if (field.includes('date') || field === 'edd' || field === 'appointment_date') {
             if (value && !isValidDate(value)) {
                 // Don't update if invalid
                 return;
@@ -1245,6 +1257,13 @@ const PatientDetails = () => {
                 return trimmed === '' ? null : trimmed;
             };
 
+            // Validate labs have dates before saving
+            const labsWithoutDate = customLabs.filter(lab => lab.value && lab.value.trim() !== '' && !lab.date);
+            if (labsWithoutDate.length > 0) {
+                alert(`Please select a test date for: ${labsWithoutDate.map(l => l.name).join(', ')}`);
+                return;
+            }
+
             // COMPLETE section data with ALL fields
             const sectionData = {
                 basic: {
@@ -1306,14 +1325,14 @@ const PatientDetails = () => {
                                 // Store as object with value and individual date
                                 allLabsData[key] = {
                                     value: lab.value,
-                                    date: lab.date || formData.lab_test_date
+                                    date: lab.date
                                 };
                             }
                         });
 
                         return allLabsData;
                     })(),
-                    lab_test_date: cleanDate(formData.lab_test_date)
+                    lab_test_date: null
                 }
             };
 
@@ -1325,7 +1344,7 @@ const PatientDetails = () => {
                     ...sectionData.basic,
                     ...sectionData.vitals,
                     labs: sectionData.labs.labs, // Keep inside JSONB object
-                    lab_test_date: sectionData.labs.lab_test_date
+                    lab_test_date: null
                 };
             } else if (section === 'vitals') {
                 patientData = { ...sectionData.basic, ...sectionData.vitals };
@@ -1333,7 +1352,7 @@ const PatientDetails = () => {
                 patientData = {
                     ...sectionData.basic,
                     labs: sectionData.labs.labs, // Keep inside JSONB object
-                    lab_test_date: sectionData.labs.lab_test_date
+                    lab_test_date: null
                 };
             } else if (section === 'basic') {
                 patientData = sectionData.basic;
@@ -1413,7 +1432,7 @@ const PatientDetails = () => {
                             // Group labs by their individual dates
                             const labsByDate = {};
                             Object.entries(sectionData.labs.labs).forEach(([key, labData]) => {
-                                const date = labData.date || sectionData.labs.lab_test_date || new Date().toISOString().split('T')[0];
+                                const date = labData.date;
                                 if (!labsByDate[date]) labsByDate[date] = {};
                                 labsByDate[date][key] = labData.value;
                             });
@@ -2079,31 +2098,6 @@ const PatientDetails = () => {
                             </div>
                         </div>
                     )}
-
-                    {/* Lab Test Date - Keep for backward compatibility */}
-                    <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                            Default Lab Test Date
-                        </label>
-                        {isEditing ? (
-                            <input
-                                type="date"
-                                value={formData.lab_test_date || ''}
-                                onChange={(e) => handleInputChange('lab_test_date', e.target.value)}
-                                className="w-full border border-gray-300 rounded-lg p-3"
-                            />
-                        ) : (
-                            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                {formData.lab_test_date ? (
-                                    <div className="flex items-center gap-2">
-                                        <FaCalendarAlt className="text-gray-400" />
-                                        {new Date(formData.lab_test_date).toLocaleDateString()}
-                                    </div>
-                                ) : <span className="text-gray-500 italic">Not recorded</span>}
-                            </div>
-                        )}
-                        <p className="text-xs text-gray-500">This date will be used for new lab tests if not specified individually</p>
-                    </div>
                 </div>
 
                 {/* Labs History Table */}
@@ -2897,16 +2891,7 @@ const PatientDetails = () => {
                             <div>
                                 <p className="text-sm text-gray-600">Lab Tests</p>
                                 <p className="text-2xl font-bold text-green-600">
-                                    {(() => {
-                                        const explicitLabs = [
-                                            'hemoglobin', 'hematocrit', 'wbc_count', 'rbc_count', 'platelet_count',
-                                            'blood_sugar', 'creatinine', 'urea', 'sodium', 'potassium', 'inr', 'tsh',
-                                            'crp', 'alt', 'ast', 'bilirubin_total', 'hba1c'
-                                        ];
-                                        const recordedExplicit = explicitLabs.filter(l => formData[l] && formData[l].toString().trim() !== '').length;
-                                        const recordedCustom = customLabs.filter(l => l.value && l.value.toString().trim() !== '').length;
-                                        return recordedExplicit + recordedCustom;
-                                    })()}
+                                    {customLabs.filter(l => l.value && l.value.toString().trim() !== '').length}
                                 </p>
                             </div>
                             <FaVial className="text-green-400 text-xl" />
@@ -2988,34 +2973,19 @@ const PatientDetails = () => {
                     </div>
                 )}
 
-                {/* --- CONSOLIDATED RECENT LABS (HIGH PRIORITY) --- */}
+                {/* --- CONSOLIDATED RECENT LABS WITH DATES --- */}
                 {(() => {
-                    const explicitLabList = [
-                        { field: 'hemoglobin', label: 'Hemoglobin', unit: 'g/dL' },
-                        { field: 'creatinine', label: 'Creatinine', unit: 'mg/dL' },
-                        { field: 'blood_sugar', label: 'Blood Sugar', unit: 'mg/dL' },
-                        { field: 'inr', label: 'INR', unit: '' },
-                        { field: 'tsh', label: 'TSH', unit: 'μIU/mL' },
-                        { field: 'sodium', label: 'Sodium', unit: 'mmol/L' },
-                        { field: 'potassium', label: 'Potassium', unit: 'mmol/L' },
-                        { field: 'hba1c', label: 'HbA1c', unit: '%' },
-                        { field: 'crp', label: 'CRP', unit: 'mg/L' }
-                    ];
-
                     const results = [];
-                    // Add explicit ones
-                    explicitLabList.forEach(f => {
-                        const val = formData[f.field];
-                        if (val && val.toString().trim() !== '') {
-                            results.push({ name: f.label, value: val, unit: f.unit });
-                        }
-                    });
-
-                    // Add custom ones
-                    const resultsNames = new Set(results.map(r => r.name.toLowerCase()));
+                    
+                    // Collect from customLabs with their dates
                     customLabs.forEach(lab => {
-                        if (lab.value && lab.value.toString().trim() !== '' && !resultsNames.has(lab.name.toLowerCase())) {
-                            results.push({ name: lab.name, value: lab.value, unit: lab.unit || '' });
+                        if (lab.value && lab.value.toString().trim() !== '') {
+                            results.push({ 
+                                name: lab.name, 
+                                value: lab.value, 
+                                unit: lab.unit || '',
+                                date: lab.date
+                            });
                         }
                     });
 
@@ -3029,25 +2999,34 @@ const PatientDetails = () => {
                             <h3 className="text-lg font-bold text-green-800 mb-4 flex items-center gap-2">
                                 <FaVial className="text-green-500" /> Key Laboratory Findings
                             </h3>
-                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 relative z-10">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 relative z-10">
                                 {results.slice(0, 12).map((lab, idx) => (
-                                    <div key={idx} className="bg-white/80 backdrop-blur-sm p-3 rounded-lg border border-green-100 flex items-center justify-between shadow-sm">
+                                    <div key={idx} className="bg-white/80 backdrop-blur-sm p-3 rounded-lg border border-green-100 shadow-sm">
                                         <div className="flex flex-col">
-                                            <p className="text-[9px] uppercase font-bold text-green-600 tracking-wider text-left">{lab.name}</p>
-                                            {lab.unit && <p className="text-[8px] text-gray-400 font-medium">{lab.unit}</p>}
+                                            <p className="text-[10px] uppercase font-bold text-green-600 tracking-wider">{lab.name}</p>
+                                            <div className="flex items-baseline justify-between mt-1">
+                                                <p className="text-lg font-black text-gray-800">{lab.value}</p>
+                                                {lab.unit && <p className="text-[10px] text-gray-500 ml-1">{lab.unit}</p>}
+                                            </div>
+                                            {lab.date && (
+                                                <div className="flex items-center gap-1 mt-2 text-[10px] text-gray-500 border-t border-green-100 pt-1">
+                                                    <FaCalendarAlt className="text-green-400 text-[8px]" />
+                                                    <span>Tested: {new Date(lab.date).toLocaleDateString()}</span>
+                                                </div>
+                                            )}
+                                            {!lab.date && (
+                                                <div className="flex items-center gap-1 mt-2 text-[10px] text-red-500 border-t border-red-100 pt-1">
+                                                    <FaExclamationTriangle className="text-red-400 text-[8px]" />
+                                                    <span>No test date recorded</span>
+                                                </div>
+                                            )}
                                         </div>
-                                        <p className="text-lg font-black text-gray-800 ml-2">{lab.value}</p>
                                     </div>
                                 ))}
                             </div>
                             {results.length > 12 && (
                                 <p className="text-xs text-green-600 mt-4 text-center font-medium">
                                     + {results.length - 12} more results available in the <strong>Labs</strong> tab
-                                </p>
-                            )}
-                            {formData.lab_test_date && (
-                                <p className="text-[10px] text-gray-400 mt-4 text-right italic">
-                                    Last laboratory update: {new Date(formData.lab_test_date).toLocaleDateString()}
                                 </p>
                             )}
                         </div>
