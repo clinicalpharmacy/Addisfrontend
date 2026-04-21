@@ -62,11 +62,13 @@ import {
 const LabInputField = React.memo(({
     label,
     value,
+    labDate,
     field,
     unit,
     placeholder,
     isEditing,
     handleChange,
+    handleDateChange,
     normalRange,
     readOnly = false,
     type = "number"
@@ -84,30 +86,45 @@ const LabInputField = React.memo(({
                 )}
             </label>
             {isEditing ? (
-                <div className="flex items-center">
-                    <input
-                        type={type}
-                        step={type === "number" ? "0.01" : undefined}
-                        value={value || ''}
-                        onChange={handleInputChange}
-                        className="flex-1 border border-gray-300 rounded-l-lg p-2 md:p-3 text-sm"
-                        placeholder={placeholder}
-                        readOnly={readOnly}
-                    />
-                    <div className="w-12 md:w-16 bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg p-2 md:p-3 text-center text-xs md:text-sm text-gray-700">
-                        {unit}
+                <div className="space-y-2">
+                    <div className="flex items-center">
+                        <input
+                            type={type}
+                            step={type === "number" ? "0.01" : undefined}
+                            value={value || ''}
+                            onChange={handleInputChange}
+                            className="flex-1 border border-gray-300 rounded-l-lg p-2 md:p-3 text-sm"
+                            placeholder={placeholder}
+                            readOnly={readOnly}
+                        />
+                        <div className="w-12 md:w-16 bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg p-2 md:p-3 text-center text-xs md:text-sm text-gray-700">
+                            {unit}
+                        </div>
                     </div>
+                    <input
+                        type="date"
+                        value={labDate || new Date().toISOString().split('T')[0]}
+                        onChange={(e) => handleDateChange(e.target.value)}
+                        className="w-full border border-gray-300 rounded-lg p-2 text-sm"
+                    />
                 </div>
             ) : (
-                <div className="flex items-center">
-                    <div className="flex-1 bg-blue-50 border border-blue-200 rounded-l-lg p-2 md:p-3 text-sm">
-                        <span className="font-medium text-gray-800">
-                            {value || '--'}
-                        </span>
+                <div>
+                    <div className="flex items-center">
+                        <div className="flex-1 bg-blue-50 border border-blue-200 rounded-l-lg p-2 md:p-3 text-sm">
+                            <span className="font-medium text-gray-800">
+                                {value || '--'}
+                            </span>
+                        </div>
+                        <div className="w-12 md:w-16 bg-blue-100 border border-l-0 border-blue-200 rounded-r-lg p-2 md:p-3 text-center text-xs md:text-sm text-gray-700">
+                            {unit}
+                        </div>
                     </div>
-                    <div className="w-12 md:w-16 bg-blue-100 border border-l-0 border-blue-200 rounded-r-lg p-2 md:p-3 text-center text-xs md:text-sm text-gray-700">
-                        {unit}
-                    </div>
+                    {labDate && (
+                        <div className="mt-1 text-xs text-gray-500">
+                            Tested: {new Date(labDate).toLocaleDateString()}
+                        </div>
+                    )}
                 </div>
             )}
         </div>
@@ -180,7 +197,7 @@ const PatientDetails = () => {
         developmental_milestones: '', feeding_method: '', birth_weight: '', birth_length: '',
         vaccination_status: '', special_instructions: '',
         // Labs (Now dynamic via customLabs/GlobalDefinitions)
-        lab_test_date: new Date().toISOString().split('T')[0] // Changed from last_tested to lab_test_date
+        lab_test_date: new Date().toISOString().split('T')[0]
     });
 
     // --- 2. HELPERS & UTILS ---
@@ -245,6 +262,7 @@ const PatientDetails = () => {
                         id: 'global-' + g.id,
                         name: g.name,
                         value: existing ? existing.value : '',
+                        date: existing ? existing.date : null,
                         isGlobal: true,
                         unit: g.unit,
                         reference_range: g.reference_range,
@@ -535,10 +553,20 @@ const PatientDetails = () => {
 
         const loadedCustomLabs = [];
         Object.entries(sourceLabs).forEach(([key, value]) => {
+            // Handle both old format (string) and new format (object with date)
+            let labValue = value;
+            let labDate = null;
+            
+            if (typeof value === 'object' && value !== null) {
+                labValue = value.value;
+                labDate = value.date;
+            }
+            
             loadedCustomLabs.push({
                 id: Date.now() + Math.random(),
                 name: key,
-                value: value
+                value: labValue,
+                date: labDate
             });
         });
 
@@ -571,7 +599,7 @@ const PatientDetails = () => {
             appointment_date: (data.appointment_date && isValidDate(data.appointment_date)) ? data.appointment_date.split('T')[0] : '',
             edd: (data.edd && isValidDate(data.edd)) ? data.edd.split('T')[0] : '',
             last_measured: (data.last_measured && isValidDate(data.last_measured)) ? data.last_measured.split('T')[0] : new Date().toISOString().split('T')[0],
-            lab_test_date: (data.lab_test_date && isValidDate(data.lab_test_date)) ? data.lab_test_date.split('T')[0] : new Date().toISOString().split('T')[0], // Changed from last_tested to lab_test_date
+            lab_test_date: (data.lab_test_date && isValidDate(data.lab_test_date)) ? data.lab_test_date.split('T')[0] : new Date().toISOString().split('T')[0],
             // Explicitly convert is_lactating to boolean
             is_lactating: data.is_lactating === true || data.is_lactating === 'true' || data.is_lactating === 1,
             is_pregnant: data.is_pregnant === true || data.is_pregnant === 'true' || data.is_pregnant === 1
@@ -599,6 +627,7 @@ const PatientDetails = () => {
                     id: 'global-' + g.id,
                     name: g.name,
                     value: existing ? existing.value : '',
+                    date: existing ? existing.date : null,
                     isGlobal: true,
                     unit: g.unit,
                     reference_range: g.reference_range,
@@ -651,7 +680,7 @@ const PatientDetails = () => {
                 setFormData(prev => ({
                     ...prev,
                     last_measured: today,
-                    lab_test_date: today, // Changed from last_tested to lab_test_date
+                    lab_test_date: today,
                     is_active: true,
                     allergies: [],
                     patient_type: 'adult'
@@ -911,7 +940,7 @@ const PatientDetails = () => {
         }
 
         // Handle date fields
-        if (field.includes('date') || field === 'edd' || field === 'appointment_date' || field === 'lab_test_date') { // Added lab_test_date
+        if (field.includes('date') || field === 'edd' || field === 'appointment_date' || field === 'lab_test_date') {
             if (value && !isValidDate(value)) {
                 // Don't update if invalid
                 return;
@@ -1274,13 +1303,17 @@ const PatientDetails = () => {
                             if (lab.name && lab.name.trim() !== '' && lab.value !== '') {
                                 // Normalize key for saving (matches explicitLabFields and database columns)
                                 const key = lab.name.toLowerCase().trim().replace(/\s+/g, '_');
-                                allLabsData[key] = lab.value;
+                                // Store as object with value and individual date
+                                allLabsData[key] = {
+                                    value: lab.value,
+                                    date: lab.date || formData.lab_test_date
+                                };
                             }
                         });
 
                         return allLabsData;
                     })(),
-                    lab_test_date: cleanDate(formData.lab_test_date) // Changed from last_tested to lab_test_date
+                    lab_test_date: cleanDate(formData.lab_test_date)
                 }
             };
 
@@ -1292,7 +1325,7 @@ const PatientDetails = () => {
                     ...sectionData.basic,
                     ...sectionData.vitals,
                     labs: sectionData.labs.labs, // Keep inside JSONB object
-                    lab_test_date: sectionData.labs.lab_test_date // Changed from last_tested to lab_test_date
+                    lab_test_date: sectionData.labs.lab_test_date
                 };
             } else if (section === 'vitals') {
                 patientData = { ...sectionData.basic, ...sectionData.vitals };
@@ -1300,7 +1333,7 @@ const PatientDetails = () => {
                 patientData = {
                     ...sectionData.basic,
                     labs: sectionData.labs.labs, // Keep inside JSONB object
-                    lab_test_date: sectionData.labs.lab_test_date // Changed from last_tested to lab_test_date
+                    lab_test_date: sectionData.labs.lab_test_date
                 };
             } else if (section === 'basic') {
                 patientData = sectionData.basic;
@@ -1377,29 +1410,38 @@ const PatientDetails = () => {
                     if (section === 'labs' || section === 'all' || isNewPatient) {
                         const hasLabs = Object.keys(sectionData.labs.labs).length > 0;
                         if (hasLabs) {
-                            // --- NEW LOGIC TO MERGE LABS ON SAME DATE ---
-                            const currentTestDate = sectionData.labs.lab_test_date;
-                            const existingEntriesOnSameDate = labsHistory.filter(entry => entry.test_date === currentTestDate);
+                            // Group labs by their individual dates
+                            const labsByDate = {};
+                            Object.entries(sectionData.labs.labs).forEach(([key, labData]) => {
+                                const date = labData.date || sectionData.labs.lab_test_date || new Date().toISOString().split('T')[0];
+                                if (!labsByDate[date]) labsByDate[date] = {};
+                                labsByDate[date][key] = labData.value;
+                            });
                             
-                            let finalLabsToSave = sectionData.labs.labs;
-
-                            if (existingEntriesOnSameDate.length > 0) {
-                                // Merge with the most recent entry on the same date
-                                const existingLabs = existingEntriesOnSameDate[0].labs;
-                                finalLabsToSave = { ...existingLabs, ...sectionData.labs.labs };
+                            // Save each date group separately to history
+                            for (const [testDate, labsForDate] of Object.entries(labsByDate)) {
+                                // Check if entry for this date already exists
+                                const existingEntry = labsHistory.find(h => h.test_date === testDate);
                                 
-                                // Optionally, delete the old entry/entries before saving the merged one
-                                for (const entry of existingEntriesOnSameDate) {
-                                    await api.delete(`/labs-history/${entry.id}`);
+                                if (existingEntry) {
+                                    // Merge with existing entry
+                                    const existingLabs = typeof existingEntry.labs === 'string' ? JSON.parse(existingEntry.labs) : existingEntry.labs;
+                                    const mergedLabs = { ...existingLabs, ...labsForDate };
+                                    await api.put(`/labs-history/${existingEntry.id}`, {
+                                        labs: mergedLabs,
+                                        test_date: testDate,
+                                        recorded_at: new Date().toISOString()
+                                    });
+                                } else {
+                                    // Create new entry
+                                    await api.post('/labs-history', {
+                                        patient_id: savedPatient.id,
+                                        labs: labsForDate,
+                                        test_date: testDate,
+                                        recorded_at: new Date().toISOString()
+                                    });
                                 }
                             }
-
-                            await api.post('/labs-history', {
-                                patient_id: savedPatient.id,
-                                labs: finalLabsToSave,
-                                test_date: currentTestDate,
-                                recorded_at: new Date().toISOString()
-                            });
                         }
                     }
                     // Refresh history using the primary ID
@@ -1964,6 +2006,7 @@ const PatientDetails = () => {
                                                 <LabInputField
                                                     label={lab.name}
                                                     value={lab.value}
+                                                    labDate={lab.date}
                                                     unit={lab.unit}
                                                     normalRange={lab.reference_range}
                                                     isEditing={isEditing}
@@ -1972,6 +2015,11 @@ const PatientDetails = () => {
                                                     handleChange={(_, val) => {
                                                         const updated = [...customLabs];
                                                         updated[labIndex].value = val;
+                                                        setCustomLabs(updated);
+                                                    }}
+                                                    handleDateChange={(date) => {
+                                                        const updated = [...customLabs];
+                                                        updated[labIndex].date = date;
                                                         setCustomLabs(updated);
                                                     }}
                                                 />
@@ -2006,6 +2054,7 @@ const PatientDetails = () => {
                                             key={lab.id}
                                             label={lab.name}
                                             value={lab.value}
+                                            labDate={lab.date}
                                             unit={lab.unit}
                                             normalRange={lab.reference_range}
                                             isEditing={isEditing}
@@ -2017,6 +2066,13 @@ const PatientDetails = () => {
                                                     setCustomLabs(updated);
                                                 }
                                             }}
+                                            handleDateChange={(date) => {
+                                                const updated = [...customLabs];
+                                                if (labIndex !== -1) {
+                                                    updated[labIndex].date = date;
+                                                    setCustomLabs(updated);
+                                                }
+                                            }}
                                         />
                                     );
                                 })}
@@ -2024,10 +2080,10 @@ const PatientDetails = () => {
                         </div>
                     )}
 
-                    {/* Lab Test Date - Renamed and moved */}
+                    {/* Lab Test Date - Keep for backward compatibility */}
                     <div className="space-y-2">
                         <label className="block text-sm font-medium text-gray-700">
-                            Lab Test Date
+                            Default Lab Test Date
                         </label>
                         {isEditing ? (
                             <input
@@ -2046,6 +2102,7 @@ const PatientDetails = () => {
                                 ) : <span className="text-gray-500 italic">Not recorded</span>}
                             </div>
                         )}
+                        <p className="text-xs text-gray-500">This date will be used for new lab tests if not specified individually</p>
                     </div>
                 </div>
 
@@ -2988,9 +3045,9 @@ const PatientDetails = () => {
                                     + {results.length - 12} more results available in the <strong>Labs</strong> tab
                                 </p>
                             )}
-                            {formData.lab_test_date && ( // Changed from last_tested to lab_test_date
+                            {formData.lab_test_date && (
                                 <p className="text-[10px] text-gray-400 mt-4 text-right italic">
-                                    Last laboratory update: {new Date(formData.lab_test_date).toLocaleDateString()} {/* Changed from last_tested to lab_test_date */}
+                                    Last laboratory update: {new Date(formData.lab_test_date).toLocaleDateString()}
                                 </p>
                             )}
                         </div>
