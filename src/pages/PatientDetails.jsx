@@ -180,7 +180,7 @@ const PatientDetails = () => {
         developmental_milestones: '', feeding_method: '', birth_weight: '', birth_length: '',
         vaccination_status: '', special_instructions: '',
         // Labs (Now dynamic via customLabs/GlobalDefinitions)
-        last_tested: new Date().toISOString().split('T')[0]
+        lab_test_date: new Date().toISOString().split('T')[0] // Changed from last_tested to lab_test_date
     });
 
     // --- 2. HELPERS & UTILS ---
@@ -571,7 +571,7 @@ const PatientDetails = () => {
             appointment_date: (data.appointment_date && isValidDate(data.appointment_date)) ? data.appointment_date.split('T')[0] : '',
             edd: (data.edd && isValidDate(data.edd)) ? data.edd.split('T')[0] : '',
             last_measured: (data.last_measured && isValidDate(data.last_measured)) ? data.last_measured.split('T')[0] : new Date().toISOString().split('T')[0],
-            last_tested: (data.last_tested && isValidDate(data.last_tested)) ? data.last_tested.split('T')[0] : new Date().toISOString().split('T')[0],
+            lab_test_date: (data.lab_test_date && isValidDate(data.lab_test_date)) ? data.lab_test_date.split('T')[0] : new Date().toISOString().split('T')[0], // Changed from last_tested to lab_test_date
             // Explicitly convert is_lactating to boolean
             is_lactating: data.is_lactating === true || data.is_lactating === 'true' || data.is_lactating === 1,
             is_pregnant: data.is_pregnant === true || data.is_pregnant === 'true' || data.is_pregnant === 1
@@ -651,7 +651,7 @@ const PatientDetails = () => {
                 setFormData(prev => ({
                     ...prev,
                     last_measured: today,
-                    last_tested: today,
+                    lab_test_date: today, // Changed from last_tested to lab_test_date
                     is_active: true,
                     allergies: [],
                     patient_type: 'adult'
@@ -911,7 +911,7 @@ const PatientDetails = () => {
         }
 
         // Handle date fields
-        if (field.includes('date') || field.includes('edd') || field === 'appointment_date') {
+        if (field.includes('date') || field === 'edd' || field === 'appointment_date' || field === 'lab_test_date') { // Added lab_test_date
             if (value && !isValidDate(value)) {
                 // Don't update if invalid
                 return;
@@ -1280,7 +1280,7 @@ const PatientDetails = () => {
 
                         return allLabsData;
                     })(),
-                    last_tested: cleanDate(formData.last_tested)
+                    lab_test_date: cleanDate(formData.lab_test_date) // Changed from last_tested to lab_test_date
                 }
             };
 
@@ -1292,7 +1292,7 @@ const PatientDetails = () => {
                     ...sectionData.basic,
                     ...sectionData.vitals,
                     labs: sectionData.labs.labs, // Keep inside JSONB object
-                    last_tested: sectionData.labs.last_tested
+                    lab_test_date: sectionData.labs.lab_test_date // Changed from last_tested to lab_test_date
                 };
             } else if (section === 'vitals') {
                 patientData = { ...sectionData.basic, ...sectionData.vitals };
@@ -1300,7 +1300,7 @@ const PatientDetails = () => {
                 patientData = {
                     ...sectionData.basic,
                     labs: sectionData.labs.labs, // Keep inside JSONB object
-                    last_tested: sectionData.labs.last_tested
+                    lab_test_date: sectionData.labs.lab_test_date // Changed from last_tested to lab_test_date
                 };
             } else if (section === 'basic') {
                 patientData = sectionData.basic;
@@ -1377,10 +1377,27 @@ const PatientDetails = () => {
                     if (section === 'labs' || section === 'all' || isNewPatient) {
                         const hasLabs = Object.keys(sectionData.labs.labs).length > 0;
                         if (hasLabs) {
+                            // --- NEW LOGIC TO MERGE LABS ON SAME DATE ---
+                            const currentTestDate = sectionData.labs.lab_test_date;
+                            const existingEntriesOnSameDate = labsHistory.filter(entry => entry.test_date === currentTestDate);
+                            
+                            let finalLabsToSave = sectionData.labs.labs;
+
+                            if (existingEntriesOnSameDate.length > 0) {
+                                // Merge with the most recent entry on the same date
+                                const existingLabs = existingEntriesOnSameDate[0].labs;
+                                finalLabsToSave = { ...existingLabs, ...sectionData.labs.labs };
+                                
+                                // Optionally, delete the old entry/entries before saving the merged one
+                                for (const entry of existingEntriesOnSameDate) {
+                                    await api.delete(`/labs-history/${entry.id}`);
+                                }
+                            }
+
                             await api.post('/labs-history', {
                                 patient_id: savedPatient.id,
-                                labs: sectionData.labs.labs,
-                                test_date: formData.last_tested || new Date().toISOString().split('T')[0],
+                                labs: finalLabsToSave,
+                                test_date: currentTestDate,
                                 recorded_at: new Date().toISOString()
                             });
                         }
@@ -1411,7 +1428,7 @@ const PatientDetails = () => {
                 alert('Error saving patient: ' + errorMsg);
             }
         }
-    }, [isNewPatient, formData, navigate, patientCode, isValidDate, calculateAgeInDays, calculateAge, determinePatientType, customLabs, fetchClinicalHistory, checkPatientLimit, loadPatientData, user]);
+    }, [isNewPatient, formData, navigate, patientCode, isValidDate, calculateAgeInDays, calculateAge, determinePatientType, customLabs, fetchClinicalHistory, checkPatientLimit, loadPatientData, user, labsHistory]);
 
     // Helper functions
     const handleSaveAll = useCallback(() => handleSave('all'), [handleSave]);
@@ -2007,24 +2024,24 @@ const PatientDetails = () => {
                         </div>
                     )}
 
-                    {/* Last Tested Date */}
+                    {/* Lab Test Date - Renamed and moved */}
                     <div className="space-y-2">
                         <label className="block text-sm font-medium text-gray-700">
-                            Last Tested Date
+                            Lab Test Date
                         </label>
                         {isEditing ? (
                             <input
                                 type="date"
-                                value={formData.last_tested || ''}
-                                onChange={(e) => handleInputChange('last_tested', e.target.value)}
+                                value={formData.lab_test_date || ''}
+                                onChange={(e) => handleInputChange('lab_test_date', e.target.value)}
                                 className="w-full border border-gray-300 rounded-lg p-3"
                             />
                         ) : (
                             <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                {formData.last_tested ? (
+                                {formData.lab_test_date ? (
                                     <div className="flex items-center gap-2">
                                         <FaCalendarAlt className="text-gray-400" />
-                                        {new Date(formData.last_tested).toLocaleDateString()}
+                                        {new Date(formData.lab_test_date).toLocaleDateString()}
                                     </div>
                                 ) : <span className="text-gray-500 italic">Not recorded</span>}
                             </div>
@@ -2971,9 +2988,9 @@ const PatientDetails = () => {
                                     + {results.length - 12} more results available in the <strong>Labs</strong> tab
                                 </p>
                             )}
-                            {formData.last_tested && (
+                            {formData.lab_test_date && ( // Changed from last_tested to lab_test_date
                                 <p className="text-[10px] text-gray-400 mt-4 text-right italic">
-                                    Last laboratory update: {new Date(formData.last_tested).toLocaleDateString()}
+                                    Last laboratory update: {new Date(formData.lab_test_date).toLocaleDateString()} {/* Changed from last_tested to lab_test_date */}
                                 </p>
                             )}
                         </div>
