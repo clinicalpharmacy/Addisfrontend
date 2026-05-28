@@ -21,19 +21,36 @@ const PhAssistPlan = ({ patientCode }) => {
     const [followUpDate, setFollowUpDate] = useState('');
 
     useEffect(() => {
-        fetchSavedPlans();
+        if (patientCode) {
+            fetchSavedPlans();
+        }
     }, [patientCode]);
 
     const fetchSavedPlans = async () => {
         try {
             setLoading(true);
-            const result = await api.get(`/plans/patient/${patientCode}`);
+            console.log('Fetching plans for patient:', patientCode);
+            
+            // Convert patientCode to number if it's numeric
+            const patientId = isNaN(patientCode) ? patientCode : parseInt(patientCode);
+            const result = await api.get(`/plans/patient/${patientId}`);
+
+            console.log('Fetch result:', result);
 
             if (result.success && result.plans) {
                 setSavedPlans(result.plans);
+            } else if (result.data && result.data.success && result.data.plans) {
+                // Handle nested response structure
+                setSavedPlans(result.data.plans);
+            } else {
+                console.warn('Unexpected response format:', result);
+                setSavedPlans([]);
             }
         } catch (error) {
             console.error('Error fetching pharmacy plans:', error);
+            console.error('Error details:', error.response?.data || error.message);
+            // Don't show alert on fetch errors, just set empty array
+            setSavedPlans([]);
         } finally {
             setLoading(false);
         }
@@ -49,8 +66,11 @@ const PhAssistPlan = ({ patientCode }) => {
                 return;
             }
 
+            // Convert patientCode to number if it's numeric
+            const patientId = isNaN(patientCode) ? patientCode : parseInt(patientCode);
+            
             const planData = {
-                patient_id: patientCode,
+                patient_id: patientId,
                 plan_type: planType, // Progress Note (optional free text)
                 goals: pharmacyAssessment,
                 medications: '',
@@ -59,16 +79,22 @@ const PhAssistPlan = ({ patientCode }) => {
                 notes: plan
             };
 
+            console.log('Saving plan data:', planData);
+
             let result;
             if (editIndex !== null) {
                 // Update existing plan
-                result = await api.put(`/plans/${editIndex}`, planData);
+                const planId = isNaN(editIndex) ? editIndex : parseInt(editIndex);
+                result = await api.put(`/plans/${planId}`, planData);
             } else {
                 // Add new plan
                 result = await api.post('/plans/pharmacy-assistance', planData);
             }
 
-            if (result.success) {
+            console.log('Save result:', result);
+
+            if (result.success || (result.data && result.data.success)) {
+                const successData = result.data || result;
                 alert(`Plan ${editIndex !== null ? 'updated' : 'saved'} successfully!`);
                 setPharmacyAssessment('');
                 setPlan('');
@@ -77,21 +103,23 @@ const PhAssistPlan = ({ patientCode }) => {
                 setEditIndex(null);
                 fetchSavedPlans();
             } else {
-                throw new Error(result.error || 'Failed to save plan');
+                throw new Error(result.error || result.data?.error || 'Failed to save plan');
             }
         } catch (error) {
             console.error('Error saving plan:', error);
-            alert('Error: ' + error.message);
+            const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to save plan';
+            alert('Error: ' + errorMessage);
         } finally {
             setLoading(false);
         }
     };
 
     const handleEdit = (planItem) => {
+        console.log('Editing plan:', planItem);
         setPharmacyAssessment(planItem.goals || '');
         setPlan(planItem.notes || '');
         setPlanType(planItem.plan_type || '');
-        setFollowUpDate(planItem.follow_up || '');
+        setFollowUpDate(planItem.follow_up || planItem.follow_up_date || '');
         setEditIndex(planItem.id);
     };
 
@@ -99,14 +127,24 @@ const PhAssistPlan = ({ patientCode }) => {
         if (!window.confirm('Are you sure you want to delete this plan?')) return;
 
         try {
-            const result = await api.delete(`/plans/${planId}`);
-            if (result.success) {
+            setLoading(true);
+            const numericPlanId = isNaN(planId) ? planId : parseInt(planId);
+            const result = await api.delete(`/plans/${numericPlanId}`);
+            
+            console.log('Delete result:', result);
+            
+            if (result.success || (result.data && result.data.success)) {
                 alert('Plan deleted successfully!');
                 fetchSavedPlans();
+            } else {
+                throw new Error(result.error || result.data?.error || 'Failed to delete plan');
             }
         } catch (error) {
             console.error('Error deleting plan:', error);
-            alert('Error deleting plan: ' + (error.message || error.error || 'Failed'));
+            const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to delete plan';
+            alert('Error deleting plan: ' + errorMessage);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -271,6 +309,24 @@ const PhAssistPlan = ({ patientCode }) => {
                                         </div>
                                     </div>
                                 </div>
+                                
+                                {/* Optional: Show follow-up date and progress note if they exist */}
+                                {(item.follow_up || item.plan_type) && (
+                                    <div className="mt-3 pt-3 border-t border-gray-200">
+                                        {item.follow_up && (
+                                            <div className="text-sm text-gray-600">
+                                                <FaCalendarAlt className="inline mr-1" size={12} />
+                                                Follow-up: {new Date(item.follow_up).toLocaleDateString()}
+                                            </div>
+                                        )}
+                                        {item.plan_type && (
+                                            <div className="text-sm text-gray-600 mt-1">
+                                                <FaFileMedical className="inline mr-1" size={12} />
+                                                Progress Note: {item.plan_type}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
