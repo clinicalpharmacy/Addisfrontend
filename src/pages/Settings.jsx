@@ -166,6 +166,16 @@ const Settings = () => {
                                             minLength="6"
                                         />
                                     </div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">Confirm New Password (min. 6 characters)</label>
+                                        <input
+                                            type="password"
+                                            value={passwords.confirm}
+                                            onChange={(e) => setPasswords({...passwords, confirm: e.target.value})}
+                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
+                                            required
+                                            minLength="6"
+                                        />
+                                    </div>
                                     <button
                                         type="submit"
                                         disabled={loading}
