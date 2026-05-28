@@ -166,6 +166,7 @@ const Settings = () => {
                                             minLength="6"
                                         />
                                     </div>
+                                    <div>
                                         <label className="block text-sm font-bold text-gray-700 mb-2">Confirm New Password (min. 6 characters)</label>
                                         <input
                                             type="password"
