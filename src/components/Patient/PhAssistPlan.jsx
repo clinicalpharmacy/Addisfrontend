@@ -6,12 +6,12 @@ import {
     FaSave,
     FaTrash,
     FaCalendarAlt,
-    FaPills,
-    FaUserMd,
-    FaFileMedical
+    FaFileMedical,
+    FaSync,
+    FaPlus
 } from 'react-icons/fa';
 
-const PhAssistPlan = ({ patientCode, patientId }) => {
+const PhAssistPlan = ({ patientCode }) => {
     const [pharmacyAssessment, setPharmacyAssessment] = useState('');
     const [plan, setPlan] = useState('');
     const [savedPlans, setSavedPlans] = useState([]);
@@ -19,42 +19,25 @@ const PhAssistPlan = ({ patientCode, patientId }) => {
     const [loading, setLoading] = useState(false);
     const [planType, setPlanType] = useState('');
     const [followUpDate, setFollowUpDate] = useState('');
-    const [error, setError] = useState(null);
+    const [showForm, setShowForm] = useState(false);
 
     useEffect(() => {
-        console.log('Component mounted with:', { patientCode, patientId });
-        if (patientId) {
+        if (patientCode) {
             fetchSavedPlans();
-        } else {
-            console.warn('No patientId provided, waiting for parent component');
         }
-    }, [patientId]);
+    }, [patientCode]);
 
     const fetchSavedPlans = async () => {
         try {
             setLoading(true);
-            setError(null);
-            console.log('Fetching plans for patientId:', patientId);
-            
-            const response = await api.get(`/pharmacy-plans/patient/${patientId}`);
-            console.log('Fetch plans response:', response);
-            
-            // Check different response structures
-            let plans = [];
-            if (response.success && response.plans) {
-                plans = response.plans;
-            } else if (response.data && response.data.success && response.data.plans) {
-                plans = response.data.plans;
-            } else if (Array.isArray(response)) {
-                plans = response;
-            } else if (response.plans) {
-                plans = response.plans;
+            // Use patientCode directly - backend will handle the lookup
+            const result = await api.get(`/pharmacy-plans/patient/${patientCode}`);
+
+            if (result.success && result.plans) {
+                setSavedPlans(result.plans);
             }
-            
-            setSavedPlans(plans);
         } catch (error) {
             console.error('Error fetching pharmacy plans:', error);
-            setError('Failed to load saved plans: ' + (error.response?.data?.error || error.message));
         } finally {
             setLoading(false);
         }
@@ -63,7 +46,6 @@ const PhAssistPlan = ({ patientCode, patientId }) => {
     const savePlan = async () => {
         try {
             setLoading(true);
-            setError(null);
 
             if (!pharmacyAssessment.trim() || !plan.trim()) {
                 alert('Please fill in both Pharmacy Assessment and Plan of Action');
@@ -71,14 +53,8 @@ const PhAssistPlan = ({ patientCode, patientId }) => {
                 return;
             }
 
-            if (!patientId) {
-                alert('Patient ID is missing. Please refresh the page.');
-                setLoading(false);
-                return;
-            }
-
             const planData = {
-                patient_id: parseInt(patientId),
+                patient_code: patientCode, // Send patient_code instead of patient_id
                 plan_type: planType || null,
                 goals: pharmacyAssessment,
                 medications: '',
@@ -87,36 +63,28 @@ const PhAssistPlan = ({ patientCode, patientId }) => {
                 notes: plan
             };
 
-            console.log('Saving plan data:', planData);
-
             let result;
             if (editIndex !== null) {
-                // Update existing plan
                 result = await api.put(`/pharmacy-plans/${editIndex}`, planData);
             } else {
-                // Add new plan
                 result = await api.post('/pharmacy-plans', planData);
             }
 
-            console.log('Save plan response:', result);
-
-            if (result && (result.success || result.data?.success)) {
-                const successMsg = result.message || result.data?.message || `Plan ${editIndex !== null ? 'updated' : 'saved'} successfully!`;
-                alert(successMsg);
+            if (result.success) {
+                alert(`Plan ${editIndex !== null ? 'updated' : 'saved'} successfully!`);
                 setPharmacyAssessment('');
                 setPlan('');
                 setFollowUpDate('');
                 setPlanType('');
                 setEditIndex(null);
-                await fetchSavedPlans();
+                setShowForm(false);
+                fetchSavedPlans();
             } else {
-                throw new Error(result?.error || result?.data?.error || 'Failed to save plan');
+                throw new Error(result.error || 'Failed to save plan');
             }
         } catch (error) {
             console.error('Error saving plan:', error);
-            const errorMsg = error.response?.data?.error || error.response?.data?.message || error.message || 'Unknown error occurred';
-            setError(errorMsg);
-            alert('Error: ' + errorMsg);
+            alert('Error: ' + (error.response?.data?.error || error.message));
         } finally {
             setLoading(false);
         }
@@ -128,68 +96,110 @@ const PhAssistPlan = ({ patientCode, patientId }) => {
         setPlanType(planItem.plan_type || '');
         setFollowUpDate(planItem.follow_up || '');
         setEditIndex(planItem.id);
+        setShowForm(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handleDelete = async (planId) => {
         if (!window.confirm('Are you sure you want to delete this plan?')) return;
 
         try {
-            setLoading(true);
             const result = await api.delete(`/pharmacy-plans/${planId}`);
-            console.log('Delete response:', result);
-            
-            if (result && (result.success || result.data?.success)) {
+            if (result.success) {
                 alert('Plan deleted successfully!');
-                await fetchSavedPlans();
-            } else {
-                throw new Error(result?.error || result?.data?.error || 'Failed to delete plan');
+                fetchSavedPlans();
             }
         } catch (error) {
             console.error('Error deleting plan:', error);
-            const errorMsg = error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to delete plan';
-            alert('Error deleting plan: ' + errorMsg);
-        } finally {
-            setLoading(false);
+            alert('Error deleting plan: ' + (error.response?.data?.error || error.message || 'Failed'));
         }
     };
 
-    if (!patientId && patientCode) {
-        return (
-            <div className="bg-white rounded-xl shadow-lg p-6">
-                <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto"></div>
-                    <p className="text-gray-600 mt-2">Loading patient information...</p>
-                    <p className="text-gray-400 text-sm mt-2">Patient Code: {patientCode}</p>
-                </div>
-            </div>
-        );
-    }
+    const resetForm = () => {
+        setPharmacyAssessment('');
+        setPlan('');
+        setFollowUpDate('');
+        setPlanType('');
+        setEditIndex(null);
+        setShowForm(false);
+    };
 
     return (
-        <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="flex items-center gap-3 mb-6">
-                <div className="bg-green-100 p-3 rounded-full">
-                    <FaClipboardList className="text-green-600 text-xl" />
+        <div className="bg-white rounded-xl shadow-lg p-3 md:p-6 overflow-x-hidden max-w-full">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 md:mb-6 gap-4">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="bg-green-100 p-2 md:p-3 rounded-full flex-shrink-0">
+                        <FaClipboardList className="text-green-600 text-lg md:text-xl" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                        <h2 className="text-xl md:text-2xl font-bold text-gray-800 truncate">Pharmacy Assessment & Plan</h2>
+                        <p className="text-xs md:text-base text-gray-600 flex items-center gap-2 truncate">
+                            <span>Patient:</span>
+                            <span className="font-semibold bg-green-50 px-2 py-1 rounded text-xs md:text-sm">{patientCode}</span>
+                        </p>
+                    </div>
                 </div>
-                <div>
-                    <h2 className="text-2xl font-bold text-gray-800">Pharmacy Assessment & Plan</h2>
-                    <p className="text-gray-600">For Patient: {patientCode || patientId || 'Loading...'}</p>
+                <button
+                    onClick={fetchSavedPlans}
+                    className="text-green-600 hover:text-green-800 flex items-center gap-2 px-3 md:px-4 py-2 border border-green-200 rounded-lg hover:bg-green-50 transition text-sm flex-shrink-0"
+                >
+                    <FaSync className={`${loading ? 'animate-spin' : ''}`} />
+                    <span className="hidden sm:inline">Refresh</span>
+                </button>
+            </div>
+
+            {/* Quick Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 mb-4 md:mb-6">
+                <div className="bg-green-50 p-2 md:p-3 rounded-lg border border-green-100">
+                    <div className="text-xs md:text-sm text-green-700">Total Plans</div>
+                    <div className="text-lg md:text-xl font-bold text-green-800">{savedPlans.length}</div>
+                </div>
+                <div className="bg-blue-50 p-2 md:p-3 rounded-lg border border-blue-100">
+                    <div className="text-xs md:text-sm text-blue-700">With Follow-up</div>
+                    <div className="text-lg md:text-xl font-bold text-blue-800">
+                        {savedPlans.filter(p => p.follow_up).length}
+                    </div>
+                </div>
+                <div className="bg-purple-50 p-2 md:p-3 rounded-lg border border-purple-100">
+                    <div className="text-xs md:text-sm text-purple-700">With Notes</div>
+                    <div className="text-lg md:text-xl font-bold text-purple-800">
+                        {savedPlans.filter(p => p.plan_type).length}
+                    </div>
+                </div>
+                <div className="bg-teal-50 p-2 md:p-3 rounded-lg border border-teal-100">
+                    <div className="text-xs md:text-sm text-teal-700">Last Month</div>
+                    <div className="text-lg md:text-xl font-bold text-teal-800">
+                        {savedPlans.filter(p => {
+                            if (!p.created_at) return false;
+                            const lastMonth = new Date();
+                            lastMonth.setMonth(lastMonth.getMonth() - 1);
+                            return new Date(p.created_at) > lastMonth;
+                        }).length}
+                    </div>
                 </div>
             </div>
 
-            {error && (
-                <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                    <strong>Error:</strong> {error}
-                </div>
-            )}
+            {/* Toggle Form Button */}
+            <div className="mb-4">
+                <button
+                    onClick={() => setShowForm(!showForm)}
+                    className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+                >
+                    <FaPlus />
+                    {showForm ? 'Hide Assessment Form' : 'New Assessment & Plan'}
+                </button>
+            </div>
 
-            {/* Input Form */}
-            <div className="mb-8">
-                <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
-                    <h3 className="text-xl font-semibold mb-4 text-gray-800 flex items-center gap-2">
-                        <FaFileMedical />
-                        {editIndex !== null ? 'Edit Assessment & Plan' : 'New Assessment & Plan'}
-                    </h3>
+            {/* Input Form - Collapsible */}
+            {showForm && (
+                <div className="bg-gray-50 rounded-lg p-3 md:p-6 mb-4 md:mb-8 border border-gray-200">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                            <FaFileMedical />
+                            {editIndex !== null ? 'Edit Assessment & Plan' : 'New Assessment & Plan'}
+                        </h3>
+                    </div>
 
                     <div className="space-y-4">
                         {/* Progress Note */}
@@ -222,6 +232,7 @@ const PhAssistPlan = ({ patientCode, patientId }) => {
                             </div>
                         </div>
 
+                        {/* Pharmacy Assessment */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Pharmacy Assessment *
@@ -236,6 +247,7 @@ const PhAssistPlan = ({ patientCode, patientId }) => {
                             />
                         </div>
 
+                        {/* Plan of Action */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Plan of Action *
@@ -250,6 +262,7 @@ const PhAssistPlan = ({ patientCode, patientId }) => {
                             />
                         </div>
 
+                        {/* Action Buttons */}
                         <div className="flex gap-3">
                             <button
                                 onClick={savePlan}
@@ -259,27 +272,20 @@ const PhAssistPlan = ({ patientCode, patientId }) => {
                                 <FaSave /> {loading ? 'Saving...' : (editIndex !== null ? 'Update Plan' : 'Save Plan')}
                             </button>
 
-                            {editIndex !== null && (
+                            {(editIndex !== null || showForm) && (
                                 <button
-                                    onClick={() => {
-                                        setPharmacyAssessment('');
-                                        setPlan('');
-                                        setFollowUpDate('');
-                                        setPlanType('');
-                                        setEditIndex(null);
-                                        setError(null);
-                                    }}
+                                    onClick={resetForm}
                                     className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-lg"
                                 >
-                                    Cancel Edit
+                                    Cancel
                                 </button>
                             )}
                         </div>
                     </div>
                 </div>
-            </div>
+            )}
 
-            {/* Saved Plans */}
+            {/* Saved Plans List */}
             <div>
                 <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center gap-2">
                     <FaClipboardList />
@@ -292,15 +298,18 @@ const PhAssistPlan = ({ patientCode, patientId }) => {
                         <p className="text-gray-600 mt-2">Loading plans...</p>
                     </div>
                 ) : savedPlans.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
+                    <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
                         <FaClipboardList className="text-4xl mx-auto mb-3 text-gray-300" />
-                        <p>No pharmacy assessments and plans saved yet.</p>
+                        <p className="text-gray-500">No pharmacy assessments and plans saved yet.</p>
+                        <p className="text-sm text-gray-400 mt-1">
+                            Click "New Assessment & Plan" to create your first plan
+                        </p>
                     </div>
                 ) : (
                     <div className="space-y-4">
                         {savedPlans.map((item, index) => (
                             <div key={item.id} className="border rounded-lg p-4 bg-gray-50 hover:bg-white transition hover:shadow-md">
-                                <div className="flex justify-between items-start mb-4">
+                                <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-4 gap-2">
                                     <div>
                                         <h4 className="font-semibold text-gray-800">
                                             Plan #{index + 1}
@@ -313,11 +322,17 @@ const PhAssistPlan = ({ patientCode, patientId }) => {
                                         )}
                                     </div>
                                     <div className="flex gap-2">
-                                        <button onClick={() => handleEdit(item)} className="text-blue-500 hover:text-blue-700">
-                                            <FaEdit /> Edit
+                                        <button 
+                                            onClick={() => handleEdit(item)} 
+                                            className="text-blue-500 hover:text-blue-700 px-2 py-1 hover:bg-blue-50 rounded transition"
+                                        >
+                                            <FaEdit className="inline mr-1" /> Edit
                                         </button>
-                                        <button onClick={() => handleDelete(item.id)} className="text-red-500 hover:text-red-700">
-                                            <FaTrash /> Delete
+                                        <button 
+                                            onClick={() => handleDelete(item.id)} 
+                                            className="text-red-500 hover:text-red-700 px-2 py-1 hover:bg-red-50 rounded transition"
+                                        >
+                                            <FaTrash className="inline mr-1" /> Delete
                                         </button>
                                     </div>
                                 </div>
