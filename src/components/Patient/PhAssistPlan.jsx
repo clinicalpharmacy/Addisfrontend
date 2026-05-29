@@ -11,14 +11,56 @@ import {
     FaFileMedical
 } from 'react-icons/fa';
 
-const PhAssistPlan = ({ patientCode, patientId }) => {
+const PhAssistPlan = ({ patientCode }) => {
     const [pharmacyAssessment, setPharmacyAssessment] = useState('');
     const [plan, setPlan] = useState('');
     const [savedPlans, setSavedPlans] = useState([]);
     const [editIndex, setEditIndex] = useState(null);
     const [loading, setLoading] = useState(false);
-    const [planType, setPlanType] = useState(''); // now Progress Note (optional)
+    const [planType, setPlanType] = useState('');
     const [followUpDate, setFollowUpDate] = useState('');
+    const [patientId, setPatientId] = useState(null);
+    const [fetchingPatient, setFetchingPatient] = useState(false);
+
+    // Fetch patient ID when patientCode changes
+    useEffect(() => {
+        if (patientCode) {
+            fetchPatientId();
+        }
+    }, [patientCode]);
+
+    const fetchPatientId = async () => {
+        try {
+            setFetchingPatient(true);
+            // Try to get patient by ID first (if patientCode is actually an ID)
+            if (/^\d+$/.test(patientCode)) {
+                // It's a numeric ID
+                setPatientId(patientCode);
+            } else {
+                // Search for patient by code or name
+                const result = await api.get(`/patients/search/${patientCode}`);
+                if (result.success && result.patients && result.patients.length > 0) {
+                    // Find the matching patient
+                    const patient = result.patients.find(p => 
+                        p.patient_code === patientCode || 
+                        p.id == patientCode ||
+                        p.full_name?.toLowerCase().includes(patientCode.toLowerCase())
+                    );
+                    if (patient) {
+                        setPatientId(patient.id);
+                    } else {
+                        console.error('Patient not found');
+                        alert('Patient not found. Please refresh the page.');
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching patient ID:', error);
+            alert('Error loading patient information');
+        } finally {
+            setFetchingPatient(false);
+        }
+    };
 
     useEffect(() => {
         if (patientId) {
@@ -58,7 +100,7 @@ const PhAssistPlan = ({ patientCode, patientId }) => {
             }
 
             const planData = {
-                patient_id: patientId,
+                patient_id: parseInt(patientId),
                 plan_type: planType,
                 goals: pharmacyAssessment,
                 medications: '',
@@ -117,6 +159,17 @@ const PhAssistPlan = ({ patientCode, patientId }) => {
             alert('Error deleting plan: ' + (error.response?.data?.error || error.message || 'Failed'));
         }
     };
+
+    if (fetchingPatient) {
+        return (
+            <div className="bg-white rounded-xl shadow-lg p-6">
+                <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto"></div>
+                    <p className="text-gray-600 mt-2">Loading patient information...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="bg-white rounded-xl shadow-lg p-6">
@@ -201,7 +254,7 @@ const PhAssistPlan = ({ patientCode, patientId }) => {
                         <div className="flex gap-3">
                             <button
                                 onClick={savePlan}
-                                disabled={loading}
+                                disabled={loading || !patientId}
                                 className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg flex items-center gap-2 disabled:opacity-50"
                             >
                                 <FaSave /> {loading ? 'Saving...' : (editIndex !== null ? 'Update Plan' : 'Save Plan')}
