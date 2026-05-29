@@ -11,7 +11,7 @@ import {
     FaPlus
 } from 'react-icons/fa';
 
-const PhAssistPlan = ({ patientCode }) => {
+const PhAssistPlan = ({ patientCode, patientId }) => {
     const [pharmacyAssessment, setPharmacyAssessment] = useState('');
     const [plan, setPlan] = useState('');
     const [savedPlans, setSavedPlans] = useState([]);
@@ -20,24 +20,38 @@ const PhAssistPlan = ({ patientCode }) => {
     const [planType, setPlanType] = useState('');
     const [followUpDate, setFollowUpDate] = useState('');
     const [showForm, setShowForm] = useState(false);
+    const [error, setError] = useState(null);
+
+    // Use patientId if available, otherwise use patientCode
+    const effectivePatientId = patientId || patientCode;
 
     useEffect(() => {
-        if (patientCode) {
+        if (effectivePatientId) {
+            console.log('Fetching plans for patient:', effectivePatientId);
             fetchSavedPlans();
         }
-    }, [patientCode]);
+    }, [effectivePatientId]);
 
     const fetchSavedPlans = async () => {
         try {
             setLoading(true);
-            // Use patientCode directly - backend will handle the lookup
-            const result = await api.get(`/pharmacy-plans/patient/${patientCode}`);
-
-            if (result.success && result.plans) {
-                setSavedPlans(result.plans);
+            setError(null);
+            
+            // Use the effective patient identifier
+            const response = await api.get(`/pharmacy-plans/patient/${effectivePatientId}`);
+            console.log('Fetch response:', response);
+            
+            if (response && response.success) {
+                setSavedPlans(response.plans || []);
+            } else if (response && response.data && response.data.success) {
+                setSavedPlans(response.data.plans || []);
+            } else {
+                setSavedPlans([]);
             }
         } catch (error) {
             console.error('Error fetching pharmacy plans:', error);
+            setError(error.response?.data?.error || error.message || 'Failed to load plans');
+            setSavedPlans([]);
         } finally {
             setLoading(false);
         }
@@ -46,6 +60,7 @@ const PhAssistPlan = ({ patientCode }) => {
     const savePlan = async () => {
         try {
             setLoading(true);
+            setError(null);
 
             if (!pharmacyAssessment.trim() || !plan.trim()) {
                 alert('Please fill in both Pharmacy Assessment and Plan of Action');
@@ -53,8 +68,14 @@ const PhAssistPlan = ({ patientCode }) => {
                 return;
             }
 
+            if (!effectivePatientId) {
+                alert('Patient information is missing. Please refresh the page.');
+                setLoading(false);
+                return;
+            }
+
             const planData = {
-                patient_code: patientCode, // Send patient_code instead of patient_id
+                patient_code: String(effectivePatientId), // Send as string to handle both numeric and text
                 plan_type: planType || null,
                 goals: pharmacyAssessment,
                 medications: '',
@@ -63,6 +84,8 @@ const PhAssistPlan = ({ patientCode }) => {
                 notes: plan
             };
 
+            console.log('Saving plan data:', planData);
+
             let result;
             if (editIndex !== null) {
                 result = await api.put(`/pharmacy-plans/${editIndex}`, planData);
@@ -70,27 +93,27 @@ const PhAssistPlan = ({ patientCode }) => {
                 result = await api.post('/pharmacy-plans', planData);
             }
 
-            if (result.success) {
+            console.log('Save response:', result);
+
+            if (result && result.success) {
                 alert(`Plan ${editIndex !== null ? 'updated' : 'saved'} successfully!`);
-                setPharmacyAssessment('');
-                setPlan('');
-                setFollowUpDate('');
-                setPlanType('');
-                setEditIndex(null);
-                setShowForm(false);
-                fetchSavedPlans();
+                resetForm();
+                await fetchSavedPlans();
             } else {
-                throw new Error(result.error || 'Failed to save plan');
+                throw new Error(result?.error || result?.data?.error || 'Failed to save plan');
             }
         } catch (error) {
             console.error('Error saving plan:', error);
-            alert('Error: ' + (error.response?.data?.error || error.message));
+            const errorMsg = error.response?.data?.error || error.response?.data?.message || error.message || 'Unknown error occurred';
+            setError(errorMsg);
+            alert('Error: ' + errorMsg);
         } finally {
             setLoading(false);
         }
     };
 
     const handleEdit = (planItem) => {
+        console.log('Editing plan:', planItem);
         setPharmacyAssessment(planItem.goals || '');
         setPlan(planItem.notes || '');
         setPlanType(planItem.plan_type || '');
@@ -104,14 +127,21 @@ const PhAssistPlan = ({ patientCode }) => {
         if (!window.confirm('Are you sure you want to delete this plan?')) return;
 
         try {
+            setLoading(true);
             const result = await api.delete(`/pharmacy-plans/${planId}`);
-            if (result.success) {
+            console.log('Delete response:', result);
+            
+            if (result && result.success) {
                 alert('Plan deleted successfully!');
-                fetchSavedPlans();
+                await fetchSavedPlans();
+            } else {
+                throw new Error(result?.error || 'Failed to delete plan');
             }
         } catch (error) {
             console.error('Error deleting plan:', error);
             alert('Error deleting plan: ' + (error.response?.data?.error || error.message || 'Failed'));
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -122,6 +152,7 @@ const PhAssistPlan = ({ patientCode }) => {
         setPlanType('');
         setEditIndex(null);
         setShowForm(false);
+        setError(null);
     };
 
     return (
@@ -135,8 +166,8 @@ const PhAssistPlan = ({ patientCode }) => {
                     <div className="min-w-0 flex-1">
                         <h2 className="text-xl md:text-2xl font-bold text-gray-800 truncate">Pharmacy Assessment & Plan</h2>
                         <p className="text-xs md:text-base text-gray-600 flex items-center gap-2 truncate">
-                            <span>Patient:</span>
-                            <span className="font-semibold bg-green-50 px-2 py-1 rounded text-xs md:text-sm">{patientCode}</span>
+                            <span>Patient ID:</span>
+                            <span className="font-semibold bg-green-50 px-2 py-1 rounded text-xs md:text-sm">{patientCode || patientId}</span>
                         </p>
                     </div>
                 </div>
@@ -148,6 +179,13 @@ const PhAssistPlan = ({ patientCode }) => {
                     <span className="hidden sm:inline">Refresh</span>
                 </button>
             </div>
+
+            {/* Error Display */}
+            {error && (
+                <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+                    <strong>Error:</strong> {error}
+                </div>
+            )}
 
             {/* Quick Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 mb-4 md:mb-6">
@@ -191,7 +229,7 @@ const PhAssistPlan = ({ patientCode }) => {
                 </button>
             </div>
 
-            {/* Input Form - Collapsible */}
+            {/* Input Form */}
             {showForm && (
                 <div className="bg-gray-50 rounded-lg p-3 md:p-6 mb-4 md:mb-8 border border-gray-200">
                     <div className="flex justify-between items-center mb-6">
