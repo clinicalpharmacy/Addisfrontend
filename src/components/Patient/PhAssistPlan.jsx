@@ -11,7 +11,7 @@ import {
     FaPlus
 } from 'react-icons/fa';
 
-const PhAssistPlan = ({ patientCode, patientId }) => {
+const PhAssistPlan = ({ patientCode }) => {
     const [pharmacyAssessment, setPharmacyAssessment] = useState('');
     const [plan, setPlan] = useState('');
     const [savedPlans, setSavedPlans] = useState([]);
@@ -22,36 +22,35 @@ const PhAssistPlan = ({ patientCode, patientId }) => {
     const [showForm, setShowForm] = useState(false);
     const [error, setError] = useState(null);
 
-    // Use patientId if available, otherwise use patientCode
-    const effectivePatientId = patientId || patientCode;
-
     useEffect(() => {
-        if (effectivePatientId) {
-            console.log('Fetching plans for patient:', effectivePatientId);
+        if (patientCode) {
+            console.log('PatientCode received:', patientCode);
             fetchSavedPlans();
         }
-    }, [effectivePatientId]);
+    }, [patientCode]);
 
     const fetchSavedPlans = async () => {
         try {
             setLoading(true);
             setError(null);
+            console.log('Fetching plans for patientCode:', patientCode);
             
-            // Use the effective patient identifier
-            const response = await api.get(`/pharmacy-plans/patient/${effectivePatientId}`);
+            const response = await api.get(`/pharmacy-plans/patient/${patientCode}`);
             console.log('Fetch response:', response);
             
+            // Handle different response structures
             if (response && response.success) {
                 setSavedPlans(response.plans || []);
+                console.log('Plans loaded:', response.plans?.length || 0);
             } else if (response && response.data && response.data.success) {
                 setSavedPlans(response.data.plans || []);
             } else {
-                setSavedPlans([]);
+                console.error('Unexpected response structure:', response);
+                setError('Invalid response from server');
             }
         } catch (error) {
             console.error('Error fetching pharmacy plans:', error);
             setError(error.response?.data?.error || error.message || 'Failed to load plans');
-            setSavedPlans([]);
         } finally {
             setLoading(false);
         }
@@ -68,14 +67,14 @@ const PhAssistPlan = ({ patientCode, patientId }) => {
                 return;
             }
 
-            if (!effectivePatientId) {
-                alert('Patient information is missing. Please refresh the page.');
+            if (!patientCode) {
+                alert('Patient code is missing. Please refresh the page.');
                 setLoading(false);
                 return;
             }
 
             const planData = {
-                patient_code: String(effectivePatientId), // Send as string to handle both numeric and text
+                patient_code: patientCode,
                 plan_type: planType || null,
                 goals: pharmacyAssessment,
                 medications: '',
@@ -88,8 +87,10 @@ const PhAssistPlan = ({ patientCode, patientId }) => {
 
             let result;
             if (editIndex !== null) {
+                console.log('Updating plan:', editIndex);
                 result = await api.put(`/pharmacy-plans/${editIndex}`, planData);
             } else {
+                console.log('Creating new plan');
                 result = await api.post('/pharmacy-plans', planData);
             }
 
@@ -128,6 +129,8 @@ const PhAssistPlan = ({ patientCode, patientId }) => {
 
         try {
             setLoading(true);
+            console.log('Deleting plan:', planId);
+            
             const result = await api.delete(`/pharmacy-plans/${planId}`);
             console.log('Delete response:', result);
             
@@ -166,8 +169,8 @@ const PhAssistPlan = ({ patientCode, patientId }) => {
                     <div className="min-w-0 flex-1">
                         <h2 className="text-xl md:text-2xl font-bold text-gray-800 truncate">Pharmacy Assessment & Plan</h2>
                         <p className="text-xs md:text-base text-gray-600 flex items-center gap-2 truncate">
-                            <span>Patient ID:</span>
-                            <span className="font-semibold bg-green-50 px-2 py-1 rounded text-xs md:text-sm">{patientCode || patientId}</span>
+                            <span>Patient:</span>
+                            <span className="font-semibold bg-green-50 px-2 py-1 rounded text-xs md:text-sm">{patientCode}</span>
                         </p>
                     </div>
                 </div>
@@ -229,7 +232,7 @@ const PhAssistPlan = ({ patientCode, patientId }) => {
                 </button>
             </div>
 
-            {/* Input Form */}
+            {/* Input Form - Collapsible */}
             {showForm && (
                 <div className="bg-gray-50 rounded-lg p-3 md:p-6 mb-4 md:mb-8 border border-gray-200">
                     <div className="flex justify-between items-center mb-6">
