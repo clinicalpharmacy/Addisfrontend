@@ -20,11 +20,9 @@ const PhAssistPlan = ({ patientCode }) => {
     const [planType, setPlanType] = useState('');
     const [followUpDate, setFollowUpDate] = useState('');
     const [showForm, setShowForm] = useState(false);
-    const [error, setError] = useState(null);
 
     useEffect(() => {
         if (patientCode) {
-            console.log('PatientCode received:', patientCode);
             fetchSavedPlans();
         }
     }, [patientCode]);
@@ -32,25 +30,14 @@ const PhAssistPlan = ({ patientCode }) => {
     const fetchSavedPlans = async () => {
         try {
             setLoading(true);
-            setError(null);
-            console.log('Fetching plans for patientCode:', patientCode);
-            
-            const response = await api.get(`/pharmacy-plans/patient/${patientCode}`);
-            console.log('Fetch response:', response);
-            
-            // Handle different response structures
-            if (response && response.success) {
-                setSavedPlans(response.plans || []);
-                console.log('Plans loaded:', response.plans?.length || 0);
-            } else if (response && response.data && response.data.success) {
-                setSavedPlans(response.data.plans || []);
-            } else {
-                console.error('Unexpected response structure:', response);
-                setError('Invalid response from server');
+            // Use patientCode directly - backend will handle the lookup
+            const result = await api.get(`/pharmacy-plans/patient/${patientCode}`);
+
+            if (result.success && result.plans) {
+                setSavedPlans(result.plans);
             }
         } catch (error) {
             console.error('Error fetching pharmacy plans:', error);
-            setError(error.response?.data?.error || error.message || 'Failed to load plans');
         } finally {
             setLoading(false);
         }
@@ -59,7 +46,6 @@ const PhAssistPlan = ({ patientCode }) => {
     const savePlan = async () => {
         try {
             setLoading(true);
-            setError(null);
 
             if (!pharmacyAssessment.trim() || !plan.trim()) {
                 alert('Please fill in both Pharmacy Assessment and Plan of Action');
@@ -67,14 +53,8 @@ const PhAssistPlan = ({ patientCode }) => {
                 return;
             }
 
-            if (!patientCode) {
-                alert('Patient code is missing. Please refresh the page.');
-                setLoading(false);
-                return;
-            }
-
             const planData = {
-                patient_code: patientCode,
+                patient_code: patientCode, // Send patient_code instead of patient_id
                 plan_type: planType || null,
                 goals: pharmacyAssessment,
                 medications: '',
@@ -83,38 +63,34 @@ const PhAssistPlan = ({ patientCode }) => {
                 notes: plan
             };
 
-            console.log('Saving plan data:', planData);
-
             let result;
             if (editIndex !== null) {
-                console.log('Updating plan:', editIndex);
                 result = await api.put(`/pharmacy-plans/${editIndex}`, planData);
             } else {
-                console.log('Creating new plan');
                 result = await api.post('/pharmacy-plans', planData);
             }
 
-            console.log('Save response:', result);
-
-            if (result && result.success) {
+            if (result.success) {
                 alert(`Plan ${editIndex !== null ? 'updated' : 'saved'} successfully!`);
-                resetForm();
-                await fetchSavedPlans();
+                setPharmacyAssessment('');
+                setPlan('');
+                setFollowUpDate('');
+                setPlanType('');
+                setEditIndex(null);
+                setShowForm(false);
+                fetchSavedPlans();
             } else {
-                throw new Error(result?.error || result?.data?.error || 'Failed to save plan');
+                throw new Error(result.error || 'Failed to save plan');
             }
         } catch (error) {
             console.error('Error saving plan:', error);
-            const errorMsg = error.response?.data?.error || error.response?.data?.message || error.message || 'Unknown error occurred';
-            setError(errorMsg);
-            alert('Error: ' + errorMsg);
+            alert('Error: ' + (error.response?.data?.error || error.message));
         } finally {
             setLoading(false);
         }
     };
 
     const handleEdit = (planItem) => {
-        console.log('Editing plan:', planItem);
         setPharmacyAssessment(planItem.goals || '');
         setPlan(planItem.notes || '');
         setPlanType(planItem.plan_type || '');
@@ -128,23 +104,14 @@ const PhAssistPlan = ({ patientCode }) => {
         if (!window.confirm('Are you sure you want to delete this plan?')) return;
 
         try {
-            setLoading(true);
-            console.log('Deleting plan:', planId);
-            
             const result = await api.delete(`/pharmacy-plans/${planId}`);
-            console.log('Delete response:', result);
-            
-            if (result && result.success) {
+            if (result.success) {
                 alert('Plan deleted successfully!');
-                await fetchSavedPlans();
-            } else {
-                throw new Error(result?.error || 'Failed to delete plan');
+                fetchSavedPlans();
             }
         } catch (error) {
             console.error('Error deleting plan:', error);
             alert('Error deleting plan: ' + (error.response?.data?.error || error.message || 'Failed'));
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -155,7 +122,6 @@ const PhAssistPlan = ({ patientCode }) => {
         setPlanType('');
         setEditIndex(null);
         setShowForm(false);
-        setError(null);
     };
 
     return (
@@ -182,13 +148,6 @@ const PhAssistPlan = ({ patientCode }) => {
                     <span className="hidden sm:inline">Refresh</span>
                 </button>
             </div>
-
-            {/* Error Display */}
-            {error && (
-                <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-                    <strong>Error:</strong> {error}
-                </div>
-            )}
 
             {/* Quick Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 mb-4 md:mb-6">
