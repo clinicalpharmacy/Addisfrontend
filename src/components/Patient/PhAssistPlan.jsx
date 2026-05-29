@@ -11,7 +11,7 @@ import {
     FaFileMedical
 } from 'react-icons/fa';
 
-const PhAssistPlan = ({ patientCode }) => {
+const PhAssistPlan = ({ patientCode, patientId }) => {
     const [pharmacyAssessment, setPharmacyAssessment] = useState('');
     const [plan, setPlan] = useState('');
     const [savedPlans, setSavedPlans] = useState([]);
@@ -21,13 +21,15 @@ const PhAssistPlan = ({ patientCode }) => {
     const [followUpDate, setFollowUpDate] = useState('');
 
     useEffect(() => {
-        fetchSavedPlans();
-    }, [patientCode]);
+        if (patientId) {
+            fetchSavedPlans();
+        }
+    }, [patientId]);
 
     const fetchSavedPlans = async () => {
         try {
             setLoading(true);
-            const result = await api.get(`/plans/patient/${patientCode}`);
+            const result = await api.get(`/pharmacy-plans/patient/${patientId}`);
 
             if (result.success && result.plans) {
                 setSavedPlans(result.plans);
@@ -49,9 +51,15 @@ const PhAssistPlan = ({ patientCode }) => {
                 return;
             }
 
+            if (!patientId) {
+                alert('Patient ID is missing. Please refresh the page.');
+                setLoading(false);
+                return;
+            }
+
             const planData = {
-                patient_id: patientCode,
-                plan_type: planType, // Progress Note (optional free text)
+                patient_id: patientId,
+                plan_type: planType,
                 goals: pharmacyAssessment,
                 medications: '',
                 monitoring: '',
@@ -62,10 +70,10 @@ const PhAssistPlan = ({ patientCode }) => {
             let result;
             if (editIndex !== null) {
                 // Update existing plan
-                result = await api.put(`/plans/${editIndex}`, planData);
+                result = await api.put(`/pharmacy-plans/${editIndex}`, planData);
             } else {
                 // Add new plan
-                result = await api.post('/plans/pharmacy-assistance', planData);
+                result = await api.post('/pharmacy-plans', planData);
             }
 
             if (result.success) {
@@ -81,7 +89,7 @@ const PhAssistPlan = ({ patientCode }) => {
             }
         } catch (error) {
             console.error('Error saving plan:', error);
-            alert('Error: ' + error.message);
+            alert('Error: ' + (error.response?.data?.error || error.message));
         } finally {
             setLoading(false);
         }
@@ -99,14 +107,14 @@ const PhAssistPlan = ({ patientCode }) => {
         if (!window.confirm('Are you sure you want to delete this plan?')) return;
 
         try {
-            const result = await api.delete(`/plans/${planId}`);
+            const result = await api.delete(`/pharmacy-plans/${planId}`);
             if (result.success) {
                 alert('Plan deleted successfully!');
                 fetchSavedPlans();
             }
         } catch (error) {
             console.error('Error deleting plan:', error);
-            alert('Error deleting plan: ' + (error.message || error.error || 'Failed'));
+            alert('Error deleting plan: ' + (error.response?.data?.error || error.message || 'Failed'));
         }
     };
 
@@ -118,7 +126,7 @@ const PhAssistPlan = ({ patientCode }) => {
                 </div>
                 <div>
                     <h2 className="text-2xl font-bold text-gray-800">Pharmacy Assessment & Plan</h2>
-                    <p className="text-gray-600">For Patient: {patientCode}</p>
+                    <p className="text-gray-600">For Patient: {patientCode || 'Loading...'}</p>
                 </div>
             </div>
 
@@ -240,9 +248,17 @@ const PhAssistPlan = ({ patientCode }) => {
                         {savedPlans.map((item, index) => (
                             <div key={item.id} className="border rounded-lg p-4 bg-gray-50 hover:bg-white transition hover:shadow-md">
                                 <div className="flex justify-between items-start mb-4">
-                                    <h4 className="font-semibold text-gray-800">
-                                        Plan #{index + 1}
-                                    </h4>
+                                    <div>
+                                        <h4 className="font-semibold text-gray-800">
+                                            Plan #{index + 1}
+                                        </h4>
+                                        {item.follow_up && (
+                                            <p className="text-sm text-gray-500 mt-1 flex items-center gap-1">
+                                                <FaCalendarAlt className="text-xs" />
+                                                Follow-up: {new Date(item.follow_up).toLocaleDateString()}
+                                            </p>
+                                        )}
+                                    </div>
                                     <div className="flex gap-2">
                                         <button onClick={() => handleEdit(item)} className="text-blue-500 hover:text-blue-700">
                                             <FaEdit /> Edit
@@ -253,7 +269,18 @@ const PhAssistPlan = ({ patientCode }) => {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {item.plan_type && (
+                                    <div className="mb-3">
+                                        <h5 className="font-medium text-gray-700 mb-1 text-sm">
+                                            Progress Note
+                                        </h5>
+                                        <div className="bg-blue-50 border border-blue-200 rounded p-3 whitespace-pre-wrap text-sm">
+                                            {item.plan_type}
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <h5 className="font-medium text-gray-700 mb-2">
                                             Pharmacy Assessment
@@ -270,6 +297,11 @@ const PhAssistPlan = ({ patientCode }) => {
                                             {item.notes}
                                         </div>
                                     </div>
+                                </div>
+
+                                <div className="mt-3 text-xs text-gray-400">
+                                    Created: {new Date(item.created_at).toLocaleString()}
+                                    {item.updated_at !== item.created_at && ` | Updated: ${new Date(item.updated_at).toLocaleString()}`}
                                 </div>
                             </div>
                         ))}
