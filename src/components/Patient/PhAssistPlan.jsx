@@ -11,7 +11,7 @@ import {
     FaFileMedical
 } from 'react-icons/fa';
 
-const PhAssistPlan = ({ patientCode }) => {
+const PhAssistPlan = ({ patientCode, patientId }) => {
     const [pharmacyAssessment, setPharmacyAssessment] = useState('');
     const [plan, setPlan] = useState('');
     const [savedPlans, setSavedPlans] = useState([]);
@@ -19,65 +19,42 @@ const PhAssistPlan = ({ patientCode }) => {
     const [loading, setLoading] = useState(false);
     const [planType, setPlanType] = useState('');
     const [followUpDate, setFollowUpDate] = useState('');
-    const [patientId, setPatientId] = useState(null);
-    const [fetchingPatient, setFetchingPatient] = useState(false);
-
-    // Fetch patient ID when patientCode changes
-    useEffect(() => {
-        if (patientCode) {
-            fetchPatientId();
-        }
-    }, [patientCode]);
-
-    const fetchPatientId = async () => {
-        try {
-            setFetchingPatient(true);
-            // Try to get patient by ID first (if patientCode is actually an ID)
-            if (/^\d+$/.test(patientCode)) {
-                // It's a numeric ID
-                setPatientId(patientCode);
-            } else {
-                // Search for patient by code or name
-                const result = await api.get(`/patients/search/${patientCode}`);
-                if (result.success && result.patients && result.patients.length > 0) {
-                    // Find the matching patient
-                    const patient = result.patients.find(p => 
-                        p.patient_code === patientCode || 
-                        p.id == patientCode ||
-                        p.full_name?.toLowerCase().includes(patientCode.toLowerCase())
-                    );
-                    if (patient) {
-                        setPatientId(patient.id);
-                    } else {
-                        console.error('Patient not found');
-                        alert('Patient not found. Please refresh the page.');
-                    }
-                }
-            }
-        } catch (error) {
-            console.error('Error fetching patient ID:', error);
-            alert('Error loading patient information');
-        } finally {
-            setFetchingPatient(false);
-        }
-    };
+    const [error, setError] = useState(null);
 
     useEffect(() => {
+        console.log('Component mounted with:', { patientCode, patientId });
         if (patientId) {
             fetchSavedPlans();
+        } else {
+            console.warn('No patientId provided, waiting for parent component');
         }
     }, [patientId]);
 
     const fetchSavedPlans = async () => {
         try {
             setLoading(true);
-            const result = await api.get(`/pharmacy-plans/patient/${patientId}`);
-
-            if (result.success && result.plans) {
-                setSavedPlans(result.plans);
+            setError(null);
+            console.log('Fetching plans for patientId:', patientId);
+            
+            const response = await api.get(`/pharmacy-plans/patient/${patientId}`);
+            console.log('Fetch plans response:', response);
+            
+            // Check different response structures
+            let plans = [];
+            if (response.success && response.plans) {
+                plans = response.plans;
+            } else if (response.data && response.data.success && response.data.plans) {
+                plans = response.data.plans;
+            } else if (Array.isArray(response)) {
+                plans = response;
+            } else if (response.plans) {
+                plans = response.plans;
             }
+            
+            setSavedPlans(plans);
         } catch (error) {
             console.error('Error fetching pharmacy plans:', error);
+            setError('Failed to load saved plans: ' + (error.response?.data?.error || error.message));
         } finally {
             setLoading(false);
         }
@@ -86,6 +63,7 @@ const PhAssistPlan = ({ patientCode }) => {
     const savePlan = async () => {
         try {
             setLoading(true);
+            setError(null);
 
             if (!pharmacyAssessment.trim() || !plan.trim()) {
                 alert('Please fill in both Pharmacy Assessment and Plan of Action');
@@ -101,13 +79,15 @@ const PhAssistPlan = ({ patientCode }) => {
 
             const planData = {
                 patient_id: parseInt(patientId),
-                plan_type: planType,
+                plan_type: planType || null,
                 goals: pharmacyAssessment,
                 medications: '',
                 monitoring: '',
                 follow_up: followUpDate || null,
                 notes: plan
             };
+
+            console.log('Saving plan data:', planData);
 
             let result;
             if (editIndex !== null) {
@@ -118,20 +98,25 @@ const PhAssistPlan = ({ patientCode }) => {
                 result = await api.post('/pharmacy-plans', planData);
             }
 
-            if (result.success) {
-                alert(`Plan ${editIndex !== null ? 'updated' : 'saved'} successfully!`);
+            console.log('Save plan response:', result);
+
+            if (result && (result.success || result.data?.success)) {
+                const successMsg = result.message || result.data?.message || `Plan ${editIndex !== null ? 'updated' : 'saved'} successfully!`;
+                alert(successMsg);
                 setPharmacyAssessment('');
                 setPlan('');
                 setFollowUpDate('');
                 setPlanType('');
                 setEditIndex(null);
-                fetchSavedPlans();
+                await fetchSavedPlans();
             } else {
-                throw new Error(result.error || 'Failed to save plan');
+                throw new Error(result?.error || result?.data?.error || 'Failed to save plan');
             }
         } catch (error) {
             console.error('Error saving plan:', error);
-            alert('Error: ' + (error.response?.data?.error || error.message));
+            const errorMsg = error.response?.data?.error || error.response?.data?.message || error.message || 'Unknown error occurred';
+            setError(errorMsg);
+            alert('Error: ' + errorMsg);
         } finally {
             setLoading(false);
         }
@@ -149,23 +134,32 @@ const PhAssistPlan = ({ patientCode }) => {
         if (!window.confirm('Are you sure you want to delete this plan?')) return;
 
         try {
+            setLoading(true);
             const result = await api.delete(`/pharmacy-plans/${planId}`);
-            if (result.success) {
+            console.log('Delete response:', result);
+            
+            if (result && (result.success || result.data?.success)) {
                 alert('Plan deleted successfully!');
-                fetchSavedPlans();
+                await fetchSavedPlans();
+            } else {
+                throw new Error(result?.error || result?.data?.error || 'Failed to delete plan');
             }
         } catch (error) {
             console.error('Error deleting plan:', error);
-            alert('Error deleting plan: ' + (error.response?.data?.error || error.message || 'Failed'));
+            const errorMsg = error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to delete plan';
+            alert('Error deleting plan: ' + errorMsg);
+        } finally {
+            setLoading(false);
         }
     };
 
-    if (fetchingPatient) {
+    if (!patientId && patientCode) {
         return (
             <div className="bg-white rounded-xl shadow-lg p-6">
                 <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto"></div>
                     <p className="text-gray-600 mt-2">Loading patient information...</p>
+                    <p className="text-gray-400 text-sm mt-2">Patient Code: {patientCode}</p>
                 </div>
             </div>
         );
@@ -179,9 +173,15 @@ const PhAssistPlan = ({ patientCode }) => {
                 </div>
                 <div>
                     <h2 className="text-2xl font-bold text-gray-800">Pharmacy Assessment & Plan</h2>
-                    <p className="text-gray-600">For Patient: {patientCode || 'Loading...'}</p>
+                    <p className="text-gray-600">For Patient: {patientCode || patientId || 'Loading...'}</p>
                 </div>
             </div>
+
+            {error && (
+                <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                    <strong>Error:</strong> {error}
+                </div>
+            )}
 
             {/* Input Form */}
             <div className="mb-8">
@@ -192,7 +192,6 @@ const PhAssistPlan = ({ patientCode }) => {
                     </h3>
 
                     <div className="space-y-4">
-
                         {/* Progress Note */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -254,7 +253,7 @@ const PhAssistPlan = ({ patientCode }) => {
                         <div className="flex gap-3">
                             <button
                                 onClick={savePlan}
-                                disabled={loading || !patientId}
+                                disabled={loading}
                                 className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg flex items-center gap-2 disabled:opacity-50"
                             >
                                 <FaSave /> {loading ? 'Saving...' : (editIndex !== null ? 'Update Plan' : 'Save Plan')}
@@ -268,6 +267,7 @@ const PhAssistPlan = ({ patientCode }) => {
                                         setFollowUpDate('');
                                         setPlanType('');
                                         setEditIndex(null);
+                                        setError(null);
                                     }}
                                     className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-lg"
                                 >
