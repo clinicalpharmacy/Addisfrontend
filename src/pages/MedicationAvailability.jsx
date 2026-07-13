@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     FaPills, FaSearch, FaPlus, FaHospital,
     FaCalendarAlt, FaTrash, FaCheckCircle, FaExclamationCircle,
@@ -22,6 +22,12 @@ const MedicationAvailability = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [editPostId, setEditPostId] = useState(null);
     const isAdmin = currentUser?.role === 'admin';
+    
+    // Add refs to prevent unnecessary re-renders and track mounted state
+    const isMounted = useRef(true);
+    const pollingInterval = useRef(null);
+    const autoDeleteInterval = useRef(null);
+    const postsRef = useRef([]);
 
     const [formData, setFormData] = useState({
         medication_needed: '',
@@ -29,19 +35,47 @@ const MedicationAvailability = () => {
         notes: '',
     });
 
+    // Keep postsRef in sync with posts state
+    useEffect(() => {
+        postsRef.current = posts;
+    }, [posts]);
+
     useEffect(() => {
         fetchCurrentUser();
         fetchPosts();
+        
+        // Cleanup on unmount
+        return () => {
+            isMounted.current = false;
+            if (pollingInterval.current) {
+                clearInterval(pollingInterval.current);
+            }
+            if (autoDeleteInterval.current) {
+                clearInterval(autoDeleteInterval.current);
+            }
+        };
     }, []);
 
-    // Auto-delete posts when search_date has passed
+    // Auto-delete posts when search_date has passed - FIXED
     useEffect(() => {
+        // Clear any existing interval
+        if (autoDeleteInterval.current) {
+            clearInterval(autoDeleteInterval.current);
+        }
+        
         const checkAndDeleteExpiredPosts = async () => {
-            const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-            const expiredPosts = posts.filter(post => 
+            // Use postsRef to avoid dependency on posts state
+            const currentPosts = postsRef.current;
+            if (!currentPosts.length) return;
+            
+            const today = new Date().toISOString().split('T')[0];
+            const expiredPosts = currentPosts.filter(post => 
                 post.search_date && post.search_date < today
             );
             
+            if (expiredPosts.length === 0) return;
+            
+            // Delete expired posts
             for (const post of expiredPosts) {
                 try {
                     await api.delete(`/medication-availability/${post.id}`);
@@ -51,42 +85,75 @@ const MedicationAvailability = () => {
                 }
             }
             
-            // Refresh posts after deletions
-            if (expiredPosts.length > 0) {
-                fetchPosts();
+            // Refresh posts only if we deleted something and component is still mounted
+            if (expiredPosts.length > 0 && isMounted.current) {
+                await fetchPosts();
             }
         };
 
-        // Check every hour (3600000 ms)
-        const interval = setInterval(checkAndDeleteExpiredPosts, 3600000);
-        
-        // Initial check
-        checkAndDeleteExpiredPosts();
+        // Initial check after a small delay to avoid immediate re-render
+        const initialTimeout = setTimeout(() => {
+            checkAndDeleteExpiredPosts();
+        }, 1000);
 
-        return () => clearInterval(interval);
-    }, [posts]);
+        // Set up interval
+        autoDeleteInterval.current = setInterval(checkAndDeleteExpiredPosts, 3600000);
 
-    // Polling for live chat
+        return () => {
+            clearTimeout(initialTimeout);
+            if (autoDeleteInterval.current) {
+                clearInterval(autoDeleteInterval.current);
+            }
+        };
+    }, []); // Empty dependency array - only runs once on mount
+
+    // Polling for live chat - FIXED
     useEffect(() => {
-        let interval;
+        // Clear any existing polling interval
+        if (pollingInterval.current) {
+            clearInterval(pollingInterval.current);
+            pollingInterval.current = null;
+        }
+
+        const fetchChatData = async () => {
+            if (!selectedPost || !isMounted.current) return;
+            
+            try {
+                if (isPoster) {
+                    if (selectedChatUser) {
+                        await fetchComments(selectedPost.id, selectedChatUser.id);
+                    }
+                } else {
+                    await fetchComments(selectedPost.id);
+                }
+            } catch (error) {
+                console.error('Error polling comments:', error);
+            }
+        };
+
+        // Initial fetch
         if (selectedPost) {
-            // Initial fetch or when chat user changes
             if (isPoster) {
-                if (selectedChatUser) fetchComments(selectedPost.id, selectedChatUser.id);
+                if (selectedChatUser) {
+                    fetchComments(selectedPost.id, selectedChatUser.id);
+                } else {
+                    // Don't poll if no chat user selected
+                }
             } else {
                 fetchComments(selectedPost.id);
             }
 
-            interval = setInterval(() => {
-                if (isPoster) {
-                    if (selectedChatUser) fetchComments(selectedPost.id, selectedChatUser.id);
-                } else {
-                    fetchComments(selectedPost.id);
-                }
-            }, 5000);
+            // Set up polling interval
+            pollingInterval.current = setInterval(fetchChatData, 5000);
         }
-        return () => clearInterval(interval);
-    }, [selectedPost, selectedChatUser, isPoster]);
+
+        return () => {
+            if (pollingInterval.current) {
+                clearInterval(pollingInterval.current);
+                pollingInterval.current = null;
+            }
+        };
+    }, [selectedPost, selectedChatUser, isPoster]); // Proper dependencies
 
     const fetchCurrentUser = () => {
         const userData = localStorage.getItem('user');
@@ -103,21 +170,25 @@ const MedicationAvailability = () => {
         try {
             setLoading(true);
             const data = await api.get('/medication-availability');
-            if (data && data.success) {
+            if (data && data.success && isMounted.current) {
                 setPosts(Array.isArray(data.posts) ? data.posts : []);
-            } else {
+            } else if (isMounted.current) {
                 setPosts([]);
             }
         } catch (error) {
             console.error('Error fetching posts:', error);
-            setPosts([]);
+            if (isMounted.current) {
+                setPosts([]);
+            }
         } finally {
-            setLoading(false);
+            if (isMounted.current) {
+                setLoading(false);
+            }
         }
     };
 
     const fetchComments = async (postId, chatWithId = null) => {
-        if (!postId || postId === 'undefined') {
+        if (!postId || postId === 'undefined' || !isMounted.current) {
             return;
         }
         try {
@@ -128,16 +199,20 @@ const MedicationAvailability = () => {
                 : `/medication-availability/${postId}/comments`;
 
             const data = await api.get(url);
-            if (data && data.success) {
+            if (data && data.success && isMounted.current) {
                 setComments(Array.isArray(data.comments) ? data.comments : []);
-            } else {
+            } else if (isMounted.current) {
                 setComments([]);
             }
         } catch (error) {
             console.error('Error fetching comments:', error);
-            setComments([]);
+            if (isMounted.current) {
+                setComments([]);
+            }
         } finally {
-            setLoadingComments(false);
+            if (isMounted.current) {
+                setLoadingComments(false);
+            }
         }
     };
 
@@ -145,14 +220,16 @@ const MedicationAvailability = () => {
         try {
             const params = currentUser?.role === 'admin' ? '?admin=true' : '';
             const data = await api.get(`/medication-availability/${postId}/conversations${params}`);
-            if (data && data.success) {
+            if (data && data.success && isMounted.current) {
                 setConversations(Array.isArray(data.conversations) ? data.conversations : []);
-            } else {
+            } else if (isMounted.current) {
                 setConversations([]);
             }
         } catch (error) {
             console.error('Error fetching conversations:', error);
-            setConversations([]);
+            if (isMounted.current) {
+                setConversations([]);
+            }
         }
     };
 
@@ -176,10 +253,9 @@ const MedicationAvailability = () => {
                 recipient_id: recipient_id
             });
 
-            if (data && data.success) {
+            if (data && data.success && isMounted.current) {
                 setComments(prevComments => [...prevComments, data.comment]);
                 setNewComment('');
-                // If this was a new conversation, refresh the list
                 if (isPoster && !conversations.find(c => c.id === selectedChatUser?.id)) {
                     fetchConversations(selectedPost.id);
                 }
@@ -200,7 +276,7 @@ const MedicationAvailability = () => {
         setComments([]);
 
         if (amIPoster || isAdmin) {
-            fetchConversations(post.id); // Admin can see all conversations
+            fetchConversations(post.id);
         }
     };
 
@@ -211,7 +287,6 @@ const MedicationAvailability = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        // Validate required fields
         if (!formData.medication_needed.trim()) {
             alert('Medication name is required');
             return;
@@ -220,7 +295,7 @@ const MedicationAvailability = () => {
         try {
             if (isEditing) {
                 const response = await api.put(`/medication-availability/${editPostId}`, formData);
-                if (response && response.success) {
+                if (response && response.success && isMounted.current) {
                     setIsEditing(false);
                     setEditPostId(null);
                     setFormData({
@@ -233,7 +308,7 @@ const MedicationAvailability = () => {
                 }
             } else {
                 const response = await api.post('/medication-availability', formData);
-                if (response && response.success) {
+                if (response && response.success && isMounted.current) {
                     setShowAddForm(false);
                     setFormData({
                         medication_needed: '',
@@ -258,14 +333,12 @@ const MedicationAvailability = () => {
         setEditPostId(post.id);
         setIsEditing(true);
         setShowAddForm(true);
-        // Scroll to form
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handleDelete = async (id) => {
         if (!window.confirm('Are you sure you want to delete this post?')) return;
         
-        // Check if user is authorized to delete (poster or admin)
         const post = posts.find(p => p.id === id);
         if (!post) return;
         
@@ -278,7 +351,7 @@ const MedicationAvailability = () => {
         
         try {
             const data = await api.delete(`/medication-availability/${id}`);
-            if (data && data.success) {
+            if (data && data.success && isMounted.current) {
                 setPosts(prevPosts => prevPosts.filter(p => p.id !== id));
                 if (selectedPost?.id === id) {
                     setSelectedPost(null);
@@ -320,12 +393,14 @@ const MedicationAvailability = () => {
         }
     };
 
-    // Check if search date has passed
     const isDatePassed = (dateString) => {
         if (!dateString) return false;
         const today = new Date().toISOString().split('T')[0];
         return dateString < today;
     };
+
+    // Memoize filtered posts to prevent unnecessary re-renders
+    const memoizedFilteredPosts = React.useMemo(() => filteredPosts, [posts, searchTerm]);
 
     return (
         <div className="p-6 max-w-7xl mx-auto flex flex-col h-[calc(100vh-100px)]">
@@ -337,7 +412,6 @@ const MedicationAvailability = () => {
                         ያጡትን መድሃኒት ማፈላለጊያ
                     </h1>
 
-                    {/* 🔵 ADDED BULLETIN TEXT (LEFT-TOP) */}
                     <div className="mt-2 flex flex-wrap gap-3 text-xs font-semibold text-gray-500">
                         <span className="bg-gray-100 px-3 py-1 rounded-full">• Anonymous post</span>
                         <span className="bg-gray-100 px-3 py-1 rounded-full">• Private chat</span>
@@ -375,7 +449,7 @@ const MedicationAvailability = () => {
                         />
                     </div>
 
-                    {/* Add/Edit Form (In-list) */}
+                    {/* Add/Edit Form */}
                     {showAddForm && (
                         <div className="bg-white p-6 rounded-2xl shadow-lg border-2 border-blue-100 mb-6">
                             <h2 className="text-lg font-bold mb-4 text-gray-800">{isEditing ? 'Edit Medication' : 'የሚፈለገውን መድሃኒት ይጻፉ'}</h2>
@@ -399,7 +473,7 @@ const MedicationAvailability = () => {
                                         onChange={(e) => setFormData({ ...formData, search_date: e.target.value })}
                                         className="border border-gray-200 rounded-xl p-3 w-full"
                                         placeholder="እስከ መች ይፈለግ"
-                                        min={new Date().toISOString().split('T')[0]} // Can't select past dates
+                                        min={new Date().toISOString().split('T')[0]}
                                     />
                                 </div>
                                 <div className="md:col-span-2">
@@ -420,10 +494,10 @@ const MedicationAvailability = () => {
 
                     {loading ? (
                         <div className="py-10 text-center">Loading posts...</div>
-                    ) : filteredPosts.length === 0 ? (
+                    ) : memoizedFilteredPosts.length === 0 ? (
                         <div className="py-20 text-center text-gray-400">No postings found.</div>
                     ) : (
-                        filteredPosts.map(post => {
+                        memoizedFilteredPosts.map(post => {
                             const searchDatePassed = isDatePassed(post.search_date);
                             
                             return (
@@ -436,7 +510,6 @@ const MedicationAvailability = () => {
                                     `}
                                 >
                                     <div className="flex justify-between items-start mb-2">
-                                        {/* LEFT: medication name */}
                                         <div>
                                             <h3 className="text-lg font-bold text-gray-800">
                                                 {post.medication_needed}
@@ -446,23 +519,18 @@ const MedicationAvailability = () => {
                                                     </span>
                                                 )}
                                             </h3>
-                                            {/* Search Date */}
                                             {post.search_date && (
                                                 <span className="text-[11px] text-gray-500 font-medium">
                                                     እስከ መች ይፈለግ: {formatDate(post.search_date)}
                                                 </span>
-                                                )}
+                                            )}
                                         </div>
                                     
-                                        {/* RIGHT: date + edit/delete */}
                                         <div className="flex flex-col items-end gap-1">
-                                    
-                                            {/* created at date */}
                                             <span className="text-[11px] text-gray-400 font-medium">
                                                 Posted: {formatDate(post.created_at)}
                                             </span>
                                     
-                                            {/* edit/delete if owner or admin */}
                                             {currentUser && (currentUser.id === post.user_id || currentUser.role === 'admin') && (
                                                 <div className="flex gap-2">
                                                     <button
@@ -541,7 +609,6 @@ const MedicationAvailability = () => {
                             ) : (
                                 <>
                                     <div className="flex-1 overflow-y-auto p-4 space-y-4 flex flex-col">
-                                        {/* Back to list if poster */}
                                         {isPoster && (
                                             <button
                                                 onClick={() => setSelectedChatUser(null)}
