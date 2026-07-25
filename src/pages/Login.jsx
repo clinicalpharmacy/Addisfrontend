@@ -323,7 +323,7 @@ const Login = () => {
     const CurrentIcon = carouselMessages[currentSlide].icon;
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 flex items-start justify-center p-3 relative overflow-auto">
+        <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 flex items-start justify-center p-1 sm:p-3 relative overflow-auto">
             {/* Animated Background Elements - Hidden on mobile for performance */}
             <div className="absolute inset-0 overflow-hidden hidden md:block">
                 <div className="absolute -top-40 -right-40 w-80 h-80 bg-white rounded-full opacity-10 animate-pulse"></div>
@@ -336,7 +336,7 @@ const Login = () => {
                 <FaUserMd className="absolute top-40 right-40 text-white opacity-10 text-6xl animate-bounce delay-300" />
             </div>
 
-            <div className="w-full max-w-sm mx-auto relative z-10 px-0 sm:px-0 py-4">
+            <div className="w-full max-w-xs mx-auto relative z-10 px-0 sm:px-0 py-2 sm:py-4">
                 {/* Animated Logo and Brand - Compact for mobile */}
                 <div className="text-center mb-4 transform hover:scale-105 transition-transform duration-300">
                     <div className="relative inline-block">
@@ -367,13 +367,8 @@ const Login = () => {
                 </div>
 
                 {/* Login Card - Optimized for mobile */}
-                <div className="bg-white/95 backdrop-blur-lg rounded-2xl shadow-2xl p-5 border border-white/20 transform transition-all duration-300">
+                <div className="bg-white/95 backdrop-blur-lg rounded-2xl shadow-2xl p-3 sm:p-5 border border-white/20 transform transition-all duration-300">
                     <div className="mb-5 text-center">
-                        <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-0.5">
-                            Welcome
-                        </h2>
-                        <p className="text-xs text-gray-600">Sign in to continue your journey</p>
-
                         {/* Login Method Toggle - Compact for mobile */}
                         <div className="flex items-center justify-center gap-1.5 mt-3 bg-gray-100 p-1 rounded-lg">
                             <button
@@ -389,7 +384,7 @@ const Login = () => {
                                     }`}
                             >
                                 <FaEnvelope className="text-xs" />
-                                Email
+                                Email (Health Prifessional)
                             </button>
                             <button
                                 type="button"
@@ -404,7 +399,7 @@ const Login = () => {
                                     }`}
                             >
                                 <FaIdCard className="text-xs" />
-                                AddisMed ID
+                                AddisMed ID (Health Care Client)
                             </button>
                         </div>
                     </div>
@@ -426,9 +421,6 @@ const Login = () => {
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {/* Email/Addis-Med ID Field */}
                         <div>
-                            <label className={`block text-xs font-medium mb-1.5 transition-colors duration-300 ${focusedField === 'email' ? 'text-blue-600' : 'text-gray-700'}`}>
-                                {loginMethod === 'email' ? 'Email Address' : 'Addis-Med ID'}
-                            </label>
                             <div className="relative group">
                                 <input
                                     type={loginMethod === 'email' ? "email" : "text"}
@@ -446,7 +438,7 @@ const Login = () => {
                                                 ? 'border-green-500'
                                                 : 'border-gray-200 hover:border-gray-300'
                                         }`}
-                                    placeholder={loginMethod === 'email' ? "your@email.com" : "HCC-XXXXXX-XXXXXX"}
+                                    placeholder={loginMethod === 'email' ? "Email Address" : "Addis-Med ID"}
                                     required
                                     disabled={loading}
                                 />
@@ -472,9 +464,6 @@ const Login = () => {
                         {/* Password Field */}
                         <div>
                             <div className="flex items-center justify-between mb-1.5">
-                                <label className={`block text-xs font-medium transition-colors duration-300 ${focusedField === 'password' ? 'text-blue-600' : 'text-gray-700'}`}>
-                                    Password
-                                </label>
                                 <Link
                                     to="/forgot-password"
                                     className="text-xs text-blue-600 hover:text-blue-800 font-medium transition-all hover:underline flex items-center gap-1 group"
