@@ -467,7 +467,7 @@ const MedicationAvailability = () => {
                                 
                                 {/* Row with label, calendar button, selected date, and post button */}
                                 <div className="md:col-span-3">
-                                    <div className="flex items-center gap-3 w-full">
+                                    <div className="flex items-center gap-2 w-full">
                                         <label className="text-lg text-gray-500 whitespace-nowrap">
                                             እስከ መች ይፈለግ
                                         </label>
@@ -494,11 +494,10 @@ const MedicationAvailability = () => {
                                         <span className="text-gray-700 text-base min-w-[120px]">
                                             {formData.search_date
                                                 ? new Date(formData.search_date).toLocaleDateString("en-CA", {
-                                                      year: "numeric",
                                                       month: "short",
                                                       day: "numeric",
                                                   })
-                                                : "No date selected"}
+                                                : "ቀን ይምረጡ"}
                                         </span>
                                 
                                         <button
@@ -508,6 +507,15 @@ const MedicationAvailability = () => {
                                             {isEditing ? "Update" : "Post"}
                                         </button>
                                     </div>
+                                </div>
+                                    <div className="md:col-span-3">
+                                    <textarea
+                                        value={formData.notes}
+                                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                                        className="w-full border border-gray-200 rounded-xl p-3"
+                                        placeholder="ተጨማሪ መረጃ (ካስፈለገ)"
+                                        rows="1"
+                                    />
                                 </div>
                             </form>
                         </div>
