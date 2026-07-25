@@ -465,7 +465,7 @@ const MedicationAvailability = () => {
                                     />
                                 </div>
                                 
-                                 {/* Row with label, calendar button, selected date, and post button */}
+                                {/* Row with label, calendar button, selected date, and post button */}
                                 <div className="md:col-span-3">
                                     <div className="flex items-center gap-3 w-full">
                                 
@@ -508,9 +508,10 @@ const MedicationAvailability = () => {
                                         >
                                             {isEditing ? "Update" : "Post"}
                                         </button>
-                                
-                                    </div>
+                                    </form>
                                 </div>
+                            )}
+                                
                     {loading ? (
                         <div className="py-10 text-center">Loading posts...</div>
                     ) : memoizedFilteredPosts.length === 0 ? (
