@@ -5,7 +5,6 @@ import {
     FaHome,
     FaPills,
     FaBookMedical,
-
     FaCogs,
     FaBell,
     FaUserCircle,
@@ -85,7 +84,7 @@ const Navbar = ({ onMenuClick }) => {
                                     <FaUserMd className="text-white" />
                                 </div>
                                 <div>
-                                    <h1 className="text-lg font-bold text-gray-800">AddisMed</h1>
+                                    <h1 className="text-lg font-bold text-gray-800">Addis Med</h1>
                                 </div>
                             </Link>
                         </div>
