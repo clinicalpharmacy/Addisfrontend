@@ -384,7 +384,7 @@ const Login = () => {
                                     }`}
                             >
                                 <FaEnvelope className="text-xs" />
-                                Email (Health Prifessional)
+                                Health Prifessional
                             </button>
                             <button
                                 type="button"
@@ -393,13 +393,13 @@ const Login = () => {
                                     setFormData({ ...formData, email: '' });
                                     setError('');
                                 }}
-                                className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all ${loginMethod === 'addisMedId'
+                                className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-2xl font-bold transition-all ${loginMethod === 'addisMedId'
                                     ? 'bg-white text-green-600 shadow-sm'
                                     : 'text-gray-600 hover:text-gray-800'
                                     }`}
                             >
-                                <FaIdCard className="text-xs" />
-                                AddisMed ID (Health Care Client)
+                                <FaIdCard className="text-2xl" />
+                                Health Care Client
                             </button>
                         </div>
                     </div>
@@ -541,7 +541,7 @@ const Login = () => {
                             ) : (
                                 <span className="flex items-center justify-center gap-2">
                                     <FaSignInAlt className="text-sm" />
-                                    <span className="text-sm">Sign In</span>
+                                    <span className="text-2xl">Sign In</span>
                                     <FaArrowRight className="text-xs animate-pulse" />
                                 </span>
                             )}
