@@ -490,7 +490,7 @@ const MedicationAvailability = () => {
                                         />
                                         {/* Overlay label */}
                                         <div className="absolute ml-3 pointer-events-none text-gray-400 text-lg">
-                                            {formData.search_date ? '📅' : 'Select date'}
+                                            {formData.search_date ? '📅'}
                                         </div>
                                         <button 
                                             type="submit" 
