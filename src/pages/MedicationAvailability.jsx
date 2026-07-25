@@ -22,13 +22,13 @@ const MedicationAvailability = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [editPostId, setEditPostId] = useState(null);
     const isAdmin = currentUser?.role === 'admin';
-    const dateInputRef = useRef(null);
     
     // Add refs to prevent unnecessary re-renders and track mounted state
     const isMounted = useRef(true);
     const pollingInterval = useRef(null);
     const autoDeleteInterval = useRef(null);
     const postsRef = useRef([]);
+    const dateInputRef = useRef(null);
 
     const [formData, setFormData] = useState({
         medication_needed: '',
@@ -465,39 +465,68 @@ const MedicationAvailability = () => {
                                     />
                                 </div>
                                 
-                                {/* Row with label, date input, and post button */}                                
+                                {/* Row with label, calendar button, and post button */}
                                 <div className="md:col-span-3">
                                     <div className="flex items-center gap-3 w-full">
-                                        <label className="text-lg text-gray-500 whitespace-nowrap">እስከ መች ይፈለግ</label>
+                                
+                                        <label className="text-lg text-gray-500 whitespace-nowrap">
+                                            እስከ መች ይፈለግ
+                                        </label>
+                                
+                                        {/* Hidden native date input */}
                                         <input
                                             ref={dateInputRef}
                                             type="date"
                                             value={formData.search_date}
-                                            onChange={(e) => setFormData({ ...formData, search_date: e.target.value })}
-                                            className="border border-gray-200 rounded-lg p-3 flex-1 cursor-pointer"
-                                            min={new Date().toISOString().split('T')[0]}
+                                            onChange={(e) =>
+                                                setFormData({
+                                                    ...formData,
+                                                    search_date: e.target.value
+                                                })
+                                            }
+                                            min={new Date().toISOString().split("T")[0]}
                                             style={{
-                                                // Hide the text completely
-                                                color: 'transparent',
-                                                // Make calendar icon visible and larger
-                                                '::-webkit-calendar-picker-indicator': {
-                                                    opacity: 1,
-                                                    padding: '8px',
-                                                    fontSize: '24px',
-                                                    cursor: 'pointer'
-                                                }
+                                                position: "absolute",
+                                                left: "-9999px"
                                             }}
                                         />
-                                        {/* Overlay label */}
-                                        <div className="absolute ml-3 pointer-events-none text-gray-400 text-lg">
-                                            {formData.search_date ? '📅'}
-                                        </div>
-                                        <button 
-                                            type="submit" 
+                                
+                                        {/* Calendar Button */}
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const input = dateInputRef.current;
+                                
+                                                if (!input) return;
+                                
+                                                if (typeof input.showPicker === "function") {
+                                                    input.showPicker();
+                                                } else {
+                                                    // iOS Safari fallback
+                                                    input.focus();
+                                                    input.click();
+                                                }
+                                            }}
+                                            className="w-12 h-12 flex items-center justify-center rounded-xl border border-gray-300 bg-white hover:bg-gray-100 transition"
+                                            title="Select Date"
+                                        >
+                                            <FaCalendarAlt className="text-2xl text-blue-600" />
+                                        </button>
+                                
+                                        {/* Optional: show selected date */}
+                                        {formData.search_date && (
+                                            <span className="text-sm text-gray-600 whitespace-nowrap">
+                                                {new Date(formData.search_date).toLocaleDateString()}
+                                            </span>
+                                        )}
+                                
+                                        <button
+                                            type="submit"
                                             className="bg-green-600 text-white font-bold py-3 px-6 rounded-2xl hover:bg-green-700 whitespace-nowrap"
                                         >
-                                            {isEditing ? 'Update' : 'Post'}
+                                            {isEditing ? "Update" : "Post"}
                                         </button>
+                                
                                     </div>
                                 </div>
                                 
