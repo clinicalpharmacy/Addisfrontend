@@ -378,7 +378,7 @@ const Login = () => {
                                     setFormData({ ...formData, email: '' });
                                     setError('');
                                 }}
-                                className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all ${loginMethod === 'email'
+                                className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-sm font-medium transition-all ${loginMethod === 'email'
                                     ? 'bg-white text-blue-600 shadow-sm'
                                     : 'text-gray-600 hover:text-gray-800'
                                     }`}
@@ -428,7 +428,7 @@ const Login = () => {
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                     onFocus={() => setFocusedField('email')}
                                     onBlur={() => setFocusedField(null)}
-                                    className={`w-full px-3 py-3 pl-9 border-2 rounded-xl outline-none transition-all duration-300 text-sm ${focusedField === 'email'
+                                    className={`w-full px-3 py-2.5 pl-9 border-2 rounded-xl outline-none transition-all duration-300 text-base ${focusedField === 'email'
                                         ? 'border-blue-500 shadow-lg shadow-blue-100'
                                         : loginMethod === 'email'
                                             ? isEmailValid && formData.email
@@ -438,7 +438,7 @@ const Login = () => {
                                                 ? 'border-green-500'
                                                 : 'border-gray-200 hover:border-gray-300'
                                         }`}
-                                    placeholder={loginMethod === 'email' ? "Email Address" : "Addis-Med ID"}
+                                    placeholder={loginMethod === 'email' ? "Email" : "Addis-Med ID"}
                                     required
                                     disabled={loading}
                                 />
@@ -485,7 +485,7 @@ const Login = () => {
                                             ? 'border-green-500'
                                             : 'border-gray-200 hover:border-gray-300'
                                         }`}
-                                    placeholder="Enter password"
+                                    placeholder="Password"
                                     required
                                     disabled={loading}
                                 />
@@ -528,7 +528,7 @@ const Login = () => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className={`w-full py-3 px-4 rounded-xl font-medium text-base transition-all transform hover:scale-[1.01] active:scale-[0.99] ${loading
+                            className={`w-full py-2.5 px-4 rounded-xl font-medium text-lg transition-all transform hover:scale-[1.01] active:scale-[0.99] ${loading
                                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                 : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-xl hover:shadow-2xl'
                                 }`}
@@ -577,20 +577,20 @@ const Login = () => {
 
                     {/* Registration Links - Compact for mobile */}
                     <div className="mt-5 pt-4 border-t-2 border-gray-100">
-                        <p className="text-center text-gray-600 text-xs mb-3">
+                        <p className="text-center text-gray-600 text-sm mb-3">
                             Don't have an account?
                         </p>
                         <div className="grid grid-cols-2 gap-2">
                             <Link
                                 to="/signup?type=individual"
-                                className="group flex items-center justify-center gap-1.5 px-3 py-2 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 text-blue-700 rounded-lg transition-all font-medium text-xs"
+                                className="group flex items-center justify-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 text-blue-700 rounded-lg transition-all font-medium text-sm"
                             >
                                 <FaUserCheck className="group-hover:animate-bounce text-xs" />
                                 Individual
                             </Link>
                             <Link
                                 to="/signup?type=organization"
-                                className="group flex items-center justify-center gap-1.5 px-3 py-2 bg-gradient-to-r from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 text-purple-700 rounded-lg transition-all font-medium text-xs"
+                                className="group flex items-center justify-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 text-purple-700 rounded-lg transition-all font-medium text-sm"
                             >
                                 <FaBuilding className="group-hover:animate-bounce text-xs" />
                                 Organization
