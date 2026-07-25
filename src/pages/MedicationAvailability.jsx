@@ -480,7 +480,7 @@ const MedicationAvailability = () => {
                                             type="submit" 
                                             className="bg-green-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-green-700 whitespace-nowrap"
                                         >
-                                            {isEditing ? 'Update' : 'Post medication'}
+                                            {isEditing ? 'Update' : 'Post'}
                                         </button>
                                     </div>
                                 </div>
