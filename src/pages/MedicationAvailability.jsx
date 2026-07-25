@@ -451,54 +451,43 @@ const MedicationAvailability = () => {
 
                     {/* Add/Edit Form */}
                     {showAddForm && (
-                        <div className="bg-white p-4 rounded-2xl shadow-lg border-2 border-blue-100 mb-4">
-                            <h2 className="text-base font-bold mb-3 text-gray-800">
-                                {isEditing ? 'Edit Medication' : 'የሚፈለገውን መድሃኒት ይጻፉ'}
-                            </h2>
-                            <form onSubmit={handleSubmit}>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                    <div className="md:col-span-3">
-                                        <input
-                                            type="text"
-                                            required
-                                            value={formData.medication_needed}
-                                            onChange={(e) => setFormData({ ...formData, medication_needed: e.target.value })}
-                                            className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
-                                            placeholder="የመድሃኒቱ ስም *"
-                                        />
-                                    </div>
-                                    
-                                    <div className="flex flex-col gap-0.5">
-                                        <label className="text-xs font-medium text-gray-600">እስከ መች ይፈለግ</label>
-                                        <input
-                                            type="date"
-                                            value={formData.search_date}
-                                            onChange={(e) => setFormData({ ...formData, search_date: e.target.value })}
-                                            className="border border-gray-200 rounded-lg p-2.5 text-sm w-full focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
-                                            min={new Date().toISOString().split('T')[0]}
-                                        />
-                                    </div>
-                                    
-                                    <div className="md:col-span-2">
-                                        <label className="text-xs font-medium text-gray-600">ተጨማሪ መረጃ</label>
-                                        <input
-                                            type="text"
-                                            value={formData.notes}
-                                            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                                            className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
-                                            placeholder="ማንኛውም ተጨማሪ መረጃ..."
-                                        />
-                                    </div>
-                                    
-                                    <div className="md:col-span-3">
-                                        <button 
-                                            type="submit" 
-                                            className="w-full bg-green-600 text-white font-semibold py-2.5 rounded-lg hover:bg-green-700 transition text-sm"
-                                        >
-                                            {isEditing ? 'Update Medication' : 'Post Medication'}
-                                        </button>
-                                    </div>
+                        <div className="bg-white p-6 rounded-2xl shadow-lg border-2 border-blue-100 mb-6">
+                            <h2 className="text-lg font-bold mb-4 text-gray-800">{isEditing ? 'Edit Medication' : 'የሚፈለገውን መድሃኒት ይጻፉ'}</h2>
+                            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="md:col-span-2">
+                                    <input
+                                        type="text"
+                                        required
+                                        value={formData.medication_needed}
+                                        onChange={(e) => setFormData({ ...formData, medication_needed: e.target.value })}
+                                        className="w-full border border-gray-200 rounded-xl p-3 focus:border-blue-500"
+                                        placeholder="የመድሃኒቱ ስም"
+                                    />
                                 </div>
+                                
+                                <div className="flex flex-col gap-1 w-full">
+                                    <label className="text-lg text-gray-500 ml-1">እስከ መች ይፈለግ</label>
+                                    <input
+                                        type="date"
+                                        value={formData.search_date}
+                                        onChange={(e) => setFormData({ ...formData, search_date: e.target.value })}
+                                        className="border border-gray-200 rounded-xl p-3 w-full"
+                                        placeholder="እስከ መች ይፈለግ"
+                                        min={new Date().toISOString().split('T')[0]}
+                                    />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <textarea
+                                        value={formData.notes}
+                                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                                        className="w-full border border-gray-200 rounded-xl p-3"
+                                        placeholder="ተጨማሪ መረጃ (ካስፈለገ)"
+                                        rows="2"
+                                    />
+                                </div>
+                                <button type="submit" className="md:col-span-2 bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700">
+                                    {isEditing ? 'Update medication' : 'Post medication'}
+                                </button>
                             </form>
                         </div>
                     )}
