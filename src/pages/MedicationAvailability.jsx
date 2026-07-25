@@ -473,15 +473,13 @@ const MedicationAvailability = () => {
                                             value={formData.search_date}
                                             onChange={(e) => setFormData({ ...formData, search_date: e.target.value })}
                                             className="border border-gray-200 rounded-xl p-3 flex-1 text-black text-lg"
-                                            style={{ color: 'black !important' }}
-                                            placeholder="እስከ መች ይፈለግ"
                                             min={new Date().toISOString().split('T')[0]}
                                         />
                                         <button 
                                             type="submit" 
-                                            className="bg-green-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-green-700 whitespace-nowrap"
+                                            className="bg-green-600 text-white font-bold py-3 px-6 rounded-2xl hover:bg-green-700 whitespace-nowrap"
                                         >
-                                            {isEditing ? 'Update' : 'Post medication'}
+                                            {isEditing ? 'Update' : 'Post'}
                                         </button>
                                     </div>
                                 </div>
