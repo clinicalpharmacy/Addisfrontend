@@ -345,7 +345,7 @@ const Login = () => {
                             <FaUserMd className="text-white text-xl animate-pulse" />
                         </div>
                     </div>
-                    <h1 className="text-2xl font-bold text-white mb-1 tracking-tight">Addis Med</h1>
+                    <h1 className="text-6xl font-bold text-white mb-1 tracking-tight">Addis Med</h1>
 
                     {/* Dynamic Carousel Message - Compact for mobile */}
                     <div className="h-8 overflow-hidden">
@@ -357,8 +357,8 @@ const Login = () => {
                                 const Icon = msg.icon;
                                 return (
                                     <div key={index} className="h-8 flex items-center justify-center gap-1">
-                                        <Icon className="text-white text-sm animate-pulse" />
-                                        <p className="text-white text-xs font-bold italic">{msg.text}</p>
+                                        <Icon className="text-white text-2xl animate-pulse" />
+                                        <p className="text-white text-3xl font-bold italic">{msg.text}</p>
                                     </div>
                                 );
                             })}
@@ -427,7 +427,7 @@ const Login = () => {
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                     onFocus={() => setFocusedField('email')}
                                     onBlur={() => setFocusedField(null)}
-                                    className={`w-full px-3 py-2.5 pl-9 border-2 rounded-xl outline-none transition-all duration-300 text-base font-bold ${focusedField === 'email'
+                                    className={`w-full px-3 py-2.5 pl-9 border-2 rounded-xl outline-none transition-all duration-300 text-2xl font-bold ${focusedField === 'email'
                                         ? 'border-blue-500 shadow-lg shadow-blue-100'
                                         : loginMethod === 'email'
                                             ? isEmailValid && formData.email
@@ -455,9 +455,6 @@ const Login = () => {
                             </div>
                         </div>
                         {loginMethod === 'addisMedId' && (
-                            <p className="text-[10px] text-gray-500 mt-1 text-center">
-                                Format: HCC-XXXXXX-XXXXXX
-                            </p>
                         )}
                     </div>
 
@@ -471,7 +468,7 @@ const Login = () => {
                                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                         onFocus={() => setFocusedField('password')}
                                         onBlur={() => setFocusedField(null)}
-                                        className={`w-full px-3 py-2.5 pl-9 pr-14 border-2 rounded-xl outline-none transition-all duration-300 text-base font-bold ${focusedField === 'password'
+                                        className={`w-full px-3 py-2.5 pl-9 pr-14 border-2 rounded-xl outline-none transition-all duration-300 text-2xl font-bold ${focusedField === 'password'
                                             ? 'border-blue-500 shadow-lg shadow-blue-100'
                                             : formData.password
                                                 ? 'border-green-500'
@@ -522,7 +519,7 @@ const Login = () => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className={`w-3/4 py-2.5 px-4 rounded-xl font-bold text-lg transition-all transform hover:scale-[1.01] active:scale-[0.99] ${loading
+                            className={`w-3/4 py-2.5 px-4 rounded-xl font-bold text-2xl transition-all transform hover:scale-[1.01] active:scale-[0.99] ${loading
                                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                 : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-xl hover:shadow-2xl'
                             }`}
@@ -535,7 +532,7 @@ const Login = () => {
                             ) : (
                                 <span className="flex items-center justify-center gap-2">
                                     <FaSignInAlt className="text-sm" />
-                                    <span className="text-sm">Sign In</span>
+                                    <span className="text-2xl">Sign In</span>
                                     <FaArrowRight className="text-xs animate-pulse" />
                                 </span>
                             )}
