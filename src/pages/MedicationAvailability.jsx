@@ -452,7 +452,6 @@ const MedicationAvailability = () => {
                     {/* Add/Edit Form */}
                     {showAddForm && (
                         <div className="bg-white p-6 rounded-2xl shadow-lg border-2 border-blue-100 mb-6">
-                            <h2 className="text-lg font-bold mb-4 text-gray-800">{isEditing ? 'Edit Medication' : 'የሚፈለገውን መድሃኒት ይጻፉ'}</h2>
                             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="md:col-span-2">
                                     <input
@@ -461,17 +460,17 @@ const MedicationAvailability = () => {
                                         value={formData.medication_needed}
                                         onChange={(e) => setFormData({ ...formData, medication_needed: e.target.value })}
                                         className="w-full border border-gray-200 rounded-xl p-3 focus:border-blue-500"
-                                        placeholder="የመድሃኒቱ ስም"
+                                        placeholder="የሚፈለገውን መድሃኒት ስም ይጻፉ"
                                     />
                                 </div>
                                 
-                                <div className="flex flex-col gap-1 w-full">
-                                    <label className="text-lg text-gray-500 ml-1">እስከ መች ይፈለግ</label>
+                                <div className="flex items-center gap-3 w-full">
+                                    <label className="text-lg text-gray-500 whitespace-nowrap">እስከ መች ይፈለግ</label>
                                     <input
                                         type="date"
                                         value={formData.search_date}
                                         onChange={(e) => setFormData({ ...formData, search_date: e.target.value })}
-                                        className="border border-gray-200 rounded-xl p-3 w-full"
+                                        className="border border-gray-200 rounded-xl p-3 flex-1"
                                         placeholder="እስከ መች ይፈለግ"
                                         min={new Date().toISOString().split('T')[0]}
                                     />
