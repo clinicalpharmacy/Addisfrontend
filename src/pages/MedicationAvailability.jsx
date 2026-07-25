@@ -473,52 +473,30 @@ const MedicationAvailability = () => {
                                             እስከ መች ይፈለግ
                                         </label>
                                 
-                                        {/* Hidden native date input */}
-                                        <input
-                                            ref={dateInputRef}
-                                            type="date"
-                                            value={formData.search_date}
-                                            onChange={(e) =>
-                                                setFormData({
-                                                    ...formData,
-                                                    search_date: e.target.value
-                                                })
-                                            }
-                                            min={new Date().toISOString().split("T")[0]}
-                                            style={{
-                                                position: "absolute",
-                                                left: "-9999px"
-                                            }}
-                                        />
+                                        {/* Calendar icon with invisible native date input on top */}
+                                        <div className="relative w-12 h-12">
+                                            <FaCalendarAlt className="absolute inset-0 m-auto text-2xl text-blue-600 pointer-events-none" />
                                 
-                                        {/* Calendar Button */}
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                const input = dateInputRef.current;
-                                
-                                                if (!input) return;
-                                
-                                                if (typeof input.showPicker === "function") {
-                                                    input.showPicker();
-                                                } else {
-                                                    // iOS Safari fallback
-                                                    input.focus();
-                                                    input.click();
+                                            <input
+                                                type="date"
+                                                value={formData.search_date}
+                                                onChange={(e) =>
+                                                    setFormData({
+                                                        ...formData,
+                                                        search_date: e.target.value,
+                                                    })
                                                 }
-                                            }}
-                                            className="w-12 h-12 flex items-center justify-center rounded-xl border border-gray-300 bg-white hover:bg-gray-100 transition"
-                                            title="Select Date"
-                                        >
-                                            <FaCalendarAlt className="text-2xl text-blue-600" />
-                                        </button>
-                                
-                                        {/* Optional: show selected date */}
-                                        {formData.search_date && (
-                                            <span className="text-sm text-gray-600 whitespace-nowrap">
-                                                {new Date(formData.search_date).toLocaleDateString()}
-                                            </span>
-                                        )}
+                                                min={new Date().toISOString().split("T")[0]}
+                                                className="
+                                                    absolute
+                                                    inset-0
+                                                    w-full
+                                                    h-full
+                                                    opacity-0
+                                                    cursor-pointer
+                                                "
+                                            />
+                                        </div>
                                 
                                         <button
                                             type="submit"
@@ -528,8 +506,7 @@ const MedicationAvailability = () => {
                                         </button>
                                 
                                     </div>
-                                </div>
-                                
+                                </div>                                
                                 <div className="md:col-span-3">
                                     <textarea
                                         value={formData.notes}
