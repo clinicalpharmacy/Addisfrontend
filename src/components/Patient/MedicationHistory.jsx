@@ -789,7 +789,7 @@ const MedicationHistory = ({ patientCode }) => {
                     className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
                 >
                     <FaPrescription />
-                    {showForm ? 'Hide Add Medication Form' : 'Add Medication'}
+                    {showForm ? 'Hide Form' : 'Add Medication'}
                 </button>
             </div>
             
@@ -891,7 +891,7 @@ const MedicationHistory = ({ patientCode }) => {
                             name="unit"
                             value={formData.unit}
                             onChange={handleInputChange}
-                            className="w-24 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                            className="flex-1 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
                           >
                             {units.map(unit => (
                               <option key={unit} value={unit}>{unit}</option>
