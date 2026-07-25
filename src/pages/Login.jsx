@@ -451,11 +451,9 @@ const Login = () => {
                                     disabled={loading}
                                 />
                                 {loginMethod === 'email' ? (
-                                    <FaEnvelope className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 text-sm ${focusedField === 'email' ? 'text-blue-500' : 'text-gray-400'
-                                        }`} />
+                                    <FaEnvelope className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 text-sm ${focusedField === 'email' ? 'text-blue-500' : 'text-gray-400'}`} />
                                 ) : (
-                                    <FaIdCard className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 text-sm ${focusedField === 'email' ? 'text-blue-500' : 'text-gray-400'
-                                        }`} />
+                                    <FaIdCard className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 text-sm ${focusedField === 'email' ? 'text-blue-500' : 'text-gray-400'}`} />
                                 )}
                                 {loginMethod === 'email' && isEmailValid && formData.email && (
                                     <FaCheckCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500 text-sm animate-scale-in" />
@@ -502,8 +500,7 @@ const Login = () => {
                                     required
                                     disabled={loading}
                                 />
-                                <FaLock className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 text-sm ${focusedField === 'password' ? 'text-blue-500' : 'text-gray-400'
-                                    }`} />
+                                <FaLock className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 text-sm ${focusedField === 'password' ? 'text-blue-500' : 'text-gray-400'}`} />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
@@ -569,19 +566,19 @@ const Login = () => {
                             <div className="grid grid-cols-3 gap-1.5">
                                 <button
                                     onClick={() => testLogin('admin@pharmacare.com', 'Admin@123')}
-                                    className="px-2 py-1.5 text-[10px] bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg transition-all transform hover:scale-105 shadow-sm"
+                                    className="px-2 py-1.5 text-[10px] bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg transition-all transform hover:scale-105 active:scale-95 font-medium"
                                 >
                                     Admin
                                 </button>
                                 <button
                                     onClick={() => testLogin('test@example.com', 'password123')}
-                                    className="px-2 py-1.5 text-[10px] bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg transition-all transform hover:scale-105 shadow-sm"
+                                    className="px-2 py-1.5 text-[10px] bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg transition-all transform hover:scale-105 active:scale-95 font-medium"
                                 >
                                     Test User
                                 </button>
                                 <button
                                     onClick={() => testLogin('HCC-K3M9X2-8A4F6B', 'healthcare123')}
-                                    className="px-2 py-1.5 text-[10px] bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg transition-all transform hover:scale-105 shadow-sm"
+                                    className="px-2 py-1.5 text-[10px] bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg transition-all transform hover:scale-105 active:scale-95 font-medium"
                                 >
                                     Healthcare
                                 </button>
@@ -597,14 +594,14 @@ const Login = () => {
                         <div className="grid grid-cols-2 gap-2">
                             <Link
                                 to="/signup?type=individual"
-                                className="group flex items-center justify-center gap-1.5 px-3 py-2 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 text-blue-700 rounded-xl transition-all transform hover:scale-105 text-xs font-medium border border-blue-200"
+                                className="group flex items-center justify-center gap-1.5 px-3 py-2 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 text-blue-700 rounded-lg transition-all font-medium text-xs"
                             >
                                 <FaUserCheck className="group-hover:animate-bounce text-xs" />
                                 Individual
                             </Link>
                             <Link
                                 to="/signup?type=organization"
-                                className="group flex items-center justify-center gap-1.5 px-3 py-2 bg-gradient-to-r from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 text-purple-700 rounded-xl transition-all transform hover:scale-105 text-xs font-medium border border-purple-200"
+                                className="group flex items-center justify-center gap-1.5 px-3 py-2 bg-gradient-to-r from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 text-purple-700 rounded-lg transition-all font-medium text-xs"
                             >
                                 <FaBuilding className="group-hover:animate-bounce text-xs" />
                                 Organization
