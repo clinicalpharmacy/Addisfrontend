@@ -357,8 +357,8 @@ const Login = () => {
                                 const Icon = msg.icon;
                                 return (
                                     <div key={index} className="h-8 flex items-center justify-center gap-1">
-                                        <Icon className="text-white text-lg animate-pulse" />
-                                        <p className="text-green text-xl font-bold italic">{msg.text}</p>
+                                        <Icon className="text-yellow-400 text-lg animate-pulse" />
+                                        <p className="text-yellow-400 text-xl font-bold italic">{msg.text}</p>
                                     </div>
                                 );
                             })}
@@ -586,7 +586,6 @@ const Login = () => {
                                 to="/signup?type=organization"
                                 className="group flex items-center justify-center gap-1.5 px-3 py-2.5 bg-gradient-to-r from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 text-purple-700 rounded-lg transition-all font-bold text-lg"
                             >
-                                <FaBuilding className="group-hover:animate-bounce text-xs" />
                                 Organization
                             </Link>
                         </div>
