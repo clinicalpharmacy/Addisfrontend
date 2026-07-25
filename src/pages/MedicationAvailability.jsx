@@ -21,7 +21,6 @@ const MedicationAvailability = () => {
     const [isPoster, setIsPoster] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editPostId, setEditPostId] = useState(null);
-    const [formStep, setFormStep] = useState(1); // Added for sequential form
     const isAdmin = currentUser?.role === 'admin';
     
     // Add refs to prevent unnecessary re-renders and track mounted state
@@ -304,7 +303,6 @@ const MedicationAvailability = () => {
                         search_date: '',
                         notes: '',
                     });
-                    setFormStep(1); // Reset step
                     setShowAddForm(false);
                     await fetchPosts();
                 }
@@ -317,7 +315,6 @@ const MedicationAvailability = () => {
                         search_date: '',
                         notes: '',
                     });
-                    setFormStep(1); // Reset step
                     await fetchPosts();
                 }
             }
@@ -335,7 +332,6 @@ const MedicationAvailability = () => {
         });
         setEditPostId(post.id);
         setIsEditing(true);
-        setFormStep(1); // Reset to first step when editing
         setShowAddForm(true);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
@@ -430,10 +426,6 @@ const MedicationAvailability = () => {
                         if (isEditing) {
                             setIsEditing(false);
                             setFormData({ medication_needed: '', search_date: '', notes: '' });
-                            setFormStep(1);
-                        }
-                        if (!showAddForm) {
-                            setFormStep(1); // Reset step when opening form
                         }
                     }}
                     className={`${showAddForm ? 'bg-gray-500' : 'bg-blue-600'} text-white px-6 py-3 rounded-xl flex items-center gap-2 hover:opacity-90 transition shadow-lg font-bold`}
@@ -457,133 +449,45 @@ const MedicationAvailability = () => {
                         />
                     </div>
 
-                    {/* Add/Edit Form - REVISED WITH SEQUENTIAL STEPS */}
+                    {/* Add/Edit Form */}
                     {showAddForm && (
                         <div className="bg-white p-6 rounded-2xl shadow-lg border-2 border-blue-100 mb-6">
-                            <h2 className="text-lg font-bold mb-4 text-gray-800">
-                                {isEditing ? 'Edit Medication' : 'የሚፈለገውን መድሃኒት ይጻፉ'}
-                            </h2>
-                            
-                            {/* Step indicator */}
-                            <div className="flex justify-center gap-2 mb-6">
-                                {[1, 2, 3].map((step) => (
-                                    <div
-                                        key={step}
-                                        className={`h-2 rounded-full transition-all duration-300 ${
-                                            step === formStep 
-                                                ? 'w-8 bg-blue-600' 
-                                                : step < formStep 
-                                                    ? 'w-4 bg-green-500' 
-                                                    : 'w-4 bg-gray-300'
-                                        }`}
+                            <h2 className="text-lg font-bold mb-4 text-gray-800">{isEditing ? 'Edit Medication' : 'የሚፈለገውን መድሃኒት ይጻፉ'}</h2>
+                            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="md:col-span-2">
+                                    <input
+                                        type="text"
+                                        required
+                                        value={formData.medication_needed}
+                                        onChange={(e) => setFormData({ ...formData, medication_needed: e.target.value })}
+                                        className="w-full border border-gray-200 rounded-xl p-3 focus:border-blue-500"
+                                        placeholder="የመድሃኒቱ ስም"
                                     />
-                                ))}
-                            </div>
-
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                                {/* Step 1: Medication Name */}
-                                {formStep === 1 && (
-                                    <div className="animate-fadeIn">
-                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                            የመድሃኒቱ ስም <span className="text-red-500">*</span>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            required
-                                            value={formData.medication_needed}
-                                            onChange={(e) => setFormData({ ...formData, medication_needed: e.target.value })}
-                                            className="w-full border border-gray-200 rounded-xl p-4 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none text-lg"
-                                            placeholder="ለምሳሌ: አሚኦዶሮን 200ሚ.ግ"
-                                            autoFocus
-                                        />
-                                        <p className="text-xs text-gray-400 mt-2">የሚፈልጉትን መድሃኒት ሙሉ ስም ይጻፉ</p>
-                                    </div>
-                                )}
-
-                                {/* Step 2: Search Date */}
-                                {formStep === 2 && (
-                                    <div className="animate-fadeIn">
-                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                            እስከ መች ይፈለግ <span className="text-red-500">*</span>
-                                        </label>
-                                        <input
-                                            type="date"
-                                            required
-                                            value={formData.search_date}
-                                            onChange={(e) => setFormData({ ...formData, search_date: e.target.value })}
-                                            className="w-full border border-gray-200 rounded-xl p-4 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none"
-                                            min={new Date().toISOString().split('T')[0]}
-                                        />
-                                        <p className="text-xs text-gray-400 mt-2">ከዚህ ቀን በኋላ ፖስቱ በራስ-ሰር ይሰረዛል</p>
-                                    </div>
-                                )}
-
-                                {/* Step 3: Additional Notes & Submit */}
-                                {formStep === 3 && (
-                                    <div className="animate-fadeIn">
-                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                            ተጨማሪ መረጃ (ካስፈለገ)
-                                        </label>
-                                        <textarea
-                                            value={formData.notes}
-                                            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                                            className="w-full border border-gray-200 rounded-xl p-4 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none"
-                                            placeholder="ማንኛውም ተጨማሪ መረጃ ካለ እዚህ ይጻፉ"
-                                            rows="4"
-                                        />
-                                        <p className="text-xs text-gray-400 mt-2">እንደ መጠን፣ ብዛት፣ ወይም ልዩ መስፈርቶች ያሉ መረጃዎችን ያካትቱ</p>
-                                        
-                                        {/* Summary before submit */}
-                                        <div className="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
-                                            <p className="text-sm font-semibold text-gray-700 mb-2">ጠቅላላ መረጃ</p>
-                                            <div className="space-y-1 text-sm text-gray-600">
-                                                <p><span className="font-medium">መድሃኒት:</span> {formData.medication_needed || 'አልተሞላም'}</p>
-                                                <p><span className="font-medium">የሚያልቅበት ቀን:</span> {formData.search_date ? formatDate(formData.search_date) : 'አልተመረጠም'}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Navigation Buttons */}
-                                <div className="flex gap-3 pt-4 border-t border-gray-100">
-                                    {formStep > 1 && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setFormStep(formStep - 1)}
-                                            className="flex-1 bg-gray-200 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-300 transition-all"
-                                        >
-                                            ተመለስ
-                                        </button>
-                                    )}
-                                    
-                                    {formStep < 3 ? (
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                // Validate current step before proceeding
-                                                if (formStep === 1 && !formData.medication_needed.trim()) {
-                                                    alert('እባክዎ የመድሃኒቱን ስም ይሙሉ');
-                                                    return;
-                                                }
-                                                if (formStep === 2 && !formData.search_date) {
-                                                    alert('እባክዎ የሚያልቅበትን ቀን ይምረጡ');
-                                                    return;
-                                                }
-                                                setFormStep(formStep + 1);
-                                            }}
-                                            className="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-all"
-                                        >
-                                            ቀጥል ➜
-                                        </button>
-                                    ) : (
-                                        <button
-                                            type="submit"
-                                            className="flex-1 bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 transition-all"
-                                        >
-                                            {isEditing ? 'Update medication' : 'Post medication'} ✓
-                                        </button>
-                                    )}
                                 </div>
+                                
+                                <div className="flex flex-col gap-1 w-full">
+                                    <label className="text-lg text-gray-500 ml-1">እስከ መች ይፈለግ</label>
+                                    <input
+                                        type="date"
+                                        value={formData.search_date}
+                                        onChange={(e) => setFormData({ ...formData, search_date: e.target.value })}
+                                        className="border border-gray-200 rounded-xl p-3 w-full"
+                                        placeholder="እስከ መች ይፈለግ"
+                                        min={new Date().toISOString().split('T')[0]}
+                                    />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <textarea
+                                        value={formData.notes}
+                                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                                        className="w-full border border-gray-200 rounded-xl p-3"
+                                        placeholder="ተጨማሪ መረጃ (ካስፈለገ)"
+                                        rows="2"
+                                    />
+                                </div>
+                                <button type="submit" className="md:col-span-2 bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700">
+                                    {isEditing ? 'Update medication' : 'Post medication'}
+                                </button>
                             </form>
                         </div>
                     )}
@@ -610,7 +514,7 @@ const MedicationAvailability = () => {
                                             <h3 className="text-lg font-bold text-gray-800">
                                                 {post.medication_needed}
                                                 {searchDatePassed && (
-                                                    <span className="ml-2 text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full">
+                                                    <span className="ml-2 text-lg bg-red-100 text-red-600 px-2 py-1 rounded-full">
                                                         Expired
                                                     </span>
                                                 )}
@@ -669,7 +573,6 @@ const MedicationAvailability = () => {
                                     <p className="text-xs text-blue-600 font-bold truncate">
                                         {isPoster
                                             ? (selectedChatUser ? `Chatting with: ${selectedChatUser.full_name}` : 'Select a conversation')
-                                            : `Contacting: ${selectedPost.user?.institution || 'Pharmacy'}`
                                         }
                                     </p>
                                 </div>
@@ -696,7 +599,6 @@ const MedicationAvailability = () => {
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <p className="font-bold text-gray-800 truncate">{user.full_name || 'User'}</p>
-                                                    <p className="text-xs text-gray-500 truncate">{user.institution || 'Pharmacy'}</p>
                                                 </div>
                                             </div>
                                         ))
