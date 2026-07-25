@@ -1408,7 +1408,7 @@ const PatientDetails = () => {
                     setIsEditing(false);
                 }
 
-                alert(isNewPatient ? 'Patient created successfully!' : 'Patient updated successfully!');
+                alert(isNewPatient ? 'Case created successfully!' : 'Case updated successfully!');
 
                 if (patientCode === 'new' && isNewPatient) {
                     navigate(`/patients/${savedPatient.id}`);
