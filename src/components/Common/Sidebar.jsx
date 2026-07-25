@@ -129,7 +129,7 @@ const Sidebar = ({ onClose }) => {
                     <div className="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-100">
                         <FaHospital className="text-white text-base" />
                     </div>
-                    <span className="font-black text-gray-900 tracking-tight">AddisMed</span>
+                    <span className="font-black text-gray-900 tracking-tight">Addis Med</span>
                 </div>
                 <button
                     onClick={onClose}
