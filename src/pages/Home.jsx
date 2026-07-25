@@ -37,7 +37,7 @@ const Home = () => {
                             {getGreeting()}.
                         </h1>
                         <p className="text-blue-100 mt-1">
-                            AddisMed Digital Health
+                            Addis Med Digital Health
                         </p>
                     </div>
                     <div className="text-left sm:text-right">
@@ -189,7 +189,7 @@ const Home = () => {
 
             {/* Simple Footer */}
             <div className="text-center text-gray-500 text-xs sm:text-sm">
-                <p>AddisMed - Enhacing patient safety and rational medicines use</p>
+                <p>Addis Med - Enhacing patient safety and rational medicines use</p>
             </div>
         </div>
     );
