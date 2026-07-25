@@ -514,13 +514,13 @@ const MedicationAvailability = () => {
                                             <h3 className="text-lg font-bold text-gray-800">
                                                 {post.medication_needed}
                                                 {searchDatePassed && (
-                                                    <span className="ml-2 text-lg bg-red-100 text-red-600 px-2 py-1 rounded-full">
+                                                    <span className="ml-2 text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full">
                                                         Expired
                                                     </span>
                                                 )}
                                             </h3>
                                             {post.search_date && (
-                                                <span className="text-[11px] text-gray-500 font-medium">
+                                                <span className="text-[11px] text-lg font-medium">
                                                     እስከ መች ይፈለግ: {formatDate(post.search_date)}
                                                 </span>
                                             )}
@@ -573,6 +573,7 @@ const MedicationAvailability = () => {
                                     <p className="text-xs text-blue-600 font-bold truncate">
                                         {isPoster
                                             ? (selectedChatUser ? `Chatting with: ${selectedChatUser.full_name}` : 'Select a conversation')
+                                            : `Contacting: ${selectedPost.user?.institution || 'Pharmacy'}`
                                         }
                                     </p>
                                 </div>
@@ -599,6 +600,7 @@ const MedicationAvailability = () => {
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <p className="font-bold text-gray-800 truncate">{user.full_name || 'User'}</p>
+                                                    <p className="text-xs text-gray-500 truncate">{user.institution || 'Pharmacy'}</p>
                                                 </div>
                                             </div>
                                         ))
