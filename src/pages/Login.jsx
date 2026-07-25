@@ -427,7 +427,7 @@ const Login = () => {
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                     onFocus={() => setFocusedField('email')}
                                     onBlur={() => setFocusedField(null)}
-                                    className={`w-full px-3 py-3 pl-9 border-2 rounded-xl outline-none transition-all duration-300 text-lg font-bold ${focusedField === 'email'
+                                    className={`w-full px-3 py-2.5 pl-9 border-2 rounded-xl outline-none transition-all duration-300 text-base font-bold ${focusedField === 'email'
                                         ? 'border-blue-500 shadow-lg shadow-blue-100'
                                         : loginMethod === 'email'
                                             ? isEmailValid && formData.email
@@ -470,7 +470,7 @@ const Login = () => {
                                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                         onFocus={() => setFocusedField('password')}
                                         onBlur={() => setFocusedField(null)}
-                                        className={`w-full px-3 py-3 pl-9 pr-14 border-2 rounded-xl outline-none transition-all duration-300 text-lg font-bold ${focusedField === 'password'
+                                        className={`w-full px-3 py-2.5 pl-9 pr-14 border-2 rounded-xl outline-none transition-all duration-300 text-base font-bold ${focusedField === 'password'
                                             ? 'border-blue-500 shadow-lg shadow-blue-100'
                                             : formData.password
                                                 ? 'border-green-500'
@@ -521,7 +521,7 @@ const Login = () => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className={`w-3/4 py-3 px-4 rounded-xl font-bold text-lg transition-all transform hover:scale-[1.01] active:scale-[0.99] ${loading
+                            className={`w-3/4 py-2.5 px-4 rounded-xl font-bold text-lg transition-all transform hover:scale-[1.01] active:scale-[0.99] ${loading
                                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                 : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-xl hover:shadow-2xl'
                             }`}
@@ -535,7 +535,6 @@ const Login = () => {
                                 <span className="flex items-center justify-center gap-2">
                                     <FaSignInAlt className="text-sm" />
                                     <span className="text-lg">Sign In</span>
-                                    <FaArrowRight className="text-xs animate-pulse" />
                                 </span>
                             )}
                         </button>
