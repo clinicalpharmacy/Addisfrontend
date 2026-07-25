@@ -452,8 +452,8 @@ const MedicationAvailability = () => {
                     {/* Add/Edit Form */}
                     {showAddForm && (
                         <div className="bg-white p-6 rounded-2xl shadow-lg border-2 border-blue-100 mb-6">
-                            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="md:col-span-2">
+                            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="md:col-span-3">
                                     <input
                                         type="text"
                                         required
@@ -464,29 +464,36 @@ const MedicationAvailability = () => {
                                     />
                                 </div>
                                 
-                                <div className="flex items-center gap-3 w-full">
-                                    <label className="text-lg text-gray-500 whitespace-nowrap">እስከ መች ይፈለግ</label>
-                                    <input
-                                        type="date"
-                                        value={formData.search_date}
-                                        onChange={(e) => setFormData({ ...formData, search_date: e.target.value })}
-                                        className="border border-gray-200 rounded-xl p-3 flex-1"
-                                        placeholder="እስከ መች ይፈለግ"
-                                        min={new Date().toISOString().split('T')[0]}
-                                    />
+                                {/* Row with label, date input, and post button */}
+                                <div className="md:col-span-3">
+                                    <div className="flex items-center gap-3 w-full">
+                                        <label className="text-lg text-gray-500 whitespace-nowrap">እስከ መች ይፈለግ</label>
+                                        <input
+                                            type="date"
+                                            value={formData.search_date}
+                                            onChange={(e) => setFormData({ ...formData, search_date: e.target.value })}
+                                            className="border border-gray-200 rounded-xl p-3 flex-1"
+                                            placeholder="እስከ መች ይፈለግ"
+                                            min={new Date().toISOString().split('T')[0]}
+                                        />
+                                        <button 
+                                            type="submit" 
+                                            className="bg-green-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-green-700 whitespace-nowrap"
+                                        >
+                                            {isEditing ? 'Update' : 'Post medication'}
+                                        </button>
+                                    </div>
                                 </div>
-                                <div className="md:col-span-2">
+                                
+                                <div className="md:col-span-3">
                                     <textarea
                                         value={formData.notes}
                                         onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                                         className="w-full border border-gray-200 rounded-xl p-3"
                                         placeholder="ተጨማሪ መረጃ (ካስፈለገ)"
-                                        rows="2"
+                                        rows="1"
                                     />
                                 </div>
-                                <button type="submit" className="md:col-span-2 bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700">
-                                    {isEditing ? 'Update medication' : 'Post medication'}
-                                </button>
                             </form>
                         </div>
                     )}
