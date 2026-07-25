@@ -405,7 +405,7 @@ const MedicationAvailability = () => {
     return (
         <div className="p-6 max-w-7xl mx-auto flex flex-col h-[calc(100vh-100px)]">
             {/* Header */}
-            <div className="flex flex-col md:row justify-between items-start md:items-center mb-6 gap-4 flex-shrink-0">
+            <div className="flex flex-col md:row justify-between items-start md:items-center mb-4 gap-4 flex-shrink-0">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
                         <FaPills className="text-blue-600" />
@@ -428,7 +428,7 @@ const MedicationAvailability = () => {
                             setFormData({ medication_needed: '', search_date: '', notes: '' });
                         }
                     }}
-                    className={`${showAddForm ? 'bg-gray-500' : 'bg-blue-600'} text-white px-6 py-3 rounded-xl flex items-center gap-2 hover:opacity-90 transition shadow-lg font-bold`}
+                    className={`${showAddForm ? 'bg-gray-500' : 'bg-blue-600'} text-white px-6 py-3 rounded-xl flex items-center gap-2 hover:opacity-90 transition shadow-lg font-bold flex-shrink-0`}
                 >
                     {showAddForm ? 'Cancel' : <><FaPlus />ያጡትን መድሃኒት ያጋሩ</>}
                 </button>
@@ -436,9 +436,9 @@ const MedicationAvailability = () => {
 
             <div className="flex flex-col md:flex-row flex-1 gap-6 overflow-hidden">
                 {/* Left Side: Posts List */}
-                <div className={`flex-1 overflow-y-auto pr-2 space-y-4 ${selectedPost ? 'hidden md:block' : ''}`}>
-                    {/* Search */}
-                    <div className="relative mb-4 sticky top-0 z-10 bg-gray-50 pt-2 pb-2">
+                <div className={`flex-1 overflow-y-auto pr-2 ${selectedPost ? 'hidden md:block' : ''}`}>
+                    {/* Search - Now Separate from Form */}
+                    <div className="relative mb-3 sticky top-0 z-10 bg-gray-50 pt-2 pb-2 flex-shrink-0">
                         <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
                         <input
                             type="text"
@@ -449,31 +449,31 @@ const MedicationAvailability = () => {
                         />
                     </div>
 
-                    {/* Add/Edit Form - SUPER COMPACT - NO SCROLLING */}
+                    {/* Add/Edit Form - COMPLETELY SEPARATE - FULLY VISIBLE - NO SCROLLING */}
                     {showAddForm && (
-                        <div className="bg-white p-2 rounded-xl shadow-lg border-2 border-blue-100 mb-2 flex-shrink-0">
-                            <h2 className="text-xs font-bold mb-1 text-gray-800">
+                        <div className="bg-white p-5 rounded-2xl shadow-lg border-2 border-blue-100 mb-4 flex-shrink-0">
+                            <h2 className="text-lg font-bold mb-3 text-gray-800">
                                 {isEditing ? 'Edit Medication' : 'የሚፈለገውን መድሃኒት ይጻፉ'}
                             </h2>
-                            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-1">
+                            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <div className="md:col-span-2">
                                     <input
                                         type="text"
                                         required
                                         value={formData.medication_needed}
                                         onChange={(e) => setFormData({ ...formData, medication_needed: e.target.value })}
-                                        className="w-full border border-gray-200 rounded-lg p-1.5 text-xs focus:border-blue-500"
+                                        className="w-full border border-gray-200 rounded-xl p-3 text-base focus:border-blue-500"
                                         placeholder="የመድሃኒቱ ስም"
                                     />
                                 </div>
                                 
-                                <div className="flex flex-col gap-0 w-full">
-                                    <label className="text-[10px] text-gray-500">እስከ መች ይፈለግ</label>
+                                <div className="flex flex-col gap-1 w-full">
+                                    <label className="text-base text-gray-500 ml-1">እስከ መች ይፈለግ</label>
                                     <input
                                         type="date"
                                         value={formData.search_date}
                                         onChange={(e) => setFormData({ ...formData, search_date: e.target.value })}
-                                        className="border border-gray-200 rounded-lg p-1.5 w-full text-xs"
+                                        className="border border-gray-200 rounded-xl p-3 w-full text-base"
                                         placeholder="እስከ መች ይፈለግ"
                                         min={new Date().toISOString().split('T')[0]}
                                     />
@@ -482,81 +482,84 @@ const MedicationAvailability = () => {
                                     <textarea
                                         value={formData.notes}
                                         onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                                        className="w-full border border-gray-200 rounded-lg p-1.5 text-xs"
+                                        className="w-full border border-gray-200 rounded-xl p-3 text-base"
                                         placeholder="ተጨማሪ መረጃ (ካስፈለገ)"
-                                        rows="1"
+                                        rows="2"
                                     />
                                 </div>
-                                <button type="submit" className="md:col-span-2 bg-green-600 text-white font-bold py-1.5 rounded-lg hover:bg-green-700 text-xs">
+                                <button type="submit" className="md:col-span-2 bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 text-base">
                                     {isEditing ? 'Update medication' : 'Post medication'}
                                 </button>
                             </form>
                         </div>
                     )}
 
-                    {loading ? (
-                        <div className="py-10 text-center">Loading posts...</div>
-                    ) : memoizedFilteredPosts.length === 0 ? (
-                        <div className="py-20 text-center text-gray-400">No postings found.</div>
-                    ) : (
-                        memoizedFilteredPosts.map(post => {
-                            const searchDatePassed = isDatePassed(post.search_date);
-                            
-                            return (
-                                <div
-                                    key={post.id}
-                                    onClick={() => openChat(post)}
-                                    className={`p-5 rounded-2xl border-2 transition-all cursor-pointer bg-white 
-                                        ${selectedPost?.id === post.id ? 'border-blue-500 shadow-md scale-[1.01]' : 'border-gray-100 hover:border-blue-200'}
-                                        ${searchDatePassed ? 'opacity-50 border-red-200' : ''}
-                                    `}
-                                >
-                                    <div className="flex justify-between items-start mb-2">
-                                        <div>
-                                            <h3 className="text-lg font-bold text-gray-800">
-                                                {post.medication_needed}
-                                                {searchDatePassed && (
-                                                    <span className="ml-2 text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full">
-                                                        Expired
+                    {/* Posts List - Will scroll independently */}
+                    <div className="space-y-3">
+                        {loading ? (
+                            <div className="py-10 text-center">Loading posts...</div>
+                        ) : memoizedFilteredPosts.length === 0 ? (
+                            <div className="py-20 text-center text-gray-400">No postings found.</div>
+                        ) : (
+                            memoizedFilteredPosts.map(post => {
+                                const searchDatePassed = isDatePassed(post.search_date);
+                                
+                                return (
+                                    <div
+                                        key={post.id}
+                                        onClick={() => openChat(post)}
+                                        className={`p-5 rounded-2xl border-2 transition-all cursor-pointer bg-white 
+                                            ${selectedPost?.id === post.id ? 'border-blue-500 shadow-md scale-[1.01]' : 'border-gray-100 hover:border-blue-200'}
+                                            ${searchDatePassed ? 'opacity-50 border-red-200' : ''}
+                                        `}
+                                    >
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div>
+                                                <h3 className="text-lg font-bold text-gray-800">
+                                                    {post.medication_needed}
+                                                    {searchDatePassed && (
+                                                        <span className="ml-2 text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full">
+                                                            Expired
+                                                        </span>
+                                                    )}
+                                                </h3>
+                                                {post.search_date && (
+                                                    <span className="text-[11px] text-gray-500 font-medium">
+                                                        እስከ መች ይፈለግ: {formatDate(post.search_date)}
                                                     </span>
                                                 )}
-                                            </h3>
-                                            {post.search_date && (
-                                                <span className="text-[11px] text-gray-500 font-medium">
-                                                    እስከ መች ይፈለግ: {formatDate(post.search_date)}
+                                            </div>
+                                        
+                                            <div className="flex flex-col items-end gap-1">
+                                                <span className="text-[11px] text-gray-400 font-medium">
+                                                    Posted: {formatDate(post.created_at)}
                                                 </span>
-                                            )}
-                                        </div>
-                                    
-                                        <div className="flex flex-col items-end gap-1">
-                                            <span className="text-[11px] text-gray-400 font-medium">
-                                                Posted: {formatDate(post.created_at)}
-                                            </span>
-                                    
-                                            {currentUser && (currentUser.id === post.user_id || currentUser.role === 'admin') && (
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); handleEdit(post); }}
-                                                        className="text-blue-500 hover:text-blue-700 p-1"
-                                                        title="Edit"
-                                                    >
-                                                        <FaEdit className="text-sm" />
-                                                    </button>
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); handleDelete(post.id); }}
-                                                        className="text-red-400 hover:text-red-600 p-1"
-                                                        title="Delete"
-                                                    >
-                                                        <FaTrash />
-                                                    </button>
-                                                </div>
-                                            )}
+                                        
+                                                {currentUser && (currentUser.id === post.user_id || currentUser.role === 'admin') && (
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleEdit(post); }}
+                                                            className="text-blue-500 hover:text-blue-700 p-1"
+                                                            title="Edit"
+                                                        >
+                                                            <FaEdit className="text-sm" />
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleDelete(post.id); }}
+                                                            className="text-red-400 hover:text-red-600 p-1"
+                                                            title="Delete"
+                                                        >
+                                                            <FaTrash />
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            );
-                        })
-                    )}
+                                );
+                            })
+                        )}
+                    </div>
                 </div>
 
                 {/* Right Side: Chat Sidebar */}
