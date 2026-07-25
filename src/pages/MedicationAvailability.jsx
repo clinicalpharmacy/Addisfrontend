@@ -468,25 +468,20 @@ const MedicationAvailability = () => {
                                 <div className="md:col-span-3">
                                     <div className="flex items-center gap-3 w-full">
                                         <label className="text-lg text-gray-500 whitespace-nowrap">እስከ መች ይፈለግ</label>
-                                        <div className="relative flex-1">
-                                            <input
-                                                type="date"
-                                                value={formData.search_date}
-                                                onChange={(e) => setFormData({ ...formData, search_date: e.target.value })}
-                                                className="border border-gray-200 rounded-xl p-3 w-full text-lg text-black"
-                                                min={new Date().toISOString().split('T')[0]}
-                                            />
-                                            {!formData.search_date && (
-                                                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-lg text-gray-400 pointer-events-none">
-                                                    ቀን ይምረጡ
-                                                </span>
-                                            )}
-                                        </div>
+                                        <input
+                                            type="date"
+                                            value={formData.search_date}
+                                            onChange={(e) => setFormData({ ...formData, search_date: e.target.value })}
+                                            className="border border-gray-200 rounded-xl p-3 flex-1 text-black text-lg"
+                                            style={{ color: 'black !important' }}
+                                            placeholder="እስከ መች ይፈለግ"
+                                            min={new Date().toISOString().split('T')[0]}
+                                        />
                                         <button 
                                             type="submit" 
                                             className="bg-green-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-green-700 whitespace-nowrap"
                                         >
-                                            {isEditing ? 'Update' : 'Post'}
+                                            {isEditing ? 'Update' : 'Post medication'}
                                         </button>
                                     </div>
                                 </div>
