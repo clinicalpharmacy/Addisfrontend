@@ -449,20 +449,20 @@ const MedicationAvailability = () => {
                         />
                     </div>
 
-                    {/* Add/Edit Form */}
+                    {/* Add/Edit Form - COMPACT VERSION (only this part changed) */}
                     {showAddForm && (
-                        <div className="bg-white p-3 rounded-xl shadow-lg border-2 border-blue-100 mb-3">
-                            <h2 className="text-sm font-bold mb-2 text-gray-800">
+                        <div className="bg-white p-3 rounded-xl shadow-lg border-2 border-blue-100 mb-3 flex-shrink-0">
+                            <h2 className="text-sm font-bold mb-1.5 text-gray-800">
                                 {isEditing ? 'Edit Medication' : 'የሚፈለገውን መድሃኒት ይጻፉ'}
                             </h2>
-                            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
                                 <div className="md:col-span-2">
                                     <input
                                         type="text"
                                         required
                                         value={formData.medication_needed}
                                         onChange={(e) => setFormData({ ...formData, medication_needed: e.target.value })}
-                                        className="w-full border border-gray-200 rounded-lg p-2 text-sm focus:border-blue-500"
+                                        className="w-full border border-gray-200 rounded-lg p-1.5 text-sm focus:border-blue-500"
                                         placeholder="የመድሃኒቱ ስም"
                                     />
                                 </div>
@@ -473,7 +473,7 @@ const MedicationAvailability = () => {
                                         type="date"
                                         value={formData.search_date}
                                         onChange={(e) => setFormData({ ...formData, search_date: e.target.value })}
-                                        className="border border-gray-200 rounded-lg p-2 w-full text-sm"
+                                        className="border border-gray-200 rounded-lg p-1.5 w-full text-sm"
                                         placeholder="እስከ መች ይፈለግ"
                                         min={new Date().toISOString().split('T')[0]}
                                     />
@@ -482,12 +482,12 @@ const MedicationAvailability = () => {
                                     <textarea
                                         value={formData.notes}
                                         onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                                        className="w-full border border-gray-200 rounded-lg p-2 text-sm"
+                                        className="w-full border border-gray-200 rounded-lg p-1.5 text-sm"
                                         placeholder="ተጨማሪ መረጃ (ካስፈለገ)"
                                         rows="1"
                                     />
                                 </div>
-                                <button type="submit" className="md:col-span-2 bg-green-600 text-white font-bold py-2 rounded-lg hover:bg-green-700 text-sm">
+                                <button type="submit" className="md:col-span-2 bg-green-600 text-white font-bold py-1.5 rounded-lg hover:bg-green-700 text-sm">
                                     {isEditing ? 'Update medication' : 'Post medication'}
                                 </button>
                             </form>
