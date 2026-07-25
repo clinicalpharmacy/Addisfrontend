@@ -789,7 +789,7 @@ const MedicationHistory = ({ patientCode }) => {
                     className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
                 >
                     <FaPrescription />
-                    {showForm ? 'Hide Add Medication Form' : 'Show Add Medication Form'}
+                    {showForm ? 'Hide Add Medication Form' : 'Add Medication'}
                 </button>
             </div>
             
