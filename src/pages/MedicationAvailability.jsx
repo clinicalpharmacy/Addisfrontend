@@ -491,7 +491,7 @@ const MedicationAvailability = () => {
                                         </div>
                                 
                                         {/* Selected Date */}
-                                        <span className="text-gray-700 text-base min-w-[120px]">
+                                        <span className="text-gray-700 text-base min-w-[85px]">
                                             {formData.search_date
                                                 ? new Date(formData.search_date).toLocaleDateString("en-CA", {
                                                       month: "short",
@@ -502,7 +502,7 @@ const MedicationAvailability = () => {
                                 
                                         <button
                                             type="submit"
-                                            className="bg-green-600 text-white font-bold py-3 px-6 rounded-2xl hover:bg-green-700 whitespace-nowrap ml-auto"
+                                            className="bg-green-600 text-white font-bold py-3 px-5 rounded-2xl hover:bg-green-700 whitespace-nowrap ml-auto"
                                         >
                                             {isEditing ? "Update" : "Post"}
                                         </button>
