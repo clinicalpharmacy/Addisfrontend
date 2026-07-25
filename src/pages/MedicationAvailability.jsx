@@ -465,7 +465,7 @@ const MedicationAvailability = () => {
                                     />
                                 </div>
                                 
-                                {/* Row with label, calendar button, and post button */}
+                                 {/* Row with label, calendar button, selected date, and post button */}
                                 <div className="md:col-span-3">
                                     <div className="flex items-center gap-3 w-full">
                                 
@@ -473,8 +473,8 @@ const MedicationAvailability = () => {
                                             እስከ መች ይፈለግ
                                         </label>
                                 
-                                        {/* Calendar icon with invisible native date input on top */}
-                                        <div className="relative w-12 h-12">
+                                        {/* Calendar Button */}
+                                        <div className="relative w-12 h-12 flex-shrink-0">
                                             <FaCalendarAlt className="absolute inset-0 m-auto text-2xl text-blue-600 pointer-events-none" />
                                 
                                             <input
@@ -487,39 +487,30 @@ const MedicationAvailability = () => {
                                                     })
                                                 }
                                                 min={new Date().toISOString().split("T")[0]}
-                                                className="
-                                                    absolute
-                                                    inset-0
-                                                    w-full
-                                                    h-full
-                                                    opacity-0
-                                                    cursor-pointer
-                                                "
+                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                                             />
                                         </div>
                                 
+                                        {/* Selected Date */}
+                                        <span className="text-gray-700 text-base min-w-[120px]">
+                                            {formData.search_date
+                                                ? new Date(formData.search_date).toLocaleDateString("en-CA", {
+                                                      year: "numeric",
+                                                      month: "short",
+                                                      day: "numeric",
+                                                  })
+                                                : "No date selected"}
+                                        </span>
+                                
                                         <button
                                             type="submit"
-                                            className="bg-green-600 text-white font-bold py-3 px-6 rounded-2xl hover:bg-green-700 whitespace-nowrap"
+                                            className="bg-green-600 text-white font-bold py-3 px-6 rounded-2xl hover:bg-green-700 whitespace-nowrap ml-auto"
                                         >
                                             {isEditing ? "Update" : "Post"}
                                         </button>
                                 
                                     </div>
-                                </div>                                
-                                <div className="md:col-span-3">
-                                    <textarea
-                                        value={formData.notes}
-                                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                                        className="w-full border border-gray-200 rounded-xl p-3"
-                                        placeholder="ተጨማሪ መረጃ (ካስፈለገ)"
-                                        rows="1"
-                                    />
                                 </div>
-                            </form>
-                        </div>
-                    )}
-
                     {loading ? (
                         <div className="py-10 text-center">Loading posts...</div>
                     ) : memoizedFilteredPosts.length === 0 ? (
