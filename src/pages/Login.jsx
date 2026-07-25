@@ -345,7 +345,7 @@ const Login = () => {
                             <FaUserMd className="text-white text-xl animate-pulse" />
                         </div>
                     </div>
-                    <h1 className="text-6xl font-bold text-white mb-1 tracking-tight">Addis Med</h1>
+                    <h1 className="text-3xl font-bold text-white mb-1 tracking-tight">Addis Med</h1>
 
                     {/* Dynamic Carousel Message - Compact for mobile */}
                     <div className="h-8 overflow-hidden">
@@ -357,7 +357,7 @@ const Login = () => {
                                 const Icon = msg.icon;
                                 return (
                                     <div key={index} className="h-8 flex items-center justify-center gap-1">
-                                        <Icon className="text-white text-2xl animate-pulse" />
+                                        <Icon className="text-white text-3xl animate-pulse" />
                                         <p className="text-white text-3xl font-bold italic">{msg.text}</p>
                                     </div>
                                 );
