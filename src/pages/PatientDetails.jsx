@@ -741,7 +741,7 @@ const PatientDetails = () => {
                 const isNotFound = apiError?.status === 404 || errorMsg.toLowerCase().includes('not found');
 
                 if (isNotFound) {
-                    setError('Patient not found. You can create a new patient instead.');
+                    setError('Case not found. You can create a new case instead.');
                     setIsNewPatient(true);
                     setIsEditing(true);
                 } else {
