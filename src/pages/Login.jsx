@@ -418,15 +418,16 @@ const Login = () => {
                     {/* Login Form - Compact for mobile */}
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {/* Email/Addis-Med ID Field */}
-                        <div>
-                            <div className="relative group">
+                    <div>
+                        <div className="flex justify-center">
+                            <div className="relative group w-3/4">
                                 <input
                                     type={loginMethod === 'email' ? "email" : "text"}
                                     value={formData.email}
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                     onFocus={() => setFocusedField('email')}
                                     onBlur={() => setFocusedField(null)}
-                                    className={`w-3/4 px-3 py-2.5 pl-9 border-2 rounded-xl outline-none transition-all duration-300 text-2xl ${focusedField === 'email'
+                                    className={`w-full px-3 py-2.5 pl-9 border-2 rounded-xl outline-none transition-all duration-300 text-base font-bold ${focusedField === 'email'
                                         ? 'border-blue-500 shadow-lg shadow-blue-100'
                                         : loginMethod === 'email'
                                             ? isEmailValid && formData.email
@@ -435,8 +436,8 @@ const Login = () => {
                                             : isAddisMedIdValid() && formData.email
                                                 ? 'border-green-500'
                                                 : 'border-gray-200 hover:border-gray-300'
-                                        }`}
-                                    placeholder={loginMethod === 'email' ? "Email" : "Addis-Med ID"}
+                                    }`}
+                                    placeholder={loginMethod === 'email' ? "Email Address" : "Addis-Med ID"}
                                     required
                                     disabled={loading}
                                 />
@@ -452,51 +453,45 @@ const Login = () => {
                                     <FaCheckCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500 text-sm animate-scale-in" />
                                 )}
                             </div>
-                            {loginMethod === 'addisMedId' && (
-                                <p className="text-[10px] text-gray-500 mt-1">
-                                    Format: HCC-XXXXXX-XXXXXX
-                                </p>
-                            )}
                         </div>
+                        {loginMethod === 'addisMedId' && (
+                            <p className="text-[10px] text-gray-500 mt-1 text-center">
+                                Format: HCC-XXXXXX-XXXXXX
+                            </p>
+                        )}
+                    </div>
 
                         {/* Password Field */}
                         <div>
-                            <div className="flex items-center justify-between mb-1.5">
-                                <Link
-                                    to="/forgot-password"
-                                    className="text-xs text-blue-600 hover:text-blue-800 font-medium transition-all hover:underline flex items-center gap-1 group"
-                                >
-                                    Forgot?
-                                    <FaArrowRight className="text-[10px] opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-                                </Link>
-                            </div>
-                            <div className="relative group">
-                                <input
-                                    type={showPassword ? "text" : "password"}
-                                    value={formData.password}
-                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                    onFocus={() => setFocusedField('password')}
-                                    onBlur={() => setFocusedField(null)}
-                                    className={`w-3/4 px-3 py-2.5 pl-9 pr-9 border-2 rounded-xl outline-none transition-all duration-300 text-2xl ${focusedField === 'password'
-                                        ? 'border-blue-500 shadow-lg shadow-blue-100'
-                                        : formData.password
-                                            ? 'border-green-500'
-                                            : 'border-gray-200 hover:border-gray-300'
+                            <div className="flex justify-center">
+                                <div className="relative group w-3/4">
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        value={formData.password}
+                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                        onFocus={() => setFocusedField('password')}
+                                        onBlur={() => setFocusedField(null)}
+                                        className={`w-full px-3 py-2.5 pl-9 pr-14 border-2 rounded-xl outline-none transition-all duration-300 text-base font-bold ${focusedField === 'password'
+                                            ? 'border-blue-500 shadow-lg shadow-blue-100'
+                                            : formData.password
+                                                ? 'border-green-500'
+                                                : 'border-gray-200 hover:border-gray-300'
                                         }`}
-                                    placeholder="Password"
-                                    required
-                                    disabled={loading}
-                                />
-                                <FaLock className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 text-sm ${focusedField === 'password' ? 'text-blue-500' : 'text-gray-400'}`} />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-600 transition-colors"
-                                >
-                                    {showPassword ? <FaEyeSlash className="text-sm" /> : <FaEye className="text-sm" />}
-                                </button>
+                                        placeholder="Enter password"
+                                        required
+                                        disabled={loading}
+                                    />
+                                    <FaLock className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 text-sm ${focusedField === 'password' ? 'text-blue-500' : 'text-gray-400'}`} />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-600 transition-colors"
+                                    >
+                                        {showPassword ? <FaEyeSlash className="text-sm" /> : <FaEye className="text-sm" />}
+                                    </button>
+                                </div>
                             </div>
-
+                        
                             {/* Password Strength Indicator */}
                             {formData.password && (
                                 <div className="mt-1.5 animate-slide-down">
@@ -507,11 +502,11 @@ const Login = () => {
                                                 className={`flex-1 h-full rounded-full transition-all duration-500 ${level <= passwordStrength
                                                     ? getPasswordStrengthColor()
                                                     : 'bg-gray-200'
-                                                    }`}
+                                                }`}
                                             ></div>
                                         ))}
                                     </div>
-                                    <p className={`text-[10px] mt-1 font-medium ${passwordStrength === 1 ? 'text-red-500' :
+                                    <p className={`text-[10px] mt-1 font-medium text-center ${passwordStrength === 1 ? 'text-red-500' :
                                         passwordStrength === 2 ? 'text-yellow-500' :
                                             passwordStrength === 3 ? 'text-green-500' :
                                                 'text-gray-400'
@@ -523,13 +518,14 @@ const Login = () => {
                         </div>
 
                         {/* Submit Button */}
+                      <div className="flex justify-center">
                         <button
                             type="submit"
                             disabled={loading}
-                            className={`w-3/4 py-2.5 px-4 rounded-xl font-bold text-2xl transition-all transform hover:scale-[1.01] active:scale-[0.99] ${loading
+                            className={`w-3/4 py-2.5 px-4 rounded-xl font-bold text-lg transition-all transform hover:scale-[1.01] active:scale-[0.99] ${loading
                                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                 : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-xl hover:shadow-2xl'
-                                }`}
+                            }`}
                         >
                             {loading ? (
                                 <span className="flex items-center justify-center gap-2">
@@ -539,11 +535,12 @@ const Login = () => {
                             ) : (
                                 <span className="flex items-center justify-center gap-2">
                                     <FaSignInAlt className="text-sm" />
-                                    <span className="text-2xl">Sign In</span>
+                                    <span className="text-sm">Sign In</span>
                                     <FaArrowRight className="text-xs animate-pulse" />
                                 </span>
                             )}
                         </button>
+                    </div>
                     </form>
 
                     {/* Quick Test Logins (For Development Only) */}
