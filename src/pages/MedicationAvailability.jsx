@@ -22,6 +22,7 @@ const MedicationAvailability = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [editPostId, setEditPostId] = useState(null);
     const isAdmin = currentUser?.role === 'admin';
+    const dateInputRef = useRef(null);
     
     // Add refs to prevent unnecessary re-renders and track mounted state
     const isMounted = useRef(true);
@@ -464,17 +465,33 @@ const MedicationAvailability = () => {
                                     />
                                 </div>
                                 
-                                {/* Row with label, date input, and post button */}
+                                {/* Row with label, date input, and post button */}                                
                                 <div className="md:col-span-3">
                                     <div className="flex items-center gap-3 w-full">
                                         <label className="text-lg text-gray-500 whitespace-nowrap">እስከ መች ይፈለግ</label>
                                         <input
+                                            ref={dateInputRef}
                                             type="date"
                                             value={formData.search_date}
                                             onChange={(e) => setFormData({ ...formData, search_date: e.target.value })}
-                                            className="border border-white rounded-lg p-3 flex-1 text-black text-lg"
+                                            className="border border-gray-200 rounded-lg p-3 flex-1 cursor-pointer"
                                             min={new Date().toISOString().split('T')[0]}
+                                            style={{
+                                                // Hide the text completely
+                                                color: 'transparent',
+                                                // Make calendar icon visible and larger
+                                                '::-webkit-calendar-picker-indicator': {
+                                                    opacity: 1,
+                                                    padding: '8px',
+                                                    fontSize: '24px',
+                                                    cursor: 'pointer'
+                                                }
+                                            }}
                                         />
+                                        {/* Overlay label */}
+                                        <div className="absolute ml-3 pointer-events-none text-gray-400 text-lg">
+                                            {formData.search_date ? '📅' : 'Select date'}
+                                        </div>
                                         <button 
                                             type="submit" 
                                             className="bg-green-600 text-white font-bold py-3 px-6 rounded-2xl hover:bg-green-700 whitespace-nowrap"
