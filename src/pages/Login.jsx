@@ -455,6 +455,8 @@ const Login = () => {
                             </div>
                         </div>
                         {loginMethod === 'addisMedId' && (
+                            <p className="text-[10px] text-gray-500 mt-1">
+                            </p>
                         )}
                     </div>
 
