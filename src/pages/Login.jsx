@@ -427,7 +427,7 @@ const Login = () => {
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                     onFocus={() => setFocusedField('email')}
                                     onBlur={() => setFocusedField(null)}
-                                    className={`w-full px-3 py-2.5 pl-9 border-2 rounded-xl outline-none transition-all duration-300 text-base font-bold ${focusedField === 'email'
+                                    className={`w-full px-3 py-2.5 pl-9 border-2 rounded-xl outline-none transition-all duration-300 text-base font-normal ${focusedField === 'email'
                                         ? 'border-blue-500 shadow-lg shadow-blue-100'
                                         : loginMethod === 'email'
                                             ? isEmailValid && formData.email
@@ -470,7 +470,7 @@ const Login = () => {
                                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                         onFocus={() => setFocusedField('password')}
                                         onBlur={() => setFocusedField(null)}
-                                        className={`w-full px-3 py-2.5 pl-9 pr-14 border-2 rounded-xl outline-none transition-all duration-300 text-base font-bold ${focusedField === 'password'
+                                        className={`w-full px-3 py-2.5 pl-9 pr-14 border-2 rounded-xl outline-none transition-all duration-300 text-base font-normal ${focusedField === 'password'
                                             ? 'border-blue-500 shadow-lg shadow-blue-100'
                                             : formData.password
                                                 ? 'border-green-500'
