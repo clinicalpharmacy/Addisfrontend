@@ -449,31 +449,31 @@ const MedicationAvailability = () => {
                         />
                     </div>
 
-                    {/* Add/Edit Form - COMPACT VERSION (only this part changed) */}
+                    {/* Add/Edit Form - SUPER COMPACT - NO SCROLLING */}
                     {showAddForm && (
-                        <div className="bg-white p-3 rounded-xl shadow-lg border-2 border-blue-100 mb-3 flex-shrink-0">
-                            <h2 className="text-sm font-bold mb-1.5 text-gray-800">
+                        <div className="bg-white p-2 rounded-xl shadow-lg border-2 border-blue-100 mb-2 flex-shrink-0">
+                            <h2 className="text-xs font-bold mb-1 text-gray-800">
                                 {isEditing ? 'Edit Medication' : 'የሚፈለገውን መድሃኒት ይጻፉ'}
                             </h2>
-                            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
+                            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-1">
                                 <div className="md:col-span-2">
                                     <input
                                         type="text"
                                         required
                                         value={formData.medication_needed}
                                         onChange={(e) => setFormData({ ...formData, medication_needed: e.target.value })}
-                                        className="w-full border border-gray-200 rounded-lg p-1.5 text-sm focus:border-blue-500"
+                                        className="w-full border border-gray-200 rounded-lg p-1.5 text-xs focus:border-blue-500"
                                         placeholder="የመድሃኒቱ ስም"
                                     />
                                 </div>
                                 
-                                <div className="flex flex-col gap-0.5 w-full">
-                                    <label className="text-xs text-gray-500 ml-1">እስከ መች ይፈለግ</label>
+                                <div className="flex flex-col gap-0 w-full">
+                                    <label className="text-[10px] text-gray-500">እስከ መች ይፈለግ</label>
                                     <input
                                         type="date"
                                         value={formData.search_date}
                                         onChange={(e) => setFormData({ ...formData, search_date: e.target.value })}
-                                        className="border border-gray-200 rounded-lg p-1.5 w-full text-sm"
+                                        className="border border-gray-200 rounded-lg p-1.5 w-full text-xs"
                                         placeholder="እስከ መች ይፈለግ"
                                         min={new Date().toISOString().split('T')[0]}
                                     />
@@ -482,12 +482,12 @@ const MedicationAvailability = () => {
                                     <textarea
                                         value={formData.notes}
                                         onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                                        className="w-full border border-gray-200 rounded-lg p-1.5 text-sm"
+                                        className="w-full border border-gray-200 rounded-lg p-1.5 text-xs"
                                         placeholder="ተጨማሪ መረጃ (ካስፈለገ)"
                                         rows="1"
                                     />
                                 </div>
-                                <button type="submit" className="md:col-span-2 bg-green-600 text-white font-bold py-1.5 rounded-lg hover:bg-green-700 text-sm">
+                                <button type="submit" className="md:col-span-2 bg-green-600 text-white font-bold py-1.5 rounded-lg hover:bg-green-700 text-xs">
                                     {isEditing ? 'Update medication' : 'Post medication'}
                                 </button>
                             </form>
