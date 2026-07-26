@@ -628,7 +628,6 @@ const MedicationAvailability = () => {
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <p className="font-bold text-gray-800 truncate">{user.full_name || 'User'}</p>
-                                                    <p className="text-xs text-gray-500 truncate">{user.institution || 'Pharmacy'}</p>
                                                 </div>
                                             </div>
                                         ))
