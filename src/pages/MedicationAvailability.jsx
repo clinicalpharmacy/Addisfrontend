@@ -509,7 +509,7 @@ const MedicationAvailability = () => {
                                             value={formData.notes}
                                             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                                             className="flex-1 border border-gray-200 rounded-xl p-3"
-                                            placeholder="ተጨማሪ መረጃ (ካስፈለገ)"
+                                            placeholder="ተጨማሪ መረጃ"
                                             rows="1"
                                         />
                                         <button
