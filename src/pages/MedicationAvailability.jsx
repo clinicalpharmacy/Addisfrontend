@@ -519,7 +519,10 @@ const MedicationAvailability = () => {
                                             {isEditing ? "Update" : "Post"}
                                         </button>
                                     </div>
-                                </div>                 
+                                </div>
+                            </form>
+                        </div>
+                    )}
                     {loading ? (
                         <div className="py-10 text-center">Loading posts...</div>
                     ) : memoizedFilteredPosts.length === 0 ? (
