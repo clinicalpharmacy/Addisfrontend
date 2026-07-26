@@ -461,7 +461,7 @@ const MedicationAvailability = () => {
                                         value={formData.medication_needed}
                                         onChange={(e) => setFormData({ ...formData, medication_needed: e.target.value })}
                                         className="w-full border border-gray-200 rounded-2xl p-3 focus:border-blue-500"
-                                        placeholder="የሚፈለገውን መድሃኒት ስም ይጻፉ"
+                                        placeholder="የሚፈለገውን መድሃኒት ይጻፉ"
                                     />
                                 </div>
                                 
