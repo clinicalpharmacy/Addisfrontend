@@ -499,27 +499,27 @@ const MedicationAvailability = () => {
                                                   })
                                                 : "ቀን ይምረጡ"}
                                         </span>
+                                    </div>
+                                </div>
                                 
+                                {/* Textarea and Post Button - Side by Side */}
+                                <div className="md:col-span-3">
+                                    <div className="flex items-center gap-3 w-full">
+                                        <textarea
+                                            value={formData.notes}
+                                            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                                            className="flex-1 border border-gray-200 rounded-xl p-3"
+                                            placeholder="ተጨማሪ መረጃ (ካስፈለገ)"
+                                            rows="1"
+                                        />
                                         <button
                                             type="submit"
-                                            className="bg-green-600 text-white font-bold py-3 px-5 rounded-2xl hover:bg-green-700 whitespace-nowrap ml-auto"
+                                            className="bg-green-600 text-white font-bold py-3 px-5 rounded-2xl hover:bg-green-700 whitespace-nowrap flex-shrink-0"
                                         >
                                             {isEditing ? "Update" : "Post"}
                                         </button>
                                     </div>
-                                </div>
-                                    <div className="md:col-span-3">
-                                    <textarea
-                                        value={formData.notes}
-                                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                                        className="w-full border border-gray-200 rounded-xl p-3"
-                                        placeholder="ተጨማሪ መረጃ (ካስፈለገ)"
-                                        rows="1"
-                                    />
-                                </div>
-                            </form>
-                        </div>
-                    )}                                
+                                </div>                 
                     {loading ? (
                         <div className="py-10 text-center">Loading posts...</div>
                     ) : memoizedFilteredPosts.length === 0 ? (
