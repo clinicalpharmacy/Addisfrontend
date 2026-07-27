@@ -51,27 +51,24 @@ const KnowledgeBaseLayout = () => {
                 </div>
             )}
 
-            <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
-                <div className="mb-4 md:mb-6">
-                    <div className="flex items-center justify-between gap-4">
-                        {isSuperAdmin && (
-                            <button
-                                onClick={toggleProtection}
-                                className={`px-3 py-2 rounded-lg flex items-center gap-2 text-sm transition-all shadow-sm flex-shrink-0 ${protectionEnabled
-                                    ? 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100'
-                                    : 'bg-green-50 text-green-600 border border-green-200 hover:bg-green-100'
-                                    }`}
-                                title={protectionEnabled ? "Disable Protection" : "Enable Protection"}
-                            >
-                                {protectionEnabled ? <FaLock /> : <FaUserShield />}
-                                <span className="hidden sm:inline font-bold">
-                                    {protectionEnabled ? 'Strict Mode' : 'Allow Copy'}
-                                </span>
-                            </button>
-                        )}
-                    </div>
+            {/* Protection Toggle - Moved to top of content */}
+            {isSuperAdmin && (
+                <div className="flex justify-end">
+                    <button
+                        onClick={toggleProtection}
+                        className={`px-3 py-2 rounded-lg flex items-center gap-2 text-sm transition-all shadow-sm ${protectionEnabled
+                            ? 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100'
+                            : 'bg-green-50 text-green-600 border border-green-200 hover:bg-green-100'
+                            }`}
+                        title={protectionEnabled ? "Disable Protection" : "Enable Protection"}
+                    >
+                        {protectionEnabled ? <FaLock /> : <FaUserShield />}
+                        <span className="hidden sm:inline font-bold">
+                            {protectionEnabled ? 'Strict Mode' : 'Allow Copy'}
+                        </span>
+                    </button>
                 </div>
-            </div>
+            )}
 
             {/* Content Area */}
             <div className="min-h-[500px] transition-all duration-300">
