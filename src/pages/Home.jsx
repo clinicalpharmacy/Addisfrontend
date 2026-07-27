@@ -9,7 +9,11 @@ import {
     FaExclamationTriangle,
     FaUserShield,
     FaLockOpen,
-    FaCheckCircle
+    FaCheckCircle,
+    FaBookMedical,
+    FaStethoscope,
+    FaCapsules,
+    FaFlask
 } from 'react-icons/fa';
 import SecurityActivator from '../components/Security/SecurityActivator';
 
@@ -25,6 +29,13 @@ const Home = () => {
         if (hour < 18) return 'Good afternoon';
         return 'Good evening';
     };
+
+    // Helper function to check if user can access professional content
+    const canAccessProfessionalContent = () => {
+        const professionalRoles = ['company_admin', 'company_user', 'pharmacist', 'pharmacy_student'];
+        return professionalRoles.includes(JSON.parse(localStorage.getItem('user'))?.role);
+    };
+
     return (
         <div className="page-container w-full max-w-full overflow-x-hidden px-2 sm:px-4 md:px-6">
             {/* 🛡️ Security Identity Banner (New) */}
@@ -58,138 +69,132 @@ const Home = () => {
                 </div>
             </div>
 
-            {/* Quick Access Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 w-full">
+            {/* Quick Access Grid - First Row (2 items now) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 w-full">
             
-              {/* Medication Review */}
-              {role !== 'admin' && (
-                <Link to="/patients" className="bg-white rounded-xl shadow p-4 sm:p-6 hover:shadow-md transition w-full">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="p-3 bg-blue-100 rounded-full">
-                      <FaUserInjured className="text-blue-600 text-2xl" />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-bold text-gray-800">Medication Review</h2>
-                      <p className="text-sm text-gray-500">Review medication use</p>
-                    </div>
-                  </div>
-                  <div className="flex justify-end">
-                    <span className="text-blue-600 flex items-center gap-1">
-                      Open <FaArrowRight />
-                    </span>
-                  </div>
-                </Link>
-              )}
+                {/* Medication Review */}
+                {role !== 'admin' && (
+                    <Link to="/patients" className="bg-white rounded-xl shadow p-4 sm:p-6 hover:shadow-md transition w-full">
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className="p-3 bg-blue-100 rounded-full">
+                                <FaUserInjured className="text-blue-600 text-2xl" />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-800">Medication Review</h2>
+                                <p className="text-sm text-gray-500">Review medication use</p>
+                            </div>
+                        </div>
+                        <div className="flex justify-end">
+                            <span className="text-blue-600 flex items-center gap-1">
+                                Open <FaArrowRight />
+                            </span>
+                        </div>
+                    </Link>
+                )}
             
-              {/* የመድሃኒት መረጃ */}
-              <Link to="/knowledge/medications" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="p-3 bg-purple-100 rounded-full">
-                    <FaPills className="text-purple-600 text-2xl" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-800">የመድሃኒት መረጃ</h2>
-                    <p className="text-sm text-gray-500">Database for Medicines information</p>
-                  </div>
-                </div>
-                <div className="flex justify-end">
-                  <span className="text-purple-600 flex items-center gap-1">
-                    Search <FaArrowRight />
-                  </span>
-                </div>
-              </Link>
-            
-              {/* Home Remedies */}
-              <Link to="/knowledge/remedies" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="p-3 bg-green-100 rounded-full">
-                    <FaVial className="text-green-600 text-2xl" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-800">የቤት ውስጥ ጤና ክብካቤ</h2>
-                    <p className="text-sm text-gray-500">Home made remedies</p>
-                  </div>
-                </div>
-                <div className="flex justify-end">
-                  <span className="text-green-600 flex items-center gap-1">
-                    Browse <FaArrowRight />
-                  </span>
-                </div>
-              </Link>
-            
-            </div>
-          
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 w-full">
-                {/* Minor Illnesses - Only for Company, Pharmacists & Pharmacy students */}
-                {['company_admin', 'company_user', 'pharmacist', 'pharmacy_student'].includes(
-                  JSON.parse(localStorage.getItem('user'))?.role
-                ) && (
-                  <Link to="/knowledge/illnesses" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
+                {/* የመድሃኒት መረጃ - Standalone Card */}
+                <Link to="/knowledge/medications" className="bg-white rounded-xl shadow p-4 sm:p-6 hover:shadow-md transition">
                     <div className="flex items-center gap-4 mb-4">
-                      <div className="p-3 bg-orange-100 rounded-full">
-                        <FaUserMd className="text-orange-600 text-2xl" />
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-bold text-gray-800">Minor Illnesses</h2>
-                        <p className="text-sm text-gray-500">OTC-based Treatment guides</p>
-                      </div>
+                        <div className="p-3 bg-purple-100 rounded-full">
+                            <FaPills className="text-purple-600 text-2xl" />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold text-gray-800">የመድሃኒት መረጃ</h2>
+                            <p className="text-sm text-gray-500">Database for Medicines information</p>
+                        </div>
                     </div>
                     <div className="flex justify-end">
-                      <span className="text-orange-600 flex items-center gap-1">
-                        View <FaArrowRight />
-                      </span>
+                        <span className="text-purple-600 flex items-center gap-1">
+                            Search <FaArrowRight />
+                        </span>
                     </div>
-                  </Link>
+                </Link>
+            </div>
+          
+            {/* Quick Access Grid - Second Row (Other Resources - 4 items grouped together) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 w-full">
+                {/* Home Remedies - Now in second row */}
+                <Link to="/knowledge/remedies" className="bg-white rounded-xl shadow p-4 sm:p-6 hover:shadow-md transition">
+                    <div className="flex items-center gap-4 mb-4">
+                        <div className="p-3 bg-green-100 rounded-full">
+                            <FaVial className="text-green-600 text-2xl" />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold text-gray-800">የቤት ውስጥ ጤና ክብካቤ</h2>
+                            <p className="text-sm text-gray-500">Home made remedies</p>
+                        </div>
+                    </div>
+                    <div className="flex justify-end">
+                        <span className="text-green-600 flex items-center gap-1">
+                            Browse <FaArrowRight />
+                        </span>
+                    </div>
+                </Link>
+
+                {/* Minor Illnesses - Only for Company, Pharmacists & Pharmacy students */}
+                {canAccessProfessionalContent() && (
+                    <Link to="/knowledge/illnesses" className="bg-white rounded-xl shadow p-4 sm:p-6 hover:shadow-md transition">
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className="p-3 bg-indigo-100 rounded-full">
+                                <FaStethoscope className="text-indigo-600 text-2xl" />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-800">Minor Illnesses</h2>
+                                <p className="text-sm text-gray-500">OTC-based Treatment guides</p>
+                            </div>
+                        </div>
+                        <div className="flex justify-end">
+                            <span className="text-indigo-600 flex items-center gap-1">
+                                View <FaArrowRight />
+                            </span>
+                        </div>
+                    </Link>
                 )}
 
                 {/* Compounding - Only for Company, Pharmacists & Pharmacy students */}
-                {['company_admin', 'company_user', 'pharmacist', 'pharmacy_student'].includes(
-                  JSON.parse(localStorage.getItem('user'))?.role
-                ) && (
-                  <Link to="/knowledge/compounding" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="p-3 bg-orange-100 rounded-full">
-                        <FaUserMd className="text-orange-600 text-2xl" />
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-bold text-gray-800">Compounding</h2>
-                        <p className="text-sm text-gray-500">Compounding SOPs</p>
-                      </div>
-                    </div>
-                    <div className="flex justify-end">
-                      <span className="text-orange-600 flex items-center gap-1">
-                        View <FaArrowRight />
-                      </span>
-                    </div>
-                  </Link>
+                {canAccessProfessionalContent() && (
+                    <Link to="/knowledge/compounding" className="bg-white rounded-xl shadow p-4 sm:p-6 hover:shadow-md transition">
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className="p-3 bg-teal-100 rounded-full">
+                                <FaFlask className="text-teal-600 text-2xl" />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-800">Compounding</h2>
+                                <p className="text-sm text-gray-500">Compounding SOPs</p>
+                            </div>
+                        </div>
+                        <div className="flex justify-end">
+                            <span className="text-teal-600 flex items-center gap-1">
+                                View <FaArrowRight />
+                            </span>
+                        </div>
+                    </Link>
                 )}
 
                 {/* Educational review - Only for Company, Pharmacists & Pharmacy students */}
-                {['company_admin', 'company_user', 'pharmacist', 'pharmacy_student'].includes(
-                  JSON.parse(localStorage.getItem('user'))?.role
-                ) && (
-                  <Link to="/knowledge/Education" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="p-3 bg-orange-100 rounded-full">
-                        <FaUserMd className="text-orange-600 text-2xl" />
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-bold text-gray-800">Education</h2>
-                        <p className="text-sm text-gray-500">Educational reviews</p>
-                      </div>
-                    </div>
-                    <div className="flex justify-end">
-                      <span className="text-orange-600 flex items-center gap-1">
-                        View <FaArrowRight />
-                      </span>
-                    </div>
-                  </Link>
+                {canAccessProfessionalContent() && (
+                    <Link to="/knowledge/education" className="bg-white rounded-xl shadow p-4 sm:p-6 hover:shadow-md transition">
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className="p-3 bg-amber-100 rounded-full">
+                                <FaBookMedical className="text-amber-600 text-2xl" />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-800">Education</h2>
+                                <p className="text-sm text-gray-500">Educational reviews</p>
+                            </div>
+                        </div>
+                        <div className="flex justify-end">
+                            <span className="text-amber-600 flex items-center gap-1">
+                                View <FaArrowRight />
+                            </span>
+                        </div>
+                    </Link>
                 )}
             </div>
 
             {/* Simple Footer */}
             <div className="text-center text-gray-500 text-xs sm:text-sm">
-                <p>Addis Med - Enhacing patient safety and rational medicines use</p>
+                <p>Addis Med - Enhancing patient safety and rational medicines use</p>
             </div>
         </div>
     );
