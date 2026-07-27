@@ -164,7 +164,7 @@ const Sidebar = ({ onClose }) => {
                             </NavLink>
                         </li>
 
-                        {/* Patients Section */}
+                        {/* Patients Section - Medication Review */}
                         {!isAdmin && ( // Show for non-admins, including healthcare_client
                             <li className="mb-2">
                                 <button
@@ -211,29 +211,22 @@ const Sidebar = ({ onClose }) => {
                                             New MR
                                         </NavLink>
                                         )}
+                                        {/* Clinical Analysis - Now nested under Medication Review */}
+                                        <NavLink
+                                            to="/cdss-analysis"
+                                            onClick={onClose}
+                                            className={({ isActive }) =>
+                                                `flex items-center gap-2.5 px-4 py-2 text-base rounded-lg transition-all ${isActive
+                                                    ? 'text-purple-600 font-black bg-purple-50'
+                                                    : 'text-gray-400 hover:text-purple-600 hover:bg-purple-50'
+                                                }`
+                                            }
+                                        >
+                                            <FaBrain className="text-base opacity-60" />
+                                            Clinical Analysis
+                                        </NavLink>
                                     </div>
                                 )}
-                            </li>
-                        )}
-
-                        {!isAdmin && (
-                            <li>
-                                <NavLink
-                                    to={isSubscribed ? "/cdss-analysis" : "/subscription/plans"}
-                                    onClick={onClose}
-                                    className={({ isActive }) =>
-                                        `flex items-center justify-between p-2.5 rounded-xl transition-all duration-300 group ${isActive
-                                            ? 'bg-purple-600 text-white shadow-lg shadow-purple-100 font-black'
-                                            : 'text-gray-500 hover:bg-purple-50 hover:text-purple-700 font-bold'
-                                        } ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`
-                                    }
-                                >
-                                    <div className="flex items-center gap-2.5">
-                                        <FaBrain className="text-xl group-hover:scale-110 transition-transform" />
-                                        <span className="text-base">Clinical Analysis</span>
-                                    </div>
-                                    {!isSubscribed && <FaLock className="text-xs opacity-50" />}
-                                </NavLink>
                             </li>
                         )}
 
