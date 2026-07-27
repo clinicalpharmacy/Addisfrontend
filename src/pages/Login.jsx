@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+"import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
     FaUserMd, FaLock, FaExclamationTriangle, FaSignInAlt,
@@ -321,6 +321,8 @@ const Login = () => {
         }
     };
 
+    const CurrentIcon = carouselMessages[currentSlide].icon;
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 flex items-start justify-center p-1 sm:p-3 relative overflow-auto">
             {/* Animated Background Elements - Hidden on mobile for performance */}
@@ -345,24 +347,6 @@ const Login = () => {
                         </div>
                     </div>
                     <h1 className="text-3xl font-bold text-white mb-1 tracking-tight">Addis Med</h1>
-
-                    {/* Dynamic Carousel Message - Compact for mobile */}
-                    <div className="h-8 overflow-hidden">
-                        <div
-                            className="transform transition-transform duration-500 ease-in-out"
-                            style={{ transform: `translateY(-${currentSlide * 2}rem)` }}
-                        >
-                            {carouselMessages.map((msg, index) => {
-                                const Icon = msg.icon;
-                                return (
-                                    <div key={index} className="h-8 flex items-center justify-center gap-1">
-                                        <Icon className="text-yellow-400 text-lg animate-pulse" />
-                                        <p className="text-yellow-400 text-xl font-bold italic">{msg.text}</p>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
                 </div>
 
                 {/* Login Card - Optimized for mobile */}
@@ -632,49 +616,49 @@ const Login = () => {
                     </div>
                 </div>
 
-                {/* Left Side - About Section & Contact Info */}
-                <div className="fixed bottom-4 left-2 sm:left-4 z-20 w-auto max-w-[45%] min-w-[120px]">
-                    <div className="px-4 py-3 min-w-[150px] sm:min-w-[220px] space-y-3">
-                        {/* About Section */}
-                        <div className="bg-white/90 backdrop-blur-sm rounded-xl p-3 shadow-lg border border-white/50">
-                            <div className="flex items-start gap-2">
+                {/* Left Side - About Section & Contact Info - REDUCED WIDTH */}
+                <div className="fixed bottom-4 left-2 sm:left-4 z-20 w-auto max-w-[35%] min-w-[100px]">
+                    <div className="px-2 py-2 min-w-[100px] sm:min-w-[180px] space-y-2">
+                        {/* About Section - Reduced width and padding */}
+                        <div className="bg-white/90 backdrop-blur-sm rounded-xl p-2 shadow-lg border border-white/50">
+                            <div className="flex items-start gap-1.5">
                                 <div className="flex-shrink-0 mt-0.5">
-                                    <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                                        <FaInfoCircle className="text-white text-xs" />
+                                    <div className="w-5 h-5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                                        <FaInfoCircle className="text-white text-[8px]" />
                                     </div>
                                 </div>
                                 <div className="text-left">
-                                    <p className="text-[10px] text-gray-700 leading-relaxed font-medium">
+                                    <p className="text-[8px] sm:text-[9px] text-gray-700 leading-relaxed font-medium">
                                         Addis Med is a digital platform that provides education and information in health with a primary focus on medicines to health professionals, health science students and healthcare clients.
                                     </p>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Contact Info */}
-                        <div className="flex items-center gap-4 flex-wrap">
-                            <div className="flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                                <span className="text-xs text-white text-sm">
-                                    <span className="text-white ml-1 font-mono text-[14px]">Addis Ababa, Ethiopia</span>
+                        {/* Contact Info - Left Side */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <div className="flex items-center gap-1.5">
+                                <div className="w-1 h-1 bg-blue-500 rounded-full"></div>
+                                <span className="text-[8px] sm:text-[9px] text-white">
+                                    <span className="text-white ml-1 font-mono text-[10px] sm:text-[12px]">Addis Ababa, Ethiopia</span>
                                 </span>
                             </div>
                             
-                            <div className="flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                                <span className="text-xs text-white text-sm">
-                                    <span className="text-white ml-1 font-mono text-[14px]">pharmcare2001@yahoo.com</span>
+                            <div className="flex items-center gap-1.5">
+                                <div className="w-1 h-1 bg-blue-500 rounded-full"></div>
+                                <span className="text-[8px] sm:text-[9px] text-white">
+                                    <span className="text-white ml-1 font-mono text-[10px] sm:text-[12px]">pharmcare2001@yahoo.com</span>
                                 </span>
                             </div>
                         </div>
                     </div>
                 </div>
                             
-                {/* Right Side - Carousel Messages & Contact Info */}
+                {/* Right Side - Carousel Messages & Contact Info - INCREASED SPACING */}
                 <div className="fixed bottom-4 right-2 sm:right-4 z-20 w-auto max-w-[45%] min-w-[120px]">
-                    <div className="px-4 py-3 min-w-[150px] sm:min-w-[220px] space-y-3">
-                        {/* Carousel Messages */}
-                        <div className="bg-white/90 backdrop-blur-sm rounded-xl p-3 shadow-lg border border-white/50">
+                    <div className="px-4 py-3 min-w-[150px] sm:min-w-[220px] space-y-6">
+                        {/* Carousel Messages - Increased bottom margin with pb-2 */}
+                        <div className="bg-white/90 backdrop-blur-sm rounded-xl p-3 shadow-lg border border-white/50 pb-4">
                             <div className="h-8 overflow-hidden">
                                 <div
                                     className="transform transition-transform duration-500 ease-in-out"
@@ -693,19 +677,19 @@ const Login = () => {
                             </div>
                         </div>
 
-                        {/* Contact Info */}
-                        <div className="flex items-center gap-4 flex-wrap justify-end">
-                            <div className="flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                                <span className="text-xs text-white text-sm">
-                                    <span className="text-white ml-1 font-mono text-[14px]">+251919519512</span>
+                        {/* Contact Info - Right Side - More spacing above */}
+                        <div className="flex items-center gap-3 flex-wrap justify-end pt-1">
+                            <div className="flex items-center gap-1.5">
+                                <div className="w-1 h-1 bg-blue-500 rounded-full"></div>
+                                <span className="text-[8px] sm:text-[9px] text-white">
+                                    <span className="text-white ml-1 font-mono text-[10px] sm:text-[12px]">+251919519512</span>
                                 </span>
                             </div>
                             
-                            <div className="flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                                <span className="text-xs text-white text-sm">
-                                    <span className="text-white ml-1 font-mono text-[14px]">tiktok.com/@addis.med</span>
+                            <div className="flex items-center gap-1.5">
+                                <div className="w-1 h-1 bg-blue-500 rounded-full"></div>
+                                <span className="text-[8px] sm:text-[9px] text-white">
+                                    <span className="text-white ml-1 font-mono text-[10px] sm:text-[12px]">tiktok.com/@addis.med</span>
                                 </span>
                             </div>
                         </div>
@@ -742,4 +726,4 @@ const Login = () => {
     );
 };
 
-export default Login;
+export default Login;"
