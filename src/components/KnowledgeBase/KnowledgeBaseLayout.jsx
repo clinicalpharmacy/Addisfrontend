@@ -53,20 +53,18 @@ const KnowledgeBaseLayout = () => {
         user?.role === 'pharmacy_student';
 
     const tabs = [
-        // Standalone tab - Drug Information
-        { path: 'medications', label: 'የመድሃኒት መረጃ', icon: <FaPills />, section: 'main' },
-        
-        // Grouped tabs under "Clinical Resources"
+        { path: 'medications', label: 'የመድሃኒት መረጃ', icon: <FaPills /> },
+        { path: 'remedies', label: 'የቤት ውስጥ ጤና ክብካቤ', icon: <FaVial /> },
         ...(hasFullAccess ? [
-            { path: 'remedies', label: 'የቤት ውስጥ ጤና ክብካቤ', icon: <FaVial />, section: 'group' },
-            { path: 'illnesses', label: 'Minor Illnesses', icon: <FaStethoscope />, section: 'group' },
-            { path: 'compounding', label: 'Compounding', icon: <FaMortarPestle />, section: 'group' },
-            { path: 'education', label: 'Education', icon: <FaBookOpen />, section: 'group' }
+            { path: 'illnesses', label: 'Minor Illnesses', icon: <FaStethoscope /> },
+            { path: 'compounding', label: 'Compounding', icon: <FaMortarPestle /> },
+            { path: 'education', label: 'Education', icon: <FaBookOpen /> }
         ] : []),
     ];
 
     return (
         <div className="space-y-6 px-6 max-w-7xl mx-auto knowledge-base-container overflow-x-hidden max-w-full relative">
+
 
             {success && (
                 <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[100] w-full max-w-md px-4 animate-fadeIn">
@@ -110,50 +108,16 @@ const KnowledgeBaseLayout = () => {
 
                 {/* Tabs Navigation */}
                 <div className="border-b border-gray-200">
-                    <nav className="-mb-px flex flex-wrap items-center gap-1 md:gap-2 pb-2 md:pb-0 scrollbar-hide">
-                        
-                        {/* Standalone Tab - Drug Information */}
-                        {tabs.filter(tab => tab.section === 'main').map((tab) => (
+                    <nav className="-mb-px flex space-x-4 md:space-x-8 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
+                        {tabs.map((tab) => (
                             <NavLink
                                 key={tab.path}
                                 to={tab.path}
-                                end={true}
+                                end={tab.path === 'medications'}
                                 className={({ isActive }) =>
-                                    `flex items-center gap-2 py-3 md:py-4 px-3 md:px-5 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
-                                        isActive
-                                            ? 'border-blue-500 text-blue-600 bg-blue-50/50 rounded-t-lg'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                    }`
-                                }
-                            >
-                                <span className="text-lg">{tab.icon}</span>
-                                {tab.label}
-                            </NavLink>
-                        ))}
-
-                        {/* Divider */}
-                        {hasFullAccess && (
-                            <div className="h-8 w-px bg-gray-300 mx-2 hidden sm:block"></div>
-                        )}
-
-                        {/* Group Label */}
-                        {hasFullAccess && (
-                            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider hidden lg:block mr-1">
-                                Clinical Resources
-                            </span>
-                        )}
-
-                        {/* Grouped Tabs - Clinical Resources */}
-                        {tabs.filter(tab => tab.section === 'group').map((tab) => (
-                            <NavLink
-                                key={tab.path}
-                                to={tab.path}
-                                end={true}
-                                className={({ isActive }) =>
-                                    `flex items-center gap-2 py-3 md:py-4 px-3 md:px-4 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
-                                        isActive
-                                            ? 'border-green-500 text-green-600 bg-green-50/50 rounded-t-lg'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    `flex items-center gap-2 py-3 md:py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${isActive
+                                        ? 'border-blue-500 text-blue-600'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`
                                 }
                             >
