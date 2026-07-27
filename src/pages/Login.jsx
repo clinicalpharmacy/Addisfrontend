@@ -36,7 +36,6 @@ const Login = () => {
     const [passwordStrength, setPasswordStrength] = useState(0);
     const [currentSlide, setCurrentSlide] = useState(0);
     const [loginMethod, setLoginMethod] = useState('email');
-    const [showAbout, setShowAbout] = useState(false);
 
     const carouselMessages = [
         { icon: FaHeartbeat, text: "Digital Health Innovation", color: "from-blue-500 to-cyan-500" },
@@ -699,7 +698,7 @@ const Login = () => {
                                 </p>
                             </div>
                         </div>
-                        <div className="flex items-center justify-between text-blue-200 text-xs">
+                        <div className="flex items-center justify-between text-blue-200 text-xs flex-wrap gap-2">
                             <div className="flex items-center gap-3">
                                 <span>📍 Addis Ababa, Ethiopia</span>
                                 <span>✉️ pharmcare2001@yahoo.com</span>
@@ -715,13 +714,13 @@ const Login = () => {
 
             {/* Desktop Footer */}
             <div className="hidden lg:block absolute bottom-6 left-0 right-0 px-8">
-                <div className="max-w-6xl mx-auto flex items-center justify-between text-blue-200/60 text-xs">
-                    <div className="flex items-center gap-6">
+                <div className="max-w-6xl mx-auto flex items-center justify-between text-blue-200/60 text-xs flex-wrap gap-4">
+                    <div className="flex items-center gap-6 flex-wrap">
                         <span>© 2026 Addis Med. All rights reserved.</span>
                         <span>📍 Addis Ababa, Ethiopia</span>
                         <span>✉️ pharmcare2001@yahoo.com</span>
                     </div>
-                    <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-6 flex-wrap">
                         <span>📞 +251919519512</span>
                         <span>🌐 tiktok.com/@addis.med</span>
                         <div className="flex items-center gap-3">
