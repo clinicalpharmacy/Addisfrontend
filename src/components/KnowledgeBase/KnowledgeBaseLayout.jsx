@@ -15,13 +15,13 @@ import {
     FaBookOpen
 } from 'react-icons/fa';
 import './KnowledgeBase.css';
+// import useScreenshotProtection from './hooks/useScreenshotProtection'; // Uncomment if needed
 
 const KnowledgeBaseLayout = () => {
     const [user, setUser] = useState(null);
     const [isAdmin, setIsAdmin] = useState(false);
     const [isSuperAdmin, setIsSuperAdmin] = useState(false);
     const [protectionEnabled, setProtectionEnabled] = useState(true);
-    // const protectionMsg = useScreenshotProtection(protectionEnabled); // Moved to individual components
     const [success, setSuccess] = useState('');
 
     useEffect(() => {
@@ -63,8 +63,8 @@ const KnowledgeBaseLayout = () => {
     ];
 
     return (
-        <div className="space-y-6 px-6 max-w-7xl mx-auto knowledge-base-container overflow-x-hidden max-w-full relative">
-
+        // Fixed: Removed duplicate max-w class
+        <div className="space-y-6 px-6 max-w-7xl mx-auto knowledge-base-container overflow-x-hidden relative">
 
             {success && (
                 <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[100] w-full max-w-md px-4 animate-fadeIn">
@@ -81,13 +81,6 @@ const KnowledgeBaseLayout = () => {
             <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
                 <div className="mb-4 md:mb-6">
                     <div className="flex items-center justify-between gap-4">
-                        <div className="flex-1">
-                            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2 flex items-center gap-2">
-                                Resources
-                                {protectionEnabled && <FaLock className="text-blue-500 text-lg md:text-xl" title="Content Protected" />}
-                            </h1>
-                        </div>
-
                         {isSuperAdmin && (
                             <button
                                 onClick={toggleProtection}
@@ -129,7 +122,7 @@ const KnowledgeBaseLayout = () => {
                 </div>
             </div>
 
-            {/* Content Area - The actual protected content */}
+            {/* Content Area */}
             <div className="min-h-[500px] transition-all duration-300">
                 <Outlet context={{ protectionEnabled, toggleProtection, isAdmin, isSuperAdmin, user }} />
             </div>
