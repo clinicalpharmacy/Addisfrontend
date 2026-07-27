@@ -118,8 +118,16 @@ const Sidebar = ({ onClose }) => {
     const daysLeft = diff !== null ? Math.ceil(diff / (1000 * 60 * 60 * 24)) : null;
     const isNearExpiry = daysLeft !== null && daysLeft <= 7;
 
-    // Check if any Drug Information route is active
-    const isDrugInfoActive = location.pathname === '/knowledge' || location.pathname.startsWith('/knowledge/');
+    // FIXED: Check if Drug Information route is active - EXACT match only
+    const isDrugInfoActive = location.pathname === '/knowledge';
+    
+    // Check if any Other Resources sub-item is active
+    const isOtherResourcesActive = [
+        '/knowledge/remedies',
+        '/knowledge/illnesses',
+        '/knowledge/compounding',
+        '/knowledge/education'
+    ].some(path => location.pathname === path || location.pathname.startsWith(path + '/'));
 
     return (
         <aside className="w-72 bg-white h-full flex flex-col border-r border-gray-100 shadow-xl z-[60] relative overflow-hidden">
@@ -253,7 +261,7 @@ const Sidebar = ({ onClose }) => {
                             </NavLink>
                         </li>
 
-                        {/* Drug Information - Standalone Menu Item - FIXED: Only active when on exact drug info routes */}
+                        {/* Drug Information - Standalone Menu Item - FIXED: Only active on exact /knowledge path */}
                         <li className="mb-2">
                             <NavLink
                                 to={isSubscribed ? "/knowledge" : "/subscription/plans"}
