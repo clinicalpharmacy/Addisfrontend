@@ -598,15 +598,22 @@ const MedicationInfo = () => {
                             <div className="min-w-0 flex-1">
                                 <h1 className="text-2xl md:text-3xl font-bold text-gray-900 truncate">የመድሃኒት መረጃ</h1>
                                 <p className="text-gray-600 mt-1 text-sm md:text-base">
-                                    Drug information database with {medications.length} medications
-                                    {user?.role === 'company_admin' ? (
-                                        <span className="ml-2 text-xs md:text-sm bg-purple-100 text-purple-800 px-2 py-1 rounded inline-flex items-center">
-                                            <FaLock className="mr-1" /> Admin View
-                                        </span>
-                                    ) : !isAdmin && (
-                                        <span className="ml-2 text-xs md:text-sm bg-gray-100 text-gray-800 px-2 py-1 rounded inline-flex items-center">
-                                            <FaLock className="mr-1" /> View Only
-                                        </span>
+                                    {isAdmin ? (
+                                        // Admin view - shows medication count
+                                        <>
+                                            Drug information database with {medications.length} medications
+                                            <span className="ml-2 text-xs md:text-sm bg-purple-100 text-purple-800 px-2 py-1 rounded inline-flex items-center">
+                                                <FaLock className="mr-1" /> Admin View
+                                            </span>
+                                        </>
+                                    ) : (
+                                        // User view - no medication count
+                                        <>
+                                            Drug Information Database
+                                            <span className="ml-2 text-xs md:text-sm bg-gray-100 text-gray-800 px-2 py-1 rounded inline-flex items-center">
+                                                <FaLock className="mr-1" /> View Only
+                                            </span>
+                                        </>
                                     )}
                                 </p>
                             </div>
@@ -1398,47 +1405,6 @@ const MedicationInfo = () => {
                                     Close
                                 </button>
                             </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Summary Footer */}
-                {filteredMedications.length > 0 && (
-                    <div className="mt-8 bg-white rounded-xl shadow-lg p-6">
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-indigo-600">{medications.length}</div>
-                                <div className="text-sm text-gray-600">Total Medications</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-green-600">
-                                    {medications.filter(m => m.side_effects).length}
-                                </div>
-                                <div className="text-sm text-gray-600">With Side Effects Info</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-blue-600">
-                                    {medications.filter(m => m.amharic_name).length}
-                                </div>
-                                <div className="text-sm text-gray-600">With Amharic Name</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-purple-600">{filteredMedications.length}</div>
-                                <div className="text-sm text-gray-600">Currently Filtered</div>
-                            </div>
-                        </div>
-                        <div className="mt-4 text-center text-sm text-gray-500">
-                            {isAdmin
-                                ? 'Administrator Mode - Full access'
-                                : `User Mode - View only(${protectionEnabled ? 'Copy/Print disabled' : 'Copy allowed'})`}
-                            {isAdmin && (
-                                <button
-                                    onClick={toggleProtection}
-                                    className="ml-2 text-blue-600 hover:text-blue-800 text-xs"
-                                >
-                                    ({protectionEnabled ? 'No Copy Mode' : 'Copy Allowed'})
-                                </button>
-                            )}
                         </div>
                     </div>
                 )}
