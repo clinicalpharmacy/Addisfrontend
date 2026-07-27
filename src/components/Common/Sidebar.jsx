@@ -180,7 +180,7 @@ const Sidebar = ({ onClose }) => {
                             <li className="mb-2">
                                 <button
                                     onClick={() => isSubscribed ? toggleSection('patients') : navigate('/subscription/plans')}
-                                    className={`flex items-center justify-between w-full p-2.5 rounded-xl text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-300 font-bold group ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                    className={`flex items-center justify-between w-full p-2.5 rounded-xl text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-300 font-normal group ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`}
                                 >
                                     <div className="flex items-center gap-2.5">
                                         <FaUserInjured className="text-xl group-hover:scale-110 transition-transform" />
@@ -314,7 +314,7 @@ const Sidebar = ({ onClose }) => {
                             >
                                 <div className="flex items-center gap-2.5 w-full">
                                     <FaLeaf className="text-xl" />
-                                    <span className="font-medium text-base">የቤት ውስጥ ጤና ክብካቤ መፍትሔዎች</span>
+                                    <span className="font-medium text-base">የቤት ውስጥ ጤና ክብካቤ</span>
                                     {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
                                 </div>
                             </NavLink>
