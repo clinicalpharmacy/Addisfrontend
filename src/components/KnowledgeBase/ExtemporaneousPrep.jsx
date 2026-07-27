@@ -1156,22 +1156,6 @@ const ExtemporaneousPrep = () => {
                                 </div>
                             ))}
                         </div>
-
-                        {/* Compact Stats Bar */}
-                        <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
-                            <div className="flex items-center gap-4">
-                                <span>•</span>
-                                <span>Filtered: {filteredPreparations.length}</span>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <span className="flex items-center gap-1">
-                                    <FaTemperatureLow className="text-blue-500" /> Storage
-                                </span>
-                                <span className="flex items-center gap-1">
-                                    <FaClock className="text-orange-500" /> BUD
-                                </span>
-                            </div>
-                        </div>
                     </div>
                 ) : (
                     <div className="bg-white rounded-xl shadow-lg p-12 text-center">
