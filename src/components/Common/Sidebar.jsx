@@ -118,6 +118,9 @@ const Sidebar = ({ onClose }) => {
     const daysLeft = diff !== null ? Math.ceil(diff / (1000 * 60 * 60 * 24)) : null;
     const isNearExpiry = daysLeft !== null && daysLeft <= 7;
 
+    // Check if any Drug Information route is active
+    const isDrugInfoActive = location.pathname === '/knowledge' || location.pathname.startsWith('/knowledge/');
+
     return (
         <aside className="w-72 bg-white h-full flex flex-col border-r border-gray-100 shadow-xl z-[60] relative overflow-hidden">
             {/* Design Element: Subtle Gradient Overlay */}
@@ -250,17 +253,16 @@ const Sidebar = ({ onClose }) => {
                             </NavLink>
                         </li>
 
-                        {/* Drug Information - Standalone Menu Item */}
+                        {/* Drug Information - Standalone Menu Item - FIXED: Only active when on exact drug info routes */}
                         <li className="mb-2">
                             <NavLink
                                 to={isSubscribed ? "/knowledge" : "/subscription/plans"}
                                 onClick={onClose}
-                                className={({ isActive }) =>
-                                    `flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isActive && isSubscribed
+                                className={`flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${
+                                    isDrugInfoActive && isSubscribed
                                         ? 'bg-indigo-50 text-indigo-600 border-l-4 border-indigo-600 shadow-sm'
                                         : 'text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 hover:shadow-sm'
-                                    } ${!isSubscribed ? 'opacity-60' : ''}`
-                                }
+                                } ${!isSubscribed ? 'opacity-60' : ''}`}
                             >
                                 <div className="flex items-center gap-2.5 w-full">
                                     <FaCapsules className="text-xl" />
@@ -269,6 +271,28 @@ const Sidebar = ({ onClose }) => {
                                 </div>
                             </NavLink>
                         </li>
+
+                        {/* Useful Links - MOVED ABOVE Other Resources */}
+                        {(user?.role !== 'healthcare_client' || !isIndividual) && (
+                            <li className="mb-2">
+                                <NavLink
+                                    to={isSubscribed ? "/useful-links" : "/subscription/plans"}
+                                    onClick={onClose}
+                                    className={({ isActive }) =>
+                                        `flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isActive && isSubscribed
+                                            ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600 shadow-sm'
+                                            : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm'
+                                        } ${!isSubscribed ? 'opacity-60' : ''}`
+                                    }
+                                >
+                                    <div className="flex items-center gap-2.5 w-full">
+                                        <FaBookmark className="text-xl" />
+                                        <span className="font-medium text-base">Useful Links</span>
+                                        {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
+                                    </div>
+                                </NavLink>
+                            </li>
+                        )}
 
                         {/* Other Resources Section - Now containing only the 4 items */}
                         <li className="mb-2">
@@ -343,28 +367,6 @@ const Sidebar = ({ onClose }) => {
                                 </div>
                             )}
                         </li>
-
-                        {/* Public Useful Links Page - Hidden only for healthcare clients */}
-                        {(user?.role !== 'healthcare_client' || !isIndividual) && (
-                            <li className="mb-2">
-                                <NavLink
-                                    to={isSubscribed ? "/useful-links" : "/subscription/plans"}
-                                    onClick={onClose}
-                                    className={({ isActive }) =>
-                                        `flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isActive && isSubscribed
-                                            ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600 shadow-sm'
-                                            : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm'
-                                        } ${!isSubscribed ? 'opacity-60' : ''}`
-                                    }
-                                >
-                                    <div className="flex items-center gap-2.5 w-full">
-                                        <FaBookmark className="text-xl" />
-                                        <span className="font-medium text-base">Useful Links</span>
-                                        {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
-                                    </div>
-                                </NavLink>
-                            </li>
-                        )}
 
                         <li>
                             <button
