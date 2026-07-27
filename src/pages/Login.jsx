@@ -640,6 +640,13 @@ const Login = () => {
                             <div className="flex items-center gap-2">
                                 <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
                                 <span className="text-xs text-white text-sm">
+                                    <span className="text-white ml-1 font-bold text-[14px]">Educational Platform</span>
+                                </span>
+                            </div>
+                            
+                            <div className="flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                                <span className="text-xs text-white text-sm">
                                     <span className="text-white ml-1 font-mono text-[14px]">Addis Ababa, Ethiopia</span>
                                 </span>
                             </div>
@@ -657,6 +664,12 @@ const Login = () => {
                 <div className="fixed bottom-4 right-2 sm:right-4 z-20 w-auto max-w-[45%] min-w-[120px]">
                     <div className="px-4 py-3 min-w-[150px] sm:min-w-[220px]">
                         <div className="flex items-center gap-4 flex-wrap">
+                            <div className="flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                                <span className="text-xs text-white text-sm">
+                                    <span className="text-white ml-1 font-bold text-[14px]">Medical Information</span>
+                                </span>
+                            </div>
                             <div className="flex items-center gap-2">
                                 <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
                                 <span className="text-xs text-white text-sm">
