@@ -1,15 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, NavLink } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import {
-    FaPills,
-    FaVial,
-    FaStethoscope,
-    FaMortarPestle,
     FaUserShield,
     FaLock,
     FaTimes,
-    FaCheckCircle,
-    FaBookOpen
+    FaCheckCircle
 } from 'react-icons/fa';
 import './KnowledgeBase.css';
 
@@ -40,24 +35,6 @@ const KnowledgeBaseLayout = () => {
         setSuccess(`Protection ${!protectionEnabled ? 'enabled' : 'disabled'}`);
         setTimeout(() => setSuccess(''), 3000);
     };
-
-    const hasFullAccess =
-        user?.role === 'admin' ||
-        user?.role === 'company_admin' ||
-        user?.account_type === 'company_user' ||
-        user?.role === 'pharmacist' ||
-        user?.role === 'pharmacy_student';
-
-    // Define the tabs array
-    const tabs = [
-        { path: 'medications', icon: <FaPills /> },
-        { path: 'remedies', icon: <FaVial /> },
-        ...(hasFullAccess ? [
-            { path: 'illnesses', icon: <FaStethoscope /> },
-            { path: 'compounding', icon: <FaMortarPestle /> },
-            { path: 'education', icon: <FaBookOpen /> }
-        ] : []),
-    ];
 
     return (
         <div className="space-y-6 px-6 max-w-7xl mx-auto knowledge-base-container overflow-x-hidden relative">
@@ -93,27 +70,6 @@ const KnowledgeBaseLayout = () => {
                             </button>
                         )}
                     </div>
-                </div>
-
-                {/* Tabs Navigation - Icons Only */}
-                <div className="border-b border-gray-200">
-                    <nav className="-mb-px flex space-x-4 md:space-x-8 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
-                        {tabs.map((tab) => (
-                            <NavLink
-                                key={tab.path}
-                                to={tab.path}
-                                end={tab.path === 'medications'}
-                                className={({ isActive }) =>
-                                    `flex items-center justify-center py-3 md:py-4 px-4 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${isActive
-                                        ? 'border-blue-500 text-blue-600'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                    }`
-                                }
-                            >
-                                <span className="text-xl">{tab.icon}</span>
-                            </NavLink>
-                        ))}
-                    </nav>
                 </div>
             </div>
 
