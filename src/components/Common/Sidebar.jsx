@@ -250,7 +250,7 @@ const Sidebar = ({ onClose }) => {
                             </NavLink>
                         </li>
 
-                        {/* Drug Information Link - Now directly after Medication Search */}
+                        {/* Drug Information - Standalone Menu Item */}
                         <li className="mb-2">
                             <NavLink
                                 to={isSubscribed ? "/knowledge" : "/subscription/plans"}
@@ -270,7 +270,7 @@ const Sidebar = ({ onClose }) => {
                             </NavLink>
                         </li>
 
-                        {/* Other Resources Section */}
+                        {/* Other Resources Section - Now containing only the 4 items */}
                         <li className="mb-2">
                             <button
                                 onClick={() => isSubscribed ? toggleSection('knowledge') : navigate('/subscription/plans')}
@@ -298,7 +298,7 @@ const Sidebar = ({ onClose }) => {
                                             }`
                                         }
                                     >
-                                        <FaVial className="text-base opacity-40" /> የቤት ውስጥ ጤና ክብካቤ መፍትሔዎች 
+                                        <FaVial className="text-base opacity-40" /> የቤት ውስጥ ጤና ክብካቤ መፍትሔዎች
                                     </NavLink>
                                     {(!isIndividual || ['pharmacist', 'pharmacy_student'].includes(user?.role)) && (
                                         <>
