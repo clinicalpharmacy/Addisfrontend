@@ -682,7 +682,7 @@ const MedicationInfo = () => {
                                 type="text"
                                 value={searchTerm}
                                 onChange={handleSearchChange}
-                                placeholder="Search for a specific medication by name..."
+                                placeholder="የሚፈልጉትን መድሃኒት ስም ይጻፉ..."
                                 className="w-full pl-10 pr-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm md:text-base"
                             />
                         </div>
@@ -699,14 +699,9 @@ const MedicationInfo = () => {
                     </div>
                 
                     <div className="mt-4 text-xs md:text-sm text-gray-500 flex flex-wrap gap-2 items-center">
-                        {searchTerm.length >= 2 ? (
+                        {searchTerm.length >= 2 && (
                             <span>Found {filteredMedications.length} medication{filteredMedications.length !== 1 ? 's' : ''} matching "{searchTerm}"</span>
-                        ) : searchTerm.length > 0 ? (
-                            <span>Type at least 2 characters to search...</span>
-                        ) : (
-                            <span>{medications.length} medications in database - Search above to find a specific medication</span>
                         )}
-                        {!isAdmin && <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-600">Read-only</span>}
                     </div>
                 </div>
 
