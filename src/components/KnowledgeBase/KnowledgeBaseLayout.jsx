@@ -5,11 +5,8 @@ import {
     FaVial,
     FaStethoscope,
     FaMortarPestle,
-    FaBookMedical,
-    FaHome,
     FaUserShield,
     FaLock,
-    FaBan,
     FaTimes,
     FaCheckCircle,
     FaBookOpen
@@ -50,6 +47,16 @@ const KnowledgeBaseLayout = () => {
         user?.account_type === 'company_user' ||
         user?.role === 'pharmacist' ||
         user?.role === 'pharmacy_student';
+
+    // Define the tabs array
+    const tabs = [
+        { path: 'medications', icon: <FaPills /> },
+        { path: 'remedies', icon: <FaVial /> },
+        ...(hasFullAccess ? [
+            { path: 'illnesses', icon: <FaStethoscope /> },
+            { path: 'compounding', icon: <FaMortarPestle /> },
+            { path: 'education', icon: <FaBookOpen /> }
+        ] : []),
     ];
 
     return (
