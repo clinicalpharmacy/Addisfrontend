@@ -617,8 +617,8 @@ const Login = () => {
                 </div>
 
                 {/* Left Side - About Section & Contact Info */}
-                <div className="fixed bottom-4 left-2 sm:left-4 z-20 w-auto max-w-[45%] min-w-[120px]">
-                    <div className="px-4 py-3 min-w-[150px] sm:min-w-[220px] space-y-3">
+                <div className="fixed bottom-4 left-2 sm:left-4 z-20 w-auto max-w-[35%] min-w-[100px]">
+                    <div className="px-3 py-3 min-w-[150px] sm:min-w-[220px] space-y-3">
                         {/* About Section */}
                         <div className="bg-white/90 backdrop-blur-sm rounded-xl p-3 shadow-lg border border-white/50">
                             <div className="flex items-start gap-2">
@@ -656,9 +656,9 @@ const Login = () => {
                             
                 {/* Right Side - Carousel Messages & Contact Info */}
                 <div className="fixed bottom-4 right-2 sm:right-4 z-20 w-auto max-w-[45%] min-w-[120px]">
-                    <div className="px-4 py-3 min-w-[150px] sm:min-w-[220px] space-y-3">
+                    <div className="px-4 py-3 min-w-[150px] sm:min-w-[220px] space-y-6">
                         {/* Carousel Messages */}
-                        <div className="bg-white/90 backdrop-blur-sm rounded-xl p-3 shadow-lg border border-white/50">
+                        <div className="bg-white/90 backdrop-blur-sm rounded-xl p-3 shadow-lg border border-white/50 pb-4">
                             <div className="h-8 overflow-hidden">
                                 <div
                                     className="transform transition-transform duration-500 ease-in-out"
@@ -678,7 +678,7 @@ const Login = () => {
                         </div>
 
                         {/* Contact Info */}
-                        <div className="flex items-center gap-4 flex-wrap justify-end">
+                        <div className="flex items-center gap-4 flex-wrap justify-end pt-1">
                             <div className="flex items-center gap-2">
                                 <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
                                 <span className="text-xs text-white text-sm">
