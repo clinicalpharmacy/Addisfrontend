@@ -1107,6 +1107,11 @@ const ExtemporaneousPrep = () => {
                 )}
 
                 {/* Preparations Grid - Four Columns as Bold Lines */}
+                {searchTerm && searchTerm.trim() !== '' && filteredPreparations.length > 0 && (
+                    <div className="mb-4 text-sm text-gray-600">
+                        Found {filteredPreparations.length} formula{filteredPreparations.length !== 1 ? 's' : ''}
+                    </div>
+                )}
                 {filteredPreparations.length > 0 ? (
                     <div className="bg-white rounded-xl shadow-lg p-6">
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-2">
@@ -1162,19 +1167,21 @@ const ExtemporaneousPrep = () => {
                         <FaMortarPestle className="text-5xl text-gray-300 mx-auto mb-4" />
                         <h3 className="text-xl font-medium text-gray-800 mb-2">No Formulas Found</h3>
                         <p className="text-gray-500 max-w-md mx-auto mb-6">
-                            {searchTerm
+                            {searchTerm && searchTerm.trim() !== ''
                                 ? 'No formulas match your search criteria. Try a different search.'
                                 : 'No compounding formulas found in the database.'}
                         </p>
                         <div className="flex flex-wrap gap-3 justify-center">
-                            <button
-                                onClick={() => {
-                                    setSearchTerm('');
-                                }}
-                                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg"
-                            >
-                                Clear Search
-                            </button>
+                            {searchTerm && searchTerm.trim() !== '' && (
+                                <button
+                                    onClick={() => {
+                                        setSearchTerm('');
+                                    }}
+                                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg"
+                                >
+                                    Clear Search
+                                </button>
+                            )}
                             {/* Only show admin buttons to admins */}
                             {isAdmin && (
                                 <>
@@ -1195,7 +1202,6 @@ const ExtemporaneousPrep = () => {
                         </div>
                     </div>
                 )}
-
                 {/* Preparation Details Modal - Narrower Width with Enhanced Formatting */}
                 {selectedPrep && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
