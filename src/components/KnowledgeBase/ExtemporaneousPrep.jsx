@@ -1412,12 +1412,6 @@ const ExtemporaneousPrep = () => {
                 {/* Summary Footer */}
                 {filteredPreparations.length > 0 && (
                     <div className="mt-8 bg-white rounded-xl shadow-lg p-6">
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-purple-600">{filteredPreparations.length}</div>
-                                <div className="text-sm text-gray-600">Currently Filtered</div>
-                            </div>
-                        </div>
                         <div className="mt-4 text-center text-sm text-gray-500">
                             {isAdmin ? 'Administrator Mode - Full access' : ''}
                             {isAdmin && (
