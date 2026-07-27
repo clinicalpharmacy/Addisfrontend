@@ -15,7 +15,6 @@ import {
     FaBookOpen
 } from 'react-icons/fa';
 import './KnowledgeBase.css';
-// import useScreenshotProtection from './hooks/useScreenshotProtection'; // Uncomment if needed
 
 const KnowledgeBaseLayout = () => {
     const [user, setUser] = useState(null);
@@ -53,17 +52,16 @@ const KnowledgeBaseLayout = () => {
         user?.role === 'pharmacy_student';
 
     const tabs = [
-        { path: 'medications', label: 'የመድሃኒት መረጃ', icon: <FaPills /> },
-        { path: 'remedies', label: 'የቤት ውስጥ ጤና ክብካቤ', icon: <FaVial /> },
+        { path: 'medications', icon: <FaPills /> },
+        { path: 'remedies', icon: <FaVial /> },
         ...(hasFullAccess ? [
-            { path: 'illnesses', label: 'Minor Illnesses', icon: <FaStethoscope /> },
-            { path: 'compounding', label: 'Compounding', icon: <FaMortarPestle /> },
-            { path: 'education', label: 'Education', icon: <FaBookOpen /> }
+            { path: 'illnesses', icon: <FaStethoscope /> },
+            { path: 'compounding', icon: <FaMortarPestle /> },
+            { path: 'education', icon: <FaBookOpen /> }
         ] : []),
     ];
 
     return (
-        // Fixed: Removed duplicate max-w class
         <div className="space-y-6 px-6 max-w-7xl mx-auto knowledge-base-container overflow-x-hidden relative">
 
             {success && (
@@ -99,7 +97,7 @@ const KnowledgeBaseLayout = () => {
                     </div>
                 </div>
 
-                {/* Tabs Navigation */}
+                {/* Tabs Navigation - Icons Only */}
                 <div className="border-b border-gray-200">
                     <nav className="-mb-px flex space-x-4 md:space-x-8 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
                         {tabs.map((tab) => (
@@ -108,14 +106,13 @@ const KnowledgeBaseLayout = () => {
                                 to={tab.path}
                                 end={tab.path === 'medications'}
                                 className={({ isActive }) =>
-                                    `flex items-center gap-2 py-3 md:py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${isActive
+                                    `flex items-center justify-center py-3 md:py-4 px-4 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${isActive
                                         ? 'border-blue-500 text-blue-600'
                                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`
                                 }
                             >
-                                <span className="text-lg">{tab.icon}</span>
-                                {tab.label}
+                                <span className="text-xl">{tab.icon}</span>
                             </NavLink>
                         ))}
                     </nav>
