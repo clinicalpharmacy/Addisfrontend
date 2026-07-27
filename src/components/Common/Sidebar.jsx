@@ -29,7 +29,10 @@ import {
     FaBookmark,
     FaCreditCard,
     FaComments,
-    FaCheckCircle
+    FaCheckCircle,
+    FaLeaf,
+    FaMortarPestle,
+    FaGraduationCap
 } from 'react-icons/fa';
 
 // Force rebuild - ensuring all icons are properly bundled
@@ -39,7 +42,6 @@ const Sidebar = ({ onClose }) => {
     const [user, setUser] = useState(null);
     const [expandedSections, setExpandedSections] = useState({
         patients: false,
-        knowledge: false,
         cdss: false,
         links: false,
         settings: false
@@ -118,16 +120,14 @@ const Sidebar = ({ onClose }) => {
     const daysLeft = diff !== null ? Math.ceil(diff / (1000 * 60 * 60 * 24)) : null;
     const isNearExpiry = daysLeft !== null && daysLeft <= 7;
 
-    // FIXED: Check if Drug Information route is active - EXACT match only
+    // Check if Drug Information route is active - EXACT match only
     const isDrugInfoActive = location.pathname === '/knowledge';
     
-    // Check if any Other Resources sub-item is active
-    const isOtherResourcesActive = [
-        '/knowledge/remedies',
-        '/knowledge/illnesses',
-        '/knowledge/compounding',
-        '/knowledge/education'
-    ].some(path => location.pathname === path || location.pathname.startsWith(path + '/'));
+    // Check if each sub-item is active
+    const isRemediesActive = location.pathname === '/knowledge/remedies';
+    const isIllnessesActive = location.pathname === '/knowledge/illnesses';
+    const isCompoundingActive = location.pathname === '/knowledge/compounding';
+    const isEducationActive = location.pathname === '/knowledge/education';
 
     return (
         <aside className="w-72 bg-white h-full flex flex-col border-r border-gray-100 shadow-xl z-[60] relative overflow-hidden">
@@ -176,7 +176,7 @@ const Sidebar = ({ onClose }) => {
                         </li>
 
                         {/* Patients Section - Medication Review */}
-                        {!isAdmin && ( // Show for non-admins, including healthcare_client
+                        {!isAdmin && (
                             <li className="mb-2">
                                 <button
                                     onClick={() => isSubscribed ? toggleSection('patients') : navigate('/subscription/plans')}
@@ -207,7 +207,7 @@ const Sidebar = ({ onClose }) => {
                                             <span className="w-2 h-2 rounded-full bg-current opacity-40" />
                                             MR List
                                         </NavLink>
-                                        {!isAdmin && ( // Show for non-admins, including healthcare_client
+                                        {!isAdmin && (
                                         <NavLink
                                             to="/patients/new"
                                             onClick={onClose}
@@ -222,7 +222,6 @@ const Sidebar = ({ onClose }) => {
                                             New MR
                                         </NavLink>
                                         )}
-                                        {/* Clinical Analysis - Now nested under Medication Review */}
                                         <NavLink
                                             to="/cdss-analysis"
                                             onClick={onClose}
@@ -261,7 +260,7 @@ const Sidebar = ({ onClose }) => {
                             </NavLink>
                         </li>
 
-                        {/* Drug Information - Standalone Menu Item - FIXED: Only active on exact /knowledge path */}
+                        {/* Drug Information - Standalone Menu Item */}
                         <li className="mb-2">
                             <NavLink
                                 to={isSubscribed ? "/knowledge" : "/subscription/plans"}
@@ -280,7 +279,7 @@ const Sidebar = ({ onClose }) => {
                             </NavLink>
                         </li>
 
-                        {/* Useful Links - MOVED ABOVE Other Resources */}
+                        {/* Useful Links - Standalone Menu Item */}
                         {(user?.role !== 'healthcare_client' || !isIndividual) && (
                             <li className="mb-2">
                                 <NavLink
@@ -302,79 +301,92 @@ const Sidebar = ({ onClose }) => {
                             </li>
                         )}
 
-                        {/* Other Resources Section - Now containing only the 4 items */}
-                        <li className="mb-2">
-                            <button
-                                onClick={() => isSubscribed ? toggleSection('knowledge') : navigate('/subscription/plans')}
-                                className={`flex items-center justify-between w-full p-2.5 rounded-xl text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-300 font-bold group ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`}
-                            >
-                                <div className="flex items-center gap-2.5">
-                                    <FaBookMedical className="text-xl group-hover:scale-110 transition-transform" />
-                                    <span className="text-lg">Other Resources</span>
-                                </div>
-                                <div className="flex items-center gap-2 text-sm">
-                                    {!isSubscribed && <FaLock className="opacity-50" />}
-                                    {expandedSections.knowledge ? <FaChevronDown /> : <FaChevronRight />}
-                                </div>
-                            </button>
-
-                            {expandedSections.knowledge && (
-                                <div className="ml-8 mt-2 space-y-1 animate-fadeIn">
-                                    <NavLink
-                                        to="/knowledge/remedies"
-                                        onClick={onClose}
-                                        className={({ isActive }) =>
-                                            `flex items-center gap-2.5 px-4 py-2 text-lg rounded-lg transition-all ${isActive
-                                                ? 'text-indigo-600 font-black'
-                                                : 'text-gray-400 hover:text-gray-700'
-                                            }`
-                                        }
-                                    >
-                                        <FaVial className="text-base opacity-40" /> የቤት ውስጥ ጤና ክብካቤ መፍትሔዎች
-                                    </NavLink>
-                                    {(!isIndividual || ['pharmacist', 'pharmacy_student'].includes(user?.role)) && (
-                                        <>
-                                            <NavLink
-                                                to="/knowledge/illnesses"
-                                                onClick={onClose}
-                                                className={({ isActive }) =>
-                                                    `flex items-center gap-2.5 px-4 py-2 text-lg rounded-lg transition-all ${isActive
-                                                        ? 'text-indigo-600 font-black'
-                                                        : 'text-gray-400 hover:text-gray-700'
-                                                    }`
-                                                }
-                                            >
-                                                <FaStethoscope className="text-base opacity-40" /> Minor Illnesses
-                                            </NavLink>
-                                            <NavLink
-                                                to="/knowledge/compounding"
-                                                onClick={onClose}
-                                                className={({ isActive }) =>
-                                                    `flex items-center gap-2.5 px-4 py-2 text-lg rounded-lg transition-all ${isActive
-                                                        ? 'text-indigo-600 font-black'
-                                                        : 'text-gray-400 hover:text-gray-700'
-                                                    }`
-                                                }
-                                            >
-                                                <FaVial className="text-base opacity-40" /> Compounding
-                                            </NavLink>
-                                            <NavLink
-                                                to="/knowledge/education"
-                                                onClick={onClose}
-                                                className={({ isActive }) =>
-                                                    `flex items-center gap-2.5 px-4 py-2 text-lg rounded-lg transition-all ${isActive
-                                                        ? 'text-indigo-600 font-black'
-                                                        : 'text-gray-400 hover:text-gray-700'
-                                                    }`
-                                                }
-                                            >
-                                                <FaVial className="text-base opacity-40" /> Education
-                                            </NavLink>
-                                        </>
-                                    )}
-                                </div>
-                            )}
+                        {/* Other Resources - Now as separate menu items */}
+                        <li className="mb-1">
+                            <div className="text-xs uppercase text-gray-400 font-black mt-4 mb-2 tracking-[0.2em] px-3">Other Resources</div>
                         </li>
+
+                        {/* Home Remedies */}
+                        <li className="mb-2">
+                            <NavLink
+                                to={isSubscribed ? "/knowledge/remedies" : "/subscription/plans"}
+                                onClick={onClose}
+                                className={`flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${
+                                    isRemediesActive && isSubscribed
+                                        ? 'bg-emerald-50 text-emerald-600 border-l-4 border-emerald-600 shadow-sm'
+                                        : 'text-gray-600 hover:bg-emerald-50 hover:text-emerald-600 hover:shadow-sm'
+                                } ${!isSubscribed ? 'opacity-60' : ''}`}
+                            >
+                                <div className="flex items-center gap-2.5 w-full">
+                                    <FaLeaf className="text-xl" />
+                                    <span className="font-medium text-base">የቤት ውስጥ ጤና ክብካቤ መፍትሔዎች</span>
+                                    {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
+                                </div>
+                            </NavLink>
+                        </li>
+
+                        {/* Minor Illnesses - Only for pharmacists/pharmacy students */}
+                        {(!isIndividual || ['pharmacist', 'pharmacy_student'].includes(user?.role)) && (
+                            <li className="mb-2">
+                                <NavLink
+                                    to={isSubscribed ? "/knowledge/illnesses" : "/subscription/plans"}
+                                    onClick={onClose}
+                                    className={`flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${
+                                        isIllnessesActive && isSubscribed
+                                            ? 'bg-rose-50 text-rose-600 border-l-4 border-rose-600 shadow-sm'
+                                            : 'text-gray-600 hover:bg-rose-50 hover:text-rose-600 hover:shadow-sm'
+                                    } ${!isSubscribed ? 'opacity-60' : ''}`}
+                                >
+                                    <div className="flex items-center gap-2.5 w-full">
+                                        <FaStethoscope className="text-xl" />
+                                        <span className="font-medium text-base">Minor Illnesses</span>
+                                        {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
+                                    </div>
+                                </NavLink>
+                            </li>
+                        )}
+
+                        {/* Compounding - Only for pharmacists/pharmacy students */}
+                        {(!isIndividual || ['pharmacist', 'pharmacy_student'].includes(user?.role)) && (
+                            <li className="mb-2">
+                                <NavLink
+                                    to={isSubscribed ? "/knowledge/compounding" : "/subscription/plans"}
+                                    onClick={onClose}
+                                    className={`flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${
+                                        isCompoundingActive && isSubscribed
+                                            ? 'bg-amber-50 text-amber-600 border-l-4 border-amber-600 shadow-sm'
+                                            : 'text-gray-600 hover:bg-amber-50 hover:text-amber-600 hover:shadow-sm'
+                                    } ${!isSubscribed ? 'opacity-60' : ''}`}
+                                >
+                                    <div className="flex items-center gap-2.5 w-full">
+                                        <FaMortarPestle className="text-xl" />
+                                        <span className="font-medium text-base">Compounding</span>
+                                        {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
+                                    </div>
+                                </NavLink>
+                            </li>
+                        )}
+
+                        {/* Education - Only for pharmacists/pharmacy students */}
+                        {(!isIndividual || ['pharmacist', 'pharmacy_student'].includes(user?.role)) && (
+                            <li className="mb-2">
+                                <NavLink
+                                    to={isSubscribed ? "/knowledge/education" : "/subscription/plans"}
+                                    onClick={onClose}
+                                    className={`flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${
+                                        isEducationActive && isSubscribed
+                                            ? 'bg-purple-50 text-purple-600 border-l-4 border-purple-600 shadow-sm'
+                                            : 'text-gray-600 hover:bg-purple-50 hover:text-purple-600 hover:shadow-sm'
+                                    } ${!isSubscribed ? 'opacity-60' : ''}`}
+                                >
+                                    <div className="flex items-center gap-2.5 w-full">
+                                        <FaGraduationCap className="text-xl" />
+                                        <span className="font-medium text-base">Education</span>
+                                        {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
+                                    </div>
+                                </NavLink>
+                            </li>
+                        )}
 
                         <li>
                             <button
