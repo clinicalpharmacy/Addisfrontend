@@ -1408,23 +1408,6 @@ const ExtemporaneousPrep = () => {
                         </div>
                     </div>
                 )}
-
-                {/* Summary Footer */}
-                {filteredPreparations.length > 0 && (
-                    <div className="mt-8 bg-white rounded-xl shadow-lg p-6">
-                        <div className="mt-4 text-center text-sm text-gray-500">
-                            {isAdmin ? 'Administrator Mode - Full access' : ''}
-                            {isAdmin && (
-                                <button
-                                    onClick={toggleProtection}
-                                    className="ml-2 text-blue-600 hover:text-blue-800 text-xs"
-                                >
-                                    ({protectionEnabled ? 'No Copy Mode' : 'Copy Allowed'})
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                )}
             </div>
         </div>
     );
