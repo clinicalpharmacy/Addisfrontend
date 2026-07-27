@@ -301,11 +301,6 @@ const Sidebar = ({ onClose }) => {
                             </li>
                         )}
 
-                        {/* Other Resources - Now as separate menu items */}
-                        <li className="mb-1">
-                            <div className="text-xs uppercase text-gray-400 font-black mt-4 mb-2 tracking-[0.2em] px-3">Other Resources</div>
-                        </li>
-
                         {/* Home Remedies */}
                         <li className="mb-2">
                             <NavLink
@@ -388,50 +383,6 @@ const Sidebar = ({ onClose }) => {
                             </li>
                         )}
 
-                        <li>
-                            <button
-                                onClick={() => toggleSection('settings')}
-                                className={`flex items-center justify-between w-full p-2.5 rounded-xl transition-all duration-300 group ${location.pathname.startsWith('/settings')
-                                    ? 'bg-blue-50 text-blue-600 font-black'
-                                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 font-bold'
-                                    }`}
-                            >
-                                <div className="flex items-center gap-2.5">
-                                    <FaCogs className="text-xl group-hover:rotate-45 transition-transform" />
-                                    <span className="text-base">Settings</span>
-                                </div>
-                                {expandedSections.settings ? <FaChevronDown className="text-current text-xs" /> : <FaChevronRight className="text-current text-xs" />}
-                            </button>
-
-                            {expandedSections.settings && (
-                                <div className="ml-8 mt-2 space-y-1 animate-fadeIn">
-                                    <NavLink
-                                        to="/settings"
-                                        onClick={onClose}
-                                        className={({ isActive }) =>
-                                            `flex items-center gap-2.5 px-4 py-2 text-sm rounded-lg transition-all ${isActive && !location.hash
-                                                ? 'text-blue-600 font-black'
-                                                : 'text-gray-400 hover:text-gray-700'
-                                            }`
-                                        }
-                                    >
-                                        <FaUserCircle className="text-xs" /> Profile info
-                                    </NavLink>
-                                    <NavLink
-                                        to="/settings#security"
-                                        onClick={onClose}
-                                        className={({ isActive }) =>
-                                            `flex items-center gap-2.5 px-4 py-2 text-sm rounded-lg transition-all ${location.hash === '#security'
-                                                ? 'text-blue-600 font-black'
-                                                : 'text-gray-400 hover:text-gray-700'
-                                            }`
-                                        }
-                                    >
-                                        <FaLock className="text-xs" /> Security Access
-                                    </NavLink>
-                                </div>
-                            )}
-                        </li>
                         {isIndividual && (!isSubscribed || isNearExpiry) && (
                             <li className="mt-2 border-t pt-2">
                                 <NavLink
@@ -661,13 +612,6 @@ const Sidebar = ({ onClose }) => {
                         )}
                     </div>
                 </div>
-                <button
-                    onClick={handleLogout}
-                    className="flex items-center gap-2.5 p-2.5 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 w-full transition-all duration-200 hover:shadow-sm"
-                >
-                    <FaSignOutAlt />
-                    <span className="font-medium">Logout</span>
-                </button>
             </div>
 
             {/* 🛡️ Modern Security Status Badge (Sidebar Footer Addition) */}
