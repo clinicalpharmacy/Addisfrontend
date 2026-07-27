@@ -50,15 +50,6 @@ const KnowledgeBaseLayout = () => {
         user?.account_type === 'company_user' ||
         user?.role === 'pharmacist' ||
         user?.role === 'pharmacy_student';
-
-    const tabs = [
-        { path: 'medications', icon: <FaPills /> },
-        { path: 'remedies', icon: <FaVial /> },
-        ...(hasFullAccess ? [
-            { path: 'illnesses', icon: <FaStethoscope /> },
-            { path: 'compounding', icon: <FaMortarPestle /> },
-            { path: 'education', icon: <FaBookOpen /> }
-        ] : []),
     ];
 
     return (
