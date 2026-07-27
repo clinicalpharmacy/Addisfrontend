@@ -154,7 +154,6 @@ const Sidebar = ({ onClose }) => {
             <nav className="flex-1 p-4 sm:p-5 overflow-y-auto no-scrollbar relative z-10">
                 {/* Main Menu */}
                 <div className="mb-8">
-                    <h3 className="text-xs uppercase text-gray-400 font-black mb-4 tracking-[0.2em] px-3">Main Menu</h3>
                     <ul className="space-y-1.5">
                         <li>
                             <NavLink
