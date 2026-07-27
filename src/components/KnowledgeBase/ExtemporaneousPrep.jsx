@@ -569,7 +569,11 @@ const ExtemporaneousPrep = () => {
                             <div className="min-w-0 flex-1">
                                 <h1 className="text-2xl md:text-3xl font-bold text-gray-900 truncate">Compounding Formulas</h1>
                                 <p className="text-gray-600 mt-1 text-sm md:text-base">
-                                    Extemporaneous preparation database with {preparations.length} formulas
+                                    {isAdmin ? (
+                                        `Extemporaneous preparation database with ${preparations.length} formulas`
+                                    ) : (
+                                        "Extemporaneous preparation database"
+                                    )}
                                     {user?.role === 'company_admin' ? (
                                         <span className="ml-2 text-xs md:text-sm bg-purple-100 text-purple-800 px-2 py-1 rounded inline-flex items-center">
                                             <FaLock className="mr-1" /> Admin View
@@ -663,7 +667,6 @@ const ExtemporaneousPrep = () => {
                     </div>
 
                     <div className="mt-4 text-xs md:text-sm text-gray-500 flex flex-wrap gap-2 items-center">
-                        <span>Showing {filteredPreparations.length} of {preparations.length} formulas</span>
                         {!isAdmin && <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-600">Read-only</span>}
                     </div>
                 </div>
@@ -1157,7 +1160,6 @@ const ExtemporaneousPrep = () => {
                         {/* Compact Stats Bar */}
                         <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
                             <div className="flex items-center gap-4">
-                                <span>Total: {preparations.length}</span>
                                 <span>•</span>
                                 <span>Filtered: {filteredPreparations.length}</span>
                             </div>
@@ -1412,30 +1414,12 @@ const ExtemporaneousPrep = () => {
                     <div className="mt-8 bg-white rounded-xl shadow-lg p-6">
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-indigo-600">{preparations.length}</div>
-                                <div className="text-sm text-gray-600">Total Formulas</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-blue-600">
-                                    {preparations.filter(p => p.storage_info).length}
-                                </div>
-                                <div className="text-sm text-gray-600">With Storage Info</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-green-600">
-                                    {preparations.filter(p => p.stability_info).length}
-                                </div>
-                                <div className="text-sm text-gray-600">With BUD Info</div>
-                            </div>
-                            <div className="text-center">
                                 <div className="text-2xl font-bold text-purple-600">{filteredPreparations.length}</div>
                                 <div className="text-sm text-gray-600">Currently Filtered</div>
                             </div>
                         </div>
                         <div className="mt-4 text-center text-sm text-gray-500">
-                            {isAdmin
-                                ? 'Administrator Mode - Full access'
-                                : `User Mode - View only (${protectionEnabled ? 'Copy/Print disabled' : 'Copy allowed'})`}
+                            {isAdmin ? 'Administrator Mode - Full access' : ''}
                             {isAdmin && (
                                 <button
                                     onClick={toggleProtection}
