@@ -1197,7 +1197,6 @@ const MedicationInfo = () => {
                             </button>
                         </div>
                     )
-                ) : (
                 )}
 
                 {/* Medication Details Modal - With Improved Scrolling */}
