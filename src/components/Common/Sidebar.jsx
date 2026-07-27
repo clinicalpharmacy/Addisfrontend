@@ -250,6 +250,26 @@ const Sidebar = ({ onClose }) => {
                             </NavLink>
                         </li>
 
+                        {/* Drug Information Link - Now directly after Medication Search */}
+                        <li className="mb-2">
+                            <NavLink
+                                to={isSubscribed ? "/knowledge" : "/subscription/plans"}
+                                onClick={onClose}
+                                className={({ isActive }) =>
+                                    `flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isActive && isSubscribed
+                                        ? 'bg-indigo-50 text-indigo-600 border-l-4 border-indigo-600 shadow-sm'
+                                        : 'text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 hover:shadow-sm'
+                                    } ${!isSubscribed ? 'opacity-60' : ''}`
+                                }
+                            >
+                                <div className="flex items-center gap-2.5 w-full">
+                                    <FaCapsules className="text-xl" />
+                                    <span className="font-bold text-base">የመድሃኒት መረጃ</span>
+                                    {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
+                                </div>
+                            </NavLink>
+                        </li>
+
                         {/* Other Resources Section */}
                         <li className="mb-2">
                             <button
@@ -268,18 +288,6 @@ const Sidebar = ({ onClose }) => {
 
                             {expandedSections.knowledge && (
                                 <div className="ml-8 mt-2 space-y-1 animate-fadeIn">
-                                    <NavLink
-                                        to="/knowledge"
-                                        onClick={onClose}
-                                        className={({ isActive }) =>
-                                            `flex items-center gap-2.5 px-4 py-2 text-lg rounded-lg transition-all ${isActive
-                                                ? 'text-indigo-600 font-black'
-                                                : 'text-gray-400 hover:text-gray-700'
-                                            }`
-                                        }
-                                    >
-                                        <FaCapsules className="text-base opacity-40" /> የመድሃኒት መረጃ
-                                    </NavLink>
                                     <NavLink
                                         to="/knowledge/remedies"
                                         onClick={onClose}
