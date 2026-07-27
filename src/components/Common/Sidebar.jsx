@@ -250,7 +250,7 @@ const Sidebar = ({ onClose }) => {
                             </NavLink>
                         </li>
 
-                        {/* Knowledge Base Section */}
+                        {/* Other Resources Section */}
                         <li className="mb-2">
                             <button
                                 onClick={() => isSubscribed ? toggleSection('knowledge') : navigate('/subscription/plans')}
@@ -258,7 +258,7 @@ const Sidebar = ({ onClose }) => {
                             >
                                 <div className="flex items-center gap-2.5">
                                     <FaBookMedical className="text-xl group-hover:scale-110 transition-transform" />
-                                    <span className="text-lg">Resources</span>
+                                    <span className="text-lg">Other Resources</span>
                                 </div>
                                 <div className="flex items-center gap-2 text-sm">
                                     {!isSubscribed && <FaLock className="opacity-50" />}
