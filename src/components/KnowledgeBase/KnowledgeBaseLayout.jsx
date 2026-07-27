@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, NavLink } from 'react-router-dom';
+import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import {
     FaPills,
     FaVial,
@@ -23,6 +23,8 @@ const KnowledgeBaseLayout = () => {
     const [protectionEnabled, setProtectionEnabled] = useState(true);
     // const protectionMsg = useScreenshotProtection(protectionEnabled); // Moved to individual components
     const [success, setSuccess] = useState('');
+    const location = useLocation();
+    const isMedicationActive = location.pathname.includes('medications');
 
     useEffect(() => {
         const userData = localStorage.getItem('user');
@@ -129,8 +131,19 @@ const KnowledgeBaseLayout = () => {
                 </div>
             </div>
 
-            {/* Content Area - The actual protected content */}
-            <div className="min-h-[500px] transition-all duration-300">
+            {/* Content Area - The actual protected content with separate container for medications */}
+            <div className={`min-h-[500px] transition-all duration-300 ${
+                isMedicationActive 
+                    ? 'medication-container bg-blue-50/30 rounded-xl p-4 md:p-6 border-2 border-blue-200 shadow-inner' 
+                    : 'bg-white rounded-xl shadow-lg p-4 md:p-6'
+            }`}>
+                {isMedicationActive && (
+                    <div className="flex items-center gap-2 mb-4 pb-3 border-b-2 border-blue-200">
+                        <FaPills className="text-blue-600 text-2xl" />
+                        <h2 className="text-xl font-bold text-blue-800">የመድሃኒት መረጃ</h2>
+                        <span className="ml-auto text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-medium">የተለየ ኮንቴይነር</span>
+                    </div>
+                )}
                 <Outlet context={{ protectionEnabled, toggleProtection, isAdmin, isSuperAdmin, user }} />
             </div>
         </div>
