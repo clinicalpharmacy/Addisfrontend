@@ -629,7 +629,7 @@ const Login = () => {
                                 </div>
                                 <div className="text-left">
                                     <p className="text-[10px] text-gray-700 leading-relaxed font-medium">
-                                        Addis Med is a digital platform that provides education and information in health with a primary focus on medicines to health professionals, health science students and healthcare clients.
+                                        Addis Med is a digital platform that provides information and educational contents in health with a primary focus on medicines to health professionals, health science students and healthcare clients.
                                     </p>
                                 </div>
                             </div>
