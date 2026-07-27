@@ -1123,7 +1123,7 @@ const MedicationInfo = () => {
                 )}
 
                 {/* Search Results - Show only when search has at least 2 characters */}
-                {searchTerm.length >= 2 ? (
+                {searchTerm.length >= 2 && (
                     filteredMedications.length > 0 ? (
                         <div className="bg-white rounded-xl shadow-lg p-6">
                             <h2 className="text-lg font-semibold text-gray-700 mb-4 pb-2 border-b">
@@ -1196,7 +1196,7 @@ const MedicationInfo = () => {
                                 Clear Search
                             </button>
                         </div>
-                    )
+                     )
                 )}
 
                 {/* Medication Details Modal - With Improved Scrolling */}
