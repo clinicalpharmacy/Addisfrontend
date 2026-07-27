@@ -37,7 +37,6 @@ const Login = () => {
     const [passwordStrength, setPasswordStrength] = useState(0);
     const [currentSlide, setCurrentSlide] = useState(0);
     const [loginMethod, setLoginMethod] = useState('email'); // 'email' or 'addisMedId'
-    const [showAbout, setShowAbout] = useState(false);
 
     // Carousel messages for dynamic background
     const carouselMessages = [
@@ -348,58 +347,11 @@ const Login = () => {
                         </div>
                     </div>
                     <h1 className="text-3xl font-bold text-white mb-1 tracking-tight">Addis Med</h1>
-
-                    {/* Dynamic Carousel Message - Compact for mobile */}
-                    <div className="h-8 overflow-hidden">
-                        <div
-                            className="transform transition-transform duration-500 ease-in-out"
-                            style={{ transform: `translateY(-${currentSlide * 2}rem)` }}
-                        >
-                            {carouselMessages.map((msg, index) => {
-                                const Icon = msg.icon;
-                                return (
-                                    <div key={index} className="h-8 flex items-center justify-center gap-1">
-                                        <Icon className="text-yellow-400 text-lg animate-pulse" />
-                                        <p className="text-yellow-400 text-xl font-bold italic">{msg.text}</p>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
                 </div>
 
                 {/* Login Card - Optimized for mobile */}
                 <div className="bg-white/95 backdrop-blur-lg rounded-2xl shadow-2xl p-3 sm:p-5 border border-white/20 transform transition-all duration-300">
                     <div className="mb-5 text-center">
-                        {/* About Section - Compact Badge */}
-                        <div className="flex items-center justify-center gap-2 mb-3">
-                            <button
-                                onClick={() => setShowAbout(!showAbout)}
-                                className="group flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 rounded-full border border-blue-200/50 transition-all duration-300 hover:scale-105"
-                            >
-                                <FaInfoCircle className="text-blue-600 text-xs group-hover:rotate-12 transition-transform duration-300" />
-                                <span className="text-xs font-medium text-blue-700">About Addis Med</span>
-                            </button>
-                        </div>
-
-                        {/* About Expanded Content - Collapsible */}
-                        {showAbout && (
-                            <div className="mb-4 p-3 bg-gradient-to-r from-blue-50/90 to-purple-50/90 rounded-xl border border-blue-200/50 animate-slide-down">
-                                <div className="flex items-start gap-2">
-                                    <div className="flex-shrink-0 mt-0.5">
-                                        <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                                            <FaInfoCircle className="text-white text-xs" />
-                                        </div>
-                                    </div>
-                                    <div className="text-left">
-                                        <p className="text-xs text-gray-700 leading-relaxed font-medium">
-                                            Addis Med is a digital platform that provides education and information in health with a primary focus on medicines to health professionals, health science students and healthcare clients.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
                         {/* Login Method Toggle - Compact for mobile */}
                         <div className="flex items-center justify-center gap-1.5 mt-3 bg-gray-100 p-1 rounded-lg">
                             <button
@@ -664,9 +616,26 @@ const Login = () => {
                     </div>
                 </div>
 
-                {/* Contact Address - Bottom with Multiple Lines */}                    
+                {/* Left Side - About Section & Contact Info */}
                 <div className="fixed bottom-4 left-2 sm:left-4 z-20 w-auto max-w-[45%] min-w-[120px]">
-                    <div className="px-4 py-3 min-w-[150px] sm:min-w-[220px]">
+                    <div className="px-4 py-3 min-w-[150px] sm:min-w-[220px] space-y-3">
+                        {/* About Section */}
+                        <div className="bg-white/90 backdrop-blur-sm rounded-xl p-3 shadow-lg border border-white/50">
+                            <div className="flex items-start gap-2">
+                                <div className="flex-shrink-0 mt-0.5">
+                                    <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                                        <FaInfoCircle className="text-white text-xs" />
+                                    </div>
+                                </div>
+                                <div className="text-left">
+                                    <p className="text-[10px] text-gray-700 leading-relaxed font-medium">
+                                        Addis Med is a digital platform that provides education and information in health with a primary focus on medicines to health professionals, health science students and healthcare clients.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Contact Info */}
                         <div className="flex items-center gap-4 flex-wrap">
                             <div className="flex items-center gap-2">
                                 <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
@@ -685,9 +654,31 @@ const Login = () => {
                     </div>
                 </div>
                             
+                {/* Right Side - Carousel Messages & Contact Info */}
                 <div className="fixed bottom-4 right-2 sm:right-4 z-20 w-auto max-w-[45%] min-w-[120px]">
-                    <div className="px-4 py-3 min-w-[150px] sm:min-w-[220px]">
-                        <div className="flex items-center gap-4 flex-wrap">
+                    <div className="px-4 py-3 min-w-[150px] sm:min-w-[220px] space-y-3">
+                        {/* Carousel Messages */}
+                        <div className="bg-white/90 backdrop-blur-sm rounded-xl p-3 shadow-lg border border-white/50">
+                            <div className="h-8 overflow-hidden">
+                                <div
+                                    className="transform transition-transform duration-500 ease-in-out"
+                                    style={{ transform: `translateY(-${currentSlide * 2}rem)` }}
+                                >
+                                    {carouselMessages.map((msg, index) => {
+                                        const Icon = msg.icon;
+                                        return (
+                                            <div key={index} className="h-8 flex items-center justify-center gap-1.5">
+                                                <Icon className="text-blue-600 text-base animate-pulse" />
+                                                <p className="text-blue-700 text-sm font-bold italic">{msg.text}</p>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Contact Info */}
+                        <div className="flex items-center gap-4 flex-wrap justify-end">
                             <div className="flex items-center gap-2">
                                 <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
                                 <span className="text-xs text-white text-sm">
