@@ -645,7 +645,7 @@ const MedicationInfo = () => {
                 {successMessage && (
                     <div className="mb-4 p-4 bg-green-100 text-green-800 rounded-lg flex items-center justify-between text-sm md:text-base">
                         <div className="flex items-center gap-2">
-                            <FaExclamationCircle className="flex-shrink-0" />
+                            <FaCheckCircle className="flex-shrink-0" />
                             <span>{successMessage}</span>
                         </div>
                         <button onClick={() => setSuccessMessage('')} className="text-green-800">
