@@ -1198,33 +1198,6 @@ const MedicationInfo = () => {
                         </div>
                     )
                 ) : (
-                    <div className="bg-white rounded-xl shadow-lg p-12 text-center">
-                        <div className="max-w-md mx-auto">
-                            <FaPills className="text-5xl text-indigo-300 mx-auto mb-4" />
-                            <h3 className="text-xl font-medium text-gray-800 mb-2">Medication Database</h3>
-                            <p className="text-gray-500 mb-4">
-                                Search for a specific medication by name to view its information.
-                            </p>
-                            
-                            {/* Search tips */}
-                            <div className="bg-indigo-50 p-4 rounded-lg text-left">
-                                <h4 className="font-medium text-indigo-800 mb-2 flex items-center gap-2">
-                                    <FaInfoCircle className="text-indigo-600" />
-                                    Search Tips
-                                </h4>
-                                <ul className="text-sm text-indigo-700 space-y-1">
-                                    <li>• Type at least 2 characters to search</li>
-                                    <li>• Search by English or Amharic name</li>
-                                    <li>• Results appear as you type</li>
-                                </ul>
-                            </div>
-                            
-                            {/* Database stats */}
-                            <div className="mt-6 text-sm text-gray-500 border-t pt-4">
-                                <span className="font-semibold text-indigo-600">{medications.length}</span> medications available in database
-                            </div>
-                        </div>
-                    </div>
                 )}
 
                 {/* Medication Details Modal - With Improved Scrolling */}
