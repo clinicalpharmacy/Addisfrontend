@@ -578,7 +578,7 @@ const Login = () => {
                 </div>
 
                 {/* Enhanced Footer status indicator - Compact for mobile */}
-                <div className="mt-4 flex justify-center">
+                <div className="mt-4 flex justify-end pr-8">
                     <div className="group flex items-center gap-2 px-4 py-2 backdrop-blur-sm rounded-full border border-transparent transition-all hover:scale-105">
                         <div className="relative">
                             <div className={`w-2 h-2 rounded-full ${isCheckingHealth
