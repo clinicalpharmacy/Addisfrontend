@@ -1112,7 +1112,7 @@ const ExtemporaneousPrep = () => {
                         Found {filteredPreparations.length} formula{filteredPreparations.length !== 1 ? 's' : ''}
                     </div>
                 )}
-                {filteredPreparations.length > 0 ? (
+                {searchTerm.length >= 2 && filteredPreparations.length > 0 ? (
                     <div className="bg-white rounded-xl shadow-lg p-6">
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-2">
                             {filteredPreparations.map((prep) => (
