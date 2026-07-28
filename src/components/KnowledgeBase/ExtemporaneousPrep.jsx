@@ -1162,7 +1162,7 @@ const ExtemporaneousPrep = () => {
                             ))}
                         </div>
                     </div>
-                ) : searchTerm.length >= 2 ? (
+                ) : (
                     <div className="bg-white rounded-xl shadow-lg p-12 text-center">
                         <div className="flex flex-wrap gap-3 justify-center">
                             {searchTerm && searchTerm.trim() !== '' && (
