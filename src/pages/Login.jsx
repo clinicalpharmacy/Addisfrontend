@@ -660,7 +660,7 @@ const Login = () => {
                                     {carouselMessages.map((msg, index) => {
                                         const Icon = msg.icon;
                                         return (
-                                            <div key={index} className="h-6 sm:h-8 flex items-center justify-center gap-1 sm:gap-1.5">
+                                            <div key={index} className="h-4 sm:h-6 flex items-center justify-center gap-1 sm:gap-1.5">
                                                 <Icon className="text-blue-600 text-[10px] sm:text-base animate-pulse" />
                                                 <p className="text-blue-700 text-[8px] sm:text-sm font-bold italic">{msg.text}</p>
                                             </div>
