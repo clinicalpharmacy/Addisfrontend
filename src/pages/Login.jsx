@@ -652,7 +652,7 @@ const Login = () => {
                     <div className="px-2 sm:px-4 py-2 sm:py-3 min-w-[100px] sm:min-w-[150px] space-y-3 sm:space-y-6">
                         {/* Carousel Messages */}
                         <div className="bg-white/90 backdrop-blur-sm rounded-xl p-2 sm:p-3 shadow-lg border border-white/50 pb-2 sm:pb-4">
-                            <div className="h-6 sm:h-8 overflow-hidden">
+                            <div className="h-4 sm:h-6 overflow-hidden">
                                 <div
                                     className="transform transition-transform duration-500 ease-in-out"
                                     style={{ transform: `translateY(-${currentSlide * 1.5}rem)` }}
