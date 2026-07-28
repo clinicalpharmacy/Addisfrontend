@@ -184,10 +184,6 @@ const RootRedirector = () => {
                 case 'pharmacist':
                     return <Navigate to="/dashboard" replace />;
                 case 'healthcare_client':
-                    const clientId = localStorage.getItem('healthcare_client_id') || (user.email && user.email.startsWith('hcc-') ? user.email.split('@')[0].toUpperCase() : null);
-                    if (clientId) {
-                        return <Navigate to={`/patients/${clientId}`} replace />;
-                    }
                     return <Navigate to="/dashboard" replace />;
                 default:
                     return <Navigate to="/dashboard" replace />;
@@ -624,7 +620,7 @@ const Dashboard = () => {
                 <div>
                     <h1 className="text-2xl font-bold">Dashboard</h1>
                     <p className="text-gray-600 mt-1">
-                        Welcome back, {user?.full_name || user?.email || 'User'}!
+                        Welcome, {user?.full_name || user?.email || 'User'}!
                     </p>
                 </div>
                 {!hasValidSubscription(user) && user?.role !== 'admin' && user?.account_type !== 'company_user' && (
