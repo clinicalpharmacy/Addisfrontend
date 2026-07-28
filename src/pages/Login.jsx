@@ -373,10 +373,7 @@ const Login = () => {
                                     : 'text-gray-600 hover:text-gray-800'
                                     }`}
                             >
-                                <div className="flex flex-col items-center leading-tight">
-                                    <span>Healthcare Client</span>
-                                    <span className="text-[10px] font-normal text-gray-500">HCC-MS0RSNCI-55SGLE</span>
-                                </div>
+                                Healthcare Client
                             </button>
                         </div>
                     </div>
