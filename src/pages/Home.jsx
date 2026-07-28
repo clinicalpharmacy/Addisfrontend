@@ -98,6 +98,24 @@ const Home = () => {
                   </span>
                 </div>
               </Link>
+
+            {/* Medication Availability - Available to ALL users */}
+            <Link to="/medication-availability" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="p-3 bg-yellow-100 rounded-full">
+                  <FaPills className="text-yellow-600 text-2xl" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-800">መድሃኒት ማፈላለጊያ</h2>
+                  <p className="text-sm text-gray-500">Check medication availability</p>
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <span className="text-yellow-600 flex items-center gap-1">
+                  Search <FaArrowRight />
+                </span>
+              </div>
+            </Link>
             
               {/* Home Remedies */}
               <Link to="/knowledge/remedies" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
