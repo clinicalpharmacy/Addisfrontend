@@ -204,13 +204,6 @@ const Login = () => {
                 navigate('/admin/dashboard');
             } else if (accountType === 'company_user' || data.user_type === 'company_user') {
                 navigate('/company/dashboard');
-            } else if (role === 'healthcare_client') {
-                const clientId = data.user.healthcare_client_id || (data.user.email && data.user.email.startsWith('hcc-') ? data.user.email.split('@')[0].toUpperCase() : null);
-                if (clientId) {
-                    navigate('/dashboard');
-                } else {
-                    navigate('/dashboard');
-                }
             } else {
                 navigate('/dashboard');
             }
@@ -616,60 +609,60 @@ const Login = () => {
                     </div>
                 </div>
 
-                {/* Left Side - About Section & Contact Info */}
-                <div className="fixed bottom-4 left-2 sm:left-4 z-20 w-auto max-w-[35%] min-w-[100px]">
-                    <div className="px-3 py-3 min-w-[150px] sm:min-w-[220px] space-y-3">
+                {/* Left Side - About Section & Contact Info - RESPONSIVE */}
+                <div className="fixed bottom-4 left-2 sm:left-4 z-20 w-auto max-w-[45%] sm:max-w-[35%] min-w-[80px] sm:min-w-[100px]">
+                    <div className="px-2 sm:px-3 py-2 sm:py-3 min-w-[100px] sm:min-w-[150px] space-y-2 sm:space-y-3">
                         {/* About Section */}
-                        <div className="bg-white/90 backdrop-blur-sm rounded-xl p-3 shadow-lg border border-white/50">
-                            <div className="flex items-start gap-2">
+                        <div className="bg-white/90 backdrop-blur-sm rounded-xl p-2 sm:p-3 shadow-lg border border-white/50">
+                            <div className="flex items-start gap-1.5 sm:gap-2">
                                 <div className="flex-shrink-0 mt-0.5">
-                                    <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                                        <FaInfoCircle className="text-white text-xs" />
+                                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                                        <FaInfoCircle className="text-white text-[8px] sm:text-xs" />
                                     </div>
                                 </div>
                                 <div className="text-left">
-                                    <p className="text-[10px] text-gray-700 leading-relaxed font-medium">
+                                    <p className="text-[8px] sm:text-[10px] text-gray-700 leading-tight sm:leading-relaxed font-medium">
                                         Addis Med is a digital platform that provides information and educational contents in health with a primary focus on medicines to health professionals, health science students and healthcare clients.
                                     </p>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Contact Info */}
-                        <div className="flex items-center gap-4 flex-wrap">
-                            <div className="flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                                <span className="text-xs text-white text-sm">
-                                    <span className="text-white ml-1 font-mono text-[14px]">Addis Ababa, Ethiopia</span>
+                        {/* Contact Info - RESPONSIVE */}
+                        <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
+                            <div className="flex items-center gap-1 sm:gap-2">
+                                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-blue-500 rounded-full"></div>
+                                <span className="text-[8px] sm:text-xs text-white">
+                                    <span className="text-white ml-0.5 sm:ml-1 font-mono text-[10px] sm:text-[14px]">Addis Ababa, Ethiopia</span>
                                 </span>
                             </div>
                             
-                            <div className="flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                                <span className="text-xs text-white text-sm">
-                                    <span className="text-white ml-1 font-mono text-[14px]">pharmcare2001@yahoo.com</span>
+                            <div className="flex items-center gap-1 sm:gap-2">
+                                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-blue-500 rounded-full"></div>
+                                <span className="text-[8px] sm:text-xs text-white">
+                                    <span className="text-white ml-0.5 sm:ml-1 font-mono text-[10px] sm:text-[14px]">pharmcare2001@yahoo.com</span>
                                 </span>
                             </div>
                         </div>
                     </div>
                 </div>
                             
-                {/* Right Side - Carousel Messages & Contact Info */}
-                <div className="fixed bottom-4 right-2 sm:right-4 z-20 w-auto max-w-[45%] min-w-[120px]">
-                    <div className="px-4 py-3 min-w-[150px] sm:min-w-[220px] space-y-6">
+                {/* Right Side - Carousel Messages & Contact Info - RESPONSIVE */}
+                <div className="fixed bottom-4 right-2 sm:right-4 z-20 w-auto max-w-[50%] sm:max-w-[45%] min-w-[80px] sm:min-w-[120px]">
+                    <div className="px-2 sm:px-4 py-2 sm:py-3 min-w-[100px] sm:min-w-[150px] space-y-3 sm:space-y-6">
                         {/* Carousel Messages */}
-                        <div className="bg-white/90 backdrop-blur-sm rounded-xl p-3 shadow-lg border border-white/50 pb-4">
-                            <div className="h-8 overflow-hidden">
+                        <div className="bg-white/90 backdrop-blur-sm rounded-xl p-2 sm:p-3 shadow-lg border border-white/50 pb-2 sm:pb-4">
+                            <div className="h-6 sm:h-8 overflow-hidden">
                                 <div
                                     className="transform transition-transform duration-500 ease-in-out"
-                                    style={{ transform: `translateY(-${currentSlide * 2}rem)` }}
+                                    style={{ transform: `translateY(-${currentSlide * 1.5}rem)` }}
                                 >
                                     {carouselMessages.map((msg, index) => {
                                         const Icon = msg.icon;
                                         return (
-                                            <div key={index} className="h-8 flex items-center justify-center gap-1.5">
-                                                <Icon className="text-blue-600 text-base animate-pulse" />
-                                                <p className="text-blue-700 text-sm font-bold italic">{msg.text}</p>
+                                            <div key={index} className="h-6 sm:h-8 flex items-center justify-center gap-1 sm:gap-1.5">
+                                                <Icon className="text-blue-600 text-[10px] sm:text-base animate-pulse" />
+                                                <p className="text-blue-700 text-[8px] sm:text-sm font-bold italic">{msg.text}</p>
                                             </div>
                                         );
                                     })}
@@ -677,19 +670,19 @@ const Login = () => {
                             </div>
                         </div>
 
-                        {/* Contact Info */}
-                        <div className="flex items-center gap-4 flex-wrap justify-end pt-1">
-                            <div className="flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                                <span className="text-xs text-white text-sm">
-                                    <span className="text-white ml-1 font-mono text-[14px]">+251919519512</span>
+                        {/* Contact Info - RESPONSIVE */}
+                        <div className="flex items-center gap-2 sm:gap-4 flex-wrap justify-end pt-0.5 sm:pt-1">
+                            <div className="flex items-center gap-1 sm:gap-2">
+                                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-blue-500 rounded-full"></div>
+                                <span className="text-[8px] sm:text-xs text-white">
+                                    <span className="text-white ml-0.5 sm:ml-1 font-mono text-[10px] sm:text-[14px]">+251919519512</span>
                                 </span>
                             </div>
                             
-                            <div className="flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                                <span className="text-xs text-white text-sm">
-                                    <span className="text-white ml-1 font-mono text-[14px]">tiktok.com/@addis.med</span>
+                            <div className="flex items-center gap-1 sm:gap-2">
+                                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-blue-500 rounded-full"></div>
+                                <span className="text-[8px] sm:text-xs text-white">
+                                    <span className="text-white ml-0.5 sm:ml-1 font-mono text-[10px] sm:text-[14px]">tiktok.com/@addis.med</span>
                                 </span>
                             </div>
                         </div>
