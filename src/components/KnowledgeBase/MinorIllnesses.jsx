@@ -622,11 +622,6 @@ const MinorIllnesses = () => {
                             </button>
                         )}
                     </div>
-
-                    <div className="mt-4 text-xs md:text-sm text-gray-500 flex flex-wrap gap-2 items-center">
-                        <span>Showing {filteredIllnesses.length} of {illnesses.length} illnesses</span>
-                        {!isAdmin && <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-600">Read-only</span>}
-                    </div>
                 </div>
 
                 {/* Add/Edit Illness Form Modal - ADMIN ONLY with Bullet Point Formatting */}
@@ -1047,9 +1042,9 @@ const MinorIllnesses = () => {
                 )}
 
                 {/* Illnesses Grid - Four Columns as Bold Lines */}
-                                {searchTerm && searchTerm.trim() !== '' && filteredPreparations.length > 0 && (
+                                {searchTerm && searchTerm.trim() !== '' && filteredllnesses.length > 0 && (
                     <div className="mb-4 text-sm text-gray-600">
-                        Found {filteredPreparations.length} formula{filteredPreparations.length !== 1 ? 's' : ''}
+                        Found {filteredllnesses.length} formula{filteredllnesses.length !== 1 ? 's' : ''}
                     </div>
                 )}
                 {searchTerm.length >= 2 && filteredIllnesses.length > 0 ? (
@@ -1103,23 +1098,8 @@ const MinorIllnesses = () => {
                         </div>
                     </div>
                 ) : (
-                    <div className="bg-white rounded-xl shadow-lg p-12 text-center">
-                        <FaThermometerHalf className="text-5xl text-gray-300 mx-auto mb-4" />
-                        <h3 className="text-xl font-medium text-gray-800 mb-2">No Illnesses Found</h3>
-                        <p className="text-gray-500 max-w-md mx-auto mb-6">
-                            {searchTerm
-                                ? 'No illnesses match your search criteria. Try a different search.'
-                                : 'No illnesses found in the database.'}
-                        </p>
+                    <div className="bg-white rounded-xl shadow-lg p-3 text-center">
                         <div className="flex flex-wrap gap-3 justify-center">
-                            <button
-                                onClick={() => {
-                                    setSearchTerm('');
-                                }}
-                                className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg"
-                            >
-                                Clear Search
-                            </button>
                             {/* Only show admin buttons to admins */}
                             {isAdmin && (
                                 <>
