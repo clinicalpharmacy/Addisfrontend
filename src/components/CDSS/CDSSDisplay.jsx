@@ -453,75 +453,40 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                         key={alert.id}
                                         className={`border rounded-xl overflow-hidden transition-all duration-200 ${severityColor} ${alert.acknowledged ? 'opacity-60' : ''}`}
                                     >
-                                        <div className="p-5">
-                                            <div className="flex flex-col md:flex-row md:items-start gap-3 md:gap-4">
-                                                <div className="flex-1 min-w-0">
-                                                    {/* Primary Finding */}
-                                                    <div className="flex flex-col gap-2 p-3 bg-gray-50/80 rounded-xl border border-gray-200 mb-3 shadow-sm">
-                                                        <div className="flex items-start gap-2 text-sm text-gray-700">
-                                                            <span className="font-black text-blue-600 uppercase text-xs shrink-0 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">Finding:</span>
-                                                            <p className="italic font-medium leading-relaxed">
-                                                                {isHealthcareClient ? (alert.client_message || alert.message) : (alert.professional_message || alert.message)}
-                                                            </p>
-                                                        </div>
-                                                    
-                                                        {/* Drug triggers */}
-                                                        {alert.evidence?.matched_medications?.length > 0 && (
-                                                            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-300/50 mt-0">
-                                                                <span className="font-black text-purple-600 uppercase text-xs shrink-0">Drug(s) Trigger:</span>
-                                                                <div className="flex flex-wrap gap-1.5">
-                                                                    {alert.evidence.matched_medications.map((med, i) => (
-                                                                        <span key={i} className="px-2.5 py-0.5 bg-purple-100 text-purple-800 rounded-lg text-xs font-black border border-purple-200 shadow-sm flex items-center gap-1.5">
-                                                                            <FaCapsules className="text-xs" /> {med}
-                                                                        </span>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                    
-                                                        {/* Recommendation */}
-                                                        <div className="bg-green-50 border-l-8 border-green-500 p-3 rounded-r-xl shadow-sm">
-                                                            <div className="flex items-center gap-1.5 mb-1.5">
-                                                                <FaCheckCircle className="text-green-600 text-xs" />
-                                                                <span className="text-xs font-black uppercase tracking-widest text-green-800">Evidence Recommendation</span>
-                                                            </div>
-                                                            <div className="text-sm font-black text-gray-900 leading-relaxed whitespace-pre-wrap">
-                                                                {(isHealthcareClient
-                                                                    ? (alert.client_recommendation || alert.recommendation || alert.details)
-                                                                    : (alert.professional_recommendation || alert.recommendation || alert.details)) || 'Review clinical guidelines'}
-                                                            </div>
+                                        <div className="flex-1 min-w-0">
+                                            {/* Primary Finding */}
+                                            <div className="flex flex-col gap-2 p-3 bg-gray-50/80 rounded-xl border border-gray-200 mb-3 shadow-sm">
+                                                <div className="flex items-start gap-2 text-sm text-gray-700">
+                                                    <span className="font-black text-blue-600 uppercase text-xs shrink-0 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">Finding:</span>
+                                                    <p className="italic font-medium leading-relaxed">
+                                                        {isHealthcareClient ? (alert.client_message || alert.message) : (alert.professional_message || alert.message)}
+                                                    </p>
+                                                </div>
+                                            
+                                                {/* Drug triggers */}
+                                                {alert.evidence?.matched_medications?.length > 0 && (
+                                                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-300/50 mt-0">
+                                                        <span className="font-black text-purple-600 uppercase text-xs shrink-0">Drug(s) Trigger:</span>
+                                                        <div className="flex flex-wrap gap-1.5">
+                                                            {alert.evidence.matched_medications.map((med, i) => (
+                                                                <span key={i} className="px-2.5 py-0.5 bg-purple-100 text-purple-800 rounded-lg text-xs font-black border border-purple-200 shadow-sm flex items-center gap-1.5">
+                                                                    <FaCapsules className="text-xs" /> {med}
+                                                                </span>
+                                                            ))}
                                                         </div>
                                                     </div>
-
-                                                    {/* Actions */}
-                                                    <div className="flex justify-end items-center gap-4 pt-4 border-t border-gray-100">
-                                                        <div className="flex items-center gap-2">
-                                                            <span className={`text-[10px] font-bold uppercase tracking-widest ${alert.processed ? 'text-green-600' : 'text-orange-500'}`}>
-                                                                {alert.processed ? 'Processed' : 'Needs Action'}
-                                                            </span>
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    acknowledgeAlert(alert.id, !alert.processed);
-                                                                }}
-                                                                className={`p-1.5 rounded-lg transition-all ${alert.processed ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400 hover:text-green-600'}`}
-                                                                title={alert.processed ? 'Mark as Unprocessed' : 'Mark as Processed'}
-                                                            >
-                                                                {alert.processed ? <FaToggleOn className="text-xl" /> : <FaToggleOff className="text-xl" />}
-                                                            </button>
-                                                        </div>
-
-                                                        {!alert.acknowledged && (
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    acknowledgeAlert(alert.id);
-                                                                }}
-                                                                className="text-xs md:text-sm font-black uppercase tracking-widest text-gray-400 hover:text-blue-600 transition-all flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 rounded-lg"
-                                                            >
-                                                                <FaEye className="text-lg" /> Seen
-                                                            </button>
-                                                        )}
+                                                )}
+                                            
+                                                {/* Recommendation */}
+                                                <div className="bg-green-50 border-l-8 border-green-500 p-3 rounded-r-xl shadow-sm">
+                                                    <div className="flex items-center gap-1.5 mb-1.5">
+                                                        <FaCheckCircle className="text-green-600 text-xs" />
+                                                        <span className="text-xs font-black uppercase tracking-widest text-green-800">Evidence Recommendation</span>
+                                                    </div>
+                                                    <div className="text-sm font-black text-gray-900 leading-relaxed whitespace-pre-wrap">
+                                                        {(isHealthcareClient
+                                                            ? (alert.client_recommendation || alert.recommendation || alert.details)
+                                                            : (alert.professional_recommendation || alert.recommendation || alert.details)) || 'Review clinical guidelines'}
                                                     </div>
                                                 </div>
                                             </div>
