@@ -847,6 +847,13 @@ const Dashboard = () => {
                                 <p className="text-sm text-green-600">Access medical references</p>
                             </button>
                             <button
+                                onClick={() => navigate('/medication-availability')}
+                                className="w-full text-left p-3 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition"
+                            >
+                                <p className="font-medium text-yellow-800">💊 Medication Availability</p>
+                                <p className="text-sm text-yellow-600">Check medication availability</p>
+                            </button>
+                            <button
                                 onClick={() => navigate('/settings')}
                                 className="w-full text-left p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition"
                             >
