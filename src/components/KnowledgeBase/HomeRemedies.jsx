@@ -1048,7 +1048,6 @@ const HomeRemedies = () => {
                         <p className="text-gray-500 max-w-md mx-auto mb-6">
                             {searchTerm
                                 ? 'No home remedies match your search criteria. Try a different search.'
-                                : 'No home remedies found in the database.'}
                         </p>
                         <div className="flex flex-wrap gap-3 justify-center">
                             {/* Only show admin buttons to admins */}
