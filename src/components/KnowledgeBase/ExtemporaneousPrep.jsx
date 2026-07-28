@@ -1197,11 +1197,10 @@ const ExtemporaneousPrep = () => {
                 )}
                 {/* Initial state - no search entered */}
                 {searchTerm.length < 2 && (
-                    <div className="bg-white rounded-xl shadow-lg p-12 text-center">
-                        <FaSearch className="text-5xl text-gray-300 mx-auto mb-4" />
+                    <div className="bg-white rounded-xl shadow-lg p-4 text-center">
                         <h3 className="text-xl font-medium text-gray-800 mb-2">Search for Formulas</h3>
                         <p className="text-gray-500 max-w-md mx-auto">
-                            Type at least 2 characters to search the compounding formula database.
+                            Type at least 2 characters of formula name, materials, or indication to search the compounding formula database.
                         </p>
                     </div>
                 )}
