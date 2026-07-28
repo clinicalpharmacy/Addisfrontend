@@ -253,11 +253,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
-                        <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 rounded-xl shrink-0 shadow-md">
-                            <FaShieldAlt className="text-white text-xl" />
-                        </div>
                         <div className="min-w-0">
-                            <h2 className="text-xl md:text-2xl font-bold text-gray-800">Clinical Analysis</h2>
                             {decryptedPatient || patientData ? (
                                 <div className="text-sm text-gray-500 flex flex-wrap items-center gap-2 mt-0.5">
                                     <span className="font-semibold text-gray-700 truncate">
