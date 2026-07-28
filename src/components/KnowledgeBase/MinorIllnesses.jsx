@@ -526,7 +526,11 @@ const MinorIllnesses = () => {
                             <div className="min-w-0 flex-1">
                                 <h1 className="text-2xl md:text-3xl font-bold text-gray-900 truncate">Minor Illnesses</h1>
                                 <p className="text-gray-600 mt-1 text-sm md:text-base">
-                                    Management guide for {illnesses.length} common illnesses
+                                    {isAdmin ? (
+                                        `Management guide for ${illnesses.length} common illnesses`
+                                    ) : (
+                                        "Minor Illnesses database"
+                                    )}
                                     {user?.role === 'company_admin' ? (
                                         <span className="ml-2 text-xs md:text-sm bg-purple-100 text-purple-800 px-2 py-1 rounded inline-flex items-center">
                                             <FaLock className="mr-1" /> Admin View
@@ -1043,7 +1047,12 @@ const MinorIllnesses = () => {
                 )}
 
                 {/* Illnesses Grid - Four Columns as Bold Lines */}
-                {filteredIllnesses.length > 0 ? (
+                                {searchTerm && searchTerm.trim() !== '' && filteredPreparations.length > 0 && (
+                    <div className="mb-4 text-sm text-gray-600">
+                        Found {filteredPreparations.length} formula{filteredPreparations.length !== 1 ? 's' : ''}
+                    </div>
+                )}
+                {searchTerm.length >= 2 && filteredIllnesses.length > 0 ? (
                     <div className="bg-white rounded-xl shadow-lg p-6">
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-2">
                             {filteredIllnesses.map((illness) => (
@@ -1296,28 +1305,6 @@ const MinorIllnesses = () => {
                 {/* Summary Footer */}
                 {filteredIllnesses.length > 0 && (
                     <div className="mt-8 bg-white rounded-xl shadow-lg p-6">
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-red-600">{illnesses.length}</div>
-                                <div className="text-sm text-gray-600">Total Illnesses</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-blue-600">
-                                    {illnesses.filter(i => i.amharic_name).length}
-                                </div>
-                                <div className="text-sm text-gray-600">With Amharic Names</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-green-600">
-                                    {illnesses.filter(i => i.otc_drug).length}
-                                </div>
-                                <div className="text-sm text-gray-600">With OTC Recommendations</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-purple-600">{filteredIllnesses.length}</div>
-                                <div className="text-sm text-gray-600">Currently Filtered</div>
-                            </div>
-                        </div>
                         <div className="mt-4 text-center text-sm text-gray-500">
                             {isAdmin
                                 ? 'Administrator Mode - Full access'
