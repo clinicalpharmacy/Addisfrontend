@@ -621,7 +621,7 @@ const Login = () => {
                                     </div>
                                 </div>
                                 <div className="text-left">
-                                    <p className="text-[8px] sm:text-[10px] text-gray-700 leading-tight sm:leading-relaxed font-medium">
+                                    <p className="text-[8px] sm:text-[10px] text-white leading-tight sm:leading-relaxed font-medium">
                                         Addis Med is a digital platform that provides information and educational contents in health with a primary focus on medicines to health professionals, health science students and healthcare clients.
                                     </p>
                                 </div>
@@ -651,7 +651,7 @@ const Login = () => {
                 <div className="fixed bottom-4 right-2 sm:right-4 z-20 w-auto max-w-[50%] sm:max-w-[45%] min-w-[80px] sm:min-w-[120px]">
                     <div className="px-2 sm:px-4 py-2 sm:py-3 min-w-[100px] sm:min-w-[150px] space-y-3 sm:space-y-6">
                         {/* Carousel Messages */}
-                        <div className="border border-blue-400/30 rounded-xl p-1.5 sm:p-2 pb-1.5 sm:pb-2.5">
+                        <div className="border border-transparent rounded-xl p-1.5 sm:p-2 pb-1.5 sm:pb-2.5">
                             <div className="h-4 sm:h-6 overflow-hidden">
                                 <div
                                     className="transform transition-transform duration-500 ease-in-out"
@@ -661,8 +661,8 @@ const Login = () => {
                                         const Icon = msg.icon;
                                         return (
                                             <div key={index} className="h-4 sm:h-6 flex items-center justify-center gap-1 sm:gap-1.5">
-                                                <Icon className="text-blue-600 text-[10px] sm:text-base animate-pulse" />
-                                                <p className="text-blue-700 text-[8px] sm:text-sm font-bold italic">{msg.text}</p>
+                                                <Icon className="text-white text-[10px] sm:text-base animate-pulse" />
+                                                <p className="text-white text-[8px] sm:text-sm font-bold italic">{msg.text}</p>
                                             </div>
                                         );
                                     })}
