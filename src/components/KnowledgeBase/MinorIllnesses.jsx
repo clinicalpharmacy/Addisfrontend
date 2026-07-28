@@ -39,7 +39,6 @@ const MinorIllnesses = () => {
     const protectionMsg = useScreenshotProtection(protectionEnabled);
 
     const [illnesses, setIllnesses] = useState([]);
-    const [filteredIllnesses, setFilteredIllnesses] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [showForm, setShowForm] = useState(false);
     const [editIllness, setEditIllness] = useState(null);
@@ -96,19 +95,11 @@ const MinorIllnesses = () => {
 
             console.log('Fetched illnesses:', data);
 
-            if (data && data.length > 0) {
-                setIllnesses(data);
-                setFilteredIllnesses(data);
-            } else {
-                console.log('No illnesses found in database');
-                setIllnesses([]);
-                setFilteredIllnesses([]);
-            }
+            setIllnesses(data || []);
         } catch (err) {
             console.error('Error fetching illnesses:', err);
             setError('Failed to load illnesses. Please try again.');
             setIllnesses([]);
-            setFilteredIllnesses([]);
         } finally {
             setLoading(false);
         }
@@ -118,8 +109,8 @@ const MinorIllnesses = () => {
         fetchIllnesses();
     }, []);
 
-    // Use useMemo for filtered illnesses
-    const filteredIlls = useMemo(() => {
+    // Use useMemo for filtered illnesses - FIXED: This directly computes filtered results
+    const filteredIllnesses = useMemo(() => {
         if (!searchTerm.trim()) return illnesses;
         
         return illnesses.filter(ill =>
@@ -129,11 +120,6 @@ const MinorIllnesses = () => {
             (ill.otc_drug && ill.otc_drug.toLowerCase().includes(searchTerm.toLowerCase()))
         );
     }, [illnesses, searchTerm]);
-
-    // Update filtered illnesses when search changes
-    useEffect(() => {
-        setFilteredIllnesses(filteredIlls);
-    }, [filteredIlls]);
 
     const handleSearchChange = (e) => {
         setSearchTerm(e.target.value);
@@ -423,7 +409,7 @@ const MinorIllnesses = () => {
         }
     };
 
-    // Initialize database if empty - ADMIN ONLY
+    // Initialize database with sample illnesses - ADMIN ONLY
     const initializeDatabase = async () => {
         if (!isAdmin) {
             setError('Only administrators can initialize the database');
@@ -437,10 +423,36 @@ const MinorIllnesses = () => {
 
         setLoading(true);
         try {
-            const { data, error } = await supabase
+            const sampleIllnesses = [
+                {
+                    name: 'Common Cold',
+                    amharic_name: 'ቀዝቃዛ በሽታ',
+                    assessment: '• Runny or stuffy nose\n• Sore throat\n• Cough\n• Mild headache\n• Low-grade fever (rare)\n  ◦ Usually self-limiting\n  ◦ Lasts 7-10 days',
+                    referral: '• Fever > 38°C for more than 3 days\n• Difficulty breathing\n• Severe headache\n• Symptoms lasting > 10 days\n• Children under 3 months with fever',
+                    otc_drug: '• Paracetamol for pain/fever\n• Ibuprofen for pain/fever\n• Decongestants for stuffy nose\n• Antihistamines for runny nose\n  ◦ Use non-drowsy during day\n• Throat lozenges for sore throat',
+                    for_pharmacists: '• Counsel on hydration\n• Rest is important\n• Avoid aspirin in children\n• Warn about overuse of decongestants\n• Consider underlying conditions'
+                },
+                {
+                    name: 'Acute Gastroenteritis',
+                    amharic_name: 'አጣዳፊ የሆድ እና አንጀት በሽታ',
+                    assessment: '• Diarrhea (watery)\n• Nausea and vomiting\n• Abdominal cramps\n• Mild fever\n• Dehydration risk\n  ◦ Especially in children\n  ◦ Monitor urine output',
+                    referral: '• Signs of severe dehydration\n• Blood in stool\n• Fever > 39°C\n• Unable to keep fluids down\n• Infants and elderly at high risk',
+                    otc_drug: '• Oral rehydration salts (ORS)\n• Loperamide for adults only\n• Bismuth subsalicylate\n  ◦ Not for children\n• Zinc supplements for children',
+                    for_pharmacists: '• Emphasize ORS use\n• Continue breastfeeding\n• Avoid anti-diarrheals in children\n• Hand hygiene education\n• Monitor for dehydration signs'
+                },
+                {
+                    name: 'Mild Allergic Rhinitis',
+                    amharic_name: 'ቀላል አለርጂክ የአፍንጫ መታወክ',
+                    assessment: '• Sneezing\n• Runny nose (clear)\n• Itchy eyes/nose\n• Nasal congestion\n• Post-nasal drip\n  ◦ Seasonal or perennial\n  ◦ Trigger identification',
+                    referral: '• Severe symptoms\n• Asthma symptoms\n• Eye swelling\n• Difficulty breathing\n• Poor response to OTC meds',
+                    otc_drug: '• Oral antihistamines (cetirizine, loratadine)\n  ◦ Non-sedating preferred\n• Nasal corticosteroid sprays\n• Antihistamine eye drops\n• Decongestants (limited use)',
+                    for_pharmacists: '• Avoid sedating antihistamines for drivers\n• Proper nasal spray technique\n• Environmental control advice\n• Consider allergen avoidance\n• Regular cleaning of AC filters'
+                }
+            ];
+
+            const { error } = await supabase
                 .from('minor_illnesses')
-                .insert(sampleIllnesses)
-                .select();
+                .insert(sampleIllnesses);
 
             if (error) throw error;
 
@@ -1042,11 +1054,13 @@ const MinorIllnesses = () => {
                 )}
 
                 {/* Illnesses Grid - Four Columns as Bold Lines */}
-                                {searchTerm && searchTerm.trim() !== '' && filteredIllnesses.length > 0 && (
+                {searchTerm && searchTerm.trim() !== '' && filteredIllnesses.length > 0 && (
                     <div className="mb-4 text-sm text-gray-600">
-                        Found {filteredIllnesses.length} formula{filteredIllnesses.length !== 1 ? 's' : ''}
+                        Found {filteredIllnesses.length} illness{filteredIllnesses.length !== 1 ? 'es' : ''}
                     </div>
                 )}
+                
+                {/* Display filtered results or empty state */}
                 {searchTerm.length >= 2 && filteredIllnesses.length > 0 ? (
                     <div className="bg-white rounded-xl shadow-lg p-6">
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-2">
@@ -1059,10 +1073,10 @@ const MinorIllnesses = () => {
                                                 onClick={() => setSelectedIllness(illness)}
                                                 className="text-left w-full flex items-center gap-1 group/button"
                                             >
-                                                <span className="font-bold text-black-800 hover:text-white-600 transition-colors text-sm md:text-base">
+                                                <span className="font-bold text-gray-800 hover:text-red-600 transition-colors text-sm md:text-base">
                                                     {illness.name}
                                                 </span>
-                                                <span className="text-black-300 group-hover/button:text-white-400 text-xs transition-colors">
+                                                <span className="text-gray-300 group-hover/button:text-red-400 text-xs transition-colors">
                                                     ▶
                                                 </span>
                                             </button>
@@ -1098,8 +1112,18 @@ const MinorIllnesses = () => {
                         </div>
                     </div>
                 ) : (
-                    <div className="bg-white rounded-xl shadow-lg p-3 text-center">
+                    <div className="bg-white rounded-xl shadow-lg p-12 text-center">
                         <div className="flex flex-wrap gap-3 justify-center">
+                            {searchTerm && searchTerm.trim() !== '' && (
+                                <button
+                                    onClick={() => {
+                                        setSearchTerm('');
+                                    }}
+                                    className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg"
+                                >
+                                    Clear Search
+                                </button>
+                            )}
                             {/* Only show admin buttons to admins */}
                             {isAdmin && (
                                 <>
@@ -1122,32 +1146,32 @@ const MinorIllnesses = () => {
                 )}
 
                 {/* Illness Details Modal - Narrower Width with Enhanced Formatting */}
-               {selectedIllness && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-xl shadow-2xl w-[60%] max-w-[60%] min-w-[300px] max-h-[90vh] overflow-hidden">
-                        {/* Header - White gradient with black text */}
-                        <div className="sticky top-0 bg-gradient-to-r from-gray-50 to-gray-100 text-gray-900 p-3 border-b border-gray-200">
-                            <div className="flex justify-between items-start">
-                                <div className="flex-1 min-w-0">
-                                    <h2 className="text-base font-bold text-gray-900 truncate">{selectedIllness.name}</h2>
-                                    {selectedIllness.amharic_name && (
-                                        <p className="text-xs font-medium text-gray-600 mt-0.5 truncate">
-                                            {selectedIllness.amharic_name}
-                                        </p>
-                                    )}
+                {selectedIllness && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                        <div className="bg-white rounded-xl shadow-2xl w-[60%] max-w-[60%] min-w-[300px] max-h-[90vh] overflow-hidden">
+                            {/* Header */}
+                            <div className="sticky top-0 bg-gradient-to-r from-red-600 to-red-800 text-white p-3">
+                                <div className="flex justify-between items-start">
+                                    <div className="flex-1 min-w-0">
+                                        <h2 className="text-base font-bold truncate">{selectedIllness.name}</h2>
+                                        {selectedIllness.amharic_name && (
+                                            <p className="text-xs font-bold text-red-100 mt-0.5 truncate">
+                                                {selectedIllness.amharic_name}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <button
+                                        onClick={() => setSelectedIllness(null)}
+                                        className="text-white hover:text-gray-200 text-lg ml-2 flex-shrink-0"
+                                    >
+                                        <FaTimes />
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={() => setSelectedIllness(null)}
-                                    className="text-gray-500 hover:text-gray-700 text-lg ml-2 flex-shrink-0"
-                                >
-                                    <FaTimes />
-                                </button>
                             </div>
-                        </div>
                             
                             {/* Scrollable Content */}
                             <div className="overflow-y-auto" style={{ maxHeight: 'calc(160vh - 120px)' }}>
-                               <div className="p-3 space-y-2">
+                                <div className="p-3 space-y-2">
                                     {/* Assessment Section */}
                                     {selectedIllness.assessment && (
                                         <div className="bg-red-50 rounded-lg overflow-hidden border border-red-100">
@@ -1284,20 +1308,20 @@ const MinorIllnesses = () => {
 
                 {/* Summary Footer */}
                 {filteredIllnesses.length > 0 && (
-                <div className="mt-8 bg-white rounded-xl shadow-lg p-6">
-                    <div className="mt-4 text-center text-sm text-gray-500">
-                        {isAdmin ? 'Administrator Mode - Full access' : 'View Only Mode'}
-                        {isAdmin && (
-                            <button
-                                onClick={toggleProtection}
-                                className="ml-2 text-blue-600 hover:text-blue-800 text-xs"
-                            >
-                                ({protectionEnabled ? 'No Copy Mode' : 'Copy Allowed'})
-                            </button>
-                        )}
+                    <div className="mt-8 bg-white rounded-xl shadow-lg p-6">
+                        <div className="mt-4 text-center text-sm text-gray-500">
+                            {isAdmin ? 'Administrator Mode - Full access' : 'View Only Mode'}
+                            {isAdmin && (
+                                <button
+                                    onClick={toggleProtection}
+                                    className="ml-2 text-blue-600 hover:text-blue-800 text-xs"
+                                >
+                                    ({protectionEnabled ? 'No Copy Mode' : 'Copy Allowed'})
+                                </button>
+                            )}
+                        </div>
                     </div>
-                </div>
-            )}
+                )}
             </div>
         </div>
     );
