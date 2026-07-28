@@ -613,7 +613,7 @@ const Login = () => {
                 <div className="fixed bottom-4 left-2 sm:left-4 z-20 w-auto max-w-[45%] sm:max-w-[35%] min-w-[80px] sm:min-w-[100px]">
                     <div className="px-2 sm:px-3 py-2 sm:py-3 min-w-[100px] sm:min-w-[150px] space-y-2 sm:space-y-3">
                         {/* About Section */}
-                        <div className="border border-blue-400/30 rounded-xl p-2 sm:p-3">
+                        <div className="border border-transparent rounded-xl p-2 sm:p-3">
                             <div className="flex items-start gap-1.5 sm:gap-2">
                                 <div className="flex-shrink-0 mt-0.5">
                                     <div className="w-5 h-5 sm:w-6 sm:h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
@@ -652,15 +652,15 @@ const Login = () => {
                     <div className="px-2 sm:px-4 py-2 sm:py-3 min-w-[100px] sm:min-w-[150px] space-y-3 sm:space-y-6">
                         {/* Carousel Messages */}
                         <div className="border border-transparent rounded-xl p-1.5 sm:p-2 pb-1.5 sm:pb-2.5">
-                            <div className="h-4 sm:h-6 overflow-hidden">
+                            <div className="h-6 sm:h-8 overflow-hidden">
                                 <div
                                     className="transform transition-transform duration-500 ease-in-out"
-                                    style={{ transform: `translateY(-${currentSlide * 1.5}rem)` }}
+                                    style={{ transform: `translateY(-${currentSlide * 2}rem)` }}
                                 >
                                     {carouselMessages.map((msg, index) => {
                                         const Icon = msg.icon;
                                         return (
-                                            <div key={index} className="h-4 sm:h-6 flex items-center justify-center gap-1 sm:gap-1.5">
+                                            <div key={index} className="h-6 sm:h-8 flex items-center justify-center gap-1 sm:gap-1.5">
                                                 <Icon className="text-white text-[10px] sm:text-base animate-pulse" />
                                                 <p className="text-white text-[8px] sm:text-sm font-bold italic">{msg.text}</p>
                                             </div>
