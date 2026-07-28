@@ -1195,15 +1195,7 @@ const ExtemporaneousPrep = () => {
                         </div>
                     </div>
                 )}
-                {/* Initial state - no search entered */}
-                {searchTerm.length < 2 && (
-                    <div className="bg-white rounded-xl shadow-lg p-4 text-center">
-                        <h3 className="text-xl font-medium text-gray-800 mb-2">Search for Formulas</h3>
-                        <p className="text-gray-500 max-w-md mx-auto">
-                            Type at least 2 characters of formula name, materials, or indication to search the compounding formula database.
-                        </p>
-                    </div>
-                )}
+
                 {/* Preparation Details Modal - Narrower Width with Enhanced Formatting */}
                 {selectedPrep && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
