@@ -1042,9 +1042,9 @@ const MinorIllnesses = () => {
                 )}
 
                 {/* Illnesses Grid - Four Columns as Bold Lines */}
-                                {searchTerm && searchTerm.trim() !== '' && filteredllnesses.length > 0 && (
+                                {searchTerm && searchTerm.trim() !== '' && filteredIllnesses.length > 0 && (
                     <div className="mb-4 text-sm text-gray-600">
-                        Found {filteredllnesses.length} formula{filteredllnesses.length !== 1 ? 's' : ''}
+                        Found {filteredIllnesses.length} formula{filteredIllnesses.length !== 1 ? 's' : ''}
                     </div>
                 )}
                 {searchTerm.length >= 2 && filteredIllnesses.length > 0 ? (
@@ -1284,22 +1284,20 @@ const MinorIllnesses = () => {
 
                 {/* Summary Footer */}
                 {filteredIllnesses.length > 0 && (
-                    <div className="mt-8 bg-white rounded-xl shadow-lg p-6">
-                        <div className="mt-4 text-center text-sm text-gray-500">
-                            {isAdmin
-                                ? 'Administrator Mode - Full access'
-                                : `User Mode - View only (${protectionEnabled ? 'Copy/Print disabled' : 'Copy allowed'})`}
-                            {isAdmin && (
-                                <button
-                                    onClick={toggleProtection}
-                                    className="ml-2 text-blue-600 hover:text-blue-800 text-xs"
-                                >
-                                    ({protectionEnabled ? 'No Copy Mode' : 'Copy Allowed'})
-                                </button>
-                            )}
-                        </div>
+                <div className="mt-8 bg-white rounded-xl shadow-lg p-6">
+                    <div className="mt-4 text-center text-sm text-gray-500">
+                        {isAdmin ? 'Administrator Mode - Full access' : 'View Only Mode'}
+                        {isAdmin && (
+                            <button
+                                onClick={toggleProtection}
+                                className="ml-2 text-blue-600 hover:text-blue-800 text-xs"
+                            >
+                                ({protectionEnabled ? 'No Copy Mode' : 'Copy Allowed'})
+                            </button>
+                        )}
                     </div>
-                )}
+                </div>
+            )}
             </div>
         </div>
     );
