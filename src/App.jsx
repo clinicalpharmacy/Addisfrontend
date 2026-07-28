@@ -836,22 +836,19 @@ const Dashboard = () => {
                                 onClick={() => navigate('/patients')}
                                 className="w-full text-left p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition"
                             >
-                                <p className="font-medium text-blue-800">Manage Medication Reviews</p>
-                                <p className="text-sm text-blue-600">View and manage medication reviews</p>
+                                <p className="font-medium text-blue-800">Medication Review</p>
                             </button>
                             <button
-                                onClick={() => navigate('/knowledge')}
+                                onClick={() => navigate('/knowledge/medications')}
                                 className="w-full text-left p-3 bg-green-50 hover:bg-green-100 rounded-lg transition"
                             >
-                                <p className="font-medium text-green-800">Knowledge Base</p>
-                                <p className="text-sm text-green-600">Access medical references</p>
+                                <p className="font-medium text-green-800">የመድሃኒት መረጃ</p>
                             </button>
                             <button
                                 onClick={() => navigate('/medication-availability')}
                                 className="w-full text-left p-3 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition"
                             >
-                                <p className="font-medium text-yellow-800">💊 Medication Availability</p>
-                                <p className="text-sm text-yellow-600">Check medication availability</p>
+                                <p className="font-medium text-yellow-800">መድሃኒት ማፈላለጊያ</p>
                             </button>
                             <button
                                 onClick={() => navigate('/settings')}
