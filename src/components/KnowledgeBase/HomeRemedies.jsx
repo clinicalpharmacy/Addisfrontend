@@ -1044,23 +1044,13 @@ const HomeRemedies = () => {
                         </div>
                     </div>
                 ) : (
-                    <div className="bg-white rounded-xl shadow-lg p-12 text-center">
-                        <FaLeaf className="text-5xl text-gray-300 mx-auto mb-4" />
-                        <h3 className="text-xl font-medium text-gray-800 mb-2">No Remedies Found</h3>
+                    <div className="bg-white rounded-xl shadow-lg p-4 text-center">
                         <p className="text-gray-500 max-w-md mx-auto mb-6">
                             {searchTerm
                                 ? 'No home remedies match your search criteria. Try a different search.'
                                 : 'No home remedies found in the database.'}
                         </p>
                         <div className="flex flex-wrap gap-3 justify-center">
-                            <button
-                                onClick={() => {
-                                    setSearchTerm('');
-                                }}
-                                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg"
-                            >
-                                Clear Search
-                            </button>
                             {/* Only show admin buttons to admins */}
                             {isAdmin && (
                                 <>
