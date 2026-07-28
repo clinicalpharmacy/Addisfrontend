@@ -1164,13 +1164,6 @@ const ExtemporaneousPrep = () => {
                     </div>
                 ) : (
                     <div className="bg-white rounded-xl shadow-lg p-12 text-center">
-                        <FaMortarPestle className="text-5xl text-gray-300 mx-auto mb-4" />
-                        <h3 className="text-xl font-medium text-gray-800 mb-2">No Formulas Found</h3>
-                        <p className="text-gray-500 max-w-md mx-auto mb-6">
-                            {searchTerm && searchTerm.trim() !== ''
-                                ? 'No formulas match your search criteria. Try a different search.'
-                                : 'No compounding formulas found in the database.'}
-                        </p>
                         <div className="flex flex-wrap gap-3 justify-center">
                             {searchTerm && searchTerm.trim() !== '' && (
                                 <button
