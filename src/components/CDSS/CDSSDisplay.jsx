@@ -455,10 +455,6 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                     >
                                         <div className="p-5">
                                             <div className="flex flex-col md:flex-row md:items-start gap-3 md:gap-4">
-                                                <div className={`p-2 md:p-3 rounded-full ${severityBgColor} shrink-0 self-start mt-1`}>
-                                                    <SeverityIcon className="text-white text-base md:text-lg" />
-                                                </div>
-
                                                 <div className="flex-1 min-w-0">
                                                     {/* Primary Finding */}
                                                     <div className="flex flex-col gap-2 p-3 bg-gray-50/80 rounded-xl border border-gray-200 mb-3 shadow-sm">
