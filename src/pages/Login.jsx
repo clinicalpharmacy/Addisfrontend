@@ -578,8 +578,8 @@ const Login = () => {
                 </div>
 
                 {/* Enhanced Footer status indicator - Compact for mobile */}
-                <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-20">
-                    <div className="group flex items-center gap-2 px-4 py-2 bg-white/90 backdrop-blur-sm rounded-full shadow-xl border border-white/50 transition-all hover:shadow-2xl hover:scale-105">
+                <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-20"> 
+                    <div className="group flex items-center gap-2 px-4 py-2 bg-white/90 backdrop-blur-sm rounded-full border border-transparent transition-all hover:scale-105">
                         <div className="relative">
                             <div className={`w-2 h-2 rounded-full ${isCheckingHealth
                                 ? 'bg-blue-400 animate-ping'
