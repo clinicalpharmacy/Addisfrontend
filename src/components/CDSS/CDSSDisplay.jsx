@@ -218,9 +218,6 @@ const CDSSDisplay = ({ patientData, onBack }) => {
     if (!hasAcknowledged) {
         return (
             <div className="bg-white rounded-xl shadow-lg p-8 md:p-12 text-center">
-                <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <FaUserShield className="text-blue-600 text-3xl" />
-                </div>
                 <h2 className="text-2xl font-bold text-gray-800 mb-4">User Acknowledgment</h2>
                 <div className="bg-blue-50 border-1 border-blue-200 p-6 rounded-2xl mb-8 max-w-2xl mx-auto">
                     <p className="text-gray-700 text-lg leading-relaxed">
