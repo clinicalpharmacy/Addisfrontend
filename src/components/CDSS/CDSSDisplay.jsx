@@ -461,35 +461,35 @@ const CDSSDisplay = ({ patientData, onBack }) => {
 
                                                 <div className="flex-1 min-w-0">
                                                     {/* Primary Finding */}
-                                                    <div className="flex flex-col gap-3 p-4 bg-gray-50/80 rounded-xl border border-gray-200 mb-5 shadow-sm">
-                                                        <div className="flex items-start gap-3 text-sm md:text-lg text-gray-700">
-                                                            <span className="font-black text-blue-600 uppercase text-xs md:text-sm mt-1 shrink-0 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">Finding:</span>
+                                                    <div className="flex flex-col gap-2 p-3 bg-gray-50/80 rounded-xl border border-gray-200 mb-3 shadow-sm">
+                                                        <div className="flex items-start gap-2 text-sm text-gray-700">
+                                                            <span className="font-black text-blue-600 uppercase text-xs shrink-0 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">Finding:</span>
                                                             <p className="italic font-medium leading-relaxed">
                                                                 {isHealthcareClient ? (alert.client_message || alert.message) : (alert.professional_message || alert.message)}
                                                             </p>
                                                         </div>
-
+                                                    
                                                         {/* Drug triggers */}
                                                         {alert.evidence?.matched_medications?.length > 0 && (
-                                                            <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-gray-300/50 mt-1">
-                                                                <span className="font-black text-purple-600 uppercase text-xs md:text-sm shrink-0">Drug(s) Trigger:</span>
-                                                                <div className="flex flex-wrap gap-2">
+                                                            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-300/50 mt-0">
+                                                                <span className="font-black text-purple-600 uppercase text-xs shrink-0">Drug(s) Trigger:</span>
+                                                                <div className="flex flex-wrap gap-1.5">
                                                                     {alert.evidence.matched_medications.map((med, i) => (
-                                                                        <span key={i} className="px-3 py-1 bg-purple-100 text-purple-800 rounded-lg text-xs md:text-sm font-black border border-purple-200 shadow-sm flex items-center gap-2">
-                                                                            <FaCapsules className="text-sm" /> {med}
+                                                                        <span key={i} className="px-2.5 py-0.5 bg-purple-100 text-purple-800 rounded-lg text-xs font-black border border-purple-200 shadow-sm flex items-center gap-1.5">
+                                                                            <FaCapsules className="text-xs" /> {med}
                                                                         </span>
                                                                     ))}
                                                                 </div>
                                                             </div>
                                                         )}
-
+                                                    
                                                         {/* Recommendation */}
-                                                        <div className="bg-green-50 border-l-8 border-green-500 p-4 md:p-5 rounded-r-xl mb-4 shadow-sm">
-                                                            <div className="flex items-center gap-2 mb-2">
-                                                                <FaCheckCircle className="text-green-600 text-sm" />
-                                                                <span className="text-xs md:text-sm font-black uppercase tracking-widest text-green-800">Evidence Recommendation</span>
+                                                        <div className="bg-green-50 border-l-8 border-green-500 p-3 rounded-r-xl shadow-sm">
+                                                            <div className="flex items-center gap-1.5 mb-1.5">
+                                                                <FaCheckCircle className="text-green-600 text-xs" />
+                                                                <span className="text-xs font-black uppercase tracking-widest text-green-800">Evidence Recommendation</span>
                                                             </div>
-                                                            <div className="text-sm md:text-base font-black text-gray-900 leading-relaxed whitespace-pre-wrap">
+                                                            <div className="text-sm font-black text-gray-900 leading-relaxed whitespace-pre-wrap">
                                                                 {(isHealthcareClient
                                                                     ? (alert.client_recommendation || alert.recommendation || alert.details)
                                                                     : (alert.professional_recommendation || alert.recommendation || alert.details)) || 'Review clinical guidelines'}
@@ -545,7 +545,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                         className="flex items-center gap-2 px-8 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold transition-all border border-gray-200 shadow-sm"
                     >
                         <FaSync className="rotate-180" />
-                        Back to Patient Selection
+                        Back to Case Selection
                     </button>
                 </div>
             )}
