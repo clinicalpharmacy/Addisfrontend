@@ -993,7 +993,7 @@ const HomeRemedies = () => {
                 )}
 
                 {/* Remedies Grid - Four Columns as Bold Lines */}
-                {filteredRemedies.length > 0 ? (
+                {searchTerm.length >= 2 && filteredRemedies.length > 0 ? (
                     <div className="bg-white rounded-xl shadow-lg p-6">
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-2">
                             {filteredRemedies.map((remedy) => (
