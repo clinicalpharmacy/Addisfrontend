@@ -581,7 +581,7 @@ const Login = () => {
                 <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-20">
                     <div className="group flex items-center gap-2 px-4 py-2 bg-white/90 backdrop-blur-sm rounded-full shadow-xl border border-white/50 transition-all hover:shadow-2xl hover:scale-105">
                         <div className="relative">
-                            <div className={`w-2.5 h-2.5 rounded-full ${isCheckingHealth
+                            <div className={`w-2 h-2 rounded-full ${isCheckingHealth
                                 ? 'bg-blue-400 animate-ping'
                                 : systemOnline
                                     ? 'bg-green-500 animate-pulse'
