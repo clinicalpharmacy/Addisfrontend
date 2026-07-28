@@ -613,7 +613,7 @@ const Login = () => {
                 <div className="fixed bottom-4 left-2 sm:left-4 z-20 w-auto max-w-[45%] sm:max-w-[35%] min-w-[80px] sm:min-w-[100px]">
                     <div className="px-2 sm:px-3 py-2 sm:py-3 min-w-[100px] sm:min-w-[150px] space-y-2 sm:space-y-3">
                         {/* About Section */}
-                        <div className="bg-white/90 backdrop-blur-sm rounded-xl p-2 sm:p-3">
+                        <div className="border border-blue-400/30 rounded-xl p-2 sm:p-3">
                             <div className="flex items-start gap-1.5 sm:gap-2">
                                 <div className="flex-shrink-0 mt-0.5">
                                     <div className="w-5 h-5 sm:w-6 sm:h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
@@ -651,7 +651,7 @@ const Login = () => {
                 <div className="fixed bottom-4 right-2 sm:right-4 z-20 w-auto max-w-[50%] sm:max-w-[45%] min-w-[80px] sm:min-w-[120px]">
                     <div className="px-2 sm:px-4 py-2 sm:py-3 min-w-[100px] sm:min-w-[150px] space-y-3 sm:space-y-6">
                         {/* Carousel Messages */}
-                        <div className="bg-white/90 backdrop-blur-sm rounded-xl p-2 sm:p-3 pb-2 sm:pb-4">
+                        <div className="border border-blue-400/30 rounded-xl p-1.5 sm:p-2 pb-1.5 sm:pb-2.5">
                             <div className="h-4 sm:h-6 overflow-hidden">
                                 <div
                                     className="transform transition-transform duration-500 ease-in-out"
