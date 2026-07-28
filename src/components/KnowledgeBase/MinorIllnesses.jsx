@@ -634,6 +634,11 @@ const MinorIllnesses = () => {
                             </button>
                         )}
                     </div>
+                    <div className="mt-4 text-xs md:text-sm text-gray-500 flex flex-wrap gap-2 items-center">
+                        {searchTerm.length >= 2 && (
+                            <span>Found {filteredIllnesses.length} illnesses{filteredIllnesses.length !== 1 ? 's' : ''} matching "{searchTerm}"</span>
+                        )}
+                    </div>
                 </div>
 
                 {/* Add/Edit Illness Form Modal - ADMIN ONLY with Bullet Point Formatting */}
@@ -1052,14 +1057,7 @@ const MinorIllnesses = () => {
                         </div>
                     </div>
                 )}
-
-                {/* Illnesses Grid - Four Columns as Bold Lines */}
-                {searchTerm && searchTerm.trim() !== '' && filteredIllnesses.length > 0 && (
-                    <div className="mb-4 text-sm text-gray-600">
-                        Found {filteredIllnesses.length} illness{filteredIllnesses.length !== 1 ? 's' : ''}
-                    </div>
-                )}
-                
+  
                 {/* Display filtered results or empty state */}
                 {searchTerm.length >= 2 && filteredIllnesses.length > 0 ? (
                     <div className="bg-white rounded-xl shadow-lg p-6">
