@@ -578,7 +578,7 @@ const Login = () => {
                 </div>
 
                 {/* Enhanced Footer status indicator - Compact for mobile */}
-                <div className="mt-4 flex justify-center">
+                <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-20">
                     <div className="group flex items-center gap-2 px-4 py-2 bg-white/90 backdrop-blur-sm rounded-full shadow-xl border border-white/50 transition-all hover:shadow-2xl hover:scale-105">
                         <div className="relative">
                             <div className={`w-2.5 h-2.5 rounded-full ${isCheckingHealth
@@ -648,7 +648,7 @@ const Login = () => {
                 </div>
                             
                 {/* Right Side - Carousel Messages & Contact Info - RESPONSIVE */}
-                <div className="fixed bottom-4 right-2 sm:right-4 z-20 w-auto max-w-[50%] sm:max-w-[45%] min-w-[80px] sm:min-w-[120px]">
+                <div className="fixed bottom-4 right-2 sm:right-4 z-20 w-auto max-w-[45%] min-w-[120px]">
                     <div className="px-2 sm:px-4 py-2 sm:py-3 min-w-[100px] sm:min-w-[150px] space-y-3 sm:space-y-6">
                         {/* Carousel Messages */}
                         <div className="border border-transparent rounded-xl p-1.5 sm:p-2 pb-1.5 sm:pb-2.5">
@@ -660,7 +660,7 @@ const Login = () => {
                                     {carouselMessages.map((msg, index) => {
                                         const Icon = msg.icon;
                                         return (
-                                            <div key={index} className="h-6 sm:h-8 flex items-center justify-center gap-1 sm:gap-1.5">
+                                            <div key={index} className="h-8 flex items-center justify-center gap-1.5">
                                                 <Icon className="text-white text-[10px] sm:text-base animate-pulse" />
                                                 <p className="text-white text-[8px] sm:text-sm font-bold italic">{msg.text}</p>
                                             </div>
