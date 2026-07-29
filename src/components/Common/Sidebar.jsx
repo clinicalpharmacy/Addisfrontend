@@ -37,7 +37,8 @@ import {
     FaFemale,
     FaUser,
     FaKidneys,
-    FaLiver
+    FaLiver,
+    FaHands
 } from 'react-icons/fa';
 
 // Force rebuild - ensuring all icons are properly bundled
@@ -141,7 +142,8 @@ const Sidebar = ({ onClose }) => {
     const isElderlyActive = location.pathname === '/safety/elderly';
     const isKidneyActive = location.pathname === '/safety/kidney';
     const isLiverActive = location.pathname === '/safety/liver';
-    const isAnySafetyActive = [isPregnancyActive, isLactationActive, isElderlyActive, isKidneyActive, isLiverActive].some(Boolean);
+    const isDrugInteractionActive = location.pathname === '/safety/drug-interactions';
+    const isAnySafetyActive = [isPregnancyActive, isLactationActive, isElderlyActive, isKidneyActive, isLiverActive, isDrugInteractionActive].some(Boolean);
 
     return (
         <aside className="w-72 bg-white h-full flex flex-col border-r border-gray-100 shadow-xl z-[60] relative overflow-hidden">
@@ -337,6 +339,21 @@ const Sidebar = ({ onClose }) => {
                                                     >
                                                         <FaLiver className="text-sm" />
                                                         Liver Safety
+                                                    </NavLink>
+
+                                                    {/* Drug Interaction Safety */}
+                                                    <NavLink
+                                                        to="/safety/drug-interactions"
+                                                        onClick={onClose}
+                                                        className={({ isActive }) =>
+                                                            `flex items-center gap-2.5 px-4 py-1.5 text-sm rounded-lg transition-all ${isActive
+                                                                ? 'text-orange-600 font-medium bg-orange-50'
+                                                                : 'text-gray-500 hover:text-orange-600 hover:bg-orange-50'
+                                                            }`
+                                                        }
+                                                    >
+                                                        <FaHands className="text-sm" />
+                                                        Drug Interaction Safety
                                                     </NavLink>
                                                 </div>
                                             )}
