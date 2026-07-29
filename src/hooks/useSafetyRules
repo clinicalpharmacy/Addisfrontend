@@ -1,0 +1,184 @@
+// src/hooks/useSafetyRules.js
+import { useState, useEffect } from 'react';
+import supabase from '../utils/supabase';
+
+// Map URL paths to database rule types
+const SAFETY_TYPE_MAP = {
+  'pregnancy': 'pregnancy_check',
+  'lactation': 'lactation_safety',
+  'elderly': 'elderly_check',
+  'kidney': 'renal_adjustment',
+  'liver': 'hepatic_adjustment',
+  'drug-interactions': 'drug_interaction',
+  'neonate': 'contraindication' // Neonate uses contraindication with age condition
+};
+
+export const useSafetyRules = (type) => {
+  const [rules, setRules] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchSafetyRules = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Get the rule_type from the map
+        const ruleType = SAFETY_TYPE_MAP[type];
+
+        if (!ruleType) {
+          setRules([]);
+          setLoading(false);
+          return;
+        }
+
+        console.log(`🔍 Fetching ${type} rules (type: ${ruleType})...`);
+
+        // Build the query
+        let query = supabase
+          .from('clinical_rules')
+          .select('*')
+          .eq('is_active', true);
+
+        // For neonate, we need to fetch all rules and filter by age condition
+        if (type === 'neonate') {
+          query = query.eq('rule_type', 'contraindication');
+        } else {
+          query = query.eq('rule_type', ruleType);
+        }
+
+        const { data, error } = await query.order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('❌ Error fetching rules:', error);
+          throw error;
+        }
+
+        console.log(`✅ Found ${data?.length || 0} rules for ${type}`);
+
+        // Transform the data
+        let transformedRules = data || [];
+
+        // For neonate, filter rules that have age_in_days < 28 in condition
+        if (type === 'neonate') {
+          transformedRules = transformedRules.filter(rule => {
+            try {
+              const condition = typeof rule.rule_condition === 'string' 
+                ? JSON.parse(rule.rule_condition) 
+                : rule.rule_condition;
+              
+              const conditions = condition?.all || condition?.any || [];
+              return conditions.some(c => 
+                c.fact === 'age_in_days' && 
+                c.operator === '<' && 
+                parseInt(c.value) <= 28
+              );
+            } catch (e) {
+              return false;
+            }
+          });
+          console.log(`✅ Filtered to ${transformedRules.length} neonate-specific rules`);
+        }
+
+        // Parse JSON fields and extract key information
+        const parsedRules = transformedRules.map(rule => {
+          try {
+            const condition = typeof rule.rule_condition === 'string' 
+              ? JSON.parse(rule.rule_condition) 
+              : rule.rule_condition;
+            
+            const action = typeof rule.rule_action === 'string'
+              ? JSON.parse(rule.rule_action)
+              : rule.rule_action;
+
+            // Extract drug names from condition
+            let drug1 = rule.rule_name;
+            let drug2 = '';
+            
+            if (condition?.all) {
+              const medConditions = condition.all.filter(c => c.fact === 'medications');
+              if (medConditions.length > 0) {
+                drug1 = medConditions[0].value || drug1;
+                if (medConditions.length > 1) {
+                  drug2 = medConditions[1].value || '';
+                }
+              }
+            }
+
+            // Extract specific fields for different rule types
+            let extraFields = {};
+            
+            // Pregnancy: extract trimester and FDA category
+            if (type === 'pregnancy') {
+              const trimester = condition?.all?.find(c => c.fact === 'trimester')?.value || '';
+              const category = condition?.all?.find(c => c.fact === 'pregnancy_category')?.value || '';
+              extraFields = { trimester, fdaCategory: category };
+            }
+
+            // Renal: extract eGFR threshold
+            if (type === 'kidney') {
+              const gfrCondition = condition?.all?.find(c => c.fact === 'egfr');
+              extraFields = {
+                gfrThreshold: gfrCondition?.operator || '',
+                gfrValue: gfrCondition?.value || ''
+              };
+            }
+
+            // Elderly: check if it's a Beers Criteria rule
+            if (type === 'elderly') {
+              extraFields = {
+                beersCriteria: rule.rule_name?.toLowerCase().includes('beers') || false
+              };
+            }
+
+            // Neonate: extract age
+            if (type === 'neonate') {
+              const ageCondition = condition?.all?.find(c => c.fact === 'age_in_days');
+              extraFields = {
+                ageInDays: ageCondition?.value || ''
+              };
+            }
+
+            return {
+              ...rule,
+              rule_condition: condition,
+              rule_action: action,
+              drug1,
+              drug2,
+              severity: action?.severity || rule.severity || 'moderate',
+              recommendation: action?.recommendation_professional || action?.recommendation || '',
+              mechanism: action?.mechanism || '',
+              message: action?.message_professional || action?.message || '',
+              ...extraFields
+            };
+          } catch (e) {
+            console.error('Error parsing rule:', rule.id, e);
+            return {
+              ...rule,
+              rule_condition: {},
+              rule_action: {},
+              drug1: rule.rule_name,
+              drug2: '',
+              severity: rule.severity || 'moderate',
+              recommendation: '',
+              mechanism: '',
+              message: ''
+            };
+          }
+        });
+
+        setRules(parsedRules);
+      } catch (err) {
+        console.error('❌ Error in useSafetyRules:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSafetyRules();
+  }, [type]);
+
+  return { rules, loading, error };
+};
