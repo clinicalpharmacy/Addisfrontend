@@ -52,8 +52,6 @@ const CDSSDisplay = ({ patientData, onBack }) => {
     };
 
     const handleRunAI = () => {
-        // runFullAnalysis: re-fetches rules + medications, then triggers analysis
-        // via analyzePatientRef.current — which always has fresh state.
         runFullAnalysis();
     };
 
@@ -62,6 +60,49 @@ const CDSSDisplay = ({ patientData, onBack }) => {
         const strVal = String(val);
         if (strVal.includes(':') && strVal.length > 30) return '[Encrypted]';
         return val;
+    };
+
+    // Helper function to extract interaction name and effect from alert
+    const getInteractionData = (alert) => {
+        // Try multiple possible locations where the data might be stored
+        let name = '';
+        let effect = '';
+        
+        // Check in rule object
+        if (alert.rule) {
+            name = alert.rule.name || alert.rule.interaction_name || '';
+            effect = alert.rule.effect || '';
+        }
+        
+        // Check in evidence object
+        if (!name && alert.evidence) {
+            name = alert.evidence.interaction_name || alert.evidence.name || '';
+            effect = alert.evidence.effect || alert.evidence.interaction_effect || '';
+        }
+        
+        // Check if the rule data is stored as a string that needs parsing
+        if (!name && alert.rule_data) {
+            try {
+                const parsed = typeof alert.rule_data === 'string' ? JSON.parse(alert.rule_data) : alert.rule_data;
+                name = parsed.name || '';
+                effect = parsed.effect || '';
+            } catch (e) {
+                // If parsing fails, try to extract from the raw data
+                if (typeof alert.rule_data === 'string') {
+                    const nameMatch = alert.rule_data.match(/"name"\s*:\s*"([^"]+)"/);
+                    const effectMatch = alert.rule_data.match(/"effect"\s*:\s*"([^"]+)"/);
+                    if (nameMatch) name = nameMatch[1];
+                    if (effectMatch) effect = effectMatch[1];
+                }
+            }
+        }
+        
+        // If still no name, try to build it from matched medications
+        if (!name && alert.evidence?.matched_medications?.length >= 2) {
+            name = alert.evidence.matched_medications.join(' + ');
+        }
+        
+        return { name, effect };
     };
 
     const downloadReport = async () => {
@@ -164,26 +205,20 @@ const CDSSDisplay = ({ patientData, onBack }) => {
             doc.text('Clinical Alerts & Recommendations', 15, currentY);
 
             const alertRows = alerts.map((alert, index) => {
-                // Get the interaction name and effect from the rule
-                const ruleData = alert.rule || {};
-                const interactionName = ruleData.name || '';
-                const effect = ruleData.effect || '';
+                const { name, effect } = getInteractionData(alert);
                 
-                // Build finding with effect included
                 let finding = isHealthcareClient
                     ? (alert.client_message || alert.message)
                     : (alert.professional_message || alert.message);
                 
-                // Add effect to finding if available
                 if (effect) {
                     finding = `${finding} - ${effect}`;
                 }
                 
-                // Build drug triggers with interaction name
                 let drugTriggers = '';
                 if (alert.evidence?.matched_medications?.length > 0) {
                     const meds = alert.evidence.matched_medications.join(', ');
-                    drugTriggers = interactionName ? `${interactionName} (${meds})` : meds;
+                    drugTriggers = name ? `${name} (${meds})` : meds;
                 } else {
                     drugTriggers = 'None';
                 }
@@ -255,7 +290,6 @@ const CDSSDisplay = ({ patientData, onBack }) => {
         );
     }
 
-    // --- Summary counts ---
     const criticalCount = analysisStats?.bySeverity?.critical || 0;
     const highCount = analysisStats?.bySeverity?.high || 0;
     const moderateCount = analysisStats?.bySeverity?.moderate || 0;
@@ -263,6 +297,11 @@ const CDSSDisplay = ({ patientData, onBack }) => {
     const totalAlerts = alerts.length;
     const hasAlerts = totalAlerts > 0;
     const hasFilteredResults = filteredAlerts.length > 0;
+
+    // Log the first alert to debug
+    if (alerts.length > 0) {
+        console.log('Alert structure:', JSON.stringify(alerts[0], null, 2));
+    }
 
     return (
         <div className="space-y-5">
@@ -298,7 +337,6 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                         </div>
                     </div>
 
-                    {/* Action buttons */}
                     <div className="flex flex-wrap gap-2 w-full md:w-auto">
                         <button
                             onClick={fetchClinicalRules}
@@ -375,7 +413,6 @@ const CDSSDisplay = ({ patientData, onBack }) => {
             {/* ── Alerts Section ── */}
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
 
-                {/* Alerts toolbar */}
                 {hasAlerts && (
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-3.5 border-b border-gray-100 bg-gray-50/60">
                         <div className="flex items-center gap-2">
@@ -415,7 +452,6 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                     </div>
                 )}
 
-                {/* Content area */}
                 <div className="p-5">
                     {loading ? (
                         <div className="text-center py-16">
@@ -430,7 +466,6 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                             <p className="text-gray-400 text-sm">Select a patient to run clinical analysis</p>
                         </div>
                     ) : !hasAlerts ? (
-                        /* ── Clean slate — no DRPs ── */
                         <div className="text-center py-14 border-2 border-dashed border-green-200 rounded-xl bg-green-50/40">
                             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <FaCheckCircle className="text-green-500 text-2xl" />
@@ -441,7 +476,6 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                             </p>
                         </div>
                     ) : !hasFilteredResults ? (
-                        /* ── Filter returned nothing ── */
                         <div className="text-center py-14 border-2 border-dashed border-gray-200 rounded-xl">
                             <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <FaSearch className="text-gray-400 text-xl" />
@@ -458,7 +492,6 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                             </button>
                         </div>
                     ) : (
-                        /* ── Alerts list ── */
                         <div className="space-y-4">
                             {filteredAlerts.map((alert) => {
                                 const SeverityIcon = severityIcons[alert.severity] || FaBell;
@@ -466,20 +499,20 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                 const severityBgColor = severityBgColors[alert.severity];
                                 const ruleTypeInfo = getRuleTypeInfo(alert.rule_type);
                                 
-                                // Get the rule data - the name and effect are stored in the rule object
-                                const ruleData = alert.rule || {};
-                                const interactionName = ruleData.name || '';
-                                const effect = ruleData.effect || '';
+                                // Get the interaction data using our helper function
+                                const { name, effect } = getInteractionData(alert);
                                 
                                 // Build the finding message with effect included
                                 let findingMessage = isHealthcareClient
                                     ? (alert.client_message || alert.message)
                                     : (alert.professional_message || alert.message);
                                 
-                                // Append effect to finding if available
                                 if (effect) {
                                     findingMessage = `${findingMessage} - ${effect}`;
                                 }
+
+                                // Log the extracted data for debugging
+                                console.log('Alert data:', { name, effect, findingMessage });
 
                                 return (
                                     <div
@@ -487,7 +520,6 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                         className={`border rounded-xl overflow-hidden transition-all duration-200 ${severityColor} ${alert.acknowledged ? 'opacity-60' : ''}`}
                                     >
                                         <div className="flex-1 min-w-0">
-                                            {/* Primary Finding */}
                                             <div className="flex flex-col gap-2 p-3 bg-gray-50/80 rounded-xl border border-gray-200 mb-3 shadow-sm">
                                                 <div className="flex items-start gap-2 text-sm text-gray-700">
                                                     <span className="font-black text-blue-600 uppercase text-xs shrink-0 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">Finding:</span>
@@ -496,18 +528,15 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                                     </p>
                                                 </div>
                                             
-                                                {/* Drug triggers with interaction name */}
                                                 {alert.evidence?.matched_medications?.length > 0 && (
                                                     <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-300/50 mt-0">
                                                         <span className="font-black text-purple-600 uppercase text-xs shrink-0">Drug(s) Trigger:</span>
                                                         <div className="flex flex-wrap gap-1.5">
-                                                            {/* Show interaction name first if available */}
-                                                            {interactionName && (
+                                                            {name && (
                                                                 <span className="px-2.5 py-0.5 bg-indigo-100 text-indigo-800 rounded-lg text-xs font-black border border-indigo-200 shadow-sm flex items-center gap-1.5">
-                                                                    <FaShieldAlt className="text-xs" /> {interactionName}
+                                                                    <FaShieldAlt className="text-xs" /> {name}
                                                                 </span>
                                                             )}
-                                                            {/* Then show individual medications */}
                                                             {alert.evidence.matched_medications.map((med, i) => (
                                                                 <span key={i} className="px-2.5 py-0.5 bg-purple-100 text-purple-800 rounded-lg text-xs font-black border border-purple-200 shadow-sm flex items-center gap-1.5">
                                                                     <FaCapsules className="text-xs" /> {med}
@@ -517,7 +546,6 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                                     </div>
                                                 )}
                                             
-                                                {/* Recommendation */}
                                                 <div className="bg-green-50 border-l-8 border-green-500 p-3 rounded-r-xl shadow-sm">
                                                     <div className="flex items-center gap-1.5 mb-1.5">
                                                         <FaCheckCircle className="text-green-600 text-xs" />
