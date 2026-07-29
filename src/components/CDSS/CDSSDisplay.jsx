@@ -62,37 +62,29 @@ const CDSSDisplay = ({ patientData, onBack }) => {
         return val;
     };
 
-    // Helper function to extract interaction name and effect from alert
+    // Helper function to extract interaction data from the rule
     const getInteractionData = (alert) => {
-        // Try multiple possible locations where the data might be stored
         let name = '';
         let effect = '';
         
-        // Check in rule object
+        // Check if the rule object has the data
         if (alert.rule) {
-            name = alert.rule.name || alert.rule.interaction_name || '';
+            name = alert.rule.name || '';
             effect = alert.rule.effect || '';
         }
         
-        // Check in evidence object
-        if (!name && alert.evidence) {
-            name = alert.evidence.interaction_name || alert.evidence.name || '';
-            effect = alert.evidence.effect || alert.evidence.interaction_effect || '';
-        }
-        
-        // Check if the rule data is stored as a string that needs parsing
-        if (!name && alert.rule_data) {
-            try {
-                const parsed = typeof alert.rule_data === 'string' ? JSON.parse(alert.rule_data) : alert.rule_data;
-                name = parsed.name || '';
-                effect = parsed.effect || '';
-            } catch (e) {
-                // If parsing fails, try to extract from the raw data
-                if (typeof alert.rule_data === 'string') {
-                    const nameMatch = alert.rule_data.match(/"name"\s*:\s*"([^"]+)"/);
-                    const effectMatch = alert.rule_data.match(/"effect"\s*:\s*"([^"]+)"/);
-                    if (nameMatch) name = nameMatch[1];
-                    if (effectMatch) effect = effectMatch[1];
+        // If no name, try to find it in the rule's any array
+        if (!name && alert.rule && alert.rule.any) {
+            // Look for the all array that contains medication matches
+            const anyRules = alert.rule.any || [];
+            for (const rule of anyRules) {
+                if (rule.all && rule.all.length > 0) {
+                    // Check if this rule has a name
+                    if (rule.name) {
+                        name = rule.name;
+                        effect = rule.effect || effect;
+                        break;
+                    }
                 }
             }
         }
@@ -100,6 +92,11 @@ const CDSSDisplay = ({ patientData, onBack }) => {
         // If still no name, try to build it from matched medications
         if (!name && alert.evidence?.matched_medications?.length >= 2) {
             name = alert.evidence.matched_medications.join(' + ');
+        }
+        
+        // If no effect, try to get it from the evidence
+        if (!effect && alert.evidence) {
+            effect = alert.evidence.effect || alert.evidence.interaction_effect || '';
         }
         
         return { name, effect };
@@ -298,9 +295,13 @@ const CDSSDisplay = ({ patientData, onBack }) => {
     const hasAlerts = totalAlerts > 0;
     const hasFilteredResults = filteredAlerts.length > 0;
 
-    // Log the first alert to debug
+    // Log the full alert structure to debug
     if (alerts.length > 0) {
-        console.log('Alert structure:', JSON.stringify(alerts[0], null, 2));
+        console.log('=== ALERT STRUCTURE DEBUG ===');
+        console.log('Full alert object:', JSON.stringify(alerts[0], null, 2));
+        console.log('Rule data:', alerts[0].rule);
+        console.log('Evidence data:', alerts[0].evidence);
+        console.log('=== END DEBUG ===');
     }
 
     return (
@@ -499,63 +500,105 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                 const severityBgColor = severityBgColors[alert.severity];
                                 const ruleTypeInfo = getRuleTypeInfo(alert.rule_type);
                                 
-                                // Get the interaction data using our helper function
-                                const { name, effect } = getInteractionData(alert);
+                                // Get the interaction data - check multiple locations
+                                let interactionName = '';
+                                let effect = '';
                                 
-                                // Build the finding message with effect included
+                                // Method 1: Direct from rule
+                                if (alert.rule) {
+                                    interactionName = alert.rule.name || '';
+                                    effect = alert.rule.effect || '';
+                                }
+                                
+                                // Method 2: From evidence
+                                if (!interactionName && alert.evidence) {
+                                    interactionName = alert.evidence.name || alert.evidence.interaction_name || '';
+                                    effect = alert.evidence.effect || alert.evidence.interaction_effect || '';
+                                }
+                                
+                                // Method 3: From rule_data if it exists
+                                if (!interactionName && alert.rule_data) {
+                                    try {
+                                        const parsed = typeof alert.rule_data === 'string' ? JSON.parse(alert.rule_data) : alert.rule_data;
+                                        interactionName = parsed.name || '';
+                                        effect = parsed.effect || '';
+                                    } catch (e) {}
+                                }
+                                
+                                // Method 4: Build from matched medications
+                                if (!interactionName && alert.evidence?.matched_medications?.length >= 2) {
+                                    interactionName = alert.evidence.matched_medications.join(' + ');
+                                }
+                                
+                                // Build the finding message
                                 let findingMessage = isHealthcareClient
                                     ? (alert.client_message || alert.message)
                                     : (alert.professional_message || alert.message);
                                 
+                                // Add effect to the finding if available
                                 if (effect) {
                                     findingMessage = `${findingMessage} - ${effect}`;
                                 }
-
-                                // Log the extracted data for debugging
-                                console.log('Alert data:', { name, effect, findingMessage });
 
                                 return (
                                     <div
                                         key={alert.id}
                                         className={`border rounded-xl overflow-hidden transition-all duration-200 ${severityColor} ${alert.acknowledged ? 'opacity-60' : ''}`}
                                     >
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex flex-col gap-2 p-3 bg-gray-50/80 rounded-xl border border-gray-200 mb-3 shadow-sm">
-                                                <div className="flex items-start gap-2 text-sm text-gray-700">
-                                                    <span className="font-black text-blue-600 uppercase text-xs shrink-0 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">Finding:</span>
-                                                    <p className="italic font-medium leading-relaxed">
+                                        <div className="p-4">
+                                            {/* Finding with effect */}
+                                            <div className="flex items-start gap-2 mb-3">
+                                                <SeverityIcon className={`mt-1 text-${alert.severity === 'critical' ? 'red' : alert.severity === 'high' ? 'orange' : alert.severity === 'moderate' ? 'yellow' : 'blue'}-500 flex-shrink-0`} />
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Finding:</span>
+                                                        <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${severityBgColor} text-white`}>
+                                                            {alert.severity?.toUpperCase()}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-gray-800 font-medium">
                                                         {findingMessage}
                                                     </p>
                                                 </div>
-                                            
-                                                {alert.evidence?.matched_medications?.length > 0 && (
-                                                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-300/50 mt-0">
-                                                        <span className="font-black text-purple-600 uppercase text-xs shrink-0">Drug(s) Trigger:</span>
-                                                        <div className="flex flex-wrap gap-1.5">
-                                                            {name && (
-                                                                <span className="px-2.5 py-0.5 bg-indigo-100 text-indigo-800 rounded-lg text-xs font-black border border-indigo-200 shadow-sm flex items-center gap-1.5">
-                                                                    <FaShieldAlt className="text-xs" /> {name}
-                                                                </span>
-                                                            )}
-                                                            {alert.evidence.matched_medications.map((med, i) => (
-                                                                <span key={i} className="px-2.5 py-0.5 bg-purple-100 text-purple-800 rounded-lg text-xs font-black border border-purple-200 shadow-sm flex items-center gap-1.5">
-                                                                    <FaCapsules className="text-xs" /> {med}
-                                                                </span>
-                                                            ))}
-                                                        </div>
+                                            </div>
+
+                                            {/* Drug(s) Trigger with combination name */}
+                                            {alert.evidence?.matched_medications?.length > 0 && (
+                                                <div className="mb-3 pl-7">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Drug(s) Trigger:</span>
                                                     </div>
-                                                )}
-                                            
-                                                <div className="bg-green-50 border-l-8 border-green-500 p-3 rounded-r-xl shadow-sm">
-                                                    <div className="flex items-center gap-1.5 mb-1.5">
+                                                    <div className="flex flex-wrap gap-2 mt-1">
+                                                        {/* Show the combination name prominently */}
+                                                        {interactionName && (
+                                                            <span className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-lg text-sm font-bold border border-indigo-300 shadow-sm flex items-center gap-2">
+                                                                <FaShieldAlt className="text-indigo-600" />
+                                                                {interactionName}
+                                                            </span>
+                                                        )}
+                                                        {/* Show individual medications */}
+                                                        {alert.evidence.matched_medications.map((med, i) => (
+                                                            <span key={i} className="px-3 py-1 bg-purple-100 text-purple-800 rounded-lg text-sm font-semibold border border-purple-200 flex items-center gap-1.5">
+                                                                <FaCapsules className="text-purple-600 text-xs" />
+                                                                {med}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Recommendation */}
+                                            <div className="pl-7 mt-2">
+                                                <div className="bg-green-50 border-l-4 border-green-500 p-3 rounded-r-lg">
+                                                    <div className="flex items-center gap-1.5 mb-1">
                                                         <FaCheckCircle className="text-green-600 text-xs" />
-                                                        <span className="text-xs font-black uppercase tracking-widest text-green-800">Evidence Recommendation</span>
+                                                        <span className="text-xs font-bold uppercase tracking-wider text-green-700">Recommendation</span>
                                                     </div>
-                                                    <div className="text-sm font-black text-gray-900 leading-relaxed whitespace-pre-wrap">
+                                                    <p className="text-sm text-gray-800">
                                                         {(isHealthcareClient
                                                             ? (alert.client_recommendation || alert.recommendation || alert.details)
                                                             : (alert.professional_recommendation || alert.recommendation || alert.details)) || 'Review clinical guidelines'}
-                                                    </div>
+                                                    </p>
                                                 </div>
                                             </div>
                                         </div>
