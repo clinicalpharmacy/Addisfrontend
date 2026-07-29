@@ -162,7 +162,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
             doc.text('Clinical Alerts & Recommendations', 15, currentY);
 
             const alertRows = alerts.map((alert, index) => {
-                // Get interaction data from the alert
+                // ===== GET THE DATA FROM THE ALERT =====
                 const interactionName = alert.interaction_name || '';
                 const effect = alert.effect || '';
                 
@@ -170,7 +170,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                     ? (alert.client_message || alert.message)
                     : (alert.professional_message || alert.message);
                 
-                // Append effect to finding if available
+                // ===== APPEND EFFECT TO FINDING =====
                 if (effect) {
                     finding = `${finding} - ${effect}`;
                 }
@@ -178,7 +178,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                 let drugTriggers = '';
                 if (alert.evidence?.matched_medications?.length > 0) {
                     const meds = alert.evidence.matched_medications.join(', ');
-                    // Show the interaction name if available
+                    // ===== SHOW NAME WITH THE MEDICATIONS =====
                     drugTriggers = interactionName ? `${interactionName} (${meds})` : meds;
                 } else {
                     drugTriggers = 'None';
@@ -455,16 +455,15 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                 const severityBgColor = severityBgColors[alert.severity];
                                 const ruleTypeInfo = getRuleTypeInfo(alert.rule_type);
                                 
-                                // Get the interaction name and effect from the alert
+                                // ===== GET THE DATA FROM THE ALERT =====
                                 const interactionName = alert.interaction_name || '';
                                 const effect = alert.effect || '';
                                 
-                                // Build the finding message with effect included
+                                // ===== BUILD THE FINDING WITH EFFECT =====
                                 let findingMessage = isHealthcareClient
                                     ? (alert.client_message || alert.message)
                                     : (alert.professional_message || alert.message);
                                 
-                                // Append effect to finding if available
                                 if (effect) {
                                     findingMessage = `${findingMessage} - ${effect}`;
                                 }
@@ -475,7 +474,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                         className={`border rounded-xl overflow-hidden transition-all duration-200 ${severityColor} ${alert.acknowledged ? 'opacity-60' : ''}`}
                                     >
                                         <div className="p-4">
-                                            {/* Finding with effect */}
+                                            {/* ===== FINDING WITH EFFECT ===== */}
                                             <div className="flex items-start gap-2 mb-3">
                                                 <SeverityIcon className={`mt-1 text-${alert.severity === 'critical' ? 'red-500' : alert.severity === 'high' ? 'orange-500' : alert.severity === 'moderate' ? 'yellow-500' : 'blue-500'} flex-shrink-0`} />
                                                 <div className="flex-1">
@@ -491,7 +490,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                                 </div>
                                             </div>
 
-                                            {/* Drug(s) Trigger with interaction name */}
+                                            {/* ===== DRUG(S) TRIGGER WITH NAME ===== */}
                                             {alert.evidence?.matched_medications?.length > 0 && (
                                                 <div className="mb-3 pl-7">
                                                     <div className="flex items-center gap-2">
@@ -516,7 +515,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                                 </div>
                                             )}
 
-                                            {/* Recommendation */}
+                                            {/* ===== RECOMMENDATION ===== */}
                                             <div className="pl-7 mt-2">
                                                 <div className="bg-green-50 border-l-4 border-green-500 p-3 rounded-r-lg">
                                                     <div className="flex items-center gap-1.5 mb-1">
