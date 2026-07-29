@@ -62,46 +62,6 @@ const CDSSDisplay = ({ patientData, onBack }) => {
         return val;
     };
 
-    // Helper function to extract interaction data from the rule
-    const getInteractionData = (alert) => {
-        let name = '';
-        let effect = '';
-        
-        // Check if the rule object has the data
-        if (alert.rule) {
-            name = alert.rule.name || '';
-            effect = alert.rule.effect || '';
-        }
-        
-        // If no name, try to find it in the rule's any array
-        if (!name && alert.rule && alert.rule.any) {
-            // Look for the all array that contains medication matches
-            const anyRules = alert.rule.any || [];
-            for (const rule of anyRules) {
-                if (rule.all && rule.all.length > 0) {
-                    // Check if this rule has a name
-                    if (rule.name) {
-                        name = rule.name;
-                        effect = rule.effect || effect;
-                        break;
-                    }
-                }
-            }
-        }
-        
-        // If still no name, try to build it from matched medications
-        if (!name && alert.evidence?.matched_medications?.length >= 2) {
-            name = alert.evidence.matched_medications.join(' + ');
-        }
-        
-        // If no effect, try to get it from the evidence
-        if (!effect && alert.evidence) {
-            effect = alert.evidence.effect || alert.evidence.interaction_effect || '';
-        }
-        
-        return { name, effect };
-    };
-
     const downloadReport = async () => {
         if (!patientData) return;
 
@@ -202,7 +162,9 @@ const CDSSDisplay = ({ patientData, onBack }) => {
             doc.text('Clinical Alerts & Recommendations', 15, currentY);
 
             const alertRows = alerts.map((alert, index) => {
-                const { name, effect } = getInteractionData(alert);
+                // Get interaction data from alert
+                const interactionName = alert.interaction_name || alert.rule?.name || alert.evidence?.interaction_name || '';
+                const effect = alert.effect || alert.rule?.effect || alert.evidence?.effect || '';
                 
                 let finding = isHealthcareClient
                     ? (alert.client_message || alert.message)
@@ -215,7 +177,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                 let drugTriggers = '';
                 if (alert.evidence?.matched_medications?.length > 0) {
                     const meds = alert.evidence.matched_medications.join(', ');
-                    drugTriggers = name ? `${name} (${meds})` : meds;
+                    drugTriggers = interactionName ? `${interactionName} (${meds})` : meds;
                 } else {
                     drugTriggers = 'None';
                 }
@@ -294,15 +256,6 @@ const CDSSDisplay = ({ patientData, onBack }) => {
     const totalAlerts = alerts.length;
     const hasAlerts = totalAlerts > 0;
     const hasFilteredResults = filteredAlerts.length > 0;
-
-    // Log the full alert structure to debug
-    if (alerts.length > 0) {
-        console.log('=== ALERT STRUCTURE DEBUG ===');
-        console.log('Full alert object:', JSON.stringify(alerts[0], null, 2));
-        console.log('Rule data:', alerts[0].rule);
-        console.log('Evidence data:', alerts[0].evidence);
-        console.log('=== END DEBUG ===');
-    }
 
     return (
         <div className="space-y-5">
@@ -500,37 +453,11 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                 const severityBgColor = severityBgColors[alert.severity];
                                 const ruleTypeInfo = getRuleTypeInfo(alert.rule_type);
                                 
-                                // Get the interaction data - check multiple locations
-                                let interactionName = '';
-                                let effect = '';
+                                // Get interaction data from the alert (now stored in the alert object)
+                                const interactionName = alert.interaction_name || alert.rule?.name || alert.evidence?.interaction_name || '';
+                                const effect = alert.effect || alert.rule?.effect || alert.evidence?.effect || '';
                                 
-                                // Method 1: Direct from rule
-                                if (alert.rule) {
-                                    interactionName = alert.rule.name || '';
-                                    effect = alert.rule.effect || '';
-                                }
-                                
-                                // Method 2: From evidence
-                                if (!interactionName && alert.evidence) {
-                                    interactionName = alert.evidence.name || alert.evidence.interaction_name || '';
-                                    effect = alert.evidence.effect || alert.evidence.interaction_effect || '';
-                                }
-                                
-                                // Method 3: From rule_data if it exists
-                                if (!interactionName && alert.rule_data) {
-                                    try {
-                                        const parsed = typeof alert.rule_data === 'string' ? JSON.parse(alert.rule_data) : alert.rule_data;
-                                        interactionName = parsed.name || '';
-                                        effect = parsed.effect || '';
-                                    } catch (e) {}
-                                }
-                                
-                                // Method 4: Build from matched medications
-                                if (!interactionName && alert.evidence?.matched_medications?.length >= 2) {
-                                    interactionName = alert.evidence.matched_medications.join(' + ');
-                                }
-                                
-                                // Build the finding message
+                                // Build the finding message with effect included
                                 let findingMessage = isHealthcareClient
                                     ? (alert.client_message || alert.message)
                                     : (alert.professional_message || alert.message);
@@ -548,7 +475,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                         <div className="p-4">
                                             {/* Finding with effect */}
                                             <div className="flex items-start gap-2 mb-3">
-                                                <SeverityIcon className={`mt-1 text-${alert.severity === 'critical' ? 'red' : alert.severity === 'high' ? 'orange' : alert.severity === 'moderate' ? 'yellow' : 'blue'}-500 flex-shrink-0`} />
+                                                <SeverityIcon className={`mt-1 text-${alert.severity === 'critical' ? 'red-500' : alert.severity === 'high' ? 'orange-500' : alert.severity === 'moderate' ? 'yellow-500' : 'blue-500'} flex-shrink-0`} />
                                                 <div className="flex-1">
                                                     <div className="flex items-center gap-2 mb-1">
                                                         <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Finding:</span>
