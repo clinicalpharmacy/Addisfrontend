@@ -167,12 +167,12 @@ export const useCDSSLogic = (patientData) => {
         }
     }, [patientData?.patient_code, patientData?.medication_history]);
 
-    // Helper function to extract interaction data from a rule
+    // ===== KEY FUNCTION: Extract name and effect from rule =====
     const extractInteractionData = (rule) => {
         let name = '';
         let effect = '';
         
-        // Method 1: Direct from rule top level
+        // Method 1: Direct from rule top level (if your JSON has it at root)
         if (rule.name) {
             name = rule.name;
         }
@@ -180,16 +180,18 @@ export const useCDSSLogic = (patientData) => {
             effect = rule.effect;
         }
         
-        // Method 2: From rule's any array (your JSON structure)
+        // Method 2: From rule.any array (your JSON structure)
+        // Your JSON: { "any": [ { "all": [...], "name": "Warfarin + Aspirin", "effect": "Increased bleeding risk" } ] }
         if (!name && rule.any && Array.isArray(rule.any)) {
             for (const item of rule.any) {
+                // Check if the item has name/effect
                 if (item.name) {
                     name = item.name;
                 }
                 if (item.effect) {
                     effect = item.effect;
                 }
-                // Check nested all arrays
+                // Also check inside all arrays
                 if (item.all && Array.isArray(item.all)) {
                     for (const subItem of item.all) {
                         if (subItem.name) {
@@ -291,7 +293,7 @@ export const useCDSSLogic = (patientData) => {
                             action = typeof rule.rule_action === 'string' ? JSON.parse(rule.rule_action) : (rule.rule_action || {});
                         } catch (e) { action = {}; }
 
-                        // Extract interaction name and effect from the rule
+                        // ===== EXTRACT THE NAME AND EFFECT FROM THE RULE =====
                         const { name: interactionName, effect } = extractInteractionData(rule);
                         
                         // If still no name, build from matched medications
@@ -308,6 +310,7 @@ export const useCDSSLogic = (patientData) => {
                         const profRec = formatAlertMessage(action.recommendation_professional || action.recommendation || rule.rule_description || '', facts);
                         const clientRec = formatAlertMessage(action.recommendation_client || action.recommendation || rule.rule_description || '', facts);
 
+                        // ===== CREATE THE ALERT WITH THE EXTRACTED DATA =====
                         triggeredAlerts.push({
                             id: `${rule.id}-${Date.now()}-${rulesEvaluated}`,
                             rule_id: rule.id,
@@ -320,7 +323,7 @@ export const useCDSSLogic = (patientData) => {
                             professional_recommendation: profRec,
                             client_recommendation: clientRec,
                             details: profRec || rule.rule_description,
-                            // Store interaction data directly on the alert
+                            // ===== STORE THE DATA FOR DISPLAY =====
                             interaction_name: finalName,
                             effect: effect || '',
                             rule: {
