@@ -264,6 +264,60 @@ export const useCDSSLogic = (patientData) => {
                         const profRec = formatAlertMessage(action.recommendation_professional || action.recommendation || rule.rule_description || '', facts);
                         const clientRec = formatAlertMessage(action.recommendation_client || action.recommendation || rule.rule_description || '', facts);
 
+                        // EXTRACT NAME AND EFFECT FROM THE RULE
+                        // Try multiple possible locations in the rule object
+                        let interactionName = '';
+                        let effect = '';
+                        
+                        // Method 1: Direct from rule top level
+                        if (rule.name) {
+                            interactionName = rule.name;
+                        }
+                        if (rule.effect) {
+                            effect = rule.effect;
+                        }
+                        
+                        // Method 2: From action object
+                        if (!interactionName && action.name) {
+                            interactionName = action.name;
+                        }
+                        if (!effect && action.effect) {
+                            effect = action.effect;
+                        }
+                        
+                        // Method 3: From rule's any array (for JSON rules)
+                        if (!interactionName && rule.any && Array.isArray(rule.any)) {
+                            for (const item of rule.any) {
+                                if (item.name) {
+                                    interactionName = item.name;
+                                }
+                                if (item.effect) {
+                                    effect = item.effect;
+                                }
+                                // Check nested all arrays
+                                if (item.all && Array.isArray(item.all)) {
+                                    for (const subItem of item.all) {
+                                        if (subItem.name) {
+                                            interactionName = subItem.name;
+                                        }
+                                        if (subItem.effect) {
+                                            effect = subItem.effect;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Method 4: Build from matched medications if still no name
+                        if (!interactionName && evalResult.matchedMedications.length >= 2) {
+                            interactionName = evalResult.matchedMedications.join(' + ');
+                        }
+                        
+                        // Method 5: Use rule_name as fallback
+                        if (!interactionName) {
+                            interactionName = rule.rule_name || '';
+                        }
+
                         triggeredAlerts.push({
                             id: `${rule.id}-${Date.now()}-${rulesEvaluated}`,
                             rule_id: rule.id,
@@ -276,9 +330,21 @@ export const useCDSSLogic = (patientData) => {
                             professional_recommendation: profRec,
                             client_recommendation: clientRec,
                             details: profRec || rule.rule_description,
+                            // Store the extracted data in the alert
+                            interaction_name: interactionName,
+                            effect: effect,
+                            // Also store the full rule for reference
+                            rule: {
+                                ...rule,
+                                name: interactionName,
+                                effect: effect
+                            },
                             evidence: {
                                 facts,
-                                matched_medications: evalResult.matchedMedications
+                                matched_medications: evalResult.matchedMedications,
+                                // Also store here for easy access
+                                interaction_name: interactionName,
+                                effect: effect
                             },
                             timestamp: new Date().toISOString(),
                             acknowledged: false,
@@ -565,6 +631,18 @@ export const useCDSSLogic = (patientData) => {
                         professional_message_formatted += ` [Drug(s): ${evalResult.matchedMedications.join(', ')}]`;
                     }
 
+                    // EXTRACT NAME AND EFFECT FOR TEST RULES
+                    let interactionName = rule.name || '';
+                    let effect = rule.effect || '';
+                    
+                    if (!interactionName && evalResult.matchedMedications.length >= 2) {
+                        interactionName = evalResult.matchedMedications.join(' + ');
+                    }
+                    
+                    if (!interactionName) {
+                        interactionName = rule.rule_name || '';
+                    }
+
                     triggeredAlerts.push({
                         id: `test-${rule.id}-${Date.now()}`,
                         rule_id: rule.id,
@@ -577,11 +655,21 @@ export const useCDSSLogic = (patientData) => {
                         details: formatAlertMessage(details, facts),
                         professional_recommendation: formatAlertMessage(professional_recommendation, facts),
                         client_recommendation: formatAlertMessage(client_recommendation, facts),
+                        // Store the extracted data
+                        interaction_name: interactionName,
+                        effect: effect,
+                        rule: {
+                            ...rule,
+                            name: interactionName,
+                            effect: effect
+                        },
                         evidence: {
                             facts: facts,
                             age_in_days: facts.age_in_days,
                             medications: facts.medication_names,
-                            matched_medications: evalResult.matchedMedications
+                            matched_medications: evalResult.matchedMedications,
+                            interaction_name: interactionName,
+                            effect: effect
                         },
                         timestamp: new Date().toISOString(),
                         acknowledged: false,
@@ -646,6 +734,8 @@ export const useCDSSLogic = (patientData) => {
         expandedAlert,
         lastAnalysisTime,
         patientFacts,
-        rulesLoading: loading
+        rulesLoading: loading,
+        decryptedPatient,
+        decryptionFailed
     };
 };
