@@ -32,7 +32,12 @@ import {
     FaCheckCircle,
     FaLeaf,
     FaMortarPestle,
-    FaGraduationCap
+    FaGraduationCap,
+    FaBaby,
+    FaFemale,
+    FaUser,
+    FaKidneys,
+    FaLiver
 } from 'react-icons/fa';
 
 // Force rebuild - ensuring all icons are properly bundled
@@ -44,7 +49,8 @@ const Sidebar = ({ onClose }) => {
         patients: false,
         cdss: false,
         links: false,
-        settings: false
+        settings: false,
+        safety: false // Added new section for safety sub-items
     });
     const [usefulLinks, setUsefulLinks] = useState([]);
     const [loadingLinks, setLoadingLinks] = useState(false);
@@ -128,6 +134,14 @@ const Sidebar = ({ onClose }) => {
     const isIllnessesActive = location.pathname === '/knowledge/illnesses';
     const isCompoundingActive = location.pathname === '/knowledge/compounding';
     const isEducationActive = location.pathname === '/knowledge/education';
+
+    // Check if safety items are active
+    const isPregnancyActive = location.pathname === '/safety/pregnancy';
+    const isLactationActive = location.pathname === '/safety/lactation';
+    const isElderlyActive = location.pathname === '/safety/elderly';
+    const isKidneyActive = location.pathname === '/safety/kidney';
+    const isLiverActive = location.pathname === '/safety/liver';
+    const isAnySafetyActive = [isPregnancyActive, isLactationActive, isElderlyActive, isKidneyActive, isLiverActive].some(Boolean);
 
     return (
         <aside className="w-72 bg-white h-full flex flex-col border-r border-gray-100 shadow-xl z-[60] relative overflow-hidden">
@@ -234,6 +248,99 @@ const Sidebar = ({ onClose }) => {
                                             <FaBrain className="text-base opacity-60" />
                                             Clinical Analysis
                                         </NavLink>
+                                        
+                                        {/* New Safety Sub-section - Expanded by default when any safety item is active */}
+                                        <div className="mt-2 pt-2 border-t border-gray-100">
+                                            <button
+                                                onClick={() => toggleSection('safety')}
+                                                className="flex items-center justify-between w-full px-2 py-1.5 text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors"
+                                            >
+                                                <span className="flex items-center gap-2">
+                                                    <FaUserMd className="text-sm" />
+                                                    Safety Information
+                                                </span>
+                                                {expandedSections.safety ? <FaChevronDown className="text-xs" /> : <FaChevronRight className="text-xs" />}
+                                            </button>
+                                            
+                                            {expandedSections.safety && (
+                                                <div className="ml-2 mt-1 space-y-1">
+                                                    {/* Pregnancy Safety */}
+                                                    <NavLink
+                                                        to="/safety/pregnancy"
+                                                        onClick={onClose}
+                                                        className={({ isActive }) =>
+                                                            `flex items-center gap-2.5 px-4 py-1.5 text-sm rounded-lg transition-all ${isActive
+                                                                ? 'text-pink-600 font-medium bg-pink-50'
+                                                                : 'text-gray-500 hover:text-pink-600 hover:bg-pink-50'
+                                                            }`
+                                                        }
+                                                    >
+                                                        <FaBaby className="text-sm" />
+                                                        Pregnancy Safety
+                                                    </NavLink>
+                                                    
+                                                    {/* Lactation Safety */}
+                                                    <NavLink
+                                                        to="/safety/lactation"
+                                                        onClick={onClose}
+                                                        className={({ isActive }) =>
+                                                            `flex items-center gap-2.5 px-4 py-1.5 text-sm rounded-lg transition-all ${isActive
+                                                                ? 'text-purple-600 font-medium bg-purple-50'
+                                                                : 'text-gray-500 hover:text-purple-600 hover:bg-purple-50'
+                                                            }`
+                                                        }
+                                                    >
+                                                        <FaFemale className="text-sm" />
+                                                        Lactation Safety
+                                                    </NavLink>
+                                                    
+                                                    {/* Elderly Safety */}
+                                                    <NavLink
+                                                        to="/safety/elderly"
+                                                        onClick={onClose}
+                                                        className={({ isActive }) =>
+                                                            `flex items-center gap-2.5 px-4 py-1.5 text-sm rounded-lg transition-all ${isActive
+                                                                ? 'text-blue-600 font-medium bg-blue-50'
+                                                                : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50'
+                                                            }`
+                                                        }
+                                                    >
+                                                        <FaUser className="text-sm" />
+                                                        Elderly Safety
+                                                    </NavLink>
+                                                    
+                                                    {/* Kidney Safety */}
+                                                    <NavLink
+                                                        to="/safety/kidney"
+                                                        onClick={onClose}
+                                                        className={({ isActive }) =>
+                                                            `flex items-center gap-2.5 px-4 py-1.5 text-sm rounded-lg transition-all ${isActive
+                                                                ? 'text-red-600 font-medium bg-red-50'
+                                                                : 'text-gray-500 hover:text-red-600 hover:bg-red-50'
+                                                            }`
+                                                        }
+                                                    >
+                                                        <FaKidneys className="text-sm" />
+                                                        Kidney Safety
+                                                    </NavLink>
+                                                    
+                                                    {/* Liver Safety */}
+                                                    <NavLink
+                                                        to="/safety/liver"
+                                                        onClick={onClose}
+                                                        className={({ isActive }) =>
+                                                            `flex items-center gap-2.5 px-4 py-1.5 text-sm rounded-lg transition-all ${isActive
+                                                                ? 'text-green-600 font-medium bg-green-50'
+                                                                : 'text-gray-500 hover:text-green-600 hover:bg-green-50'
+                                                            }`
+                                                        }
+                                                    >
+                                                        <FaLiver className="text-sm" />
+                                                        Liver Safety
+                                                    </NavLink>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
                             </li>
