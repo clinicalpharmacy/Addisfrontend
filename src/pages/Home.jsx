@@ -175,7 +175,10 @@ const Home = () => {
                         </div>
                     </Link>
                 )}
+            </div>
 
+            {/* Quick Access Grid - Row 3 - Compounding & Education together */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 {/* Compounding */}
                 {['company_admin', 'company_user', 'pharmacist', 'pharmacy_student'].includes(role) && (
                     <Link to="/knowledge/compounding" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
@@ -195,15 +198,13 @@ const Home = () => {
                         </div>
                     </Link>
                 )}
-            </div>
 
-            {/* Education - Only for Company, Pharmacists & Pharmacy students */}
-            {['company_admin', 'company_user', 'pharmacist', 'pharmacy_student'].includes(role) && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <Link to="/knowledge/Education" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition md:col-span-1">
+                {/* Education - Now next to Compounding */}
+                {['company_admin', 'company_user', 'pharmacist', 'pharmacy_student'].includes(role) && (
+                    <Link to="/knowledge/Education" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-orange-100 rounded-lg">
-                                <FaUserMd className="text-orange-600 text-lg" />
+                            <div className="p-2 bg-purple-100 rounded-lg">
+                                <FaUserMd className="text-purple-600 text-lg" />
                             </div>
                             <div>
                                 <h2 className="text-sm font-bold text-gray-800">Education</h2>
@@ -211,13 +212,13 @@ const Home = () => {
                             </div>
                         </div>
                         <div className="flex justify-end">
-                            <span className="text-orange-600 text-sm flex items-center gap-1">
+                            <span className="text-purple-600 text-sm flex items-center gap-1">
                                 View <FaArrowRight className="text-xs" />
                             </span>
                         </div>
                     </Link>
-                </div>
-            )}
+                )}
+            </div>
 
             {/* Footer */}
             <div className="text-center text-gray-500 text-xs sm:text-sm mt-4">
