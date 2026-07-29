@@ -164,12 +164,31 @@ const CDSSDisplay = ({ patientData, onBack }) => {
             doc.text('Clinical Alerts & Recommendations', 15, currentY);
 
             const alertRows = alerts.map((alert, index) => {
-                const finding = isHealthcareClient
+                // Get the interaction name from the rule data
+                const interactionName = alert.rule?.name || alert.evidence?.interaction_name || '';
+                
+                // Get the effect from the rule data
+                const effect = alert.rule?.effect || alert.evidence?.effect || '';
+                
+                // Build finding with effect included
+                let finding = isHealthcareClient
                     ? (alert.client_message || alert.message)
                     : (alert.professional_message || alert.message);
-                const drugTriggers = alert.evidence?.matched_medications?.length > 0
-                    ? alert.evidence.matched_medications.join(', ')
-                    : 'None';
+                
+                // Add effect to finding if available
+                if (effect) {
+                    finding = `${finding} - ${effect}`;
+                }
+                
+                // Build drug triggers with interaction name
+                let drugTriggers = '';
+                if (alert.evidence?.matched_medications?.length > 0) {
+                    const meds = alert.evidence.matched_medications.join(', ');
+                    drugTriggers = interactionName ? `${interactionName} (${meds})` : meds;
+                } else {
+                    drugTriggers = 'None';
+                }
+                
                 const recommendation = (isHealthcareClient
                     ? (alert.client_recommendation || alert.details)
                     : (alert.professional_recommendation || alert.details)) || 'Review clinical guidelines';
@@ -447,6 +466,20 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                 const severityColor = severityColors[alert.severity];
                                 const severityBgColor = severityBgColors[alert.severity];
                                 const ruleTypeInfo = getRuleTypeInfo(alert.rule_type);
+                                
+                                // Get interaction name and effect from the rule
+                                const interactionName = alert.rule?.name || alert.evidence?.interaction_name || '';
+                                const effect = alert.rule?.effect || alert.evidence?.effect || '';
+                                
+                                // Build the finding message with effect included
+                                let findingMessage = isHealthcareClient
+                                    ? (alert.client_message || alert.message)
+                                    : (alert.professional_message || alert.message);
+                                
+                                // Append effect to finding if available
+                                if (effect) {
+                                    findingMessage = `${findingMessage} - ${effect}`;
+                                }
 
                                 return (
                                     <div
@@ -459,15 +492,22 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                                 <div className="flex items-start gap-2 text-sm text-gray-700">
                                                     <span className="font-black text-blue-600 uppercase text-xs shrink-0 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">Finding:</span>
                                                     <p className="italic font-medium leading-relaxed">
-                                                        {isHealthcareClient ? (alert.client_message || alert.message) : (alert.professional_message || alert.message)}
+                                                        {findingMessage}
                                                     </p>
                                                 </div>
                                             
-                                                {/* Drug triggers */}
+                                                {/* Drug triggers with interaction name */}
                                                 {alert.evidence?.matched_medications?.length > 0 && (
                                                     <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-300/50 mt-0">
                                                         <span className="font-black text-purple-600 uppercase text-xs shrink-0">Drug(s) Trigger:</span>
                                                         <div className="flex flex-wrap gap-1.5">
+                                                            {/* Show interaction name first if available */}
+                                                            {interactionName && (
+                                                                <span className="px-2.5 py-0.5 bg-indigo-100 text-indigo-800 rounded-lg text-xs font-black border border-indigo-200 shadow-sm flex items-center gap-1.5">
+                                                                    <FaShieldAlt className="text-xs" /> {interactionName}
+                                                                </span>
+                                                            )}
+                                                            {/* Then show individual medications */}
                                                             {alert.evidence.matched_medications.map((med, i) => (
                                                                 <span key={i} className="px-2.5 py-0.5 bg-purple-100 text-purple-800 rounded-lg text-xs font-black border border-purple-200 shadow-sm flex items-center gap-1.5">
                                                                     <FaCapsules className="text-xs" /> {med}
