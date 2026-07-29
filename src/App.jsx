@@ -225,6 +225,15 @@ const PublicRoute = ({ children }) => {
     return children;
 };
 
+// Admin Layout - MOVED BEFORE ProtectedRoute to fix reference error
+const AdminLayout = ({ children }) => {
+    return (
+        <MainLayout>
+            {children}
+        </MainLayout>
+    );
+};
+
 // Protected Route Component - UPDATED: Added allowCompanyUsers prop
 const ProtectedRoute = ({ children, adminOnly = false, companyAdminOnly = false, allowedRoles = null, requireSubscription = false, allowAdmin = true, showLayout = true, allowCompanyUsers = false }) => {
     const [loading, setLoading] = useState(true);
@@ -409,15 +418,6 @@ const SubscriptionLayout = ({ children }) => (
         {children}
     </div>
 );
-
-// Admin Layout - Updated to show sidebar and navbar for consistency
-const AdminLayout = ({ children }) => {
-    return (
-        <MainLayout>
-            {children}
-        </MainLayout>
-    );
-};
 
 // Dashboard Component - FIXED: Don't auto-redirect admin users
 const Dashboard = () => {
