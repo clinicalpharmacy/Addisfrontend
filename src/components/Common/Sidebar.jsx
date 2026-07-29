@@ -150,9 +150,9 @@ const Sidebar = ({ onClose }) => {
                 </button>
             </div>
 
-            {/* Navigation Menu */}
+            {/* Navigation Dashboard */}
             <nav className="flex-1 p-4 sm:p-5 overflow-y-auto no-scrollbar relative z-10">
-                {/* Main Menu */}
+                {/* Dashboard */}
                 <div className="mb-8">
                     <ul className="space-y-1.5">
                         <li>
@@ -168,7 +168,7 @@ const Sidebar = ({ onClose }) => {
                             >
                                 <div className="flex items-center gap-2.5 w-full">
                                     <FaHome className="text-xl group-hover:scale-110 transition-transform" />
-                                    <span className="text-base">Menu</span>
+                                    <span className="text-base">Dashboard</span>
                                     {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
                                 </div>
                             </NavLink>
@@ -259,7 +259,7 @@ const Sidebar = ({ onClose }) => {
                             </NavLink>
                         </li>
 
-                        {/* Drug Information - Standalone Menu Item */}
+                        {/* Drug Information */}
                         <li className="mb-2">
                             <NavLink
                                 to={isSubscribed ? "/knowledge" : "/subscription/plans"}
@@ -278,7 +278,7 @@ const Sidebar = ({ onClose }) => {
                             </NavLink>
                         </li>
 
-                        {/* Useful Links - Standalone Menu Item */}
+                        {/* Useful Links */}
                         {(user?.role !== 'healthcare_client' || !isIndividual) && (
                             <li className="mb-2">
                                 <NavLink
