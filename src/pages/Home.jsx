@@ -99,52 +99,45 @@ const Home = () => {
                     </div>
                 </Link>
 
-                {/* Medication Availability - Available to ALL users with Useful Links */}
-                <div className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
-                    <Link to="/medication-availability" className="block">
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-yellow-100 rounded-lg">
-                                <FaPills className="text-yellow-600 text-lg" />
-                            </div>
-                            <div>
-                                <h2 className="text-sm font-bold text-gray-800">መድሃኒት ማፈላለጊያ</h2>
-                                <p className="text-xs text-gray-500">Medication availability</p>
-                            </div>
+                {/* Medication Availability - Available to ALL users */}
+                <Link to="/medication-availability" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 bg-yellow-100 rounded-lg">
+                            <FaPills className="text-yellow-600 text-lg" />
                         </div>
-                        <div className="flex justify-end">
-                            <span className="text-yellow-600 text-sm flex items-center gap-1">
-                                Search <FaArrowRight className="text-xs" />
-                            </span>
+                        <div>
+                            <h2 className="text-sm font-bold text-gray-800">መድሃኒት ማፈላለጊያ</h2>
+                            <p className="text-xs text-gray-500">Medication availability</p>
                         </div>
-                    </Link>
-                    
-                    {/* Divider */}
-                    <div className="border-t border-gray-100 my-2"></div>
-                    
-                    {/* Useful Links - Added next to Medication Availability */}
-                    <Link to="/useful-links" className="block group">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-green-100 rounded-lg group-hover:bg-green-200 transition">
-                                <FaBookmark className="text-green-600 text-sm" />
-                            </div>
-                            <div>
-                                <h2 className="text-xs font-medium text-gray-700 group-hover:text-green-600 transition">
-                                    Useful Links
-                                </h2>
-                                <p className="text-[10px] text-gray-400">External resources</p>
-                            </div>
-                            <div className="ml-auto">
-                                <span className="text-green-600 text-xs flex items-center gap-1 opacity-60 group-hover:opacity-100 transition">
-                                    <FaExternalLinkAlt className="text-[10px]" />
-                                </span>
-                            </div>
-                        </div>
-                    </Link>
-                </div>
+                    </div>
+                    <div className="flex justify-end">
+                        <span className="text-yellow-600 text-sm flex items-center gap-1">
+                            Search <FaArrowRight className="text-xs" />
+                        </span>
+                    </div>
+                </Link>
             </div>
 
             {/* Quick Access Grid - Row 2 */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                {/* Useful Links - Separate card next to Medication Availability */}
+                <Link to="/useful-links" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 bg-green-100 rounded-lg">
+                            <FaBookmark className="text-green-600 text-lg" />
+                        </div>
+                        <div>
+                            <h2 className="text-sm font-bold text-gray-800">Useful Links</h2>
+                            <p className="text-xs text-gray-500">External resources & references</p>
+                        </div>
+                    </div>
+                    <div className="flex justify-end">
+                        <span className="text-green-600 text-sm flex items-center gap-1">
+                            View <FaArrowRight className="text-xs" />
+                        </span>
+                    </div>
+                </Link>
+
                 {/* Home Remedies */}
                 <Link to="/knowledge/remedies" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
                     <div className="flex items-center gap-3 mb-2">
