@@ -162,14 +162,15 @@ const CDSSDisplay = ({ patientData, onBack }) => {
             doc.text('Clinical Alerts & Recommendations', 15, currentY);
 
             const alertRows = alerts.map((alert, index) => {
-                // Get interaction data from alert
-                const interactionName = alert.interaction_name || alert.rule?.name || alert.evidence?.interaction_name || '';
-                const effect = alert.effect || alert.rule?.effect || alert.evidence?.effect || '';
+                // Get interaction data from the alert
+                const interactionName = alert.interaction_name || '';
+                const effect = alert.effect || '';
                 
                 let finding = isHealthcareClient
                     ? (alert.client_message || alert.message)
                     : (alert.professional_message || alert.message);
                 
+                // Append effect to finding if available
                 if (effect) {
                     finding = `${finding} - ${effect}`;
                 }
@@ -177,6 +178,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                 let drugTriggers = '';
                 if (alert.evidence?.matched_medications?.length > 0) {
                     const meds = alert.evidence.matched_medications.join(', ');
+                    // Show the interaction name if available
                     drugTriggers = interactionName ? `${interactionName} (${meds})` : meds;
                 } else {
                     drugTriggers = 'None';
@@ -453,16 +455,16 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                 const severityBgColor = severityBgColors[alert.severity];
                                 const ruleTypeInfo = getRuleTypeInfo(alert.rule_type);
                                 
-                                // Get interaction data from the alert (now stored in the alert object)
-                                const interactionName = alert.interaction_name || alert.rule?.name || alert.evidence?.interaction_name || '';
-                                const effect = alert.effect || alert.rule?.effect || alert.evidence?.effect || '';
+                                // Get the interaction name and effect from the alert
+                                const interactionName = alert.interaction_name || '';
+                                const effect = alert.effect || '';
                                 
                                 // Build the finding message with effect included
                                 let findingMessage = isHealthcareClient
                                     ? (alert.client_message || alert.message)
                                     : (alert.professional_message || alert.message);
                                 
-                                // Add effect to the finding if available
+                                // Append effect to finding if available
                                 if (effect) {
                                     findingMessage = `${findingMessage} - ${effect}`;
                                 }
@@ -489,14 +491,14 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                                 </div>
                                             </div>
 
-                                            {/* Drug(s) Trigger with combination name */}
+                                            {/* Drug(s) Trigger with interaction name */}
                                             {alert.evidence?.matched_medications?.length > 0 && (
                                                 <div className="mb-3 pl-7">
                                                     <div className="flex items-center gap-2">
                                                         <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Drug(s) Trigger:</span>
                                                     </div>
                                                     <div className="flex flex-wrap gap-2 mt-1">
-                                                        {/* Show the combination name prominently */}
+                                                        {/* Show the interaction name from your JSON */}
                                                         {interactionName && (
                                                             <span className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-lg text-sm font-bold border border-indigo-300 shadow-sm flex items-center gap-2">
                                                                 <FaShieldAlt className="text-indigo-600" />
