@@ -27,6 +27,7 @@ import MedicationAvailability from './pages/MedicationAvailability';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import VerifyEmail from './pages/VerifyEmail';
+import SafetySection from './pages/safety/SafetySection';
 
 // Subscription Pages
 import SubscriptionPlans from "./pages/SubscriptionPlans";
@@ -1294,6 +1295,63 @@ function App() {
                     }
                 />
 
+                {/* Safety Routes */}
+                <Route
+                    path="/safety/pregnancy"
+                    element={
+                        <ProtectedRoute requireSubscription={true}>
+                            <SafetySection />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/safety/lactation"
+                    element={
+                        <ProtectedRoute requireSubscription={true}>
+                            <SafetySection />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/safety/elderly"
+                    element={
+                        <ProtectedRoute requireSubscription={true}>
+                            <SafetySection />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/safety/kidney"
+                    element={
+                        <ProtectedRoute requireSubscription={true}>
+                            <SafetySection />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/safety/liver"
+                    element={
+                        <ProtectedRoute requireSubscription={true}>
+                            <SafetySection />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/safety/drug-interactions"
+                    element={
+                        <ProtectedRoute requireSubscription={true}>
+                            <SafetySection />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/safety/neonate"
+                    element={
+                        <ProtectedRoute requireSubscription={true}>
+                            <SafetySection />
+                        </ProtectedRoute>
+                    }
+                />
                 {/* Catch-all route */}
                 <Route
                     path="*"
