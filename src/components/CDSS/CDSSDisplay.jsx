@@ -164,11 +164,10 @@ const CDSSDisplay = ({ patientData, onBack }) => {
             doc.text('Clinical Alerts & Recommendations', 15, currentY);
 
             const alertRows = alerts.map((alert, index) => {
-                // Get the interaction name from the rule data
-                const interactionName = alert.rule?.name || alert.evidence?.interaction_name || '';
-                
-                // Get the effect from the rule data
-                const effect = alert.rule?.effect || alert.evidence?.effect || '';
+                // Get the interaction name and effect from the rule
+                const ruleData = alert.rule || {};
+                const interactionName = ruleData.name || '';
+                const effect = ruleData.effect || '';
                 
                 // Build finding with effect included
                 let finding = isHealthcareClient
@@ -467,9 +466,10 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                 const severityBgColor = severityBgColors[alert.severity];
                                 const ruleTypeInfo = getRuleTypeInfo(alert.rule_type);
                                 
-                                // Get interaction name and effect from the rule
-                                const interactionName = alert.rule?.name || alert.evidence?.interaction_name || '';
-                                const effect = alert.rule?.effect || alert.evidence?.effect || '';
+                                // Get the rule data - the name and effect are stored in the rule object
+                                const ruleData = alert.rule || {};
+                                const interactionName = ruleData.name || '';
+                                const effect = ruleData.effect || '';
                                 
                                 // Build the finding message with effect included
                                 let findingMessage = isHealthcareClient
