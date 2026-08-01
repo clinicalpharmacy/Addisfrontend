@@ -17,12 +17,25 @@ const Settings = () => {
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState({ type: '', message: '' });
     const [user, setUser] = useState(null);
+    const [commissionData, setCommissionData] = useState({ total_earned: 0, referrals_count: 0, promotion_code: 'N/A' });
 
     useEffect(() => {
         const userData = localStorage.getItem('user');
         if (userData) {
             setUser(JSON.parse(userData));
         }
+
+        api.get('/auth/commissions')
+            .then(res => {
+                if (res.success) {
+                    setCommissionData({
+                        total_earned: res.total_earned,
+                        referrals_count: res.referrals_count,
+                        promotion_code: res.promotion_code
+                    });
+                }
+            })
+            .catch(err => console.error("Failed to load commissions:", err));
 
         if (location.hash === '#security') {
             setActiveTab('security');
@@ -93,7 +106,12 @@ const Settings = () => {
                     >
                         <FaUserShield /> <span className="font-semibold">Security</span>
                     </button>
-
+                    <button
+                        onClick={() => setActiveTab('promotions')}
+                        className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all duration-200 ${activeTab === 'promotions' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-600 hover:bg-gray-100'}`}
+                    >
+                        <FaInfoCircle /> <span className="font-semibold">Promotions</span>
+                    </button>
 
                 </div>
 
@@ -128,6 +146,35 @@ const Settings = () => {
                             </div>
 
 
+                        ) : activeTab === 'promotions' ? (
+                            <div className="p-8">
+                                <h2 className="text-xl font-bold text-gray-900 mb-6">Promotions & Referrals</h2>
+                                <div className="mb-6 p-6 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-3xl">
+                                    <p className="text-sm text-gray-600 font-bold uppercase mb-2">Your Promotion Code</p>
+                                    <div className="flex items-center gap-4">
+                                        <div className="px-6 py-3 bg-white text-blue-700 text-2xl font-mono font-bold rounded-xl shadow-inner border-2 border-blue-300 tracking-widest">
+                                            {commissionData.promotion_code}
+                                        </div>
+                                        <button 
+                                            onClick={() => navigator.clipboard.writeText(commissionData.promotion_code)}
+                                            className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition"
+                                        >
+                                            Copy
+                                        </button>
+                                    </div>
+                                    <p className="text-sm text-gray-500 mt-4">Share this code with others. When they register and pay for a subscription using your code, you earn a 10% commission!</p>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="p-6 bg-green-50 rounded-3xl border border-green-100">
+                                        <p className="text-sm font-bold text-green-700 uppercase mb-1">Total Earned</p>
+                                        <p className="text-3xl font-bold text-gray-900">{commissionData.total_earned} ETB</p>
+                                    </div>
+                                    <div className="p-6 bg-purple-50 rounded-3xl border border-purple-100">
+                                        <p className="text-sm font-bold text-purple-700 uppercase mb-1">Total Referrals</p>
+                                        <p className="text-3xl font-bold text-gray-900">{commissionData.referrals_count}</p>
+                                    </div>
+                                </div>
+                            </div>
                         ) : (
                             <div className="p-8">
                                 <h2 className="text-xl font-bold text-gray-900 mb-6">Security & Password</h2>

@@ -172,7 +172,8 @@ const Signup = () => {
         admin_confirm_password: '',
         admin_full_name: '',
         admin_phone: '',
-        user_capacity: 5
+        user_capacity: 5,
+        referral_code: ''
     });
 
     const [showPassword, setShowPassword] = useState(false);
@@ -1496,6 +1497,22 @@ const Signup = () => {
                                                 placeholder="Enter your woreda"
                                                 value={formData.woreda}
                                                 onChange={(e) => setFormData({ ...formData, woreda: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label className="block text-gray-700 font-medium mb-2">
+                                                <FaUser className="inline mr-2" />
+                                                Referral Code (Optional)
+                                            </label>
+                                            <input
+                                                type="text"
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                placeholder="Enter referral code"
+                                                value={formData.referral_code}
+                                                onChange={(e) => setFormData({ ...formData, referral_code: e.target.value })}
                                             />
                                         </div>
                                     </div>
