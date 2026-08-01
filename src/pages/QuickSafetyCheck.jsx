@@ -33,16 +33,10 @@ const CategoryTitle = ({ type }) => {
 
 const StatusBadge = ({ status }) => {
     const s = status?.toLowerCase() || '';
-    if (s.includes('safe') && !s.includes('unsafe')) {
-        return <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"><FaCheckCircle /> Safe</span>;
-    }
-    if (s.includes('caution') || s.includes('monitor') || s.includes('adjust')) {
-        return <span className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"><FaExclamationTriangle /> Caution</span>;
-    }
     if (s.includes('contraindicate') || s.includes('avoid') || s.includes('unsafe')) {
-        return <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"><FaExclamationCircle /> Avoid </span>;
+        return <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"><FaExclamationCircle /> UNSAFE</span>;
     }
-    return <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"><FaInfoCircle /> Unknown / Unclear</span>;
+    return null; // Don't show anything for non-unsafe statuses
 };
 
 const QuickSafetyCheck = () => {
@@ -52,6 +46,22 @@ const QuickSafetyCheck = () => {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
     const [error, setError] = useState('');
+    const [isUnsafeDetected, setIsUnsafeDetected] = useState(false);
+
+    const checkForUnsafe = (safetyProfile) => {
+        if (!safetyProfile || !safetyProfile.categories) return false;
+        
+        // Check all categories for unsafe status
+        for (const [key, data] of Object.entries(safetyProfile.categories)) {
+            const status = data.status?.toLowerCase() || '';
+            if (status.includes('contraindicate') || 
+                status.includes('avoid') || 
+                status.includes('unsafe')) {
+                return true;
+            }
+        }
+        return false;
+    };
 
     const handleSearch = async (e) => {
         e.preventDefault();
@@ -60,6 +70,7 @@ const QuickSafetyCheck = () => {
         setLoading(true);
         setError('');
         setResult(null);
+        setIsUnsafeDetected(false);
 
         try {
             const response = await api.post('/quick-safety', { 
@@ -68,6 +79,7 @@ const QuickSafetyCheck = () => {
             });
             if (response.success && response.safetyProfile) {
                 setResult(response.safetyProfile);
+                setIsUnsafeDetected(checkForUnsafe(response.safetyProfile));
             } else {
                 setError('Failed to retrieve safety data. Please try again.');
             }
@@ -80,7 +92,7 @@ const QuickSafetyCheck = () => {
     };
 
     return (
-     <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
+        <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
             {/* Header */}
             <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
                 <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -103,7 +115,7 @@ const QuickSafetyCheck = () => {
                     <div className="relative z-10">
                         <h2 className="text-3xl md:text-4xl font-black mb-4 tracking-tight">Check Medication Safety</h2>
                         <p className="text-blue-100 text-lg md:text-xl mb-8 max-w-2xl mx-auto opacity-90 font-medium">
-                            Enter generic drug name to instantly see if it's safe for pregnancy, breastfeeding, neonate, the elderly, or those with organ failure.
+                            Enter generic drug name to instantly see if it's unsafe for pregnancy, breastfeeding, neonate, the elderly, or those with organ failure.
                         </p>
                         
                         <form onSubmit={handleSearch} className="max-w-3xl mx-auto relative group flex flex-col md:flex-row gap-3">
@@ -165,6 +177,42 @@ const QuickSafetyCheck = () => {
                 {/* Results */}
                 {result && !loading && (
                     <div className="animate-fadeIn space-y-6">
+                        {/* UNSAFE Alert Banner */}
+                        {isUnsafeDetected && (
+                            <div className="bg-red-50 border-2 border-red-500 rounded-2xl p-6 md:p-8 shadow-lg">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <FaExclamationTriangle className="text-4xl text-red-600" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-2xl font-black text-red-700">⚠️ UNSAFE</h3>
+                                        <p className="text-red-600 font-medium">
+                                            This medication has been identified as UNSAFE for one or more special populations. 
+                                            Please review the details below and consult with a healthcare professional.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Safe Alert Banner - Only show when no unsafe detected */}
+                        {!isUnsafeDetected && (
+                            <div className="bg-green-50 border-2 border-green-500 rounded-2xl p-6 md:p-8 shadow-lg">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <FaCheckCircle className="text-4xl text-green-600" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-2xl font-black text-green-700">✅ No Unsafe Medication Detected</h3>
+                                        <p className="text-green-600 font-medium">
+                                            No unsafe medication is detected in the Addis Med database for this medication 
+                                            across the selected special populations. Always consult with your healthcare provider.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100">
                             <h3 className="text-3xl font-black text-gray-900 capitalize mb-2">{result.medication}</h3>
                             <p className="text-gray-600 text-lg leading-relaxed">{result.general_overview}</p>
@@ -173,20 +221,25 @@ const QuickSafetyCheck = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {Object.entries(result.categories || {})
                                 .filter(([key]) => selectedCategory === 'all' || key === selectedCategory)
-                                .map(([key, data]) => (
-                                <div key={key} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:border-blue-200 transition-colors group">
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-2xl group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                                                <CategoryIcon type={key} />
+                                .map(([key, data]) => {
+                                    const isUnsafe = data.status?.toLowerCase().includes('contraindicate') || 
+                                                    data.status?.toLowerCase().includes('avoid') || 
+                                                    data.status?.toLowerCase().includes('unsafe');
+                                    return (
+                                        <div key={key} className={`bg-white rounded-2xl p-6 shadow-sm border ${isUnsafe ? 'border-red-300 bg-red-50/30' : 'border-gray-100'} hover:border-blue-200 transition-colors group`}>
+                                            <div className="flex items-start justify-between mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-12 h-12 ${isUnsafe ? 'bg-red-100 text-red-600' : 'bg-blue-50 text-blue-600'} rounded-xl flex items-center justify-center text-2xl group-hover:bg-blue-600 group-hover:text-white transition-colors`}>
+                                                        <CategoryIcon type={key} />
+                                                    </div>
+                                                    <h4 className="font-bold text-gray-800 text-lg"><CategoryTitle type={key} /></h4>
+                                                </div>
+                                                <StatusBadge status={data.status} />
                                             </div>
-                                            <h4 className="font-bold text-gray-800 text-lg"><CategoryTitle type={key} /></h4>
+                                            <p className="text-gray-600 leading-relaxed text-sm">{data.details}</p>
                                         </div>
-                                        <StatusBadge status={data.status} />
-                                    </div>
-                                    <p className="text-gray-600 leading-relaxed text-sm">{data.details}</p>
-                                </div>
-                            ))}
+                                    );
+                                })}
                         </div>
 
                         {/* Major Interactions */}
@@ -204,7 +257,7 @@ const QuickSafetyCheck = () => {
                         )}
                         
                         <div className="mt-8 text-center bg-gray-50 p-4 rounded-xl text-xs font-bold text-gray-400 flex items-center justify-center gap-2">
-                            <FaInfoCircle /> Disclaimer: This information is for educational purposes only and does not replace consultation with a qualified healthcare professional. Medication information may change with emerging evidence, manufacturers’ current prescribing information, and evolving medical practice. Users are responsible for verifying all information and exercising health professional's judgment. 
+                            <FaInfoCircle /> Disclaimer: This information is for educational purposes only and does not replace consultation with a qualified healthcare professional. Medication information may change with emerging evidence, manufacturers' current prescribing information, and evolving medical practice. Users are responsible for verifying all information and exercising health professional's judgment. 
                         </div>
                     </div>
                 )}
