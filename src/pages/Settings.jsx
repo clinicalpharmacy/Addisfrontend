@@ -9,7 +9,6 @@ import SecurityActivator from '../components/Security/SecurityActivator';
 const Settings = () => {
     const location = useLocation();
     const [activeTab, setActiveTab] = useState('profile');
-    const isAdmin = currentUser?.role === 'admin';
     const [passwords, setPasswords] = useState({
         current: '',
         new: '',
@@ -18,6 +17,9 @@ const Settings = () => {
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState({ type: '', message: '' });
     const [user, setUser] = useState(null);
+    const isAdmin =
+        user?.role?.toLowerCase() === 'admin' ||
+        user?.role?.toLowerCase() === 'administrator';
     const [commissionData, setCommissionData] = useState({ total_earned: 0, referrals_count: 0, promotion_code: 'N/A' });
 
     useEffect(() => {
@@ -107,13 +109,14 @@ const Settings = () => {
                     >
                         <FaUserShield /> <span className="font-semibold">Security</span>
                     </button>
-                    <button
-                        onClick={() => setActiveTab('promotions')}
-                        className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all duration-200 ${activeTab === 'promotions' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-600 hover:bg-gray-100'}`}
-                    >
-                        <FaInfoCircle /> <span className="font-semibold">Promotions</span>
-                    </button>
-
+                    {!isAdmin && (
+                        <button
+                            onClick={() => setActiveTab('promotions')}
+                            className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all duration-200 ${activeTab === 'promotions' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-600 hover:bg-gray-100'}`}
+                        >
+                            <FaInfoCircle /> <span className="font-semibold">Promotions</span>
+                        </button>
+                    )}
                 </div>
 
                 {/* Main Content Area */}
@@ -146,7 +149,7 @@ const Settings = () => {
                                 </div>
                             </div>
 
-                        ) : !isAdmin && activeTab === 'promotions' ? (
+                        ) : activeTab === 'promotions' && !isAdmin ? (
                             <div className="p-8">
                                 <h2 className="text-xl font-bold text-gray-900 mb-6">
                                     Promotions & Referrals
