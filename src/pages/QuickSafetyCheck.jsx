@@ -258,10 +258,9 @@ const QuickSafetyCheck = () => {
                                     <div className="bg-green-50 border-2 border-green-500 rounded-2xl p-8 md:p-12 shadow-lg text-center">
                                         <div className="flex flex-col items-center gap-4">
                                             <div>
-                                                <h3 className="text-3xl font-black text-green-700 mb-2">✅ No Unsafe Medication Detected</h3>
+                                                <h3 className="text-lg font-black text-green-700 mb-2">✅ No Contraindication Detected in the Addis Med database</h3>
                                                 <p className="text-green-600 text-lg font-medium max-w-2xl mx-auto">
-                                                    It appears {result.medication} is likely acceptable to use in the selected condition(s), 
-                                                    and no contraindication is detected in the Addis Med database. Always consult with your healthcare provider.
+                                                    It appears {result.medication} is likely acceptable to use in the selected condition(s). Always consult with your healthcare provider.
                                                 </p>
                                             </div>
                                         </div>
@@ -273,12 +272,10 @@ const QuickSafetyCheck = () => {
                             <div className="bg-green-50 border-2 border-green-500 rounded-2xl p-8 md:p-12 shadow-lg text-center">
                                 <div className="flex flex-col items-center gap-4">
                                     <div>
-                                        <h3 className="text-3xl font-black text-green-700 mb-2">✅ No Unsafe Medication Detected</h3>
+                                        <h3 className="text-lg font-black text-green-700 mb-2">✅ No Contraindication Detected in the Addis Med database</h3>
                                         <p className="text-green-600 text-lg font-medium max-w-2xl mx-auto">
                                             It appears {result.medication} is likely acceptable to use
-                                            {selectedCategory !== 'all' ? ` in the ${CategoryTitle({ type: selectedCategory })} category` : ''}, 
-                                            and no contraindication is detected in the Addis Med database. Always consult with your healthcare provider. 
-                                            Always consult with your healthcare provider.
+                                            {selectedCategory !== 'all' ? ` in ${CategoryTitle({ type: selectedCategory })}` : ''}. Always consult with your healthcare provider.
                                         </p>
                                     </div>
                                 </div>
