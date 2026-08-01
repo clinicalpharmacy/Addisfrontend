@@ -188,13 +188,13 @@ const AdminDashboard = () => {
 
             {/* Navigation Tabs */}
             <div className="max-w-7xl mx-auto px-4 mb-4 md:mb-6">
-                <div className="bg-white rounded-xl shadow-sm p-1 overflow-x-auto scrollbar-hide no-scrollbar">
-                    <nav className="flex space-x-1 min-w-max">
+                <div className="bg-white rounded-xl shadow-sm p-2">
+                    <nav className="flex flex-wrap gap-1">
                         {navigationTabs.map(tab => (
                             <button
                                 key={tab.id}
                                 onClick={() => setSelectedTab(tab.id)}
-                                className={`px-4 py-2 rounded-lg text-xs md:text-sm font-bold flex items-center gap-2 transition-all shrink-0 ${selectedTab === tab.id
+                                className={`px-3 py-2 rounded-lg text-xs md:text-sm font-bold flex items-center gap-1.5 transition-all ${selectedTab === tab.id
                                     ? 'bg-blue-600 text-white shadow-sm'
                                     : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
                                     }`}
