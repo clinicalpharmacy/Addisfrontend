@@ -6,82 +6,256 @@ import {
     FaCheckCircle, FaExclamationCircle, FaSpinner, FaInfoCircle,
     FaCamera, FaTimes, FaMicrophone, FaUpload
 } from 'react-icons/fa';
-import Tesseract from 'tesseract.js';
 import api from '../utils/api';
 
-// Comprehensive medication database with brand names and generic names
-const medicationDatabase = {
-    // Pain relievers
-    'advil': { generic: 'ibuprofen', category: 'NSAID' },
-    'motrin': { generic: 'ibuprofen', category: 'NSAID' },
-    'ibuprofen': { generic: 'ibuprofen', category: 'NSAID' },
-    'tylenol': { generic: 'acetaminophen', category: 'Analgesic' },
-    'paracetamol': { generic: 'acetaminophen', category: 'Analgesic' },
-    'acetaminophen': { generic: 'acetaminophen', category: 'Analgesic' },
-    'aleve': { generic: 'naproxen', category: 'NSAID' },
-    'naprosyn': { generic: 'naproxen', category: 'NSAID' },
-    'naproxen': { generic: 'naproxen', category: 'NSAID' },
-    'aspirin': { generic: 'aspirin', category: 'NSAID' },
+// Import Tesseract.js for OCR
+const Tesseract = require('tesseract.js');
+
+// Common medication name patterns (suffixes and prefixes)
+const MEDICATION_PATTERNS = {
+    suffixes: [
+        /-ol$/i,      // propranolol, metoprolol
+        /-am$/i,      // diazepam, lorazepam
+        /-in$/i,      // insulin, lovastatin
+        /-one$/i,     // prednisone, testosterone
+        /-ide$/i,     // metformin, glipizide
+        /-ine$/i,     // codeine, quinine
+        /-pen$/i,     // amprenavir
+        /-vir$/i,     // acyclovir, oseltamivir
+        /-floxacin$/i,// ciprofloxacin
+        /-mycin$/i,   // azithromycin
+        /-cycline$/i, // doxycycline
+        /-statin$/i,  // atorvastatin
+        /-pril$/i,    // lisinopril
+        /-sartan$/i,  // losartan
+        /-prazole$/i, // omeprazole
+        /-oxetine$/i, // fluoxetine
+        /-lactam$/i,  // amoxicillin
+        /-cillin$/i,  // penicillin
+        /-conazole$/i,// fluconazole
+        /-dipine$/i,  // amlodipine
+        /-phen$/i,    // diphenhydramine
+        /-done$/i,    // tramadone, methadone
+        /-pam$/i,     // clonazepam, diazepam
+        /-pine$/i,    // olanzapine, clozapine
+    ],
+    prefixes: [
+        /^anti/i,     // antibiotic, antifungal
+        /^hydro/i,    // hydrochlorothiazide, hydrocodone
+        /^chlor/i,    // chlorpheniramine, chlordiazepoxide
+        /^meth/i,     // methadone, methotrexate
+        /^phen/i,     // phenytoin, phenobarbital
+    ],
+    commonMedicationWords: [
+        'tablet', 'capsule', 'injection', 'solution', 'suspension',
+        'ointment', 'cream', 'gel', 'patch', 'inhaler', 'spray',
+        'drop', 'syrup', 'elixir', 'suppository', 'enema'
+    ]
+};
+
+// Common words to ignore in text extraction
+const COMMON_WORDS = new Set([
+    'take', 'daily', 'once', 'twice', 'three', 'times', 'day', 'with', 
+    'food', 'water', 'meal', 'dose', 'dosage', 'strength', 'generic', 
+    'brand', 'tablet', 'capsule', 'pill', 'mg', 'ml', 'mcg', 'gram',
+    'prescription', 'medication', 'medicine', 'drug', 'pharmacy',
+    'adult', 'child', 'infant', 'elderly', 'patient', 'doctor',
+    'hospital', 'clinic', 'pharmacist', 'nurse', 'physician',
+    'morning', 'evening', 'night', 'week', 'month', 'year',
+    'oral', 'topical', 'intravenous', 'subcutaneous', 'intramuscular',
+    'please', 'store', 'keep', 'away', 'from', 'heat', 'light',
+    'moisture', 'children', 'use', 'only', 'directed', 'consult',
+    'physician', 'if', 'symptoms', 'persist', 'worsen', 'stop',
+    'and', 'the', 'for', 'you', 'your', 'can', 'may', 'will',
+    'should', 'could', 'would', 'have', 'has', 'had', 'been',
+    'being', 'were', 'was', 'are', 'is', 'am', 'not', 'no'
+]);
+
+// Function to check if a word is a common word
+const isCommonWord = (word) => {
+    const lower = word.toLowerCase();
+    return COMMON_WORDS.has(lower) || lower.length < 3;
+};
+
+// Function to check if a word looks like a medication name
+const isLikelyMedication = (word) => {
+    if (isCommonWord(word)) return false;
+    if (word.length < 4) return false;
+    if (word.match(/^\d+$/)) return false; // Just numbers
     
-    // Antibiotics
-    'amoxicillin': { generic: 'amoxicillin', category: 'Antibiotic' },
-    'amoxil': { generic: 'amoxicillin', category: 'Antibiotic' },
-    'azithromycin': { generic: 'azithromycin', category: 'Antibiotic' },
-    'zithromax': { generic: 'azithromycin', category: 'Antibiotic' },
-    'ciprofloxacin': { generic: 'ciprofloxacin', category: 'Antibiotic' },
-    'cipro': { generic: 'ciprofloxacin', category: 'Antibiotic' },
-    'doxycycline': { generic: 'doxycycline', category: 'Antibiotic' },
-    'vibramycin': { generic: 'doxycycline', category: 'Antibiotic' },
-    'cephalexin': { generic: 'cephalexin', category: 'Antibiotic' },
-    'keflex': { generic: 'cephalexin', category: 'Antibiotic' },
+    const lower = word.toLowerCase();
     
-    // Antidepressants
-    'sertraline': { generic: 'sertraline', category: 'SSRI' },
-    'zoloft': { generic: 'sertraline', category: 'SSRI' },
-    'fluoxetine': { generic: 'fluoxetine', category: 'SSRI' },
-    'prozac': { generic: 'fluoxetine', category: 'SSRI' },
-    'escitalopram': { generic: 'escitalopram', category: 'SSRI' },
-    'lexapro': { generic: 'escitalopram', category: 'SSRI' },
-    'citalopram': { generic: 'citalopram', category: 'SSRI' },
-    'celexa': { generic: 'citalopram', category: 'SSRI' },
+    // Check suffixes
+    for (const pattern of MEDICATION_PATTERNS.suffixes) {
+        if (pattern.test(lower)) return true;
+    }
     
-    // Anti-anxiety
-    'alprazolam': { generic: 'alprazolam', category: 'Benzodiazepine' },
-    'xanax': { generic: 'alprazolam', category: 'Benzodiazepine' },
-    'lorazepam': { generic: 'lorazepam', category: 'Benzodiazepine' },
-    'ativan': { generic: 'lorazepam', category: 'Benzodiazepine' },
-    'diazepam': { generic: 'diazepam', category: 'Benzodiazepine' },
-    'valium': { generic: 'diazepam', category: 'Benzodiazepine' },
-    'clonazepam': { generic: 'clonazepam', category: 'Benzodiazepine' },
-    'klonopin': { generic: 'clonazepam', category: 'Benzodiazepine' },
+    // Check prefixes
+    for (const pattern of MEDICATION_PATTERNS.prefixes) {
+        if (pattern.test(lower)) return true;
+    }
     
-    // Sleep aids
-    'zolpidem': { generic: 'zolpidem', category: 'Sedative' },
-    'ambien': { generic: 'zolpidem', category: 'Sedative' },
+    // Check for common medication word patterns
+    // Many medications end with specific letters
+    if (lower.match(/[a-z]{2,}[aeiou][a-z]{2,}$/)) return true;
     
-    // Cardiovascular
-    'lisinopril': { generic: 'lisinopril', category: 'ACE Inhibitor' },
-    'zestril': { generic: 'lisinopril', category: 'ACE Inhibitor' },
-    'metformin': { generic: 'metformin', category: 'Antidiabetic' },
-    'glucophage': { generic: 'metformin', category: 'Antidiabetic' },
-    'atorvastatin': { generic: 'atorvastatin', category: 'Statin' },
-    'lipitor': { generic: 'atorvastatin', category: 'Statin' },
-    'simvastatin': { generic: 'simvastatin', category: 'Statin' },
-    'zocor': { generic: 'simvastatin', category: 'Statin' },
-    'amlodipine': { generic: 'amlodipine', category: 'Calcium Channel Blocker' },
-    'norvasc': { generic: 'amlodipine', category: 'Calcium Channel Blocker' },
+    return false;
+};
+
+// Function to score words based on likelihood of being a medication
+const scoreWord = (word, context) => {
+    let score = 0;
+    const lower = word.toLowerCase();
     
-    // Blood pressure
-    'hydrochlorothiazide': { generic: 'hydrochlorothiazide', category: 'Diuretic' },
-    'hctz': { generic: 'hydrochlorothiazide', category: 'Diuretic' },
-    'losartan': { generic: 'losartan', category: 'ARB' },
-    'cozaar': { generic: 'losartan', category: 'ARB' },
+    // Check suffixes (high confidence)
+    for (const pattern of MEDICATION_PATTERNS.suffixes) {
+        if (pattern.test(lower)) score += 10;
+    }
     
-    // Diabetes
-    'insulin': { generic: 'insulin', category: 'Antidiabetic' },
-    'lantus': { generic: 'insulin glargine', category: 'Antidiabetic' },
+    // Check prefixes (medium confidence)
+    for (const pattern of MEDICATION_PATTERNS.prefixes) {
+        if (pattern.test(lower)) score += 5;
+    }
     
-    // ADD MORE MEDICATIONS AS NEEDED
+    // Longer words are more likely to be medications
+    if (word.length > 7) score += 3;
+    if (word.length > 10) score += 2;
+    
+    // Check if it appears near common medication words
+    if (context) {
+        for (const medWord of MEDICATION_PATTERNS.commonMedicationWords) {
+            if (context.includes(medWord)) score += 2;
+        }
+    }
+    
+    // Check if it has capital letters (brand names often capitalized)
+    if (word.match(/^[A-Z]/)) score += 2;
+    
+    return score;
+};
+
+// Extract the most likely medication name from OCR text
+const extractMedicationFromText = (text) => {
+    if (!text || text.length < 3) return null;
+    
+    // Clean the text
+    const cleaned = text
+        .replace(/[^\w\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    
+    // Split into words and phrases
+    const words = cleaned.split(/\s+/);
+    
+    // Filter out common words and short words
+    const filteredWords = words.filter(word => !isCommonWord(word) && word.length >= 3);
+    
+    if (filteredWords.length === 0) return null;
+    
+    // Score each word
+    const scoredWords = filteredWords.map((word, index) => {
+        // Get surrounding context (5 words before and after)
+        const start = Math.max(0, index - 5);
+        const end = Math.min(words.length, index + 6);
+        const context = words.slice(start, end).join(' ');
+        
+        return {
+            word: word,
+            score: scoreWord(word, context),
+            index: index
+        };
+    });
+    
+    // Sort by score (highest first)
+    scoredWords.sort((a, b) => b.score - a.score);
+    
+    // Get the highest scoring word
+    const bestMatch = scoredWords[0];
+    
+    // If the best match has a score > 0, return it
+    if (bestMatch && bestMatch.score > 0) {
+        // Check if it's already a medication name by pattern
+        if (isLikelyMedication(bestMatch.word)) {
+            return bestMatch.word;
+        }
+        
+        // Check for multi-word medication names
+        // Look for combinations like "metformin hydrochloride"
+        const index = bestMatch.index;
+        const nextWord = index + 1 < words.length ? words[index + 1] : null;
+        const prevWord = index - 1 >= 0 ? words[index - 1] : null;
+        
+        // Common medication name combinations
+        const commonCombinations = [
+            'hydrochloride', 'sulfate', 'phosphate', 'citrate', 'tartrate',
+            'maleate', 'fumarate', 'succinate', 'lactate', 'bitartrate'
+        ];
+        
+        if (nextWord && commonCombinations.includes(nextWord.toLowerCase())) {
+            return `${bestMatch.word} ${nextWord}`;
+        }
+        
+        if (prevWord && ['sodium', 'calcium', 'potassium', 'magnesium'].includes(prevWord.toLowerCase())) {
+            return `${prevWord} ${bestMatch.word}`;
+        }
+        
+        return bestMatch.word;
+    }
+    
+    // If no word scored well, try to find any word that looks like a medication
+    const likelyMed = words.find(word => isLikelyMedication(word));
+    if (likelyMed) return likelyMed;
+    
+    // Last resort: return the longest word that's not common
+    const sortedByLength = filteredWords.sort((a, b) => b.length - a.length);
+    if (sortedByLength.length > 0) {
+        return sortedByLength[0];
+    }
+    
+    return null;
+};
+
+// Function to try to get generic name from online sources
+// Using Wikipedia API (free, no key required)
+const getGenericNameFromWikipedia = async (medicationName) => {
+    try {
+        // Search Wikipedia for the medication
+        const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(medicationName)}&format=json&origin=*`;
+        
+        const searchResponse = await fetch(searchUrl);
+        const searchData = await searchResponse.json();
+        
+        if (searchData.query && searchData.query.search && searchData.query.search.length > 0) {
+            // Get the first result
+            const pageTitle = searchData.query.search[0].title;
+            
+            // Get the page content
+            const contentUrl = `https://en.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(pageTitle)}&format=json&origin=*`;
+            const contentResponse = await fetch(contentUrl);
+            const contentData = await contentResponse.json();
+            
+            if (contentData.parse && contentData.parse.text) {
+                const html = contentData.parse.text['*'];
+                
+                // Look for drug name patterns in the HTML
+                // Many Wikipedia drug pages start with "Brand name" or contain "generic name"
+                const genericMatch = html.match(/generic name[:\s]+([A-Za-z\s]+)/i);
+                if (genericMatch && genericMatch[1]) {
+                    return genericMatch[1].trim();
+                }
+                
+                // Look for "also known as" patterns
+                const alsoKnownMatch = html.match(/also known as[:\s]+([A-Za-z\s]+)/i);
+                if (alsoKnownMatch && alsoKnownMatch[1]) {
+                    return alsoKnownMatch[1].trim();
+                }
+            }
+        }
+        return null;
+    } catch (error) {
+        console.error('Error fetching from Wikipedia:', error);
+        return null;
+    }
 };
 
 const CategoryIcon = ({ type }) => {
@@ -134,6 +308,7 @@ const QuickSafetyCheck = () => {
     const [isRecording, setIsRecording] = useState(false);
     const [recognitionResult, setRecognitionResult] = useState('');
     const [ocrProgress, setOcrProgress] = useState(0);
+    const [isFetchingGeneric, setIsFetchingGeneric] = useState(false);
     
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
@@ -166,7 +341,7 @@ const QuickSafetyCheck = () => {
                 setRecognitionResult(recognizedText);
                 
                 // Try to find medication match
-                const match = findMedicationMatch(recognizedText);
+                const match = extractMedicationFromText(recognizedText);
                 if (match) {
                     setDrugName(match);
                     if (finalTranscript) {
@@ -186,66 +361,6 @@ const QuickSafetyCheck = () => {
             };
         }
     }, []);
-
-    // Find medication match from database
-    const findMedicationMatch = (text) => {
-        const cleaned = text.toLowerCase().trim();
-        const words = cleaned.split(/\s+/);
-        
-        // Check each word for match
-        for (const word of words) {
-            if (medicationDatabase[word]) {
-                return medicationDatabase[word].generic;
-            }
-        }
-        
-        // Check for partial matches
-        for (const [key, value] of Object.entries(medicationDatabase)) {
-            if (cleaned.includes(key) || key.includes(cleaned)) {
-                return value.generic;
-            }
-        }
-        
-        return null;
-    };
-
-    // Extract medication name from OCR text
-    const extractMedicationFromText = (text) => {
-        const cleaned = text.toLowerCase().trim();
-        const words = cleaned.split(/\s+/);
-        
-        // First try to find exact matches
-        for (const word of words) {
-            if (medicationDatabase[word]) {
-                return medicationDatabase[word].generic;
-            }
-        }
-        
-        // Try to find matches with common medication name patterns
-        // Look for words that might be medication names (more than 3 characters, not common words)
-        const commonWords = ['take', 'take', 'daily', 'once', 'twice', 'three', 'times', 'day', 'with', 'food', 'water', 'meal', 'mg', 'ml', 'tablet', 'capsule'];
-        const potentialMeds = words.filter(word => 
-            word.length > 3 && 
-            !commonWords.includes(word) &&
-            !word.match(/^\d+$/) // not just numbers
-        );
-        
-        for (const med of potentialMeds) {
-            // Check if this word or any part of it matches our database
-            for (const [key, value] of Object.entries(medicationDatabase)) {
-                if (med.includes(key) || key.includes(med)) {
-                    return value.generic;
-                }
-            }
-        }
-        
-        // If we found potential medications but no exact match, return the first one
-        if (potentialMeds.length > 0) {
-            return potentialMeds[0];
-        }
-        
-        return null;
-    };
 
     const startCamera = useCallback(async () => {
         try {
@@ -311,20 +426,13 @@ const QuickSafetyCheck = () => {
         const canvas = canvasRef.current;
         const context = canvas.getContext('2d');
         
-        // Set canvas dimensions to match video
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         
-        // Draw video frame to canvas
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         
-        // Convert to base64 image
         const imageData = canvas.toDataURL('image/jpeg', 0.9);
-        
-        // Process the image to extract medication name
         await processMedicationImage(imageData);
-        
-        // Stop camera after capture
         stopCamera();
     }, [stopCamera]);
 
@@ -334,7 +442,7 @@ const QuickSafetyCheck = () => {
         setOcrProgress(0);
         
         try {
-            // Use Tesseract.js for client-side OCR
+            // Perform OCR
             const result = await Tesseract.recognize(
                 imageData,
                 'eng',
@@ -352,17 +460,29 @@ const QuickSafetyCheck = () => {
             console.log('OCR Result:', recognizedText);
             
             // Extract medication name from the recognized text
-            const medicationName = extractMedicationFromText(recognizedText);
+            let medicationName = extractMedicationFromText(recognizedText);
             
             if (medicationName) {
-                // Check if it's a brand name that needs to be converted to generic
-                const genericName = medicationDatabase[medicationName.toLowerCase()]?.generic || medicationName;
-                setDrugName(genericName);
+                setDrugName(medicationName);
                 setError('');
+                console.log(`Medication recognized: ${medicationName}`);
                 
-                // Optional: Auto-search after a short delay
+                // Try to get generic name from Wikipedia (free, no API key)
+                setIsFetchingGeneric(true);
+                try {
+                    const genericName = await getGenericNameFromWikipedia(medicationName);
+                    if (genericName && genericName !== medicationName) {
+                        setDrugName(genericName);
+                        console.log(`Generic name found: ${genericName}`);
+                    }
+                } catch (err) {
+                    console.log('Could not fetch generic name, using detected name');
+                } finally {
+                    setIsFetchingGeneric(false);
+                }
+                
+                // Auto-search after a short delay
                 setTimeout(() => {
-                    // Auto-submit the form
                     const form = document.getElementById('search-form');
                     if (form) form.dispatchEvent(new Event('submit'));
                 }, 500);
@@ -409,10 +529,9 @@ const QuickSafetyCheck = () => {
     // Handle voice recognition result automatically
     useEffect(() => {
         if (recognitionResult && !isRecording) {
-            const match = findMedicationMatch(recognitionResult);
+            const match = extractMedicationFromText(recognitionResult);
             if (match) {
                 setDrugName(match);
-                // Auto-search after voice recognition
                 setTimeout(() => {
                     const form = document.getElementById('search-form');
                     if (form) form.dispatchEvent(new Event('submit'));
@@ -423,7 +542,6 @@ const QuickSafetyCheck = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
-            {/* Header */}
             <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
                 <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
                     <button 
@@ -440,7 +558,6 @@ const QuickSafetyCheck = () => {
             </header>
 
             <main className="flex-1 max-w-4xl w-full mx-auto p-4 md:p-8">
-                {/* Search Hero */}
                 <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-8 md:p-12 text-white shadow-xl text-center mb-8 relative overflow-hidden">
                     <div className="relative z-10">
                         <h2 className="text-3xl md:text-4xl font-black mb-4 tracking-tight">Check Medication Safety</h2>
@@ -459,9 +576,7 @@ const QuickSafetyCheck = () => {
                                 />
                                 <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg" />
                                 
-                                {/* Action buttons */}
                                 <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                                    {/* Voice button */}
                                     <button
                                         type="button"
                                         onClick={startVoiceRecognition}
@@ -476,7 +591,6 @@ const QuickSafetyCheck = () => {
                                         <FaMicrophone className="text-lg" />
                                     </button>
                                     
-                                    {/* Camera button */}
                                     <button
                                         type="button"
                                         onClick={startCamera}
@@ -491,7 +605,6 @@ const QuickSafetyCheck = () => {
                                         )}
                                     </button>
                                     
-                                    {/* Hidden file upload for image selection */}
                                     <label className="cursor-pointer">
                                         <input
                                             type="file"
@@ -528,7 +641,6 @@ const QuickSafetyCheck = () => {
                             </button>
                         </form>
 
-                        {/* Voice recognition status */}
                         {isRecording && (
                             <div className="mt-4 text-white flex items-center justify-center gap-3 animate-pulse">
                                 <div className="w-3 h-3 bg-red-500 rounded-full animate-ping"></div>
@@ -544,11 +656,12 @@ const QuickSafetyCheck = () => {
                             </div>
                         )}
 
-                        {/* OCR Progress */}
                         {isProcessingImage && (
                             <div className="mt-4 bg-white/20 rounded-xl p-4">
                                 <div className="flex items-center justify-between text-white mb-2">
-                                    <span className="text-sm font-medium">Processing image...</span>
+                                    <span className="text-sm font-medium">
+                                        {isFetchingGeneric ? 'Fetching generic name...' : 'Processing image...'}
+                                    </span>
                                     <span className="text-sm">{ocrProgress}%</span>
                                 </div>
                                 <div className="w-full bg-white/30 rounded-full h-2 overflow-hidden">
@@ -655,7 +768,6 @@ const QuickSafetyCheck = () => {
                             ))}
                         </div>
 
-                        {/* Major Interactions */}
                         {result.major_interactions && result.major_interactions.length > 0 && (
                             <div className="bg-amber-50 rounded-2xl p-6 md:p-8 shadow-sm border border-amber-200 mt-6">
                                 <h4 className="text-xl font-bold text-amber-900 flex items-center gap-2 mb-4">
