@@ -103,7 +103,7 @@ const QuickSafetyCheck = () => {
                     <div className="relative z-10">
                         <h2 className="text-3xl md:text-4xl font-black mb-4 tracking-tight">Check Medication Safety</h2>
                         <p className="text-blue-100 text-lg md:text-xl mb-8 max-w-2xl mx-auto opacity-90 font-medium">
-                            Enter any drug name to instantly see if it's safe for pregnancy, breastfeeding, the elderly, or those with organ failure.
+                            Enter any drug name to instantly see if it's safe for pregnancy, breastfeeding, neonate, the elderly, or those with organ failure.
                         </p>
                         
                         <form onSubmit={handleSearch} className="max-w-3xl mx-auto relative group flex flex-col md:flex-row gap-3">
@@ -123,10 +123,10 @@ const QuickSafetyCheck = () => {
                                 onChange={(e) => setSelectedCategory(e.target.value)}
                                 className="bg-white text-gray-800 px-4 py-4 rounded-xl text-base font-semibold shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/50 appearance-none cursor-pointer border-r-8 border-transparent"
                             >
-                                <option value="all">All Conditions</option>
+                                <option value="all">Select Conditions</option>
                                 <option value="pregnancy">Pregnancy</option>
                                 <option value="lactation">Breastfeeding</option>
-                                <option value="elderly">Elderly (Over 65)</option>
+                                <option value="elderly">Elderly (Over 65 years old)</option>
                                 <option value="neonate">Neonates/Infants</option>
                                 <option value="kidney_failure">Kidney Failure</option>
                                 <option value="liver_failure">Liver Failure</option>
@@ -204,7 +204,7 @@ const QuickSafetyCheck = () => {
                         )}
                         
                         <div className="mt-8 text-center bg-gray-50 p-4 rounded-xl text-xs text-gray-400 flex items-center justify-center gap-2">
-                            <FaInfoCircle /> AI-generated safety profile. Always consult a healthcare professional before changing medication regimens.
+                            <FaInfoCircle /> Disclaimer: This information is for educational purposes only and does not replace consultation with a qualified healthcare professional. Medication information may change with emerging evidence, manufacturers’ current prescribing information, and evolving medical practice. Users are responsible for verifying all information and exercising their own professional judgment. 
                         </div>
                     </div>
                 )}
