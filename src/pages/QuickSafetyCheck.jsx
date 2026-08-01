@@ -80,19 +80,20 @@ const QuickSafetyCheck = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
+     <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
             {/* Header */}
-            <header className="sticky top-0 z-40">
-                <div className="max-w-[300px] sm:max-w-[350px] md:max-w-[400px] lg:max-w-[500px] xl:max-w-[600px] ml-0 sm:ml-2 md:ml-4 lg:ml-6 xl:ml-8 px-2 sm:px-4 h-16 flex items-center gap-4 bg-white shadow-sm rounded-b-lg">
+            <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+                <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
                     <button 
                         onClick={() => navigate(-1)}
                         className="flex items-center gap-2 text-gray-500 hover:text-blue-600 transition-colors font-medium"
                     >
                         <FaArrowLeft /> Back
                     </button>
-                    <h1 className="text-sm sm:text-base md:text-lg lg:text-xl font-black text-gray-800 flex items-center gap-2">
+                    <h1 className="text-xl font-black text-gray-800 flex items-center gap-2">
                         <FaShieldAlt className="text-blue-600" /> Quick Safety Check
                     </h1>
+                    <div className="w-20"></div> {/* Spacer for centering */}
                 </div>
             </header>
 
