@@ -1219,6 +1219,19 @@ const Signup = () => {
                                         </div>
                                     </div>
                                 </div>
+                                <div className="mt-6 mb-6">
+                                    <label className="block text-gray-700 font-medium mb-2">
+                                        <FaUser className="inline mr-2" />
+                                        Referral Code (Optional)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                        placeholder="Enter referral code"
+                                        value={formData.referral_code}
+                                        onChange={(e) => setFormData({ ...formData, referral_code: e.target.value })}
+                                    />
+                                </div>
 
                                 <div className="flex flex-col md:flex-row gap-4 pt-6 border-t">
                                     <button
@@ -1861,18 +1874,33 @@ const Signup = () => {
                                         </div>
                                     </div>
 
-                                    <div className="mt-4">
-                                        <label className="block text-gray-700 font-medium mb-2">
-                                            <FaMapMarker className="inline mr-2" />
-                                            Woreda/Zone (Optional)
-                                        </label>
-                                        <input
-                                            type="text"
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                            placeholder="Enter woreda/zone"
-                                            value={formData.woreda}
-                                            onChange={(e) => setFormData({ ...formData, woreda: e.target.value })}
-                                        />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                                        <div>
+                                            <label className="block text-gray-700 font-medium mb-2">
+                                                <FaMapMarker className="inline mr-2" />
+                                                Woreda/Zone (Optional)
+                                            </label>
+                                            <input
+                                                type="text"
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                placeholder="Enter woreda/zone"
+                                                value={formData.woreda}
+                                                onChange={(e) => setFormData({ ...formData, woreda: e.target.value })}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-gray-700 font-medium mb-2">
+                                                <FaUser className="inline mr-2" />
+                                                Referral Code (Optional)
+                                            </label>
+                                            <input
+                                                type="text"
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                placeholder="Enter referral code"
+                                                value={formData.referral_code}
+                                                onChange={(e) => setFormData({ ...formData, referral_code: e.target.value })}
+                                            />
+                                        </div>
                                     </div>
 
                                     <div className="mt-4">
