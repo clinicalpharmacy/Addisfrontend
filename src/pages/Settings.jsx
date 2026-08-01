@@ -173,7 +173,7 @@ const Settings = () => {
                                     </div>
                         
                                     <p className="text-sm text-gray-500 mt-4">
-                                        Share this code with others. When they register and pay for a subscription using your code, you earn a 2% commission!
+                                        Share this code with a new customer. When a new customer register and pay for a subscription using your code, you will earn a 2% commission!
                                     </p>
                                 </div>
                         
