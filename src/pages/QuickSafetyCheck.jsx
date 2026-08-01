@@ -83,7 +83,7 @@ const QuickSafetyCheck = () => {
         <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
             {/* Header */}
             <header className="border-b border-gray-200 sticky top-0 z-40">
-                <div className="max-w-lg mx-auto px-2 h-16 flex items-center justify-between bg-white">
+                <div className="max-w-lg mx-auto px-2 h-16 flex items-center gap-4 bg-white">
                     <button 
                         onClick={() => navigate(-1)}
                         className="flex items-center gap-2 text-gray-500 hover:text-blue-600 transition-colors font-medium"
