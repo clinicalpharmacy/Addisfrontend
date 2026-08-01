@@ -34,6 +34,7 @@ const QuickSafetyCheck = () => {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
     const [error, setError] = useState('');
+    const [medicationNotFound, setMedicationNotFound] = useState(false);
 
     const handleSearch = async (e) => {
         e.preventDefault();
@@ -42,20 +43,37 @@ const QuickSafetyCheck = () => {
         setLoading(true);
         setError('');
         setResult(null);
+        setMedicationNotFound(false);
 
         try {
             const response = await api.post('/quick-safety', { 
                 medication: drugName.trim(),
                 category: selectedCategory === 'all' ? null : selectedCategory
             });
+            
+            // Check if medication was found in the database
             if (response.success && response.safetyProfile) {
-                setResult(response.safetyProfile);
+                // Check if the medication exists in the database
+                // Assuming the API returns a flag or the medication name is validated
+                if (response.medicationFound === false || !response.safetyProfile.medication) {
+                    setMedicationNotFound(true);
+                } else {
+                    setResult(response.safetyProfile);
+                }
+            } else if (response.message && response.message.includes('not found')) {
+                // Handle case where API returns a not found message
+                setMedicationNotFound(true);
             } else {
                 setError('Failed to retrieve safety data. Please try again.');
             }
         } catch (err) {
             console.error(err);
-            setError(err.error || 'Failed to check medication. It might not be recognized.');
+            // Check if error indicates medication not found
+            if (err.response && err.response.status === 404) {
+                setMedicationNotFound(true);
+            } else {
+                setError(err.error || 'Failed to check medication. It might not be recognized.');
+            }
         } finally {
             setLoading(false);
         }
@@ -157,6 +175,24 @@ const QuickSafetyCheck = () => {
                     </div>
                 )}
 
+                {/* Medication Not Found Message */}
+                {medicationNotFound && !loading && (
+                    <div className="bg-yellow-50 border-2 border-yellow-500 rounded-2xl p-8 md:p-12 shadow-lg text-center animate-fadeIn">
+                        <div className="flex flex-col items-center gap-4">
+                            <div className="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center">
+                                <FaInfoCircle className="text-5xl text-yellow-600" />
+                            </div>
+                            <div>
+                                <h3 className="text-2xl font-black text-yellow-700 mb-2">⚠️ Medication Not Available</h3>
+                                <p className="text-yellow-600 text-lg font-medium max-w-2xl mx-auto">
+                                    The medication "{drugName.trim()}" is not available in the Addis Med database.
+                                    Please check the spelling or try a different medication.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Loading State */}
                 {loading && (
                     <div className="flex flex-col items-center justify-center py-20 animate-fadeIn">
@@ -169,7 +205,7 @@ const QuickSafetyCheck = () => {
                 )}
 
                 {/* Results */}
-                {result && !loading && (
+                {result && !loading && !medicationNotFound && (
                     <div className="animate-fadeIn space-y-6">
                         {hasUnsafeInFiltered() ? (
                             <>
@@ -179,7 +215,7 @@ const QuickSafetyCheck = () => {
                                         <div>
                                             <h3 className="text-2xl font-black text-red-700">⚠️ UNSAFE Medication Detected</h3>
                                             <p className="text-red-600 font-medium">
-                                                This medication has been identified as UNSAFE for the following special population(s). 
+                                                This medication has been identified as UNSAFE in the following condition(s). 
                                                 Please review the details below and consult with a healthcare professional.
                                             </p>
                                         </div>
