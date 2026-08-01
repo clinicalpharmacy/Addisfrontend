@@ -23,7 +23,7 @@ const CategoryTitle = ({ type }) => {
     switch (type) {
         case 'pregnancy': return 'Pregnancy';
         case 'lactation': return 'Breastfeeding';
-        case 'elderly': return 'Elderly (Over 65)';
+        case 'elderly': return 'Elderly (≥ 65 years old)';
         case 'neonate': return 'Neonates';
         case 'kidney_failure': return 'Kidney Failure';
         case 'liver_failure': return 'Liver Failure';
@@ -126,7 +126,7 @@ const QuickSafetyCheck = () => {
                                 <option value="all">All Conditions</option>
                                 <option value="pregnancy">Pregnancy</option>
                                 <option value="lactation">Breastfeeding</option>
-                                <option value="elderly">Elderly (Over 65 years old)</option>
+                                <option value="elderly">Elderly (≥ 65 years old)</option>
                                 <option value="neonate">Neonates</option>
                                 <option value="kidney_failure">Kidney Failure</option>
                                 <option value="liver_failure">Liver Failure</option>
