@@ -95,6 +95,34 @@ const QuickSafetyCheck = () => {
         }
     };
 
+    // Get filtered categories based on selection
+    const getFilteredCategories = () => {
+        if (!result || !result.categories) return [];
+        
+        const entries = Object.entries(result.categories);
+        
+        // If a specific category is selected, only return that one
+        if (selectedCategory !== 'all') {
+            return entries.filter(([key]) => key === selectedCategory);
+        }
+        
+        // If 'all' is selected, return all categories
+        return entries;
+    };
+
+    // Get unsafe categories only (for the unsafe display)
+    const getUnsafeCategories = () => {
+        if (!result || !result.categories) return [];
+        
+        return Object.entries(result.categories)
+            .filter(([key, data]) => {
+                const status = data.status?.toLowerCase() || '';
+                return status.includes('contraindicate') || 
+                       status.includes('avoid') || 
+                       status.includes('unsafe');
+            });
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
             {/* Header */}
@@ -181,8 +209,8 @@ const QuickSafetyCheck = () => {
                 {/* Results */}
                 {result && !loading && (
                     <div className="animate-fadeIn space-y-6">
-                        {/* Show only when unsafe is detected */}
-                        {isUnsafeDetected ? (
+                        {/* Show only when unsafe is detected AND unsafe exists in filtered results */}
+                        {isUnsafeDetected && getUnsafeCategories().length > 0 ? (
                             <>
                                 {/* UNSAFE Alert Banner */}
                                 <div className="bg-red-50 border-2 border-red-500 rounded-2xl p-6 md:p-8 shadow-lg">
@@ -205,16 +233,10 @@ const QuickSafetyCheck = () => {
                                     <p className="text-gray-600 text-lg leading-relaxed">{result.general_overview}</p>
                                 </div>
 
-                                {/* Show ONLY unsafe categories */}
+                                {/* Show ONLY unsafe categories with filtering */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {Object.entries(result.categories || {})
-                                        .filter(([key, data]) => {
-                                            // Only show categories that are unsafe
-                                            const status = data.status?.toLowerCase() || '';
-                                            return status.includes('contraindicate') || 
-                                                   status.includes('avoid') || 
-                                                   status.includes('unsafe');
-                                        })
+                                    {getUnsafeCategories()
+                                        .filter(([key]) => selectedCategory === 'all' || key === selectedCategory)
                                         .map(([key, data]) => (
                                             <div key={key} className="bg-red-50 rounded-2xl p-6 shadow-sm border-2 border-red-400 hover:border-red-600 transition-colors group">
                                                 <div className="flex items-start justify-between mb-4">
@@ -230,9 +252,27 @@ const QuickSafetyCheck = () => {
                                             </div>
                                         ))}
                                 </div>
+
+                                {/* Show message if no unsafe categories match the filter */}
+                                {getUnsafeCategories().filter(([key]) => selectedCategory === 'all' || key === selectedCategory).length === 0 && (
+                                    <div className="bg-green-50 border-2 border-green-500 rounded-2xl p-8 md:p-12 shadow-lg text-center">
+                                        <div className="flex flex-col items-center gap-4">
+                                            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
+                                                <FaCheckCircle className="text-5xl text-green-600" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-3xl font-black text-green-700 mb-2">✅ No Unsafe Medication Detected</h3>
+                                                <p className="text-green-600 text-lg font-medium max-w-2xl mx-auto">
+                                                    No unsafe medication is detected in the Addis Med database for {result.medication} 
+                                                    in the selected condition. Always consult with your healthcare provider.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </>
                         ) : (
-                            /* Show only when NO unsafe is detected */
+                            /* Show only when NO unsafe is detected in the filtered results */
                             <div className="bg-green-50 border-2 border-green-500 rounded-2xl p-8 md:p-12 shadow-lg text-center">
                                 <div className="flex flex-col items-center gap-4">
                                     <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
@@ -242,7 +282,8 @@ const QuickSafetyCheck = () => {
                                         <h3 className="text-3xl font-black text-green-700 mb-2">✅ No Unsafe Medication Detected</h3>
                                         <p className="text-green-600 text-lg font-medium max-w-2xl mx-auto">
                                             No unsafe medication is detected in the Addis Med database for {result.medication} 
-                                            across the selected special populations. Always consult with your healthcare provider.
+                                            {selectedCategory !== 'all' ? ` in the ${CategoryTitle({ type: selectedCategory })} category` : ''}. 
+                                            Always consult with your healthcare provider.
                                         </p>
                                     </div>
                                 </div>
