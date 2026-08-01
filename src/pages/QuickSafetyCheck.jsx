@@ -197,9 +197,6 @@ const QuickSafetyCheck = () => {
                                         <div key={key} className="bg-red-50 rounded-2xl p-6 shadow-sm border-2 border-red-400 hover:border-red-600 transition-colors group">
                                             <div className="flex items-start justify-between mb-4">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-12 h-12 bg-red-100 text-red-600 rounded-xl flex items-center justify-center text-2xl group-hover:bg-red-600 group-hover:text-white transition-colors">
-                                                        <CategoryIcon type={key} />
-                                                    </div>
                                                     <h4 className="font-bold text-gray-800 text-lg"><CategoryTitle type={key} /></h4>
                                                 </div>
                                                 <StatusBadge status={data.status} />
