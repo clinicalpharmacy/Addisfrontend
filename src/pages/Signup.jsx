@@ -552,7 +552,8 @@ const Signup = () => {
                     frontendUrl: window.location.origin,
                     is_healthcare_client: true,
                     healthcare_client_id: userData.userId,
-                    client_password: userData.password
+                    client_password: userData.client_password || userData.password,
+                    referral_code: userData.referral_code || ''
                 };
 
                 const data = await api.post('/chapa/create-payment', paymentRequest);
