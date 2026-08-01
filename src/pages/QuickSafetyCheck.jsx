@@ -24,7 +24,7 @@ const CategoryTitle = ({ type }) => {
         case 'pregnancy': return 'Pregnancy';
         case 'lactation': return 'Breastfeeding';
         case 'elderly': return 'Elderly (Over 65)';
-        case 'neonate': return 'Neonates/Infants';
+        case 'neonate': return 'Neonates';
         case 'kidney_failure': return 'Kidney Failure';
         case 'liver_failure': return 'Liver Failure';
         default: return type;
@@ -123,11 +123,11 @@ const QuickSafetyCheck = () => {
                                 onChange={(e) => setSelectedCategory(e.target.value)}
                                 className="bg-white text-gray-800 px-4 py-4 rounded-xl text-base font-semibold shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/50 appearance-none cursor-pointer border-r-8 border-transparent"
                             >
-                                <option value="all">Select Conditions</option>
+                                <option value="all">All Conditions</option>
                                 <option value="pregnancy">Pregnancy</option>
                                 <option value="lactation">Breastfeeding</option>
                                 <option value="elderly">Elderly (Over 65 years old)</option>
-                                <option value="neonate">Neonates/Infants</option>
+                                <option value="neonate">Neonates</option>
                                 <option value="kidney_failure">Kidney Failure</option>
                                 <option value="liver_failure">Liver Failure</option>
                             </select>
