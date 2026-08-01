@@ -147,34 +147,36 @@ const Settings = () => {
 
 
                         ) : activeTab === 'promotions' ? (
-                            <div className="p-8">
-                                <h2 className="text-xl font-bold text-gray-900 mb-6">Promotions & Referrals</h2>
-                                <div className="mb-6 p-6 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-3xl">
-                                    <p className="text-sm text-gray-600 font-bold uppercase mb-2">Your Promotion Code</p>
-                                    <div className="flex items-center gap-4">
-                                        <div className="px-6 py-3 bg-white text-blue-700 text-2xl font-mono font-bold rounded-xl shadow-inner border-2 border-blue-300 tracking-widest">
-                                            {commissionData.promotion_code}
+                            !isAdmin && (      
+                                <div className="p-8">
+                                    <h2 className="text-xl font-bold text-gray-900 mb-6">Promotions & Referrals</h2>
+                                    <div className="mb-6 p-6 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-3xl">
+                                        <p className="text-sm text-gray-600 font-bold uppercase mb-2">Your Promotion Code</p>
+                                        <div className="flex items-center gap-4">
+                                            <div className="px-6 py-3 bg-white text-blue-700 text-2xl font-mono font-bold rounded-xl shadow-inner border-2 border-blue-300 tracking-widest">
+                                                {commissionData.promotion_code}
+                                            </div>
+                                            <button 
+                                                onClick={() => navigator.clipboard.writeText(commissionData.promotion_code)}
+                                                className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition"
+                                            >
+                                                Copy
+                                            </button>
                                         </div>
-                                        <button 
-                                            onClick={() => navigator.clipboard.writeText(commissionData.promotion_code)}
-                                            className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition"
-                                        >
-                                            Copy
-                                        </button>
+                                        <p className="text-sm text-gray-500 mt-4">Share this code with others. When they register and pay for a subscription using your code, you earn a 2% commission!</p>
                                     </div>
-                                    <p className="text-sm text-gray-500 mt-4">Share this code with others. When they register and pay for a subscription using your code, you earn a 2% commission!</p>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="p-6 bg-green-50 rounded-3xl border border-green-100">
-                                        <p className="text-sm font-bold text-green-700 uppercase mb-1">Total Earned</p>
-                                        <p className="text-3xl font-bold text-gray-900">{commissionData.total_earned} ETB</p>
-                                    </div>
-                                    <div className="p-6 bg-purple-50 rounded-3xl border border-purple-100">
-                                        <p className="text-sm font-bold text-purple-700 uppercase mb-1">Total Referrals</p>
-                                        <p className="text-3xl font-bold text-gray-900">{commissionData.referrals_count}</p>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="p-6 bg-green-50 rounded-3xl border border-green-100">
+                                            <p className="text-sm font-bold text-green-700 uppercase mb-1">Total Earned</p>
+                                            <p className="text-3xl font-bold text-gray-900">{commissionData.total_earned} ETB</p>
+                                        </div>
+                                        <div className="p-6 bg-purple-50 rounded-3xl border border-purple-100">
+                                            <p className="text-sm font-bold text-purple-700 uppercase mb-1">Total Referrals</p>
+                                            <p className="text-3xl font-bold text-gray-900">{commissionData.referrals_count}</p>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            )
                         ) : (
                             <div className="p-8">
                                 <h2 className="text-xl font-bold text-gray-900 mb-6">Security & Password</h2>
