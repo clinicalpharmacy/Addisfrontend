@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
     FaSearch, FaArrowLeft, FaShieldAlt, FaBaby, FaBabyCarriage, 
@@ -52,6 +52,53 @@ const QuickSafetyCheck = () => {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
     const [error, setError] = useState('');
+    const [medicationList, setMedicationList] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [isFetchingMedications, setIsFetchingMedications] = useState(false);
+    const searchRef = useRef(null);
+
+    // Fetch medication list when 2 or more characters are typed
+    useEffect(() => {
+        const fetchMedications = async () => {
+            if (drugName.trim().length >= 2) {
+                setIsFetchingMedications(true);
+                try {
+                    const response = await api.get(`/medications/search?query=${encodeURIComponent(drugName.trim())}`);
+                    if (response.success && response.medications) {
+                        setMedicationList(response.medications);
+                        setShowSuggestions(true);
+                    } else {
+                        setMedicationList([]);
+                        setShowSuggestions(false);
+                    }
+                } catch (err) {
+                    console.error('Error fetching medications:', err);
+                    setMedicationList([]);
+                    setShowSuggestions(false);
+                } finally {
+                    setIsFetchingMedications(false);
+                }
+            } else {
+                setMedicationList([]);
+                setShowSuggestions(false);
+            }
+        };
+
+        // Debounce the search to avoid excessive API calls
+        const debounceTimer = setTimeout(fetchMedications, 300);
+        return () => clearTimeout(debounceTimer);
+    }, [drugName]);
+
+    // Close suggestions when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (searchRef.current && !searchRef.current.contains(event.target)) {
+                setShowSuggestions(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const handleSearch = async (e) => {
         e.preventDefault();
@@ -60,6 +107,7 @@ const QuickSafetyCheck = () => {
         setLoading(true);
         setError('');
         setResult(null);
+        setShowSuggestions(false);
 
         try {
             const response = await api.post('/quick-safety', { 
@@ -79,8 +127,13 @@ const QuickSafetyCheck = () => {
         }
     };
 
+    const handleMedicationSelect = (medication) => {
+        setDrugName(medication);
+        setShowSuggestions(false);
+    };
+
     return (
-     <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
+        <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
             {/* Header */}
             <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
                 <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -93,7 +146,7 @@ const QuickSafetyCheck = () => {
                     <h1 className="text-xl font-black text-gray-800 flex items-center gap-2">
                         <FaShieldAlt className="text-blue-600" /> Quick Safety Check
                     </h1>
-                    <div className="w-20"></div> {/* Spacer for centering */}
+                    <div className="w-20"></div>
                 </div>
             </header>
 
@@ -107,15 +160,45 @@ const QuickSafetyCheck = () => {
                         </p>
                         
                         <form onSubmit={handleSearch} className="max-w-3xl mx-auto relative group flex flex-col md:flex-row gap-3">
-                            <div className="relative flex-1">
+                            <div className="relative flex-1" ref={searchRef}>
                                 <input 
                                     type="text"
-                                    placeholder="e.g., Ibuprofen, Amoxicillin..."
+                                    placeholder="Type 2+ letters to search medications..."
                                     value={drugName}
                                     onChange={(e) => setDrugName(e.target.value)}
                                     className="w-full bg-white text-gray-800 px-6 py-4 pl-12 rounded-xl text-lg font-bold shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/50 transition-all placeholder:text-gray-400"
+                                    autoComplete="off"
                                 />
                                 <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg" />
+                                
+                                {/* Medication Suggestions Dropdown */}
+                                {showSuggestions && (
+                                    <div className="absolute left-0 right-0 top-full mt-1 bg-white rounded-xl shadow-lg border border-gray-200 max-h-80 overflow-y-auto z-20">
+                                        {isFetchingMedications ? (
+                                            <div className="p-4 text-center text-gray-500">
+                                                <FaSpinner className="animate-spin inline-block mr-2" />
+                                                Searching medications...
+                                            </div>
+                                        ) : medicationList.length > 0 ? (
+                                            <ul className="py-2">
+                                                {medicationList.map((med, index) => (
+                                                    <li 
+                                                        key={index}
+                                                        onClick={() => handleMedicationSelect(med)}
+                                                        className="px-4 py-3 hover:bg-blue-50 cursor-pointer transition-colors flex items-center gap-3 border-b border-gray-100 last:border-0"
+                                                    >
+                                                        <FaPills className="text-blue-500 text-sm" />
+                                                        <span className="font-medium text-gray-800">{med}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        ) : (
+                                            <div className="p-4 text-center text-gray-500">
+                                                No medications found matching "{drugName}"
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                             
                             <select 
@@ -204,7 +287,7 @@ const QuickSafetyCheck = () => {
                         )}
                         
                         <div className="mt-8 text-center bg-gray-50 p-4 rounded-xl text-xs font-bold text-gray-400 flex items-center justify-center gap-2">
-                            <FaInfoCircle /> Disclaimer: This information is for educational purposes only and does not replace consultation with a qualified healthcare professional. Medication information may change with emerging evidence, manufacturers’ current prescribing information, and evolving medical practice. Users are responsible for verifying all information and exercising health professional's judgment. 
+                            <FaInfoCircle /> Disclaimer: This information is for educational purposes only and does not replace consultation with a qualified healthcare professional. Medication information may change with emerging evidence, manufacturers' current prescribing information, and evolving medical practice. Users are responsible for verifying all information and exercising health professional's judgment. 
                         </div>
                     </div>
                 )}
