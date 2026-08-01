@@ -325,7 +325,8 @@ const Signup = () => {
                     is_healthcare_client: true,
                     individual_type: 'client',
                     registered_at: new Date().toISOString(),
-                    password: formData.password
+                    password: formData.password,
+                    referral_code: formData.referral_code?.trim() || ''
                 };
 
                 localStorage.setItem('registered_user', JSON.stringify(userData));
@@ -341,7 +342,8 @@ const Signup = () => {
                     selected_plan_details: selectedPlanDetails,
                     is_healthcare_client: true,
                     individual_type: 'client',
-                    client_password: formData.password
+                    client_password: formData.password,
+                    referral_code: formData.referral_code?.trim() || ''
                 };
                 localStorage.setItem('payment_user_data', JSON.stringify(paymentUserData));
 
@@ -404,7 +406,8 @@ const Signup = () => {
                     account_type: 'individual',
                     individual_type: 'professional', // Add this field
                     selected_plan: selectedPlan,
-                    skip_verification_email: true
+                    skip_verification_email: true,
+                    referral_code: formData.referral_code?.trim() || ''
                 };
             } else {
                 endpoint = '/auth/register-company';
@@ -425,7 +428,8 @@ const Signup = () => {
                     admin_phone: formData.admin_phone.trim(),
                     admin_license_number: formData.admin_license_number?.trim() || '',
                     selected_plan: selectedPlan,
-                    skip_verification_email: true
+                    skip_verification_email: true,
+                    referral_code: formData.referral_code?.trim() || ''
                 };
             }
 
