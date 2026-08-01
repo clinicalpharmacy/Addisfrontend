@@ -40,7 +40,7 @@ const StatusBadge = ({ status }) => {
         return <span className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"><FaExclamationTriangle /> Caution</span>;
     }
     if (s.includes('contraindicate') || s.includes('avoid') || s.includes('unsafe')) {
-        return <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"><FaExclamationCircle /> Avoid / Contraindicated</span>;
+        return <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"><FaExclamationCircle /> Avoid </span>;
     }
     return <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"><FaInfoCircle /> Unknown / Unclear</span>;
 };
