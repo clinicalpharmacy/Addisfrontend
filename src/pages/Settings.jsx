@@ -148,7 +148,6 @@ const Settings = () => {
                                     <p className="text-sm text-blue-800">Your profile is currently protected by Zero-Knowledge encryption.</p>
                                 </div>
                             </div>
-
                         ) : activeTab === 'promotions' && !isAdmin ? (
                             <div className="p-8">
                                 <h2 className="text-xl font-bold text-gray-900 mb-6">
@@ -198,8 +197,7 @@ const Settings = () => {
                                     </div>
                                 </div>
                             </div>
-                        ) : null
-                            
+                        ) : activeTab === 'security' ? (
                             <div className="p-8">
                                 <h2 className="text-xl font-bold text-gray-900 mb-6">Security & Password</h2>
                                 
@@ -257,7 +255,7 @@ const Settings = () => {
                                     </button>
                                 </form>
                             </div>
-                        )}
+                        ) : null}
                     </div>
                 </div>
             </div>
