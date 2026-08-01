@@ -198,7 +198,7 @@ const ExamModule = ({ examId, examTitle, examSubject, onBack }) => {
                         </h4>
                     </div>
 
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                         {questions[currentQuestionIndex].options.map(option => {
                             const hasAnswered = !!selectedAnswers[questions[currentQuestionIndex].id];
                             const isSelected = selectedAnswers[questions[currentQuestionIndex].id] === option.id;
