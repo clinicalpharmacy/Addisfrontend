@@ -7,18 +7,6 @@ import {
 } from 'react-icons/fa';
 import api from '../utils/api';
 
-const CategoryIcon = ({ type }) => {
-    switch (type) {
-        case 'pregnancy': return <FaBabyCarriage />;
-        case 'lactation': return <FaBaby />;
-        case 'elderly': return <FaUserEdit />;
-        case 'neonate': return <FaProcedures />;
-        case 'kidney_failure': return <FaHeartbeat />;
-        case 'liver_failure': return <FaHeartbeat />;
-        default: return <FaShieldAlt />;
-    }
-};
-
 const CategoryTitle = ({ type }) => {
     switch (type) {
         case 'pregnancy': return 'Pregnancy';
@@ -188,9 +176,6 @@ const QuickSafetyCheck = () => {
                                 {/* UNSAFE Alert Banner */}
                                 <div className="bg-red-50 border-2 border-red-500 rounded-2xl p-6 md:p-8 shadow-lg">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                            <FaExclamationTriangle className="text-4xl text-red-600" />
-                                        </div>
                                         <div>
                                             <h3 className="text-2xl font-black text-red-700">⚠️ UNSAFE Medication Detected</h3>
                                             <p className="text-red-600 font-medium">
