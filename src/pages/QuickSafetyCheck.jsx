@@ -274,8 +274,9 @@ const QuickSafetyCheck = () => {
                                     <div>
                                         <h3 className="text-lg font-black text-green-700 mb-2">✅ No Contraindication Detected in the Addis Med database</h3>
                                         <p className="text-green-600 text-lg font-medium max-w-2xl mx-auto">
-                                            It appears {result.medication} is likely acceptable to use
-                                            {selectedCategory !== 'all' ? ` in ${CategoryTitle({ type: selectedCategory })}` : ''}. Always consult with your healthcare provider.
+                                            It appears {result.medication} is likely acceptable to use in the selected condition(s)
+                                            {selectedCategory !== 'all' && ` [${CategoryTitle(selectedCategory)}]`}.
+                                            Always consult with your healthcare provider.
                                         </p>
                                     </div>
                                 </div>
