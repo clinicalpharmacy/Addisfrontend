@@ -46,25 +46,6 @@ const QuickSafetyCheck = () => {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
     const [error, setError] = useState('');
-    const [isUnsafeDetected, setIsUnsafeDetected] = useState(false);
-    const [unsafeCategories, setUnsafeCategories] = useState([]);
-
-    const checkForUnsafe = (safetyProfile) => {
-        if (!safetyProfile || !safetyProfile.categories) return false;
-        
-        const unsafe = [];
-        // Check all categories for unsafe status
-        for (const [key, data] of Object.entries(safetyProfile.categories)) {
-            const status = data.status?.toLowerCase() || '';
-            if (status.includes('contraindicate') || 
-                status.includes('avoid') || 
-                status.includes('unsafe')) {
-                unsafe.push(key);
-            }
-        }
-        setUnsafeCategories(unsafe);
-        return unsafe.length > 0;
-    };
 
     const handleSearch = async (e) => {
         e.preventDefault();
@@ -73,8 +54,6 @@ const QuickSafetyCheck = () => {
         setLoading(true);
         setError('');
         setResult(null);
-        setIsUnsafeDetected(false);
-        setUnsafeCategories([]);
 
         try {
             const response = await api.post('/quick-safety', { 
@@ -83,7 +62,6 @@ const QuickSafetyCheck = () => {
             });
             if (response.success && response.safetyProfile) {
                 setResult(response.safetyProfile);
-                setIsUnsafeDetected(checkForUnsafe(response.safetyProfile));
             } else {
                 setError('Failed to retrieve safety data. Please try again.');
             }
@@ -95,32 +73,28 @@ const QuickSafetyCheck = () => {
         }
     };
 
-    // Get filtered categories based on selection
-    const getFilteredCategories = () => {
+    // Get unsafe categories only with filtering
+    const getFilteredUnsafeCategories = () => {
         if (!result || !result.categories) return [];
         
-        const entries = Object.entries(result.categories);
-        
-        // If a specific category is selected, only return that one
-        if (selectedCategory !== 'all') {
-            return entries.filter(([key]) => key === selectedCategory);
-        }
-        
-        // If 'all' is selected, return all categories
-        return entries;
-    };
-
-    // Get unsafe categories only (for the unsafe display)
-    const getUnsafeCategories = () => {
-        if (!result || !result.categories) return [];
-        
-        return Object.entries(result.categories)
+        const unsafe = Object.entries(result.categories)
             .filter(([key, data]) => {
                 const status = data.status?.toLowerCase() || '';
                 return status.includes('contraindicate') || 
                        status.includes('avoid') || 
                        status.includes('unsafe');
             });
+        
+        // Apply category filter
+        if (selectedCategory === 'all') {
+            return unsafe;
+        }
+        return unsafe.filter(([key]) => key === selectedCategory);
+    };
+
+    // Check if there are any unsafe categories
+    const hasUnsafeInFiltered = () => {
+        return getFilteredUnsafeCategories().length > 0;
     };
 
     return (
@@ -209,8 +183,7 @@ const QuickSafetyCheck = () => {
                 {/* Results */}
                 {result && !loading && (
                     <div className="animate-fadeIn space-y-6">
-                        {/* Show only when unsafe is detected AND unsafe exists in filtered results */}
-                        {isUnsafeDetected && getUnsafeCategories().length > 0 ? (
+                        {hasUnsafeInFiltered() ? (
                             <>
                                 {/* UNSAFE Alert Banner */}
                                 <div className="bg-red-50 border-2 border-red-500 rounded-2xl p-6 md:p-8 shadow-lg">
@@ -233,67 +206,51 @@ const QuickSafetyCheck = () => {
                                     <p className="text-gray-600 text-lg leading-relaxed">{result.general_overview}</p>
                                 </div>
 
-                                {/* Show ONLY unsafe categories with filtering */}
+                                {/* Show ONLY unsafe categories with proper filtering */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {getUnsafeCategories()
-                                        .filter(([key]) => selectedCategory === 'all' || key === selectedCategory)
-                                        .map(([key, data]) => (
-                                            <div key={key} className="bg-red-50 rounded-2xl p-6 shadow-sm border-2 border-red-400 hover:border-red-600 transition-colors group">
-                                                <div className="flex items-start justify-between mb-4">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-12 h-12 bg-red-100 text-red-600 rounded-xl flex items-center justify-center text-2xl group-hover:bg-red-600 group-hover:text-white transition-colors">
-                                                            <CategoryIcon type={key} />
-                                                        </div>
-                                                        <h4 className="font-bold text-gray-800 text-lg"><CategoryTitle type={key} /></h4>
+                                    {getFilteredUnsafeCategories().map(([key, data]) => (
+                                        <div key={key} className="bg-red-50 rounded-2xl p-6 shadow-sm border-2 border-red-400 hover:border-red-600 transition-colors group">
+                                            <div className="flex items-start justify-between mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-12 h-12 bg-red-100 text-red-600 rounded-xl flex items-center justify-center text-2xl group-hover:bg-red-600 group-hover:text-white transition-colors">
+                                                        <CategoryIcon type={key} />
                                                     </div>
-                                                    <StatusBadge status={data.status} />
+                                                    <h4 className="font-bold text-gray-800 text-lg"><CategoryTitle type={key} /></h4>
                                                 </div>
-                                                <p className="text-gray-700 leading-relaxed text-sm font-medium">{data.details}</p>
+                                                <StatusBadge status={data.status} />
                                             </div>
-                                        ))}
+                                            <p className="text-gray-700 leading-relaxed text-sm font-medium">{data.details}</p>
+                                        </div>
+                                    ))}
                                 </div>
 
-                                {/* Show message if no unsafe categories match the filter */}
-                                {getUnsafeCategories().filter(([key]) => selectedCategory === 'all' || key === selectedCategory).length === 0 && (
-                                    <div className="bg-green-50 border-2 border-green-500 rounded-2xl p-8 md:p-12 shadow-lg text-center">
-                                        <div className="flex flex-col items-center gap-4">
-                                            <div>
-                                                <h3 className="text-lg font-black text-green-700 mb-2">✅ No Contraindication Detected in the Addis Med database</h3>
-                                                <p className="text-green-600 text-lg font-medium max-w-2xl mx-auto">
-                                                    It appears {result.medication} is likely acceptable to use in the selected condition(s). Always consult with your healthcare provider.
-                                                </p>
-                                            </div>
-                                        </div>
+                                {/* Major Interactions */}
+                                {result.major_interactions && result.major_interactions.length > 0 && (
+                                    <div className="bg-amber-50 rounded-2xl p-6 md:p-8 shadow-sm border border-amber-200 mt-6">
+                                        <h4 className="text-xl font-bold text-amber-900 flex items-center gap-2 mb-4">
+                                            <FaPills className="text-amber-600" /> Major Drug Interactions (Avoid With)
+                                        </h4>
+                                        <ul className="list-disc list-inside space-y-2 text-amber-800 font-medium ml-2">
+                                            {result.major_interactions.map((interaction, i) => (
+                                                <li key={i}>{interaction}</li>
+                                            ))}
+                                        </ul>
                                     </div>
                                 )}
                             </>
                         ) : (
-                            /* Show only when NO unsafe is detected in the filtered results */
+                            /* Show when NO unsafe is detected in the filtered results */
                             <div className="bg-green-50 border-2 border-green-500 rounded-2xl p-8 md:p-12 shadow-lg text-center">
                                 <div className="flex flex-col items-center gap-4">
                                     <div>
-                                        <h3 className="text-lg font-black text-green-700 mb-2">✅ No Contraindication Detected in the Addis Med database</h3>
+                                        <h3 className="text-2xl font-black text-green-700 mb-2">✅ No Contraindication Detected in the Addis Med database</h3>
                                         <p className="text-green-600 text-lg font-medium max-w-2xl mx-auto">
                                             It appears {result.medication} is likely acceptable to use in the selected condition(s)
-                                            {selectedCategory !== 'all' && ` [${CategoryTitle(selectedCategory)}]`}.
+                                            {selectedCategory !== 'all' && ` [${CategoryTitle({ type: selectedCategory })}]`}.
                                             Always consult with your healthcare provider.
                                         </p>
                                     </div>
                                 </div>
-                            </div>
-                        )}
-
-                        {/* Major Interactions - Only show if unsafe detected */}
-                        {isUnsafeDetected && result.major_interactions && result.major_interactions.length > 0 && (
-                            <div className="bg-amber-50 rounded-2xl p-6 md:p-8 shadow-sm border border-amber-200 mt-6">
-                                <h4 className="text-xl font-bold text-amber-900 flex items-center gap-2 mb-4">
-                                    <FaPills className="text-amber-600" /> Major Drug Interactions (Avoid With)
-                                </h4>
-                                <ul className="list-disc list-inside space-y-2 text-amber-800 font-medium ml-2">
-                                    {result.major_interactions.map((interaction, i) => (
-                                        <li key={i}>{interaction}</li>
-                                    ))}
-                                </ul>
                             </div>
                         )}
                         
