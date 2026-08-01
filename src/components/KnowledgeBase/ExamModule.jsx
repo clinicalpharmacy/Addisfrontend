@@ -282,11 +282,11 @@ const ExamModule = ({ examId, examTitle, examSubject, onBack }) => {
                         </div>
                     )}
 
-                    <div className="flex justify-between items-center pt-8 border-t border-gray-100 mt-8">
+                    <div className="flex justify-between items-center pt-4 border-t border-gray-100 mt-4">
                         <button
                             onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
                             disabled={currentQuestionIndex === 0}
-                            className={`px-6 py-2.5 rounded-lg font-bold transition-all ${
+                            className={`px-6 py-1.5 rounded-lg font-bold transition-all ${
                                 currentQuestionIndex === 0
                                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                     : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 shadow-sm'
@@ -298,14 +298,14 @@ const ExamModule = ({ examId, examTitle, examSubject, onBack }) => {
                         {currentQuestionIndex === questions.length - 1 ? (
                             <button
                                 onClick={handleSubmit}
-                                className="px-8 py-2.5 rounded-lg font-bold bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg shadow-green-200 transition-all transform hover:-translate-y-0.5"
+                                className="px-8 py-1.5 rounded-lg font-bold bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg shadow-green-200 transition-all transform hover:-translate-y-0.5"
                             >
                                 Submit Exam
                             </button>
                         ) : (
                             <button
                                 onClick={() => setCurrentQuestionIndex(Math.min(questions.length - 1, currentQuestionIndex + 1))}
-                                className="px-8 py-2.5 rounded-lg font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 transition-all"
+                                className="px-8 py-1.5 rounded-lg font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 transition-all"
                             >
                                 Next
                             </button>
