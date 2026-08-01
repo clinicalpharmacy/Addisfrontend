@@ -221,7 +221,7 @@ const QuickSafetyCheck = () => {
                                         <div>
                                             <h3 className="text-2xl font-black text-red-700">⚠️ UNSAFE Medication Detected</h3>
                                             <p className="text-red-600 font-medium">
-                                                This medication has been identified as UNSAFE for the following special populations. 
+                                                This medication has been identified as UNSAFE for the following special population(s). 
                                                 Please review the details below and consult with a healthcare professional.
                                             </p>
                                         </div>
@@ -263,8 +263,8 @@ const QuickSafetyCheck = () => {
                                             <div>
                                                 <h3 className="text-3xl font-black text-green-700 mb-2">✅ No Unsafe Medication Detected</h3>
                                                 <p className="text-green-600 text-lg font-medium max-w-2xl mx-auto">
-                                                    No unsafe medication is detected in the Addis Med database for {result.medication} 
-                                                    in the selected condition. Always consult with your healthcare provider.
+                                                    It appears {result.medication} is likely acceptable to use in the selected condition(s), 
+                                                    and no contraindication is detected in the Addis Med database. Always consult with your healthcare provider.
                                                 </p>
                                             </div>
                                         </div>
