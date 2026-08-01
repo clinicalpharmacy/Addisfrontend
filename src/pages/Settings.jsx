@@ -145,10 +145,8 @@ const Settings = () => {
                                 </div>
                             </div>
 
-                         !isAdmin ? (
-                             // Promotion content for non-admin users
-                            <div>Access Denied</div>
-                        ) : activeTab === 'promotions' ? (
+                        !isAdmin && activeTab === 'promotions' ? (
+                            // Only NON-ADMINS see the promotions content
                             <div className="p-8">
                                 <h2 className="text-xl font-bold text-gray-900 mb-6">Promotions & Referrals</h2>
                                 <div className="mb-6 p-6 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-3xl">
@@ -177,7 +175,7 @@ const Settings = () => {
                                     </div>
                                 </div>
                             </div>
-                        ) : null 
+                        ) : null
                             
                             <div className="p-8">
                                 <h2 className="text-xl font-bold text-gray-900 mb-6">Security & Password</h2>
