@@ -83,7 +83,7 @@ const QuickSafetyCheck = () => {
         <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
             {/* Header */}
             <header className="sticky top-0 z-40">
-                <div className="max-w-full sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl ml-0 sm:ml-2 md:ml-4 lg:ml-6 xl:ml-8 px-2 sm:px-4 h-16 flex items-center gap-4 bg-white shadow-sm rounded-b-lg">
+                <div className="max-w-[300px] sm:max-w-[350px] md:max-w-[400px] lg:max-w-[500px] xl:max-w-[600px] ml-0 sm:ml-2 md:ml-4 lg:ml-6 xl:ml-8 px-2 sm:px-4 h-16 flex items-center gap-4 bg-white shadow-sm rounded-b-lg">
                     <button 
                         onClick={() => navigate(-1)}
                         className="flex items-center gap-2 text-gray-500 hover:text-blue-600 transition-colors font-medium"
