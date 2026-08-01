@@ -9,6 +9,7 @@ import SecurityActivator from '../components/Security/SecurityActivator';
 const Settings = () => {
     const location = useLocation();
     const [activeTab, setActiveTab] = useState('profile');
+    const isAdmin = currentUser?.role === 'admin';
     const [passwords, setPasswords] = useState({
         current: '',
         new: '',
