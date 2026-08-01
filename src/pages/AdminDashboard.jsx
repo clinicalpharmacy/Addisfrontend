@@ -28,6 +28,7 @@ import { AdminSubscriptions } from '../components/Admin/AdminSubscriptions';
 import { AdminFeedback } from '../components/Admin/AdminFeedback';
 import { SupportVault } from '../components/Admin/SupportVault';
 import { AdminExams } from '../components/Admin/AdminExams';
+import { AdminReferrals } from '../components/Admin/AdminReferrals';
 import api from '../utils/api';
 
 const AdminDashboard = () => {
@@ -112,7 +113,8 @@ const AdminDashboard = () => {
         { id: 'support_access', label: 'Support Access', icon: FaUserShield, iconColor: 'text-amber-500', count: dashboardData.stats.active_support_count, color: 'bg-blue-600' },
         { id: 'feedback', label: 'User Feedback', icon: FaComments, iconColor: 'text-pink-500' },
         { id: 'chats', label: 'Support Chats', icon: FaComments, iconColor: 'text-teal-500' },
-        { id: 'exams', label: 'Exams', icon: FaGraduationCap, iconColor: 'text-purple-500' }
+        { id: 'exams', label: 'Exams', icon: FaGraduationCap, iconColor: 'text-purple-500' },
+        { id: 'referrals', label: 'Referrals', icon: FaUsers, iconColor: 'text-emerald-500' }
     ];
 
     // Logout
@@ -303,6 +305,10 @@ const AdminDashboard = () => {
 
                 {selectedTab === 'exams' && (
                     <AdminExams />
+                )}
+
+                {selectedTab === 'referrals' && (
+                    <AdminReferrals />
                 )}
             </main>
         </div>
