@@ -11,7 +11,8 @@ import {
     FaLockOpen,
     FaCheckCircle,
     FaExternalLinkAlt,
-    FaBookmark
+    FaBookmark,
+    FaShieldAlt
 } from 'react-icons/fa';
 import SecurityActivator from '../components/Security/SecurityActivator';
 
@@ -95,6 +96,24 @@ const Home = () => {
                     <div className="flex justify-end">
                         <span className="text-purple-600 text-sm flex items-center gap-1">
                             Search <FaArrowRight className="text-xs" />
+                        </span>
+                    </div>
+                </Link>
+
+                {/* Quick Safety Check */}
+                <Link to="/quick-safety" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition border-2 border-transparent hover:border-blue-100">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 bg-indigo-100 rounded-lg">
+                            <FaShieldAlt className="text-indigo-600 text-lg" />
+                        </div>
+                        <div>
+                            <h2 className="text-sm font-bold text-gray-800">Quick Safety Check</h2>
+                            <p className="text-xs text-gray-500">Pregnancy, elderly, organs</p>
+                        </div>
+                    </div>
+                    <div className="flex justify-end">
+                        <span className="text-indigo-600 text-sm flex items-center gap-1">
+                            Check <FaArrowRight className="text-xs" />
                         </span>
                     </div>
                 </Link>

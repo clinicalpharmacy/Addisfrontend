@@ -32,7 +32,8 @@ import {
     FaCheckCircle,
     FaLeaf,
     FaMortarPestle,
-    FaGraduationCap
+    FaGraduationCap,
+    FaShieldAlt
 } from 'react-icons/fa';
 
 // Force rebuild - ensuring all icons are properly bundled
@@ -273,6 +274,25 @@ const Sidebar = ({ onClose }) => {
                                 <div className="flex items-center gap-2.5 w-full">
                                     <FaCapsules className="text-xl" />
                                     <span className="font-bold text-base">የመድሃኒት መረጃ</span>
+                                    {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
+                                </div>
+                            </NavLink>
+                        </li>
+
+                        {/* Quick Safety Check */}
+                        <li className="mb-2">
+                            <NavLink
+                                to={isSubscribed ? "/quick-safety" : "/subscription/plans"}
+                                onClick={onClose}
+                                className={`flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${
+                                    location.pathname === '/quick-safety' && isSubscribed
+                                        ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600 shadow-sm'
+                                        : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:shadow-sm'
+                                } ${!isSubscribed ? 'opacity-60' : ''}`}
+                            >
+                                <div className="flex items-center gap-2.5 w-full">
+                                    <FaShieldAlt className="text-xl" />
+                                    <span className="font-bold text-base">Quick Safety Check</span>
                                     {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
                                 </div>
                             </NavLink>

@@ -330,7 +330,7 @@ const Login = () => {
                 <FaUserMd className="absolute top-40 right-40 text-white opacity-10 text-6xl animate-bounce delay-300" />
             </div>
 
-            <div className="w-full max-w-xs mx-auto relative z-10 px-0 sm:px-0 py-2 sm:py-4">
+            <div className="w-full max-w-md mx-auto relative z-10 px-4 sm:px-6 py-2 sm:py-4">
                 {/* Animated Logo and Brand - Compact for mobile */}
                 <div className="text-center mb-4 transform hover:scale-105 transition-transform duration-300">
                     <div className="relative inline-block">
@@ -396,7 +396,7 @@ const Login = () => {
                         {/* Email/Addis-Med ID Field */}
                     <div>
                         <div className="flex justify-center">
-                            <div className="relative group w-3/4">
+                            <div className="relative group w-full">
                                 <input
                                     type={loginMethod === 'email' ? "email" : "text"}
                                     value={formData.email}
@@ -439,7 +439,7 @@ const Login = () => {
                         {/* Password Field */}
                         <div>
                             <div className="flex justify-center">
-                                <div className="relative group w-3/4">
+                                <div className="relative group w-full">
                                     <input
                                         type={showPassword ? "text" : "password"}
                                         value={formData.password}
@@ -497,7 +497,7 @@ const Login = () => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className={`w-3/4 py-2.5 px-4 rounded-xl font-bold text-lg transition-all transform hover:scale-[1.01] active:scale-[0.99] ${loading
+                            className={`w-full py-2.5 px-4 rounded-xl font-bold text-lg transition-all transform hover:scale-[1.01] active:scale-[0.99] ${loading
                                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                 : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-xl hover:shadow-2xl'
                             }`}

@@ -18,6 +18,7 @@ import PatientList from "./pages/PatientList";
 import PatientDetails from "./pages/PatientDetails";
 
 import Settings from "./pages/Settings";
+import QuickSafetyCheck from './pages/QuickSafetyCheck';
 import CDSSAnalysisPage from './pages/CDSSAnalysisPage';
 import LabSettingsPage from './pages/LabSettingsPage';
 import CompanyPerformanceReport from './pages/CompanyPerformanceReport';
@@ -40,6 +41,7 @@ import ExtemporaneousPrep from "./components/KnowledgeBase/ExtemporaneousPrep";
 
 // Knowledge Base Layout
 import KnowledgeBaseLayout from "./components/KnowledgeBase/KnowledgeBaseLayout";
+import Education from "./components/KnowledgeBase/Education";
 
 // CDSS Components (ADMIN ONLY)
 import ClinicalRulesAdmin from "./components/CDSS/ClinicalRulesAdmin";
@@ -1117,6 +1119,12 @@ function App() {
                     }
                 />
 
+                <Route path="/quick-safety" element={
+                    <ProtectedRoute>
+                        <QuickSafetyCheck />
+                    </ProtectedRoute>
+                } />
+
                 {/* Admin CDSS Routes - ONLY for admin users */}
                 <Route
                     path="/admin/cdss/rules"
@@ -1241,6 +1249,14 @@ function App() {
                         element={
                             <ProtectedRoute allowedRoles={['pharmacist', 'pharmacy_student']} allowCompanyUsers={true} showLayout={false}>
                                 <ExtemporaneousPrep />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="education"
+                        element={
+                            <ProtectedRoute allowedRoles={['pharmacist', 'pharmacy_student']} allowCompanyUsers={true} showLayout={false}>
+                                <Education />
                             </ProtectedRoute>
                         }
                     />

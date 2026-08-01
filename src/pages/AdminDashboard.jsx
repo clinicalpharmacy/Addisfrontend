@@ -4,7 +4,7 @@ import {
     FaUserCircle, FaSignOutAlt, FaHome, FaBookMedical,
     FaSync, FaSpinner, FaCheckCircle, FaExclamationTriangle,
     FaUserCheck, FaUsers, FaHospital, FaPills, FaComments, FaCreditCard,
-    FaChartLine, FaBuilding, FaUserShield
+    FaChartLine, FaBuilding, FaUserShield, FaFileAlt, FaGraduationCap
 } from 'react-icons/fa';
 
 // Hooks
@@ -27,6 +27,7 @@ import { AdminChats } from '../components/Admin/AdminChats';
 import { AdminSubscriptions } from '../components/Admin/AdminSubscriptions';
 import { AdminFeedback } from '../components/Admin/AdminFeedback';
 import { SupportVault } from '../components/Admin/SupportVault';
+import { AdminExams } from '../components/Admin/AdminExams';
 import api from '../utils/api';
 
 const AdminDashboard = () => {
@@ -110,7 +111,8 @@ const AdminDashboard = () => {
         { id: 'subscriptions', label: 'Subscriptions', icon: FaCreditCard, iconColor: 'text-green-500' },
         { id: 'support_access', label: 'Support Access', icon: FaUserShield, iconColor: 'text-amber-500', count: dashboardData.stats.active_support_count, color: 'bg-blue-600' },
         { id: 'feedback', label: 'User Feedback', icon: FaComments, iconColor: 'text-pink-500' },
-        { id: 'chats', label: 'Support Chats', icon: FaComments, iconColor: 'text-teal-500' }
+        { id: 'chats', label: 'Support Chats', icon: FaComments, iconColor: 'text-teal-500' },
+        { id: 'exams', label: 'Exams', icon: FaGraduationCap, iconColor: 'text-purple-500' }
     ];
 
     // Logout
@@ -297,6 +299,10 @@ const AdminDashboard = () => {
 
                 {selectedTab === 'chats' && (
                     <AdminChats />
+                )}
+
+                {selectedTab === 'exams' && (
+                    <AdminExams />
                 )}
             </main>
         </div>

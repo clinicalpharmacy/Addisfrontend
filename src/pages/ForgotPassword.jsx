@@ -36,7 +36,7 @@ const ForgotPassword = () => {
                 <div className="bg-white rounded-3xl shadow-2xl p-8 border border-gray-100 transform transition-all">
                     <div className="mb-8 text-center">
                         <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-3xl shadow-lg mb-4 transform hover:rotate-12 transition-transform">
-                            <FaShield className="text-white text-3xl" />
+                            <FaShieldAlt className="text-white text-3xl" />
                         </div>
                         <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">Recover Access</h2>
                         <p className="text-gray-500 mt-2 font-medium">Verify your identity to reset your password</p>
