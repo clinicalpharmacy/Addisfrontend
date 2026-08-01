@@ -193,7 +193,6 @@ const MedicationAvailability = () => {
             return;
         }
         try {
-            setLoadingComments(true);
             const isValidChatId = chatWithId && chatWithId !== 'undefined' && chatWithId !== 'null';
             const url = isValidChatId
                 ? `/medication-availability/${postId}/comments?chat_with=${chatWithId}`
