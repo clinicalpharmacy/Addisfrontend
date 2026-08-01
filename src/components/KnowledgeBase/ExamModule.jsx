@@ -228,7 +228,7 @@ const ExamModule = ({ examId, examTitle, examSubject, onBack }) => {
                                     key={option.id}
                                     onClick={() => handleOptionSelect(questions[currentQuestionIndex].id, option.id)}
                                     disabled={hasAnswered}
-                                    className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 ${buttonStyle}`}
+                                    className={`w-full text-left p-3 rounded-xl border-2 transition-all duration-200 ${buttonStyle}`}
                                 >
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
