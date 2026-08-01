@@ -668,10 +668,10 @@ export const ExamCreator = ({ onBack, editData }) => {
                         </div>
 
                         {/* Questions list */}
-                        <div className="space-y-6">
+                        <div className="space-y-4">
                             {extractedQuestions.map((q, qIndex) => (
-                                <div key={q.id || qIndex} className="border border-gray-200 rounded-xl p-5 bg-white shadow-sm hover:border-purple-300 transition-colors">
-                                    <div className="flex justify-between items-start mb-4">
+                                <div key={q.id || qIndex} className="border border-gray-200 rounded-xl p-4 bg-white shadow-sm hover:border-purple-300 transition-colors">
+                                    <div className="flex justify-between items-start mb-3">
                                         <div className="flex-1 mr-4">
                                             <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                                                 Question {qIndex + 1}
@@ -693,7 +693,7 @@ export const ExamCreator = ({ onBack, editData }) => {
                                         </button>
                                     </div>
 
-                                    <div className="space-y-2 ml-4 mb-4 border-l-2 border-gray-100 pl-4">
+                                    <div className="space-y-1.5 ml-4 mb-4 border-l-2 border-gray-100 pl-4">
                                         {q.options.map((opt, oIndex) => (
                                             <div key={opt.id || oIndex} className="flex items-center gap-3">
                                                 <input
