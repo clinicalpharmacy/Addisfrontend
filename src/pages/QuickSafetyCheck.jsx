@@ -203,8 +203,8 @@ const QuickSafetyCheck = () => {
                             </div>
                         )}
                         
-                        <div className="mt-8 text-center bg-gray-50 p-4 rounded-xl text-xs text-gray-400 flex items-center justify-center gap-2">
-                            <FaInfoCircle /> Disclaimer: This information is for educational purposes only and does not replace consultation with a qualified healthcare professional. Medication information may change with emerging evidence, manufacturers’ current prescribing information, and evolving medical practice. Users are responsible for verifying all information and exercising their own professional judgment. 
+                        <div className="mt-8 text-center bg-gray-50 p-4 rounded-xl text-xs font-bold text-gray-400 flex items-center justify-center gap-2">
+                            <FaInfoCircle /> Disclaimer: This information is for educational purposes only and does not replace consultation with a qualified healthcare professional. Medication information may change with emerging evidence, manufacturers’ current prescribing information, and evolving medical practice. Users are responsible for verifying all information and exercising health professional's judgment. 
                         </div>
                     </div>
                 )}
