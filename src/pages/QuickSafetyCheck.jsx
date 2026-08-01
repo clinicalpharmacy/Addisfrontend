@@ -257,9 +257,6 @@ const QuickSafetyCheck = () => {
                                 {getUnsafeCategories().filter(([key]) => selectedCategory === 'all' || key === selectedCategory).length === 0 && (
                                     <div className="bg-green-50 border-2 border-green-500 rounded-2xl p-8 md:p-12 shadow-lg text-center">
                                         <div className="flex flex-col items-center gap-4">
-                                            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
-                                                <FaCheckCircle className="text-5xl text-green-600" />
-                                            </div>
                                             <div>
                                                 <h3 className="text-3xl font-black text-green-700 mb-2">✅ No Unsafe Medication Detected</h3>
                                                 <p className="text-green-600 text-lg font-medium max-w-2xl mx-auto">
@@ -275,14 +272,12 @@ const QuickSafetyCheck = () => {
                             /* Show only when NO unsafe is detected in the filtered results */
                             <div className="bg-green-50 border-2 border-green-500 rounded-2xl p-8 md:p-12 shadow-lg text-center">
                                 <div className="flex flex-col items-center gap-4">
-                                    <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
-                                        <FaCheckCircle className="text-5xl text-green-600" />
-                                    </div>
                                     <div>
                                         <h3 className="text-3xl font-black text-green-700 mb-2">✅ No Unsafe Medication Detected</h3>
                                         <p className="text-green-600 text-lg font-medium max-w-2xl mx-auto">
-                                            No unsafe medication is detected in the Addis Med database for {result.medication} 
-                                            {selectedCategory !== 'all' ? ` in the ${CategoryTitle({ type: selectedCategory })} category` : ''}. 
+                                            It appears {result.medication} is likely acceptable to use
+                                            {selectedCategory !== 'all' ? ` in the ${CategoryTitle({ type: selectedCategory })} category` : ''}, 
+                                            and no contraindication is detected in the Addis Med database. Always consult with your healthcare provider. 
                                             Always consult with your healthcare provider.
                                         </p>
                                     </div>
