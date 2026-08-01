@@ -108,15 +108,15 @@ const ExamModule = ({ examId, examTitle, examSubject, onBack }) => {
     const percentage = ((score / questions.length) * 100).toFixed(1);
 
     return (
-        <div className="bg-white rounded-xl shadow-lg p-6 md:p-8 animate-fadeIn max-w-4xl mx-auto">
-            <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
+        <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 animate-fadeIn max-w-3xl mx-auto">
+            <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
                 <button 
                     onClick={onBack}
                     className="flex items-center gap-2 text-gray-500 hover:text-blue-600 font-medium transition-colors"
                 >
                     <FaArrowLeft /> Back
                 </button>
-                <h3 className="text-2xl font-black text-gray-800 tracking-tight">{examTitle || examSubject}</h3>
+                <h3 className="text-xl font-black text-gray-800 tracking-tight">{examTitle || examSubject}</h3>
                 <div className="text-sm font-bold text-gray-500">
                     {isSubmitted ? 'Completed' : `Question ${currentQuestionIndex + 1} of ${questions.length}`}
                 </div>
