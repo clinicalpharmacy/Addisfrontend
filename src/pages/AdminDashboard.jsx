@@ -156,7 +156,7 @@ const AdminDashboard = () => {
             )}
 
             {/* Header */}
-            <header className="bg-white border-b border-gray-100 mb-4 sticky top-0 z-40 w-full overflow-hidden">
+            <header className="bg-white border-b border-gray-100 mb-4 sticky top-0 z-10 w-full overflow-hidden">
                 <div className="max-w-7xl mx-auto px-4 py-3">
                     <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
                         <div className="flex items-center gap-2.5 w-full sm:w-auto">
