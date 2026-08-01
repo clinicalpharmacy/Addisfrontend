@@ -162,7 +162,7 @@ const Settings = () => {
                                             Copy
                                         </button>
                                     </div>
-                                    <p className="text-sm text-gray-500 mt-4">Share this code with others. When they register and pay for a subscription using your code, you earn a 10% commission!</p>
+                                    <p className="text-sm text-gray-500 mt-4">Share this code with others. When they register and pay for a subscription using your code, you earn a 2% commission!</p>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="p-6 bg-green-50 rounded-3xl border border-green-100">
