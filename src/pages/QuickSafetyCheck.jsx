@@ -103,7 +103,7 @@ const QuickSafetyCheck = () => {
                     <div className="relative z-10">
                         <h2 className="text-3xl md:text-4xl font-black mb-4 tracking-tight">Check Medication Safety</h2>
                         <p className="text-blue-100 text-lg md:text-xl mb-8 max-w-2xl mx-auto opacity-90 font-medium">
-                            Enter any drug name to instantly see if it's safe for pregnancy, breastfeeding, neonate, the elderly, or those with organ failure.
+                            Enter generic drug name to instantly see if it's safe for pregnancy, breastfeeding, neonate, the elderly, or those with organ failure.
                         </p>
                         
                         <form onSubmit={handleSearch} className="max-w-3xl mx-auto relative group flex flex-col md:flex-row gap-3">
