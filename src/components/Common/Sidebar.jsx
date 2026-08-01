@@ -234,7 +234,7 @@ const Sidebar = ({ onClose }) => {
                         </li>
 
                         {/* Patients Section - Medication Review */}
-                        {!isAdmin && userRole !== 'healthcare_client' && (
+                        {!isAdmin && user?.role !== 'healthcare_client' && (
                             <li className="mb-2">
                                 <button
                                     onClick={() => isSubscribed ? toggleSection('patients') : navigate('/subscription/plans')}
