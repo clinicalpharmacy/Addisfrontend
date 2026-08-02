@@ -1405,7 +1405,7 @@ const getMatchedMedications = (condition, facts) => {
     return matched;
 };
 
-// ✅ getInteractionPairs - extracts specific drug pairs from rule conditions AND action
+// ✅ getInteractionPairs - extracts specific drug pairs from rule conditions (handles nested ANY/ALL)
 const getInteractionPairs = (condition, facts, rule) => {
     const pairs = [];
     if (!facts) return pairs;
@@ -1430,16 +1430,24 @@ const getInteractionPairs = (condition, facts, rule) => {
         return null;
     };
 
-    // Extract pairs from rule_action
+    // Extract pairs from rule_action (if defined there)
     const extractPairsFromAction = () => {
         if (!rule) return [];
-        const action = typeof rule.rule_action === 'string' 
-            ? safeJsonParse(rule.rule_action, {}) 
-            : (rule.rule_action || {});
+        
+        let action = {};
+        if (typeof rule.rule_action === 'string') {
+            try {
+                action = JSON.parse(rule.rule_action);
+            } catch (e) {
+                return [];
+            }
+        } else {
+            action = rule.rule_action || {};
+        }
         
         const foundPairs = [];
         
-        // Check for drug_pairs array (multiple pairs)
+        // Check for drug_pairs array
         if (action.drug_pairs && Array.isArray(action.drug_pairs) && action.drug_pairs.length > 0) {
             action.drug_pairs.forEach(pair => {
                 if (pair.drug_a && pair.drug_b) {
@@ -1460,9 +1468,10 @@ const getInteractionPairs = (condition, facts, rule) => {
             if (drugA && drugB) {
                 foundPairs.push({ drugA, drugB });
             }
+            return foundPairs;
         }
         
-        // Check for incompatibility specific fields
+        // Check for incompatibility_pairs
         if (action.incompatibility_pairs && Array.isArray(action.incompatibility_pairs)) {
             action.incompatibility_pairs.forEach(pair => {
                 if (pair.drug_a && pair.drug_b) {
@@ -1473,84 +1482,91 @@ const getInteractionPairs = (condition, facts, rule) => {
                     }
                 }
             });
+            return foundPairs;
         }
         
         return foundPairs;
     };
 
-    // Extract pairs from condition structure
+    // ✅ Extract pairs from the condition structure (handles nested ANY/ALL)
     const extractPairsFromCondition = () => {
         if (!condition) return [];
         const foundPairs = [];
         
-        const findPairsInConditions = (conds) => {
-            if (!conds || !Array.isArray(conds)) return;
-            
-            const medicationConditions = [];
-            conds.forEach(c => {
-                if (c.fact === 'medications' && c.operator === 'contains') {
-                    medicationConditions.push(c.value);
-                }
-                if (c.any) findPairsInConditions(c.any);
-                if (c.all) findPairsInConditions(c.all);
-            });
-
-            if (medicationConditions.length === 2) {
-                const drugA = findMatchingMedication(medicationConditions[0]);
-                const drugB = findMatchingMedication(medicationConditions[1]);
-                if (drugA && drugB) {
-                    const exists = foundPairs.some(p => p.drugA === drugA && p.drugB === drugB);
-                    if (!exists) {
-                        foundPairs.push({ drugA, drugB });
-                    }
-                }
-            } else if (medicationConditions.length > 2) {
-                const matchedMeds = medicationConditions
-                    .map(val => findMatchingMedication(val))
-                    .filter(med => med !== null);
-                
-                const uniqueMeds = [...new Set(matchedMeds)];
-                
-                for (let i = 0; i < uniqueMeds.length; i++) {
-                    for (let j = i + 1; j < uniqueMeds.length; j++) {
-                        const exists = foundPairs.some(p => 
-                            (p.drugA === uniqueMeds[i] && p.drugB === uniqueMeds[j]) ||
-                            (p.drugA === uniqueMeds[j] && p.drugB === uniqueMeds[i])
-                        );
-                        if (!exists) {
-                            foundPairs.push({ drugA: uniqueMeds[i], drugB: uniqueMeds[j] });
-                        }
-                    }
-                }
-            }
-        };
-
+        // Parse condition if it's a string
         let parsedCondition = condition;
         if (typeof condition === 'string') {
             try { parsedCondition = JSON.parse(condition); } catch (e) { return foundPairs; }
         }
 
-        if (parsedCondition.all) findPairsInConditions(parsedCondition.all);
-        if (parsedCondition.any) findPairsInConditions(parsedCondition.any);
+        // Recursively find all medication pairs in the condition
+        const findPairsInConditions = (conds) => {
+            if (!conds) return;
+            
+            // Handle array of conditions
+            if (Array.isArray(conds)) {
+                // Check if this is an 'all' block with exactly 2 medication conditions
+                const medicationConditions = conds.filter(c => 
+                    c.fact === 'medications' && c.operator === 'contains' && c.value
+                );
+                
+                // If we found exactly 2 medication conditions in this block, they form a pair
+                if (medicationConditions.length === 2) {
+                    const drugA = findMatchingMedication(medicationConditions[0].value);
+                    const drugB = findMatchingMedication(medicationConditions[1].value);
+                    if (drugA && drugB) {
+                        // Check if this pair already exists
+                        const exists = foundPairs.some(p => 
+                            (p.drugA === drugA && p.drugB === drugB) ||
+                            (p.drugA === drugB && p.drugB === drugA)
+                        );
+                        if (!exists) {
+                            foundPairs.push({ drugA, drugB });
+                        }
+                    }
+                }
+                
+                // Recursively process nested conditions
+                conds.forEach(c => {
+                    if (c.any) findPairsInConditions(c.any);
+                    if (c.all) findPairsInConditions(c.all);
+                });
+            } 
+            // Handle object with 'any' or 'all' properties
+            else if (typeof conds === 'object') {
+                if (conds.any) findPairsInConditions(conds.any);
+                if (conds.all) findPairsInConditions(conds.all);
+            }
+        };
+
+        // Start traversing from the root
+        findPairsInConditions(parsedCondition);
         
         return foundPairs;
     };
 
-    // First try to get pairs from the action (most reliable)
+    // First try to get pairs from the action
     const actionPairs = extractPairsFromAction();
     if (actionPairs.length > 0) {
+        console.log(`✅ Found ${actionPairs.length} pairs in action`);
         return actionPairs;
     }
 
-    // If no pairs in action, try from condition
+    // Then try to extract pairs from the condition
     const conditionPairs = extractPairsFromCondition();
     if (conditionPairs.length > 0) {
+        console.log(`✅ Found ${conditionPairs.length} pairs in condition`);
         return conditionPairs;
     }
 
-    // Fallback: generate pairs from matched medications
+    // Fallback: If we have matched medications but no specific pairs
     const matchedMeds = facts.matched_medications || [];
-    if (matchedMeds.length >= 2) {
+    if (matchedMeds.length === 2) {
+        pairs.push({ 
+            drugA: matchedMeds[0], 
+            drugB: matchedMeds[1] 
+        });
+    } else if (matchedMeds.length > 2) {
         const uniqueMeds = [...new Set(matchedMeds)];
         for (let i = 0; i < uniqueMeds.length; i++) {
             for (let j = i + 1; j < uniqueMeds.length; j++) {
