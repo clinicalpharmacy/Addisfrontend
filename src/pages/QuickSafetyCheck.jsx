@@ -87,6 +87,25 @@ const QuickSafetyCheck = () => {
         return getFilteredUnsafeCategories().length > 0;
     };
 
+    // Check if there are any interactions or incompatibilities
+    const hasInteractionsOrIncompatibilities = () => {
+        if (!result) return false;
+        
+        // Check if we should show interactions based on filter
+        const showInteractions = selectedCategory === 'all' || selectedCategory === 'drug_interactions';
+        const showIncompatibility = selectedCategory === 'all' || selectedCategory === 'iv_incompatibility';
+        
+        const hasInteractions = showInteractions && result.major_interactions && result.major_interactions.length > 0;
+        const hasIncompatibility = showIncompatibility && result.iv_incompatibility && result.iv_incompatibility.length > 0;
+        
+        return hasInteractions || hasIncompatibility;
+    };
+
+    // Check if any data exists to show
+    const hasAnyDataToShow = () => {
+        return hasUnsafeInFiltered() || hasInteractionsOrIncompatibilities();
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
             {/* Header */}
@@ -175,31 +194,33 @@ const QuickSafetyCheck = () => {
                 {/* Results */}
                 {result && !loading && (
                     <div className="animate-fadeIn space-y-6">
-                        {hasUnsafeInFiltered() ? (
+                        {hasAnyDataToShow() ? (
                             <>
-
                                 <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100">
                                     <h3 className="text-3xl font-black text-gray-900 capitalize mb-2">{result.medication}</h3>
                                     <p className="text-gray-600 text-lg leading-relaxed">{result.general_overview}</p>
                                 </div>
 
-                                {/* Show ONLY unsafe categories with proper filtering */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {getFilteredUnsafeCategories().map(([key, data]) => (
-                                        <div key={key} className="bg-red-50 rounded-2xl p-6 shadow-sm border-2 border-red-400 hover:border-red-600 transition-colors group">
-                                            <div className="flex items-start justify-between mb-4">
-                                                <div className="flex items-center gap-3">
-                                                    <h4 className="font-bold text-gray-800 text-lg"><CategoryTitle type={key} /></h4>
+                                {/* Show unsafe categories with proper filtering */}
+                                {hasUnsafeInFiltered() && (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {getFilteredUnsafeCategories().map(([key, data]) => (
+                                            <div key={key} className="bg-red-50 rounded-2xl p-6 shadow-sm border-2 border-red-400 hover:border-red-600 transition-colors group">
+                                                <div className="flex items-start justify-between mb-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <h4 className="font-bold text-gray-800 text-lg"><CategoryTitle type={key} /></h4>
+                                                    </div>
+                                                    <StatusBadge status={data.status} />
                                                 </div>
-                                                <StatusBadge status={data.status} />
+                                                <p className="text-gray-700 leading-relaxed text-base font-bold">{data.details}</p>
                                             </div>
-                                            <p className="text-gray-700 leading-relaxed text-base font-bold">{data.details}</p>
-                                        </div>
-                                    ))}
-                                </div>
+                                        ))}
+                                    </div>
+                                )}
 
                                 {/* Major Drug Interactions */}
-                                {result.major_interactions && result.major_interactions.length > 0 && (
+                                {(selectedCategory === 'all' || selectedCategory === 'drug_interactions') && 
+                                 result.major_interactions && result.major_interactions.length > 0 && (
                                     <div className="bg-amber-50 rounded-2xl p-6 md:p-8 shadow-sm border border-amber-200 mt-6">
                                         <h4 className="text-xl font-bold text-amber-900 flex items-center gap-2 mb-4">
                                             <FaPills className="text-amber-600" /> Major Drug Interactions (Avoid With)
@@ -213,7 +234,8 @@ const QuickSafetyCheck = () => {
                                 )}
 
                                 {/* IV Drug Incompatibility */}
-                                {result.iv_incompatibility && result.iv_incompatibility.length > 0 && (
+                                {(selectedCategory === 'all' || selectedCategory === 'iv_incompatibility') && 
+                                 result.iv_incompatibility && result.iv_incompatibility.length > 0 && (
                                     <div className="bg-red-50 rounded-2xl p-6 md:p-8 shadow-sm border border-red-200 mt-6">
                                         <h4 className="text-xl font-bold text-red-900 flex items-center gap-2 mb-4">
                                             <FaSyringe className="text-red-600" /> IV Drug Incompatibility (Do Not Mix)
@@ -227,7 +249,7 @@ const QuickSafetyCheck = () => {
                                 )}
                             </>
                         ) : (
-                            /* Show when NO unsafe is detected in the filtered results */
+                            /* Show when NO data is detected in the filtered results */
                             <div className="bg-green-50 border-2 border-green-500 rounded-2xl p-8 md:p-12 shadow-lg text-center">
                                 <div className="flex flex-col items-center gap-4">
                                     <div>
