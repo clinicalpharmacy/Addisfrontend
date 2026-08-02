@@ -1137,7 +1137,7 @@ const MinorIllnesses = () => {
 
                 {/* Illness Details Modal - Narrower Width with Enhanced Formatting */}
                 {selectedIllness && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-start p-4 z-50">
                         <div className="bg-white rounded-xl shadow-2xl w-[60%] max-w-[60%] min-w-[300px] max-h-[90vh] overflow-hidden">
                             {/* Header */}
                             <div className="sticky top-0 bg-gradient-to-r from-red-600 to-red-800 text-white p-3">
