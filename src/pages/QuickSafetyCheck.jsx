@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
     FaSearch, FaArrowLeft, FaShieldAlt, FaBaby, FaBabyCarriage, 
     FaUserEdit, FaProcedures, FaHeartbeat, FaPills, FaExclamationTriangle,
-    FaCheckCircle, FaExclamationCircle, FaSpinner, FaInfoCircle
+    FaCheckCircle, FaExclamationCircle, FaSpinner, FaInfoCircle, FaSyringe
 } from 'react-icons/fa';
 import api from '../utils/api';
 
@@ -203,6 +203,20 @@ const QuickSafetyCheck = () => {
                                         <ul className="list-disc list-inside space-y-2 text-amber-800 font-medium ml-2">
                                             {result.major_interactions.map((interaction, i) => (
                                                 <li key={i}>{interaction}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+
+                                {/* IV Drug Incompatibility */}
+                                {result.iv_incompatibility && result.iv_incompatibility.length > 0 && (
+                                    <div className="bg-red-50 rounded-2xl p-6 md:p-8 shadow-sm border border-red-200 mt-6">
+                                        <h4 className="text-xl font-bold text-red-900 flex items-center gap-2 mb-4">
+                                            <FaSyringe className="text-red-600" /> IV Drug Incompatibility (Do Not Mix)
+                                        </h4>
+                                        <ul className="list-disc list-inside space-y-2 text-red-800 font-medium ml-2">
+                                            {result.iv_incompatibility.map((incompatibility, i) => (
+                                                <li key={i}>{incompatibility}</li>
                                             ))}
                                         </ul>
                                     </div>
