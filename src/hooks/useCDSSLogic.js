@@ -5,73 +5,6 @@ import { mapPatientToFacts, evaluateRule, formatAlertMessage } from '../componen
 import { sampleTestRules } from '../constants/cdssRules';
 import { getEncryptionKey, decryptPatient, decryptValue } from '../utils/encryptionUtils';
 
-// ============================================
-// HELPER FUNCTIONS FOR NESTED CONDITION HANDLING
-// ============================================
-
-/**
- * Recursively collect ALL leaf facts from a nested condition tree.
- * Handles: { all: [...] }, { any: [...] }, and plain { fact, value, operator }
- */
-const collectFacts = (node) => {
-    if (!node) return [];
-    const results = [];
-    if (node.fact) {
-        results.push(node);
-    }
-    if (Array.isArray(node.all)) {
-        node.all.forEach(child => results.push(...collectFacts(child)));
-    }
-    if (Array.isArray(node.any)) {
-        node.any.forEach(child => results.push(...collectFacts(child)));
-    }
-    return results;
-};
-
-/**
- * Get all medication names from a condition block
- */
-const getMedicationNames = (block) => {
-    const facts = collectFacts(block);
-    return facts
-        .filter(f => f.fact === 'medications' && f.value)
-        .map(f => f.value);
-};
-
-/**
- * Find the "any" block that contains medication pairs in a nested condition tree
- */
-const findMedicationPairs = (node) => {
-    if (!node) return null;
-    
-    // If this node has 'any' with medication facts, return it
-    if (Array.isArray(node.any)) {
-        const hasMedications = node.any.some(item => {
-            const facts = collectFacts(item);
-            return facts.some(f => f.fact === 'medications');
-        });
-        if (hasMedications) {
-            return node.any;
-        }
-    }
-    
-    // Recursively search in child nodes
-    if (Array.isArray(node.all)) {
-        for (const child of node.all) {
-            const result = findMedicationPairs(child);
-            if (result) return result;
-        }
-    }
-    if (Array.isArray(node.any)) {
-        for (const child of node.any) {
-            const result = findMedicationPairs(child);
-            if (result) return result;
-        }
-    }
-    
-    return null;
-};
-
 export const useCDSSLogic = (patientData) => {
     const [alerts, setAlerts] = useState([]);
     const [filteredAlerts, setFilteredAlerts] = useState([]);
@@ -92,11 +25,14 @@ export const useCDSSLogic = (patientData) => {
     const [hasAnalyzed, setHasAnalyzed] = useState(false);
     const [decryptionFailed, setDecryptionFailed] = useState(false);
     const [decryptedPatient, setDecryptedPatient] = useState(null);
+    // Incrementing this triggers a forced re-analysis after state commits
     const [forceReanalysisKey, setForceReanalysisKey] = useState(0);
+    // Gate: prevents auto-analysis from firing before medications are fetched
     const [medicationsFetched, setMedicationsFetched] = useState(false);
 
     // Use refs to prevent infinite loops
     const previousPatientIdRef = useRef(null);
+    // Stable ref to analyzePatient to avoid it being a useEffect dependency
     const analyzePatientRef = useRef(null);
 
     const fetchClinicalRules = useCallback(async () => {
@@ -112,6 +48,9 @@ export const useCDSSLogic = (patientData) => {
                 console.error('❌ Error fetching rules:', result.error);
                 debugText += `❌ Error fetching rules: ${result.error || 'Unknown error'}\n`;
                 setDebugInfo(prev => prev + debugText);
+
+                // If database error, use sample test rules
+                console.log('⚠️ Using sample test rules due to database error');
                 setClinicalRules(sampleTestRules);
                 return;
             }
@@ -140,6 +79,7 @@ export const useCDSSLogic = (patientData) => {
     }, []);
 
     const fetchPatientMedications = useCallback(async () => {
+        // Initialize with patientData medications if available (fallback)
         let fallbackMedications = [];
         if (patientData?.medication_history && Array.isArray(patientData.medication_history)) {
             fallbackMedications = patientData.medication_history;
@@ -148,7 +88,7 @@ export const useCDSSLogic = (patientData) => {
         if (!patientData?.id) {
             console.log('⚠️ No patient id provided for medication fetch, using fallback if available');
             setMedications(fallbackMedications);
-            setMedicationsFetched(true);
+            setMedicationsFetched(true); // gate: mark done even with no id
             return;
         }
 
@@ -171,6 +111,7 @@ export const useCDSSLogic = (patientData) => {
             console.log(`✅ Loaded ${data.length} medications from API`);
             debugText += `✅ Loaded ${data.length} medications from API\n`;
             
+            // 🔐 ZERO-KNOWLEDGE: Decrypt medications for display and analysis
             let medsResult = data;
             const encKey = await getEncryptionKey();
             if (encKey && medsResult.length > 0) {
@@ -192,6 +133,7 @@ export const useCDSSLogic = (patientData) => {
                 }
             }
 
+            // Use API data if available, otherwise fallback
             if (medsResult.length > 0) {
                 setMedications(medsResult);
             } else {
@@ -201,6 +143,7 @@ export const useCDSSLogic = (patientData) => {
                 if (fallbackMedications.length > 0) {
                     console.log(`✅ Found ${fallbackMedications.length} medications in patient record. Decrypting...`);
                     
+                    // Decrypt fallback meds too
                     let decryptedFallback = fallbackMedications;
                     if (encKey) {
                         try {
@@ -231,6 +174,7 @@ export const useCDSSLogic = (patientData) => {
             setDebugInfo(prev => prev + `❌ Exception fetching medications: ${error.message}\n`);
             setMedications(fallbackMedications);
         } finally {
+            // Always mark medications as fetched so auto-analysis can proceed
             setMedicationsFetched(true);
         }
     }, [patientData?.patient_code, patientData?.medication_history]);
@@ -244,6 +188,8 @@ export const useCDSSLogic = (patientData) => {
         setLoading(true);
         setAnalysisError(null);
         
+        // Reset results but keep old ones if refresh is requested? 
+        // Actually, user wants immediate feedback, so we clear.
         setAlerts([]);
         setFilteredAlerts([]);
         setAnalysisStats(null);
@@ -258,7 +204,8 @@ export const useCDSSLogic = (patientData) => {
         setDebugInfo(debug);
 
         try {
-            setHasAnalyzed(true);
+            setHasAnalyzed(true); // Mark as analyzed right away to prevent loops
+            // 🔐 ZERO-KNOWLEDGE: Decrypt data before analysis
             let currentPatient = { ...patientData };
             let currentMedications = [...medsToUse];
             
@@ -269,6 +216,7 @@ export const useCDSSLogic = (patientData) => {
                     setDecryptedPatient(currentPatient);
                     setDecryptionFailed(false);
 
+                    // Decrypt medications
                     currentMedications = await Promise.all(medsToUse.map(async (m) => {
                         const d = { ...m };
                         const sensitiveMedsFields = ['drug_name', 'dose', 'frequency', 'roa', 'route', 'indication', 'notes', 'medical_condition'];
@@ -301,90 +249,11 @@ export const useCDSSLogic = (patientData) => {
             for (const rule of rulesSrc) {
                 rulesEvaluated++;
                 try {
-                    const cond = rule.rule_condition;
-                    if (!cond) continue;
-                    
-                    const lowerRuleType = String(rule.rule_type).toLowerCase();
-                    const lowerRuleName = String(rule.rule_name).toLowerCase();
-                    
-                    // ============================================
-                    // CHECK FOR IV INCOMPATIBILITY
-                    // ============================================
-                    if (lowerRuleType === 'iv incompatibility' || 
-                        lowerRuleName.includes('iv drug incompatibility') || 
-                        lowerRuleName.includes('iv incompatibility')) {
-                        
-                        // Check if patient has IV medications
-                        const hasIVRoute = currentMedications.some(med => 
-                            med.roa?.toLowerCase() === 'iv' || 
-                            med.route?.toLowerCase() === 'iv'
-                        );
-                        
-                        if (!hasIVRoute) {
-                            // Skip if no IV medications
-                            continue;
-                        }
-                        
-                        // Find medication pairs in the condition
-                        const pairs = findMedicationPairs(cond);
-                        if (pairs) {
-                            let matched = false;
-                            pairs.forEach(block => {
-                                const medsInBlock = getMedicationNames(block);
-                                if (medsInBlock.length >= 2) {
-                                    // Check if patient has all medications in this pair
-                                    const hasAllMeds = medsInBlock.every(medName => 
-                                        currentMedications.some(med => 
-                                            med.drug_name?.toLowerCase().includes(medName.toLowerCase())
-                                        )
-                                    );
-                                    
-                                    if (hasAllMeds) {
-                                        matched = true;
-                                        const combo = medsInBlock.join(' + ');
-                                        const severity = rule.severity || 'high';
-                                        
-                                        const action = typeof rule.rule_action === 'string' ? JSON.parse(rule.rule_action) : (rule.rule_action || {});
-                                        const profRec = formatAlertMessage(action.recommendation_professional || action.recommendation || rule.rule_description || '', facts);
-                                        
-                                        triggeredAlerts.push({
-                                            id: `iv_incompat_${Date.now()}_${Math.random()}`,
-                                            rule_id: rule.id,
-                                            rule_name: rule.rule_name,
-                                            rule_type: 'IV Incompatibility',
-                                            severity: severity,
-                                            message: `IV Incompatibility: ${combo}`,
-                                            professional_message: `IV Drug Incompatibility detected: ${combo}. Do not mix in same IV line.`,
-                                            client_message: `IV Incompatibility: ${combo} - Do not mix in the same IV line.`,
-                                            professional_recommendation: `Administer ${combo} through separate IV lines.`,
-                                            client_recommendation: `Administer ${combo} through separate IV lines.`,
-                                            details: profRec || `These medications should not be mixed in the same IV line.`,
-                                            evidence: {
-                                                facts,
-                                                matched_medications: medsInBlock,
-                                                rule_condition: cond
-                                            },
-                                            timestamp: new Date().toISOString(),
-                                            acknowledged: false,
-                                            processed: false,
-                                            patient_id: patientData.id
-                                        });
-                                        
-                                        rulesTriggered++;
-                                    }
-                                }
-                            });
-                            if (matched) continue; // Skip regular evaluation if matched
-                        }
-                    }
-                    
-                    // ============================================
-                    // REGULAR RULE EVALUATION FOR NON-IV RULES
-                    // ============================================
                     const evalResult = evaluateRule(rule, facts, true);
                     if (evalResult.triggered) {
                         rulesTriggered++;
                         
+                        // Parse action
                         let action = {};
                         try {
                             action = typeof rule.rule_action === 'string' ? JSON.parse(rule.rule_action) : (rule.rule_action || {});
@@ -417,16 +286,16 @@ export const useCDSSLogic = (patientData) => {
                             patient_id: patientData.id
                         });
                     }
-                } catch (e) { 
-                    console.error(`Rule ${rule.id} failed`, e); 
-                }
+                } catch (e) { console.error(`Rule ${rule.id} failed`, e); }
             }
 
+            // Finalize
             const severityOrder = { critical: 0, high: 1, moderate: 2, low: 3 };
             triggeredAlerts.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
 
             setAlerts(triggeredAlerts);
             
+            // Sync Filtered Alerts Immediately
             if (severityFilter === 'all') {
                 setFilteredAlerts(triggeredAlerts);
             } else {
@@ -460,6 +329,7 @@ export const useCDSSLogic = (patientData) => {
         console.log('🚀 Running full clinical analysis refresh...');
         
         try {
+            // Fetch everything fresh
             const [rulesRes, medsRes] = await Promise.all([
                 api.get('/clinical-rules'),
                 api.get(`/medication-history/patient/${patientData.id}`)
@@ -468,8 +338,10 @@ export const useCDSSLogic = (patientData) => {
             const freshRules = rulesRes.success ? (rulesRes.rules || []) : clinicalRules;
             const freshMeds = medsRes.success ? (medsRes.medications || []) : medications;
 
+            // Update state for next cycle
             if (rulesRes.success) setClinicalRules(freshRules);
             if (medsRes.success) {
+                // Decrypt meds before setting state to keep UI consistent
                 let decrypted = freshMeds;
                 const encKey = await getEncryptionKey();
                 if (encKey && freshMeds.length > 0) {
@@ -488,6 +360,8 @@ export const useCDSSLogic = (patientData) => {
                 setMedicationsFetched(true);
             }
 
+            // TRIGGER ANALYSIS IMMEDIATELY with the fresh data we just got
+            // This avoids waiting for React's async setState cycle
             await analyzePatient(freshRules, freshMeds);
             
         } catch (error) {
@@ -514,6 +388,7 @@ export const useCDSSLogic = (patientData) => {
                 acknowledged: isProcessed !== null ? (isProcessed ? true : a.acknowledged) : true
             } : a);
             
+            // Sync filtered list too
             const filtered = severityFilter === 'all' ? updated : updated.filter(u => u.severity === severityFilter);
             setFilteredAlerts(filtered);
             return updated;
@@ -530,6 +405,7 @@ export const useCDSSLogic = (patientData) => {
         setExpandedAlert(prev => prev === alertId ? null : alertId);
     }, []);
 
+    // Effect: Sync analyzePatientRef
     useEffect(() => {
         analyzePatientRef.current = analyzePatient;
     });
@@ -549,6 +425,7 @@ export const useCDSSLogic = (patientData) => {
             const freshRules = rulesRes.success ? (rulesRes.rules || []) : sampleTestRules;
             const freshMeds = medsRes.success ? (medsRes.medications || []) : (patientData?.medication_history || []);
 
+            // Set state
             if (rulesRes.success && freshRules.length > 0) {
                 setClinicalRules(freshRules);
             } else {
@@ -561,9 +438,11 @@ export const useCDSSLogic = (patientData) => {
             
             if (encKey) {
                 try {
+                    // Decrypt Patient data for display
                     currentPatient = await decryptPatient(currentPatient, encKey);
                     setDecryptedPatient(currentPatient);
 
+                    // Decrypt medications
                     if (freshMeds.length > 0) {
                         decryptedMeds = await Promise.all(freshMeds.map(async (m) => {
                             const d = { ...m };
@@ -589,6 +468,7 @@ export const useCDSSLogic = (patientData) => {
             setMedications(decryptedMeds);
             setMedicationsFetched(true);
 
+            // Force analysis immediately identically to runFullAnalysis
             await analyzePatient(rulesRes.success && freshRules.length > 0 ? freshRules : sampleTestRules, decryptedMeds);
 
         } catch (error) {
@@ -599,12 +479,14 @@ export const useCDSSLogic = (patientData) => {
         }
     }, [patientData, analyzePatient]);
 
+    // Effect: Initialize/Re-fetch when patient changes
     useEffect(() => {
         const currentId = patientData?.id;
         
         if (currentId && currentId !== previousPatientIdRef.current) {
             console.log(`🎯 Patient switched to ${currentId}. Resetting and initializing CDSS...`);
             
+            // 1. Reset states to prevent "ghost" data from previous patient
             setAlerts([]);
             setFilteredAlerts([]);
             setMedications([]);
@@ -612,14 +494,20 @@ export const useCDSSLogic = (patientData) => {
             setAnalysisStats(null);
             setHasAnalyzed(false);
             
+            // 2. Clear debug info
             setDebugInfo(`🔄 Loading clinical rules for Patient ${currentId}...\n`);
             
+            // 3. Update ref immediately
             previousPatientIdRef.current = currentId;
             
+            // 4. Trigger fresh fetch
             initializeCDSS();
         }
     }, [patientData?.id, initializeCDSS]);
 
+    // Effect: High-performance facts synchronization
+    // This ensures that if PatientDetails updates formData (age/gender/labs/diagnosis) 
+    // after the initial mount, the CDSS logic stays in sync.
     useEffect(() => {
         if (patientData && medicationsFetched && hasAnalyzed) {
             const hasKeyData = patientData.gender || patientData.age || patientData.age_in_days || patientData.diagnosis;
@@ -668,8 +556,11 @@ export const useCDSSLogic = (patientData) => {
                     const details = rule.rule_action?.recommendation || rule.rule_description;
                     const severity = rule.rule_action?.severity || rule.severity || 'moderate';
 
+                    // Format message
+                    // Format professional message
                     let professional_message_formatted = formatAlertMessage(professional_message, facts);
 
+                    // Append matched medications
                     if (evalResult.matchedMedications.length > 0) {
                         professional_message_formatted += ` [Drug(s): ${evalResult.matchedMedications.join(', ')}]`;
                     }
