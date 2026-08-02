@@ -15,6 +15,8 @@ const CategoryTitle = ({ type }) => {
         case 'neonate': return 'Neonates';
         case 'kidney_failure': return 'Kidney Failure';
         case 'liver_failure': return 'Liver Failure';
+        case 'drug_interactions': return 'Drug Interactions';
+        case 'iv_incompatibility': return 'IV Drug Incompatibility';
         default: return type;
     }
 };
@@ -136,6 +138,8 @@ const QuickSafetyCheck = () => {
                                 <option value="neonate">Neonates</option>
                                 <option value="kidney_failure">Kidney Failure</option>
                                 <option value="liver_failure">Liver Failure</option>
+                                <option value="drug_interactions">Drug Interactions</option>
+                                <option value="iv_incompatibility">IV Drug Incompatibility</option>
                             </select>
 
                             <button 
@@ -194,7 +198,7 @@ const QuickSafetyCheck = () => {
                                     ))}
                                 </div>
 
-                                {/* Major Interactions */}
+                                {/* Major Drug Interactions */}
                                 {result.major_interactions && result.major_interactions.length > 0 && (
                                     <div className="bg-amber-50 rounded-2xl p-6 md:p-8 shadow-sm border border-amber-200 mt-6">
                                         <h4 className="text-xl font-bold text-amber-900 flex items-center gap-2 mb-4">
