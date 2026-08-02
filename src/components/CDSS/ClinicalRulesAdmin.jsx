@@ -118,6 +118,7 @@ const ClinicalRulesAdmin = () => {
         { value: 'elderly_check', label: 'Elderly Check', icon: FaUser, color: 'bg-lime-100 text-lime-800', category: 'Safety' },
         { value: 'administration', label: 'Administration', icon: FaPills, color: 'bg-amber-100 text-amber-800', category: 'Adherence' },
         { value: 'administration', label: 'Administration', icon: FaPills, color: 'bg-amber-100 text-amber-800', category: 'Effectiveness' },
+        { value: 'iv incompatibility', label: 'IV Incompatibility', icon: FaPills, color: 'bg-amber-100 text-amber-800', category: 'Safety' },
         { value: 'pediatric_check', label: 'Pediatric Check', icon: FaBaby, color: 'bg-indigo-100 text-indigo-800', category: 'Safety' }
     ];
 
