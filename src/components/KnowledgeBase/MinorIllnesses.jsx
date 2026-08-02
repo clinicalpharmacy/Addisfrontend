@@ -36,6 +36,7 @@ const MinorIllnesses = () => {
     const context = useOutletContext();
     const protectionEnabled = context?.protectionEnabled ?? true;
     const toggleProtection = context?.toggleProtection ?? (() => { });
+    const protectionMsg = useScreenshotProtection(protectionEnabled);
 
     const [illnesses, setIllnesses] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
