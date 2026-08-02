@@ -317,36 +317,37 @@ const Login = () => {
     const CurrentIcon = carouselMessages[currentSlide].icon;
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-indigo-700 via-purple-700 to-pink-700 flex items-start justify-center p-1 sm:p-3 relative overflow-auto">
-            {/* Animated Background Elements - Enhanced with better visibility */}
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-start justify-center p-1 sm:p-3 relative overflow-auto">
+            {/* Animated Background Elements - Hidden on mobile for performance */}
             <div className="absolute inset-0 overflow-hidden hidden md:block">
-                <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-cyan-400 to-blue-400 rounded-full opacity-20 animate-pulse"></div>
-                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-pink-400 to-rose-400 rounded-full opacity-20 animate-pulse delay-1000"></div>
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-blue-300 to-purple-300 rounded-full opacity-15 animate-ping"></div>
+                <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-100 rounded-full opacity-30 animate-pulse"></div>
+                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-100 rounded-full opacity-30 animate-pulse delay-1000"></div>
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-blue-200 to-purple-200 rounded-full opacity-20 animate-ping"></div>
 
-                {/* Floating medical icons with better visibility */}
-                <FaHeartbeat className="absolute top-20 left-20 text-white opacity-15 text-6xl animate-bounce" />
-                <FaUserShield className="absolute bottom-20 right-20 text-white opacity-15 text-6xl animate-bounce delay-700" />
-                <FaUserMd className="absolute top-40 right-40 text-white opacity-15 text-6xl animate-bounce delay-300" />
+                {/* Floating medical icons */}
+                <FaHeartbeat className="absolute top-20 left-20 text-blue-200 opacity-30 text-6xl animate-bounce" />
+                <FaUserShield className="absolute bottom-20 right-20 text-purple-200 opacity-30 text-6xl animate-bounce delay-700" />
+                <FaUserMd className="absolute top-40 right-40 text-indigo-200 opacity-30 text-6xl animate-bounce delay-300" />
             </div>
 
             <div className="w-full max-w-md mx-auto relative z-10 px-4 sm:px-6 py-2 sm:py-4">
-                {/* Animated Logo and Brand - Enhanced with better contrast */}
+                {/* Animated Logo and Brand - Compact for mobile */}
                 <div className="text-center mb-4 transform hover:scale-105 transition-transform duration-300">
                     <div className="relative inline-block">
-                        <div className="absolute inset-0 bg-white rounded-xl blur-xl opacity-60 animate-pulse"></div>
-                        <div className="relative flex items-center justify-center w-14 h-14 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-xl mb-2 mx-auto shadow-2xl">
+                        <div className="absolute inset-0 bg-white rounded-xl blur-xl opacity-50 animate-pulse"></div>
+                        <div className="relative flex items-center justify-center w-14 h-14 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl mb-2 mx-auto shadow-2xl">
                             <FaUserMd className="text-white text-xl animate-pulse" />
                         </div>
                     </div>
-                    <h1 className="text-3xl font-bold text-white mb-1 tracking-tight drop-shadow-lg">Addis Med</h1>
+                    <h1 className="text-3xl font-bold text-gray-800 mb-1 tracking-tight">Addis Med</h1>
+                    <p className="text-sm text-gray-600 font-medium">Healthcare Information Platform</p>
                 </div>
 
-                {/* Login Card - Enhanced with better contrast and clarity */}
-                <div className="bg-white/95 backdrop-blur-lg rounded-2xl shadow-2xl p-3 sm:p-5 border border-white/30 transform transition-all duration-300">
+                {/* Login Card - Optimized for mobile */}
+                <div className="bg-white rounded-2xl shadow-2xl p-3 sm:p-5 border border-gray-200 transform transition-all duration-300">
                     <div className="mb-5 text-center">
-                        {/* Login Method Toggle - Enhanced with better contrast */}
-                        <div className="flex items-center justify-center gap-1.5 mt-3 bg-gray-100 p-1 rounded-lg shadow-inner">
+                        {/* Login Method Toggle - Compact for mobile */}
+                        <div className="flex items-center justify-center gap-1.5 mt-3 bg-gray-100 p-1 rounded-lg">
                             <button
                                 type="button"
                                 onClick={() => {
@@ -355,8 +356,8 @@ const Login = () => {
                                     setError('');
                                 }}
                                 className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-base font-bold transition-all ${loginMethod === 'email'
-                                    ? 'bg-gradient-to-r from-indigo-500 to-blue-600 text-white shadow-lg shadow-indigo-200'
-                                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-200'
+                                    ? 'bg-white text-blue-600 shadow-md ring-2 ring-blue-500'
+                                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-200'
                                     }`}
                             >
                                 Health Professionals & Students
@@ -369,8 +370,8 @@ const Login = () => {
                                     setError('');
                                 }}
                                 className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-base font-bold transition-all ${loginMethod === 'addisMedId'
-                                    ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-200'
-                                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-200'
+                                    ? 'bg-white text-green-600 shadow-md ring-2 ring-green-500'
+                                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-200'
                                     }`}
                             >
                                 Healthcare Client
@@ -378,22 +379,22 @@ const Login = () => {
                         </div>
                     </div>
 
-                    {/* Error Message with Enhanced Visibility */}
+                    {/* Error Message with Animation - Compact for mobile */}
                     {error && (
-                        <div className="mb-4 p-4 bg-red-50 border-l-4 border-red-600 rounded-r-xl animate-shake shadow-md">
+                        <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-xl animate-shake">
                             <div className="flex items-start gap-2">
-                                <FaExclamationTriangle className="text-red-600 mt-0.5 flex-shrink-0 text-xs animate-pulse" />
+                                <FaExclamationTriangle className="text-red-500 mt-0.5 flex-shrink-0 text-xs animate-pulse" />
                                 <div className="flex-1 min-w-0">
                                     <div className="text-red-800 font-bold text-xs mb-0.5 uppercase tracking-wider">Error</div>
-                                    <div className="text-red-700 text-xs leading-relaxed font-medium">{error}</div>
+                                    <div className="text-red-600 text-xs leading-relaxed">{error}</div>
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    {/* Login Form - Enhanced with better contrast */}
+                    {/* Login Form - Compact for mobile */}
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        {/* Email/Addis-Med ID Field - Enhanced focus states */}
+                        {/* Email/Addis-Med ID Field */}
                     <div>
                         <div className="flex justify-center">
                             <div className="relative group w-full">
@@ -403,35 +404,30 @@ const Login = () => {
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                     onFocus={() => setFocusedField('email')}
                                     onBlur={() => setFocusedField(null)}
-                                    className={`w-full px-3 py-2.5 pl-9 border-2 rounded-xl outline-none transition-all duration-300 text-base font-normal text-black ${
-                                        focusedField === 'email'
-                                            ? 'border-indigo-500 shadow-lg shadow-indigo-200 ring-2 ring-indigo-200'
-                                            : loginMethod === 'email'
-                                                ? isEmailValid && formData.email
-                                                    ? 'border-emerald-500 bg-emerald-50/30'
-                                                    : 'border-gray-300 hover:border-gray-400 bg-white'
-                                                : isAddisMedIdValid() && formData.email
-                                                    ? 'border-emerald-500 bg-emerald-50/30'
-                                                    : 'border-gray-300 hover:border-gray-400 bg-white'
+                                    className={`w-full px-3 py-2.5 pl-9 border-2 rounded-xl outline-none transition-all duration-300 text-base font-normal text-gray-800 bg-gray-50 ${focusedField === 'email'
+                                        ? 'border-blue-500 shadow-lg shadow-blue-100 bg-white'
+                                        : loginMethod === 'email'
+                                            ? isEmailValid && formData.email
+                                                ? 'border-green-500 bg-white'
+                                                : 'border-gray-300 hover:border-gray-400 bg-white'
+                                            : isAddisMedIdValid() && formData.email
+                                                ? 'border-green-500 bg-white'
+                                                : 'border-gray-300 hover:border-gray-400 bg-white'
                                     }`}
                                     placeholder={loginMethod === 'email' ? "Email Address" : "Addis-Med ID"}
                                     required
                                     disabled={loading}
                                 />
                                 {loginMethod === 'email' ? (
-                                    <FaEnvelope className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 text-sm ${
-                                        focusedField === 'email' ? 'text-indigo-500' : 'text-gray-500'
-                                    }`} />
+                                    <FaEnvelope className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 text-sm ${focusedField === 'email' ? 'text-blue-500' : 'text-gray-400'}`} />
                                 ) : (
-                                    <FaIdCard className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 text-sm ${
-                                        focusedField === 'email' ? 'text-indigo-500' : 'text-gray-500'
-                                    }`} />
+                                    <FaIdCard className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 text-sm ${focusedField === 'email' ? 'text-blue-500' : 'text-gray-400'}`} />
                                 )}
                                 {loginMethod === 'email' && isEmailValid && formData.email && (
-                                    <FaCheckCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 text-emerald-500 text-sm animate-scale-in" />
+                                    <FaCheckCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500 text-sm animate-scale-in" />
                                 )}
                                 {loginMethod === 'addisMedId' && isAddisMedIdValid() && formData.email && (
-                                    <FaCheckCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 text-emerald-500 text-sm animate-scale-in" />
+                                    <FaCheckCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500 text-sm animate-scale-in" />
                                 )}
                             </div>
                         </div>
@@ -441,7 +437,7 @@ const Login = () => {
                         )}
                     </div>
 
-                        {/* Password Field - Enhanced focus and contrast */}
+                        {/* Password Field */}
                         <div>
                             <div className="flex justify-center">
                                 <div className="relative group w-full">
@@ -451,66 +447,60 @@ const Login = () => {
                                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                         onFocus={() => setFocusedField('password')}
                                         onBlur={() => setFocusedField(null)}
-                                        className={`w-full px-3 py-2.5 pl-9 pr-14 border-2 rounded-xl outline-none transition-all duration-300 text-base font-normal text-black ${
-                                            focusedField === 'password'
-                                                ? 'border-indigo-500 shadow-lg shadow-indigo-200 ring-2 ring-indigo-200'
-                                                : formData.password
-                                                    ? 'border-emerald-500 bg-emerald-50/30'
-                                                    : 'border-gray-300 hover:border-gray-400 bg-white'
+                                        className={`w-full px-3 py-2.5 pl-9 pr-14 border-2 rounded-xl outline-none transition-all duration-300 text-base font-normal text-gray-800 bg-gray-50 ${focusedField === 'password'
+                                            ? 'border-blue-500 shadow-lg shadow-blue-100 bg-white'
+                                            : formData.password
+                                                ? 'border-green-500 bg-white'
+                                                : 'border-gray-300 hover:border-gray-400 bg-white'
                                         }`}
                                         placeholder="Enter password"
                                         required
                                         disabled={loading}
                                     />
-                                    <FaLock className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 text-sm ${
-                                        focusedField === 'password' ? 'text-indigo-500' : 'text-gray-500'
-                                    }`} />
+                                    <FaLock className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 text-sm ${focusedField === 'password' ? 'text-blue-500' : 'text-gray-400'}`} />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-indigo-600 transition-colors"
+                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-600 transition-colors"
                                     >
                                         {showPassword ? <FaEyeSlash className="text-sm" /> : <FaEye className="text-sm" />}
                                     </button>
                                 </div>
                             </div>
                         
-                            {/* Password Strength Indicator - Enhanced visibility */}
+                            {/* Password Strength Indicator */}
                             {formData.password && (
                                 <div className="mt-1.5 animate-slide-down">
-                                    <div className="flex gap-1 h-1.5">
+                                    <div className="flex gap-1 h-1">
                                         {[1, 2, 3].map((level) => (
                                             <div
                                                 key={level}
-                                                className={`flex-1 h-full rounded-full transition-all duration-500 ${
-                                                    level <= passwordStrength
-                                                        ? getPasswordStrengthColor()
-                                                        : 'bg-gray-300'
+                                                className={`flex-1 h-full rounded-full transition-all duration-500 ${level <= passwordStrength
+                                                    ? getPasswordStrengthColor()
+                                                    : 'bg-gray-200'
                                                 }`}
                                             ></div>
                                         ))}
                                     </div>
-                                    <p className={`text-[10px] mt-1 font-semibold text-center ${
-                                        passwordStrength === 1 ? 'text-red-600' :
-                                        passwordStrength === 2 ? 'text-amber-600' :
-                                        passwordStrength === 3 ? 'text-emerald-600' :
-                                        'text-gray-400'
-                                    }`}>
+                                    <p className={`text-[10px] mt-1 font-medium text-center ${passwordStrength === 1 ? 'text-red-500' :
+                                        passwordStrength === 2 ? 'text-yellow-500' :
+                                            passwordStrength === 3 ? 'text-green-500' :
+                                                'text-gray-400'
+                                        }`}>
                                         {getPasswordStrengthText()}
                                     </p>
                                 </div>
                             )}
                         </div>
 
-                        {/* Submit Button - Enhanced with better gradient and contrast */}
+                        {/* Submit Button */}
                       <div className="flex justify-center">
                         <button
                             type="submit"
                             disabled={loading}
-                            className={`w-full py-2.5 px-4 rounded-xl font-bold text-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] ${
-                                loading
-                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                    : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700 text-white shadow-xl hover:shadow-2xl hover:shadow-purple-200'
+                            className={`w-full py-2.5 px-4 rounded-xl font-bold text-lg transition-all transform hover:scale-[1.01] active:scale-[0.99] ${loading
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-xl hover:shadow-2xl'
                             }`}
                         >
                             {loading ? (
@@ -528,26 +518,26 @@ const Login = () => {
                     </div>
                     </form>
 
-                    {/* Quick Test Logins - Enhanced with better contrast */}
+                    {/* Quick Test Logins (For Development Only) */}
                     {process.env.NODE_ENV === 'development' && (
-                        <div className="mt-4 p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200 shadow-sm">
-                            <p className="text-xs text-gray-700 mb-2 font-semibold">Quick Test (Dev Only):</p>
+                        <div className="mt-4 p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
+                            <p className="text-xs text-gray-600 mb-2 font-medium">Quick Test (Dev Only):</p>
                             <div className="grid grid-cols-3 gap-1.5">
                                 <button
                                     onClick={() => testLogin('admin@pharmacare.com', 'Admin@123')}
-                                    className="px-2 py-1.5 text-[10px] bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg transition-all transform hover:scale-105 active:scale-95 font-medium shadow-md"
+                                    className="px-2 py-1.5 text-[10px] bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg transition-all transform hover:scale-105 active:scale-95 font-medium"
                                 >
                                     Admin
                                 </button>
                                 <button
                                     onClick={() => testLogin('test@example.com', 'password123')}
-                                    className="px-2 py-1.5 text-[10px] bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white rounded-lg transition-all transform hover:scale-105 active:scale-95 font-medium shadow-md"
+                                    className="px-2 py-1.5 text-[10px] bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg transition-all transform hover:scale-105 active:scale-95 font-medium"
                                 >
                                     Test User
                                 </button>
                                 <button
                                     onClick={() => testLogin('HCC-K3M9X2-8A4F6B', 'healthcare123')}
-                                    className="px-2 py-1.5 text-[10px] bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg transition-all transform hover:scale-105 active:scale-95 font-medium shadow-md"
+                                    className="px-2 py-1.5 text-[10px] bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg transition-all transform hover:scale-105 active:scale-95 font-medium"
                                 >
                                     Healthcare
                                 </button>
@@ -555,7 +545,7 @@ const Login = () => {
                         </div>
                     )}
 
-                    {/* Registration Links - Enhanced with better contrast and styling */}
+                    {/* Registration Links - Compact for mobile */}
                     <div className="mt-5 pt-4 border-t-2 border-gray-200">
                         <p className="text-center text-gray-700 font-bold text-lg mb-3">
                             Don't have an account?
@@ -563,109 +553,106 @@ const Login = () => {
                         <div className="grid grid-cols-2 gap-2">
                             <Link
                                 to="/signup?type=individual"
-                                className="group flex items-center justify-center gap-1.5 px-3 py-2.5 bg-gradient-to-r from-indigo-50 to-blue-100 hover:from-indigo-100 hover:to-blue-200 text-indigo-700 rounded-lg transition-all font-bold text-lg shadow-sm hover:shadow-md"
+                                className="group flex items-center justify-center gap-1.5 px-3 py-2.5 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 text-blue-700 rounded-lg transition-all font-bold text-lg border border-blue-200 hover:border-blue-300"
                             >
                                 <FaUserCheck className="group-hover:animate-bounce text-xs" />
                                 Individual
                             </Link>
                             <Link
                                 to="/signup?type=organization"
-                                className="group flex items-center justify-center gap-1.5 px-3 py-2.5 bg-gradient-to-r from-purple-50 to-pink-100 hover:from-purple-100 hover:to-pink-200 text-purple-700 rounded-lg transition-all font-bold text-lg shadow-sm hover:shadow-md"
+                                className="group flex items-center justify-center gap-1.5 px-3 py-2.5 bg-gradient-to-r from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 text-purple-700 rounded-lg transition-all font-bold text-lg border border-purple-200 hover:border-purple-300"
                             >
                                 Organization
                             </Link>
                         </div>
                     </div>
 
-                    {/* Help Text - Enhanced contrast */}
+                    {/* Help Text */}
                     <div className="mt-4 text-center">
-                        <p className="text-[10px] text-gray-600 font-medium">
+                        <p className="text-[10px] text-gray-600">
                             Having trouble?{' '}
-                            <Link to="/contact-support" className="text-indigo-600 hover:text-indigo-800 underline font-semibold transition-all hover:no-underline">
+                            <Link to="/contact-support" className="text-blue-600 hover:text-blue-800 underline font-medium transition-all hover:no-underline">
                                 Contact Support
                             </Link>
                         </p>
                     </div>
                 </div>
 
-                {/* Enhanced Footer status indicator - Better visibility */}
+                {/* Enhanced Footer status indicator - Compact for mobile */}
                 <div className="mt-4 flex justify-end pr-8">
-                    <div className="group flex items-center gap-2 px-4 py-2 backdrop-blur-sm rounded-full border border-white/20 transition-all hover:scale-105 bg-black/10">
+                    <div className="group flex items-center gap-2 px-4 py-2 backdrop-blur-sm bg-white/50 rounded-full border border-gray-200 transition-all hover:scale-105">
                         <div className="relative">
-                            <div className={`w-2 h-2 rounded-full ${
-                                isCheckingHealth
-                                    ? 'bg-blue-400 animate-ping'
-                                    : systemOnline
-                                        ? 'bg-emerald-400 animate-pulse'
-                                        : 'bg-red-400 animate-pulse'
-                            }`}></div>
-                            <div className={`absolute inset-0 w-2.5 h-2.5 rounded-full ${
-                                isCheckingHealth
-                                    ? 'bg-blue-400'
-                                    : systemOnline
-                                        ? 'bg-emerald-400'
-                                        : 'bg-red-400'
-                            } opacity-75`}></div>
-                        </div>
-                        <span className={`text-[10px] font-bold uppercase tracking-wider ${
-                            isCheckingHealth
-                                ? 'text-blue-200'
+                            <div className={`w-2 h-2 rounded-full ${isCheckingHealth
+                                ? 'bg-blue-400 animate-ping'
                                 : systemOnline
-                                    ? 'text-emerald-200'
-                                    : 'text-red-200'
-                        }`}>
+                                    ? 'bg-green-500 animate-pulse'
+                                    : 'bg-red-500 animate-pulse'
+                                }`}></div>
+                            <div className={`absolute inset-0 w-2.5 h-2.5 rounded-full ${isCheckingHealth
+                                ? 'bg-blue-400'
+                                : systemOnline
+                                    ? 'bg-green-500'
+                                    : 'bg-red-500'
+                                } opacity-75`}></div>
+                        </div>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ${isCheckingHealth
+                            ? 'text-blue-600'
+                            : systemOnline
+                                ? 'text-green-600'
+                                : 'text-red-600'
+                            }`}>
                             {isCheckingHealth ? 'Verifying...' : systemOnline ? 'Online' : 'Offline'}
                         </span>
-                        <div className="w-px h-3 bg-white/30 mx-0.5"></div>
-                        <span className="text-[10px] font-bold text-white/80 group-hover:text-white transition-colors">
+                        <div className="w-px h-3 bg-gray-300 mx-0.5"></div>
+                        <span className="text-[10px] font-bold text-gray-600 group-hover:text-gray-800 transition-colors">
                             v{import.meta.env.VITE_APP_VERSION || '2.0.1'}
                         </span>
                     </div>
                 </div>
 
-                {/* Left Side - About Section - Enhanced with better contrast */}
+                {/* Left Side - About Section & Contact Info - RESPONSIVE */}
                 <div className="fixed bottom-4 left-2 sm:left-4 z-20 w-auto max-w-[45%] sm:max-w-[35%] min-w-[80px] sm:min-w-[100px]">
                     <div className="px-2 sm:px-3 py-2 sm:py-3 min-w-[100px] sm:min-w-[150px] space-y-2 sm:space-y-3">
-                        {/* About Section - Enhanced */}
-                        <div className="border border-white/20 rounded-xl p-2 sm:p-3 backdrop-blur-sm bg-black/10">
+                        {/* About Section */}
+                        <div className="border border-gray-200 bg-white/80 backdrop-blur-sm rounded-xl p-2 sm:p-3 shadow-lg">
                             <div className="flex items-start gap-1.5 sm:gap-2">
                                 <div className="flex-shrink-0 mt-0.5">
-                                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg">
+                                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
                                         <FaInfoCircle className="text-white text-[8px] sm:text-xs" />
                                     </div>
                                 </div>
                                 <div className="text-left">
-                                    <p className="text-[8px] sm:text-[10px] text-white leading-tight sm:leading-relaxed font-medium drop-shadow-md">
+                                    <p className="text-[8px] sm:text-[10px] text-gray-700 leading-tight sm:leading-relaxed font-medium">
                                         Addis Med is a digital platform that provides information and educational contents in health with a primary focus on medications.
                                     </p>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Contact Info - Enhanced */}
-                        <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
+                        {/* Contact Info - RESPONSIVE */}
+                        <div className="flex items-center gap-2 sm:gap-4 flex-wrap bg-white/80 backdrop-blur-sm rounded-lg p-1.5 sm:p-2 shadow-lg border border-gray-200">
                             <div className="flex items-center gap-1 sm:gap-2">
-                                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-indigo-400 rounded-full animate-pulse"></div>
-                                <span className="text-[8px] sm:text-xs text-white/90">
-                                    <span className="text-white ml-0.5 sm:ml-1 font-mono text-[10px] sm:text-[14px] font-bold drop-shadow-md">Addis Ababa, Ethiopia</span>
+                                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-blue-500 rounded-full"></div>
+                                <span className="text-[8px] sm:text-xs text-gray-700">
+                                    <span className="text-gray-800 ml-0.5 sm:ml-1 font-mono text-[10px] sm:text-[14px]">Addis Ababa, Ethiopia</span>
                                 </span>
                             </div>
                             
                             <div className="flex items-center gap-1 sm:gap-2">
-                                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-indigo-400 rounded-full animate-pulse"></div>
-                                <span className="text-[8px] sm:text-xs text-white/90">
-                                    <span className="text-white ml-0.5 sm:ml-1 font-mono text-[10px] sm:text-[14px] font-bold drop-shadow-md">pharmcare2001@yahoo.com</span>
+                                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-blue-500 rounded-full"></div>
+                                <span className="text-[8px] sm:text-xs text-gray-700">
+                                    <span className="text-gray-800 ml-0.5 sm:ml-1 font-mono text-[10px] sm:text-[14px]">pharmcare2001@yahoo.com</span>
                                 </span>
                             </div>
                         </div>
                     </div>
                 </div>
                             
-                {/* Right Side - Carousel Messages - Enhanced with better contrast */}
+                {/* Right Side - Carousel Messages & Contact Info - RESPONSIVE */}
                 <div className="fixed bottom-4 right-2 sm:right-4 z-20 w-auto max-w-[45%] min-w-[120px]">
                     <div className="px-2 sm:px-4 py-2 sm:py-3 min-w-[100px] sm:min-w-[150px] space-y-3 sm:space-y-6">
-                        {/* Carousel Messages - Enhanced */}
-                        <div className="border border-white/20 rounded-xl p-1.5 sm:p-2 pb-1.5 sm:pb-2.5 backdrop-blur-sm bg-black/10">
+                        {/* Carousel Messages */}
+                        <div className="border border-gray-200 bg-white/80 backdrop-blur-sm rounded-xl p-1.5 sm:p-2 pb-1.5 sm:pb-2.5 shadow-lg">
                             <div className="h-6 sm:h-8 overflow-hidden">
                                 <div
                                     className="transform transition-transform duration-500 ease-in-out"
@@ -675,8 +662,8 @@ const Login = () => {
                                         const Icon = msg.icon;
                                         return (
                                             <div key={index} className="h-8 flex items-center justify-center gap-1.5">
-                                                <Icon className="text-white text-[10px] sm:text-base animate-pulse drop-shadow-lg" />
-                                                <p className="text-white text-[8px] sm:text-sm font-bold italic drop-shadow-lg">{msg.text}</p>
+                                                <Icon className="text-blue-600 text-[10px] sm:text-base animate-pulse" />
+                                                <p className="text-gray-800 text-[8px] sm:text-sm font-bold italic">{msg.text}</p>
                                             </div>
                                         );
                                     })}
@@ -684,19 +671,19 @@ const Login = () => {
                             </div>
                         </div>
 
-                        {/* Contact Info - Enhanced with better visibility */}
-                        <div className="flex items-center gap-2 sm:gap-4 flex-wrap justify-end pt-0.5 sm:pt-1">
+                        {/* Contact Info - RESPONSIVE */}
+                        <div className="flex items-center gap-2 sm:gap-4 flex-wrap justify-end pt-0.5 sm:pt-1 bg-white/80 backdrop-blur-sm rounded-lg p-1.5 sm:p-2 shadow-lg border border-gray-200">
                             <div className="flex items-center gap-1 sm:gap-2">
-                                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-indigo-400 rounded-full animate-pulse"></div>
-                                <span className="text-[8px] sm:text-xs text-white/90">
-                                    <span className="text-white ml-0.5 sm:ml-1 font-mono text-[10px] sm:text-[14px] font-bold drop-shadow-md">+251919519512</span>
+                                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-blue-500 rounded-full"></div>
+                                <span className="text-[8px] sm:text-xs text-gray-700">
+                                    <span className="text-gray-800 ml-0.5 sm:ml-1 font-mono text-[10px] sm:text-[14px]">+251919519512</span>
                                 </span>
                             </div>
                             
                             <div className="flex items-center gap-1 sm:gap-2">
-                                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-indigo-400 rounded-full animate-pulse"></div>
-                                <span className="text-[8px] sm:text-xs text-white/90">
-                                    <span className="text-white ml-0.5 sm:ml-1 font-mono text-[10px] sm:text-[14px] font-bold drop-shadow-md">tiktok.com/@addis.med</span>
+                                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-blue-500 rounded-full"></div>
+                                <span className="text-[8px] sm:text-xs text-gray-700">
+                                    <span className="text-gray-800 ml-0.5 sm:ml-1 font-mono text-[10px] sm:text-[14px]">tiktok.com/@addis.med</span>
                                 </span>
                             </div>
                         </div>
