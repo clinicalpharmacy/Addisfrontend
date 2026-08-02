@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
     FaSearch, FaArrowLeft, FaShieldAlt, FaBaby, FaBabyCarriage, 
     FaUserEdit, FaProcedures, FaHeartbeat, FaPills, FaExclamationTriangle,
-    FaCheckCircle, FaExclamationCircle, FaSpinner, FaInfoCircle, FaSyringe,
-    FaExchangeAlt
+    FaCheckCircle, FaExclamationCircle, FaSpinner, FaInfoCircle, FaSyringe
 } from 'react-icons/fa';
 import api from '../utils/api';
 
@@ -159,97 +158,6 @@ const QuickSafetyCheck = () => {
         return !isHealthcareClient;
     };
 
-    // Function to detect and format pairs from drug interactions
-    const detectPairs = (interactions) => {
-        if (!interactions || interactions.length === 0) return [];
-        
-        // Look for patterns like "Drug A + Drug B" or "Drug A with Drug B"
-        const pairs = [];
-        const pairPatterns = [
-            /([A-Za-z]+)\s*\+\s*([A-Za-z]+)/i,
-            /([A-Za-z]+)\s+with\s+([A-Za-z]+)/i,
-            /([A-Za-z]+)\s+and\s+([A-Za-z]+)/i,
-            /([A-Za-z]+)\s*-\s*([A-Za-z]+)/i
-        ];
-        
-        interactions.forEach(interaction => {
-            let matched = false;
-            for (const pattern of pairPatterns) {
-                const match = interaction.match(pattern);
-                if (match) {
-                    const drug1 = match[1].trim();
-                    const drug2 = match[2].trim();
-                    // Only add if both drugs are different and not the same as the searched drug
-                    if (drug1 !== drug2 && drug1.toLowerCase() !== drugName.toLowerCase() && drug2.toLowerCase() !== drugName.toLowerCase()) {
-                        pairs.push({
-                            drug1: drug1,
-                            drug2: drug2,
-                            fullText: interaction
-                        });
-                        matched = true;
-                        break;
-                    }
-                }
-            }
-            if (!matched) {
-                // If no pattern matched, check if it contains the drug name and another drug
-                const lowerInteraction = interaction.toLowerCase();
-                const lowerDrugName = drugName.toLowerCase();
-                if (lowerInteraction.includes(lowerDrugName)) {
-                    // Try to extract the other drug
-                    const parts = interaction.split(/with|\+|\-/i);
-                    if (parts.length > 1) {
-                        const otherDrug = parts.find(p => !p.toLowerCase().includes(lowerDrugName))?.trim();
-                        if (otherDrug && otherDrug.length > 1) {
-                            pairs.push({
-                                drug1: drugName,
-                                drug2: otherDrug,
-                                fullText: interaction
-                            });
-                        }
-                    }
-                }
-            }
-        });
-        
-        return pairs;
-    };
-
-    // Function to detect pairs in IV incompatibility
-    const detectIVPairs = (incompatibilities) => {
-        if (!incompatibilities || incompatibilities.length === 0) return [];
-        
-        const pairs = [];
-        const pairPatterns = [
-            /([A-Za-z]+)\s*\+\s*([A-Za-z]+)/i,
-            /([A-Za-z]+)\s+with\s+([A-Za-z]+)/i,
-            /([A-Za-z]+)\s+and\s+([A-Za-z]+)/i,
-            /([A-Za-z]+)\s*-\s*([A-Za-z]+)/i
-        ];
-        
-        incompatibilities.forEach(incompatibility => {
-            let matched = false;
-            for (const pattern of pairPatterns) {
-                const match = incompatibility.match(pattern);
-                if (match) {
-                    const drug1 = match[1].trim();
-                    const drug2 = match[2].trim();
-                    if (drug1 !== drug2) {
-                        pairs.push({
-                            drug1: drug1,
-                            drug2: drug2,
-                            fullText: incompatibility
-                        });
-                        matched = true;
-                        break;
-                    }
-                }
-            }
-        });
-        
-        return pairs;
-    };
-
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
             {/* Header */}
@@ -364,86 +272,34 @@ const QuickSafetyCheck = () => {
                                     </div>
                                 )}
 
-                                {/* Major Drug Interactions - Display as Pairs */}
+                                {/* Major Drug Interactions */}
                                 {(selectedCategory === 'all' || selectedCategory === 'drug_interactions') && 
                                  result.major_interactions && result.major_interactions.length > 0 && (
                                     <div className="bg-amber-50 rounded-2xl p-6 md:p-8 shadow-sm border border-amber-200 mt-6">
                                         <h4 className="text-xl font-bold text-amber-900 flex items-center gap-2 mb-4">
-                                            <FaExchangeAlt className="text-amber-600" /> Drug Interaction Pairs
+                                            <FaPills className="text-amber-600" /> Major Drug Interactions (Avoid With)
                                         </h4>
-                                        
-                                        {/* Detect and display pairs */}
-                                        {(() => {
-                                            const pairs = detectPairs(result.major_interactions);
-                                            if (pairs.length > 0) {
-                                                return (
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                        {pairs.map((pair, index) => (
-                                                            <div key={index} className="bg-white rounded-xl p-4 shadow-sm border border-amber-200">
-                                                                <div className="flex items-center justify-between">
-                                                                    <div className="flex items-center gap-3">
-                                                                        <span className="font-bold text-amber-800">{pair.drug1}</span>
-                                                                        <FaExchangeAlt className="text-amber-400 text-sm" />
-                                                                        <span className="font-bold text-amber-800">{pair.drug2}</span>
-                                                                    </div>
-                                                                    <span className="text-xs text-amber-600 font-medium bg-amber-100 px-2 py-1 rounded-full">AVOID</span>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                );
-                                            } else {
-                                                return (
-                                                    <ul className="list-disc list-inside space-y-2 text-amber-800 font-medium ml-2">
-                                                        {result.major_interactions.map((interaction, i) => (
-                                                            <li key={i}>{interaction}</li>
-                                                        ))}
-                                                    </ul>
-                                                );
-                                            }
-                                        })()}
+                                        <ul className="list-disc list-inside space-y-2 text-amber-800 font-medium ml-2">
+                                            {result.major_interactions.map((interaction, i) => (
+                                                <li key={i}>{interaction}</li>
+                                            ))}
+                                        </ul>
                                     </div>
                                 )}
 
-                                {/* IV Drug Incompatibility - Display as Pairs */}
+                                {/* IV Drug Incompatibility - Only shown for non-healthcare_client */}
                                 {!isHealthcareClient && 
                                  (selectedCategory === 'all' || selectedCategory === 'iv_incompatibility') && 
                                  result.iv_incompatibility && result.iv_incompatibility.length > 0 && (
                                     <div className="bg-red-50 rounded-2xl p-6 md:p-8 shadow-sm border border-red-200 mt-6">
                                         <h4 className="text-xl font-bold text-red-900 flex items-center gap-2 mb-4">
-                                            <FaSyringe className="text-red-600" /> IV Incompatibility Pairs
+                                            <FaSyringe className="text-red-600" /> IV Drug Incompatibility (Do Not Mix)
                                         </h4>
-                                        
-                                        {/* Detect and display IV pairs */}
-                                        {(() => {
-                                            const pairs = detectIVPairs(result.iv_incompatibility);
-                                            if (pairs.length > 0) {
-                                                return (
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                        {pairs.map((pair, index) => (
-                                                            <div key={index} className="bg-white rounded-xl p-4 shadow-sm border border-red-200">
-                                                                <div className="flex items-center justify-between">
-                                                                    <div className="flex items-center gap-3">
-                                                                        <span className="font-bold text-red-800">{pair.drug1}</span>
-                                                                        <FaExchangeAlt className="text-red-400 text-sm" />
-                                                                        <span className="font-bold text-red-800">{pair.drug2}</span>
-                                                                    </div>
-                                                                    <span className="text-xs text-red-600 font-medium bg-red-100 px-2 py-1 rounded-full">DO NOT MIX</span>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                );
-                                            } else {
-                                                return (
-                                                    <ul className="list-disc list-inside space-y-2 text-red-800 font-medium ml-2">
-                                                        {result.iv_incompatibility.map((incompatibility, i) => (
-                                                            <li key={i}>{incompatibility}</li>
-                                                        ))}
-                                                    </ul>
-                                                );
-                                            }
-                                        })()}
+                                        <ul className="list-disc list-inside space-y-2 text-red-800 font-medium ml-2">
+                                            {result.iv_incompatibility.map((incompatibility, i) => (
+                                                <li key={i}>{incompatibility}</li>
+                                            ))}
+                                        </ul>
                                     </div>
                                 )}
                             </>
