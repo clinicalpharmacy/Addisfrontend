@@ -50,13 +50,24 @@ const QuickSafetyCheck = () => {
                 medication: drugName.trim(),
                 category: selectedCategory === 'all' ? null : selectedCategory
             });
+            
+            // DEBUG: Log the full response
+            console.log('Full API Response:', response);
+            
             if (response.success && response.safetyProfile) {
+                // DEBUG: Log specific fields
+                console.log('Safety Profile:', response.safetyProfile);
+                console.log('Major Interactions:', response.safetyProfile.major_interactions);
+                console.log('IV Incompatibility:', response.safetyProfile.iv_incompatibility);
+                console.log('IV Incompatibility Type:', typeof response.safetyProfile.iv_incompatibility);
+                console.log('IV Incompatibility Length:', response.safetyProfile.iv_incompatibility?.length);
+                
                 setResult(response.safetyProfile);
             } else {
                 setError('Failed to retrieve safety data. Please try again.');
             }
         } catch (err) {
-            console.error(err);
+            console.error('Error:', err);
             setError(err.error || 'Failed to check medication. It might not be recognized.');
         } finally {
             setLoading(false);
@@ -96,6 +107,11 @@ const QuickSafetyCheck = () => {
                                result.major_interactions && result.major_interactions.length > 0;
         const hasIVIncompatibility = (selectedCategory === 'all' || selectedCategory === 'iv_incompatibility') && 
                                      result.iv_incompatibility && result.iv_incompatibility.length > 0;
+        
+        // DEBUG: Log what's being detected
+        console.log('hasUnsafe:', hasUnsafe);
+        console.log('hasInteractions:', hasInteractions);
+        console.log('hasIVIncompatibility:', hasIVIncompatibility);
         
         return hasUnsafe || hasInteractions || hasIVIncompatibility;
     };
