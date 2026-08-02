@@ -1194,7 +1194,7 @@ const MedicationInfo = () => {
                 {/* Medication Details Modal - With Improved Scrolling */}
                 {selectedMedication && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-end p-4 z-50">
-                        <div className="bg-white rounded-xl shadow-2xl w-[60%] max-w-[60%] min-w-[300px] max-h-[90vh] overflow-hidden flex flex-col mx-auto">
+                        <div className="bg-white rounded-xl shadow-2xl w-[60%] max-w-[60%] min-w-[300px] max-h-[90vh] overflow-hidden flex flex-col mr-8">
                             {/* Header - Fixed */}
                             <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-indigo-800 text-white p-4 flex-shrink-0">
                                 <div className="flex justify-between items-start">
