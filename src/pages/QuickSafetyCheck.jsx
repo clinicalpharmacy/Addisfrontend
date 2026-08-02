@@ -113,32 +113,23 @@ const QuickSafetyCheck = () => {
         return [];
     };
 
-    // Check if there are any interactions or incompatibilities
-    const hasInteractionsOrIncompatibilities = () => {
-        if (!result) return false;
-        
-        // Check if we should show interactions based on filter
-        const showInteractions = selectedCategory === 'all' || selectedCategory === 'drug_interactions';
-        const showIncompatibility = selectedCategory === 'all' || selectedCategory === 'iv_incompatibility';
-        
-        // Parse IV incompatibility data
-        const ivData = parseIVIncompatibility(result.iv_incompatibility);
-        
-        const hasInteractions = showInteractions && result.major_interactions && result.major_interactions.length > 0;
-        const hasIncompatibility = showIncompatibility && ivData.length > 0;
-        
-        return hasInteractions || hasIncompatibility;
-    };
-
     // Get formatted IV incompatibility data
     const getFormattedIVData = () => {
         if (!result) return [];
         return parseIVIncompatibility(result.iv_incompatibility);
     };
 
-    // Check if any data exists to show
+    // Check if there's any data to show
     const hasAnyDataToShow = () => {
-        return hasUnsafeInFiltered() || hasInteractionsOrIncompatibilities();
+        if (!result) return false;
+        
+        const hasUnsafe = hasUnsafeInFiltered();
+        const hasInteractions = (selectedCategory === 'all' || selectedCategory === 'drug_interactions') && 
+                               result.major_interactions && result.major_interactions.length > 0;
+        const hasIVIncompatibility = (selectedCategory === 'all' || selectedCategory === 'iv_incompatibility') && 
+                                     getFormattedIVData().length > 0;
+        
+        return hasUnsafe || hasInteractions || hasIVIncompatibility;
     };
 
     return (
