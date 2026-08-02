@@ -87,6 +87,32 @@ const QuickSafetyCheck = () => {
         return getFilteredUnsafeCategories().length > 0;
     };
 
+    // Parse IV incompatibility data from the nested JSON structure
+    const parseIVIncompatibility = (data) => {
+        if (!data) return [];
+        
+        // If it's already an array of strings, return it
+        if (Array.isArray(data)) return data;
+        
+        // If it's the nested structure with 'any' array
+        if (data.any && Array.isArray(data.any)) {
+            const incompatibilities = [];
+            data.any.forEach(item => {
+                if (item.all && Array.isArray(item.all)) {
+                    const medications = item.all
+                        .filter(condition => condition.fact === 'medications')
+                        .map(condition => condition.value);
+                    if (medications.length >= 2) {
+                        incompatibilities.push(medications.join(' + '));
+                    }
+                }
+            });
+            return incompatibilities;
+        }
+        
+        return [];
+    };
+
     // Check if there are any interactions or incompatibilities
     const hasInteractionsOrIncompatibilities = () => {
         if (!result) return false;
@@ -95,10 +121,19 @@ const QuickSafetyCheck = () => {
         const showInteractions = selectedCategory === 'all' || selectedCategory === 'drug_interactions';
         const showIncompatibility = selectedCategory === 'all' || selectedCategory === 'iv_incompatibility';
         
+        // Parse IV incompatibility data
+        const ivData = parseIVIncompatibility(result.iv_incompatibility);
+        
         const hasInteractions = showInteractions && result.major_interactions && result.major_interactions.length > 0;
-        const hasIncompatibility = showIncompatibility && result.iv_incompatibility && result.iv_incompatibility.length > 0;
+        const hasIncompatibility = showIncompatibility && ivData.length > 0;
         
         return hasInteractions || hasIncompatibility;
+    };
+
+    // Get formatted IV incompatibility data
+    const getFormattedIVData = () => {
+        if (!result) return [];
+        return parseIVIncompatibility(result.iv_incompatibility);
     };
 
     // Check if any data exists to show
@@ -235,13 +270,13 @@ const QuickSafetyCheck = () => {
 
                                 {/* IV Drug Incompatibility */}
                                 {(selectedCategory === 'all' || selectedCategory === 'iv_incompatibility') && 
-                                 result.iv_incompatibility && result.iv_incompatibility.length > 0 && (
+                                 getFormattedIVData().length > 0 && (
                                     <div className="bg-red-50 rounded-2xl p-6 md:p-8 shadow-sm border border-red-200 mt-6">
                                         <h4 className="text-xl font-bold text-red-900 flex items-center gap-2 mb-4">
                                             <FaSyringe className="text-red-600" /> IV Drug Incompatibility (Do Not Mix)
                                         </h4>
                                         <ul className="list-disc list-inside space-y-2 text-red-800 font-medium ml-2">
-                                            {result.iv_incompatibility.map((incompatibility, i) => (
+                                            {getFormattedIVData().map((incompatibility, i) => (
                                                 <li key={i}>{incompatibility}</li>
                                             ))}
                                         </ul>
