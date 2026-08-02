@@ -264,6 +264,37 @@ export const useCDSSLogic = (patientData) => {
                         const profRec = formatAlertMessage(action.recommendation_professional || action.recommendation || rule.rule_description || '', facts);
                         const clientRec = formatAlertMessage(action.recommendation_client || action.recommendation || rule.rule_description || '', facts);
 
+                        // REVISED: Build evidence object with interaction support
+                        const evidence = {
+                            facts,
+                            matched_medications: evalResult.matchedMedications || []
+                        };
+
+                        // If this is a drug interaction or incompatibility, add pair information
+                        if (rule.rule_type === 'drug_interaction' || rule.rule_type === 'incompatibility') {
+                            // Look for interaction pair in evalResult or action
+                            if (evalResult.interactingPair) {
+                                evidence.interacting_pair = evalResult.interactingPair;
+                                evidence.drug_a = evalResult.drugA || evalResult.matchedMedications?.[0];
+                                evidence.drug_b = evalResult.drugB || evalResult.matchedMedications?.[1];
+                            } else if (evalResult.matchedMedications?.length >= 2) {
+                                // Construct pair from matched medications
+                                evidence.interacting_pair = `${evalResult.matchedMedications[0]} ⇄ ${evalResult.matchedMedications[1]}`;
+                                evidence.drug_a = evalResult.matchedMedications[0];
+                                evidence.drug_b = evalResult.matchedMedications[1];
+                            }
+                            
+                            // Add severity rating from action if available
+                            if (action.severity_rating) {
+                                evidence.severity_rating = action.severity_rating;
+                            }
+                            
+                            // Add interaction description
+                            if (action.interaction_description) {
+                                evidence.description = action.interaction_description;
+                            }
+                        }
+
                         triggeredAlerts.push({
                             id: `${rule.id}-${Date.now()}-${rulesEvaluated}`,
                             rule_id: rule.id,
@@ -276,10 +307,7 @@ export const useCDSSLogic = (patientData) => {
                             professional_recommendation: profRec,
                             client_recommendation: clientRec,
                             details: profRec || rule.rule_description,
-                            evidence: {
-                                facts,
-                                matched_medications: evalResult.matchedMedications
-                            },
+                            evidence: evidence,
                             timestamp: new Date().toISOString(),
                             acknowledged: false,
                             processed: false,
@@ -565,6 +593,37 @@ export const useCDSSLogic = (patientData) => {
                         professional_message_formatted += ` [Drug(s): ${evalResult.matchedMedications.join(', ')}]`;
                     }
 
+                    // REVISED: Build evidence object with interaction support for test rules
+                    const evidence = {
+                        facts: facts,
+                        age_in_days: facts.age_in_days,
+                        medications: facts.medication_names,
+                        matched_medications: evalResult.matchedMedications || []
+                    };
+
+                    // If this is a drug interaction or incompatibility, add pair information
+                    if (rule.rule_type === 'drug_interaction' || rule.rule_type === 'incompatibility') {
+                        const action = typeof rule.rule_action === 'string' ? JSON.parse(rule.rule_action) : (rule.rule_action || {});
+                        
+                        if (evalResult.interactingPair) {
+                            evidence.interacting_pair = evalResult.interactingPair;
+                            evidence.drug_a = evalResult.drugA || evalResult.matchedMedications?.[0];
+                            evidence.drug_b = evalResult.drugB || evalResult.matchedMedications?.[1];
+                        } else if (evalResult.matchedMedications?.length >= 2) {
+                            evidence.interacting_pair = `${evalResult.matchedMedications[0]} ⇄ ${evalResult.matchedMedications[1]}`;
+                            evidence.drug_a = evalResult.matchedMedications[0];
+                            evidence.drug_b = evalResult.matchedMedications[1];
+                        }
+                        
+                        if (action.severity_rating) {
+                            evidence.severity_rating = action.severity_rating;
+                        }
+                        
+                        if (action.interaction_description) {
+                            evidence.description = action.interaction_description;
+                        }
+                    }
+
                     triggeredAlerts.push({
                         id: `test-${rule.id}-${Date.now()}`,
                         rule_id: rule.id,
@@ -577,12 +636,7 @@ export const useCDSSLogic = (patientData) => {
                         details: formatAlertMessage(details, facts),
                         professional_recommendation: formatAlertMessage(professional_recommendation, facts),
                         client_recommendation: formatAlertMessage(client_recommendation, facts),
-                        evidence: {
-                            facts: facts,
-                            age_in_days: facts.age_in_days,
-                            medications: facts.medication_names,
-                            matched_medications: evalResult.matchedMedications
-                        },
+                        evidence: evidence,
                         timestamp: new Date().toISOString(),
                         acknowledged: false,
                         processed: false,
