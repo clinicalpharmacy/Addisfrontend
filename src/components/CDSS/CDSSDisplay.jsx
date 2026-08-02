@@ -64,6 +64,18 @@ const CDSSDisplay = ({ patientData, onBack }) => {
         return val;
     };
 
+    // Helper function to generate pairs display string
+    const generatePairsDisplay = (medications) => {
+        if (!medications || medications.length < 2) return '';
+        const pairs = [];
+        for (let i = 0; i < medications.length; i++) {
+            for (let j = i + 1; j < medications.length; j++) {
+                pairs.push(`${medications[i]} ⇄ ${medications[j]}`);
+            }
+        }
+        return pairs.join('; ');
+    };
+
     const downloadReport = async () => {
         if (!patientData) return;
 
@@ -167,9 +179,23 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                 const finding = isHealthcareClient
                     ? (alert.client_message || alert.message)
                     : (alert.professional_message || alert.message);
-                const drugTriggers = alert.evidence?.matched_medications?.length > 0
-                    ? alert.evidence.matched_medications.join(', ')
-                    : 'None';
+                
+                let drugTriggers = 'None';
+                if (alert.evidence?.matched_medications?.length > 0) {
+                    // Check if it's an interaction with multiple pairs
+                    if ((alert.rule_type === 'drug_interaction' || alert.rule_type === 'incompatibility') && 
+                        alert.evidence.interaction_pairs) {
+                        drugTriggers = alert.evidence.interaction_pairs
+                            .map(p => `${p.drug_a} ⇄ ${p.drug_b}`)
+                            .join('; ');
+                    } else if ((alert.rule_type === 'drug_interaction' || alert.rule_type === 'incompatibility') &&
+                               alert.evidence.matched_medications?.length >= 2) {
+                        drugTriggers = generatePairsDisplay(alert.evidence.matched_medications);
+                    } else {
+                        drugTriggers = alert.evidence.matched_medications.join(', ');
+                    }
+                }
+                
                 const recommendation = (isHealthcareClient
                     ? (alert.client_recommendation || alert.details)
                     : (alert.professional_recommendation || alert.details)) || 'Review clinical guidelines';
@@ -463,23 +489,33 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                                     </p>
                                                 </div>
                                             
-                                                {/* Drug triggers - REVISED SECTION FOR INTERACTIONS */}
-                                                {alert.evidence && (alert.evidence.matched_medications?.length > 0 || alert.evidence.interacting_pair) && (
+                                                {/* Drug triggers - REVISED SECTION FOR ALL INTERACTION PAIRS */}
+                                                {alert.evidence && (alert.evidence.matched_medications?.length > 0 || alert.evidence.interaction_pairs) && (
                                                     <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-300/50 mt-0">
                                                         <span className="font-black text-purple-600 uppercase text-xs shrink-0">
-                                                            {alert.rule_type === 'drug_interaction' || alert.rule_type === 'incompatibility' ? 'Interaction Pair:' : 'Drug(s) Trigger:'}
+                                                            {alert.rule_type === 'drug_interaction' || alert.rule_type === 'incompatibility' ? 'Interaction Pairs:' : 'Drug(s) Trigger:'}
                                                         </span>
                                                         <div className="flex flex-wrap gap-1.5">
-                                                            {/* Show combination for interactions */}
+                                                            {/* Show all interaction pairs */}
                                                             {alert.rule_type === 'drug_interaction' || alert.rule_type === 'incompatibility' ? (
-                                                                <span className="px-2.5 py-0.5 bg-red-100 text-red-800 rounded-lg text-xs font-black border border-red-200 shadow-sm flex items-center gap-1.5">
-                                                                    <FaCapsules className="text-xs" />
-                                                                    {alert.evidence.interacting_pair || 
-                                                                     (alert.evidence.matched_medications?.length === 2 
-                                                                        ? `${alert.evidence.matched_medications[0]} ⇄ ${alert.evidence.matched_medications[1]}`
-                                                                        : alert.evidence.matched_medications?.join(' ⇄ ') || 'Unknown pair')
-                                                                    }
-                                                                </span>
+                                                                alert.evidence.interaction_pairs && alert.evidence.interaction_pairs.length > 0 ? (
+                                                                    // Display each pair separately
+                                                                    alert.evidence.interaction_pairs.map((pair, idx) => (
+                                                                        <span key={idx} className="px-2.5 py-0.5 bg-red-100 text-red-800 rounded-lg text-xs font-black border border-red-200 shadow-sm flex items-center gap-1.5">
+                                                                            <FaCapsules className="text-xs" />
+                                                                            {pair.pair_string || `${pair.drug_a} ⇄ ${pair.drug_b}`}
+                                                                        </span>
+                                                                    ))
+                                                                ) : (
+                                                                    // Fallback: try to use all_pairs_string or construct from matched_medications
+                                                                    <span className="px-2.5 py-0.5 bg-red-100 text-red-800 rounded-lg text-xs font-black border border-red-200 shadow-sm flex items-center gap-1.5">
+                                                                        <FaCapsules className="text-xs" />
+                                                                        {alert.evidence.all_pairs_string || 
+                                                                         (alert.evidence.matched_medications?.length >= 2 
+                                                                            ? generatePairsDisplay(alert.evidence.matched_medications)
+                                                                            : alert.evidence.interacting_pair || alert.evidence.matched_medications?.join(' ⇄ ') || 'Unknown pair')}
+                                                                    </span>
+                                                                )
                                                             ) : (
                                                                 // Regular individual medications
                                                                 alert.evidence.matched_medications?.map((med, i) => (
