@@ -64,8 +64,18 @@ const CDSSDisplay = ({ patientData, onBack }) => {
         return val;
     };
 
-    // Helper function to generate pairs display string
-    const generatePairsDisplay = (medications) => {
+    // Helper function to generate pairs display string from interaction pairs
+    const generatePairsDisplay = (interactionPairs) => {
+        if (!interactionPairs || !Array.isArray(interactionPairs) || interactionPairs.length === 0) {
+            return '';
+        }
+        return interactionPairs
+            .map(p => `${p.drug_a} ⇄ ${p.drug_b}`)
+            .join('; ');
+    };
+
+    // Helper function to generate pairs from medication names (fallback)
+    const generatePairsFromMeds = (medications) => {
         if (!medications || medications.length < 2) return '';
         const pairs = [];
         for (let i = 0; i < medications.length; i++) {
@@ -183,14 +193,19 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                 let drugTriggers = 'None';
                 if (alert.evidence?.matched_medications?.length > 0) {
                     // Check if it's an interaction with multiple pairs
-                    if ((alert.rule_type === 'drug_interaction' || alert.rule_type === 'incompatibility') && 
-                        alert.evidence.interaction_pairs) {
-                        drugTriggers = alert.evidence.interaction_pairs
-                            .map(p => `${p.drug_a} ⇄ ${p.drug_b}`)
-                            .join('; ');
-                    } else if ((alert.rule_type === 'drug_interaction' || alert.rule_type === 'incompatibility') &&
-                               alert.evidence.matched_medications?.length >= 2) {
-                        drugTriggers = generatePairsDisplay(alert.evidence.matched_medications);
+                    if ((alert.rule_type === 'drug_interaction' || alert.rule_type === 'incompatibility')) {
+                        if (alert.evidence.interaction_pairs && alert.evidence.interaction_pairs.length > 0) {
+                            // Use the interaction pairs from evidence
+                            drugTriggers = generatePairsDisplay(alert.evidence.interaction_pairs);
+                        } else if (alert.evidence.all_pairs_string) {
+                            // Use the pre-formatted all_pairs_string
+                            drugTriggers = alert.evidence.all_pairs_string;
+                        } else if (alert.evidence.matched_medications?.length >= 2) {
+                            // Fallback: generate pairs from matched medications
+                            drugTriggers = generatePairsFromMeds(alert.evidence.matched_medications);
+                        } else {
+                            drugTriggers = alert.evidence.matched_medications.join(', ');
+                        }
                     } else {
                         drugTriggers = alert.evidence.matched_medications.join(', ');
                     }
@@ -512,7 +527,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                                                         <FaCapsules className="text-xs" />
                                                                         {alert.evidence.all_pairs_string || 
                                                                          (alert.evidence.matched_medications?.length >= 2 
-                                                                            ? generatePairsDisplay(alert.evidence.matched_medications)
+                                                                            ? generatePairsFromMeds(alert.evidence.matched_medications)
                                                                             : alert.evidence.interacting_pair || alert.evidence.matched_medications?.join(' ⇄ ') || 'Unknown pair')}
                                                                     </span>
                                                                 )
@@ -530,6 +545,13 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                                                 <span className="px-2.5 py-0.5 bg-blue-50 text-blue-700 rounded-lg text-xs border border-blue-200 flex items-center gap-1.5">
                                                                     <FaInfoCircle className="text-xs" />
                                                                     {alert.evidence.description}
+                                                                </span>
+                                                            )}
+                                                            {/* Show mechanism if available */}
+                                                            {alert.evidence.mechanism && (
+                                                                <span className="px-2.5 py-0.5 bg-gray-50 text-gray-700 rounded-lg text-xs border border-gray-200 flex items-center gap-1.5">
+                                                                    <FaInfoCircle className="text-xs" />
+                                                                    {alert.evidence.mechanism}
                                                                 </span>
                                                             )}
                                                         </div>
