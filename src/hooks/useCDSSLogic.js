@@ -292,6 +292,9 @@ export const useCDSSLogic = (patientData) => {
                                     evidence.drug_a = evidence.interaction_pairs[0].drug_a;
                                     evidence.drug_b = evidence.interaction_pairs[0].drug_b;
                                 }
+                                
+                                // Log the pairs found
+                                console.log(`✅ Found ${evidence.interaction_pairs.length} interaction pairs for rule: ${rule.rule_name}`);
                             } else if (evalResult.matchedMedications?.length >= 2) {
                                 // If we have matched medications but no specific pairs,
                                 // create pairs only if we have exactly 2 medications
