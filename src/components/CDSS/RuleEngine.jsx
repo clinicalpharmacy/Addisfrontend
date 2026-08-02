@@ -1,4 +1,4 @@
-// src/components/CDSS/RuleEngine.js - COMPLETE VERSION WITH PAIR SUPPORT
+// src/components/CDSS/RuleEngine.js - COMPLETE VERSION WITH ALL INPUTS
 import api from '../../utils/api';
 
 // Helper function to safely parse JSON
@@ -1405,196 +1405,17 @@ const getMatchedMedications = (condition, facts) => {
     return matched;
 };
 
-// ✅ getInteractionPairs - extracts specific drug pairs from rule conditions (handles nested ANY/ALL)
-const getInteractionPairs = (condition, facts, rule) => {
-    const pairs = [];
-    if (!facts) return pairs;
-
-    // Only process for interaction/incompatibility rules
-    const ruleType = rule?.rule_type || '';
-    if (ruleType !== 'drug_interaction' && ruleType !== 'incompatibility') {
-        return pairs;
-    }
-
-    // Helper to check if a value matches any patient medication
-    const findMatchingMedication = (searchValue) => {
-        if (!searchValue) return null;
-        const searchVal = searchValue.toString().toLowerCase().trim();
-        const patientMeds = facts.medication_names || [];
-        for (const med of patientMeds) {
-            const medStr = String(med).toLowerCase().trim();
-            if (medStr.includes(searchVal) || medStr === searchVal) {
-                return med.charAt(0).toUpperCase() + med.slice(1);
-            }
-        }
-        return null;
-    };
-
-    // Extract pairs from rule_action (if defined there)
-    const extractPairsFromAction = () => {
-        if (!rule) return [];
-        
-        let action = {};
-        if (typeof rule.rule_action === 'string') {
-            try {
-                action = JSON.parse(rule.rule_action);
-            } catch (e) {
-                return [];
-            }
-        } else {
-            action = rule.rule_action || {};
-        }
-        
-        const foundPairs = [];
-        
-        // Check for drug_pairs array
-        if (action.drug_pairs && Array.isArray(action.drug_pairs) && action.drug_pairs.length > 0) {
-            action.drug_pairs.forEach(pair => {
-                if (pair.drug_a && pair.drug_b) {
-                    const drugA = findMatchingMedication(pair.drug_a);
-                    const drugB = findMatchingMedication(pair.drug_b);
-                    if (drugA && drugB) {
-                        foundPairs.push({ drugA, drugB });
-                    }
-                }
-            });
-            return foundPairs;
-        }
-        
-        // Check for single pair
-        if (action.drug_a && action.drug_b) {
-            const drugA = findMatchingMedication(action.drug_a);
-            const drugB = findMatchingMedication(action.drug_b);
-            if (drugA && drugB) {
-                foundPairs.push({ drugA, drugB });
-            }
-            return foundPairs;
-        }
-        
-        // Check for incompatibility_pairs
-        if (action.incompatibility_pairs && Array.isArray(action.incompatibility_pairs)) {
-            action.incompatibility_pairs.forEach(pair => {
-                if (pair.drug_a && pair.drug_b) {
-                    const drugA = findMatchingMedication(pair.drug_a);
-                    const drugB = findMatchingMedication(pair.drug_b);
-                    if (drugA && drugB) {
-                        foundPairs.push({ drugA, drugB });
-                    }
-                }
-            });
-            return foundPairs;
-        }
-        
-        return foundPairs;
-    };
-
-    // ✅ Extract pairs from the condition structure (handles nested ANY/ALL)
-    const extractPairsFromCondition = () => {
-        if (!condition) return [];
-        const foundPairs = [];
-        
-        // Parse condition if it's a string
-        let parsedCondition = condition;
-        if (typeof condition === 'string') {
-            try { parsedCondition = JSON.parse(condition); } catch (e) { return foundPairs; }
-        }
-
-        // Recursively find all medication pairs in the condition
-        const findPairsInConditions = (conds) => {
-            if (!conds) return;
-            
-            // Handle array of conditions
-            if (Array.isArray(conds)) {
-                // Check if this is an 'all' block with exactly 2 medication conditions
-                const medicationConditions = conds.filter(c => 
-                    c.fact === 'medications' && c.operator === 'contains' && c.value
-                );
-                
-                // If we found exactly 2 medication conditions in this block, they form a pair
-                if (medicationConditions.length === 2) {
-                    const drugA = findMatchingMedication(medicationConditions[0].value);
-                    const drugB = findMatchingMedication(medicationConditions[1].value);
-                    if (drugA && drugB) {
-                        // Check if this pair already exists
-                        const exists = foundPairs.some(p => 
-                            (p.drugA === drugA && p.drugB === drugB) ||
-                            (p.drugA === drugB && p.drugB === drugA)
-                        );
-                        if (!exists) {
-                            foundPairs.push({ drugA, drugB });
-                        }
-                    }
-                }
-                
-                // Recursively process nested conditions
-                conds.forEach(c => {
-                    if (c.any) findPairsInConditions(c.any);
-                    if (c.all) findPairsInConditions(c.all);
-                });
-            } 
-            // Handle object with 'any' or 'all' properties
-            else if (typeof conds === 'object') {
-                if (conds.any) findPairsInConditions(conds.any);
-                if (conds.all) findPairsInConditions(conds.all);
-            }
-        };
-
-        // Start traversing from the root
-        findPairsInConditions(parsedCondition);
-        
-        return foundPairs;
-    };
-
-    // First try to get pairs from the action
-    const actionPairs = extractPairsFromAction();
-    if (actionPairs.length > 0) {
-        console.log(`✅ Found ${actionPairs.length} pairs in action`);
-        return actionPairs;
-    }
-
-    // Then try to extract pairs from the condition
-    const conditionPairs = extractPairsFromCondition();
-    if (conditionPairs.length > 0) {
-        console.log(`✅ Found ${conditionPairs.length} pairs in condition`);
-        return conditionPairs;
-    }
-
-    // Fallback: If we have matched medications but no specific pairs
-    const matchedMeds = facts.matched_medications || [];
-    if (matchedMeds.length === 2) {
-        pairs.push({ 
-            drugA: matchedMeds[0], 
-            drugB: matchedMeds[1] 
-        });
-    } else if (matchedMeds.length > 2) {
-        const uniqueMeds = [...new Set(matchedMeds)];
-        for (let i = 0; i < uniqueMeds.length; i++) {
-            for (let j = i + 1; j < uniqueMeds.length; j++) {
-                const exists = pairs.some(p => 
-                    (p.drugA === uniqueMeds[i] && p.drugB === uniqueMeds[j]) ||
-                    (p.drugA === uniqueMeds[j] && p.drugB === uniqueMeds[i])
-                );
-                if (!exists) {
-                    pairs.push({ drugA: uniqueMeds[i], drugB: uniqueMeds[j] });
-                }
-            }
-        }
-    }
-
-    return pairs;
-};
-
-// ✅ evaluateRule function - returns { triggered, matchedMedications, interactionPairs }
+// ✅ evaluateRule function - returns { triggered, matchedMedications } or boolean for backward compatibility
 export const evaluateRule = (rule, facts, returnDetails = false) => {
     try {
         if (!rule || !facts) {
             console.error('❌ Missing rule or facts');
-            return returnDetails ? { triggered: false, matchedMedications: [], interactionPairs: [] } : false;
+            return returnDetails ? { triggered: false, matchedMedications: [] } : false;
         }
 
         console.log(`\n🎯 Evaluating rule: "${rule.rule_name}"`);
 
-        // ✅ Check if rule applies to this patient type
+        // ✅ NEW: Check if rule applies to this patient type
         if (rule.applies_to && Array.isArray(rule.applies_to) && rule.applies_to.length > 0) {
             const appliesTo = rule.applies_to;
             const patientType = facts.patient_type;
@@ -1611,7 +1432,7 @@ export const evaluateRule = (rule, facts, returnDetails = false) => {
 
             if (!isApplicable) {
                 console.log(`⏭️ Rule "${rule.rule_name}" does not apply to ${patientType} patients. Skipping.`);
-                return returnDetails ? { triggered: false, matchedMedications: [], interactionPairs: [] } : false;
+                return returnDetails ? { triggered: false, matchedMedications: [] } : false;
             }
         }
 
@@ -1623,30 +1444,17 @@ export const evaluateRule = (rule, facts, returnDetails = false) => {
 
         if (returnDetails) {
             const matchedMeds = result ? getMatchedMedications(rule.rule_condition, facts) : [];
-            
-            // ✅ Get interaction pairs for drug_interaction and incompatibility rules
-            let interactionPairs = [];
-            if (result && (rule.rule_type === 'drug_interaction' || rule.rule_type === 'incompatibility')) {
-                interactionPairs = getInteractionPairs(rule.rule_condition, facts, rule);
-                console.log(`💊 Interaction pairs found:`, interactionPairs);
-            }
-            
             if (matchedMeds.length > 0) {
                 console.log(`💊 Matched medications: ${matchedMeds.join(', ')}`);
             }
-            
-            return { 
-                triggered: result, 
-                matchedMedications: matchedMeds,
-                interactionPairs: interactionPairs
-            };
+            return { triggered: result, matchedMedications: matchedMeds };
         }
 
         return result;
 
     } catch (error) {
         console.error('❌ Error evaluating rule:', error);
-        return returnDetails ? { triggered: false, matchedMedications: [], interactionPairs: [] } : false;
+        return returnDetails ? { triggered: false, matchedMedications: [] } : false;
     }
 };
 
@@ -1760,8 +1568,7 @@ export const runClinicalDecisionSupport = async (facts) => {
                     recommendation,
                     client_recommendation,
                     severity: action.severity || rule.severity || 'moderate',
-                    matchedMedications: evalResult.matchedMedications,
-                    interactionPairs: evalResult.interactionPairs || []
+                    matchedMedications: evalResult.matchedMedications
                 });
             }
         }
