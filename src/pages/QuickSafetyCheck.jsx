@@ -213,9 +213,8 @@ const QuickSafetyCheck = () => {
                             <div className="bg-green-50 border-2 border-green-500 rounded-2xl p-8 md:p-12 shadow-lg text-center">
                                 <div className="flex flex-col items-center gap-4">
                                     <div>
-                                        <h3 className="text-2xl font-black text-green-700 mb-2">✅ No Contraindication Detected in the Addis Med database</h3>
-                                        <p className="text-green-600 text-lg font-medium max-w-2xl mx-auto">
-                                            It appears {result.medication} is likely acceptable to use in the selected condition(s)
+                                        <p className="text-green-600 text-xl font-black max-w-2xl mx-auto">
+                                            ✅ {result.medication} can be used safely in the selected condition(s)
                                             {selectedCategory !== 'all' && ` [${CategoryTitle({ type: selectedCategory })}]`}.
                                             Always consult with your healthcare provider.
                                         </p>
