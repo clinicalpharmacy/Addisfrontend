@@ -38,11 +38,11 @@ const Login = () => {
     const [currentSlide, setCurrentSlide] = useState(0);
     const [loginMethod, setLoginMethod] = useState('email'); // 'email' or 'addisMedId'
 
-    // Carousel messages for dynamic background - MODIFIED COLORS (darker blues)
+    // Carousel messages for dynamic background
     const carouselMessages = [
-        { icon: FaHeartbeat, text: "Digital Health", color: "from-blue-800 to-cyan-800" },
-        { icon: FaUserShield, text: "Enhance Patient Safety", color: "from-purple-800 to-pink-800" },
-        { icon: FaCheckCircle, text: "Optimize Medicines Use", color: "from-green-800 to-teal-800" }
+        { icon: FaHeartbeat, text: "Digital Health", color: "from-amber-600 to-yellow-600" },
+        { icon: FaUserShield, text: "Enhance Patient Safety", color: "from-orange-600 to-amber-600" },
+        { icon: FaCheckCircle, text: "Optimize Medicines Use", color: "from-yellow-600 to-amber-600" }
     ];
 
     useEffect(() => {
@@ -236,7 +236,7 @@ const Login = () => {
                                     setLoading(false);
                                 }
                             }}
-                            className="bg-blue-700 text-white text-xs font-bold py-2 px-4 rounded-lg hover:bg-blue-800 transition w-fit mt-2"
+                            className="bg-amber-600 text-white text-xs font-bold py-2 px-4 rounded-lg hover:bg-amber-700 transition w-fit mt-2"
                         >
                             Resend Verification Email
                         </button>
@@ -263,7 +263,7 @@ const Login = () => {
                                     setLoading(false);
                                 }
                             }}
-                            className="bg-blue-700 text-white text-xs font-bold py-2 px-4 rounded-lg hover:bg-blue-800 transition w-fit"
+                            className="bg-amber-600 text-white text-xs font-bold py-2 px-4 rounded-lg hover:bg-amber-700 transition w-fit"
                         >
                             Resend Verification Email
                         </button>
@@ -317,26 +317,25 @@ const Login = () => {
     const CurrentIcon = carouselMessages[currentSlide].icon;
 
     return (
-        // MODIFIED: Darker background gradient
-        <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-pink-900 flex items-start justify-center p-1 sm:p-3 relative overflow-auto">
+        <div className="min-h-screen bg-gradient-to-br from-amber-600 via-yellow-600 to-orange-600 flex items-start justify-center p-1 sm:p-3 relative overflow-auto">
             {/* Animated Background Elements - Hidden on mobile for performance */}
             <div className="absolute inset-0 overflow-hidden hidden md:block">
-                <div className="absolute -top-40 -right-40 w-80 h-80 bg-white rounded-full opacity-5 animate-pulse"></div>
-                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-white rounded-full opacity-5 animate-pulse delay-1000"></div>
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-blue-700 to-purple-700 rounded-full opacity-10 animate-ping"></div>
+                <div className="absolute -top-40 -right-40 w-80 h-80 bg-white rounded-full opacity-10 animate-pulse"></div>
+                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-white rounded-full opacity-10 animate-pulse delay-1000"></div>
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-amber-400 to-yellow-400 rounded-full opacity-20 animate-ping"></div>
 
-                {/* Floating medical icons - reduced opacity */}
-                <FaHeartbeat className="absolute top-20 left-20 text-white opacity-5 text-6xl animate-bounce" />
-                <FaUserShield className="absolute bottom-20 right-20 text-white opacity-5 text-6xl animate-bounce delay-700" />
-                <FaUserMd className="absolute top-40 right-40 text-white opacity-5 text-6xl animate-bounce delay-300" />
+                {/* Floating medical icons */}
+                <FaHeartbeat className="absolute top-20 left-20 text-white opacity-10 text-6xl animate-bounce" />
+                <FaUserShield className="absolute bottom-20 right-20 text-white opacity-10 text-6xl animate-bounce delay-700" />
+                <FaUserMd className="absolute top-40 right-40 text-white opacity-10 text-6xl animate-bounce delay-300" />
             </div>
 
             <div className="w-full max-w-md mx-auto relative z-10 px-4 sm:px-6 py-2 sm:py-4">
                 {/* Animated Logo and Brand - Compact for mobile */}
                 <div className="text-center mb-4 transform hover:scale-105 transition-transform duration-300">
                     <div className="relative inline-block">
-                        <div className="absolute inset-0 bg-white rounded-xl blur-xl opacity-30 animate-pulse"></div>
-                        <div className="relative flex items-center justify-center w-14 h-14 bg-gradient-to-r from-blue-700 to-purple-700 rounded-xl mb-2 mx-auto shadow-2xl">
+                        <div className="absolute inset-0 bg-white rounded-xl blur-xl opacity-50 animate-pulse"></div>
+                        <div className="relative flex items-center justify-center w-14 h-14 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-xl mb-2 mx-auto shadow-2xl">
                             <FaUserMd className="text-white text-xl animate-pulse" />
                         </div>
                     </div>
@@ -356,7 +355,7 @@ const Login = () => {
                                     setError('');
                                 }}
                                 className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-base font-bold transition-all ${loginMethod === 'email'
-                                    ? 'bg-white text-blue-700 shadow-sm'
+                                    ? 'bg-white text-amber-600 shadow-sm'
                                     : 'text-gray-600 hover:text-gray-800'
                                     }`}
                             >
@@ -370,7 +369,7 @@ const Login = () => {
                                     setError('');
                                 }}
                                 className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-base font-bold transition-all ${loginMethod === 'addisMedId'
-                                    ? 'bg-white text-green-700 shadow-sm'
+                                    ? 'bg-white text-amber-600 shadow-sm'
                                     : 'text-gray-600 hover:text-gray-800'
                                     }`}
                             >
@@ -381,9 +380,9 @@ const Login = () => {
 
                     {/* Error Message with Animation - Compact for mobile */}
                     {error && (
-                        <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-700 rounded-r-xl animate-shake">
+                        <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-xl animate-shake">
                             <div className="flex items-start gap-2">
-                                <FaExclamationTriangle className="text-red-700 mt-0.5 flex-shrink-0 text-xs animate-pulse" />
+                                <FaExclamationTriangle className="text-red-500 mt-0.5 flex-shrink-0 text-xs animate-pulse" />
                                 <div className="flex-1 min-w-0">
                                     <div className="text-red-800 font-bold text-xs mb-0.5 uppercase tracking-wider">Error</div>
                                     <div className="text-red-600 text-xs leading-relaxed">{error}</div>
@@ -405,13 +404,13 @@ const Login = () => {
                                     onFocus={() => setFocusedField('email')}
                                     onBlur={() => setFocusedField(null)}
                                     className={`w-full px-3 py-2.5 pl-9 border-2 rounded-xl outline-none transition-all duration-300 text-base font-normal text-black ${focusedField === 'email'
-                                        ? 'border-blue-700 shadow-lg shadow-blue-100'
+                                        ? 'border-amber-500 shadow-lg shadow-amber-100'
                                         : loginMethod === 'email'
                                             ? isEmailValid && formData.email
-                                                ? 'border-green-700'
+                                                ? 'border-green-500'
                                                 : 'border-gray-200 hover:border-gray-300'
                                             : isAddisMedIdValid() && formData.email
-                                                ? 'border-green-700'
+                                                ? 'border-green-500'
                                                 : 'border-gray-200 hover:border-gray-300'
                                     }`}
                                     placeholder={loginMethod === 'email' ? "Email Address" : "Addis-Med ID"}
@@ -419,15 +418,15 @@ const Login = () => {
                                     disabled={loading}
                                 />
                                 {loginMethod === 'email' ? (
-                                    <FaEnvelope className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 text-sm ${focusedField === 'email' ? 'text-blue-700' : 'text-gray-400'}`} />
+                                    <FaEnvelope className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 text-sm ${focusedField === 'email' ? 'text-amber-500' : 'text-gray-400'}`} />
                                 ) : (
-                                    <FaIdCard className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 text-sm ${focusedField === 'email' ? 'text-blue-700' : 'text-gray-400'}`} />
+                                    <FaIdCard className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 text-sm ${focusedField === 'email' ? 'text-amber-500' : 'text-gray-400'}`} />
                                 )}
                                 {loginMethod === 'email' && isEmailValid && formData.email && (
-                                    <FaCheckCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-700 text-sm animate-scale-in" />
+                                    <FaCheckCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500 text-sm animate-scale-in" />
                                 )}
                                 {loginMethod === 'addisMedId' && isAddisMedIdValid() && formData.email && (
-                                    <FaCheckCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-700 text-sm animate-scale-in" />
+                                    <FaCheckCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500 text-sm animate-scale-in" />
                                 )}
                             </div>
                         </div>
@@ -448,20 +447,20 @@ const Login = () => {
                                         onFocus={() => setFocusedField('password')}
                                         onBlur={() => setFocusedField(null)}
                                         className={`w-full px-3 py-2.5 pl-9 pr-14 border-2 rounded-xl outline-none transition-all duration-300 text-base font-normal text-black ${focusedField === 'password'
-                                            ? 'border-blue-700 shadow-lg shadow-blue-100'
+                                            ? 'border-amber-500 shadow-lg shadow-amber-100'
                                             : formData.password
-                                                ? 'border-green-700'
+                                                ? 'border-green-500'
                                                 : 'border-gray-200 hover:border-gray-300'
                                         }`}
                                         placeholder="Enter password"
                                         required
                                         disabled={loading}
                                     />
-                                    <FaLock className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 text-sm ${focusedField === 'password' ? 'text-blue-700' : 'text-gray-400'}`} />
+                                    <FaLock className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 text-sm ${focusedField === 'password' ? 'text-amber-500' : 'text-gray-400'}`} />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-700 transition-colors"
+                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-amber-600 transition-colors"
                                     >
                                         {showPassword ? <FaEyeSlash className="text-sm" /> : <FaEye className="text-sm" />}
                                     </button>
@@ -493,14 +492,14 @@ const Login = () => {
                             )}
                         </div>
 
-                        {/* Submit Button - MODIFIED to darker blue */}
+                        {/* Submit Button */}
                       <div className="flex justify-center">
                         <button
                             type="submit"
                             disabled={loading}
                             className={`w-full py-2.5 px-4 rounded-xl font-bold text-lg transition-all transform hover:scale-[1.01] active:scale-[0.99] ${loading
                                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                : 'bg-gradient-to-r from-blue-700 to-purple-700 hover:from-blue-800 hover:to-purple-800 text-white shadow-xl hover:shadow-2xl'
+                                : 'bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-700 hover:to-yellow-700 text-white shadow-xl hover:shadow-2xl'
                             }`}
                         >
                             {loading ? (
@@ -525,19 +524,19 @@ const Login = () => {
                             <div className="grid grid-cols-3 gap-1.5">
                                 <button
                                     onClick={() => testLogin('admin@pharmacare.com', 'Admin@123')}
-                                    className="px-2 py-1.5 text-[10px] bg-gradient-to-r from-blue-700 to-blue-800 hover:from-blue-800 hover:to-blue-900 text-white rounded-lg transition-all transform hover:scale-105 active:scale-95 font-medium"
+                                    className="px-2 py-1.5 text-[10px] bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white rounded-lg transition-all transform hover:scale-105 active:scale-95 font-medium"
                                 >
                                     Admin
                                 </button>
                                 <button
                                     onClick={() => testLogin('test@example.com', 'password123')}
-                                    className="px-2 py-1.5 text-[10px] bg-gradient-to-r from-green-700 to-green-800 hover:from-green-800 hover:to-green-900 text-white rounded-lg transition-all transform hover:scale-105 active:scale-95 font-medium"
+                                    className="px-2 py-1.5 text-[10px] bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg transition-all transform hover:scale-105 active:scale-95 font-medium"
                                 >
                                     Test User
                                 </button>
                                 <button
                                     onClick={() => testLogin('HCC-K3M9X2-8A4F6B', 'healthcare123')}
-                                    className="px-2 py-1.5 text-[10px] bg-gradient-to-r from-purple-700 to-purple-800 hover:from-purple-800 hover:to-purple-900 text-white rounded-lg transition-all transform hover:scale-105 active:scale-95 font-medium"
+                                    className="px-2 py-1.5 text-[10px] bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white rounded-lg transition-all transform hover:scale-105 active:scale-95 font-medium"
                                 >
                                     Healthcare
                                 </button>
@@ -553,14 +552,14 @@ const Login = () => {
                         <div className="grid grid-cols-2 gap-2">
                             <Link
                                 to="/signup?type=individual"
-                                className="group flex items-center justify-center gap-1.5 px-3 py-2.5 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 text-blue-700 rounded-lg transition-all font-bold text-lg"
+                                className="group flex items-center justify-center gap-1.5 px-3 py-2.5 bg-gradient-to-r from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 text-amber-700 rounded-lg transition-all font-bold text-lg"
                             >
                                 <FaUserCheck className="group-hover:animate-bounce text-xs" />
                                 Individual
                             </Link>
                             <Link
                                 to="/signup?type=organization"
-                                className="group flex items-center justify-center gap-1.5 px-3 py-2.5 bg-gradient-to-r from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 text-purple-700 rounded-lg transition-all font-bold text-lg"
+                                className="group flex items-center justify-center gap-1.5 px-3 py-2.5 bg-gradient-to-r from-orange-50 to-amber-50 hover:from-orange-100 hover:to-amber-100 text-orange-700 rounded-lg transition-all font-bold text-lg"
                             >
                                 Organization
                             </Link>
@@ -571,7 +570,7 @@ const Login = () => {
                     <div className="mt-4 text-center">
                         <p className="text-[10px] text-gray-500">
                             Having trouble?{' '}
-                            <Link to="/contact-support" className="text-blue-700 hover:text-blue-900 underline font-medium transition-all hover:no-underline">
+                            <Link to="/contact-support" className="text-amber-600 hover:text-amber-800 underline font-medium transition-all hover:no-underline">
                                 Contact Support
                             </Link>
                         </p>
@@ -583,20 +582,20 @@ const Login = () => {
                     <div className="group flex items-center gap-2 px-4 py-2 backdrop-blur-sm rounded-full border border-transparent transition-all hover:scale-105">
                         <div className="relative">
                             <div className={`w-2 h-2 rounded-full ${isCheckingHealth
-                                ? 'bg-blue-400 animate-ping'
+                                ? 'bg-amber-400 animate-ping'
                                 : systemOnline
                                     ? 'bg-green-500 animate-pulse'
                                     : 'bg-red-500 animate-pulse'
                                 }`}></div>
                             <div className={`absolute inset-0 w-2.5 h-2.5 rounded-full ${isCheckingHealth
-                                ? 'bg-blue-400'
+                                ? 'bg-amber-400'
                                 : systemOnline
                                     ? 'bg-green-500'
                                     : 'bg-red-500'
                                 } opacity-75`}></div>
                         </div>
                         <span className={`text-[10px] font-bold uppercase tracking-wider ${isCheckingHealth
-                            ? 'text-blue-600'
+                            ? 'text-amber-600'
                             : systemOnline
                                 ? 'text-green-600'
                                 : 'text-red-600'
@@ -617,7 +616,7 @@ const Login = () => {
                         <div className="border border-transparent rounded-xl p-2 sm:p-3">
                             <div className="flex items-start gap-1.5 sm:gap-2">
                                 <div className="flex-shrink-0 mt-0.5">
-                                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-gradient-to-r from-blue-700 to-purple-700 rounded-full flex items-center justify-center">
+                                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-full flex items-center justify-center">
                                         <FaInfoCircle className="text-white text-[8px] sm:text-xs" />
                                     </div>
                                 </div>
@@ -632,14 +631,14 @@ const Login = () => {
                         {/* Contact Info - RESPONSIVE */}
                         <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
                             <div className="flex items-center gap-1 sm:gap-2">
-                                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-blue-500 rounded-full"></div>
+                                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-amber-500 rounded-full"></div>
                                 <span className="text-[8px] sm:text-xs text-white">
                                     <span className="text-white ml-0.5 sm:ml-1 font-mono text-[10px] sm:text-[14px]">Addis Ababa, Ethiopia</span>
                                 </span>
                             </div>
                             
                             <div className="flex items-center gap-1 sm:gap-2">
-                                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-blue-500 rounded-full"></div>
+                                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-amber-500 rounded-full"></div>
                                 <span className="text-[8px] sm:text-xs text-white">
                                     <span className="text-white ml-0.5 sm:ml-1 font-mono text-[10px] sm:text-[14px]">pharmcare2001@yahoo.com</span>
                                 </span>
@@ -674,14 +673,14 @@ const Login = () => {
                         {/* Contact Info - RESPONSIVE */}
                         <div className="flex items-center gap-2 sm:gap-4 flex-wrap justify-end pt-0.5 sm:pt-1">
                             <div className="flex items-center gap-1 sm:gap-2">
-                                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-blue-500 rounded-full"></div>
+                                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-amber-500 rounded-full"></div>
                                 <span className="text-[8px] sm:text-xs text-white">
                                     <span className="text-white ml-0.5 sm:ml-1 font-mono text-[10px] sm:text-[14px]">+251919519512</span>
                                 </span>
                             </div>
                             
                             <div className="flex items-center gap-1 sm:gap-2">
-                                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-blue-500 rounded-full"></div>
+                                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-amber-500 rounded-full"></div>
                                 <span className="text-[8px] sm:text-xs text-white">
                                     <span className="text-white ml-0.5 sm:ml-1 font-mono text-[10px] sm:text-[14px]">tiktok.com/@addis.med</span>
                                 </span>
