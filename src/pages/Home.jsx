@@ -62,7 +62,7 @@ const Home = () => {
 
             {/* Quick Access Grid - Row 1 */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                {/* Medication Availability - Available to ALL users */}
+                {/* 1. Medication Availability */}
                 <Link to="/medication-availability" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 bg-yellow-100 rounded-lg">
@@ -80,7 +80,7 @@ const Home = () => {
                     </div>
                 </Link>
                 
-                {/* Medication Information */}
+                {/* 2. Medication Information */}
                 <Link to="/knowledge/medications" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 bg-purple-100 rounded-lg">
@@ -98,7 +98,7 @@ const Home = () => {
                     </div>
                 </Link>
 
-                {/* Quick Safety Check */}
+                {/* 3. Quick Safety Check */}
                 <Link to="/quick-safety" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition border-2 border-transparent hover:border-blue-100">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 bg-indigo-100 rounded-lg">
@@ -115,26 +115,11 @@ const Home = () => {
                         </span>
                     </div>
                 </Link>
+            </div>
 
-                {/* Home Remedies */}
-                <Link to="/knowledge/remedies" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-green-100 rounded-lg">
-                            <FaVial className="text-green-600 text-lg" />
-                        </div>
-                        <div>
-                            <h2 className="text-sm font-bold text-gray-800">የቤት ውስጥ ጤና ክብካቤ</h2>
-                            <p className="text-xs text-gray-500">Home remedies</p>
-                        </div>
-                    </div>
-                    <div className="flex justify-end">
-                        <span className="text-green-600 text-sm flex items-center gap-1">
-                            Browse <FaArrowRight className="text-xs" />
-                        </span>
-                    </div>
-                </Link>
-
-                {/* Medication Review */}
+            {/* Quick Access Grid - Row 2 */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                {/* 4. Medication Review */}
                 {!isAdmin && user?.role !== 'healthcare_client' && (
                     <Link to="/patients" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
                         <div className="flex items-center gap-3 mb-2">
@@ -153,12 +138,9 @@ const Home = () => {
                         </div>
                     </Link>
                 )}
-            </div>
 
-            {/* Quick Access Grid - Row 2 */}
-            {(user?.role !== 'healthcare_client' || !isIndividual) && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    {/* Useful Links */}
+                {/* 5. Useful Links */}
+                {(user?.role !== 'healthcare_client' || !isIndividual) && (
                     <Link to="/useful-links" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
                         <div className="flex items-center gap-3 mb-2">
                             <div className="p-2 bg-green-100 rounded-lg">
@@ -175,32 +157,50 @@ const Home = () => {
                             </span>
                         </div>
                     </Link>
+                )}
 
-                    {/* Minor Illnesses */}
-                    {['company_admin', 'company_user', 'pharmacist', 'pharmacy_student'].includes(role) && (
-                        <Link to="/knowledge/illnesses" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="p-2 bg-orange-100 rounded-lg">
-                                    <FaUserMd className="text-orange-600 text-lg" />
-                                </div>
-                                <div>
-                                    <h2 className="text-sm font-bold text-gray-800">Minor Illnesses</h2>
-                                    <p className="text-xs text-gray-500">OTC Treatment guides</p>
-                                </div>
-                            </div>
-                            <div className="flex justify-end">
-                                <span className="text-orange-600 text-sm flex items-center gap-1">
-                                    View <FaArrowRight className="text-xs" />
-                                </span>
-                            </div>
-                        </Link>
-                    )}
-                </div>
-            )}
+                {/* 6. Home Remedies */}
+                <Link to="/knowledge/remedies" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 bg-green-100 rounded-lg">
+                            <FaVial className="text-green-600 text-lg" />
+                        </div>
+                        <div>
+                            <h2 className="text-sm font-bold text-gray-800">የቤት ውስጥ ጤና ክብካቤ</h2>
+                            <p className="text-xs text-gray-500">Home remedies</p>
+                        </div>
+                    </div>
+                    <div className="flex justify-end">
+                        <span className="text-green-600 text-sm flex items-center gap-1">
+                            Browse <FaArrowRight className="text-xs" />
+                        </span>
+                    </div>
+                </Link>
+            </div>
 
-            {/* Quick Access Grid - Row 3 - Compounding & Education together */}
+            {/* Quick Access Grid - Row 3 */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                {/* Compounding */}
+                {/* 7. Minor Illnesses */}
+                {['company_admin', 'company_user', 'pharmacist', 'pharmacy_student'].includes(role) && (
+                    <Link to="/knowledge/illnesses" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="p-2 bg-orange-100 rounded-lg">
+                                <FaUserMd className="text-orange-600 text-lg" />
+                            </div>
+                            <div>
+                                <h2 className="text-sm font-bold text-gray-800">Minor Illnesses</h2>
+                                <p className="text-xs text-gray-500">OTC Treatment guides</p>
+                            </div>
+                        </div>
+                        <div className="flex justify-end">
+                            <span className="text-orange-600 text-sm flex items-center gap-1">
+                                View <FaArrowRight className="text-xs" />
+                            </span>
+                        </div>
+                    </Link>
+                )}
+
+                {/* 8. Compounding */}
                 {['company_admin', 'company_user', 'pharmacist', 'pharmacy_student'].includes(role) && (
                     <Link to="/knowledge/compounding" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
                         <div className="flex items-center gap-3 mb-2">
@@ -220,7 +220,7 @@ const Home = () => {
                     </Link>
                 )}
 
-                {/* Education */}
+                {/* 9. Education */}
                 {['company_admin', 'company_user', 'pharmacist', 'pharmacy_student'].includes(role) && (
                     <Link to="/knowledge/Education" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
                         <div className="flex items-center gap-3 mb-2">
