@@ -55,6 +55,11 @@ const QuickSafetyCheck = () => {
             console.log('Full API Response:', response);
             
             if (response.success && response.safetyProfile) {
+                // Ensure iv_incompatibility is always an array
+                if (!response.safetyProfile.iv_incompatibility) {
+                    response.safetyProfile.iv_incompatibility = [];
+                }
+                
                 // DEBUG: Log specific fields
                 console.log('Safety Profile:', response.safetyProfile);
                 console.log('Major Interactions:', response.safetyProfile.major_interactions);
