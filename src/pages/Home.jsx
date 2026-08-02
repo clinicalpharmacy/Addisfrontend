@@ -116,6 +116,24 @@ const Home = () => {
                     </div>
                 </Link>
 
+                {/* Home Remedies */}
+                <Link to="/knowledge/remedies" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 bg-green-100 rounded-lg">
+                            <FaVial className="text-green-600 text-lg" />
+                        </div>
+                        <div>
+                            <h2 className="text-sm font-bold text-gray-800">የቤት ውስጥ ጤና ክብካቤ</h2>
+                            <p className="text-xs text-gray-500">Home remedies</p>
+                        </div>
+                    </div>
+                    <div className="flex justify-end">
+                        <span className="text-green-600 text-sm flex items-center gap-1">
+                            Browse <FaArrowRight className="text-xs" />
+                        </span>
+                    </div>
+                </Link>
+
                 {/* Medication Review */}
                 {!isAdmin && user?.role !== 'healthcare_client' && (
                     <Link to="/patients" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
@@ -154,24 +172,6 @@ const Home = () => {
                         <div className="flex justify-end">
                             <span className="text-green-600 text-sm flex items-center gap-1">
                                 View <FaArrowRight className="text-xs" />
-                            </span>
-                        </div>
-                    </Link>
-
-                    {/* Home Remedies */}
-                    <Link to="/knowledge/remedies" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-green-100 rounded-lg">
-                                <FaVial className="text-green-600 text-lg" />
-                            </div>
-                            <div>
-                                <h2 className="text-sm font-bold text-gray-800">የቤት ውስጥ ጤና ክብካቤ</h2>
-                                <p className="text-xs text-gray-500">Home remedies</p>
-                            </div>
-                        </div>
-                        <div className="flex justify-end">
-                            <span className="text-green-600 text-sm flex items-center gap-1">
-                                Browse <FaArrowRight className="text-xs" />
                             </span>
                         </div>
                     </Link>
