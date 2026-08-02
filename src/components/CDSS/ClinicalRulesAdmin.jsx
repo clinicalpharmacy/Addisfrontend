@@ -1005,7 +1005,7 @@ const ClinicalRulesAdmin = () => {
 
             {/* Rule Form Modal - Only for admins */}
             {showForm && isAdmin && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-end p-4 z-50">
                     <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto">
                         <form onSubmit={handleSubmit} className="p-6">
                             <div className="flex justify-between items-center mb-6">
