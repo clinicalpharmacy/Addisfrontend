@@ -1405,15 +1405,168 @@ const getMatchedMedications = (condition, facts) => {
     return matched;
 };
 
-// ✅ NEW: getInteractionPairs - extracts specific drug pairs from rule conditions
-const getInteractionPairs = (condition, facts, ruleType) => {
+// ✅ getInteractionPairs - extracts specific drug pairs from rule conditions AND action
+const getInteractionPairs = (condition, facts, rule) => {
     const pairs = [];
-    if (!condition || !facts) return pairs;
+    if (!facts) return pairs;
 
     // Only process for interaction/incompatibility rules
+    const ruleType = rule?.rule_type || '';
     if (ruleType !== 'drug_interaction' && ruleType !== 'incompatibility') {
         return pairs;
     }
+
+    // Helper to check if a value matches any patient medication
+    const findMatchingMedication = (searchValue) => {
+        if (!searchValue) return null;
+        const searchVal = searchValue.toString().toLowerCase().trim();
+        const patientMeds = facts.medication_names || [];
+        for (const med of patientMeds) {
+            const medStr = String(med).toLowerCase().trim();
+            if (medStr.includes(searchVal) || medStr === searchVal) {
+                return med.charAt(0).toUpperCase() + med.slice(1);
+            }
+        }
+        return null;
+    };
+
+    // Extract pairs from rule_action
+    const extractPairsFromAction = () => {
+        if (!rule) return [];
+        const action = typeof rule.rule_action === 'string' 
+            ? safeJsonParse(rule.rule_action, {}) 
+            : (rule.rule_action || {});
+        
+        const foundPairs = [];
+        
+        // Check for drug_pairs array (multiple pairs)
+        if (action.drug_pairs && Array.isArray(action.drug_pairs) && action.drug_pairs.length > 0) {
+            action.drug_pairs.forEach(pair => {
+                if (pair.drug_a && pair.drug_b) {
+                    const drugA = findMatchingMedication(pair.drug_a);
+                    const drugB = findMatchingMedication(pair.drug_b);
+                    if (drugA && drugB) {
+                        foundPairs.push({ drugA, drugB });
+                    }
+                }
+            });
+            return foundPairs;
+        }
+        
+        // Check for single pair
+        if (action.drug_a && action.drug_b) {
+            const drugA = findMatchingMedication(action.drug_a);
+            const drugB = findMatchingMedication(action.drug_b);
+            if (drugA && drugB) {
+                foundPairs.push({ drugA, drugB });
+            }
+        }
+        
+        // Check for incompatibility specific fields
+        if (action.incompatibility_pairs && Array.isArray(action.incompatibility_pairs)) {
+            action.incompatibility_pairs.forEach(pair => {
+                if (pair.drug_a && pair.drug_b) {
+                    const drugA = findMatchingMedication(pair.drug_a);
+                    const drugB = findMatchingMedication(pair.drug_b);
+                    if (drugA && drugB) {
+                        foundPairs.push({ drugA, drugB });
+                    }
+                }
+            });
+        }
+        
+        return foundPairs;
+    };
+
+    // Extract pairs from condition structure
+    const extractPairsFromCondition = () => {
+        if (!condition) return [];
+        const foundPairs = [];
+        
+        const findPairsInConditions = (conds) => {
+            if (!conds || !Array.isArray(conds)) return;
+            
+            const medicationConditions = [];
+            conds.forEach(c => {
+                if (c.fact === 'medications' && c.operator === 'contains') {
+                    medicationConditions.push(c.value);
+                }
+                if (c.any) findPairsInConditions(c.any);
+                if (c.all) findPairsInConditions(c.all);
+            });
+
+            if (medicationConditions.length === 2) {
+                const drugA = findMatchingMedication(medicationConditions[0]);
+                const drugB = findMatchingMedication(medicationConditions[1]);
+                if (drugA && drugB) {
+                    const exists = foundPairs.some(p => p.drugA === drugA && p.drugB === drugB);
+                    if (!exists) {
+                        foundPairs.push({ drugA, drugB });
+                    }
+                }
+            } else if (medicationConditions.length > 2) {
+                const matchedMeds = medicationConditions
+                    .map(val => findMatchingMedication(val))
+                    .filter(med => med !== null);
+                
+                const uniqueMeds = [...new Set(matchedMeds)];
+                
+                for (let i = 0; i < uniqueMeds.length; i++) {
+                    for (let j = i + 1; j < uniqueMeds.length; j++) {
+                        const exists = foundPairs.some(p => 
+                            (p.drugA === uniqueMeds[i] && p.drugB === uniqueMeds[j]) ||
+                            (p.drugA === uniqueMeds[j] && p.drugB === uniqueMeds[i])
+                        );
+                        if (!exists) {
+                            foundPairs.push({ drugA: uniqueMeds[i], drugB: uniqueMeds[j] });
+                        }
+                    }
+                }
+            }
+        };
+
+        let parsedCondition = condition;
+        if (typeof condition === 'string') {
+            try { parsedCondition = JSON.parse(condition); } catch (e) { return foundPairs; }
+        }
+
+        if (parsedCondition.all) findPairsInConditions(parsedCondition.all);
+        if (parsedCondition.any) findPairsInConditions(parsedCondition.any);
+        
+        return foundPairs;
+    };
+
+    // First try to get pairs from the action (most reliable)
+    const actionPairs = extractPairsFromAction();
+    if (actionPairs.length > 0) {
+        return actionPairs;
+    }
+
+    // If no pairs in action, try from condition
+    const conditionPairs = extractPairsFromCondition();
+    if (conditionPairs.length > 0) {
+        return conditionPairs;
+    }
+
+    // Fallback: generate pairs from matched medications
+    const matchedMeds = facts.matched_medications || [];
+    if (matchedMeds.length >= 2) {
+        const uniqueMeds = [...new Set(matchedMeds)];
+        for (let i = 0; i < uniqueMeds.length; i++) {
+            for (let j = i + 1; j < uniqueMeds.length; j++) {
+                const exists = pairs.some(p => 
+                    (p.drugA === uniqueMeds[i] && p.drugB === uniqueMeds[j]) ||
+                    (p.drugA === uniqueMeds[j] && p.drugB === uniqueMeds[i])
+                );
+                if (!exists) {
+                    pairs.push({ drugA: uniqueMeds[i], drugB: uniqueMeds[j] });
+                }
+            }
+        }
+    }
+
+    return pairs;
+};
 
     // Helper to check if a value matches any patient medication
     const findMatchingMedication = (searchValue) => {
@@ -1560,7 +1713,7 @@ export const evaluateRule = (rule, facts, returnDetails = false) => {
             // ✅ NEW: Get interaction pairs for drug_interaction and incompatibility rules
             let interactionPairs = [];
             if (result && (rule.rule_type === 'drug_interaction' || rule.rule_type === 'incompatibility')) {
-                interactionPairs = getInteractionPairs(rule.rule_condition, facts, rule.rule_type);
+                interactionPairs = getInteractionPairs(rule.rule_condition, facts, rule);
                 console.log(`💊 Interaction pairs found:`, interactionPairs);
             }
             
