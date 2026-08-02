@@ -1067,7 +1067,7 @@ const HomeRemedies = () => {
                 {/* Remedy Details Modal - Narrower Width with Enhanced Formatting */}
                 {selectedRemedy && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-end p-4 z-50">
-                        <div className="bg-white rounded-xl shadow-2xl w-[75%] max-w-[75%] min-w-[300px] max-h-[90vh] overflow-hidden flex flex-col mr-12">
+                        <div className="bg-white rounded-xl shadow-2xl w-[75%] max-w-[75%] min-w-[300px] max-h-[90vh] overflow-hidden flex flex-col mr-8">
                             {/* Header */}
                             <div className="sticky top-0 bg-gradient-to-r from-green-600 to-green-800 text-white p-3">
                                 <div className="flex justify-between items-start">
