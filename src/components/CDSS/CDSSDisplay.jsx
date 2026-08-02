@@ -463,16 +463,39 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                                                     </p>
                                                 </div>
                                             
-                                                {/* Drug triggers */}
-                                                {alert.evidence?.matched_medications?.length > 0 && (
+                                                {/* Drug triggers - REVISED SECTION FOR INTERACTIONS */}
+                                                {alert.evidence && (alert.evidence.matched_medications?.length > 0 || alert.evidence.interacting_pair) && (
                                                     <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-300/50 mt-0">
-                                                        <span className="font-black text-purple-600 uppercase text-xs shrink-0">Drug(s) Trigger:</span>
+                                                        <span className="font-black text-purple-600 uppercase text-xs shrink-0">
+                                                            {alert.rule_type === 'drug_interaction' || alert.rule_type === 'incompatibility' ? 'Interaction Pair:' : 'Drug(s) Trigger:'}
+                                                        </span>
                                                         <div className="flex flex-wrap gap-1.5">
-                                                            {alert.evidence.matched_medications.map((med, i) => (
-                                                                <span key={i} className="px-2.5 py-0.5 bg-purple-100 text-purple-800 rounded-lg text-xs font-black border border-purple-200 shadow-sm flex items-center gap-1.5">
-                                                                    <FaCapsules className="text-xs" /> {med}
+                                                            {/* Show combination for interactions */}
+                                                            {alert.rule_type === 'drug_interaction' || alert.rule_type === 'incompatibility' ? (
+                                                                <span className="px-2.5 py-0.5 bg-red-100 text-red-800 rounded-lg text-xs font-black border border-red-200 shadow-sm flex items-center gap-1.5">
+                                                                    <FaCapsules className="text-xs" />
+                                                                    {alert.evidence.interacting_pair || 
+                                                                     (alert.evidence.matched_medications?.length === 2 
+                                                                        ? `${alert.evidence.matched_medications[0]} ⇄ ${alert.evidence.matched_medications[1]}`
+                                                                        : alert.evidence.matched_medications?.join(' ⇄ ') || 'Unknown pair')
+                                                                    }
                                                                 </span>
-                                                            ))}
+                                                            ) : (
+                                                                // Regular individual medications
+                                                                alert.evidence.matched_medications?.map((med, i) => (
+                                                                    <span key={i} className="px-2.5 py-0.5 bg-purple-100 text-purple-800 rounded-lg text-xs font-black border border-purple-200 shadow-sm flex items-center gap-1.5">
+                                                                        <FaCapsules className="text-xs" /> {med}
+                                                                    </span>
+                                                                ))
+                                                            )}
+                                                            
+                                                            {/* Show additional evidence details if available */}
+                                                            {alert.evidence.description && (
+                                                                <span className="px-2.5 py-0.5 bg-blue-50 text-blue-700 rounded-lg text-xs border border-blue-200 flex items-center gap-1.5">
+                                                                    <FaInfoCircle className="text-xs" />
+                                                                    {alert.evidence.description}
+                                                                </span>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 )}
