@@ -40,9 +40,9 @@ const Login = () => {
 
     // Carousel messages for dynamic background
     const carouselMessages = [
-        { icon: FaHeartbeat, text: "Digital Health", color: "from-lightGrayBlue to-grayBlue" },
-        { icon: FaUserShield, text: "Enhance Patient Safety", color: "from-lightGrayBlue to-grayBlue" },
-        { icon: FaCheckCircle, text: "Optimize Medicines Use", color: "from-lightGrayBlue to-grayBlue" }
+        { icon: FaHeartbeat, text: "Digital Health", color: "from-blue-600 to-cyan-600" },
+        { icon: FaUserShield, text: "Enhance Patient Safety", color: "from-purple-600 to-pink-600" },
+        { icon: FaCheckCircle, text: "Optimize Medicines Use", color: "from-green-600 to-teal-600" }
     ];
 
     useEffect(() => {
@@ -236,7 +236,7 @@ const Login = () => {
                                     setLoading(false);
                                 }
                             }}
-                            className="bg-lightGrayBlue text-white text-xs font-bold py-2 px-4 rounded-lg hover:bg-grayBlue transition w-fit mt-2"
+                            className="bg-blue-600 text-white text-xs font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition w-fit mt-2"
                         >
                             Resend Verification Email
                         </button>
@@ -263,7 +263,7 @@ const Login = () => {
                                     setLoading(false);
                                 }
                             }}
-                            className="bg-lightGrayBlue text-white text-xs font-bold py-2 px-4 rounded-lg hover:bg-grayBlue transition w-fit"
+                            className="bg-blue-600 text-white text-xs font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition w-fit"
                         >
                             Resend Verification Email
                         </button>
@@ -297,9 +297,9 @@ const Login = () => {
     const getPasswordStrengthColor = () => {
         switch (passwordStrength) {
             case 0: return 'bg-gray-200';
-            case 1: return 'bg-lightGrayBlue';
-            case 2: return 'bg-grayBlue';
-            case 3: return 'bg-darkGrayBlue';
+            case 1: return 'bg-red-500';
+            case 2: return 'bg-yellow-500';
+            case 3: return 'bg-green-500';
             default: return 'bg-gray-200';
         }
     };
@@ -317,12 +317,12 @@ const Login = () => {
     const CurrentIcon = carouselMessages[currentSlide].icon;
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-lightGrayBlue via-grayBlue to-darkGrayBlue flex items-start justify-center p-1 sm:p-3 relative overflow-auto">
+        <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 flex items-start justify-center p-1 sm:p-3 relative overflow-auto">
             {/* Animated Background Elements - Hidden on mobile for performance */}
             <div className="absolute inset-0 overflow-hidden hidden md:block">
                 <div className="absolute -top-40 -right-40 w-80 h-80 bg-white rounded-full opacity-10 animate-pulse"></div>
                 <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-white rounded-full opacity-10 animate-pulse delay-1000"></div>
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-lightGrayBlue to-grayBlue rounded-full opacity-20 animate-ping"></div>
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full opacity-20 animate-ping"></div>
 
                 {/* Floating medical icons */}
                 <FaHeartbeat className="absolute top-20 left-20 text-white opacity-10 text-6xl animate-bounce" />
@@ -335,7 +335,7 @@ const Login = () => {
                 <div className="text-center mb-4 transform hover:scale-105 transition-transform duration-300">
                     <div className="relative inline-block">
                         <div className="absolute inset-0 bg-white rounded-xl blur-xl opacity-50 animate-pulse"></div>
-                        <div className="relative flex items-center justify-center w-14 h-14 bg-gradient-to-r from-lightGrayBlue to-grayBlue rounded-xl mb-2 mx-auto shadow-2xl">
+                        <div className="relative flex items-center justify-center w-14 h-14 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl mb-2 mx-auto shadow-2xl">
                             <FaUserMd className="text-white text-xl animate-pulse" />
                         </div>
                     </div>
@@ -355,7 +355,7 @@ const Login = () => {
                                     setError('');
                                 }}
                                 className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-base font-bold transition-all ${loginMethod === 'email'
-                                    ? 'bg-white text-lightGrayBlue shadow-sm'
+                                    ? 'bg-white text-blue-600 shadow-sm'
                                     : 'text-gray-600 hover:text-gray-800'
                                     }`}
                             >
@@ -369,7 +369,7 @@ const Login = () => {
                                     setError('');
                                 }}
                                 className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-base font-bold transition-all ${loginMethod === 'addisMedId'
-                                    ? 'bg-white text-grayBlue shadow-sm'
+                                    ? 'bg-white text-green-600 shadow-sm'
                                     : 'text-gray-600 hover:text-gray-800'
                                     }`}
                             >
@@ -404,7 +404,7 @@ const Login = () => {
                                     onFocus={() => setFocusedField('email')}
                                     onBlur={() => setFocusedField(null)}
                                     className={`w-full px-3 py-2.5 pl-9 border-2 rounded-xl outline-none transition-all duration-300 text-base font-normal text-black ${focusedField === 'email'
-                                        ? 'border-lightGrayBlue shadow-lg shadow-lightGrayBlue/20'
+                                        ? 'border-blue-500 shadow-lg shadow-blue-100'
                                         : loginMethod === 'email'
                                             ? isEmailValid && formData.email
                                                 ? 'border-green-500'
@@ -418,9 +418,9 @@ const Login = () => {
                                     disabled={loading}
                                 />
                                 {loginMethod === 'email' ? (
-                                    <FaEnvelope className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 text-sm ${focusedField === 'email' ? 'text-lightGrayBlue' : 'text-gray-400'}`} />
+                                    <FaEnvelope className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 text-sm ${focusedField === 'email' ? 'text-blue-500' : 'text-gray-400'}`} />
                                 ) : (
-                                    <FaIdCard className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 text-sm ${focusedField === 'email' ? 'text-lightGrayBlue' : 'text-gray-400'}`} />
+                                    <FaIdCard className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 text-sm ${focusedField === 'email' ? 'text-blue-500' : 'text-gray-400'}`} />
                                 )}
                                 {loginMethod === 'email' && isEmailValid && formData.email && (
                                     <FaCheckCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500 text-sm animate-scale-in" />
@@ -447,7 +447,7 @@ const Login = () => {
                                         onFocus={() => setFocusedField('password')}
                                         onBlur={() => setFocusedField(null)}
                                         className={`w-full px-3 py-2.5 pl-9 pr-14 border-2 rounded-xl outline-none transition-all duration-300 text-base font-normal text-black ${focusedField === 'password'
-                                            ? 'border-lightGrayBlue shadow-lg shadow-lightGrayBlue/20'
+                                            ? 'border-blue-500 shadow-lg shadow-blue-100'
                                             : formData.password
                                                 ? 'border-green-500'
                                                 : 'border-gray-200 hover:border-gray-300'
@@ -456,11 +456,11 @@ const Login = () => {
                                         required
                                         disabled={loading}
                                     />
-                                    <FaLock className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 text-sm ${focusedField === 'password' ? 'text-lightGrayBlue' : 'text-gray-400'}`} />
+                                    <FaLock className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 text-sm ${focusedField === 'password' ? 'text-blue-500' : 'text-gray-400'}`} />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-lightGrayBlue transition-colors"
+                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-600 transition-colors"
                                     >
                                         {showPassword ? <FaEyeSlash className="text-sm" /> : <FaEye className="text-sm" />}
                                     </button>
@@ -481,9 +481,9 @@ const Login = () => {
                                             ></div>
                                         ))}
                                     </div>
-                                    <p className={`text-[10px] mt-1 font-medium text-center ${passwordStrength === 1 ? 'text-lightGrayBlue' :
-                                        passwordStrength === 2 ? 'text-grayBlue' :
-                                            passwordStrength === 3 ? 'text-darkGrayBlue' :
+                                    <p className={`text-[10px] mt-1 font-medium text-center ${passwordStrength === 1 ? 'text-red-500' :
+                                        passwordStrength === 2 ? 'text-yellow-500' :
+                                            passwordStrength === 3 ? 'text-green-500' :
                                                 'text-gray-400'
                                         }`}>
                                         {getPasswordStrengthText()}
@@ -499,7 +499,7 @@ const Login = () => {
                             disabled={loading}
                             className={`w-full py-2.5 px-4 rounded-xl font-bold text-lg transition-all transform hover:scale-[1.01] active:scale-[0.99] ${loading
                                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                : 'bg-gradient-to-r from-lightGrayBlue to-darkGrayBlue hover:from-grayBlue hover:to-darkGrayBlue text-white shadow-xl hover:shadow-2xl'
+                                : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-xl hover:shadow-2xl'
                             }`}
                         >
                             {loading ? (
@@ -524,19 +524,19 @@ const Login = () => {
                             <div className="grid grid-cols-3 gap-1.5">
                                 <button
                                     onClick={() => testLogin('admin@pharmacare.com', 'Admin@123')}
-                                    className="px-2 py-1.5 text-[10px] bg-gradient-to-r from-lightGrayBlue to-grayBlue hover:from-grayBlue hover:to-darkGrayBlue text-white rounded-lg transition-all transform hover:scale-105 active:scale-95 font-medium"
+                                    className="px-2 py-1.5 text-[10px] bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg transition-all transform hover:scale-105 active:scale-95 font-medium"
                                 >
                                     Admin
                                 </button>
                                 <button
                                     onClick={() => testLogin('test@example.com', 'password123')}
-                                    className="px-2 py-1.5 text-[10px] bg-gradient-to-r from-lightGrayBlue to-grayBlue hover:from-grayBlue hover:to-darkGrayBlue text-white rounded-lg transition-all transform hover:scale-105 active:scale-95 font-medium"
+                                    className="px-2 py-1.5 text-[10px] bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg transition-all transform hover:scale-105 active:scale-95 font-medium"
                                 >
                                     Test User
                                 </button>
                                 <button
                                     onClick={() => testLogin('HCC-K3M9X2-8A4F6B', 'healthcare123')}
-                                    className="px-2 py-1.5 text-[10px] bg-gradient-to-r from-lightGrayBlue to-grayBlue hover:from-grayBlue hover:to-darkGrayBlue text-white rounded-lg transition-all transform hover:scale-105 active:scale-95 font-medium"
+                                    className="px-2 py-1.5 text-[10px] bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg transition-all transform hover:scale-105 active:scale-95 font-medium"
                                 >
                                     Healthcare
                                 </button>
@@ -552,14 +552,14 @@ const Login = () => {
                         <div className="grid grid-cols-2 gap-2">
                             <Link
                                 to="/signup?type=individual"
-                                className="group flex items-center justify-center gap-1.5 px-3 py-2.5 bg-gradient-to-r from-lightGrayBlue/10 to-lightGrayBlue/20 hover:from-lightGrayBlue/20 hover:to-lightGrayBlue/30 text-lightGrayBlue rounded-lg transition-all font-bold text-lg"
+                                className="group flex items-center justify-center gap-1.5 px-3 py-2.5 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 text-blue-700 rounded-lg transition-all font-bold text-lg"
                             >
                                 <FaUserCheck className="group-hover:animate-bounce text-xs" />
                                 Individual
                             </Link>
                             <Link
                                 to="/signup?type=organization"
-                                className="group flex items-center justify-center gap-1.5 px-3 py-2.5 bg-gradient-to-r from-grayBlue/10 to-grayBlue/20 hover:from-grayBlue/20 hover:to-grayBlue/30 text-grayBlue rounded-lg transition-all font-bold text-lg"
+                                className="group flex items-center justify-center gap-1.5 px-3 py-2.5 bg-gradient-to-r from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 text-purple-700 rounded-lg transition-all font-bold text-lg"
                             >
                                 Organization
                             </Link>
@@ -570,7 +570,7 @@ const Login = () => {
                     <div className="mt-4 text-center">
                         <p className="text-[10px] text-gray-500">
                             Having trouble?{' '}
-                            <Link to="/contact-support" className="text-lightGrayBlue hover:text-darkGrayBlue underline font-medium transition-all hover:no-underline">
+                            <Link to="/contact-support" className="text-blue-600 hover:text-blue-800 underline font-medium transition-all hover:no-underline">
                                 Contact Support
                             </Link>
                         </p>
@@ -582,20 +582,20 @@ const Login = () => {
                     <div className="group flex items-center gap-2 px-4 py-2 backdrop-blur-sm rounded-full border border-transparent transition-all hover:scale-105">
                         <div className="relative">
                             <div className={`w-2 h-2 rounded-full ${isCheckingHealth
-                                ? 'bg-lightGrayBlue animate-ping'
+                                ? 'bg-blue-400 animate-ping'
                                 : systemOnline
                                     ? 'bg-green-500 animate-pulse'
                                     : 'bg-red-500 animate-pulse'
                                 }`}></div>
                             <div className={`absolute inset-0 w-2.5 h-2.5 rounded-full ${isCheckingHealth
-                                ? 'bg-lightGrayBlue'
+                                ? 'bg-blue-400'
                                 : systemOnline
                                     ? 'bg-green-500'
                                     : 'bg-red-500'
                                 } opacity-75`}></div>
                         </div>
                         <span className={`text-[10px] font-bold uppercase tracking-wider ${isCheckingHealth
-                            ? 'text-lightGrayBlue'
+                            ? 'text-blue-600'
                             : systemOnline
                                 ? 'text-green-600'
                                 : 'text-red-600'
@@ -616,7 +616,7 @@ const Login = () => {
                         <div className="border border-transparent rounded-xl p-2 sm:p-3">
                             <div className="flex items-start gap-1.5 sm:gap-2">
                                 <div className="flex-shrink-0 mt-0.5">
-                                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-gradient-to-r from-lightGrayBlue to-grayBlue rounded-full flex items-center justify-center">
+                                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
                                         <FaInfoCircle className="text-white text-[8px] sm:text-xs" />
                                     </div>
                                 </div>
@@ -631,14 +631,14 @@ const Login = () => {
                         {/* Contact Info - RESPONSIVE */}
                         <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
                             <div className="flex items-center gap-1 sm:gap-2">
-                                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-lightGrayBlue rounded-full"></div>
+                                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-blue-500 rounded-full"></div>
                                 <span className="text-[8px] sm:text-xs text-white">
                                     <span className="text-white ml-0.5 sm:ml-1 font-mono text-[10px] sm:text-[14px]">Addis Ababa, Ethiopia</span>
                                 </span>
                             </div>
                             
                             <div className="flex items-center gap-1 sm:gap-2">
-                                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-lightGrayBlue rounded-full"></div>
+                                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-blue-500 rounded-full"></div>
                                 <span className="text-[8px] sm:text-xs text-white">
                                     <span className="text-white ml-0.5 sm:ml-1 font-mono text-[10px] sm:text-[14px]">pharmcare2001@yahoo.com</span>
                                 </span>
@@ -673,14 +673,14 @@ const Login = () => {
                         {/* Contact Info - RESPONSIVE */}
                         <div className="flex items-center gap-2 sm:gap-4 flex-wrap justify-end pt-0.5 sm:pt-1">
                             <div className="flex items-center gap-1 sm:gap-2">
-                                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-lightGrayBlue rounded-full"></div>
+                                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-blue-500 rounded-full"></div>
                                 <span className="text-[8px] sm:text-xs text-white">
                                     <span className="text-white ml-0.5 sm:ml-1 font-mono text-[10px] sm:text-[14px]">+251919519512</span>
                                 </span>
                             </div>
                             
                             <div className="flex items-center gap-1 sm:gap-2">
-                                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-lightGrayBlue rounded-full"></div>
+                                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-blue-500 rounded-full"></div>
                                 <span className="text-[8px] sm:text-xs text-white">
                                     <span className="text-white ml-0.5 sm:ml-1 font-mono text-[10px] sm:text-[14px]">tiktok.com/@addis.med</span>
                                 </span>
