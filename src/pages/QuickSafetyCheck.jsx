@@ -173,18 +173,6 @@ const QuickSafetyCheck = () => {
                     <div className="animate-fadeIn space-y-6">
                         {hasUnsafeInFiltered() ? (
                             <>
-                                {/* UNSAFE Alert Banner */}
-                                <div className="bg-red-50 border-2 border-red-500 rounded-2xl p-6 md:p-8 shadow-lg">
-                                    <div className="flex items-center gap-4">
-                                        <div>
-                                            <h3 className="text-2xl font-black text-red-700">⚠️ UNSAFE Medication Detected</h3>
-                                            <p className="text-red-600 font-medium">
-                                                This medication has been identified as UNSAFE in the following condition(s). 
-                                                Please review the details below and consult with a healthcare professional.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
 
                                 <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100">
                                     <h3 className="text-3xl font-black text-gray-900 capitalize mb-2">{result.medication}</h3>
@@ -201,7 +189,7 @@ const QuickSafetyCheck = () => {
                                                 </div>
                                                 <StatusBadge status={data.status} />
                                             </div>
-                                            <p className="text-gray-700 leading-relaxed text-sm font-medium">{data.details}</p>
+                                            <p className="text-gray-700 leading-relaxed text-base font-bold">{data.details}</p>
                                         </div>
                                     ))}
                                 </div>
