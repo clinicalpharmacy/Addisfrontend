@@ -1,302 +1,517 @@
+// Clinical Display Component - v3.0.0
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { 
-    FaSearch, FaArrowLeft, FaShieldAlt, FaBaby, FaBabyCarriage, 
-    FaUserEdit, FaProcedures, FaHeartbeat, FaPills, FaExclamationTriangle,
-    FaCheckCircle, FaExclamationCircle, FaSpinner, FaInfoCircle, FaSyringe
+import { useCDSSLogic } from '../../hooks/useCDSSLogic';
+import { AlertDetails } from './AlertComponents';
+import { getRuleTypeInfo, getTimeAgo, getAgeCategoryIcon, getAgeCategoryLabel } from '../../utils/cdssUtils';
+import {
+    FaBell, FaExclamationTriangle, FaCheckCircle, FaInfoCircle,
+    FaUserMd, FaFilter, FaSync, FaDownload,
+    FaDatabase, FaEye, FaEyeSlash,
+    FaClock, FaUser, FaCapsules, FaRedo, FaRocket,
+    FaCalendarDay, FaUserTag, FaVial, FaBaby, FaChevronDown, FaChevronUp,
+    FaExclamationCircle, FaHeartbeat, FaBrain, FaRobot, FaLightbulb, FaUserShield,
+    FaBookMedical, FaListUl, FaToggleOn, FaToggleOff, FaShieldAlt, FaSearch,
+    FaStar, FaMagic, FaClipboardCheck
 } from 'react-icons/fa';
-import api from '../utils/api';
+import api from '../../utils/api';
 
-const CategoryTitle = ({ type }) => {
-    switch (type) {
-        case 'pregnancy': return 'Pregnancy';
-        case 'lactation': return 'Breastfeeding';
-        case 'elderly': return 'Elderly (≥ 65 years old)';
-        case 'neonate': return 'Neonates';
-        case 'kidney_failure': return 'Kidney Failure';
-        case 'liver_failure': return 'Liver Failure';
-        case 'drug_interactions': return 'Drug Interactions';
-        case 'iv_incompatibility': return 'IV Drug Incompatibility';
-        default: return type;
-    }
-};
+const CDSSDisplay = ({ patientData, onBack }) => {
 
-const StatusBadge = ({ status }) => {
-    const s = status?.toLowerCase() || '';
-    if (s.includes('contraindicate') || s.includes('avoid') || s.includes('unsafe')) {
-        return <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"><FaExclamationCircle /> UNSAFE</span>;
-    }
-    return null;
-};
+    const {
+        alerts, filteredAlerts, loading, analysisStats,
+        clinicalRules, medications, analysisError, testResults,
+        severityFilter, setSeverityFilter,
+        fetchClinicalRules, testSampleRules, analyzePatient, runFullAnalysis,
+        acknowledgeAlert, acknowledgeAll, toggleExpandAlert, expandedAlert,
+        patientFacts, lastAnalysisTime, decryptedPatient, decryptionFailed
+    } = useCDSSLogic(patientData);
 
-const QuickSafetyCheck = () => {
-    const navigate = useNavigate();
-    const [drugName, setDrugName] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState('all');
-    const [loading, setLoading] = useState(false);
-    const [result, setResult] = useState(null);
-    const [error, setError] = useState('');
+    const rawUserRole = localStorage.getItem('userRole') || 'admin';
+    const userRole = rawUserRole.toLowerCase().trim();
+    const isHealthcareClient = userRole === 'healthcare_client';
 
-    const handleSearch = async (e) => {
-        e.preventDefault();
-        if (!drugName.trim()) return;
+    const severityColors = {
+        critical: 'bg-red-50 text-red-800 border-red-200 hover:bg-red-100',
+        high: 'bg-orange-50 text-orange-800 border-orange-200 hover:bg-orange-100',
+        moderate: 'bg-yellow-50 text-yellow-800 border-yellow-200 hover:bg-yellow-100',
+        low: 'bg-blue-50 text-blue-800 border-blue-200 hover:bg-blue-100'
+    };
 
-        setLoading(true);
-        setError('');
-        setResult(null);
+    const severityIcons = {
+        critical: FaExclamationTriangle,
+        high: FaExclamationTriangle,
+        moderate: FaExclamationCircle,
+        low: FaInfoCircle
+    };
+
+    const severityBgColors = {
+        critical: 'bg-red-500',
+        high: 'bg-orange-500',
+        moderate: 'bg-yellow-500',
+        low: 'bg-blue-500'
+    };
+
+    const handleRunAI = () => {
+        // runFullAnalysis: re-fetches rules + medications, then triggers analysis
+        // via analyzePatientRef.current — which always has fresh state.
+        runFullAnalysis();
+    };
+
+    const formatEncValue = (val, fallback = 'Not specified') => {
+        if (!val) return fallback;
+        const strVal = String(val);
+        if (strVal.includes(':') && strVal.length > 30) return '[Encrypted]';
+        return val;
+    };
+
+    const downloadReport = async () => {
+        if (!patientData) return;
 
         try {
-            const response = await api.post('/quick-safety', { 
-                medication: drugName.trim(),
-                category: selectedCategory === 'all' ? null : selectedCategory
+            const { default: jsPDF } = await import('jspdf');
+            const { default: autoTable } = await import('jspdf-autotable');
+
+            const doc = jsPDF({
+                orientation: 'p',
+                unit: 'mm',
+                format: 'a4'
             });
-            if (response.success && response.safetyProfile) {
-                setResult(response.safetyProfile);
-            } else {
-                setError('Failed to retrieve safety data. Please try again.');
-            }
-        } catch (err) {
-            console.error(err);
-            setError(err.error || 'Failed to check medication. It might not be recognized.');
-        } finally {
-            setLoading(false);
-        }
-    };
 
-    // Get unsafe categories only with filtering
-    const getFilteredUnsafeCategories = () => {
-        if (!result || !result.categories) return [];
-        
-        const unsafe = Object.entries(result.categories)
-            .filter(([key, data]) => {
-                const status = data.status?.toLowerCase() || '';
-                return status.includes('contraindicate') || 
-                       status.includes('avoid') || 
-                       status.includes('unsafe');
-            });
-        
-        // Apply category filter
-        if (selectedCategory === 'all') {
-            return unsafe;
-        }
-        return unsafe.filter(([key]) => key === selectedCategory);
-    };
+            doc.setFillColor(37, 99, 235);
+            doc.rect(0, 0, 210, 40, 'F');
 
-    // Check if there are any unsafe categories
-    const hasUnsafeInFiltered = () => {
-        return getFilteredUnsafeCategories().length > 0;
-    };
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(22);
+            doc.setFont('helvetica', 'bold');
+            doc.text('CLINICAL ANALYSIS REPORT', 15, 20);
 
-    // Parse IV incompatibility data from the nested JSON structure
-    const parseIVIncompatibility = (data) => {
-        if (!data) return [];
-        
-        // If it's already an array of strings, return it
-        if (Array.isArray(data)) return data;
-        
-        // If it's the nested structure with 'any' array
-        if (data.any && Array.isArray(data.any)) {
-            const incompatibilities = [];
-            data.any.forEach(item => {
-                if (item.all && Array.isArray(item.all)) {
-                    const medications = item.all
-                        .filter(condition => condition.fact === 'medications')
-                        .map(condition => condition.value);
-                    if (medications.length >= 2) {
-                        incompatibilities.push(medications.join(' + '));
-                    }
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Generated on: ${new Date().toLocaleString()}`, 15, 30);
+            doc.text(`Patient ID: ${patientData.id}`, 15, 35);
+
+            doc.setTextColor(31, 41, 55);
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Patient Information', 15, 50);
+
+            doc.setDrawColor(229, 231, 235);
+            doc.line(15, 52, 195, 52);
+
+            autoTable(doc, {
+                startY: 55,
+                head: [],
+                body: [
+                    ['Full Name:', patientData.full_name || 'N/A', 'Gender:', patientData.gender || 'N/A'],
+                    ['Age:', `${patientData.age || 'N/A'} (${patientFacts?.patient_type || 'N/A'})`, 'Primary Diagnosis:', patientData.diagnosis || 'None recorded']
+                ],
+                theme: 'plain',
+                styles: { fontSize: 10, cellPadding: 2 },
+                columnStyles: {
+                    0: { fontStyle: 'bold', width: 30 },
+                    2: { fontStyle: 'bold', width: 40 }
                 }
             });
-            return incompatibilities;
+
+            let currentY = doc.lastAutoTable.finalY + 10;
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Analysis Summary', 15, currentY);
+            doc.line(15, currentY + 2, 195, currentY + 2);
+
+            const statsData = [
+                ['Total Alerts', analysisStats?.alertsGenerated || 0],
+                ['Critical', analysisStats?.bySeverity?.critical || 0],
+                ['High Severity', analysisStats?.bySeverity?.high || 0],
+                ['Moderate/Low', (analysisStats?.bySeverity?.moderate || 0) + (analysisStats?.bySeverity?.low || 0)]
+            ];
+
+            autoTable(doc, {
+                startY: currentY + 5,
+                head: [['Parameter', 'Count']],
+                body: statsData,
+                theme: 'striped',
+                headStyles: { fillColor: [79, 70, 229] },
+                styles: { fontSize: 9 }
+            });
+
+            if (medications && medications.length > 0) {
+                currentY = doc.lastAutoTable.finalY + 10;
+                doc.setFontSize(14);
+                doc.setFont('helvetica', 'bold');
+                doc.text('Current Medications', 15, currentY);
+
+                autoTable(doc, {
+                    startY: currentY + 5,
+                    head: [['#', 'Drug Name', 'Class', 'Dose/Frequency']],
+                    body: medications.map((m, i) => [
+                        i + 1,
+                        m.drug_name,
+                        m.drug_class || 'N/A',
+                        `${m.dose || ''} ${m.frequency || ''}`
+                    ]),
+                    theme: 'grid',
+                    headStyles: { fillColor: [107, 114, 128] },
+                    styles: { fontSize: 8 }
+                });
+            }
+
+            currentY = doc.lastAutoTable.finalY + 10;
+            if (currentY > 250) { doc.addPage(); currentY = 20; }
+
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Clinical Alerts & Recommendations', 15, currentY);
+
+            const alertRows = alerts.map((alert, index) => {
+                const finding = isHealthcareClient
+                    ? (alert.client_message || alert.message)
+                    : (alert.professional_message || alert.message);
+                const drugTriggers = alert.evidence?.matched_medications?.length > 0
+                    ? alert.evidence.matched_medications.join(', ')
+                    : 'None';
+                const recommendation = (isHealthcareClient
+                    ? (alert.client_recommendation || alert.details)
+                    : (alert.professional_recommendation || alert.details)) || 'Review clinical guidelines';
+
+                return [index + 1, finding, drugTriggers, recommendation];
+            });
+
+            autoTable(doc, {
+                startY: currentY + 5,
+                head: [['#', 'Finding', 'Drug(s) Trigger', 'Evidence Recommendation']],
+                body: alertRows,
+                theme: 'grid',
+                headStyles: { fillColor: [220, 38, 38] },
+                styles: { fontSize: 7, cellPadding: 3 },
+                columnStyles: {
+                    0: { width: 10 },
+                    1: { width: 60 },
+                    2: { width: 40 },
+                    3: { width: 70 }
+                }
+            });
+
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.setTextColor(156, 163, 175);
+                doc.text(
+                    'DISCLAIMER: This clinical analysis report only gives information & it cannot replace the decision of a health professional.',
+                    15, 285
+                );
+                doc.text(`Page ${i} of ${pageCount}`, 180, 285);
+            }
+
+            doc.save(`Clinical_Analysis_${patientData.id}_${new Date().toISOString().split('T')[0]}.pdf`);
+        } catch (error) {
+            console.error('PDF Generation Error:', error);
+            alert('PDF generation failed. Library error.');
         }
-        
-        return [];
     };
 
-    // Get formatted IV incompatibility data
-    const getFormattedIVData = () => {
-        if (!result) return [];
-        return parseIVIncompatibility(result.iv_incompatibility);
-    };
+    const AgeCategoryIcon = getAgeCategoryIcon(patientFacts);
 
-    // Check if there's any data to show
-    const hasAnyDataToShow = () => {
-        if (!result) return false;
-        
-        const hasUnsafe = hasUnsafeInFiltered();
-        const hasInteractions = (selectedCategory === 'all' || selectedCategory === 'drug_interactions') && 
-                               result.major_interactions && result.major_interactions.length > 0;
-        const hasIVIncompatibility = (selectedCategory === 'all' || selectedCategory === 'iv_incompatibility') && 
-                                     getFormattedIVData().length > 0;
-        
-        return hasUnsafe || hasInteractions || hasIVIncompatibility;
-    };
+    const [hasAcknowledged, setHasAcknowledged] = useState(false);
+
+    if (!hasAcknowledged) {
+        return (
+            <div className="bg-white rounded-xl shadow-lg p-8 md:p-12 text-center">
+                <h2 className="text-2xl font-bold text-gray-800 mb-4">User Acknowledgment</h2>
+                <div className="bg-blue-50 border-1 border-blue-200 p-6 rounded-2xl mb-8 max-w-2xl mx-auto">
+                    <p className="text-gray-700 text-lg leading-relaxed">
+                        <span className="block">"By continuing, you acknowledge that this supportive clinical information does not replace consultation with a licensed healthcare professional."</span>
+                        <span className="block font-bold text-blue-800 text-base border-t border-blue-200 pt-4">"በመቀጠልዎ፤ ይህ መልዕክት ፈቃድ ካለው የጤና ባለሙያ ጋር የሚደረገውን የማማከር አገልግሎት የማይተካ መሆኑን ይስማማሉ።"</span>
+                    </p>
+                </div>
+                <button
+                    onClick={() => setHasAcknowledged(true)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-10 rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 flex items-center gap-2 mx-auto"
+                >
+                    <FaCheckCircle />
+                    <span>Accept & Continue</span>
+                    <span className="border-l border-blue-400 pl-2">ተቀብያለሁ እናም ይቀጥል</span>
+                </button>
+            </div>
+        );
+    }
+
+    // --- Summary counts ---
+    const criticalCount = analysisStats?.bySeverity?.critical || 0;
+    const highCount = analysisStats?.bySeverity?.high || 0;
+    const moderateCount = analysisStats?.bySeverity?.moderate || 0;
+    const lowCount = analysisStats?.bySeverity?.low || 0;
+    const totalAlerts = alerts.length;
+    const hasAlerts = totalAlerts > 0;
+    const hasFilteredResults = filteredAlerts.length > 0;
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
-            {/* Header */}
-            <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-                <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-                    <button 
-                        onClick={() => navigate(-1)}
-                        className="flex items-center gap-2 text-gray-500 hover:text-blue-600 transition-colors font-medium"
-                    >
-                        <FaArrowLeft /> Back
-                    </button>
-                    <h1 className="text-xl font-black text-gray-800 flex items-center gap-2">
-                        <FaShieldAlt className="text-blue-600" /> Quick Safety Check
-                    </h1>
-                    <div className="w-20"></div>
-                </div>
-            </header>
+        <div className="space-y-5">
 
-            <main className="flex-1 max-w-4xl w-full mx-auto p-4 md:p-8">
-                {/* Search Hero */}
-                <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-8 md:p-12 text-white shadow-xl text-center mb-8 relative overflow-hidden">
-                    <div className="relative z-10">
-                        <h2 className="text-3xl md:text-4xl font-black mb-4 tracking-tight">Check Medication Safety</h2>
-                        <p className="text-blue-100 text-lg md:text-xl mb-8 max-w-2xl mx-auto opacity-90 font-medium">
-                            Enter generic drug name to see if it's unsafe for pregnancy, breastfeeding, neonate, the elderly, or those with organ failure.
-                        </p>
-                        
-                        <form onSubmit={handleSearch} className="max-w-3xl mx-auto relative group flex flex-col md:flex-row gap-3">
-                            <div className="relative flex-1">
-                                <input 
-                                    type="text"
-                                    placeholder="e.g., Ibuprofen, Amoxicillin..."
-                                    value={drugName}
-                                    onChange={(e) => setDrugName(e.target.value)}
-                                    className="w-full bg-white text-gray-800 px-6 py-4 pl-12 rounded-xl text-lg font-bold shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/50 transition-all placeholder:text-gray-400"
-                                />
-                                <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg" />
-                            </div>
-                            
-                            <select 
-                                value={selectedCategory}
-                                onChange={(e) => setSelectedCategory(e.target.value)}
-                                className="bg-white text-gray-800 px-4 py-4 rounded-xl text-base font-semibold shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/50 appearance-none cursor-pointer border-r-8 border-transparent"
-                            >
-                                <option value="all">All Conditions</option>
-                                <option value="pregnancy">Pregnancy</option>
-                                <option value="lactation">Breastfeeding</option>
-                                <option value="elderly">Elderly (≥ 65 years old)</option>
-                                <option value="neonate">Neonates</option>
-                                <option value="kidney_failure">Kidney Failure</option>
-                                <option value="liver_failure">Liver Failure</option>
-                                <option value="drug_interactions">Drug Interactions</option>
-                                <option value="iv_incompatibility">IV Drug Incompatibility</option>
-                            </select>
+            {/* ── Header Card ── */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="min-w-0">
+                            {decryptedPatient || patientData ? (
+                                <div className="text-sm text-gray-500 flex flex-wrap items-center gap-2 mt-0.5">
+                                    <span className="font-semibold text-gray-700 truncate">
+                                        {formatEncValue((decryptedPatient || patientData).full_name, 'MR Profile')}
+                                    </span>
+                                    {decryptionFailed && (
+                                        <span className="bg-amber-100 text-amber-700 text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1 border border-amber-200">
+                                            <FaEyeSlash size={10} /> Profile Locked
+                                        </span>
+                                    )}
+                                    {lastAnalysisTime && (
+                                        <>
+                                            <span className="text-gray-300">·</span>
+                                            <span className="flex items-center gap-1 whitespace-nowrap">
+                                                <FaClock className="text-xs" />
+                                                Run: {getTimeAgo ? getTimeAgo(lastAnalysisTime) : new Date(lastAnalysisTime).toLocaleTimeString()}
+                                            </span>
+                                        </>
+                                    )}
+                                </div>
+                            ) : (
+                                <p className="text-sm text-gray-500">Retrieving patient record...</p>
+                            )}
+                        </div>
+                    </div>
 
-                            <button 
-                                type="submit"
-                                disabled={loading || !drugName.trim()}
-                                className="bg-blue-900 hover:bg-gray-900 disabled:bg-blue-400 text-white px-8 py-4 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 shadow-sm whitespace-nowrap"
+                    {/* Action buttons */}
+                    <div className="flex flex-wrap gap-2 w-full md:w-auto">
+                        <button
+                            onClick={fetchClinicalRules}
+                            className="flex-1 md:flex-none bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm border border-gray-200 transition-colors font-medium"
+                            title="Refresh Clinical Analysis"
+                        >
+                            <FaSync className={loading ? 'animate-spin' : ''} />
+                            <span>Refresh Clinical Analysis</span>
+                        </button>
+
+                        <button
+                            onClick={handleRunAI}
+                            disabled={loading || !patientData}
+                            className="flex-1 md:flex-none bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm shadow-sm transition-all font-medium"
+                            title="Run AI Clinical Assistant"
+                        >
+                            {loading ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                            ) : (
+                                <FaRobot />
+                            )}
+                            <span>Run AI Clinical Assistant</span>
+                        </button>
+
+                        {hasAlerts && (
+                            <button
+                                onClick={downloadReport}
+                                className="flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm shadow-sm transition-all font-medium"
+                                title="Export PDF Report"
                             >
-                                {loading ? <FaSpinner className="animate-spin" /> : 'Check Safety'}
+                                <FaDownload />
+                                <span className="hidden sm:inline">Export PDF</span>
                             </button>
-                        </form>
+                        )}
                     </div>
                 </div>
+            </div>
 
-                {/* Error */}
-                {error && (
-                    <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl flex items-center gap-3 animate-fadeIn mb-8">
-                        <FaExclamationTriangle className="text-red-500 text-xl" />
-                        <span className="font-medium">{error}</span>
+            {/* ── Test Results Banner ── */}
+            {testResults && (
+                <div className={`p-4 rounded-xl ${testResults.passed ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'}`}>
+                    <div className="flex items-center gap-2">
+                        {testResults.passed
+                            ? <FaCheckCircle className="text-green-600" />
+                            : <FaInfoCircle className="text-yellow-600" />
+                        }
+                        <span className={`font-semibold ${testResults.passed ? 'text-green-700' : 'text-yellow-700'}`}>
+                            {testResults.passed ? 'Age-in-Days Rules Test Passed!' : 'Age-in-Days Rules Test'}
+                        </span>
                     </div>
-                )}
+                    <p className={`text-sm mt-1 ${testResults.passed ? 'text-green-600' : 'text-yellow-600'}`}>
+                        {testResults.message}
+                    </p>
+                </div>
+            )}
 
-                {/* Loading State */}
-                {loading && (
-                    <div className="flex flex-col items-center justify-center py-20 animate-fadeIn">
-                        <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-6">
-                            <FaShieldAlt className="text-4xl text-blue-600 animate-pulse" />
-                        </div>
-                        <h3 className="text-2xl font-bold text-gray-800 mb-2">Analyzing {drugName}...</h3>
-                        <p className="text-gray-500">Checking clinical safety guidelines across special populations.</p>
+            {/* ── Error Display ── */}
+            {analysisError && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
+                    <div className="flex items-center gap-2 text-red-700 mb-2">
+                        <FaExclamationTriangle />
+                        <span className="font-semibold">Analysis Error</span>
                     </div>
-                )}
+                    <p className="text-red-600 text-sm">{analysisError}</p>
+                    <button
+                        onClick={analyzePatient}
+                        className="mt-2 text-sm text-red-700 hover:text-red-900 font-medium underline"
+                    >
+                        Try again
+                    </button>
+                </div>
+            )}
 
-                {/* Results */}
-                {result && !loading && (
-                    <div className="animate-fadeIn space-y-6">
-                        {hasAnyDataToShow() ? (
-                            <>
-                                <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100">
-                                    <h3 className="text-3xl font-black text-gray-900 capitalize mb-2">{result.medication}</h3>
-                                    <p className="text-gray-600 text-lg leading-relaxed">{result.general_overview}</p>
-                                </div>
+            {/* ── Alerts Section ── */}
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
 
-                                {/* Show unsafe categories with proper filtering */}
-                                {hasUnsafeInFiltered() && (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {getFilteredUnsafeCategories().map(([key, data]) => (
-                                            <div key={key} className="bg-red-50 rounded-2xl p-6 shadow-sm border-2 border-red-400 hover:border-red-600 transition-colors group">
-                                                <div className="flex items-start justify-between mb-4">
-                                                    <div className="flex items-center gap-3">
-                                                        <h4 className="font-bold text-gray-800 text-lg"><CategoryTitle type={key} /></h4>
-                                                    </div>
-                                                    <StatusBadge status={data.status} />
-                                                </div>
-                                                <p className="text-gray-700 leading-relaxed text-base font-bold">{data.details}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-
-                                {/* Major Drug Interactions */}
-                                {(selectedCategory === 'all' || selectedCategory === 'drug_interactions') && 
-                                 result.major_interactions && result.major_interactions.length > 0 && (
-                                    <div className="bg-amber-50 rounded-2xl p-6 md:p-8 shadow-sm border border-amber-200 mt-6">
-                                        <h4 className="text-xl font-bold text-amber-900 flex items-center gap-2 mb-4">
-                                            <FaPills className="text-amber-600" /> Major Drug Interactions (Avoid With)
-                                        </h4>
-                                        <ul className="list-disc list-inside space-y-2 text-amber-800 font-medium ml-2">
-                                            {result.major_interactions.map((interaction, i) => (
-                                                <li key={i}>{interaction}</li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                )}
-
-                                {/* IV Drug Incompatibility */}
-                                {(selectedCategory === 'all' || selectedCategory === 'iv_incompatibility') && 
-                                 getFormattedIVData().length > 0 && (
-                                    <div className="bg-red-50 rounded-2xl p-6 md:p-8 shadow-sm border border-red-200 mt-6">
-                                        <h4 className="text-xl font-bold text-red-900 flex items-center gap-2 mb-4">
-                                            <FaSyringe className="text-red-600" /> IV Drug Incompatibility (Do Not Mix)
-                                        </h4>
-                                        <ul className="list-disc list-inside space-y-2 text-red-800 font-medium ml-2">
-                                            {getFormattedIVData().map((incompatibility, i) => (
-                                                <li key={i}>{incompatibility}</li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                )}
-                            </>
-                        ) : (
-                            /* Show when NO data is detected in the filtered results */
-                            <div className="bg-green-50 border-2 border-green-500 rounded-2xl p-8 md:p-12 shadow-lg text-center">
-                                <div className="flex flex-col items-center gap-4">
-                                    <div>
-                                        <p className="text-green-600 text-xl font-black max-w-2xl mx-auto">
-                                            No contraindication data about {result.medication} in Addis Med for its safe use in the selected condition(s)
-                                            {selectedCategory !== 'all' && ` [${CategoryTitle({ type: selectedCategory })}]`}.
-                                            Always consult with your healthcare provider.
-                                        </p>
-                                    </div>
-                                </div>
+                {/* Alerts toolbar */}
+                {hasAlerts && (
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-3.5 border-b border-gray-100 bg-gray-50/60">
+                        <div className="flex items-center gap-2">
+                            <div className="bg-gradient-to-br from-red-500 to-orange-500 p-1.5 rounded-lg">
+                                <FaExclamationTriangle className="text-white text-sm" />
                             </div>
-                        )}
-                        
-                        <div className="mt-8 text-center bg-gray-50 p-4 rounded-xl text-xs font-bold text-gray-400 flex items-center justify-center gap-2">
-                            <FaInfoCircle /> Disclaimer: This information is for educational purposes only and does not replace consultation with a qualified healthcare professional. Medication information may change with emerging evidence, manufacturers' current prescribing information, and evolving medical practice. Users are responsible for verifying all information and exercising health professional's judgment. 
+                            <h3 className="text-sm font-bold text-gray-700">
+                                Clinical Alerts
+                                <span className="ml-2 bg-red-100 text-red-700 text-xs font-black px-1.5 py-0.5 rounded-full border border-red-200">
+                                    {alerts.length}
+                                </span>
+                            </h3>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-3">
+                            <button
+                                onClick={acknowledgeAll}
+                                className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 font-semibold transition-colors"
+                            >
+                                <FaClipboardCheck /> Mark all reviewed
+                            </button>
+                            <div className="flex items-center gap-2">
+                                <FaFilter className="text-gray-400 text-xs" />
+                                <select
+                                    value={severityFilter}
+                                    onChange={(e) => setSeverityFilter(e.target.value)}
+                                    className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs bg-white text-gray-700 font-medium"
+                                >
+                                    <option value="all">All Severities</option>
+                                    <option value="critical">Critical</option>
+                                    <option value="high">High</option>
+                                    <option value="moderate">Moderate</option>
+                                    <option value="low">Low</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                 )}
-            </main>
+
+                {/* Content area */}
+                <div className="p-5">
+                    {loading ? (
+                        <div className="text-center py-16">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
+                            <p className="text-gray-600 font-medium mb-1">Running clinical analysis…</p>
+                            <p className="text-gray-400 text-sm">Evaluating {clinicalRules.length} active rules</p>
+                        </div>
+                    ) : !patientData ? (
+                        <div className="text-center py-16">
+                            <FaUser className="text-5xl text-gray-200 mx-auto mb-4" />
+                            <p className="text-gray-500 font-medium mb-1">No patient selected</p>
+                            <p className="text-gray-400 text-sm">Select a patient to run clinical analysis</p>
+                        </div>
+                    ) : !hasAlerts ? (
+                        /* ── Clean slate — no DRPs ── */
+                        <div className="text-center py-14 border-2 border-dashed border-green-200 rounded-xl bg-green-50/40">
+                            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <FaCheckCircle className="text-green-500 text-2xl" />
+                            </div>
+                            <p className="text-gray-700 text-lg font-bold mb-1">No drug-related problems detected</p>
+                            <p className="text-gray-400 text-sm max-w-xs mx-auto">
+                                The patient's current medication profile appears safe based on {clinicalRules.length} active clinical rules.
+                            </p>
+                        </div>
+                    ) : !hasFilteredResults ? (
+                        /* ── Filter returned nothing ── */
+                        <div className="text-center py-14 border-2 border-dashed border-gray-200 rounded-xl">
+                            <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <FaSearch className="text-gray-400 text-xl" />
+                            </div>
+                            <p className="text-gray-600 font-semibold mb-1">No issues found matching current filter</p>
+                            <p className="text-gray-400 text-sm mb-4">
+                                Try changing the severity filter or view all alerts.
+                            </p>
+                            <button
+                                onClick={() => setSeverityFilter('all')}
+                                className="text-sm text-blue-600 hover:text-blue-800 font-semibold underline"
+                            >
+                                Show all {totalAlerts} alert{totalAlerts !== 1 ? 's' : ''}
+                            </button>
+                        </div>
+                    ) : (
+                        /* ── Alerts list ── */
+                        <div className="space-y-4">
+                            {filteredAlerts.map((alert) => {
+                                const SeverityIcon = severityIcons[alert.severity] || FaBell;
+                                const severityColor = severityColors[alert.severity];
+                                const severityBgColor = severityBgColors[alert.severity];
+                                const ruleTypeInfo = getRuleTypeInfo(alert.rule_type);
+
+                                return (
+                                    <div
+                                        key={alert.id}
+                                        className={`border rounded-xl overflow-hidden transition-all duration-200 ${severityColor} ${alert.acknowledged ? 'opacity-60' : ''}`}
+                                    >
+                                        <div className="flex-1 min-w-0">
+                                            {/* Primary Finding */}
+                                            <div className="flex flex-col gap-2 p-3 bg-gray-50/80 rounded-xl border border-gray-200 mb-3 shadow-sm">
+                                                <div className="flex items-start gap-2 text-sm text-gray-700">
+                                                    <span className="font-black text-blue-600 uppercase text-xs shrink-0 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">Finding:</span>
+                                                    <p className="italic font-medium leading-relaxed">
+                                                        {isHealthcareClient ? (alert.client_message || alert.message) : (alert.professional_message || alert.message)}
+                                                    </p>
+                                                </div>
+                                            
+                                                {/* Drug triggers */}
+                                                {alert.evidence?.matched_medications?.length > 0 && (
+                                                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-300/50 mt-0">
+                                                        <span className="font-black text-purple-600 uppercase text-xs shrink-0">Drug(s) Trigger:</span>
+                                                        <div className="flex flex-wrap gap-1.5">
+                                                            {alert.evidence.matched_medications.map((med, i) => (
+                                                                <span key={i} className="px-2.5 py-0.5 bg-purple-100 text-purple-800 rounded-lg text-xs font-black border border-purple-200 shadow-sm flex items-center gap-1.5">
+                                                                    <FaCapsules className="text-xs" /> {med}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            
+                                                {/* Recommendation */}
+                                                <div className="bg-green-50 border-l-8 border-green-500 p-3 rounded-r-xl shadow-sm">
+                                                    <div className="flex items-center gap-1.5 mb-1.5">
+                                                        <FaCheckCircle className="text-green-600 text-xs" />
+                                                        <span className="text-xs font-black uppercase tracking-widest text-green-800">Evidence Recommendation</span>
+                                                    </div>
+                                                    <div className="text-sm font-black text-gray-900 leading-relaxed whitespace-pre-wrap">
+                                                        {(isHealthcareClient
+                                                            ? (alert.client_recommendation || alert.recommendation || alert.details)
+                                                            : (alert.professional_recommendation || alert.recommendation || alert.details)) || 'Review clinical guidelines'}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {onBack && (
+                <div className="flex justify-center pb-4">
+                    <button
+                        onClick={onBack}
+                        className="flex items-center gap-2 px-8 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold transition-all border border-gray-200 shadow-sm"
+                    >
+                        <FaSync className="rotate-180" />
+                        Back to Case Selection
+                    </button>
+                </div>
+            )}
         </div>
     );
 };
 
-export default QuickSafetyCheck;
+export default CDSSDisplay;
