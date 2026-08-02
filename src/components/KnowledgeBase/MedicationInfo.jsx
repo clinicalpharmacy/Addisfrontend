@@ -41,6 +41,7 @@ const MedicationInfo = () => {
     // Default to true (protected) if used outside of layout context
     const protectionEnabled = context?.protectionEnabled ?? true;
     const toggleProtection = context?.toggleProtection ?? (() => { });
+    const protectionMsg = useScreenshotProtection(protectionEnabled);
 
     const [medications, setMedications] = useState([]);
     const [filteredMedications, setFilteredMedications] = useState([]);
@@ -577,6 +578,7 @@ const MedicationInfo = () => {
     };
 
     return (
+         <div className="bg-gray-50 min-h-full pb-8">
             <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 md:py-8">
                 {/* Header */}
                 <div className="mb-6 md:mb-8">
