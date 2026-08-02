@@ -309,7 +309,7 @@ const QuickSafetyCheck = () => {
                                 <div className="flex flex-col items-center gap-4">
                                     <div>
                                         <p className="text-green-600 text-xl font-black max-w-2xl mx-auto">
-                                            No contraindication data about {result.medication} in Addis Med for its safe use in the selected condition(s)
+                                            No contraindication data found in Addis Med for safe use of {result.medication} in the selected condition(s)
                                             {selectedCategory !== 'all' && ` [${CategoryTitle({ type: selectedCategory })}]`}.
                                             Always consult with your healthcare provider.
                                         </p>
