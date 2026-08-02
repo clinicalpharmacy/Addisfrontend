@@ -37,6 +37,28 @@ const QuickSafetyCheck = () => {
     const [result, setResult] = useState(null);
     const [error, setError] = useState('');
 
+    // Get user role from localStorage or context
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    
+    // Check user roles
+    const isAdmin = user?.role === 'admin';
+    const isCompanyAdmin = user?.role === 'company_admin';
+    const isCompanyUser = !!user?.company_id || user?.account_type === 'company' || ['company_admin', 'company_user'].includes(user?.role);
+    const isIndividual = !isAdmin && !isCompanyUser;
+    
+    // Check if user is healthcare_client
+    const isHealthcareClient = user?.role === 'healthcare_client' || user?.account_type === 'healthcare_client';
+
+    // Filter out IV incompatibility for healthcare_client
+    const filterIVIncompatibility = (safetyProfile) => {
+        if (isHealthcareClient && safetyProfile) {
+            // Remove iv_incompatibility from the profile
+            const { iv_incompatibility, ...filteredProfile } = safetyProfile;
+            return filteredProfile;
+        }
+        return safetyProfile;
+    };
+
     const handleSearch = async (e) => {
         e.preventDefault();
         if (!drugName.trim()) return;
@@ -55,19 +77,23 @@ const QuickSafetyCheck = () => {
             console.log('Full API Response:', response);
             
             if (response.success && response.safetyProfile) {
-                // Ensure iv_incompatibility is always an array
-                if (!response.safetyProfile.iv_incompatibility) {
+                // Ensure iv_incompatibility is always an array for non-healthcare_client
+                if (!response.safetyProfile.iv_incompatibility && !isHealthcareClient) {
                     response.safetyProfile.iv_incompatibility = [];
                 }
                 
-                // DEBUG: Log specific fields
-                console.log('Safety Profile:', response.safetyProfile);
-                console.log('Major Interactions:', response.safetyProfile.major_interactions);
-                console.log('IV Incompatibility:', response.safetyProfile.iv_incompatibility);
-                console.log('IV Incompatibility Type:', typeof response.safetyProfile.iv_incompatibility);
-                console.log('IV Incompatibility Length:', response.safetyProfile.iv_incompatibility?.length);
+                // Filter IV incompatibility for healthcare_client
+                const filteredProfile = filterIVIncompatibility(response.safetyProfile);
                 
-                setResult(response.safetyProfile);
+                // DEBUG: Log specific fields
+                console.log('Safety Profile:', filteredProfile);
+                console.log('Is Healthcare Client:', isHealthcareClient);
+                console.log('Major Interactions:', filteredProfile.major_interactions);
+                console.log('IV Incompatibility:', filteredProfile.iv_incompatibility);
+                console.log('IV Incompatibility Type:', typeof filteredProfile.iv_incompatibility);
+                console.log('IV Incompatibility Length:', filteredProfile.iv_incompatibility?.length);
+                
+                setResult(filteredProfile);
             } else {
                 setError('Failed to retrieve safety data. Please try again.');
             }
@@ -110,15 +136,26 @@ const QuickSafetyCheck = () => {
         const hasUnsafe = hasUnsafeInFiltered();
         const hasInteractions = (selectedCategory === 'all' || selectedCategory === 'drug_interactions') && 
                                result.major_interactions && result.major_interactions.length > 0;
-        const hasIVIncompatibility = (selectedCategory === 'all' || selectedCategory === 'iv_incompatibility') && 
-                                     result.iv_incompatibility && result.iv_incompatibility.length > 0;
+        
+        // Only check IV incompatibility if NOT healthcare_client
+        let hasIVIncompatibility = false;
+        if (!isHealthcareClient) {
+            hasIVIncompatibility = (selectedCategory === 'all' || selectedCategory === 'iv_incompatibility') && 
+                                   result.iv_incompatibility && result.iv_incompatibility.length > 0;
+        }
         
         // DEBUG: Log what's being detected
         console.log('hasUnsafe:', hasUnsafe);
         console.log('hasInteractions:', hasInteractions);
         console.log('hasIVIncompatibility:', hasIVIncompatibility);
+        console.log('isHealthcareClient:', isHealthcareClient);
         
         return hasUnsafe || hasInteractions || hasIVIncompatibility;
+    };
+
+    // Check if IV incompatibility should be shown in category dropdown
+    const shouldShowIVCategory = () => {
+        return !isHealthcareClient;
     };
 
     return (
@@ -173,7 +210,9 @@ const QuickSafetyCheck = () => {
                                 <option value="kidney_failure">Kidney Failure</option>
                                 <option value="liver_failure">Liver Failure</option>
                                 <option value="drug_interactions">Drug Interactions</option>
-                                <option value="iv_incompatibility">IV Drug Incompatibility</option>
+                                {shouldShowIVCategory() && (
+                                    <option value="iv_incompatibility">IV Drug Incompatibility</option>
+                                )}
                             </select>
 
                             <button 
@@ -248,8 +287,9 @@ const QuickSafetyCheck = () => {
                                     </div>
                                 )}
 
-                                {/* IV Drug Incompatibility */}
-                                {(selectedCategory === 'all' || selectedCategory === 'iv_incompatibility') && 
+                                {/* IV Drug Incompatibility - Only shown for non-healthcare_client */}
+                                {!isHealthcareClient && 
+                                 (selectedCategory === 'all' || selectedCategory === 'iv_incompatibility') && 
                                  result.iv_incompatibility && result.iv_incompatibility.length > 0 && (
                                     <div className="bg-red-50 rounded-2xl p-6 md:p-8 shadow-sm border border-red-200 mt-6">
                                         <h4 className="text-xl font-bold text-red-900 flex items-center gap-2 mb-4">
