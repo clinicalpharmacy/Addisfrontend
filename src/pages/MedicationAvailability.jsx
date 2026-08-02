@@ -409,7 +409,7 @@ const MedicationAvailability = () => {
                 <div>
                     <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
                         <FaPills className="text-blue-600" />
-                        ያጡትን መድሃኒት ማፈላለጊያ
+                           መድሃኒት ማፈላለጊያ
                     </h1>
 
                     <div className="mt-2 flex flex-wrap gap-3 text-xs font-semibold text-gray-500">
@@ -430,7 +430,7 @@ const MedicationAvailability = () => {
                     }}
                     className={`${showAddForm ? 'bg-gray-500' : 'bg-blue-600'} text-white px-6 py-3 rounded-xl flex items-center gap-2 hover:opacity-90 transition shadow-lg font-bold`}
                 >
-                    {showAddForm ? 'Cancel' : <><FaPlus />ያጡትን መድሃኒት ያጋሩ</>}
+                    {showAddForm ? 'Cancel' : <><FaPlus />ተፈላጊውን መድሃኒት ያጋሩ</>}
                 </button>
             </div>
 
@@ -460,7 +460,7 @@ const MedicationAvailability = () => {
                                         value={formData.medication_needed}
                                         onChange={(e) => setFormData({ ...formData, medication_needed: e.target.value })}
                                         className="w-full border border-gray-200 rounded-2xl p-3 focus:border-blue-500"
-                                        placeholder="የሚፈለገውን መድሃኒት ይጻፉ"
+                                        placeholder="የመድሃኒቱን ስም ይጻፉ"
                                     />
                                 </div>
                                 
@@ -468,7 +468,7 @@ const MedicationAvailability = () => {
                                 <div className="md:col-span-3">
                                     <div className="flex items-center gap-2 w-full">
                                         <label className="text-lg text-gray-500 whitespace-nowrap">
-                                            እስከ መች ይፈለግ
+                                            እስከ መች ይለጠፍ 
                                         </label>
                                 
                                         {/* Calendar Button */}
