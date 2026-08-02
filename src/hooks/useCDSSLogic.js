@@ -179,6 +179,17 @@ export const useCDSSLogic = (patientData) => {
         }
     }, [patientData?.patient_code, patientData?.medication_history]);
 
+    // Helper function to generate all pairs from an array
+    const generatePairs = (items) => {
+        const pairs = [];
+        for (let i = 0; i < items.length; i++) {
+            for (let j = i + 1; j < items.length; j++) {
+                pairs.push([items[i], items[j]]);
+            }
+        }
+        return pairs;
+    };
+
     const analyzePatient = useCallback(async (overrideRules = null, overrideMedications = null) => {
         if (!patientData?.id) {
             console.warn('⚠️ Cannot analyze: Patient ID missing');
@@ -264,24 +275,34 @@ export const useCDSSLogic = (patientData) => {
                         const profRec = formatAlertMessage(action.recommendation_professional || action.recommendation || rule.rule_description || '', facts);
                         const clientRec = formatAlertMessage(action.recommendation_client || action.recommendation || rule.rule_description || '', facts);
 
-                        // REVISED: Build evidence object with interaction support
+                        // REVISED: Build evidence object with full interaction pair support
                         const evidence = {
                             facts,
                             matched_medications: evalResult.matchedMedications || []
                         };
 
-                        // If this is a drug interaction or incompatibility, add pair information
+                        // If this is a drug interaction or incompatibility, generate all pairs
                         if (rule.rule_type === 'drug_interaction' || rule.rule_type === 'incompatibility') {
-                            // Look for interaction pair in evalResult or action
-                            if (evalResult.interactingPair) {
-                                evidence.interacting_pair = evalResult.interactingPair;
-                                evidence.drug_a = evalResult.drugA || evalResult.matchedMedications?.[0];
-                                evidence.drug_b = evalResult.drugB || evalResult.matchedMedications?.[1];
-                            } else if (evalResult.matchedMedications?.length >= 2) {
-                                // Construct pair from matched medications
-                                evidence.interacting_pair = `${evalResult.matchedMedications[0]} ⇄ ${evalResult.matchedMedications[1]}`;
-                                evidence.drug_a = evalResult.matchedMedications[0];
-                                evidence.drug_b = evalResult.matchedMedications[1];
+                            const matchedMeds = evalResult.matchedMedications || [];
+                            
+                            // Generate all possible pairs from matched medications
+                            if (matchedMeds.length >= 2) {
+                                const pairs = generatePairs(matchedMeds);
+                                
+                                // Store all pairs as an array of objects
+                                evidence.interaction_pairs = pairs.map(pair => ({
+                                    drug_a: pair[0],
+                                    drug_b: pair[1],
+                                    pair_string: `${pair[0]} ⇄ ${pair[1]}`
+                                }));
+                                
+                                // Also store a formatted string with all pairs for display
+                                evidence.all_pairs_string = pairs.map(p => `${p[0]} ⇄ ${p[1]}`).join('; ');
+                                
+                                // For backward compatibility, keep the first pair as interacting_pair
+                                evidence.interacting_pair = pairs.length > 0 ? `${pairs[0][0]} ⇄ ${pairs[0][1]}` : null;
+                                evidence.drug_a = pairs.length > 0 ? pairs[0][0] : null;
+                                evidence.drug_b = pairs.length > 0 ? pairs[0][1] : null;
                             }
                             
                             // Add severity rating from action if available
@@ -593,7 +614,7 @@ export const useCDSSLogic = (patientData) => {
                         professional_message_formatted += ` [Drug(s): ${evalResult.matchedMedications.join(', ')}]`;
                     }
 
-                    // REVISED: Build evidence object with interaction support for test rules
+                    // REVISED: Build evidence object with full interaction pair support for test rules
                     const evidence = {
                         facts: facts,
                         age_in_days: facts.age_in_days,
@@ -601,18 +622,29 @@ export const useCDSSLogic = (patientData) => {
                         matched_medications: evalResult.matchedMedications || []
                     };
 
-                    // If this is a drug interaction or incompatibility, add pair information
+                    // If this is a drug interaction or incompatibility, generate all pairs
                     if (rule.rule_type === 'drug_interaction' || rule.rule_type === 'incompatibility') {
                         const action = typeof rule.rule_action === 'string' ? JSON.parse(rule.rule_action) : (rule.rule_action || {});
+                        const matchedMeds = evalResult.matchedMedications || [];
                         
-                        if (evalResult.interactingPair) {
-                            evidence.interacting_pair = evalResult.interactingPair;
-                            evidence.drug_a = evalResult.drugA || evalResult.matchedMedications?.[0];
-                            evidence.drug_b = evalResult.drugB || evalResult.matchedMedications?.[1];
-                        } else if (evalResult.matchedMedications?.length >= 2) {
-                            evidence.interacting_pair = `${evalResult.matchedMedications[0]} ⇄ ${evalResult.matchedMedications[1]}`;
-                            evidence.drug_a = evalResult.matchedMedications[0];
-                            evidence.drug_b = evalResult.matchedMedications[1];
+                        // Generate all possible pairs from matched medications
+                        if (matchedMeds.length >= 2) {
+                            const pairs = generatePairs(matchedMeds);
+                            
+                            // Store all pairs as an array of objects
+                            evidence.interaction_pairs = pairs.map(pair => ({
+                                drug_a: pair[0],
+                                drug_b: pair[1],
+                                pair_string: `${pair[0]} ⇄ ${pair[1]}`
+                            }));
+                            
+                            // Also store a formatted string with all pairs for display
+                            evidence.all_pairs_string = pairs.map(p => `${p[0]} ⇄ ${p[1]}`).join('; ');
+                            
+                            // For backward compatibility, keep the first pair as interacting_pair
+                            evidence.interacting_pair = pairs.length > 0 ? `${pairs[0][0]} ⇄ ${pairs[0][1]}` : null;
+                            evidence.drug_a = pairs.length > 0 ? pairs[0][0] : null;
+                            evidence.drug_b = pairs.length > 0 ? pairs[0][1] : null;
                         }
                         
                         if (action.severity_rating) {
