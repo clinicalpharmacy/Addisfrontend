@@ -551,7 +551,7 @@ const MedicationAvailability = () => {
                                             </h3>
                                             {post.search_date && (
                                                 <span className="text-[11px] text-lg font-medium">
-                                                    እስከ መች ይፈለግ: {formatDate(post.search_date)}
+                                                    እስከ: {formatDate(post.search_date)}
                                                 </span>
                                             )}
                                         </div>
