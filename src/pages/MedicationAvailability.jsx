@@ -468,7 +468,7 @@ const MedicationAvailability = () => {
                                 <div className="md:col-span-3">
                                     <div className="flex items-center gap-2 w-full">
                                         <label className="text-lg text-gray-500 whitespace-nowrap">
-                                            እስከ መች ይለጠፍ 
+                                            እስከ መች ይፈለግ 
                                         </label>
                                 
                                         {/* Calendar Button */}
