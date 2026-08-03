@@ -1,4 +1,4 @@
-"import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
     FaUser,
@@ -679,51 +679,51 @@ const PatientDetails = () => {
         };
 
         // Build complete form data object
-    const formDataToSet = {
-        ...data,
-        age: ageInYears,
-        age_in_days: ageInDays,
-        patient_type: patientType,
-        allergies: ensureArray(data.allergies),
-        vaccination_status: ensureArray(data.vaccination_status),
-        developmental_milestones: ensureArray(data.developmental_milestones),
-        date_of_birth: (dob && isValidDate(dob)) ? dob.split('T')[0] : '',
-        appointment_date: (data.appointment_date && isValidDate(data.appointment_date)) ? data.appointment_date.split('T')[0] : '',
-        edd: (data.edd && isValidDate(data.edd)) ? data.edd.split('T')[0] : '',
-        last_measured: (data.last_measured && isValidDate(data.last_measured)) ? data.last_measured.split('T')[0] : new Date().toISOString().split('T')[0],
-        lab_test_date: null,
-        // Explicitly convert is_lactating to boolean
-        is_lactating: data.is_lactating === true || data.is_lactating === 'true' || data.is_lactating === 1,
-        is_pregnant: data.is_pregnant === true || data.is_pregnant === 'true' || data.is_pregnant === 1,
-    };
-    
-    // Parse diagnosis if it's JSON (for sub-category fields)
-    if (data.diagnosis && typeof data.diagnosis === 'string' && data.diagnosis.startsWith('{')) {
-        try {
-            const parsedDiagnosis = JSON.parse(data.diagnosis);
-            formDataToSet.diagnosis_primary = parsedDiagnosis.primary || '';
-            formDataToSet.diagnosis_special_conditions = parsedDiagnosis.special_conditions || [];
-            formDataToSet.diagnosis_sub_category_type = parsedDiagnosis.sub_category_type || '';
-            // Clear the diagnosis field since we're using structured data
-            formDataToSet.diagnosis = ''; 
-        } catch (e) {
-            // If parsing fails, treat it as plain text (keep the original)
-            console.warn('Failed to parse diagnosis JSON:', e);
-            // Keep the original diagnosis as plain text
-            formDataToSet.diagnosis = data.diagnosis;
+        const formDataToSet = {
+            ...data,
+            age: ageInYears,
+            age_in_days: ageInDays,
+            patient_type: patientType,
+            allergies: ensureArray(data.allergies),
+            vaccination_status: ensureArray(data.vaccination_status),
+            developmental_milestones: ensureArray(data.developmental_milestones),
+            date_of_birth: (dob && isValidDate(dob)) ? dob.split('T')[0] : '',
+            appointment_date: (data.appointment_date && isValidDate(data.appointment_date)) ? data.appointment_date.split('T')[0] : '',
+            edd: (data.edd && isValidDate(data.edd)) ? data.edd.split('T')[0] : '',
+            last_measured: (data.last_measured && isValidDate(data.last_measured)) ? data.last_measured.split('T')[0] : new Date().toISOString().split('T')[0],
+            lab_test_date: null,
+            // Explicitly convert is_lactating to boolean
+            is_lactating: data.is_lactating === true || data.is_lactating === 'true' || data.is_lactating === 1,
+            is_pregnant: data.is_pregnant === true || data.is_pregnant === 'true' || data.is_pregnant === 1,
+        };
+        
+        // Parse diagnosis if it's JSON (for sub-category fields)
+        if (data.diagnosis && typeof data.diagnosis === 'string' && data.diagnosis.startsWith('{')) {
+            try {
+                const parsedDiagnosis = JSON.parse(data.diagnosis);
+                formDataToSet.diagnosis_primary = parsedDiagnosis.primary || '';
+                formDataToSet.diagnosis_special_conditions = parsedDiagnosis.special_conditions || [];
+                formDataToSet.diagnosis_sub_category_type = parsedDiagnosis.sub_category_type || '';
+                // Clear the diagnosis field since we're using structured data
+                formDataToSet.diagnosis = ''; 
+            } catch (e) {
+                // If parsing fails, treat it as plain text (keep the original)
+                console.warn('Failed to parse diagnosis JSON:', e);
+                // Keep the original diagnosis as plain text
+                formDataToSet.diagnosis = data.diagnosis;
+                formDataToSet.diagnosis_primary = '';
+                formDataToSet.diagnosis_special_conditions = [];
+                formDataToSet.diagnosis_sub_category_type = '';
+            }
+        } else {
+            // If it's plain text, keep it as is
+            formDataToSet.diagnosis = data.diagnosis || ''; // Keep the plain text
             formDataToSet.diagnosis_primary = '';
             formDataToSet.diagnosis_special_conditions = [];
             formDataToSet.diagnosis_sub_category_type = '';
         }
-    } else {
-        // If it's plain text, keep it as is
-        formDataToSet.diagnosis = data.diagnosis || ''; // Keep the plain text
-        formDataToSet.diagnosis_primary = '';
-        formDataToSet.diagnosis_special_conditions = [];
-        formDataToSet.diagnosis_sub_category_type = '';
-    }
-    
-    setFormData(formDataToSet);
+        
+        setFormData(formDataToSet);
         // Merge Custom Labs with Global Definitions
         if (globalLabDefinitions && globalLabDefinitions.length > 0) {
             const existingMap = new Map();
@@ -2341,6 +2341,11 @@ const PatientDetails = () => {
         const patientCodeToDisplay = getCurrentPatientCode();
         const isIndividual = user?.account_type === 'individual' && user?.role !== 'admin';
 
+        const diagnosisPrimary = formData.diagnosis_primary || '';
+        const diagnosisSpecialConditions = Array.isArray(formData.diagnosis_special_conditions) 
+            ? formData.diagnosis_special_conditions 
+            : [];
+
         return (
             <div className="space-y-6">
                 <div className="flex items-center justify-between mb-6">
@@ -2929,7 +2934,7 @@ const PatientDetails = () => {
                             </label>
                             {isEditing ? (
                                 <textarea
-                                    value={formData.diagnosis_primary || ''}
+                                    value={diagnosisPrimary || ''}
                                     onChange={(e) => handleInputChange('diagnosis_primary', e.target.value)}
                                     rows="2"
                                     className="w-full border border-gray-300 rounded-lg p-3"
@@ -2937,7 +2942,7 @@ const PatientDetails = () => {
                                 />
                             ) : (
                                 <div className="p-3 bg-white rounded-lg border border-gray-200">
-                                    {formData.diagnosis_primary || <span className="text-gray-500 italic">No primary diagnosis recorded</span>}
+                                    {diagnosisPrimary || <span className="text-gray-500 italic">No primary diagnosis recorded</span>}
                                 </div>
                             )}
                         </div>
@@ -2984,7 +2989,7 @@ const PatientDetails = () => {
                                                     alert('Please select a condition.');
                                                     return;
                                                 }
-                                                if (!formData.diagnosis_special_conditions.includes(conditionToAdd)) {
+                                                if (!diagnosisSpecialConditions.includes(conditionToAdd)) {
                                                     setFormData(prev => ({
                                                         ...prev,
                                                         diagnosis_special_conditions: [...prev.diagnosis_special_conditions, conditionToAdd]
@@ -3037,9 +3042,9 @@ const PatientDetails = () => {
                                     </div>
 
                                     {/* Added Conditions List */}
-                                    {formData.diagnosis_special_conditions.length > 0 && (
+                                    {diagnosisSpecialConditions.length > 0 && (
                                         <div className="flex flex-wrap gap-2 mt-2">
-                                            {formData.diagnosis_special_conditions.map((condition, idx) => (
+                                            {diagnosisSpecialConditions.map((condition, idx) => (
                                                 <div key={idx} className="bg-indigo-100 text-indigo-800 px-3 py-2 rounded-lg flex items-center gap-2">
                                                     <FaExclamationTriangle className="text-indigo-500" />
                                                     {condition}
@@ -3062,9 +3067,9 @@ const PatientDetails = () => {
                                 </div>
                             ) : (
                                 <div className="p-3 bg-white rounded-lg border border-gray-200">
-                                    {formData.diagnosis_special_conditions && formData.diagnosis_special_conditions.length > 0 ? (
+                                    {diagnosisSpecialConditions.length > 0 ? (
                                         <div className="flex flex-wrap gap-2">
-                                            {formData.diagnosis_special_conditions.map((condition, idx) => (
+                                            {diagnosisSpecialConditions.map((condition, idx) => (
                                                 <span key={idx} className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-lg flex items-center gap-2">
                                                     <FaExclamationTriangle className="text-indigo-500" />
                                                     {condition}
@@ -3098,6 +3103,10 @@ const PatientDetails = () => {
         const ageDisplay = formatAgeDisplay(formData.age_in_days, formData.date_of_birth);
         const isPediatric = formData.patient_type && formData.patient_type !== 'adult';
         const patientCodeToDisplay = getCurrentPatientCode();
+        const diagnosisPrimary = formData.diagnosis_primary || '';
+        const diagnosisSpecialConditions = Array.isArray(formData.diagnosis_special_conditions) 
+            ? formData.diagnosis_special_conditions 
+            : [];
 
         return (
             <div className="space-y-6">
@@ -3419,14 +3428,14 @@ const PatientDetails = () => {
                         <FaStethoscope className="text-indigo-500" /> Diagnosis
                     </h3>
                     <div className="p-4 bg-gray-50 rounded-lg">
-                        {formData.diagnosis_primary ? (
+                        {diagnosisPrimary ? (
                             <div className="space-y-2">
-                                <p className="font-medium text-gray-800">Primary: {formData.diagnosis_primary}</p>
-                                {formData.diagnosis_special_conditions && formData.diagnosis_special_conditions.length > 0 && (
+                                <p className="font-medium text-gray-800">Primary: {diagnosisPrimary}</p>
+                                {diagnosisSpecialConditions.length > 0 && (
                                     <div>
                                         <p className="text-sm text-gray-600 font-medium">Special Conditions:</p>
                                         <div className="flex flex-wrap gap-2 mt-1">
-                                            {formData.diagnosis_special_conditions.map((condition, idx) => (
+                                            {diagnosisSpecialConditions.map((condition, idx) => (
                                                 <span key={idx} className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-lg text-sm">
                                                     {condition}
                                                 </span>
@@ -3875,4 +3884,4 @@ const PatientDetails = () => {
     );
 };
 
-export default PatientDetails;"
+export default PatientDetails;
