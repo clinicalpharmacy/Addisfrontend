@@ -237,7 +237,8 @@ const PatientDetails = () => {
         lab_test_date: null,
         // Diagnosis sub-categories
         diagnosis_primary: '',
-        diagnosis_special_conditions: []
+        diagnosis_special_conditions: [],
+        diagnosis_sub_category_type: '' // Added to track which sub-category was selected
     });
 
     // --- 2. HELPERS & UTILS ---
@@ -272,6 +273,7 @@ const PatientDetails = () => {
         }
     };
 
+    // FIXED: handleDiagnosisSubCategoryConfirm with proper logic
     const handleDiagnosisSubCategoryConfirm = () => {
         if (!diagnosisSubCategory) {
             alert('Please select a diagnosis sub-category.');
@@ -279,6 +281,11 @@ const PatientDetails = () => {
         }
         setShowDiagnosisSubCategory(false);
         setIsEditing(true);
+        // Set the diagnosis sub-category type for the form
+        setFormData(prev => ({
+            ...prev,
+            diagnosis_sub_category_type: diagnosisSubCategory
+        }));
     };
 
     const handleAddSpecialCondition = () => {
@@ -690,7 +697,8 @@ const PatientDetails = () => {
             is_pregnant: data.is_pregnant === true || data.is_pregnant === 'true' || data.is_pregnant === 1,
             // Load diagnosis sub-categories
             diagnosis_primary: data.diagnosis_primary || '',
-            diagnosis_special_conditions: ensureArray(data.diagnosis_special_conditions)
+            diagnosis_special_conditions: ensureArray(data.diagnosis_special_conditions),
+            diagnosis_sub_category_type: data.diagnosis_sub_category_type || ''
         };
 
         setFormData(formDataToSet);
@@ -1373,7 +1381,8 @@ const PatientDetails = () => {
                     developmental_milestones: cleanText(formData.developmental_milestones),
                     // Diagnosis sub-categories
                     diagnosis_primary: cleanText(formData.diagnosis_primary),
-                    diagnosis_special_conditions: Array.isArray(formData.diagnosis_special_conditions) ? formData.diagnosis_special_conditions : []
+                    diagnosis_special_conditions: Array.isArray(formData.diagnosis_special_conditions) ? formData.diagnosis_special_conditions : [],
+                    diagnosis_sub_category_type: cleanText(formData.diagnosis_sub_category_type)
                 },
 
                 vitals: {
@@ -2578,8 +2587,8 @@ const PatientDetails = () => {
                         )}
                     </div>
 
-                    {/* Diagnosis Section with Sub-categories */}
-                    {selectedSections.diagnosis && (
+                    {/* Diagnosis Section with Sub-categories - FIXED: Now shown if either Demography or Diagnosis is selected */}
+                    {(selectedSections.demography || selectedSections.diagnosis) && (
                         <div className="md:col-span-2 space-y-4 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200">
                             <h3 className="font-bold text-indigo-800 flex items-center gap-2">
                                 <FaStethoscope /> Diagnosis Information
@@ -2590,7 +2599,7 @@ const PatientDetails = () => {
                                 <label className="block text-sm font-medium text-gray-700">
                                     Primary Diagnosis
                                 </label>
-                                {isEditing && selectedSections.diagnosis ? (
+                                {isEditing && (selectedSections.demography || selectedSections.diagnosis) ? (
                                     <textarea
                                         value={formData.diagnosis_primary || ''}
                                         onChange={(e) => handleInputChange('diagnosis_primary', e.target.value)}
@@ -2605,141 +2614,143 @@ const PatientDetails = () => {
                                 )}
                             </div>
 
-                            {/* Special Conditions */}
-                            <div className="space-y-3">
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Special Conditions
-                                </label>
-                                {isEditing && selectedSections.diagnosis ? (
-                                    <div className="space-y-3">
-                                        <div className="flex gap-2">
-                                            <select
-                                                value={diagnosisSubCategory}
-                                                onChange={(e) => setDiagnosisSubCategory(e.target.value)}
-                                                className="flex-1 border border-gray-300 rounded-lg p-3 bg-white"
-                                            >
-                                                <option value="">Select a condition...</option>
-                                                {specialConditions.map((condition, idx) => (
-                                                    <option key={idx} value={condition}>{condition}</option>
-                                                ))}
-                                                <option value="other">Other (specify)</option>
-                                            </select>
-                                            {diagnosisSubCategory === 'other' && (
-                                                <input
-                                                    type="text"
-                                                    value={diagnosisSubCategoryOther}
-                                                    onChange={(e) => setDiagnosisSubCategoryOther(e.target.value)}
-                                                    className="flex-1 border border-gray-300 rounded-lg p-3"
-                                                    placeholder="Specify condition..."
-                                                />
-                                            )}
-                                            <button
-                                                onClick={() => {
-                                                    let conditionToAdd = diagnosisSubCategory;
-                                                    if (conditionToAdd === 'other') {
-                                                        conditionToAdd = diagnosisSubCategoryOther.trim();
+                            {/* Special Conditions - Only shown if Diagnosis section was specifically selected */}
+                            {selectedSections.diagnosis && (
+                                <div className="space-y-3">
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        Special Conditions
+                                    </label>
+                                    {isEditing && selectedSections.diagnosis ? (
+                                        <div className="space-y-3">
+                                            <div className="flex gap-2">
+                                                <select
+                                                    value={diagnosisSubCategory}
+                                                    onChange={(e) => setDiagnosisSubCategory(e.target.value)}
+                                                    className="flex-1 border border-gray-300 rounded-lg p-3 bg-white"
+                                                >
+                                                    <option value="">Select a condition...</option>
+                                                    {specialConditions.map((condition, idx) => (
+                                                        <option key={idx} value={condition}>{condition}</option>
+                                                    ))}
+                                                    <option value="other">Other (specify)</option>
+                                                </select>
+                                                {diagnosisSubCategory === 'other' && (
+                                                    <input
+                                                        type="text"
+                                                        value={diagnosisSubCategoryOther}
+                                                        onChange={(e) => setDiagnosisSubCategoryOther(e.target.value)}
+                                                        className="flex-1 border border-gray-300 rounded-lg p-3"
+                                                        placeholder="Specify condition..."
+                                                    />
+                                                )}
+                                                <button
+                                                    onClick={() => {
+                                                        let conditionToAdd = diagnosisSubCategory;
+                                                        if (conditionToAdd === 'other') {
+                                                            conditionToAdd = diagnosisSubCategoryOther.trim();
+                                                            if (!conditionToAdd) {
+                                                                alert('Please specify the condition.');
+                                                                return;
+                                                            }
+                                                        }
                                                         if (!conditionToAdd) {
-                                                            alert('Please specify the condition.');
+                                                            alert('Please select a condition.');
                                                             return;
                                                         }
-                                                    }
-                                                    if (!conditionToAdd) {
-                                                        alert('Please select a condition.');
-                                                        return;
-                                                    }
-                                                    if (!formData.diagnosis_special_conditions.includes(conditionToAdd)) {
-                                                        setFormData(prev => ({
-                                                            ...prev,
-                                                            diagnosis_special_conditions: [...prev.diagnosis_special_conditions, conditionToAdd]
-                                                        }));
-                                                        setDiagnosisSubCategory('');
-                                                        setDiagnosisSubCategoryOther('');
-                                                    } else {
-                                                        alert('This condition is already added.');
-                                                    }
-                                                }}
-                                                className="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-3 rounded-lg flex items-center gap-2"
-                                            >
-                                                <FaPlus /> Add
-                                            </button>
-                                        </div>
-                                        
-                                        {/* Manage Special Conditions */}
-                                        <div className="mt-3 p-3 bg-white rounded-lg border border-gray-200">
-                                            <p className="text-sm font-medium text-gray-700 mb-2">Manage available conditions:</p>
-                                            <div className="flex flex-wrap gap-2 mb-3">
-                                                {specialConditions.map((condition, idx) => (
-                                                    <span key={idx} className="bg-gray-100 text-gray-700 px-3 py-1 rounded-lg text-sm flex items-center gap-2">
-                                                        {condition}
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleRemoveSpecialCondition(condition)}
-                                                            className="text-red-500 hover:text-red-700"
-                                                        >
-                                                            <FaTimes size={12} />
-                                                        </button>
-                                                    </span>
-                                                ))}
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <input
-                                                    type="text"
-                                                    value={newSpecialCondition}
-                                                    onChange={(e) => setNewSpecialCondition(e.target.value)}
-                                                    className="flex-1 border border-gray-300 rounded-lg p-2 text-sm"
-                                                    placeholder="Add new condition..."
-                                                    onKeyPress={(e) => e.key === 'Enter' && handleAddSpecialCondition()}
-                                                />
-                                                <button
-                                                    onClick={handleAddSpecialCondition}
-                                                    className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-sm"
+                                                        if (!formData.diagnosis_special_conditions.includes(conditionToAdd)) {
+                                                            setFormData(prev => ({
+                                                                ...prev,
+                                                                diagnosis_special_conditions: [...prev.diagnosis_special_conditions, conditionToAdd]
+                                                            }));
+                                                            setDiagnosisSubCategory('');
+                                                            setDiagnosisSubCategoryOther('');
+                                                        } else {
+                                                            alert('This condition is already added.');
+                                                        }
+                                                    }}
+                                                    className="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-3 rounded-lg flex items-center gap-2"
                                                 >
-                                                    Add Option
+                                                    <FaPlus /> Add
                                                 </button>
                                             </div>
-                                        </div>
+                                            
+                                            {/* Manage Special Conditions */}
+                                            <div className="mt-3 p-3 bg-white rounded-lg border border-gray-200">
+                                                <p className="text-sm font-medium text-gray-700 mb-2">Manage available conditions:</p>
+                                                <div className="flex flex-wrap gap-2 mb-3">
+                                                    {specialConditions.map((condition, idx) => (
+                                                        <span key={idx} className="bg-gray-100 text-gray-700 px-3 py-1 rounded-lg text-sm flex items-center gap-2">
+                                                            {condition}
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleRemoveSpecialCondition(condition)}
+                                                                className="text-red-500 hover:text-red-700"
+                                                            >
+                                                                <FaTimes size={12} />
+                                                            </button>
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        type="text"
+                                                        value={newSpecialCondition}
+                                                        onChange={(e) => setNewSpecialCondition(e.target.value)}
+                                                        className="flex-1 border border-gray-300 rounded-lg p-2 text-sm"
+                                                        placeholder="Add new condition..."
+                                                        onKeyPress={(e) => e.key === 'Enter' && handleAddSpecialCondition()}
+                                                    />
+                                                    <button
+                                                        onClick={handleAddSpecialCondition}
+                                                        className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-sm"
+                                                    >
+                                                        Add Option
+                                                    </button>
+                                                </div>
+                                            </div>
 
-                                        {/* Added Conditions List */}
-                                        {formData.diagnosis_special_conditions.length > 0 && (
-                                            <div className="flex flex-wrap gap-2 mt-2">
-                                                {formData.diagnosis_special_conditions.map((condition, idx) => (
-                                                    <div key={idx} className="bg-indigo-100 text-indigo-800 px-3 py-2 rounded-lg flex items-center gap-2">
-                                                        <FaExclamationTriangle className="text-indigo-500" />
-                                                        {condition}
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setFormData(prev => ({
-                                                                    ...prev,
-                                                                    diagnosis_special_conditions: prev.diagnosis_special_conditions.filter((_, i) => i !== idx)
-                                                                }));
-                                                            }}
-                                                            className="text-indigo-600 hover:text-indigo-800"
-                                                        >
-                                                            <FaTimes />
-                                                        </button>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div className="p-3 bg-white rounded-lg border border-gray-200">
-                                        {formData.diagnosis_special_conditions && formData.diagnosis_special_conditions.length > 0 ? (
-                                            <div className="flex flex-wrap gap-2">
-                                                {formData.diagnosis_special_conditions.map((condition, idx) => (
-                                                    <span key={idx} className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-lg flex items-center gap-2">
-                                                        <FaExclamationTriangle className="text-indigo-500" />
-                                                        {condition}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <span className="text-gray-500 italic">No special conditions recorded</span>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
+                                            {/* Added Conditions List */}
+                                            {formData.diagnosis_special_conditions.length > 0 && (
+                                                <div className="flex flex-wrap gap-2 mt-2">
+                                                    {formData.diagnosis_special_conditions.map((condition, idx) => (
+                                                        <div key={idx} className="bg-indigo-100 text-indigo-800 px-3 py-2 rounded-lg flex items-center gap-2">
+                                                            <FaExclamationTriangle className="text-indigo-500" />
+                                                            {condition}
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setFormData(prev => ({
+                                                                        ...prev,
+                                                                        diagnosis_special_conditions: prev.diagnosis_special_conditions.filter((_, i) => i !== idx)
+                                                                    }));
+                                                                }}
+                                                                className="text-indigo-600 hover:text-indigo-800"
+                                                            >
+                                                                <FaTimes />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="p-3 bg-white rounded-lg border border-gray-200">
+                                            {formData.diagnosis_special_conditions && formData.diagnosis_special_conditions.length > 0 ? (
+                                                <div className="flex flex-wrap gap-2">
+                                                    {formData.diagnosis_special_conditions.map((condition, idx) => (
+                                                        <span key={idx} className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-lg flex items-center gap-2">
+                                                            <FaExclamationTriangle className="text-indigo-500" />
+                                                            {condition}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <span className="text-gray-500 italic">No special conditions recorded</span>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     )}
 
