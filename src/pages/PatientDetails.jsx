@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+"import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
     FaUser,
@@ -175,6 +175,31 @@ const PatientDetails = () => {
     const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
     const [supportActivated, setSupportActivated] = useState(false);
 
+    // --- NEW STATES FOR PATIENT SECTION SELECTION ---
+    const [showSectionSelector, setShowSectionSelector] = useState(false);
+    const [selectedSections, setSelectedSections] = useState({
+        demography: false,
+        diagnosis: false,
+        anthropometry: false,
+        vitals: false,
+        labs: false,
+        medication: false
+    });
+    const [showDiagnosisSubCategory, setShowDiagnosisSubCategory] = useState(false);
+    const [diagnosisSubCategory, setDiagnosisSubCategory] = useState('');
+    const [diagnosisSubCategoryOther, setDiagnosisSubCategoryOther] = useState('');
+    const [specialConditions, setSpecialConditions] = useState([
+        'Kidney Impairment',
+        'Liver Impairment'
+    ]);
+    const [newSpecialCondition, setNewSpecialCondition] = useState('');
+
+    // --- NEW STATE FOR DIAGNOSIS SUB-CATEGORIES ---
+    const [diagnosisCategories, setDiagnosisCategories] = useState({
+        primary: '',
+        special_conditions: []
+    });
+
     // Effect to fetch initial data
     useEffect(() => {
         if (patientCode && !isNewPatient) {
@@ -209,7 +234,11 @@ const PatientDetails = () => {
         developmental_milestones: '', feeding_method: '', birth_weight: '', birth_length: '',
         vaccination_status: '', special_instructions: '',
         // Labs (Now dynamic via customLabs/GlobalDefinitions)
-        lab_test_date: null
+        lab_test_date: null,
+        // Diagnosis sub-categories
+        diagnosis_primary: '',
+        diagnosis_special_conditions: [],
+        diagnosis_sub_category_type: '' // Added to track which sub-category was selected
     });
 
     // --- 2. HELPERS & UTILS ---
@@ -220,7 +249,58 @@ const PatientDetails = () => {
         return val;
     }, []);
 
+    // --- HANDLE PATIENT SECTION SELECTION ---
+    const handleSectionToggle = (section) => {
+        setSelectedSections(prev => ({
+            ...prev,
+            [section]: !prev[section]
+        }));
+    };
 
+    const handleSectionSelectionConfirm = () => {
+        const anySelected = Object.values(selectedSections).some(v => v === true);
+        if (!anySelected) {
+            alert('Please select at least one section to proceed.');
+            return;
+        }
+        setShowSectionSelector(false);
+        // If diagnosis is selected, show sub-category selection
+        if (selectedSections.diagnosis) {
+            setShowDiagnosisSubCategory(true);
+        } else {
+            // Proceed to fill sections
+            setIsEditing(true);
+        }
+    };
+
+    // FIXED: handleDiagnosisSubCategoryConfirm with proper logic
+    const handleDiagnosisSubCategoryConfirm = () => {
+        if (!diagnosisSubCategory) {
+            alert('Please select a diagnosis sub-category.');
+            return;
+        }
+        setShowDiagnosisSubCategory(false);
+        setIsEditing(true);
+        // Set the diagnosis sub-category type for the form
+        setFormData(prev => ({
+            ...prev,
+            diagnosis_sub_category_type: diagnosisSubCategory
+        }));
+    };
+
+    const handleAddSpecialCondition = () => {
+        if (newSpecialCondition.trim() === '') return;
+        if (specialConditions.includes(newSpecialCondition.trim())) {
+            alert('This condition already exists.');
+            return;
+        }
+        setSpecialConditions(prev => [...prev, newSpecialCondition.trim()]);
+        setNewSpecialCondition('');
+    };
+
+    const handleRemoveSpecialCondition = (condition) => {
+        setSpecialConditions(prev => prev.filter(c => c !== condition));
+    };
 
     // --- 3. EFFECTS ---
     // Initialize user from localStorage
@@ -614,7 +694,11 @@ const PatientDetails = () => {
             lab_test_date: null,
             // Explicitly convert is_lactating to boolean
             is_lactating: data.is_lactating === true || data.is_lactating === 'true' || data.is_lactating === 1,
-            is_pregnant: data.is_pregnant === true || data.is_pregnant === 'true' || data.is_pregnant === 1
+            is_pregnant: data.is_pregnant === true || data.is_pregnant === 'true' || data.is_pregnant === 1,
+            // Load diagnosis sub-categories
+            diagnosis_primary: data.diagnosis_primary || '',
+            diagnosis_special_conditions: ensureArray(data.diagnosis_special_conditions),
+            diagnosis_sub_category_type: data.diagnosis_sub_category_type || ''
         };
 
         setFormData(formDataToSet);
@@ -686,7 +770,9 @@ const PatientDetails = () => {
             if (isNewPatientRoute) {
 
                 setIsNewPatient(true);
-                setIsEditing(true);
+                // Show section selector instead of directly editing
+                setShowSectionSelector(true);
+                setIsEditing(false);
 
                 const today = new Date().toISOString().split('T')[0];
                 setFormData(prev => ({
@@ -1293,6 +1379,10 @@ const PatientDetails = () => {
                     vaccination_status: cleanText(formData.vaccination_status),
                     special_instructions: cleanText(formData.special_instructions),
                     developmental_milestones: cleanText(formData.developmental_milestones),
+                    // Diagnosis sub-categories
+                    diagnosis_primary: cleanText(formData.diagnosis_primary),
+                    diagnosis_special_conditions: Array.isArray(formData.diagnosis_special_conditions) ? formData.diagnosis_special_conditions : [],
+                    diagnosis_sub_category_type: cleanText(formData.diagnosis_sub_category_type)
                 },
 
                 vitals: {
@@ -1530,6 +1620,22 @@ const PatientDetails = () => {
 
     // Memoize the render functions to prevent infinite re-renders
     const renderVitalsSection = useCallback(() => {
+        // Only show if vitals section is selected
+        if (isNewPatient && !selectedSections.vitals && !selectedSections.anthropometry) {
+            return (
+                <div className="text-center py-12 text-gray-500">
+                    <FaHeartbeat className="text-6xl mx-auto text-gray-300 mb-4" />
+                    <p className="text-lg">Vitals & Anthropometry section not selected.</p>
+                    <button 
+                        onClick={() => setShowSectionSelector(true)}
+                        className="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg"
+                    >
+                        Go back to section selection
+                    </button>
+                </div>
+            );
+        }
+
         const isPediatric = formData.patient_type && formData.patient_type !== 'adult';
         const ageInDays = parseInt(formData.age_in_days) || 0;
 
@@ -1551,7 +1657,7 @@ const PatientDetails = () => {
                             </p>
                         </div>
                     </div>
-                    {isEditing && (
+                    {isEditing && selectedSections.vitals && (
                         <button
                             onClick={handleSaveVitals}
                             className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
@@ -1596,7 +1702,7 @@ const PatientDetails = () => {
                                 </span>
                             )}
                         </div>
-                        {isEditing ? (
+                        {isEditing && selectedSections.vitals ? (
                             <input
                                 type="text"
                                 value={formData.blood_pressure || ''}
@@ -1628,7 +1734,7 @@ const PatientDetails = () => {
                                 </span>
                             )}
                         </div>
-                        {isEditing ? (
+                        {isEditing && selectedSections.vitals ? (
                             <input
                                 type="number"
                                 value={formData.heart_rate || ''}
@@ -1653,7 +1759,7 @@ const PatientDetails = () => {
                         <label className="block text-sm font-medium text-gray-700">
                             Temperature
                         </label>
-                        {isEditing ? (
+                        {isEditing && selectedSections.vitals ? (
                             <input
                                 type="number"
                                 step="0.1"
@@ -1686,7 +1792,7 @@ const PatientDetails = () => {
                                 </span>
                             )}
                         </div>
-                        {isEditing ? (
+                        {isEditing && selectedSections.vitals ? (
                             <input
                                 type="number"
                                 value={formData.respiratory_rate || ''}
@@ -1711,7 +1817,7 @@ const PatientDetails = () => {
                         <label className="block text-sm font-medium text-gray-700">
                             Oxygen Saturation (SpO₂)
                         </label>
-                        {isEditing ? (
+                        {isEditing && selectedSections.vitals ? (
                             <input
                                 type="number"
                                 value={formData.oxygen_saturation || ''}
@@ -1742,7 +1848,7 @@ const PatientDetails = () => {
                                 </span>
                             )}
                         </label>
-                        {isEditing ? (
+                        {isEditing && (selectedSections.vitals || selectedSections.anthropometry) ? (
                             <div className="flex gap-2">
                                 <input
                                     type="number"
@@ -1760,8 +1866,7 @@ const PatientDetails = () => {
                             <div className="p-3 bg-red-50 rounded-lg border border-red-200">
                                 <div className="flex items-center justify-between">
                                     <span className="font-medium text-gray-800">
-                                        {formData.weight || '--'} kg
-                                    </span>
+                                        {formData.weight || '--'} kg                                    </span>
                                     {formData.weight_percentile && (
                                         <span className="text-sm text-blue-600 font-medium">
                                             {formData.weight_percentile}
@@ -1782,7 +1887,7 @@ const PatientDetails = () => {
                                 </span>
                             )}
                         </label>
-                        {isEditing ? (
+                        {isEditing && (selectedSections.vitals || selectedSections.anthropometry) ? (
                             <div className="flex gap-2">
                                 <input
                                     type="number"
@@ -1826,7 +1931,7 @@ const PatientDetails = () => {
                                     </span>
                                 )}
                             </label>
-                            {isEditing ? (
+                            {isEditing && (selectedSections.vitals || selectedSections.anthropometry) ? (
                                 <div className="flex gap-2">
                                     <input
                                         type="number"
@@ -1866,7 +1971,7 @@ const PatientDetails = () => {
                                 </span>
                             )}
                         </label>
-                        {isEditing ? (
+                        {isEditing && (selectedSections.vitals || selectedSections.anthropometry) ? (
                             <input
                                 type="text"
                                 value={formData.bsa || ''}
@@ -1898,7 +2003,7 @@ const PatientDetails = () => {
                         <label className="block text-sm font-medium text-gray-700">
                             Last Measured
                         </label>
-                        {isEditing ? (
+                        {isEditing && (selectedSections.vitals || selectedSections.anthropometry) ? (
                             <input
                                 type="date"
                                 value={formData.last_measured || ''}
@@ -1975,9 +2080,25 @@ const PatientDetails = () => {
                 )}
             </div>
         );
-    }, [formData, isEditing, handleSaveVitals, formatAgeDisplay, getPediatricNormalRange, handleVitalsInputChange, handleInputChange, vitalsHistory, isNewPatient]);
+    }, [formData, isEditing, handleSaveVitals, formatAgeDisplay, getPediatricNormalRange, handleVitalsInputChange, handleInputChange, vitalsHistory, isNewPatient, selectedSections]);
 
     const renderLabsSection = useCallback(() => {
+        // Only show if labs section is selected
+        if (isNewPatient && !selectedSections.labs) {
+            return (
+                <div className="text-center py-12 text-gray-500">
+                    <FaVial className="text-6xl mx-auto text-gray-300 mb-4" />
+                    <p className="text-lg">Labs section not selected.</p>
+                    <button 
+                        onClick={() => setShowSectionSelector(true)}
+                        className="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg"
+                    >
+                        Go back to section selection
+                    </button>
+                </div>
+            );
+        }
+
         const isPediatric = formData.patient_type && formData.patient_type !== 'adult';
 
         return (
@@ -1992,7 +2113,7 @@ const PatientDetails = () => {
                             <p className="text-gray-600">Complete laboratory test results</p>
                         </div>
                     </div>
-                    {isEditing && (
+                    {isEditing && selectedSections.labs && (
                         <button
                             onClick={handleSaveLabs}
                             className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
@@ -2028,7 +2149,7 @@ const PatientDetails = () => {
                                                     labDate={lab.date}
                                                     unit={lab.unit}
                                                     normalRange={lab.reference_range}
-                                                    isEditing={isEditing}
+                                                    isEditing={isEditing && selectedSections.labs}
                                                     placeholder="Enter result..."
                                                     type="text"
                                                     handleChange={(_, val) => {
@@ -2076,7 +2197,7 @@ const PatientDetails = () => {
                                             labDate={lab.date}
                                             unit={lab.unit}
                                             normalRange={lab.reference_range}
-                                            isEditing={isEditing}
+                                            isEditing={isEditing && selectedSections.labs}
                                             placeholder="Enter result..."
                                             handleChange={(_, val) => {
                                                 const updated = [...customLabs];
@@ -2160,9 +2281,25 @@ const PatientDetails = () => {
                 )}
             </div>
         );
-    }, [formData, isEditing, showPediatricLabs, handleSaveLabs, handleLabInputChange, handleInputChange, labsHistory, isNewPatient, customLabs, setCustomLabs]);
+    }, [formData, isEditing, showPediatricLabs, handleSaveLabs, handleLabInputChange, handleInputChange, labsHistory, isNewPatient, customLabs, setCustomLabs, selectedSections]);
 
     const renderDemographicsSection = useCallback(() => {
+        // Only show if demography section is selected
+        if (isNewPatient && !selectedSections.demography && !selectedSections.diagnosis) {
+            return (
+                <div className="text-center py-12 text-gray-500">
+                    <FaUser className="text-6xl mx-auto text-gray-300 mb-4" />
+                    <p className="text-lg">Demographics section not selected.</p>
+                    <button 
+                        onClick={() => setShowSectionSelector(true)}
+                        className="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg"
+                    >
+                        Go back to section selection
+                    </button>
+                </div>
+            );
+        }
+
         const ageDisplay = formatAgeDisplay(formData.age_in_days, formData.date_of_birth);
         const isPediatric = formData.patient_type && formData.patient_type !== 'adult';
         const patientCodeToDisplay = getCurrentPatientCode();
@@ -2180,7 +2317,7 @@ const PatientDetails = () => {
                             <p className="text-gray-600">Basic information</p>
                         </div>
                     </div>
-                    {isEditing && (
+                    {isEditing && selectedSections.demography && (
                         <button
                             onClick={handleSaveDemographics}
                             className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
@@ -2190,574 +2327,724 @@ const PatientDetails = () => {
                     )}
                 </div>
 
-                {ageDisplay && (
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg mb-4">
-                        <div className="flex items-center gap-3">
-                            {isPediatric ? (
-                                formData.patient_type === 'neonate' ? <FaBaby className="text-blue-600 text-2xl" /> :
-                                    formData.patient_type === 'infant' ? <FaBabyCarriage className="text-blue-600 text-2xl" /> :
-                                        <FaChild className="text-blue-600 text-2xl" />
-                            ) : (
-                                <FaUser className="text-blue-600 text-2xl" />
-                            )}
-                            <div>
-                                <h3 className="font-bold text-blue-800">Age Information</h3>
-                                <p className="text-blue-700">{ageDisplay}</p>
+                {/* DEMOGRAPHY SECTION - Only shown if Demography is selected */}
+                {selectedSections.demography && (
+                    <>
+                        {ageDisplay && (
+                            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg mb-4">
+                                <div className="flex items-center gap-3">
+                                    {isPediatric ? (
+                                        formData.patient_type === 'neonate' ? <FaBaby className="text-blue-600 text-2xl" /> :
+                                            formData.patient_type === 'infant' ? <FaBabyCarriage className="text-blue-600 text-2xl" /> :
+                                                <FaChild className="text-blue-600 text-2xl" />
+                                    ) : (
+                                        <FaUser className="text-blue-600 text-2xl" />
+                                    )}
+                                    <div>
+                                        <h3 className="font-bold text-blue-800">Age Information</h3>
+                                        <p className="text-blue-700">{ageDisplay}</p>
+                                    </div>
+                                </div>
                             </div>
+                        )}
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Full Name */}
+                            {!isIndividual && (
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        Full Name
+                                    </label>
+                                    {isEditing && selectedSections.demography ? (
+                                        <input
+                                            type="text"
+                                            value={formData.full_name || ''}
+                                            onChange={(e) => handleInputChange('full_name', e.target.value)}
+                                            className="w-full border border-gray-300 rounded-lg p-3"
+                                            placeholder="Enter patient's full name"
+                                        />
+                                    ) : (
+                                        <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                            {formatEncValue(formData.full_name || patient?.full_name)}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Age Input */}
+                            <div className="space-y-2">
+                                <div className="flex justify-between items-center">
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        Age {ageMode === 'days' && isPediatric ? '(in days)' : '(in years)'}
+                                    </label>
+                                    {isEditing && selectedSections.demography && formData.age_in_days && parseInt(formData.age_in_days) < 730 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setAgeMode(ageMode === 'days' ? 'years' : 'days')}
+                                            className="text-xs text-blue-600 hover:text-blue-800"
+                                        >
+                                            Show in {ageMode === 'days' ? 'years/months' : 'days'}
+                                        </button>
+                                    )}
+                                </div>
+                                {isEditing && selectedSections.demography ? (
+                                    <div className="flex gap-2">
+                                        {ageMode === 'days' && isPediatric ? (
+                                            <input
+                                                type="number"
+                                                value={formData.age_in_days || ''}
+                                                onChange={(e) => handleInputChange('age_in_days', e.target.value)}
+                                                className="flex-1 border border-gray-300 rounded-lg p-3"
+                                                placeholder="Enter age in days"
+                                                min="0"
+                                                max="365"
+                                            />
+                                        ) : (
+                                            <input
+                                                type="number"
+                                                value={formData.age || ''}
+                                                onChange={(e) => handleInputChange('age', e.target.value)}
+                                                className="flex-1 border border-gray-300 rounded-lg p-3"
+                                                placeholder="Enter age"
+                                                min="0"
+                                                max="120"
+                                            />
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                        {ageDisplay || <span className="text-gray-500 italic">Not specified</span>}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Date of Birth */}
+                            {!isIndividual && (
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        Date of Birth
+                                    </label>
+                                    {isEditing && selectedSections.demography ? (
+                                        <input
+                                            type="date"
+                                            value={formData.date_of_birth || ''}
+                                            onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
+                                            className="w-full border border-gray-300 rounded-lg p-3"
+                                        />
+                                    ) : (
+                                        <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                            {formData.date_of_birth ? (
+                                                <div className="flex items-center gap-2">
+                                                    <FaBirthdayCake className="text-gray-400" />
+                                                    {isValidDate(formData.date_of_birth) ? new Date(formData.date_of_birth).toLocaleDateString() : formatEncValue(formData.date_of_birth)}
+                                                </div>
+                                            ) : <span className="text-gray-500 italic">Not specified</span>}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            {/* Gender */}
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700">
+                                    Gender
+                                </label>
+                                {isEditing && selectedSections.demography ? (
+                                    <select
+                                        value={formData.gender || ''}
+                                        onChange={(e) => handleInputChange('gender', e.target.value)}
+                                        className="w-full border border-gray-300 rounded-lg p-3"
+                                    >
+                                        <option value="">Select Gender</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                    </select>
+                                ) : (
+                                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                        {formatEncValue(formData.gender || patient?.gender)}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Patient Type */}
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700">
+                                    Age Category
+                                </label>
+                                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                    {formData.patient_type ? (
+                                        <div className="flex items-center gap-2">
+                                            {formData.patient_type === 'neonate' && <FaBaby className="text-pink-500" />}
+                                            {formData.patient_type === 'infant' && <FaBabyCarriage className="text-purple-500" />}
+                                            {formData.patient_type === 'child' && <FaChild className="text-blue-500" />}
+                                            {formData.patient_type === 'adolescent' && <FaUser className="text-green-500" />}
+                                            {formData.patient_type === 'adult' && <FaUser className="text-indigo-500" />}
+                                            <span className="font-medium capitalize">
+                                                {formData.patient_type}
+                                                {formData.patient_type === 'neonate' && ' (0-28 days)'}
+                                                {formData.patient_type === 'infant' && ' (29 days - 1 year)'}
+                                                {formData.patient_type === 'child' && ' (1-12 years)'}
+                                                {formData.patient_type === 'adolescent' && ' (13-18 years)'}
+                                                {formData.patient_type === 'adult' && ' (>18 years)'}
+                                            </span>
+                                        </div>
+                                    ) : <span className="text-gray-500 italic">Not determined</span>}
+                                </div>
+                            </div>
+
+                            {/* Contact Number */}
+                            {!isIndividual && (
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        Contact Number
+                                    </label>
+                                    {isEditing && selectedSections.demography ? (
+                                        <input
+                                            type="tel"
+                                            value={formData.contact_number || ''}
+                                            onChange={(e) => handleInputChange('contact_number', e.target.value)}
+                                            className="w-full border border-gray-300 rounded-lg p-3"
+                                            placeholder="Phone number"
+                                        />
+                                    ) : (
+                                        <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                            {formatEncValue(formData.contact_number || patient?.contact_number)}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            {/* Address */}
+                            {!isIndividual && (
+                                <div className="space-y-2 md:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        Address
+                                    </label>
+                                    {isEditing && selectedSections.demography ? (
+                                        <textarea
+                                            value={formData.address || ''}
+                                            onChange={(e) => handleInputChange('address', e.target.value)}
+                                            rows="2"
+                                            className="w-full border border-gray-300 rounded-lg p-3"
+                                            placeholder="Patient's address"
+                                        />
+                                    ) : (
+                                        <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                            {formatEncValue(formData.address || patient?.address)}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            {/* Allergies */}
+                            <div className="space-y-2 md:col-span-2">
+                                <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
+                                    <FaAllergies /> Allergies
+                                </label>
+                                {isEditing && selectedSections.demography ? (
+                                    <div className="space-y-3">
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                value={newAllergy}
+                                                onChange={(e) => setNewAllergy(e.target.value)}
+                                                className="flex-1 border border-gray-300 rounded-lg p-3"
+                                                placeholder="Add an allergy (e.g., Penicillin)"
+                                                onKeyPress={(e) => e.key === 'Enter' && handleAddAllergy()}
+                                            />
+                                            <button
+                                                onClick={handleAddAllergy}
+                                                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-lg flex items-center gap-2"
+                                            >
+                                                <FaPlus /> Add
+                                            </button>
+                                        </div>
+                                        {Array.isArray(formData.allergies) && formData.allergies.length > 0 && (
+                                            <div className="flex flex-wrap gap-2">
+                                                {formData.allergies.map((allergy, index) => (
+                                                    <div key={index} className="bg-red-100 text-red-800 px-3 py-2 rounded-lg flex items-center gap-2">
+                                                        {allergy}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRemoveAllergy(index)}
+                                                            className="text-red-600 hover:text-red-800"
+                                                        >
+                                                            <FaTimes />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                        {Array.isArray(formData.allergies) && formData.allergies.length > 0 ? (
+                                            <div className="flex flex-wrap gap-2">
+                                                {formData.allergies.map((allergy, index) => (
+                                                    <span key={index} className="bg-red-100 text-red-800 px-3 py-1 rounded-lg">
+                                                        {allergy}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <span className="text-gray-500 italic">No allergies reported</span>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Appointment Date */}
+                            {!isIndividual && (
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        Next Appointment
+                                    </label>
+                                    {isEditing && selectedSections.demography ? (
+                                        <input
+                                            type="date"
+                                            value={formData.appointment_date || ''}
+                                            onChange={(e) => handleInputChange('appointment_date', e.target.value)}
+                                            className="w-full border border-gray-300 rounded-lg p-3"
+                                        />
+                                    ) : (
+                                        <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                            {formData.appointment_date ? (
+                                                <div className="flex items-center gap-2">
+                                                    <FaCalendarAlt className="text-gray-400" />
+                                                    {new Date(formData.appointment_date).toLocaleDateString()}
+                                                </div>
+                                            ) : <span className="text-gray-500 italic">Not scheduled</span>}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Status */}
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700">
+                                    Status
+                                </label>
+                                <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                    <div className={`w-3 h-3 rounded-full ${formData.is_active ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                                    <span className="font-medium">{formData.is_active ? 'Active' : 'Inactive'}</span>
+                                </div>
+                            </div>
+
+                            {/* Pregnancy Status (Females Only) */}
+                            {(formData.gender && formData.gender.toLowerCase() === 'female') && (
+                                <div className="bg-white rounded-xl shadow-lg p-6 mt-6 border border-pink-100 md:col-span-2">
+                                    <div className="flex justify-between items-center mb-6 border-b border-pink-100 pb-2">
+                                        <h3 className="text-lg font-bold text-pink-700 flex items-center gap-2">
+                                            <FaBaby className="text-pink-500" /> Pregnancy Status
+                                        </h3>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <div className="bg-pink-50 p-3 rounded-lg border border-pink-100">
+                                            <label className="block text-xs font-bold text-pink-600 uppercase mb-2">Is Pregnant?</label>
+                                            {isEditing && selectedSections.demography ? (
+                                                <div className="flex bg-white rounded-lg p-1 border border-pink-200">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleInputChange('is_pregnant', false)}
+                                                        className={`flex-1 py-2 px-4 rounded-md text-sm font-bold transition-all ${!formData.is_pregnant ? 'bg-gray-100 text-gray-700 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                                                    >
+                                                        No
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleInputChange('is_pregnant', true)}
+                                                        className={`flex-1 py-2 px-4 rounded-md text-sm font-bold transition-all ${formData.is_pregnant ? 'bg-pink-500 text-white shadow-md' : 'text-gray-400 hover:text-pink-400'}`}
+                                                    >
+                                                        Yes
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div className={`p-2 font-bold rounded-md text-center ${formData.is_pregnant ? 'bg-pink-500 text-white' : 'bg-gray-100 text-gray-700'}`}>
+                                                    {formData.is_pregnant ? 'PREGNANT' : 'NOT PREGNANT'}
+                                                </div>
+                                            )}
+                                        </div>
+                                        {formData.is_pregnant && (
+                                            <>
+                                                <div className="bg-pink-50 p-3 rounded-lg border border-pink-100">
+                                                    <label className="block text-xs font-bold text-pink-600 uppercase mb-2">Weeks</label>
+                                                    {isEditing && selectedSections.demography ? (
+                                                        <input
+                                                            type="number"
+                                                            placeholder="e.g. 12"
+                                                            value={formData.pregnancy_weeks || ''}
+                                                            onChange={e => handleInputChange('pregnancy_weeks', e.target.value)}
+                                                            className="w-full px-3 py-2 border border-pink-200 rounded-md outline-none focus:ring-2 focus:ring-pink-500 transition bg-white font-bold text-pink-700"
+                                                        />
+                                                    ) : (
+                                                        <div className="p-2 font-bold text-pink-800 bg-white rounded-md text-center border border-pink-100">
+                                                            {formData.pregnancy_weeks || '--'} Weeks
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="bg-pink-50 p-3 rounded-lg border border-pink-100">
+                                                    <label className="block text-xs font-bold text-pink-600 uppercase mb-2">Trimester</label>
+                                                    <div className="p-2 font-black text-pink-900 bg-pink-200 rounded-md text-center shadow-inner tracking-wider">
+                                                        {formData.pregnancy_trimester || 'SELECT WEEKS'}
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Lactation Status (Females Only) */}
+                            {(formData.gender && formData.gender.toLowerCase() === 'female') && (
+                                <div className="bg-white rounded-xl shadow-lg p-6 mt-6 border border-blue-100 md:col-span-2">
+                                    <div className="flex justify-between items-center mb-6 border-b border-blue-100 pb-2">
+                                        <h3 className="text-lg font-bold text-blue-700 flex items-center gap-2">
+                                            <FaBabyCarriage className="text-blue-500" /> Lactation Status
+                                        </h3>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                                            <label className="block text-xs font-bold text-blue-600 uppercase mb-2">Is Lactating/Breastfeeding?</label>
+                                            {isEditing && selectedSections.demography ? (
+                                                <select
+                                                    value={formData.is_lactating ? 'true' : 'false'}
+                                                    onChange={(e) => handleInputChange('is_lactating', e.target.value === 'true')}
+                                                    className="w-full px-3 py-2 border border-blue-200 rounded-md outline-none focus:ring-2 focus:ring-blue-500 transition bg-white font-bold text-blue-700 cursor-pointer"
+                                                >
+                                                    <option value="false">No</option>
+                                                    <option value="true">Yes</option>
+                                                </select>
+                                            ) : (
+                                                <div className={`p-2 font-bold rounded-md text-center ${formData.is_lactating ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}>
+                                                    {formData.is_lactating ? 'LACTATING' : 'NOT LACTATING'}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                                            <label className="block text-xs font-bold text-blue-600 uppercase mb-2">Lactation Notes</label>
+                                            {isEditing && selectedSections.demography ? (
+                                                <input
+                                                    type="text"
+                                                    placeholder="e.g. Exclusive breastfeeding"
+                                                    value={formData.lactation_notes || ''}
+                                                    onChange={e => handleInputChange('lactation_notes', e.target.value)}
+                                                    className="w-full px-3 py-2 border border-blue-200 rounded-md outline-none focus:ring-2 focus:ring-blue-500 transition bg-white font-bold text-blue-700"
+                                                />
+                                            ) : (
+                                                <div className="p-2 font-bold text-blue-800 bg-white rounded-md border border-blue-100">
+                                                    {formData.lactation_notes || '--'}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Pediatric Information */}
+                            {isPediatric && (
+                                <div className="md:col-span-2 space-y-4 p-4 bg-gradient-to-r from-pink-50 to-purple-50 rounded-lg border border-pink-200">
+                                    <h3 className="font-bold text-purple-800 flex items-center gap-2">
+                                        <FaBaby /> Pediatric Information
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="block text-sm font-medium text-gray-700">
+                                                Birth Weight
+                                            </label>
+                                            {isEditing && selectedSections.demography ? (
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        value={formData.birth_weight || ''}
+                                                        onChange={(e) => handleInputChange('birth_weight', e.target.value)}
+                                                        className="flex-1 border border-gray-300 rounded-lg p-2"
+                                                        placeholder="e.g., 3.5"
+                                                    />
+                                                    <div className="w-16 bg-gray-100 border border-gray-300 rounded-lg p-2 text-center">
+                                                        kg
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="p-2 bg-white rounded border">
+                                                    {formData.birth_weight || '--'} kg
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="block text-sm font-medium text-gray-700">
+                                                Birth Length
+                                            </label>
+                                            {isEditing && selectedSections.demography ? (
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        type="number"
+                                                        step="0.1"
+                                                        value={formData.birth_length || ''}
+                                                        onChange={(e) => handleInputChange('birth_length', e.target.value)}
+                                                        className="flex-1 border border-gray-300 rounded-lg p-2"
+                                                        placeholder="e.g., 50"
+                                                    />
+                                                    <div className="w-16 bg-gray-100 border border-gray-300 rounded-lg p-2 text-center">
+                                                        cm
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="p-2 bg-white rounded border">
+                                                    {formData.birth_length || '--'} cm
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="block text-sm font-medium text-gray-700">
+                                                Feeding Method
+                                            </label>
+                                            {isEditing && selectedSections.demography ? (
+                                                <select
+                                                    value={formData.feeding_method || ''}
+                                                    onChange={(e) => handleInputChange('feeding_method', e.target.value)}
+                                                    className="w-full border border-gray-300 rounded-lg p-2"
+                                                >
+                                                    <option value="">Select method</option>
+                                                    <option value="Breastfed">Breastfed</option>
+                                                    <option value="Formula">Formula</option>
+                                                    <option value="Mixed">Mixed</option>
+                                                    <option value="Solids">Solids</option>
+                                                </select>
+                                            ) : (
+                                                <div className="p-2 bg-white rounded border">
+                                                    {formData.feeding_method || 'Not specified'}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="block text-sm font-medium text-gray-700">
+                                                Vaccination Status
+                                            </label>
+                                            {isEditing && selectedSections.demography ? (
+                                                <select
+                                                    value={formData.vaccination_status || ''}
+                                                    onChange={(e) => handleInputChange('vaccination_status', e.target.value)}
+                                                    className="w-full border border-gray-300 rounded-lg p-2"
+                                                >
+                                                    <option value="">Select status</option>
+                                                    <option value="Up to date">Up to date</option>
+                                                    <option value="Partially vaccinated">Partially vaccinated</option>
+                                                    <option value="Not vaccinated">Not vaccinated</option>
+                                                    <option value="Unknown">Unknown</option>
+                                                </select>
+                                            ) : (
+                                                <div className="p-2 bg-white rounded border">
+                                                    {formData.vaccination_status || 'Not specified'}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="md:col-span-2 space-y-2">
+                                            <label className="block text-sm font-medium text-gray-700">
+                                                Developmental Milestones
+                                            </label>
+                                            {isEditing && selectedSections.demography ? (
+                                                <textarea
+                                                    value={formData.developmental_milestones || ''}
+                                                    onChange={(e) => handleInputChange('developmental_milestones', e.target.value)}
+                                                    rows="2"
+                                                    className="w-full border border-gray-300 rounded-lg p-2"
+                                                    placeholder="Describe developmental milestones"
+                                                />
+                                            ) : (
+                                                <div className="p-2 bg-white rounded border min-h-[60px]">
+                                                    {formData.developmental_milestones || 'Not specified'}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="md:col-span-2 space-y-2">
+                                            <label className="block text-sm font-medium text-gray-700">
+                                                Special Instructions
+                                            </label>
+                                            {isEditing && selectedSections.demography ? (
+                                                <textarea
+                                                    value={formData.special_instructions || ''}
+                                                    onChange={(e) => handleInputChange('special_instructions', e.target.value)}
+                                                    rows="2"
+                                                    className="w-full border border-gray-300 rounded-lg p-2"
+                                                    placeholder="Any special care instructions"
+                                                />
+                                            ) : (
+                                                <div className="p-2 bg-white rounded border min-h-[60px]">
+                                                    {formData.special_instructions || 'None'}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </>
+                )}
+
+                {/* DIAGNOSIS SECTION - Always shown if Diagnosis is selected, even without Demography */}
+                {selectedSections.diagnosis && (
+                    <div className="space-y-4 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200">
+                        <h3 className="font-bold text-indigo-800 flex items-center gap-2">
+                            <FaStethoscope /> Diagnosis Information
+                        </h3>
+                        
+                        {/* Primary Diagnosis */}
+                        <div className="space-y-2">
+                            <label className="block text-sm font-medium text-gray-700">
+                                Primary Diagnosis
+                            </label>
+                            {isEditing ? (
+                                <textarea
+                                    value={formData.diagnosis_primary || ''}
+                                    onChange={(e) => handleInputChange('diagnosis_primary', e.target.value)}
+                                    rows="2"
+                                    className="w-full border border-gray-300 rounded-lg p-3"
+                                    placeholder="Enter primary diagnosis"
+                                />
+                            ) : (
+                                <div className="p-3 bg-white rounded-lg border border-gray-200">
+                                    {formData.diagnosis_primary || <span className="text-gray-500 italic">No primary diagnosis recorded</span>}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Special Conditions */}
+                        <div className="space-y-3">
+                            <label className="block text-sm font-medium text-gray-700">
+                                Special Conditions
+                            </label>
+                            {isEditing ? (
+                                <div className="space-y-3">
+                                    <div className="flex gap-2">
+                                        <select
+                                            value={diagnosisSubCategory}
+                                            onChange={(e) => setDiagnosisSubCategory(e.target.value)}
+                                            className="flex-1 border border-gray-300 rounded-lg p-3 bg-white"
+                                        >
+                                            <option value="">Select a condition...</option>
+                                            {specialConditions.map((condition, idx) => (
+                                                <option key={idx} value={condition}>{condition}</option>
+                                            ))}
+                                            <option value="other">Other (specify)</option>
+                                        </select>
+                                        {diagnosisSubCategory === 'other' && (
+                                            <input
+                                                type="text"
+                                                value={diagnosisSubCategoryOther}
+                                                onChange={(e) => setDiagnosisSubCategoryOther(e.target.value)}
+                                                className="flex-1 border border-gray-300 rounded-lg p-3"
+                                                placeholder="Specify condition..."
+                                            />
+                                        )}
+                                        <button
+                                            onClick={() => {
+                                                let conditionToAdd = diagnosisSubCategory;
+                                                if (conditionToAdd === 'other') {
+                                                    conditionToAdd = diagnosisSubCategoryOther.trim();
+                                                    if (!conditionToAdd) {
+                                                        alert('Please specify the condition.');
+                                                        return;
+                                                    }
+                                                }
+                                                if (!conditionToAdd) {
+                                                    alert('Please select a condition.');
+                                                    return;
+                                                }
+                                                if (!formData.diagnosis_special_conditions.includes(conditionToAdd)) {
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        diagnosis_special_conditions: [...prev.diagnosis_special_conditions, conditionToAdd]
+                                                    }));
+                                                    setDiagnosisSubCategory('');
+                                                    setDiagnosisSubCategoryOther('');
+                                                } else {
+                                                    alert('This condition is already added.');
+                                                }
+                                            }}
+                                            className="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-3 rounded-lg flex items-center gap-2"
+                                        >
+                                            <FaPlus /> Add
+                                        </button>
+                                    </div>
+                                    
+                                    {/* Manage Special Conditions */}
+                                    <div className="mt-3 p-3 bg-white rounded-lg border border-gray-200">
+                                        <p className="text-sm font-medium text-gray-700 mb-2">Manage available conditions:</p>
+                                        <div className="flex flex-wrap gap-2 mb-3">
+                                            {specialConditions.map((condition, idx) => (
+                                                <span key={idx} className="bg-gray-100 text-gray-700 px-3 py-1 rounded-lg text-sm flex items-center gap-2">
+                                                    {condition}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRemoveSpecialCondition(condition)}
+                                                        className="text-red-500 hover:text-red-700"
+                                                    >
+                                                        <FaTimes size={12} />
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                value={newSpecialCondition}
+                                                onChange={(e) => setNewSpecialCondition(e.target.value)}
+                                                className="flex-1 border border-gray-300 rounded-lg p-2 text-sm"
+                                                placeholder="Add new condition..."
+                                                onKeyPress={(e) => e.key === 'Enter' && handleAddSpecialCondition()}
+                                            />
+                                            <button
+                                                onClick={handleAddSpecialCondition}
+                                                className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-sm"
+                                            >
+                                                Add Option
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Added Conditions List */}
+                                    {formData.diagnosis_special_conditions.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 mt-2">
+                                            {formData.diagnosis_special_conditions.map((condition, idx) => (
+                                                <div key={idx} className="bg-indigo-100 text-indigo-800 px-3 py-2 rounded-lg flex items-center gap-2">
+                                                    <FaExclamationTriangle className="text-indigo-500" />
+                                                    {condition}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setFormData(prev => ({
+                                                                ...prev,
+                                                                diagnosis_special_conditions: prev.diagnosis_special_conditions.filter((_, i) => i !== idx)
+                                                            }));
+                                                        }}
+                                                        className="text-indigo-600 hover:text-indigo-800"
+                                                    >
+                                                        <FaTimes />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="p-3 bg-white rounded-lg border border-gray-200">
+                                    {formData.diagnosis_special_conditions && formData.diagnosis_special_conditions.length > 0 ? (
+                                        <div className="flex flex-wrap gap-2">
+                                            {formData.diagnosis_special_conditions.map((condition, idx) => (
+                                                <span key={idx} className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-lg flex items-center gap-2">
+                                                    <FaExclamationTriangle className="text-indigo-500" />
+                                                    {condition}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <span className="text-gray-500 italic">No special conditions recorded</span>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Full Name */}
-                    {!isIndividual && (
-                        <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-700">
-                                Full Name
-                            </label>
-                            {isEditing ? (
-                                <input
-                                    type="text"
-                                    value={formData.full_name || ''}
-                                    onChange={(e) => handleInputChange('full_name', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-3"
-                                    placeholder="Enter patient's full name"
-                                />
-                            ) : (
-                                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                    {formatEncValue(formData.full_name || patient?.full_name)}
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/* Age Input */}
-                    <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                            <label className="block text-sm font-medium text-gray-700">
-                                Age {ageMode === 'days' && isPediatric ? '(in days)' : '(in years)'}
-                            </label>
-                            {isEditing && formData.age_in_days && parseInt(formData.age_in_days) < 730 && (
-                                <button
-                                    type="button"
-                                    onClick={() => setAgeMode(ageMode === 'days' ? 'years' : 'days')}
-                                    className="text-xs text-blue-600 hover:text-blue-800"
-                                >
-                                    Show in {ageMode === 'days' ? 'years/months' : 'days'}
-                                </button>
-                            )}
-                        </div>
-                        {isEditing ? (
-                            <div className="flex gap-2">
-                                {ageMode === 'days' && isPediatric ? (
-                                    <input
-                                        type="number"
-                                        value={formData.age_in_days || ''}
-                                        onChange={(e) => handleInputChange('age_in_days', e.target.value)}
-                                        className="flex-1 border border-gray-300 rounded-lg p-3"
-                                        placeholder="Enter age in days"
-                                        min="0"
-                                        max="365"
-                                    />
-                                ) : (
-                                    <input
-                                        type="number"
-                                        value={formData.age || ''}
-                                        onChange={(e) => handleInputChange('age', e.target.value)}
-                                        className="flex-1 border border-gray-300 rounded-lg p-3"
-                                        placeholder="Enter age"
-                                        min="0"
-                                        max="120"
-                                    />
-                                )}
-                            </div>
-                        ) : (
-                            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                {ageDisplay || <span className="text-gray-500 italic">Not specified</span>}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Date of Birth */}
-                    {!isIndividual && (
-                        <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-700">
-                                Date of Birth
-                            </label>
-                            {isEditing ? (
-                                <input
-                                    type="date"
-                                    value={formData.date_of_birth || ''}
-                                    onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-3"
-                                />
-                            ) : (
-                                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                    {formData.date_of_birth ? (
-                                        <div className="flex items-center gap-2">
-                                            <FaBirthdayCake className="text-gray-400" />
-                                            {isValidDate(formData.date_of_birth) ? new Date(formData.date_of_birth).toLocaleDateString() : formatEncValue(formData.date_of_birth)}
-                                        </div>
-                                    ) : <span className="text-gray-500 italic">Not specified</span>}
-                                </div>
-                            )}
-                        </div>
-                    )}
-                    {/* Gender - FIXED: Only Male and Female */}
-                    <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                            Gender
-                        </label>
-                        {isEditing ? (
-                            <select
-                                value={formData.gender || ''}
-                                onChange={(e) => handleInputChange('gender', e.target.value)}
-                                className="w-full border border-gray-300 rounded-lg p-3"
-                            >
-                                <option value="">Select Gender</option>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                            </select>
-                        ) : (
-                            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                {formatEncValue(formData.gender || patient?.gender)}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Patient Type */}
-                    <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                            Age Category
-                        </label>
-                        <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                            {formData.patient_type ? (
-                                <div className="flex items-center gap-2">
-                                    {formData.patient_type === 'neonate' && <FaBaby className="text-pink-500" />}
-                                    {formData.patient_type === 'infant' && <FaBabyCarriage className="text-purple-500" />}
-                                    {formData.patient_type === 'child' && <FaChild className="text-blue-500" />}
-                                    {formData.patient_type === 'adolescent' && <FaUser className="text-green-500" />}
-                                    {formData.patient_type === 'adult' && <FaUser className="text-indigo-500" />}
-                                    <span className="font-medium capitalize">
-                                        {formData.patient_type}
-                                        {formData.patient_type === 'neonate' && ' (0-28 days)'}
-                                        {formData.patient_type === 'infant' && ' (29 days - 1 year)'}
-                                        {formData.patient_type === 'child' && ' (1-12 years)'}
-                                        {formData.patient_type === 'adolescent' && ' (13-18 years)'}
-                                        {formData.patient_type === 'adult' && ' (>18 years)'}
-                                    </span>
-                                </div>
-                            ) : <span className="text-gray-500 italic">Not determined</span>}
-                        </div>
-                    </div>
-
-                    {/* Contact Number */}
-                    {!isIndividual && (
-                        <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-700">
-                                Contact Number
-                            </label>
-                            {isEditing ? (
-                                <input
-                                    type="tel"
-                                    value={formData.contact_number || ''}
-                                    onChange={(e) => handleInputChange('contact_number', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-3"
-                                    placeholder="Phone number"
-                                />
-                            ) : (
-                                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                    {formatEncValue(formData.contact_number || patient?.contact_number)}
-                                </div>
-                            )}
-                        </div>
-                    )}
-                    {/* Address */}
-                    {!isIndividual && (
-                        <div className="space-y-2 md:col-span-2">
-                            <label className="block text-sm font-medium text-gray-700">
-                                Address
-                            </label>
-                            {isEditing ? (
-                                <textarea
-                                    value={formData.address || ''}
-                                    onChange={(e) => handleInputChange('address', e.target.value)}
-                                    rows="2"
-                                    className="w-full border border-gray-300 rounded-lg p-3"
-                                    placeholder="Patient's address"
-                                />
-                            ) : (
-                                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                    {formatEncValue(formData.address || patient?.address)}
-                                </div>
-                            )}
-                        </div>
-                    )}
-                    {/* Allergies */}
-                    <div className="space-y-2 md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
-                            <FaAllergies /> Allergies
-                        </label>
-                        {isEditing ? (
-                            <div className="space-y-3">
-                                <div className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        value={newAllergy}
-                                        onChange={(e) => setNewAllergy(e.target.value)}
-                                        className="flex-1 border border-gray-300 rounded-lg p-3"
-                                        placeholder="Add an allergy (e.g., Penicillin)"
-                                        onKeyPress={(e) => e.key === 'Enter' && handleAddAllergy()}
-                                    />
-                                    <button
-                                        onClick={handleAddAllergy}
-                                        className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-lg flex items-center gap-2"
-                                    >
-                                        <FaPlus /> Add
-                                    </button>
-                                </div>
-                                {Array.isArray(formData.allergies) && formData.allergies.length > 0 && (
-                                    <div className="flex flex-wrap gap-2">
-                                        {formData.allergies.map((allergy, index) => (
-                                            <div key={index} className="bg-red-100 text-red-800 px-3 py-2 rounded-lg flex items-center gap-2">
-                                                {allergy}
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleRemoveAllergy(index)}
-                                                    className="text-red-600 hover:text-red-800"
-                                                >
-                                                    <FaTimes />
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        ) : (
-                            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                {Array.isArray(formData.allergies) && formData.allergies.length > 0 ? (
-                                    <div className="flex flex-wrap gap-2">
-                                        {formData.allergies.map((allergy, index) => (
-                                            <span key={index} className="bg-red-100 text-red-800 px-3 py-1 rounded-lg">
-                                                {allergy}
-                                            </span>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <span className="text-gray-500 italic">No allergies reported</span>
-                                )}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Diagnosis */}
-                    <div className="space-y-2 md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                            Diagnosis
-                        </label>
-                        {isEditing ? (
-                            <textarea
-                                value={formData.diagnosis || ''}
-                                onChange={(e) => handleInputChange('diagnosis', e.target.value)}
-                                rows="3"
-                                className="w-full border border-gray-300 rounded-lg p-3"
-                                placeholder="Enter diagnosis"
-                            />
-                        ) : (
-                            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                {formatEncValue(formData.diagnosis || patient?.diagnosis)}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Appointment Date */}
-                    {!isIndividual && (
-                        <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-700">
-                                Next Appointment
-                            </label>
-                            {isEditing ? (
-                                <input
-                                    type="date"
-                                    value={formData.appointment_date || ''}
-                                    onChange={(e) => handleInputChange('appointment_date', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-3"
-                                />
-                            ) : (
-                                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                    {formData.appointment_date ? (
-                                        <div className="flex items-center gap-2">
-                                            <FaCalendarAlt className="text-gray-400" />
-                                            {new Date(formData.appointment_date).toLocaleDateString()}
-                                        </div>
-                                    ) : <span className="text-gray-500 italic">Not scheduled</span>}
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/* Status */}
-                    <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                            Status
-                        </label>
-                        <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                            <div className={`w-3 h-3 rounded-full ${formData.is_active ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                            <span className="font-medium">{formData.is_active ? 'Active' : 'Inactive'}</span>
-                        </div>
-                    </div>
-
-                    {/* Pregnancy Status (Females Only) - Moved from Vitals */}
-                    {(formData.gender && formData.gender.toLowerCase() === 'female') && (
-                        <div className="bg-white rounded-xl shadow-lg p-6 mt-6 border border-pink-100 md:col-span-2">
-                            <div className="flex justify-between items-center mb-6 border-b border-pink-100 pb-2">
-                                <h3 className="text-lg font-bold text-pink-700 flex items-center gap-2">
-                                    <FaBaby className="text-pink-500" /> Pregnancy Status
-                                </h3>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div className="bg-pink-50 p-3 rounded-lg border border-pink-100">
-                                    <label className="block text-xs font-bold text-pink-600 uppercase mb-2">Is Pregnant?</label>
-                                    {isEditing ? (
-                                        <div className="flex bg-white rounded-lg p-1 border border-pink-200">
-                                            <button
-                                                type="button"
-                                                onClick={() => handleInputChange('is_pregnant', false)}
-                                                className={`flex-1 py-2 px-4 rounded-md text-sm font-bold transition-all ${!formData.is_pregnant ? 'bg-gray-100 text-gray-700 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-                                            >
-                                                No
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleInputChange('is_pregnant', true)}
-                                                className={`flex-1 py-2 px-4 rounded-md text-sm font-bold transition-all ${formData.is_pregnant ? 'bg-pink-500 text-white shadow-md' : 'text-gray-400 hover:text-pink-400'}`}
-                                            >
-                                                Yes
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <div className={`p-2 font-bold rounded-md text-center ${formData.is_pregnant ? 'bg-pink-500 text-white' : 'bg-gray-100 text-gray-700'}`}>
-                                            {formData.is_pregnant ? 'PREGNANT' : 'NOT PREGNANT'}
-                                        </div>
-                                    )}
-                                </div>
-                                {formData.is_pregnant && (
-                                    <>
-                                        <div className="bg-pink-50 p-3 rounded-lg border border-pink-100">
-                                            <label className="block text-xs font-bold text-pink-600 uppercase mb-2">Weeks</label>
-                                            {isEditing ? (
-                                                <input
-                                                    type="number"
-                                                    placeholder="e.g. 12"
-                                                    value={formData.pregnancy_weeks || ''}
-                                                    onChange={e => handleInputChange('pregnancy_weeks', e.target.value)}
-                                                    className="w-full px-3 py-2 border border-pink-200 rounded-md outline-none focus:ring-2 focus:ring-pink-500 transition bg-white font-bold text-pink-700"
-                                                />
-                                            ) : (
-                                                <div className="p-2 font-bold text-pink-800 bg-white rounded-md text-center border border-pink-100">
-                                                    {formData.pregnancy_weeks || '--'} Weeks
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="bg-pink-50 p-3 rounded-lg border border-pink-100">
-                                            <label className="block text-xs font-bold text-pink-600 uppercase mb-2">Trimester</label>
-                                            <div className="p-2 font-black text-pink-900 bg-pink-200 rounded-md text-center shadow-inner tracking-wider">
-                                                {formData.pregnancy_trimester || 'SELECT WEEKS'}
-                                            </div>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Lactation Status (Females Only) - Moved from Vitals */}
-                    {(formData.gender && formData.gender.toLowerCase() === 'female') && (
-                        <div className="bg-white rounded-xl shadow-lg p-6 mt-6 border border-blue-100 md:col-span-2">
-                            <div className="flex justify-between items-center mb-6 border-b border-blue-100 pb-2">
-                                <h3 className="text-lg font-bold text-blue-700 flex items-center gap-2">
-                                    <FaBabyCarriage className="text-blue-500" /> Lactation Status
-                                </h3>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
-                                    <label className="block text-xs font-bold text-blue-600 uppercase mb-2">Is Lactating/Breastfeeding?</label>
-                                    {isEditing ? (
-                                        <select
-                                            value={formData.is_lactating ? 'true' : 'false'}
-                                            onChange={(e) => handleInputChange('is_lactating', e.target.value === 'true')}
-                                            className="w-full px-3 py-2 border border-blue-200 rounded-md outline-none focus:ring-2 focus:ring-blue-500 transition bg-white font-bold text-blue-700 cursor-pointer"
-                                        >
-                                            <option value="false">No</option>
-                                            <option value="true">Yes</option>
-                                        </select>
-                                    ) : (
-                                        <div className={`p-2 font-bold rounded-md text-center ${formData.is_lactating ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}>
-                                            {formData.is_lactating ? 'LACTATING' : 'NOT LACTATING'}
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
-                                    <label className="block text-xs font-bold text-blue-600 uppercase mb-2">Lactation Notes</label>
-                                    {isEditing ? (
-                                        <input
-                                            type="text"
-                                            placeholder="e.g. Exclusive breastfeeding"
-                                            value={formData.lactation_notes || ''}
-                                            onChange={e => handleInputChange('lactation_notes', e.target.value)}
-                                            className="w-full px-3 py-2 border border-blue-200 rounded-md outline-none focus:ring-2 focus:ring-blue-500 transition bg-white font-bold text-blue-700"
-                                        />
-                                    ) : (
-                                        <div className="p-2 font-bold text-blue-800 bg-white rounded-md border border-blue-100">
-                                            {formData.lactation_notes || '--'}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Pediatric Information */}
-                    {isPediatric && (
-                        <div className="md:col-span-2 space-y-4 p-4 bg-gradient-to-r from-pink-50 to-purple-50 rounded-lg border border-pink-200">
-                            <h3 className="font-bold text-purple-800 flex items-center gap-2">
-                                <FaBaby /> Pediatric Information
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700">
-                                        Birth Weight
-                                    </label>
-                                    {isEditing ? (
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="number"
-                                                step="0.01"
-                                                value={formData.birth_weight || ''}
-                                                onChange={(e) => handleInputChange('birth_weight', e.target.value)}
-                                                className="flex-1 border border-gray-300 rounded-lg p-2"
-                                                placeholder="e.g., 3.5"
-                                            />
-                                            <div className="w-16 bg-gray-100 border border-gray-300 rounded-lg p-2 text-center">
-                                                kg
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="p-2 bg-white rounded border">
-                                            {formData.birth_weight || '--'} kg
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700">
-                                        Birth Length
-                                    </label>
-                                    {isEditing ? (
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="number"
-                                                step="0.1"
-                                                value={formData.birth_length || ''}
-                                                onChange={(e) => handleInputChange('birth_length', e.target.value)}
-                                                className="flex-1 border border-gray-300 rounded-lg p-2"
-                                                placeholder="e.g., 50"
-                                            />
-                                            <div className="w-16 bg-gray-100 border border-gray-300 rounded-lg p-2 text-center">
-                                                cm
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="p-2 bg-white rounded border">
-                                            {formData.birth_length || '--'} cm
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700">
-                                        Feeding Method
-                                    </label>
-                                    {isEditing ? (
-                                        <select
-                                            value={formData.feeding_method || ''}
-                                            onChange={(e) => handleInputChange('feeding_method', e.target.value)}
-                                            className="w-full border border-gray-300 rounded-lg p-2"
-                                        >
-                                            <option value="">Select method</option>
-                                            <option value="Breastfed">Breastfed</option>
-                                            <option value="Formula">Formula</option>
-                                            <option value="Mixed">Mixed</option>
-                                            <option value="Solids">Solids</option>
-                                        </select>
-                                    ) : (
-                                        <div className="p-2 bg-white rounded border">
-                                            {formData.feeding_method || 'Not specified'}
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700">
-                                        Vaccination Status
-                                    </label>
-                                    {isEditing ? (
-                                        <select
-                                            value={formData.vaccination_status || ''}
-                                            onChange={(e) => handleInputChange('vaccination_status', e.target.value)}
-                                            className="w-full border border-gray-300 rounded-lg p-2"
-                                        >
-                                            <option value="">Select status</option>
-                                            <option value="Up to date">Up to date</option>
-                                            <option value="Partially vaccinated">Partially vaccinated</option>
-                                            <option value="Not vaccinated">Not vaccinated</option>
-                                            <option value="Unknown">Unknown</option>
-                                        </select>
-                                    ) : (
-                                        <div className="p-2 bg-white rounded border">
-                                            {formData.vaccination_status || 'Not specified'}
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="md:col-span-2 space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700">
-                                        Developmental Milestones
-                                    </label>
-                                    {isEditing ? (
-                                        <textarea
-                                            value={formData.developmental_milestones || ''}
-                                            onChange={(e) => handleInputChange('developmental_milestones', e.target.value)}
-                                            rows="2"
-                                            className="w-full border border-gray-300 rounded-lg p-2"
-                                            placeholder="Describe developmental milestones"
-                                        />
-                                    ) : (
-                                        <div className="p-2 bg-white rounded border min-h-[60px]">
-                                            {formData.developmental_milestones || 'Not specified'}
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="md:col-span-2 space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700">
-                                        Special Instructions
-                                    </label>
-                                    {isEditing ? (
-                                        <textarea
-                                            value={formData.special_instructions || ''}
-                                            onChange={(e) => handleInputChange('special_instructions', e.target.value)}
-                                            rows="2"
-                                            className="w-full border border-gray-300 rounded-lg p-2"
-                                            placeholder="Any special care instructions"
-                                        />
-                                    ) : (
-                                        <div className="p-2 bg-white rounded border min-h-[60px]">
-                                            {formData.special_instructions || 'None'}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {isEditing && (
+                {isEditing && selectedSections.demography && (
                     <div className="mt-6 pt-6 border-t border-gray-200">
                         <button
                             onClick={handleSaveDemographics}
@@ -2769,7 +3056,7 @@ const PatientDetails = () => {
                 )}
             </div>
         );
-    }, [formData, patient, isEditing, ageMode, newAllergy, handleSaveDemographics, formatAgeDisplay, handleInputChange, handleAddAllergy, handleRemoveAllergy]);
+    }, [formData, patient, isEditing, ageMode, newAllergy, handleSaveDemographics, formatAgeDisplay, handleInputChange, handleAddAllergy, handleRemoveAllergy, selectedSections, isNewPatient, diagnosisSubCategory, diagnosisSubCategoryOther, specialConditions, newSpecialCondition]);
 
     const renderOverviewSection = useCallback(() => {
         const ageDisplay = formatAgeDisplay(formData.age_in_days, formData.date_of_birth);
@@ -3096,8 +3383,22 @@ const PatientDetails = () => {
                         <FaStethoscope className="text-indigo-500" /> Diagnosis
                     </h3>
                     <div className="p-4 bg-gray-50 rounded-lg">
-                        {formData.diagnosis ? (
-                            <p className="text-gray-800">{formData.diagnosis}</p>
+                        {formData.diagnosis_primary ? (
+                            <div className="space-y-2">
+                                <p className="font-medium text-gray-800">Primary: {formData.diagnosis_primary}</p>
+                                {formData.diagnosis_special_conditions && formData.diagnosis_special_conditions.length > 0 && (
+                                    <div>
+                                        <p className="text-sm text-gray-600 font-medium">Special Conditions:</p>
+                                        <div className="flex flex-wrap gap-2 mt-1">
+                                            {formData.diagnosis_special_conditions.map((condition, idx) => (
+                                                <span key={idx} className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-lg text-sm">
+                                                    {condition}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         ) : (
                             <p className="text-gray-500 italic">No diagnosis recorded</p>
                         )}
@@ -3179,6 +3480,180 @@ const PatientDetails = () => {
                             >
                                 <FaSync /> Retry
                             </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* --- SECTION SELECTOR MODAL --- */}
+                {showSectionSelector && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+                            <div className="text-center mb-6">
+                                <FaUser className="text-4xl text-indigo-500 mx-auto mb-3" />
+                                <h2 className="text-2xl font-bold text-gray-800">Which data are you gonna fill?</h2>
+                                <p className="text-gray-500 text-sm mt-1">Select the sections you want to complete</p>
+                            </div>
+                            
+                            <div className="space-y-3 mb-6">
+                                <label className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-indigo-50 transition cursor-pointer border border-gray-200 hover:border-indigo-300">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedSections.demography}
+                                        onChange={() => handleSectionToggle('demography')}
+                                        className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
+                                    />
+                                    <div>
+                                        <span className="font-medium text-gray-800">Demography</span>
+                                        <p className="text-xs text-gray-500">Basic patient information</p>
+                                    </div>
+                                </label>
+                                
+                                <label className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-indigo-50 transition cursor-pointer border border-gray-200 hover:border-indigo-300">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedSections.diagnosis}
+                                        onChange={() => handleSectionToggle('diagnosis')}
+                                        className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
+                                    />
+                                    <div>
+                                        <span className="font-medium text-gray-800">Diagnosis</span>
+                                        <p className="text-xs text-gray-500">Medical diagnosis and conditions</p>
+                                    </div>
+                                </label>
+                                
+                                <label className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-indigo-50 transition cursor-pointer border border-gray-200 hover:border-indigo-300">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedSections.anthropometry}
+                                        onChange={() => handleSectionToggle('anthropometry')}
+                                        className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
+                                    />
+                                    <div>
+                                        <span className="font-medium text-gray-800">Anthropometry</span>
+                                        <p className="text-xs text-gray-500">Body measurements</p>
+                                    </div>
+                                </label>
+                                
+                                <label className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-indigo-50 transition cursor-pointer border border-gray-200 hover:border-indigo-300">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedSections.vitals}
+                                        onChange={() => handleSectionToggle('vitals')}
+                                        className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
+                                    />
+                                    <div>
+                                        <span className="font-medium text-gray-800">Vitals</span>
+                                        <p className="text-xs text-gray-500">Clinical vital signs</p>
+                                    </div>
+                                </label>
+                                
+                                <label className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-indigo-50 transition cursor-pointer border border-gray-200 hover:border-indigo-300">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedSections.labs}
+                                        onChange={() => handleSectionToggle('labs')}
+                                        className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
+                                    />
+                                    <div>
+                                        <span className="font-medium text-gray-800">Labs</span>
+                                        <p className="text-xs text-gray-500">Laboratory test results</p>
+                                    </div>
+                                </label>
+                                
+                                <label className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-indigo-50 transition cursor-pointer border border-gray-200 hover:border-indigo-300">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedSections.medication}
+                                        onChange={() => handleSectionToggle('medication')}
+                                        className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
+                                    />
+                                    <div>
+                                        <span className="font-medium text-gray-800">Medication</span>
+                                        <p className="text-xs text-gray-500">Prescribed medications</p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => {
+                                        setShowSectionSelector(false);
+                                        navigate('/patients');
+                                    }}
+                                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-3 rounded-lg font-medium transition"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleSectionSelectionConfirm}
+                                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-lg font-medium transition"
+                                >
+                                    Proceed
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* --- DIAGNOSIS SUB-CATEGORY MODAL --- */}
+                {showDiagnosisSubCategory && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+                            <div className="text-center mb-6">
+                                <FaStethoscope className="text-4xl text-purple-500 mx-auto mb-3" />
+                                <h2 className="text-2xl font-bold text-gray-800">Diagnosis Sub-Category</h2>
+                                <p className="text-gray-500 text-sm mt-1">Select the type of diagnosis you want to record</p>
+                            </div>
+                            
+                            <div className="space-y-3 mb-6">
+                                <label className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition cursor-pointer border border-purple-200">
+                                    <input
+                                        type="radio"
+                                        name="diagnosisSubCategory"
+                                        value="primary"
+                                        checked={diagnosisSubCategory === 'primary'}
+                                        onChange={() => setDiagnosisSubCategory('primary')}
+                                        className="w-5 h-5 text-purple-600"
+                                    />
+                                    <div>
+                                        <span className="font-medium text-gray-800">Primary Diagnosis</span>
+                                        <p className="text-xs text-gray-500">Main diagnosis for this case</p>
+                                    </div>
+                                </label>
+                                
+                                <label className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition cursor-pointer border border-purple-200">
+                                    <input
+                                        type="radio"
+                                        name="diagnosisSubCategory"
+                                        value="special_conditions"
+                                        checked={diagnosisSubCategory === 'special_conditions'}
+                                        onChange={() => setDiagnosisSubCategory('special_conditions')}
+                                        className="w-5 h-5 text-purple-600"
+                                    />
+                                    <div>
+                                        <span className="font-medium text-gray-800">Special Conditions</span>
+                                        <p className="text-xs text-gray-500">Kidney impairment, liver impairment, etc.</p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => {
+                                        setShowDiagnosisSubCategory(false);
+                                        setDiagnosisSubCategory('');
+                                    }}
+                                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-3 rounded-lg font-medium transition"
+                                >
+                                    Back
+                                </button>
+                                <button
+                                    onClick={handleDiagnosisSubCategoryConfirm}
+                                    className="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-lg font-medium transition"
+                                >
+                                    Confirm
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -3364,4 +3839,4 @@ const PatientDetails = () => {
     );
 };
 
-export default PatientDetails;
+export default PatientDetails;"
