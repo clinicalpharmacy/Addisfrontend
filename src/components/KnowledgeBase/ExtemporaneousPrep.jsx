@@ -550,14 +550,6 @@ const ExtemporaneousPrep = () => {
 
     return (
         <div className="bg-gray-50 min-h-full pb-8">
-            {protectionMsg && (
-                <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[100] w-full max-w-md px-4">
-                    <div className="bg-red-600/90 text-white p-3 rounded-lg shadow-2xl flex items-center justify-center gap-3 animate-pulse border border-red-400 backdrop-blur-sm">
-                        <FaUserShield className="text-xl" />
-                        <span className="font-bold text-sm md:text-base">{protectionMsg}</span>
-                    </div>
-                </div>
-            )}
             <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 md:py-8">
                 {/* Header */}
                 <div className="mb-6 md:mb-8">
@@ -1198,8 +1190,8 @@ const ExtemporaneousPrep = () => {
 
                 {/* Preparation Details Modal - Narrower Width with Enhanced Formatting */}
                 {selectedPrep && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                        <div className="bg-white rounded-xl shadow-2xl w-[60%] max-w-[60%] min-w-[300px] max-h-[90vh] overflow-hidden">
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-end p-4 z-50">
+                        <div className="bg-white rounded-xl shadow-2xl w-[75%] max-w-[75%] min-w-[300px] max-h-[90vh] overflow-hidden flex flex-col mr-8">
                             {/* Header */}
                             <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-indigo-800 text-white p-3">
                                 <div className="flex justify-between items-start">

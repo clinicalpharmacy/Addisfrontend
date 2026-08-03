@@ -175,8 +175,66 @@ const Sidebar = ({ onClose }) => {
                             </NavLink>
                         </li>
 
+                        {/* Medication Availability Link */}
+                        <li className="mb-2">
+                            <NavLink
+                                to={isSubscribed ? "/medication-availability" : "/subscription/plans"}
+                                onClick={onClose}
+                                className={({ isActive }) =>
+                                    `flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isActive && isSubscribed
+                                        ? 'bg-green-50 text-green-600 border-l-4 border-green-600 shadow-sm'
+                                        : 'text-gray-600 hover:bg-green-50 hover:text-green-600 hover:shadow-sm'
+                                    } ${!isSubscribed ? 'opacity-60' : ''}`
+                                }
+                            >
+                                <div className="flex items-center gap-2.5 w-full">
+                                    <FaPills className="text-xl" />
+                                    <span className="font-bold text-base">መድሃኒት ማፈላለጊያ</span>
+                                    {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
+                                </div>
+                            </NavLink>
+                        </li>
+
+                        {/* Drug Information */}
+                        <li className="mb-2">
+                            <NavLink
+                                to={isSubscribed ? "/knowledge" : "/subscription/plans"}
+                                onClick={onClose}
+                                className={`flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${
+                                    isDrugInfoActive && isSubscribed
+                                        ? 'bg-indigo-50 text-indigo-600 border-l-4 border-indigo-600 shadow-sm'
+                                        : 'text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 hover:shadow-sm'
+                                } ${!isSubscribed ? 'opacity-60' : ''}`}
+                            >
+                                <div className="flex items-center gap-2.5 w-full">
+                                    <FaCapsules className="text-xl" />
+                                    <span className="font-bold text-base">የመድሃኒት መረጃ</span>
+                                    {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
+                                </div>
+                            </NavLink>
+                        </li>
+
+                        {/* Quick Safety Check */}
+                        <li className="mb-2">
+                            <NavLink
+                                to={isSubscribed ? "/quick-safety" : "/subscription/plans"}
+                                onClick={onClose}
+                                className={`flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${
+                                    location.pathname === '/quick-safety' && isSubscribed
+                                        ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600 shadow-sm'
+                                        : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:shadow-sm'
+                                } ${!isSubscribed ? 'opacity-60' : ''}`}
+                            >
+                                <div className="flex items-center gap-2.5 w-full">
+                                    <FaShieldAlt className="text-xl" />
+                                    <span className="font-bold text-base">Quick Safety Check</span>
+                                    {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
+                                </div>
+                            </NavLink>
+                        </li>
+
                         {/* Patients Section - Medication Review */}
-                        {!isAdmin && (
+                        {!isAdmin && user?.role !== 'healthcare_client' && (
                             <li className="mb-2">
                                 <button
                                     onClick={() => isSubscribed ? toggleSection('patients') : navigate('/subscription/plans')}
@@ -226,6 +284,7 @@ const Sidebar = ({ onClose }) => {
                                 )}
                             </li>
                         )}
+<<<<<<< HEAD
 
                         {/* Clinical Analysis - Independent top-level item */}
                         {!isAdmin && (
@@ -307,6 +366,9 @@ const Sidebar = ({ onClose }) => {
                             </NavLink>
                         </li>
 
+=======
+                        
+>>>>>>> 509f45dc5ac705b20a4179777741508e3467a376
                         {/* Useful Links */}
                         {(user?.role !== 'healthcare_client' || !isIndividual) && (
                             <li className="mb-2">

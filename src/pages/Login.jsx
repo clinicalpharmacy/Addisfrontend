@@ -149,7 +149,7 @@ const Login = () => {
                 localStorage.setItem('subscription_end_date', data.user.subscription_end_date || '');
                 localStorage.setItem('has_subscription', data.user.subscription_status === 'active' ? 'true' : 'false');
 
-                // Store healthcare client ID if applicable
+                // Store  ID if applicable
                 if (data.user.healthcare_client_id) {
                     localStorage.setItem('healthcare_client_id', data.user.healthcare_client_id);
                 }
@@ -354,12 +354,12 @@ const Login = () => {
                                     setFormData({ ...formData, email: '' });
                                     setError('');
                                 }}
-                                className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-lg font-bold transition-all ${loginMethod === 'email'
+                                className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-base font-bold transition-all ${loginMethod === 'email'
                                     ? 'bg-white text-blue-600 shadow-sm'
                                     : 'text-gray-600 hover:text-gray-800'
                                     }`}
                             >
-                                Health Professional
+                                Health Professionals & Students
                             </button>
                             <button
                                 type="button"
@@ -368,7 +368,7 @@ const Login = () => {
                                     setFormData({ ...formData, email: '' });
                                     setError('');
                                 }}
-                                className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-lg font-bold transition-all ${loginMethod === 'addisMedId'
+                                className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-base font-bold transition-all ${loginMethod === 'addisMedId'
                                     ? 'bg-white text-green-600 shadow-sm'
                                     : 'text-gray-600 hover:text-gray-800'
                                     }`}

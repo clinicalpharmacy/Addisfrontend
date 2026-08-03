@@ -108,15 +108,15 @@ const ExamModule = ({ examId, examTitle, examSubject, onBack }) => {
     const percentage = ((score / questions.length) * 100).toFixed(1);
 
     return (
-        <div className="bg-white rounded-xl shadow-lg p-6 md:p-8 animate-fadeIn max-w-4xl mx-auto">
-            <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
+        <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 animate-fadeIn max-w-3xl mx-auto">
+            <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
                 <button 
                     onClick={onBack}
                     className="flex items-center gap-2 text-gray-500 hover:text-blue-600 font-medium transition-colors"
                 >
                     <FaArrowLeft /> Back
                 </button>
-                <h3 className="text-2xl font-black text-gray-800 tracking-tight">{examTitle || examSubject}</h3>
+                <h3 className="text-xl font-black text-gray-800 tracking-tight">{examTitle || examSubject}</h3>
                 <div className="text-sm font-bold text-gray-500">
                     {isSubmitted ? 'Completed' : `Question ${currentQuestionIndex + 1} of ${questions.length}`}
                 </div>
@@ -198,7 +198,7 @@ const ExamModule = ({ examId, examTitle, examSubject, onBack }) => {
                         </h4>
                     </div>
 
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                         {questions[currentQuestionIndex].options.map(option => {
                             const hasAnswered = !!selectedAnswers[questions[currentQuestionIndex].id];
                             const isSelected = selectedAnswers[questions[currentQuestionIndex].id] === option.id;
@@ -228,7 +228,7 @@ const ExamModule = ({ examId, examTitle, examSubject, onBack }) => {
                                     key={option.id}
                                     onClick={() => handleOptionSelect(questions[currentQuestionIndex].id, option.id)}
                                     disabled={hasAnswered}
-                                    className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 ${buttonStyle}`}
+                                    className={`w-full text-left p-3 rounded-xl border-2 transition-all duration-200 ${buttonStyle}`}
                                 >
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
@@ -282,11 +282,11 @@ const ExamModule = ({ examId, examTitle, examSubject, onBack }) => {
                         </div>
                     )}
 
-                    <div className="flex justify-between items-center pt-8 border-t border-gray-100 mt-8">
+                    <div className="flex justify-between items-center pt-4 border-t border-gray-100 mt-4">
                         <button
                             onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
                             disabled={currentQuestionIndex === 0}
-                            className={`px-6 py-2.5 rounded-lg font-bold transition-all ${
+                            className={`px-6 py-1.5 rounded-lg font-bold transition-all ${
                                 currentQuestionIndex === 0
                                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                     : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 shadow-sm'
@@ -298,14 +298,14 @@ const ExamModule = ({ examId, examTitle, examSubject, onBack }) => {
                         {currentQuestionIndex === questions.length - 1 ? (
                             <button
                                 onClick={handleSubmit}
-                                className="px-8 py-2.5 rounded-lg font-bold bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg shadow-green-200 transition-all transform hover:-translate-y-0.5"
+                                className="px-8 py-1.5 rounded-lg font-bold bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg shadow-green-200 transition-all transform hover:-translate-y-0.5"
                             >
                                 Submit Exam
                             </button>
                         ) : (
                             <button
                                 onClick={() => setCurrentQuestionIndex(Math.min(questions.length - 1, currentQuestionIndex + 1))}
-                                className="px-8 py-2.5 rounded-lg font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 transition-all"
+                                className="px-8 py-1.5 rounded-lg font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 transition-all"
                             >
                                 Next
                             </button>

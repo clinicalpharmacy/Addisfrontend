@@ -6,15 +6,9 @@ import {
     FaVial,
     FaUserMd,
     FaArrowRight,
-    FaExclamationTriangle,
-    FaUserShield,
-    FaLockOpen,
-    FaCheckCircle,
-    FaExternalLinkAlt,
     FaBookmark,
     FaShieldAlt
 } from 'react-icons/fa';
-import SecurityActivator from '../components/Security/SecurityActivator';
 
 const Home = () => {
     const [showSecuritySetup, setShowSecuritySetup] = useState(false);
@@ -22,6 +16,12 @@ const Home = () => {
     const role = user?.role;
     const isSecurityActive = !!user?.public_key;
 
+    // Check user roles
+    const isAdmin = user?.role === 'admin';
+    const isCompanyAdmin = user?.role === 'company_admin';
+    const isCompanyUser = !!user?.company_id || user?.account_type === 'company' || ['company_admin', 'company_user'].includes(user?.role);
+    const isIndividual = !isAdmin && !isCompanyUser;
+    
     const getGreeting = () => {
         const hour = new Date().getHours();
         if (hour < 12) return 'Good morning';
@@ -62,8 +62,65 @@ const Home = () => {
 
             {/* Quick Access Grid - Row 1 */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                {/* Medication Review */}
-                {role !== 'admin' && (
+                {/* 1. Medication Availability */}
+                <Link to="/medication-availability" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 bg-yellow-100 rounded-lg">
+                            <FaPills className="text-yellow-600 text-lg" />
+                        </div>
+                        <div>
+                            <h2 className="text-sm font-bold text-gray-800">መድሃኒት ማፈላለጊያ</h2>
+                            <p className="text-xs text-gray-500">Medication availability</p>
+                        </div>
+                    </div>
+                    <div className="flex justify-end">
+                        <span className="text-yellow-600 text-sm flex items-center gap-1">
+                            Search <FaArrowRight className="text-xs" />
+                        </span>
+                    </div>
+                </Link>
+                
+                {/* 2. Medication Information */}
+                <Link to="/knowledge/medications" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 bg-purple-100 rounded-lg">
+                            <FaPills className="text-purple-600 text-lg" />
+                        </div>
+                        <div>
+                            <h2 className="text-sm font-bold text-gray-800">የመድሃኒት መረጃ</h2>
+                            <p className="text-xs text-gray-500">Medicines database</p>
+                        </div>
+                    </div>
+                    <div className="flex justify-end">
+                        <span className="text-purple-600 text-sm flex items-center gap-1">
+                            Search <FaArrowRight className="text-xs" />
+                        </span>
+                    </div>
+                </Link>
+
+                {/* 3. Quick Safety Check */}
+                <Link to="/quick-safety" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition border-2 border-transparent hover:border-blue-100">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 bg-indigo-100 rounded-lg">
+                            <FaShieldAlt className="text-indigo-600 text-lg" />
+                        </div>
+                        <div>
+                            <h2 className="text-sm font-bold text-gray-800">Quick Safety Check</h2>
+                            <p className="text-xs text-gray-500">Pregnancy, elderly, organs</p>
+                        </div>
+                    </div>
+                    <div className="flex justify-end">
+                        <span className="text-indigo-600 text-sm flex items-center gap-1">
+                            Check <FaArrowRight className="text-xs" />
+                        </span>
+                    </div>
+                </Link>
+            </div>
+
+            {/* Quick Access Grid - Row 2 */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                {/* 4. Medication Review */}
+                {!isAdmin && user?.role !== 'healthcare_client' && (
                     <Link to="/patients" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
                         <div className="flex items-center gap-3 mb-2">
                             <div className="p-2 bg-blue-100 rounded-lg">
@@ -82,82 +139,27 @@ const Home = () => {
                     </Link>
                 )}
 
-                {/* Medication Information */}
-                <Link to="/knowledge/medications" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-purple-100 rounded-lg">
-                            <FaPills className="text-purple-600 text-lg" />
+                {/* 5. Useful Links */}
+                {(user?.role !== 'healthcare_client' || !isIndividual) && (
+                    <Link to="/useful-links" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="p-2 bg-green-100 rounded-lg">
+                                <FaBookmark className="text-green-600 text-lg" />
+                            </div>
+                            <div>
+                                <h2 className="text-sm font-bold text-gray-800">Useful Links</h2>
+                                <p className="text-xs text-gray-500">External resources & references</p>
+                            </div>
                         </div>
-                        <div>
-                            <h2 className="text-sm font-bold text-gray-800">የመድሃኒት መረጃ</h2>
-                            <p className="text-xs text-gray-500">Medicines database</p>
+                        <div className="flex justify-end">
+                            <span className="text-green-600 text-sm flex items-center gap-1">
+                                View <FaArrowRight className="text-xs" />
+                            </span>
                         </div>
-                    </div>
-                    <div className="flex justify-end">
-                        <span className="text-purple-600 text-sm flex items-center gap-1">
-                            Search <FaArrowRight className="text-xs" />
-                        </span>
-                    </div>
-                </Link>
+                    </Link>
+                )}
 
-                {/* Quick Safety Check */}
-                <Link to="/quick-safety" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition border-2 border-transparent hover:border-blue-100">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-indigo-100 rounded-lg">
-                            <FaShieldAlt className="text-indigo-600 text-lg" />
-                        </div>
-                        <div>
-                            <h2 className="text-sm font-bold text-gray-800">Quick Safety Check</h2>
-                            <p className="text-xs text-gray-500">Pregnancy, elderly, organs</p>
-                        </div>
-                    </div>
-                    <div className="flex justify-end">
-                        <span className="text-indigo-600 text-sm flex items-center gap-1">
-                            Check <FaArrowRight className="text-xs" />
-                        </span>
-                    </div>
-                </Link>
-
-                {/* Medication Availability - Available to ALL users */}
-                <Link to="/medication-availability" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-yellow-100 rounded-lg">
-                            <FaPills className="text-yellow-600 text-lg" />
-                        </div>
-                        <div>
-                            <h2 className="text-sm font-bold text-gray-800">መድሃኒት ማፈላለጊያ</h2>
-                            <p className="text-xs text-gray-500">Medication availability</p>
-                        </div>
-                    </div>
-                    <div className="flex justify-end">
-                        <span className="text-yellow-600 text-sm flex items-center gap-1">
-                            Search <FaArrowRight className="text-xs" />
-                        </span>
-                    </div>
-                </Link>
-            </div>
-
-            {/* Quick Access Grid - Row 2 */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                {/* Useful Links - Separate card next to Medication Availability */}
-                <Link to="/useful-links" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-green-100 rounded-lg">
-                            <FaBookmark className="text-green-600 text-lg" />
-                        </div>
-                        <div>
-                            <h2 className="text-sm font-bold text-gray-800">Useful Links</h2>
-                            <p className="text-xs text-gray-500">External resources & references</p>
-                        </div>
-                    </div>
-                    <div className="flex justify-end">
-                        <span className="text-green-600 text-sm flex items-center gap-1">
-                            View <FaArrowRight className="text-xs" />
-                        </span>
-                    </div>
-                </Link>
-
-                {/* Home Remedies */}
+                {/* 6. Home Remedies */}
                 <Link to="/knowledge/remedies" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 bg-green-100 rounded-lg">
@@ -174,8 +176,11 @@ const Home = () => {
                         </span>
                     </div>
                 </Link>
+            </div>
 
-                {/* Minor Illnesses */}
+            {/* Quick Access Grid - Row 3 */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                {/* 7. Minor Illnesses */}
                 {['company_admin', 'company_user', 'pharmacist', 'pharmacy_student'].includes(role) && (
                     <Link to="/knowledge/illnesses" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
                         <div className="flex items-center gap-3 mb-2">
@@ -194,11 +199,8 @@ const Home = () => {
                         </div>
                     </Link>
                 )}
-            </div>
 
-            {/* Quick Access Grid - Row 3 - Compounding & Education together */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                {/* Compounding */}
+                {/* 8. Compounding */}
                 {['company_admin', 'company_user', 'pharmacist', 'pharmacy_student'].includes(role) && (
                     <Link to="/knowledge/compounding" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
                         <div className="flex items-center gap-3 mb-2">
@@ -218,7 +220,7 @@ const Home = () => {
                     </Link>
                 )}
 
-                {/* Education - Now next to Compounding */}
+                {/* 9. Education */}
                 {['company_admin', 'company_user', 'pharmacist', 'pharmacy_student'].includes(role) && (
                     <Link to="/knowledge/Education" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
                         <div className="flex items-center gap-3 mb-2">
