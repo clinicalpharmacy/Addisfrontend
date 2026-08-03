@@ -234,7 +234,11 @@ const PatientDetails = () => {
         developmental_milestones: '', feeding_method: '', birth_weight: '', birth_length: '',
         vaccination_status: '', special_instructions: '',
         // Labs (Now dynamic via customLabs/GlobalDefinitions)
-        lab_test_date: null
+        lab_test_date: null,
+        // Diagnosis sub-categories (stored in frontend only, not in database)
+        diagnosis_primary: '',
+        diagnosis_special_conditions: [],
+        diagnosis_sub_category_type: ''
     });
 
     // --- 2. HELPERS & UTILS ---
@@ -675,26 +679,51 @@ const PatientDetails = () => {
         };
 
         // Build complete form data object
-        const formDataToSet = {
-            ...data,
-            age: ageInYears,
-            age_in_days: ageInDays,
-            patient_type: patientType,
-            allergies: ensureArray(data.allergies),
-            vaccination_status: ensureArray(data.vaccination_status),
-            developmental_milestones: ensureArray(data.developmental_milestones),
-            date_of_birth: (dob && isValidDate(dob)) ? dob.split('T')[0] : '',
-            appointment_date: (data.appointment_date && isValidDate(data.appointment_date)) ? data.appointment_date.split('T')[0] : '',
-            edd: (data.edd && isValidDate(data.edd)) ? data.edd.split('T')[0] : '',
-            last_measured: (data.last_measured && isValidDate(data.last_measured)) ? data.last_measured.split('T')[0] : new Date().toISOString().split('T')[0],
-            lab_test_date: null,
-            // Explicitly convert is_lactating to boolean
-            is_lactating: data.is_lactating === true || data.is_lactating === 'true' || data.is_lactating === 1,
-            is_pregnant: data.is_pregnant === true || data.is_pregnant === 'true' || data.is_pregnant === 1
-        };
-
-        setFormData(formDataToSet);
-
+    const formDataToSet = {
+        ...data,
+        age: ageInYears,
+        age_in_days: ageInDays,
+        patient_type: patientType,
+        allergies: ensureArray(data.allergies),
+        vaccination_status: ensureArray(data.vaccination_status),
+        developmental_milestones: ensureArray(data.developmental_milestones),
+        date_of_birth: (dob && isValidDate(dob)) ? dob.split('T')[0] : '',
+        appointment_date: (data.appointment_date && isValidDate(data.appointment_date)) ? data.appointment_date.split('T')[0] : '',
+        edd: (data.edd && isValidDate(data.edd)) ? data.edd.split('T')[0] : '',
+        last_measured: (data.last_measured && isValidDate(data.last_measured)) ? data.last_measured.split('T')[0] : new Date().toISOString().split('T')[0],
+        lab_test_date: null,
+        // Explicitly convert is_lactating to boolean
+        is_lactating: data.is_lactating === true || data.is_lactating === 'true' || data.is_lactating === 1,
+        is_pregnant: data.is_pregnant === true || data.is_pregnant === 'true' || data.is_pregnant === 1,
+    };
+    
+    // Parse diagnosis if it's JSON (for sub-category fields)
+    if (data.diagnosis && typeof data.diagnosis === 'string' && data.diagnosis.startsWith('{')) {
+        try {
+            const parsedDiagnosis = JSON.parse(data.diagnosis);
+            formDataToSet.diagnosis_primary = parsedDiagnosis.primary || '';
+            formDataToSet.diagnosis_special_conditions = parsedDiagnosis.special_conditions || [];
+            formDataToSet.diagnosis_sub_category_type = parsedDiagnosis.sub_category_type || '';
+            // Clear the diagnosis field since we're using structured data
+            formDataToSet.diagnosis = ''; 
+        } catch (e) {
+            // If parsing fails, treat it as plain text (keep the original)
+            console.warn('Failed to parse diagnosis JSON:', e);
+            // Keep the original diagnosis as plain text
+            formDataToSet.diagnosis = data.diagnosis;
+            formDataToSet.diagnosis_primary = '';
+            formDataToSet.diagnosis_special_conditions = [];
+            formDataToSet.diagnosis_sub_category_type = '';
+        }
+    } else {
+        // If it's plain text, keep it as is
+        formDataToSet.diagnosis = data.diagnosis || ''; // Keep the plain text
+        formDataToSet.diagnosis_primary = '';
+        formDataToSet.diagnosis_special_conditions = [];
+        formDataToSet.diagnosis_sub_category_type = '';
+    }
+    
+    setFormData(formDataToSet);
         // Merge Custom Labs with Global Definitions
         if (globalLabDefinitions && globalLabDefinitions.length > 0) {
             const existingMap = new Map();
@@ -943,8 +972,6 @@ const PatientDetails = () => {
     }, [formData.weight, formData.height, calculateBSA]);
 
     const handleInputChange = useCallback((field, value) => {
-
-
         // Handle date fields with validation
         if (field === 'date_of_birth' && value) {
             if (!isValidDate(value)) {
@@ -954,11 +981,11 @@ const PatientDetails = () => {
                 }));
                 return;
             }
-
+    
             const ageInDays = calculateAgeInDays(value);
             const ageInYears = calculateAge(value);
             const patientType = determinePatientType(ageInDays);
-
+    
             setFormData(prev => ({
                 ...prev,
                 [field]: value,
@@ -966,7 +993,7 @@ const PatientDetails = () => {
                 age: ageInYears,
                 patient_type: patientType
             }));
-
+    
             if (ageInDays && parseInt(ageInDays) < 365) {
                 setAgeMode('days');
                 setShowPediatricLabs(true);
@@ -976,18 +1003,18 @@ const PatientDetails = () => {
             }
             return;
         }
-
+    
         if (field === 'age_in_days') {
             const patientType = determinePatientType(value);
             const years = value ? Math.floor(parseInt(value) / 365) : '';
-
+    
             setFormData(prev => ({
                 ...prev,
                 [field]: value,
                 age: years.toString(),
                 patient_type: patientType
             }));
-
+    
             if (value && parseInt(value) < 365) {
                 setAgeMode('days');
                 setShowPediatricLabs(true);
@@ -997,18 +1024,18 @@ const PatientDetails = () => {
             }
             return;
         }
-
+    
         if (field === 'age') {
             const days = value ? parseInt(value) * 365 : '';
             const patientType = determinePatientType(days.toString());
-
+    
             setFormData(prev => ({
                 ...prev,
                 [field]: value,
                 age_in_days: days.toString(),
                 patient_type: patientType
             }));
-
+    
             if (value && parseInt(value) < 1) {
                 setAgeMode('days');
                 setShowPediatricLabs(true);
@@ -1018,7 +1045,7 @@ const PatientDetails = () => {
             }
             return;
         }
-
+    
         if (field === 'pregnancy_weeks') {
             const newTrimester = calculateTrimester(value);
             setFormData(prev => ({
@@ -1028,7 +1055,7 @@ const PatientDetails = () => {
             }));
             return;
         }
-
+    
         // Handle date fields
         if (field.includes('date') || field === 'edd' || field === 'appointment_date') {
             if (value && !isValidDate(value)) {
@@ -1036,7 +1063,16 @@ const PatientDetails = () => {
                 return;
             }
         }
-
+    
+        // ADD THIS NEW CASE FOR DIAGNOSIS_PRIMARY
+        if (field === 'diagnosis_primary') {
+            setFormData(prev => ({
+                ...prev,
+                [field]: value
+            }));
+            return;
+        }
+    
         // For basic text/number fields in demographics
         setFormData(prev => ({
             ...prev,
@@ -1352,7 +1388,19 @@ const PatientDetails = () => {
                     date_of_birth: cleanDate(formData.date_of_birth),
                     contact_number: cleanText(formData.contact_number),
                     address: cleanText(formData.address),
-                    diagnosis: cleanText(formData.diagnosis),
+                    diagnosis: (() => {
+                        // If there's a primary diagnosis or special conditions, store as JSON
+                        if (formData.diagnosis_primary || (formData.diagnosis_special_conditions && formData.diagnosis_special_conditions.length > 0)) {
+                            const diagnosisData = {
+                                primary: cleanText(formData.diagnosis_primary) || '',
+                                special_conditions: Array.isArray(formData.diagnosis_special_conditions) ? formData.diagnosis_special_conditions : [],
+                                sub_category_type: cleanText(formData.diagnosis_sub_category_type) || ''
+                            };
+                            return JSON.stringify(diagnosisData);
+                        }
+                        // Otherwise use the plain text diagnosis
+                        return cleanText(formData.diagnosis);
+                    })(),               
                     appointment_date: cleanDate(formData.appointment_date),
                     is_active: formData.is_active !== false,
                     allergies: Array.isArray(formData.allergies) ? formData.allergies.filter(a => a && typeof a === 'string' && a.trim() !== '') : [],
