@@ -222,21 +222,30 @@ const Sidebar = ({ onClose }) => {
                                             New MR
                                         </NavLink>
                                         )}
-                                        <NavLink
-                                            to="/cdss-analysis"
-                                            onClick={onClose}
-                                            className={({ isActive }) =>
-                                                `flex items-center gap-2.5 px-4 py-2 text-base rounded-lg transition-all ${isActive
-                                                    ? 'text-purple-600 font-black bg-purple-50'
-                                                    : 'text-gray-400 hover:text-purple-600 hover:bg-purple-50'
-                                                }`
-                                            }
-                                        >
-                                            <FaBrain className="text-base opacity-60" />
-                                            Clinical Analysis
-                                        </NavLink>
                                     </div>
                                 )}
+                            </li>
+                        )}
+
+                        {/* Clinical Analysis - Independent top-level item */}
+                        {!isAdmin && (
+                            <li className="mb-2">
+                                <NavLink
+                                    to={isSubscribed ? "/cdss-analysis" : "/subscription/plans"}
+                                    onClick={onClose}
+                                    className={({ isActive }) =>
+                                        `flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isActive && isSubscribed
+                                            ? 'bg-purple-50 text-purple-600 border-l-4 border-purple-600 shadow-sm'
+                                            : 'text-gray-600 hover:bg-purple-50 hover:text-purple-600 hover:shadow-sm'
+                                        } ${!isSubscribed ? 'opacity-60' : ''}`
+                                    }
+                                >
+                                    <div className="flex items-center gap-2.5 w-full">
+                                        <FaBrain className="text-xl" />
+                                        <span className="font-bold text-base">Clinical Analysis</span>
+                                        {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
+                                    </div>
+                                </NavLink>
                             </li>
                         )}
 
