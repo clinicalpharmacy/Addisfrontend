@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
     FaUserInjured,
     FaPills,
@@ -7,11 +7,32 @@ import {
     FaUserMd,
     FaArrowRight,
     FaBookmark,
-    FaShieldAlt
+    FaShieldAlt,
+    FaUser,
+    FaStethoscope,
+    FaHeartbeat,
+    FaTimes
 } from 'react-icons/fa';
 
 const Home = () => {
-    const [showSecuritySetup, setShowSecuritySetup] = useState(false);
+    const navigate = useNavigate();
+    const [showSectionSelector, setShowSectionSelector] = useState(false);
+    const [selectedSections, setSelectedSections] = useState({
+        demography: false,
+        diagnosis: false,
+        anthropometry: false,
+        vitals: false,
+        labs: false,
+        medication: false
+    });
+    const [showDiagnosisSubCategory, setShowDiagnosisSubCategory] = useState(false);
+    const [diagnosisSubCategory, setDiagnosisSubCategory] = useState('');
+    const [specialConditions, setSpecialConditions] = useState([
+        'Kidney Impairment',
+        'Liver Impairment'
+    ]);
+    const [newSpecialCondition, setNewSpecialCondition] = useState('');
+
     const user = JSON.parse(localStorage.getItem('user'));
     const role = user?.role;
     const isSecurityActive = !!user?.public_key;
@@ -27,6 +48,68 @@ const Home = () => {
         if (hour < 12) return 'Good morning';
         if (hour < 18) return 'Good afternoon';
         return 'Good evening';
+    };
+
+    const handleSectionToggle = (section) => {
+        setSelectedSections(prev => ({
+            ...prev,
+            [section]: !prev[section]
+        }));
+    };
+
+    const handleSectionSelectionConfirm = () => {
+        const anySelected = Object.values(selectedSections).some(v => v === true);
+        if (!anySelected) {
+            alert('Please select at least one section to proceed.');
+            return;
+        }
+        setShowSectionSelector(false);
+        // If diagnosis is selected, show sub-category selection
+        if (selectedSections.diagnosis) {
+            setShowDiagnosisSubCategory(true);
+        } else {
+            // Navigate to patients page with selected sections
+            navigate('/patients/new', { 
+                state: { 
+                    selectedSections,
+                    fromHome: true 
+                } 
+            });
+        }
+    };
+
+    const handleDiagnosisSubCategoryConfirm = () => {
+        if (!diagnosisSubCategory) {
+            alert('Please select a diagnosis sub-category.');
+            return;
+        }
+        setShowDiagnosisSubCategory(false);
+        navigate('/patients/new', { 
+            state: { 
+                selectedSections,
+                diagnosisSubCategory,
+                fromHome: true 
+            } 
+        });
+    };
+
+    const handleAddSpecialCondition = () => {
+        if (newSpecialCondition.trim() === '') return;
+        if (specialConditions.includes(newSpecialCondition.trim())) {
+            alert('This condition already exists.');
+            return;
+        }
+        setSpecialConditions(prev => [...prev, newSpecialCondition.trim()]);
+        setNewSpecialCondition('');
+    };
+
+    const handleRemoveSpecialCondition = (condition) => {
+        setSpecialConditions(prev => prev.filter(c => c !== condition));
+    };
+
+    // Handler for Medication Review click
+    const handleMedicationReviewClick = () => {
+        setShowSectionSelector(true);
     };
 
     return (
@@ -119,9 +202,12 @@ const Home = () => {
 
             {/* Quick Access Grid - Row 2 */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                {/* 4. Medication Review */}
+                {/* 4. Medication Review - Opens Section Selector */}
                 {!isAdmin && user?.role !== 'healthcare_client' && (
-                    <Link to="/patients" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
+                    <div 
+                        onClick={handleMedicationReviewClick}
+                        className="bg-white rounded-xl shadow p-4 hover:shadow-md transition cursor-pointer"
+                    >
                         <div className="flex items-center gap-3 mb-2">
                             <div className="p-2 bg-blue-100 rounded-lg">
                                 <FaUserInjured className="text-blue-600 text-lg" />
@@ -136,7 +222,7 @@ const Home = () => {
                                 Open <FaArrowRight className="text-xs" />
                             </span>
                         </div>
-                    </Link>
+                    </div>
                 )}
 
                 {/* 5. Useful Links */}
@@ -240,6 +326,222 @@ const Home = () => {
                     </Link>
                 )}
             </div>
+
+            {/* --- SECTION SELECTOR MODAL --- */}
+            {showSectionSelector && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-4">
+                            <div className="text-center flex-1">
+                                <FaUser className="text-4xl text-indigo-500 mx-auto mb-2" />
+                                <h2 className="text-2xl font-bold text-gray-800">Which data are you gonna fill?</h2>
+                                <p className="text-gray-500 text-sm mt-1">Select the sections you want to complete</p>
+                            </div>
+                            <button
+                                onClick={() => setShowSectionSelector(false)}
+                                className="text-gray-400 hover:text-gray-600 p-1"
+                            >
+                                <FaTimes className="text-xl" />
+                            </button>
+                        </div>
+                        
+                        <div className="space-y-3 mb-6">
+                            <label className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-indigo-50 transition cursor-pointer border border-gray-200 hover:border-indigo-300">
+                                <input
+                                    type="checkbox"
+                                    checked={selectedSections.demography}
+                                    onChange={() => handleSectionToggle('demography')}
+                                    className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
+                                />
+                                <div>
+                                    <span className="font-medium text-gray-800">Demography</span>
+                                    <p className="text-xs text-gray-500">Basic patient information</p>
+                                </div>
+                            </label>
+                            
+                            <label className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-indigo-50 transition cursor-pointer border border-gray-200 hover:border-indigo-300">
+                                <input
+                                    type="checkbox"
+                                    checked={selectedSections.diagnosis}
+                                    onChange={() => handleSectionToggle('diagnosis')}
+                                    className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
+                                />
+                                <div>
+                                    <span className="font-medium text-gray-800">Diagnosis</span>
+                                    <p className="text-xs text-gray-500">Medical diagnosis and conditions</p>
+                                </div>
+                            </label>
+                            
+                            <label className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-indigo-50 transition cursor-pointer border border-gray-200 hover:border-indigo-300">
+                                <input
+                                    type="checkbox"
+                                    checked={selectedSections.anthropometry}
+                                    onChange={() => handleSectionToggle('anthropometry')}
+                                    className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
+                                />
+                                <div>
+                                    <span className="font-medium text-gray-800">Anthropometry</span>
+                                    <p className="text-xs text-gray-500">Body measurements</p>
+                                </div>
+                            </label>
+                            
+                            <label className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-indigo-50 transition cursor-pointer border border-gray-200 hover:border-indigo-300">
+                                <input
+                                    type="checkbox"
+                                    checked={selectedSections.vitals}
+                                    onChange={() => handleSectionToggle('vitals')}
+                                    className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
+                                />
+                                <div>
+                                    <span className="font-medium text-gray-800">Vitals</span>
+                                    <p className="text-xs text-gray-500">Clinical vital signs</p>
+                                </div>
+                            </label>
+                            
+                            <label className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-indigo-50 transition cursor-pointer border border-gray-200 hover:border-indigo-300">
+                                <input
+                                    type="checkbox"
+                                    checked={selectedSections.labs}
+                                    onChange={() => handleSectionToggle('labs')}
+                                    className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
+                                />
+                                <div>
+                                    <span className="font-medium text-gray-800">Labs</span>
+                                    <p className="text-xs text-gray-500">Laboratory test results</p>
+                                </div>
+                            </label>
+                            
+                            <label className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-indigo-50 transition cursor-pointer border border-gray-200 hover:border-indigo-300">
+                                <input
+                                    type="checkbox"
+                                    checked={selectedSections.medication}
+                                    onChange={() => handleSectionToggle('medication')}
+                                    className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
+                                />
+                                <div>
+                                    <span className="font-medium text-gray-800">Medication</span>
+                                    <p className="text-xs text-gray-500">Prescribed medications</p>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowSectionSelector(false)}
+                                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-3 rounded-lg font-medium transition"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSectionSelectionConfirm}
+                                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-lg font-medium transition"
+                            >
+                                Proceed
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* --- DIAGNOSIS SUB-CATEGORY MODAL --- */}
+            {showDiagnosisSubCategory && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+                        <div className="text-center mb-6">
+                            <FaStethoscope className="text-4xl text-purple-500 mx-auto mb-3" />
+                            <h2 className="text-2xl font-bold text-gray-800">Diagnosis Sub-Category</h2>
+                            <p className="text-gray-500 text-sm mt-1">Select the type of diagnosis you want to record</p>
+                        </div>
+                        
+                        <div className="space-y-3 mb-6">
+                            <label className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition cursor-pointer border border-purple-200">
+                                <input
+                                    type="radio"
+                                    name="diagnosisSubCategory"
+                                    value="primary"
+                                    checked={diagnosisSubCategory === 'primary'}
+                                    onChange={() => setDiagnosisSubCategory('primary')}
+                                    className="w-5 h-5 text-purple-600"
+                                />
+                                <div>
+                                    <span className="font-medium text-gray-800">Primary Diagnosis</span>
+                                    <p className="text-xs text-gray-500">Main diagnosis for this case</p>
+                                </div>
+                            </label>
+                            
+                            <label className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition cursor-pointer border border-purple-200">
+                                <input
+                                    type="radio"
+                                    name="diagnosisSubCategory"
+                                    value="special_conditions"
+                                    checked={diagnosisSubCategory === 'special_conditions'}
+                                    onChange={() => setDiagnosisSubCategory('special_conditions')}
+                                    className="w-5 h-5 text-purple-600"
+                                />
+                                <div>
+                                    <span className="font-medium text-gray-800">Special Conditions</span>
+                                    <p className="text-xs text-gray-500">Kidney impairment, liver impairment, etc.</p>
+                                </div>
+                            </label>
+                        </div>
+
+                        {/* Special Conditions Management */}
+                        {diagnosisSubCategory === 'special_conditions' && (
+                            <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                <p className="text-sm font-medium text-gray-700 mb-2">Manage available conditions:</p>
+                                <div className="flex flex-wrap gap-2 mb-3">
+                                    {specialConditions.map((condition, idx) => (
+                                        <span key={idx} className="bg-gray-200 text-gray-700 px-3 py-1 rounded-lg text-sm flex items-center gap-2">
+                                            {condition}
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveSpecialCondition(condition)}
+                                                className="text-red-500 hover:text-red-700"
+                                            >
+                                                <FaTimes size={12} />
+                                            </button>
+                                        </span>
+                                    ))}
+                                </div>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={newSpecialCondition}
+                                        onChange={(e) => setNewSpecialCondition(e.target.value)}
+                                        className="flex-1 border border-gray-300 rounded-lg p-2 text-sm"
+                                        placeholder="Add new condition..."
+                                        onKeyPress={(e) => e.key === 'Enter' && handleAddSpecialCondition()}
+                                    />
+                                    <button
+                                        onClick={handleAddSpecialCondition}
+                                        className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-sm"
+                                    >
+                                        Add
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => {
+                                    setShowDiagnosisSubCategory(false);
+                                    setDiagnosisSubCategory('');
+                                }}
+                                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-3 rounded-lg font-medium transition"
+                            >
+                                Back
+                            </button>
+                            <button
+                                onClick={handleDiagnosisSubCategoryConfirm}
+                                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-lg font-medium transition"
+                            >
+                                Confirm
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Footer */}
             <div className="text-center text-gray-500 text-xs sm:text-sm mt-4">
