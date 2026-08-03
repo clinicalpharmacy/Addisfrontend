@@ -136,7 +136,20 @@ export const AdminReferrals = () => {
                                                     <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 font-mono font-bold text-sm rounded-lg border border-blue-200">
                                                         {user.promotion_code}
                                                         <button
-                                                            onClick={() => navigator.clipboard.writeText(user.promotion_code)}
+                                                            onClick={() => {
+                                                                if (navigator.clipboard && window.isSecureContext) {
+                                                                    navigator.clipboard.writeText(user.promotion_code);
+                                                                } else {
+                                                                    const textArea = document.createElement("textarea");
+                                                                    textArea.value = user.promotion_code;
+                                                                    textArea.style.position = "absolute";
+                                                                    textArea.style.left = "-999999px";
+                                                                    document.body.appendChild(textArea);
+                                                                    textArea.select();
+                                                                    try { document.execCommand('copy'); } catch(e) {}
+                                                                    textArea.remove();
+                                                                }
+                                                            }}
                                                             className="text-blue-400 hover:text-blue-600 transition"
                                                             title="Copy code"
                                                         >

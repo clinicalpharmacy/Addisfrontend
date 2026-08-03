@@ -21,6 +21,7 @@ const Settings = () => {
         user?.role?.toLowerCase() === 'admin' ||
         user?.role?.toLowerCase() === 'administrator';
     const [commissionData, setCommissionData] = useState({ total_earned: 0, referrals_count: 0, promotion_code: 'N/A' });
+    const [copied, setCopied] = useState(false);
 
     useEffect(() => {
         const userData = localStorage.getItem('user');
@@ -76,6 +77,31 @@ const Settings = () => {
             setStatus({ type: 'error', message: error.error || error.message || 'Failed to change password' });
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleCopy = () => {
+        const text = commissionData.promotion_code;
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(() => {
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            }).catch(err => console.error('Failed to copy', err));
+        } else {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "absolute";
+            textArea.style.left = "-999999px";
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            } catch (error) {
+                console.error("Fallback copy failed", error);
+            }
+            textArea.remove();
         }
     };
 
@@ -165,10 +191,10 @@ const Settings = () => {
                                         </div>
                         
                                         <button
-                                            onClick={() => navigator.clipboard.writeText(commissionData.promotion_code)}
-                                            className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition"
+                                            onClick={handleCopy}
+                                            className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition flex items-center gap-2"
                                         >
-                                            Copy
+                                            {copied ? <><FaCheckCircle /> Copied!</> : 'Copy'}
                                         </button>
                                     </div>
                         
