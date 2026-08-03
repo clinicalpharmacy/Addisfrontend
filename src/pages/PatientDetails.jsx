@@ -234,11 +234,7 @@ const PatientDetails = () => {
         developmental_milestones: '', feeding_method: '', birth_weight: '', birth_length: '',
         vaccination_status: '', special_instructions: '',
         // Labs (Now dynamic via customLabs/GlobalDefinitions)
-        lab_test_date: null,
-        // Diagnosis sub-categories
-        diagnosis_primary: '',
-        diagnosis_special_conditions: [],
-        diagnosis_sub_category_type: '' // Added to track which sub-category was selected
+        lab_test_date: null
     });
 
     // --- 2. HELPERS & UTILS ---
@@ -694,11 +690,7 @@ const PatientDetails = () => {
             lab_test_date: null,
             // Explicitly convert is_lactating to boolean
             is_lactating: data.is_lactating === true || data.is_lactating === 'true' || data.is_lactating === 1,
-            is_pregnant: data.is_pregnant === true || data.is_pregnant === 'true' || data.is_pregnant === 1,
-            // Load diagnosis sub-categories
-            diagnosis_primary: data.diagnosis_primary || '',
-            diagnosis_special_conditions: ensureArray(data.diagnosis_special_conditions),
-            diagnosis_sub_category_type: data.diagnosis_sub_category_type || ''
+            is_pregnant: data.is_pregnant === true || data.is_pregnant === 'true' || data.is_pregnant === 1
         };
 
         setFormData(formDataToSet);
@@ -1379,10 +1371,6 @@ const PatientDetails = () => {
                     vaccination_status: cleanText(formData.vaccination_status),
                     special_instructions: cleanText(formData.special_instructions),
                     developmental_milestones: cleanText(formData.developmental_milestones),
-                    // Diagnosis sub-categories
-                    diagnosis_primary: cleanText(formData.diagnosis_primary),
-                    diagnosis_special_conditions: Array.isArray(formData.diagnosis_special_conditions) ? formData.diagnosis_special_conditions : [],
-                    diagnosis_sub_category_type: cleanText(formData.diagnosis_sub_category_type)
                 },
 
                 vitals: {
