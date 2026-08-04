@@ -238,9 +238,9 @@ const Sidebar = ({ onClose }) => {
                                     onClick={() => isSubscribed ? toggleSection('patients') : navigate('/subscription/plans')}
                                     className={`flex items-center justify-between w-full p-2.5 rounded-xl text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-300 font-normal group ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`}
                                 >
-                                    <div className="flex items-center gap-2.5">
+                                    <div className="flex items-center gap-2">
                                         <FaUserInjured className="text-xl group-hover:scale-110 transition-transform" />
-                                        <span className="text-lg font-bold">Clinical Pharmacy Tool</span>
+                                        <span className="text-base font-bold">Clinical Pharmacy Tool</span>
                                     </div>
                                     <div className="flex items-center gap-2 text-sm">
                                         {!isSubscribed && <FaLock className="opacity-50" />}
