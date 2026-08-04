@@ -127,7 +127,7 @@ const Home = () => {
                                 <FaUserInjured className="text-blue-600 text-lg" />
                             </div>
                             <div>
-                                <h2 className="text-sm font-bold text-gray-800">Medication Review</h2>
+                                <h2 className="text-sm font-bold text-gray-800">Clinical Pharmacy Tool</h2>
                                 <p className="text-xs text-gray-500">Review medication use</p>
                             </div>
                         </div>
