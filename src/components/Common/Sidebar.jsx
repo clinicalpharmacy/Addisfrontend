@@ -36,6 +36,8 @@ import {
     FaShieldAlt
 } from 'react-icons/fa';
 
+// Force rebuild - ensuring all icons are properly bundled
+
 const Sidebar = ({ onClose }) => {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
@@ -57,10 +59,9 @@ const Sidebar = ({ onClose }) => {
         }
         fetchUsefulLinks();
         
-        // Auto-expand patients section if on Clinical Analysis page or any patients sub-page
-        if (location.pathname === '/cdss-analysis' || 
-            location.pathname === '/patients' || 
-            location.pathname === '/patients/new') {
+        // Auto-expand patients section if on any patients-related page
+        const patientRoutes = ['/patients', '/patients/new', '/cdss-analysis'];
+        if (patientRoutes.includes(location.pathname)) {
             setExpandedSections(prev => ({
                 ...prev,
                 patients: true
@@ -86,6 +87,7 @@ const Sidebar = ({ onClose }) => {
         if (!user) return false;
         if (user.role === 'admin') return true;
 
+        // Prioritize user object data over localStorage
         const subscriptionStatus = user.subscription_status || localStorage.getItem('subscription_status');
         const hasSubscription = user.has_subscription !== undefined ? String(user.has_subscription) : localStorage.getItem('has_subscription');
         const subscriptionEndDate = user.subscription_end_date || localStorage.getItem('subscription_end_date');
@@ -117,25 +119,37 @@ const Sidebar = ({ onClose }) => {
         }));
     };
 
+    // Check user roles
     const isAdmin = user?.role === 'admin';
     const isCompanyAdmin = user?.role === 'company_admin';
     const isCompanyUser = !!user?.company_id || user?.account_type === 'company' || ['company_admin', 'company_user'].includes(user?.role);
     const isIndividual = !isAdmin && !isCompanyUser;
 
+    // Check near expiry for subscription (within 7 days)
     const diff = user?.subscription_end_date ? new Date(user.subscription_end_date) - new Date() : null;
     const daysLeft = diff !== null ? Math.ceil(diff / (1000 * 60 * 60 * 24)) : null;
     const isNearExpiry = daysLeft !== null && daysLeft <= 7;
 
+    // Check if Drug Information route is active - EXACT match only
     const isDrugInfoActive = location.pathname === '/knowledge';
+    
+    // Check if each sub-item is active
     const isRemediesActive = location.pathname === '/knowledge/remedies';
     const isIllnessesActive = location.pathname === '/knowledge/illnesses';
     const isCompoundingActive = location.pathname === '/knowledge/compounding';
     const isEducationActive = location.pathname === '/knowledge/education';
 
+    // Check if any patients sub-route is active
+    const isPatientsActive = location.pathname === '/patients' || 
+                            location.pathname === '/patients/new' || 
+                            location.pathname === '/cdss-analysis';
+
     return (
         <aside className="w-72 bg-white h-full flex flex-col border-r border-gray-100 shadow-xl z-[60] relative overflow-hidden">
+            {/* Design Element: Subtle Gradient Overlay */}
             <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-blue-50/20 to-transparent pointer-events-none" />
 
+            {/* Close button for mobile */}
             <div className="p-5 border-b border-gray-50 flex justify-between items-center md:hidden bg-white/80 backdrop-blur-md sticky top-0 z-10">
                 <div className="flex items-center gap-2.5">
                     <div className="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-100">
@@ -151,7 +165,9 @@ const Sidebar = ({ onClose }) => {
                 </button>
             </div>
 
+            {/* Navigation Dashboard */}
             <nav className="flex-1 p-4 sm:p-5 overflow-y-auto no-scrollbar relative z-10">
+                {/* Dashboard */}
                 <div className="mb-8">
                     <ul className="space-y-1.5">
                         <li>
@@ -173,75 +189,20 @@ const Sidebar = ({ onClose }) => {
                             </NavLink>
                         </li>
 
-                        <li className="mb-2">
-                            <NavLink
-                                to={isSubscribed ? "/medication-availability" : "/subscription/plans"}
-                                onClick={onClose}
-                                className={({ isActive }) =>
-                                    `flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isActive && isSubscribed
-                                        ? 'bg-green-50 text-green-600 border-l-4 border-green-600 shadow-sm'
-                                        : 'text-gray-600 hover:bg-green-50 hover:text-green-600 hover:shadow-sm'
-                                    } ${!isSubscribed ? 'opacity-60' : ''}`
-                                }
-                            >
-                                <div className="flex items-center gap-2.5 w-full">
-                                    <FaPills className="text-xl" />
-                                    <span className="font-bold text-base">መድሃኒት ማፈላለጊያ</span>
-                                    {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
-                                </div>
-                            </NavLink>
-                        </li>
-
-                        <li className="mb-2">
-                            <NavLink
-                                to={isSubscribed ? "/knowledge" : "/subscription/plans"}
-                                onClick={onClose}
-                                className={`flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${
-                                    isDrugInfoActive && isSubscribed
-                                        ? 'bg-indigo-50 text-indigo-600 border-l-4 border-indigo-600 shadow-sm'
-                                        : 'text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 hover:shadow-sm'
-                                } ${!isSubscribed ? 'opacity-60' : ''}`}
-                            >
-                                <div className="flex items-center gap-2.5 w-full">
-                                    <FaCapsules className="text-xl" />
-                                    <span className="font-bold text-base">የመድሃኒት መረጃ</span>
-                                    {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
-                                </div>
-                            </NavLink>
-                        </li>
-
-                        <li className="mb-2">
-                            <NavLink
-                                to={isSubscribed ? "/quick-safety" : "/subscription/plans"}
-                                onClick={onClose}
-                                className={`flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${
-                                    location.pathname === '/quick-safety' && isSubscribed
-                                        ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600 shadow-sm'
-                                        : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:shadow-sm'
-                                } ${!isSubscribed ? 'opacity-60' : ''}`}
-                            >
-                                <div className="flex items-center gap-2.5 w-full">
-                                    <FaShieldAlt className="text-xl" />
-                                    <span className="font-bold text-base">Quick Safety Check</span>
-                                    {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
-                                </div>
-                            </NavLink>
-                        </li>
-
-                        {/* Patients Section - Clinical Pharmacy Tool */}
+                        {/* Patients Section - Medication Review */}
                         {!isAdmin && (
                             <li className="mb-2">
                                 <button
                                     onClick={() => isSubscribed ? toggleSection('patients') : navigate('/subscription/plans')}
                                     className={`flex items-center justify-between w-full p-2.5 rounded-xl transition-all duration-300 font-normal group ${
-                                        expandedSections.patients 
-                                            ? 'text-blue-600 bg-blue-50' 
+                                        expandedSections.patients || isPatientsActive
+                                            ? 'text-blue-600 bg-blue-50'
                                             : 'text-gray-500 hover:bg-blue-50 hover:text-blue-600'
                                     } ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`}
                                 >
                                     <div className="flex items-center gap-2.5">
                                         <FaUserInjured className="text-xl group-hover:scale-110 transition-transform" />
-                                        <span className="text-base font-bold">Clinical Pharmacy Tool</span>
+                                        <span className="text-lg">Medication Review</span>
                                     </div>
                                     <div className="flex items-center gap-2 text-sm">
                                         {!isSubscribed && <FaLock className="opacity-50" />}
@@ -265,19 +226,19 @@ const Sidebar = ({ onClose }) => {
                                             MR List
                                         </NavLink>
                                         {!isAdmin && (
-                                            <NavLink
-                                                to="/patients/new"
-                                                onClick={onClose}
-                                                className={({ isActive }) =>
-                                                    `flex items-center gap-2.5 px-4 py-2 text-base rounded-lg transition-all ${isActive
-                                                        ? 'text-blue-600 font-black bg-blue-50'
-                                                        : 'text-gray-400 hover:text-gray-700 hover:bg-gray-50'
-                                                    }`
-                                                }
-                                            >
-                                                <span className="w-2 h-2 rounded-full bg-current opacity-40" />
-                                                New MR
-                                            </NavLink>
+                                        <NavLink
+                                            to="/patients/new"
+                                            onClick={onClose}
+                                            className={({ isActive }) =>
+                                                `flex items-center gap-2.5 px-4 py-2 text-base rounded-lg transition-all ${isActive
+                                                    ? 'text-blue-600 font-black bg-blue-50'
+                                                    : 'text-gray-400 hover:text-gray-700 hover:bg-gray-50'
+                                                }`
+                                            }
+                                        >
+                                            <span className="w-2 h-2 rounded-full bg-current opacity-40" />
+                                            New MR
+                                        </NavLink>
                                         )}
                                         <NavLink
                                             to="/cdss-analysis"
@@ -297,6 +258,65 @@ const Sidebar = ({ onClose }) => {
                             </li>
                         )}
 
+                        {/* Medication Availability Link */}
+                        <li className="mb-2">
+                            <NavLink
+                                to={isSubscribed ? "/medication-availability" : "/subscription/plans"}
+                                onClick={onClose}
+                                className={({ isActive }) =>
+                                    `flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isActive && isSubscribed
+                                        ? 'bg-green-50 text-green-600 border-l-4 border-green-600 shadow-sm'
+                                        : 'text-gray-600 hover:bg-green-50 hover:text-green-600 hover:shadow-sm'
+                                    } ${!isSubscribed ? 'opacity-60' : ''}`
+                                }
+                            >
+                                <div className="flex items-center gap-2.5 w-full">
+                                    <FaPills className="text-xl" />
+                                    <span className="font-bold text-base">መድሃኒት ማፈላለጊያ</span>
+                                    {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
+                                </div>
+                            </NavLink>
+                        </li>
+
+                        {/* Drug Information */}
+                        <li className="mb-2">
+                            <NavLink
+                                to={isSubscribed ? "/knowledge" : "/subscription/plans"}
+                                onClick={onClose}
+                                className={`flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${
+                                    isDrugInfoActive && isSubscribed
+                                        ? 'bg-indigo-50 text-indigo-600 border-l-4 border-indigo-600 shadow-sm'
+                                        : 'text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 hover:shadow-sm'
+                                } ${!isSubscribed ? 'opacity-60' : ''}`}
+                            >
+                                <div className="flex items-center gap-2.5 w-full">
+                                    <FaCapsules className="text-xl" />
+                                    <span className="font-bold text-base">የመድሃኒት መረጃ</span>
+                                    {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
+                                </div>
+                            </NavLink>
+                        </li>
+
+                        {/* Quick Safety Check */}
+                        <li className="mb-2">
+                            <NavLink
+                                to={isSubscribed ? "/quick-safety" : "/subscription/plans"}
+                                onClick={onClose}
+                                className={`flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${
+                                    location.pathname === '/quick-safety' && isSubscribed
+                                        ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600 shadow-sm'
+                                        : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:shadow-sm'
+                                } ${!isSubscribed ? 'opacity-60' : ''}`}
+                            >
+                                <div className="flex items-center gap-2.5 w-full">
+                                    <FaShieldAlt className="text-xl" />
+                                    <span className="font-bold text-base">Quick Safety Check</span>
+                                    {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
+                                </div>
+                            </NavLink>
+                        </li>
+
+                        {/* Useful Links */}
                         {(user?.role !== 'healthcare_client' || !isIndividual) && (
                             <li className="mb-2">
                                 <NavLink
@@ -318,6 +338,7 @@ const Sidebar = ({ onClose }) => {
                             </li>
                         )}
 
+                        {/* Home Remedies */}
                         <li className="mb-2">
                             <NavLink
                                 to={isSubscribed ? "/knowledge/remedies" : "/subscription/plans"}
@@ -336,6 +357,7 @@ const Sidebar = ({ onClose }) => {
                             </NavLink>
                         </li>
 
+                        {/* Minor Illnesses - Only for pharmacists/pharmacy students */}
                         {(!isIndividual || ['pharmacist', 'pharmacy_student'].includes(user?.role)) && (
                             <li className="mb-2">
                                 <NavLink
@@ -356,6 +378,7 @@ const Sidebar = ({ onClose }) => {
                             </li>
                         )}
 
+                        {/* Compounding - Only for pharmacists/pharmacy students */}
                         {(!isIndividual || ['pharmacist', 'pharmacy_student'].includes(user?.role)) && (
                             <li className="mb-2">
                                 <NavLink
@@ -376,6 +399,7 @@ const Sidebar = ({ onClose }) => {
                             </li>
                         )}
 
+                        {/* Education - Only for pharmacists/pharmacy students */}
                         {(!isIndividual || ['pharmacist', 'pharmacy_student'].includes(user?.role)) && (
                             <li className="mb-2">
                                 <NavLink
@@ -452,10 +476,12 @@ const Sidebar = ({ onClose }) => {
                     </ul>
                 </div>
 
+                {/* Admin Navigation */}
                 {isAdmin && (
                     <div className="mb-8">
                         <h3 className="text-xs uppercase text-gray-400 font-black mb-4 tracking-[0.2em] px-3">Admin</h3>
                         <ul className="space-y-1.5">
+                            {/* CDSS Section */}
                             <li className="mb-2">
                                 <button
                                     onClick={() => toggleSection('cdss')}
@@ -487,6 +513,7 @@ const Sidebar = ({ onClose }) => {
                                 )}
                             </li>
 
+                            {/* System Setup Section */}
                             <li className="mb-2">
                                 <NavLink
                                     to="/admin/labs"
@@ -503,6 +530,7 @@ const Sidebar = ({ onClose }) => {
                                 </NavLink>
                             </li>
 
+                            {/* Admin Dashboard */}
                             <li className="mb-2">
                                 <NavLink
                                     to="/admin/dashboard"
@@ -519,6 +547,7 @@ const Sidebar = ({ onClose }) => {
                                 </NavLink>
                             </li>
 
+                            {/* Admin Link Management Link */}
                             <li className="mb-2">
                                 <NavLink
                                     to="/admin/useful-links"
@@ -538,6 +567,7 @@ const Sidebar = ({ onClose }) => {
                     </div>
                 )}
 
+                {/* Company Admin Dashboard Link (Only for company admin users) */}
                 {isCompanyAdmin && (
                     <div className="mb-8">
                         <h3 className="text-xs uppercase text-gray-400 font-black mb-4 tracking-[0.2em] px-3">Company</h3>
@@ -584,6 +614,7 @@ const Sidebar = ({ onClose }) => {
                 )}
             </nav>
 
+            {/* User Info & Logout */}
             <div className="p-4 border-t border-gray-200 bg-gray-50">
                 <div className="flex items-center gap-2.5 mb-4">
                     <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
@@ -620,6 +651,7 @@ const Sidebar = ({ onClose }) => {
                 </div>
             </div>
 
+            {/* 🛡️ Modern Security Status Badge (Sidebar Footer Addition) */}
             <div className="px-4 pb-4 pt-2 border-t border-gray-100 bg-white">
                 <div className={`p-4 rounded-2xl border-2 transition-all duration-500 shadow-sm flex items-center justify-between group cursor-pointer ${user?.public_key ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100 animate-pulse'}`}
                     onClick={() => navigate('/settings#security')}
