@@ -240,7 +240,7 @@ const Sidebar = ({ onClose }) => {
                                 >
                                     <div className="flex items-center gap-2.5">
                                         <FaUserInjured className="text-xl group-hover:scale-110 transition-transform" />
-                                        <span className="text-base font-bol">Clinical Pharmacy Tool</span>
+                                        <span className="text-base font-bold">Clinical Pharmacy Tool</span>
                                     </div>
                                     <div className="flex items-center gap-2 text-sm">
                                         {!isSubscribed && <FaLock className="opacity-50" />}
