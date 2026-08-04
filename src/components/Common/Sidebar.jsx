@@ -235,32 +235,21 @@ const Sidebar = ({ onClose }) => {
                         {!isAdmin && (
                             <li className="mb-2">
                                 <button
-                                    onClick={() => {
-                                        console.log('Button clicked, isSubscribed:', isSubscribed);
-                                        if (isSubscribed) {
-                                            toggleSection('patients');
-                                        } else {
-                                            navigate('/subscription/plans');
-                                        }
-                                    }}
+                                    onClick={() => isSubscribed ? toggleSection('patients') : navigate('/subscription/plans')}
                                     className={`flex items-center justify-between w-full p-2.5 rounded-xl text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-300 font-normal group ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`}
                                 >
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2.5">
                                         <FaUserInjured className="text-xl group-hover:scale-110 transition-transform" />
-                                        <span className="text-base font-bold">Clinical Pharmacy Tool</span>
+                                        <span className="text-base font-bol">Clinical Pharmacy Tool</span>
                                     </div>
                                     <div className="flex items-center gap-2 text-sm">
                                         {!isSubscribed && <FaLock className="opacity-50" />}
                                         {expandedSections.patients ? <FaChevronDown /> : <FaChevronRight />}
                                     </div>
                                 </button>
-                        
-                                {/* Debug - log when this renders */}
-                                {console.log('Expanded state:', expandedSections.patients)}
-                        
+
                                 {expandedSections.patients && (
                                     <div className="ml-8 mt-2 space-y-1 animate-fadeIn">
-                                        {/* MR List */}
                                         <NavLink
                                             to="/patients"
                                             onClick={onClose}
@@ -274,8 +263,6 @@ const Sidebar = ({ onClose }) => {
                                             <span className="w-2 h-2 rounded-full bg-current opacity-40" />
                                             MR List
                                         </NavLink>
-                        
-                                        {/* New MR - Only for non-admins */}
                                         {!isAdmin && (
                                             <NavLink
                                                 to="/patients/new"
@@ -291,8 +278,6 @@ const Sidebar = ({ onClose }) => {
                                                 New MR
                                             </NavLink>
                                         )}
-                        
-                                        {/* Clinical Analysis - Show for everyone who can see this section */}
                                         <NavLink
                                             to="/cdss-analysis"
                                             onClick={onClose}
@@ -310,6 +295,7 @@ const Sidebar = ({ onClose }) => {
                                 )}
                             </li>
                         )}
+
                         {/* Useful Links */}
                         {(user?.role !== 'healthcare_client' || !isIndividual) && (
                             <li className="mb-2">
