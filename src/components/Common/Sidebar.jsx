@@ -243,12 +243,13 @@ const Sidebar = ({ onClose }) => {
                                     } ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`}
                                 >
                                     <div className="flex items-center gap-2.5">
-                                        <span className="text-lg font-bold">Clinical Pharmacy Tool</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-sm">
-                                            {!isSubscribed && <FaLock className="opacity-50" />}
+                                        <span className="text-lg">Clinical Pharmacy Tool</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-sm">
+                                        {!isSubscribed && <FaLock className="opacity-50" />}
+                                        <span className="hidden">
                                             {expandedSections.patients ? <FaChevronDown /> : <FaChevronRight />}
-                                        </div>
+                                        </span>
                                     </div>
                                 </button>
 
