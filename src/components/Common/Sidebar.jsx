@@ -239,8 +239,7 @@ const Sidebar = ({ onClose }) => {
                                     className={`flex items-center justify-between w-full p-2.5 rounded-xl text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-300 font-normal group ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`}
                                 >
                                     <div className="flex items-center gap-2.5">
-                                        <FaUserInjured className="text-xl group-hover:scale-110 transition-transform" />
-                                        <span className="text-lg">Medication Review</span>
+                                        <span className="text-lg">Clinical Pharmacy Tool</span>
                                     </div>
                                     <div className="flex items-center gap-2 text-sm">
                                         {!isSubscribed && <FaLock className="opacity-50" />}
