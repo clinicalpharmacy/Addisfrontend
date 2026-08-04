@@ -359,7 +359,7 @@ const Login = () => {
                                     : 'text-gray-600 hover:text-gray-800'
                                     }`}
                             >
-                                Health Professionals & Students
+                                Health Professionals and Students
                             </button>
                             <button
                                 type="button"
