@@ -51,6 +51,12 @@ const Sidebar = ({ onClose }) => {
     const [loadingLinks, setLoadingLinks] = useState(false);
     const location = useLocation();
 
+    // Check user roles
+    const isAdmin = user?.role === 'admin';
+    const isCompanyAdmin = user?.role === 'company_admin';
+    const isCompanyUser = !!user?.company_id || user?.account_type === 'company' || ['company_admin', 'company_user'].includes(user?.role);
+    const isIndividual = !isAdmin && !isCompanyUser;
+
     useEffect(() => {
         const userData = localStorage.getItem('user');
         if (userData) {
@@ -58,15 +64,6 @@ const Sidebar = ({ onClose }) => {
             setUser(parsedUser);
         }
         fetchUsefulLinks();
-        
-        // Auto-expand patients section if on any patients-related page
-        const patientRoutes = ['/patients', '/patients/new', '/cdss-analysis'];
-        if (patientRoutes.includes(location.pathname)) {
-            setExpandedSections(prev => ({
-                ...prev,
-                patients: true
-            }));
-        }
     }, [location]);
 
     const fetchUsefulLinks = async () => {
@@ -132,17 +129,12 @@ const Sidebar = ({ onClose }) => {
 
     // Check if Drug Information route is active - EXACT match only
     const isDrugInfoActive = location.pathname === '/knowledge';
-    
+
     // Check if each sub-item is active
     const isRemediesActive = location.pathname === '/knowledge/remedies';
     const isIllnessesActive = location.pathname === '/knowledge/illnesses';
     const isCompoundingActive = location.pathname === '/knowledge/compounding';
     const isEducationActive = location.pathname === '/knowledge/education';
-
-    // Check if any patients sub-route is active
-    const isPatientsActive = location.pathname === '/patients' || 
-                            location.pathname === '/patients/new' || 
-                            location.pathname === '/cdss-analysis';
 
     return (
         <aside className="w-72 bg-white h-full flex flex-col border-r border-gray-100 shadow-xl z-[60] relative overflow-hidden">
@@ -189,75 +181,6 @@ const Sidebar = ({ onClose }) => {
                             </NavLink>
                         </li>
 
-                        {/* Patients Section - Medication Review */}
-                        {!isAdmin && (
-                            <li className="mb-2">
-                                <button
-                                    onClick={() => isSubscribed ? toggleSection('patients') : navigate('/subscription/plans')}
-                                    className={`flex items-center justify-between w-full p-2.5 rounded-xl transition-all duration-300 font-normal group ${
-                                        expandedSections.patients || isPatientsActive
-                                            ? 'text-blue-600 bg-blue-50'
-                                            : 'text-gray-500 hover:bg-blue-50 hover:text-blue-600'
-                                    } ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`}
-                                >
-                                    <div className="flex items-center gap-2.5">
-                                        <FaUserInjured className="text-xl group-hover:scale-110 transition-transform" />
-                                        <span className="text-lg">Medication Review</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-sm">
-                                        {!isSubscribed && <FaLock className="opacity-50" />}
-                                        {expandedSections.patients ? <FaChevronDown /> : <FaChevronRight />}
-                                    </div>
-                                </button>
-
-                                {expandedSections.patients && (
-                                    <div className="ml-8 mt-2 space-y-1 animate-fadeIn">
-                                        <NavLink
-                                            to="/patients"
-                                            onClick={onClose}
-                                            className={({ isActive }) =>
-                                                `flex items-center gap-2.5 px-4 py-2 text-base rounded-lg transition-all ${isActive
-                                                    ? 'text-blue-600 font-black bg-blue-50'
-                                                    : 'text-gray-400 hover:text-gray-700 hover:bg-gray-50'
-                                                }`
-                                            }
-                                        >
-                                            <span className="w-2 h-2 rounded-full bg-current opacity-40" />
-                                            MR List
-                                        </NavLink>
-                                        {!isAdmin && (
-                                        <NavLink
-                                            to="/patients/new"
-                                            onClick={onClose}
-                                            className={({ isActive }) =>
-                                                `flex items-center gap-2.5 px-4 py-2 text-base rounded-lg transition-all ${isActive
-                                                    ? 'text-blue-600 font-black bg-blue-50'
-                                                    : 'text-gray-400 hover:text-gray-700 hover:bg-gray-50'
-                                                }`
-                                            }
-                                        >
-                                            <span className="w-2 h-2 rounded-full bg-current opacity-40" />
-                                            New MR
-                                        </NavLink>
-                                        )}
-                                        <NavLink
-                                            to="/cdss-analysis"
-                                            onClick={onClose}
-                                            className={({ isActive }) =>
-                                                `flex items-center gap-2.5 px-4 py-2 text-base rounded-lg transition-all ${isActive
-                                                    ? 'text-purple-600 font-black bg-purple-50'
-                                                    : 'text-gray-400 hover:text-purple-600 hover:bg-purple-50'
-                                                }`
-                                            }
-                                        >
-                                            <FaBrain className="text-base opacity-60" />
-                                            Clinical Analysis
-                                        </NavLink>
-                                    </div>
-                                )}
-                            </li>
-                        )}
-
                         {/* Medication Availability Link */}
                         <li className="mb-2">
                             <NavLink
@@ -283,11 +206,10 @@ const Sidebar = ({ onClose }) => {
                             <NavLink
                                 to={isSubscribed ? "/knowledge" : "/subscription/plans"}
                                 onClick={onClose}
-                                className={`flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${
-                                    isDrugInfoActive && isSubscribed
+                                className={`flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isDrugInfoActive && isSubscribed
                                         ? 'bg-indigo-50 text-indigo-600 border-l-4 border-indigo-600 shadow-sm'
                                         : 'text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 hover:shadow-sm'
-                                } ${!isSubscribed ? 'opacity-60' : ''}`}
+                                    } ${!isSubscribed ? 'opacity-60' : ''}`}
                             >
                                 <div className="flex items-center gap-2.5 w-full">
                                     <FaCapsules className="text-xl" />
@@ -302,11 +224,10 @@ const Sidebar = ({ onClose }) => {
                             <NavLink
                                 to={isSubscribed ? "/quick-safety" : "/subscription/plans"}
                                 onClick={onClose}
-                                className={`flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${
-                                    location.pathname === '/quick-safety' && isSubscribed
+                                className={`flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${location.pathname === '/quick-safety' && isSubscribed
                                         ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600 shadow-sm'
                                         : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:shadow-sm'
-                                } ${!isSubscribed ? 'opacity-60' : ''}`}
+                                    } ${!isSubscribed ? 'opacity-60' : ''}`}
                             >
                                 <div className="flex items-center gap-2.5 w-full">
                                     <FaShieldAlt className="text-xl" />
@@ -315,6 +236,71 @@ const Sidebar = ({ onClose }) => {
                                 </div>
                             </NavLink>
                         </li>
+
+                        {/* Patients Section - Medication Review */}
+                        {!isAdmin && user?.role !== 'healthcare_client' && (
+                            <li className="mb-2">
+                                <button
+                                    onClick={() => isSubscribed ? toggleSection('patients') : navigate('/subscription/plans')}
+                                    className={`flex items-center justify-between w-full p-2.5 rounded-xl text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-300 font-normal group ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                >
+                                    <div className="flex items-center gap-2.5">
+                                        <FaUserInjured className="text-xl group-hover:scale-110 transition-transform" />
+                                        <span className="text-base font-bold">Clinical Pharmacy Tool</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-sm">
+                                        {!isSubscribed && <FaLock className="opacity-50" />}
+                                        {expandedSections.patients ? <FaChevronDown /> : <FaChevronRight />}
+                                    </div>
+                                </button>
+
+                                {expandedSections.patients && (
+                                    <div className="ml-8 mt-2 space-y-1 animate-fadeIn">
+                                        <NavLink
+                                            to="/patients"
+                                            onClick={onClose}
+                                            className={({ isActive }) =>
+                                                `flex items-center gap-2.5 px-4 py-2 text-base rounded-lg transition-all ${isActive
+                                                    ? 'text-blue-600 font-black'
+                                                    : 'text-gray-400 hover:text-gray-700'
+                                                }`
+                                            }
+                                        >
+                                            <span className="w-2 h-2 rounded-full bg-current opacity-40" />
+                                            MR List
+                                        </NavLink>
+                                        {!isAdmin && (
+                                            <NavLink
+                                                to="/patients/new"
+                                                onClick={onClose}
+                                                className={({ isActive }) =>
+                                                    `flex items-center gap-2.5 px-4 py-2 text-base rounded-lg transition-all ${isActive
+                                                        ? 'text-blue-600 font-black'
+                                                        : 'text-gray-400 hover:text-gray-700'
+                                                    }`
+                                                }
+                                            >
+                                                <span className="w-2 h-2 rounded-full bg-current opacity-40" />
+                                                New MR
+                                            </NavLink>
+                                        )}
+                                        <NavLink
+                                            to="/cdss-analysis"
+                                            onClick={onClose}
+                                            className={({ isActive }) =>
+                                                `flex items-center gap-2.5 px-4 py-2 text-base rounded-lg transition-all ${isActive
+                                                    ? 'text-purple-600 font-black bg-purple-50'
+                                                    : 'text-gray-400 hover:text-purple-600 hover:bg-purple-50'
+                                                }`
+                                            }
+                                        >
+                                            <FaBrain className="text-base opacity-60" />
+                                            Clinical Analysis
+                                        </NavLink>
+                                    </div>
+                                )}
+                            </li>
+                        )}
 
                         {/* Useful Links */}
                         {(user?.role !== 'healthcare_client' || !isIndividual) && (
@@ -343,11 +329,10 @@ const Sidebar = ({ onClose }) => {
                             <NavLink
                                 to={isSubscribed ? "/knowledge/remedies" : "/subscription/plans"}
                                 onClick={onClose}
-                                className={`flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${
-                                    isRemediesActive && isSubscribed
+                                className={`flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isRemediesActive && isSubscribed
                                         ? 'bg-emerald-50 text-emerald-600 border-l-4 border-emerald-600 shadow-sm'
                                         : 'text-gray-600 hover:bg-emerald-50 hover:text-emerald-600 hover:shadow-sm'
-                                } ${!isSubscribed ? 'opacity-60' : ''}`}
+                                    } ${!isSubscribed ? 'opacity-60' : ''}`}
                             >
                                 <div className="flex items-center gap-2.5 w-full">
                                     <FaLeaf className="text-xl" />
@@ -363,11 +348,10 @@ const Sidebar = ({ onClose }) => {
                                 <NavLink
                                     to={isSubscribed ? "/knowledge/illnesses" : "/subscription/plans"}
                                     onClick={onClose}
-                                    className={`flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${
-                                        isIllnessesActive && isSubscribed
+                                    className={`flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isIllnessesActive && isSubscribed
                                             ? 'bg-rose-50 text-rose-600 border-l-4 border-rose-600 shadow-sm'
                                             : 'text-gray-600 hover:bg-rose-50 hover:text-rose-600 hover:shadow-sm'
-                                    } ${!isSubscribed ? 'opacity-60' : ''}`}
+                                        } ${!isSubscribed ? 'opacity-60' : ''}`}
                                 >
                                     <div className="flex items-center gap-2.5 w-full">
                                         <FaStethoscope className="text-xl" />
@@ -384,11 +368,10 @@ const Sidebar = ({ onClose }) => {
                                 <NavLink
                                     to={isSubscribed ? "/knowledge/compounding" : "/subscription/plans"}
                                     onClick={onClose}
-                                    className={`flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${
-                                        isCompoundingActive && isSubscribed
+                                    className={`flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isCompoundingActive && isSubscribed
                                             ? 'bg-amber-50 text-amber-600 border-l-4 border-amber-600 shadow-sm'
                                             : 'text-gray-600 hover:bg-amber-50 hover:text-amber-600 hover:shadow-sm'
-                                    } ${!isSubscribed ? 'opacity-60' : ''}`}
+                                        } ${!isSubscribed ? 'opacity-60' : ''}`}
                                 >
                                     <div className="flex items-center gap-2.5 w-full">
                                         <FaMortarPestle className="text-xl" />
@@ -405,11 +388,10 @@ const Sidebar = ({ onClose }) => {
                                 <NavLink
                                     to={isSubscribed ? "/knowledge/education" : "/subscription/plans"}
                                     onClick={onClose}
-                                    className={`flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${
-                                        isEducationActive && isSubscribed
+                                    className={`flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isEducationActive && isSubscribed
                                             ? 'bg-purple-50 text-purple-600 border-l-4 border-purple-600 shadow-sm'
                                             : 'text-gray-600 hover:bg-purple-50 hover:text-purple-600 hover:shadow-sm'
-                                    } ${!isSubscribed ? 'opacity-60' : ''}`}
+                                        } ${!isSubscribed ? 'opacity-60' : ''}`}
                                 >
                                     <div className="flex items-center gap-2.5 w-full">
                                         <FaGraduationCap className="text-xl" />
