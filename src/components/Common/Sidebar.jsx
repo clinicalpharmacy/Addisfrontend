@@ -51,12 +51,6 @@ const Sidebar = ({ onClose }) => {
     const [loadingLinks, setLoadingLinks] = useState(false);
     const location = useLocation();
 
-    // Check user roles
-    const isAdmin = user?.role === 'admin';
-    const isCompanyAdmin = user?.role === 'company_admin';
-    const isCompanyUser = !!user?.company_id || user?.account_type === 'company' || ['company_admin', 'company_user'].includes(user?.role);
-    const isIndividual = !isAdmin && !isCompanyUser;
-
     useEffect(() => {
         const userData = localStorage.getItem('user');
         if (userData) {
@@ -116,7 +110,7 @@ const Sidebar = ({ onClose }) => {
         }));
     };
 
-    // Check user roles
+    // Check user roles - defined ONCE here
     const isAdmin = user?.role === 'admin';
     const isCompanyAdmin = user?.role === 'company_admin';
     const isCompanyUser = !!user?.company_id || user?.account_type === 'company' || ['company_admin', 'company_user'].includes(user?.role);
