@@ -236,10 +236,19 @@ const Sidebar = ({ onClose }) => {
                             <li className="mb-2">
                                 <button
                                     onClick={() => isSubscribed ? toggleSection('patients') : navigate('/subscription/plans')}
-                                    className={`flex items-center justify-between w-full p-2.5 rounded-xl text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-300 font-normal group ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                    className={`flex items-center justify-between w-full p-2.5 rounded-xl transition-all duration-300 font-normal group ${
+                                        expandedSections.patients 
+                                            ? 'bg-blue-50 text-blue-600' 
+                                            : 'text-gray-500 hover:bg-blue-50 hover:text-blue-600'
+                                    } ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`}
                                 >
                                     <div className="flex items-center gap-2.5">
-                                        <span className="text-lg font-bold">Clinical Pharmacy Tool</span>
+                                        <span className={`text-lg font-bold ${expandedSections.patients ? 'text-blue-600' : ''}`}>
+                                            Clinical Pharmacy Tool
+                                        </span>
+                                        {expandedSections.patients && (
+                                            <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                                        )}
                                     </div>
                                     <div className="flex items-center gap-2 text-sm">
                                         {!isSubscribed && <FaLock className="opacity-50" />}
