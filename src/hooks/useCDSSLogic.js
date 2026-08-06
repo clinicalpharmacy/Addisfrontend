@@ -329,10 +329,13 @@ export const useCDSSLogic = (patientData) => {
         console.log('🚀 Running full clinical analysis refresh...');
         
         try {
+            const isTempPatient = String(patientData.id).startsWith('TEMP-');
             // Fetch everything fresh
             const [rulesRes, medsRes] = await Promise.all([
-                api.get('/clinical-rules'),
-                api.get(`/medication-history/patient/${patientData.id}`)
+                api.get('/clinical-rules').catch(e => ({ success: false, error: e })),
+                isTempPatient 
+                    ? Promise.resolve({ success: true, medications: patientData.medication_history || [] }) 
+                    : api.get(`/medication-history/patient/${patientData.id}`).catch(e => ({ success: false, error: e }))
             ]);
             
             const freshRules = rulesRes.success ? (rulesRes.rules || []) : clinicalRules;
@@ -417,9 +420,13 @@ export const useCDSSLogic = (patientData) => {
         setHasAnalyzed(true);
 
         try {
+            const isTempPatient = String(patientData.id).startsWith('TEMP-');
+            
             const [rulesRes, medsRes] = await Promise.all([
-                api.get('/clinical-rules'),
-                api.get(`/medication-history/patient/${patientData.id}`)
+                api.get('/clinical-rules').catch(e => ({ success: false, error: e })),
+                isTempPatient 
+                    ? Promise.resolve({ success: true, medications: patientData.medication_history || [] }) 
+                    : api.get(`/medication-history/patient/${patientData.id}`).catch(e => ({ success: false, error: e }))
             ]);
 
             const freshRules = rulesRes.success ? (rulesRes.rules || []) : sampleTestRules;

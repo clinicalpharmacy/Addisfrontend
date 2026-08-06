@@ -15,7 +15,7 @@ import {
 } from 'react-icons/fa';
 import api from '../../utils/api';
 
-const CDSSDisplay = ({ patientData, onBack }) => {
+const CDSSDisplay = ({ patientData, onBack, onDataChange }) => {
 
     const {
         alerts, filteredAlerts, loading, analysisStats,
@@ -25,6 +25,13 @@ const CDSSDisplay = ({ patientData, onBack }) => {
         acknowledgeAlert, acknowledgeAll, toggleExpandAlert, expandedAlert,
         patientFacts, lastAnalysisTime, decryptedPatient, decryptionFailed
     } = useCDSSLogic(patientData);
+
+    // Pass alerts up to parent for PDF generation
+    React.useEffect(() => {
+        if (onDataChange && alerts) {
+            onDataChange(alerts);
+        }
+    }, [alerts, onDataChange]);
 
     const rawUserRole = localStorage.getItem('userRole') || 'admin';
     const userRole = rawUserRole.toLowerCase().trim();
@@ -213,7 +220,12 @@ const CDSSDisplay = ({ patientData, onBack }) => {
 
     const AgeCategoryIcon = getAgeCategoryIcon(patientFacts);
 
-    const [hasAcknowledged, setHasAcknowledged] = useState(false);
+    const [hasAcknowledged, setHasAcknowledged] = useState(sessionStorage.getItem('clinical_ai_acknowledged') === 'true');
+
+    const handleAcknowledge = () => {
+        sessionStorage.setItem('clinical_ai_acknowledged', 'true');
+        setHasAcknowledged(true);
+    };
 
     if (!hasAcknowledged) {
         return (
@@ -226,7 +238,7 @@ const CDSSDisplay = ({ patientData, onBack }) => {
                     </p>
                 </div>
                 <button
-                    onClick={() => setHasAcknowledged(true)}
+                    onClick={handleAcknowledge}
                     className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-10 rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 flex items-center gap-2 mx-auto"
                 >
                     <FaCheckCircle />

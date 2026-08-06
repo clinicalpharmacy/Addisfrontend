@@ -119,7 +119,7 @@ const Home = () => {
 
             {/* Quick Access Grid - Row 2 */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                {/* 4. Medication Review */}
+                {/* 4. Clinical Pharmacy Tool */}
                 {!isAdmin && user?.role !== 'healthcare_client' && (
                     <Link to="/patients" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
                         <div className="flex items-center gap-3 mb-2">
@@ -127,7 +127,7 @@ const Home = () => {
                                 <FaUserInjured className="text-blue-600 text-lg" />
                             </div>
                             <div>
-                                <h2 className="text-sm font-bold text-gray-800">Medication Review</h2>
+                                <h2 className="text-sm font-bold text-gray-800">Clinical Pharmacy Tool</h2>
                                 <p className="text-xs text-gray-500">Review medication use</p>
                             </div>
                         </div>

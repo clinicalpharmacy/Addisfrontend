@@ -310,45 +310,37 @@ const PatientDetails = () => {
             user?.account_type === 'company' ||
             ['company_admin', 'company_user'].includes(user?.role);
 
+        const isHealthcareClient = user?.role === 'healthcare_client' || user?.account_type === 'healthcare_client';
+        const isIndividual = user?.account_type === 'individual';
+        const isPharmacy = user?.role === 'pharmacy' || user?.role === 'pharmacist' || user?.account_type === 'pharmacy';
+
         const allTabs = [
             { id: 'overview', label: 'Overview', icon: FaUser },
             { id: 'demographics', label: 'Demographics & Dx', icon: FaUser },
             { id: 'vitals', label: 'Vitals & Anthropometry', icon: FaHeartbeat },
             { id: 'labs', label: 'Labs', icon: FaVial },
             { id: 'medications', label: 'Medications', icon: FaPills },
-            ...(user?.role === 'healthcare_client' ? [{ id: 'analysis', label: 'Clinical Case Review', icon: FaUserShield }] : []),
+            ...(isHealthcareClient || isIndividual || isPharmacy ? [{ id: 'analysis', label: 'Clinical Case Review', icon: FaUserShield }] : []),
             { id: 'drn', label: 'DRN Assessment', icon: FaRobot },
             { id: 'plan', label: 'Ph-Asst & Plan', icon: FaFileMedical },
             { id: 'outcome', label: 'Outcome', icon: FaChartLine },
-            ...(isCompanyUser ? [{ id: 'cost', label: 'Cost', icon: FaMoneyBillWave }] : [])
+            ...((isCompanyUser || isHealthcareClient || isIndividual || isPharmacy) ? [{ id: 'cost', label: 'Cost', icon: FaMoneyBillWave }] : [])
         ];
 
         const hasActiveSubscription = user?.subscription_status === 'active';
         const isAdmin = user?.role === 'admin';
-        const isPharmacistOrStudent = user?.account_type === 'individual' &&
-            (user?.role === 'pharmacist' || user?.role === 'pharmacy_student');
 
         let result = allTabs;
 
         // Ensure core tabs are ALWAYS included for everyone
         const alwaysVisible = ['overview', 'demographics', 'vitals', 'labs', 'analysis', 'cost'];
 
-        if (!hasActiveSubscription && !isAdmin) {
+        if (!hasActiveSubscription && !isAdmin && !isHealthcareClient && !isIndividual && !isPharmacy) {
             // Keep alwaysVisible + others except core clinical tools
             result = allTabs.filter(tab =>
                 alwaysVisible.includes(tab.id) ||
                 !['plan', 'outcome', 'drn', 'medications'].includes(tab.id)
             );
-        } else if (user?.account_type === 'individual' && !isAdmin) {
-            // Individual subscribers - remove some tabs but KEEP analysis and cost
-            result = allTabs.filter(tab =>
-                alwaysVisible.includes(tab.id) ||
-                !['plan', 'outcome'].includes(tab.id)
-            );
-
-            if (!isPharmacistOrStudent) {
-                result = result.filter(tab => tab.id !== 'drn');
-            }
         }
 
         return result;

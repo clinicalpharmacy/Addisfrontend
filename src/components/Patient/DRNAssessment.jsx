@@ -11,7 +11,7 @@ import {
     FaRegLightbulb, FaUserShield, FaClipboardList
 } from 'react-icons/fa';
 
-const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHistory: medicationProps }) => {
+const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHistory: medicationProps, standalone = false, onDataChange }) => {
     const [assessments, setAssessments] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [selectedCauses, setSelectedCauses] = useState([]);
@@ -25,7 +25,7 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
     const [analysisResults, setAnalysisResults] = useState(null);
     const [aiLoading, setAiLoading] = useState(false);
     const [aiError, setAiError] = useState(null);
-    const [hasAiAcknowledged, setHasAiAcknowledged] = useState(false);
+    const [hasAiAcknowledged, setHasAiAcknowledged] = useState(sessionStorage.getItem('clinical_ai_acknowledged') === 'true');
     const [showAiAck, setShowAiAck] = useState(false);
     const [patientData, setPatientData] = useState(initialPatient || null);
     const [medications, setMedications] = useState(medicationProps || []);
@@ -253,7 +253,7 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
                 let currentUserId = getUserIdFromToken();
                 if (!currentUserId) currentUserId = getUserIdFromSession();
 
-                if (!currentUserId) {
+                if (!currentUserId && !standalone) {
                     try {
                         const { data: { user } } = await supabase.auth.getUser();
                         if (user) currentUserId = user.id;
@@ -262,13 +262,13 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
                     }
                 }
 
-                if (!currentUserId) {
+                if (!currentUserId && !standalone) {
                     if (isMounted) setAuthError('Please log in to use DRN Assessment.');
                     return;
                 }
 
                 if (isMounted) {
-                    setUserId(currentUserId);
+                    setUserId(currentUserId || 'standalone-user');
                     setAuthError(null);
                     await loadPatientData();
                     await fetchClinicalRules();
@@ -284,7 +284,14 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
         return () => {
             isMounted = false;
         };
-    }, [patientCode]);
+    }, [patientCode, standalone]);
+
+    // Report data changes to parent
+    useEffect(() => {
+        if (standalone && onDataChange) {
+            onDataChange(assessments);
+        }
+    }, [assessments, standalone]);
 
     // Fetch assessments when both IDs are available
     useEffect(() => {
@@ -443,6 +450,7 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
 
     const fetchAssessments = async () => {
         if (!patientId || !userId) return;
+        if (standalone) return; // Skip fetching in standalone mode
 
         setIsLoading(true);
         try {
@@ -797,30 +805,49 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
             // Add created_at only for new records
             let result;
 
-            if (editId !== null) {
-                const { data, error } = await supabase
-                    .from('drn_assessments')
-                    .update(assessmentData)
-                    .eq('id', editId)
-                    .eq('user_id', userId)
-                    .select();
-
-                if (error) throw error;
-                result = data[0];
-            } else {
-                // Add created_at for new records
-                const insertData = {
+            if (standalone) {
+                const newId = editId || 'temp-' + Date.now();
+                const finalData = {
                     ...assessmentData,
-                    created_at: new Date().toISOString()
+                    id: newId,
+                    created_at: editId ? undefined : new Date().toISOString(),
+                    // add missing properties for local rendering/pdf
+                    category: selectedCategory,
+                    severity: 'Moderate', 
+                    status: 'Open'
                 };
-                
-                const { data, error } = await supabase
-                    .from('drn_assessments')
-                    .insert([insertData])
-                    .select();
 
-                if (error) throw error;
-                result = data[0];
+                if (editId !== null) {
+                    setAssessments(prev => prev.map(a => a.id === editId ? { ...a, ...finalData } : a));
+                } else {
+                    setAssessments(prev => [finalData, ...prev]);
+                }
+            } else {
+                if (editId !== null) {
+                    const { data, error } = await supabase
+                        .from('drn_assessments')
+                        .update(assessmentData)
+                        .eq('id', editId)
+                        .eq('user_id', userId)
+                        .select();
+
+                    if (error) throw error;
+                    result = data[0];
+                } else {
+                    // Add created_at for new records
+                    const insertData = {
+                        ...assessmentData,
+                        created_at: new Date().toISOString()
+                    };
+                    
+                    const { data, error } = await supabase
+                        .from('drn_assessments')
+                        .insert([insertData])
+                        .select();
+
+                    if (error) throw error;
+                    result = data[0];
+                }
             }
 
             await fetchAssessments();
@@ -964,7 +991,8 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
                 </div>
             </div>
 
-            {/* CDSS Analysis Section */}
+            {/* CDSS Analysis Section - Hidden for individual healthcare clients (standalone mode) */}
+            {!standalone && (
             <div className="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-xl font-semibold text-blue-800 flex items-center gap-2">
@@ -1009,6 +1037,7 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
                                         <button
                                             onClick={() => {
                                                 setHasAiAcknowledged(true);
+                                                sessionStorage.setItem('clinical_ai_acknowledged', 'true');
                                                 setShowAiAck(false);
                                                 if (pendingAnalysis === 'cdss') {
                                                     setTimeout(() => runCdssAnalysis(true), 100);
@@ -1228,6 +1257,7 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
                     </>
                 )}
             </div>
+            )}
 
             {/* 9 Category Selection */}
             <div className="mb-8" id="assessment-form">

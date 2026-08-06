@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../../utils/api';
 import { FaMoneyBillWave, FaEdit, FaTrash, FaPlus, FaChevronDown, FaChevronUp, FaChartLine } from 'react-icons/fa';
 
-const CostSection = ({ patientCode }) => {
+const CostSection = ({ patientCode, standalone = false, onDataChange }) => {
     const [costEntries, setCostEntries] = useState([]);
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState(null);
@@ -34,8 +34,17 @@ const CostSection = ({ patientCode }) => {
     ];
 
     useEffect(() => {
-        fetchCostEntries();
+        if (!standalone) {
+            fetchCostEntries();
+        }
     }, [patientCode]);
+
+    // Report data changes to parent
+    useEffect(() => {
+        if (standalone && onDataChange) {
+            onDataChange(costEntries);
+        }
+    }, [costEntries, standalone]);
 
     const fetchCostEntries = async () => {
         try {
@@ -48,10 +57,7 @@ const CostSection = ({ patientCode }) => {
                     const directCostsVal = parseFloat(cost.direct_costs) || 0;
                     const indirectCostsVal = parseFloat(cost.indirect_costs) || 0;
 
-                    // Strictly check for savings: either positive cost_savings field or negative total_costs
                     const isReduced = costSavingsVal > 0 || totalCostVal < 0;
-
-                    // Amount should be the savings value for reduced types, or absolute total cost
                     const amount = isReduced ? (costSavingsVal || Math.abs(totalCostVal)) : (totalCostVal || (directCostsVal + indirectCostsVal));
 
                     return {
@@ -84,51 +90,75 @@ const CostSection = ({ patientCode }) => {
         try {
             setLoading(true);
 
-            // Calculate totals
             const directCosts = parseFloat(formData.direct_costs) || 0;
             const indirectCosts = parseFloat(formData.indirect_costs) || 0;
             const enteredSavings = parseFloat(formData.cost_savings) || 0;
             const totalCosts = directCosts + indirectCosts;
 
-            // For cost reduction, if they enter costs but no explicit savings, use the costs as the savings amount
             const isReduced = formData.analysis_type === 'reduced';
             const savings = isReduced && enteredSavings === 0 ? totalCosts : enteredSavings;
             const finalTotalCosts = isReduced ? -savings : totalCosts;
 
-            // Calculate ROI if there are savings
             const roi = savings > 0 && (isReduced ? totalCosts > 0 : true) ?
                 (isReduced && totalCosts > 0 ? ((savings - totalCosts) / totalCosts * 100) : 0) : 0;
 
-            const costData = {
-                patient_id: patientCode,
-                analysis_date: formData.analysis_date,
-                analysis_type: formData.category || 'other',
-                direct_costs: directCosts,
-                indirect_costs: indirectCosts,
-                total_costs: finalTotalCosts,
-                cost_savings: savings,
-                roi: roi,
-                cost_per_outcome: totalCosts > 0 ? totalCosts : 0,
-                currency: 'ETB',
-                methodology: formData.methodology || 'Standard cost analysis',
-                assumptions: formData.assumptions || '',
-                findings: formData.description || 'Cost analysis conducted',
-                recommendations: [],
-                analyzed_by: 'System User',
-                notes: formData.notes || ''
-            };
+            if (standalone) {
+                const localEntry = {
+                    id: editingId || Date.now(),
+                    type: isReduced ? 'reduced' : 'incurred',
+                    amount: isReduced ? savings : totalCosts,
+                    description: formData.description || 'Cost analysis conducted',
+                    category: (formData.category || 'other').toLowerCase(),
+                    date: formData.analysis_date,
+                    direct_costs: directCosts,
+                    indirect_costs: indirectCosts,
+                    total_costs: finalTotalCosts,
+                    cost_savings: savings,
+                    roi: roi,
+                    currency: 'ETB',
+                    findings: formData.description,
+                    created_at: new Date().toISOString()
+                };
 
-            let result;
-            if (editingId) {
-                result = await api.put(`/costs/${editingId}`, costData);
-            } else {
-                result = await api.post('/costs', costData);
-            }
-
-            if (result.success) {
-                alert(editingId ? 'Cost analysis updated successfully!' : 'Cost analysis added successfully!');
+                if (editingId) {
+                    setCostEntries(prev => prev.map(e => e.id === editingId ? localEntry : e));
+                } else {
+                    setCostEntries(prev => [...prev, localEntry]);
+                }
+                alert(editingId ? 'Cost analysis updated locally!' : 'Cost analysis added locally!');
                 resetForm();
-                await fetchCostEntries();
+            } else {
+                const costData = {
+                    patient_id: patientCode,
+                    analysis_date: formData.analysis_date,
+                    analysis_type: formData.category || 'other',
+                    direct_costs: directCosts,
+                    indirect_costs: indirectCosts,
+                    total_costs: finalTotalCosts,
+                    cost_savings: savings,
+                    roi: roi,
+                    cost_per_outcome: totalCosts > 0 ? totalCosts : 0,
+                    currency: 'ETB',
+                    methodology: formData.methodology || 'Standard cost analysis',
+                    assumptions: formData.assumptions || '',
+                    findings: formData.description || 'Cost analysis conducted',
+                    recommendations: [],
+                    analyzed_by: 'System User',
+                    notes: formData.notes || ''
+                };
+
+                let result;
+                if (editingId) {
+                    result = await api.put(`/costs/${editingId}`, costData);
+                } else {
+                    result = await api.post('/costs', costData);
+                }
+
+                if (result.success) {
+                    alert(editingId ? 'Cost analysis updated successfully!' : 'Cost analysis added successfully!');
+                    resetForm();
+                    await fetchCostEntries();
+                }
             }
         } catch (error) {
             console.error('Error saving cost analysis:', error);
@@ -158,6 +188,12 @@ const CostSection = ({ patientCode }) => {
 
     const handleDelete = async (id) => {
         if (!window.confirm('Are you sure you want to delete this cost analysis?')) return;
+
+        if (standalone) {
+            setCostEntries(prev => prev.filter(entry => entry.id !== id));
+            alert('Cost analysis deleted!');
+            return;
+        }
 
         try {
             const result = await api.delete(`/costs/${id}`);

@@ -75,7 +75,7 @@ const MedicationHistory = ({ patientCode }) => {
 
     const reconciliationSites = [
         'Admission', 'Discharge', 'Transfer In', 'Transfer Out',
-        'Clinic Visit', 'ER Visit', 'Medication Review', 'Consultation'
+        'Clinic Visit', 'ER Visit', 'Clinical Pharmacy Tool', 'Consultation'
     ];
 
     // Dropdown Options

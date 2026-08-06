@@ -28,6 +28,7 @@ import MedicationAvailability from './pages/MedicationAvailability';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import VerifyEmail from './pages/VerifyEmail';
+import ClinicalPharmacyTool from './pages/ClinicalPharmacyTool';
 
 // Subscription Pages
 import SubscriptionPlans from "./pages/SubscriptionPlans";
@@ -768,7 +769,7 @@ const Dashboard = () => {
                                 </div>
                             </div>
                         )}
-                        <h3 className="text-lg font-bold text-gray-800 mb-4">Recent Medication Reviews</h3>
+                        <h3 className="text-lg font-bold text-gray-800 mb-4">Recent Clinical Pharmacy Tools</h3>
                         <div className="space-y-3 max-h-60 overflow-y-auto">
                             {userPatients.length > 0 ? (
                                 userPatients.slice(0, 5).map((patient, index) => (
@@ -835,10 +836,10 @@ const Dashboard = () => {
                         <h3 className="text-lg font-bold text-gray-800 mb-4">Quick Actions</h3>
                         <div className="space-y-3">
                             <button
-                                onClick={() => navigate('/patients')}
+                                onClick={() => navigate('/clinical-pharmacy-tool')}
                                 className="w-full text-left p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition"
                             >
-                                <p className="font-medium text-blue-800">Medication Review</p>
+                                <p className="font-medium text-blue-800">Clinical Pharmacy Tool</p>
                             </button>
                             <button
                                 onClick={() => navigate('/knowledge/medications')}
@@ -1067,6 +1068,15 @@ function App() {
                             requireSubscription={false}
                         >
                             <Dashboard />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/clinical-pharmacy-tool"
+                    element={
+                        <ProtectedRoute>
+                            <ClinicalPharmacyTool />
                         </ProtectedRoute>
                     }
                 />

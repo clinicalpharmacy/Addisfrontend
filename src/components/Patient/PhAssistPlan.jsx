@@ -11,7 +11,7 @@ import {
     FaPlus
 } from 'react-icons/fa';
 
-const PhAssistPlan = ({ patientCode }) => {
+const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
     const [pharmacyAssessment, setPharmacyAssessment] = useState('');
     const [plan, setPlan] = useState('');
     const [savedPlans, setSavedPlans] = useState([]);
@@ -22,15 +22,21 @@ const PhAssistPlan = ({ patientCode }) => {
     const [showForm, setShowForm] = useState(false);
 
     useEffect(() => {
-        if (patientCode) {
+        if (patientCode && !standalone) {
             fetchSavedPlans();
         }
     }, [patientCode]);
 
+    // Report data changes to parent
+    useEffect(() => {
+        if (standalone && onDataChange) {
+            onDataChange(savedPlans);
+        }
+    }, [savedPlans, standalone]);
+
     const fetchSavedPlans = async () => {
         try {
             setLoading(true);
-            // Use patientCode directly - backend will handle the lookup
             const result = await api.get(`/pharmacy-plans/patient/${patientCode}`);
 
             if (result.success && result.plans) {
@@ -54,7 +60,7 @@ const PhAssistPlan = ({ patientCode }) => {
             }
 
             const planData = {
-                patient_code: patientCode, // Send patient_code instead of patient_id
+                patient_code: patientCode,
                 plan_type: planType || null,
                 goals: pharmacyAssessment,
                 medications: '',
@@ -63,24 +69,41 @@ const PhAssistPlan = ({ patientCode }) => {
                 notes: plan
             };
 
-            let result;
-            if (editIndex !== null) {
-                result = await api.put(`/pharmacy-plans/${editIndex}`, planData);
-            } else {
-                result = await api.post('/pharmacy-plans', planData);
-            }
-
-            if (result.success) {
-                alert(`Plan ${editIndex !== null ? 'updated' : 'saved'} successfully!`);
+            if (standalone) {
+                // Local-only mode
+                if (editIndex !== null) {
+                    setSavedPlans(prev => prev.map(p => p.id === editIndex ? { ...p, ...planData, updated_at: new Date().toISOString() } : p));
+                } else {
+                    const newPlan = { ...planData, id: Date.now(), created_at: new Date().toISOString() };
+                    setSavedPlans(prev => [...prev, newPlan]);
+                }
+                alert(`Plan ${editIndex !== null ? 'updated' : 'saved'} locally!`);
                 setPharmacyAssessment('');
                 setPlan('');
                 setFollowUpDate('');
                 setPlanType('');
                 setEditIndex(null);
                 setShowForm(false);
-                fetchSavedPlans();
             } else {
-                throw new Error(result.error || 'Failed to save plan');
+                let result;
+                if (editIndex !== null) {
+                    result = await api.put(`/pharmacy-plans/${editIndex}`, planData);
+                } else {
+                    result = await api.post('/pharmacy-plans', planData);
+                }
+
+                if (result.success) {
+                    alert(`Plan ${editIndex !== null ? 'updated' : 'saved'} successfully!`);
+                    setPharmacyAssessment('');
+                    setPlan('');
+                    setFollowUpDate('');
+                    setPlanType('');
+                    setEditIndex(null);
+                    setShowForm(false);
+                    fetchSavedPlans();
+                } else {
+                    throw new Error(result.error || 'Failed to save plan');
+                }
             }
         } catch (error) {
             console.error('Error saving plan:', error);
@@ -102,6 +125,12 @@ const PhAssistPlan = ({ patientCode }) => {
 
     const handleDelete = async (planId) => {
         if (!window.confirm('Are you sure you want to delete this plan?')) return;
+
+        if (standalone) {
+            setSavedPlans(prev => prev.filter(p => p.id !== planId));
+            alert('Plan deleted!');
+            return;
+        }
 
         try {
             const result = await api.delete(`/pharmacy-plans/${planId}`);

@@ -179,17 +179,17 @@ const Settings = () => {
                                 <h2 className="text-xl font-bold text-gray-900 mb-6">
                                     Promotions & Referrals
                                 </h2>
-                        
+
                                 <div className="mb-6 p-6 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-3xl">
                                     <p className="text-sm text-gray-600 font-bold uppercase mb-2">
                                         Your Promotion Code
                                     </p>
-                        
+
                                     <div className="flex items-center gap-4">
                                         <div className="px-6 py-3 bg-white text-blue-700 text-2xl font-mono font-bold rounded-xl shadow-inner border-2 border-blue-300 tracking-widest">
                                             {commissionData.promotion_code}
                                         </div>
-                        
+
                                         <button
                                             onClick={handleCopy}
                                             className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition flex items-center gap-2"
@@ -197,12 +197,12 @@ const Settings = () => {
                                             {copied ? <><FaCheckCircle /> Copied!</> : 'Copy'}
                                         </button>
                                     </div>
-                        
+
                                     <p className="text-sm text-gray-500 mt-4">
                                         Share this code with a new customer. When a new customer register and pay for a subscription using your code, you will earn a 2% commission!
                                     </p>
                                 </div>
-                        
+
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="p-6 bg-green-50 rounded-3xl border border-green-100">
                                         <p className="text-sm font-bold text-green-700 uppercase mb-1">
@@ -212,7 +212,7 @@ const Settings = () => {
                                             {commissionData.total_earned} ETB
                                         </p>
                                     </div>
-                        
+
                                     <div className="p-6 bg-purple-50 rounded-3xl border border-purple-100">
                                         <p className="text-sm font-bold text-purple-700 uppercase mb-1">
                                             Total Referrals
@@ -226,7 +226,7 @@ const Settings = () => {
                         ) : activeTab === 'security' ? (
                             <div className="p-8">
                                 <h2 className="text-xl font-bold text-gray-900 mb-6">Security & Password</h2>
-                                
+
                                 {user && !user.public_key && (
                                     <div className="mb-8 p-4 bg-orange-50 border-2 border-dashed border-orange-200 rounded-3xl animate-in zoom-in-95 duration-500">
                                         <SecurityActivator onActivated={(updatedUser) => setUser(updatedUser)} />
@@ -245,7 +245,7 @@ const Settings = () => {
                                         <input
                                             type="password"
                                             value={passwords.current}
-                                            onChange={(e) => setPasswords({...passwords, current: e.target.value})}
+                                            onChange={(e) => setPasswords({ ...passwords, current: e.target.value })}
                                             className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
                                             required
                                         />
@@ -255,7 +255,7 @@ const Settings = () => {
                                         <input
                                             type="password"
                                             value={passwords.new}
-                                            onChange={(e) => setPasswords({...passwords, new: e.target.value})}
+                                            onChange={(e) => setPasswords({ ...passwords, new: e.target.value })}
                                             className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
                                             required
                                             minLength="6"
@@ -266,7 +266,7 @@ const Settings = () => {
                                         <input
                                             type="password"
                                             value={passwords.confirm}
-                                            onChange={(e) => setPasswords({...passwords, confirm: e.target.value})}
+                                            onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}
                                             className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
                                             required
                                             minLength="6"

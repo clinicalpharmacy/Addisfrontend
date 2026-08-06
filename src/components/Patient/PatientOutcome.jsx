@@ -13,7 +13,7 @@ import {
     FaNotesMedical
 } from 'react-icons/fa';
 
-const PatientOutcome = ({ patientCode }) => {
+const PatientOutcome = ({ patientCode, standalone = false, onDataChange }) => {
     const [outcomes, setOutcomes] = useState([]);
     const [formData, setFormData] = useState({
         outcome_status: 'resolved',
@@ -34,10 +34,17 @@ const PatientOutcome = ({ patientCode }) => {
     ];
 
     useEffect(() => {
-        if (patientCode) {
+        if (patientCode && !standalone) {
             fetchOutcomes();
         }
     }, [patientCode]);
+
+    // Report data changes to parent
+    useEffect(() => {
+        if (standalone && onDataChange) {
+            onDataChange(outcomes);
+        }
+    }, [outcomes, standalone]);
 
     const fetchOutcomes = async () => {
         try {
@@ -69,23 +76,32 @@ const PatientOutcome = ({ patientCode }) => {
                 ...formData
             };
 
-            let result;
-            if (editIndex !== null) {
-                result = await api.put(`/outcomes/${editIndex}`, outcomeData);
-            } else {
-                result = await api.post('/outcomes', outcomeData);
-            }
-
-            if (result.success) {
-                alert(editIndex !== null ? 'Outcome updated successfully!' : 'Outcome recorded successfully!');
-                setFormData({
-                    outcome_status: 'resolved',
-                    notes: ''
-                });
+            if (standalone) {
+                if (editIndex !== null) {
+                    setOutcomes(prev => prev.map(o => o.id === editIndex ? { ...o, ...outcomeData, updated_at: new Date().toISOString() } : o));
+                } else {
+                    const newOutcome = { ...outcomeData, id: Date.now(), created_at: new Date().toISOString() };
+                    setOutcomes(prev => [...prev, newOutcome]);
+                }
+                alert(editIndex !== null ? 'Outcome updated locally!' : 'Outcome recorded locally!');
+                setFormData({ outcome_status: 'resolved', notes: '' });
                 setEditIndex(null);
-                fetchOutcomes();
             } else {
-                throw new Error(result.error || 'Failed to save outcome');
+                let result;
+                if (editIndex !== null) {
+                    result = await api.put(`/outcomes/${editIndex}`, outcomeData);
+                } else {
+                    result = await api.post('/outcomes', outcomeData);
+                }
+
+                if (result.success) {
+                    alert(editIndex !== null ? 'Outcome updated successfully!' : 'Outcome recorded successfully!');
+                    setFormData({ outcome_status: 'resolved', notes: '' });
+                    setEditIndex(null);
+                    fetchOutcomes();
+                } else {
+                    throw new Error(result.error || 'Failed to save outcome');
+                }
             }
         } catch (error) {
             console.error('Error saving outcome:', error);
@@ -105,6 +121,12 @@ const PatientOutcome = ({ patientCode }) => {
 
     const handleDelete = async (outcomeId) => {
         if (!window.confirm('Are you sure you want to delete this record?')) {
+            return;
+        }
+
+        if (standalone) {
+            setOutcomes(prev => prev.filter(o => o.id !== outcomeId));
+            alert('Record deleted!');
             return;
         }
 

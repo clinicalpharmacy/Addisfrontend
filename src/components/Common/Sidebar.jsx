@@ -175,8 +175,29 @@ const Sidebar = ({ onClose }) => {
                             </NavLink>
                         </li>
 
-                        {/* Patients Section - Medication Review */}
-                        {!isAdmin && (
+                        {/* Patients Section - Clinical Pharmacy Tool */}
+                        {isIndividual && (
+                            <li className="mb-2">
+                                <NavLink
+                                    to={isSubscribed ? "/clinical-pharmacy-tool" : "/subscription/plans"}
+                                    onClick={onClose}
+                                    className={({ isActive }) =>
+                                        `flex items-center gap-2.5 p-2.5 rounded-xl transition-all duration-300 group ${isActive && isSubscribed
+                                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-100 font-black'
+                                            : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 font-bold'
+                                        } ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`
+                                    }
+                                >
+                                    <div className="flex items-center gap-2.5 w-full">
+                                        <FaUserInjured className="text-xl group-hover:scale-110 transition-transform" />
+                                        <span className="text-lg">Clinical Pharmacy Tool</span>
+                                        {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
+                                    </div>
+                                </NavLink>
+                            </li>
+                        )}
+
+                        {(!isAdmin && !isIndividual) && (
                             <li className="mb-2">
                                 <button
                                     onClick={() => isSubscribed ? toggleSection('patients') : navigate('/subscription/plans')}
@@ -184,7 +205,7 @@ const Sidebar = ({ onClose }) => {
                                 >
                                     <div className="flex items-center gap-2.5">
                                         <FaUserInjured className="text-xl group-hover:scale-110 transition-transform" />
-                                        <span className="text-lg">Medication Review</span>
+                                        <span className="text-lg">Clinical Pharmacy Tool</span>
                                     </div>
                                     <div className="flex items-center gap-2 text-sm">
                                         {!isSubscribed && <FaLock className="opacity-50" />}
