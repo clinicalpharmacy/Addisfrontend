@@ -354,12 +354,12 @@ const Login = () => {
                                     setFormData({ ...formData, email: '' });
                                     setError('');
                                 }}
-                                className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-base font-bold transition-all ${loginMethod === 'email'
+                                className={`flex-[2] flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-base font-bold transition-all ${loginMethod === 'email'
                                     ? 'bg-white text-blue-600 shadow-sm'
                                     : 'text-gray-600 hover:text-gray-800'
                                     }`}
                             >
-                                Health Professionals & Students
+                                Health Professionals & Health Science Students
                             </button>
                             <button
                                 type="button"

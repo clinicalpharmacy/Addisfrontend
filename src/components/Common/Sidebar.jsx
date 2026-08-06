@@ -110,7 +110,7 @@ const Sidebar = ({ onClose }) => {
         }));
     };
 
-    // Check user roles
+    // Check user roles - defined ONCE here
     const isAdmin = user?.role === 'admin';
     const isCompanyAdmin = user?.role === 'company_admin';
     const isCompanyUser = !!user?.company_id || user?.account_type === 'company' || ['company_admin', 'company_user'].includes(user?.role);
@@ -175,6 +175,7 @@ const Sidebar = ({ onClose }) => {
                             </NavLink>
                         </li>
 
+<<<<<<< HEAD
                         {/* Patients Section - Clinical Pharmacy Tool */}
                         {isIndividual && (
                             <li className="mb-2">
@@ -261,6 +262,8 @@ const Sidebar = ({ onClose }) => {
                             </li>
                         )}
 
+=======
+>>>>>>> d93e33460ce9080a1dde1f075257e5e037d103fc
                         {/* Medication Availability Link */}
                         <li className="mb-2">
                             <NavLink
@@ -316,6 +319,71 @@ const Sidebar = ({ onClose }) => {
                                 </div>
                             </NavLink>
                         </li>
+
+                        {/* Patients Section - Medication Review */}
+                        {!isAdmin && user?.role !== 'healthcare_client' && (
+                            <li className="mb-2">
+                                <button
+                                    onClick={() => isSubscribed ? toggleSection('patients') : navigate('/subscription/plans')}
+                                    className={`flex items-center justify-between w-full p-2.5 rounded-xl text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-300 font-normal group ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                >
+                                    <div className="flex items-center gap-2.5">
+                                        <FaUserInjured className="text-xl group-hover:scale-110 transition-transform" />
+                                        <span className="text-base font-bold">Clinical Pharmacy Tool</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-sm">
+                                        {!isSubscribed && <FaLock className="opacity-50" />}
+                                        {expandedSections.patients ? <FaChevronDown /> : <FaChevronRight />}
+                                    </div>
+                                </button>
+
+                                {expandedSections.patients && (
+                                    <div className="ml-8 mt-2 space-y-1 animate-fadeIn">
+                                        <NavLink
+                                            to="/patients"
+                                            onClick={onClose}
+                                            className={({ isActive }) =>
+                                                `flex items-center gap-2.5 px-4 py-2 text-base rounded-lg transition-all ${isActive
+                                                    ? 'text-blue-600 font-black'
+                                                    : 'text-gray-400 hover:text-gray-700'
+                                                }`
+                                            }
+                                        >
+                                            <span className="w-2 h-2 rounded-full bg-current opacity-40" />
+                                            MR List
+                                        </NavLink>
+                                        {!isAdmin && (
+                                            <NavLink
+                                                to="/patients/new"
+                                                onClick={onClose}
+                                                className={({ isActive }) =>
+                                                    `flex items-center gap-2.5 px-4 py-2 text-base rounded-lg transition-all ${isActive
+                                                        ? 'text-blue-600 font-black'
+                                                        : 'text-gray-400 hover:text-gray-700'
+                                                    }`
+                                                }
+                                            >
+                                                <span className="w-2 h-2 rounded-full bg-current opacity-40" />
+                                                New MR
+                                            </NavLink>
+                                        )}
+                                        <NavLink
+                                            to="/cdss-analysis"
+                                            onClick={onClose}
+                                            className={({ isActive }) =>
+                                                `flex items-center gap-2.5 px-4 py-2 text-base rounded-lg transition-all ${isActive
+                                                    ? 'text-purple-600 font-black bg-purple-50'
+                                                    : 'text-gray-400 hover:text-purple-600 hover:bg-purple-50'
+                                                }`
+                                            }
+                                        >
+                                            <FaBrain className="text-base opacity-60" />
+                                            Clinical Analysis
+                                        </NavLink>
+                                    </div>
+                                )}
+                            </li>
+                        )}
 
                         {/* Useful Links */}
                         {(user?.role !== 'healthcare_client' || !isIndividual) && (
