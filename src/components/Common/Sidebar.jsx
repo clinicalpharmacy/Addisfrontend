@@ -175,7 +175,6 @@ const Sidebar = ({ onClose }) => {
                             </NavLink>
                         </li>
 
-<<<<<<< HEAD
                         {/* Patients Section - Clinical Pharmacy Tool */}
                         {isIndividual && (
                             <li className="mb-2">
@@ -261,9 +260,6 @@ const Sidebar = ({ onClose }) => {
                                 )}
                             </li>
                         )}
-
-=======
->>>>>>> d93e33460ce9080a1dde1f075257e5e037d103fc
                         {/* Medication Availability Link */}
                         <li className="mb-2">
                             <NavLink
