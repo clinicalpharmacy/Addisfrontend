@@ -211,8 +211,8 @@ const QuickSafetyCheck = () => {
                             Enter one or more generic drug names to check safety and interactions.
                         </p>
                         
-                        <form onSubmit={handleSearch} className="max-w-3xl mx-auto relative group flex flex-col md:flex-row gap-3">
-                            <div className="relative flex-1 flex flex-col">
+                        <form onSubmit={handleSearch} className="max-w-3xl mx-auto relative group flex flex-col md:flex-row gap-3 items-start">
+                            <div className="relative flex-1 flex flex-col w-full">
                                 <div className="relative">
                                     <input 
                                         type="text"
