@@ -555,16 +555,13 @@ const ClinicalPharmacyTool = () => {
                             </div>
                         )}
 
-                        {/* Saved Medications Display */}
-                        {formData.medications.length === 0 && !showMedicationInput ? (
-                            <div className="text-center py-6 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                                No medications added. Click "Add Medication" to include drugs in the analysis.
-                            </div>
-                        ) : formData.medications.length > 0 && (
+                        {/* Saved Medications Display - Only show when medications exist */}
+                        {formData.medications.length > 0 && (
                             <>
                                 {/* Temporary Storage Display - Single Line */}
                                 <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
                                     <div className="flex items-start gap-2">
+                                        <span className="text-blue-600 font-medium text-sm whitespace-nowrap">📋 Saved:</span>
                                         <span className="text-sm text-gray-700 break-all flex-1">
                                             {formData.medications
                                                 .map(med => {
@@ -576,41 +573,6 @@ const ClinicalPharmacyTool = () => {
                                                 })
                                                 .join('; ')}
                                         </span>
-                                        <div className="flex gap-1 ml-2">
-                                            <button
-                                                onClick={() => {
-                                                    const medLine = formData.medications
-                                                        .map(med => {
-                                                            const parts = [med.drug_name];
-                                                            if (med.dose) parts.push(med.dose);
-                                                            if (med.frequency) parts.push(med.frequency);
-                                                            if (med.route) parts.push(med.route);
-                                                            return parts.join(' ');
-                                                        })
-                                                        .join('; ');
-                                                    navigator.clipboard.writeText(medLine).then(() => {
-                                                        alert('Medications copied to clipboard!');
-                                                    }).catch(() => {
-                                                        alert('Failed to copy medications');
-                                                    });
-                                                }}
-                                                className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 flex items-center gap-1 whitespace-nowrap"
-                                                title="Copy all medications"
-                                            >
-                                                <FaCopy className="w-3 h-3" /> Copy
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    if (window.confirm('Delete all medications?')) {
-                                                        setFormData({ ...formData, medications: [] });
-                                                    }
-                                                }}
-                                                className="text-xs bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 flex items-center gap-1 whitespace-nowrap"
-                                                title="Delete all medications"
-                                            >
-                                                <FaTrash className="w-3 h-3" /> Delete All
-                                            </button>
-                                        </div>
                                     </div>
                                 </div>
 
