@@ -477,252 +477,7 @@ const ClinicalPharmacyTool = () => {
                     </div>
                 </div>
                 <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-                    <h1 className="text-2xl md:text-base font-bold text-gray-800">Fill medication(s) to be reviewed</h1>
-                    {/* Medications - Always visible */}
-                    <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-purple-500">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                                <FaPills className="text-purple-500" /> Medications
-                            </h3>
-                            <button
-                                onClick={addMedication}
-                                className="flex items-center gap-2 text-sm bg-purple-100 text-purple-700 px-3 py-1.5 rounded-lg hover:bg-purple-200 font-medium"
-                            >
-                                <FaPlus /> Add Medication
-                            </button>
-                        </div>
-                
-                        {/* Saved Medications Display - Only show when medications exist */}
-                        {formData.medications.length === 0 ? (
-                            <div className="text-center py-6 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                                No medications added. Click "Add Medication" to include drugs in the analysis.
-                            </div>
-                        ) : (
-                            <div className="space-y-4">
-                                {formData.medications.map((med, index) => (
-                                    <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200 relative">
-                                        <button
-                                            onClick={() => removeMedication(index)}
-                                            className="absolute top-2 right-2 text-red-400 hover:text-red-600 p-1 bg-white rounded-full shadow-sm hover:shadow"
-                                            title="Remove medication"
-                                        >
-                                            <FaTimes className="w-3 h-3" />
-                                        </button>
-                                        
-                                        <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                                            {/* Row 1: Core details */}
-                                            <div className="col-span-1 md:col-span-2">
-                                                <label className="block text-xs font-medium text-gray-700 mb-1">Drug Name / Brand Name</label>
-                                                <div className="flex gap-2">
-                                                    <input
-                                                        type="text"
-                                                        value={med.drug_name}
-                                                        onChange={(e) => updateMedication(index, 'drug_name', e.target.value)}
-                                                        className="w-1/2 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                        placeholder="Generic Name *"
-                                                    />
-                                                    <input
-                                                        type="text"
-                                                        value={med.brand_name}
-                                                        onChange={(e) => updateMedication(index, 'brand_name', e.target.value)}
-                                                        className="w-1/2 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                        placeholder="Brand Name"
-                                                    />
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="col-span-1">
-                                                <label className="block text-xs font-medium text-gray-700 mb-1">Drug Class</label>
-                                                <input
-                                                    type="text"
-                                                    value={med.drug_class}
-                                                    onChange={(e) => updateMedication(index, 'drug_class', e.target.value)}
-                                                    className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                    placeholder="e.g. Beta Blocker"
-                                                />
-                                            </div>
-                                            
-                                            <div className="col-span-1">
-                                                <label className="block text-xs font-medium text-gray-700 mb-1">Indication</label>
-                                                <input
-                                                    type="text"
-                                                    value={med.indication}
-                                                    onChange={(e) => updateMedication(index, 'indication', e.target.value)}
-                                                    className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                    placeholder="Reason for use"
-                                                />
-                                            </div>
-                                            
-                                            <div className="col-span-1">
-                                                <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
-                                                <select
-                                                    value={med.status}
-                                                    onChange={(e) => updateMedication(index, 'status', e.target.value)}
-                                                    className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500 bg-white"
-                                                >
-                                                    <option value="Active">Active</option>
-                                                    <option value="Discontinued">Discontinued</option>
-                                                    <option value="On Hold">On Hold</option>
-                                                    <option value="Completed">Completed</option>
-                                                </select>
-                                            </div>
-                                            
-                                            {/* Row 2: Dosage and Admin */}
-                                            <div className="col-span-1 md:col-span-2">
-                                                <label className="block text-xs font-medium text-gray-700 mb-1">Dose / Strength / Unit</label>
-                                                <div className="flex gap-2">
-                                                    <input
-                                                        type="text"
-                                                        value={med.dose}
-                                                        onChange={(e) => updateMedication(index, 'dose', e.target.value)}
-                                                        className="w-1/3 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                        placeholder="Dose"
-                                                    />
-                                                    <input
-                                                        type="text"
-                                                        value={med.strength}
-                                                        onChange={(e) => updateMedication(index, 'strength', e.target.value)}
-                                                        className="w-1/3 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                        placeholder="Strength"
-                                                    />
-                                                    <input
-                                                        type="text"
-                                                        value={med.unit}
-                                                        onChange={(e) => updateMedication(index, 'unit', e.target.value)}
-                                                        className="w-1/3 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                        placeholder="Unit (mg)"
-                                                    />
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="col-span-1">
-                                                <label className="block text-xs font-medium text-gray-700 mb-1">Dosage Form</label>
-                                                <select
-                                                    value={med.dosage_form}
-                                                    onChange={(e) => updateMedication(index, 'dosage_form', e.target.value)}
-                                                    className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500 bg-white"
-                                                >
-                                                    <option value="Tablet">Tablet</option>
-                                                    <option value="Capsule">Capsule</option>
-                                                    <option value="Injection">Injection</option>
-                                                    <option value="Syrup">Syrup</option>
-                                                    <option value="Inhaler">Inhaler</option>
-                                                    <option value="Cream/Ointment">Cream/Ointment</option>
-                                                    <option value="Drops">Drops</option>
-                                                    <option value="Other">Other</option>
-                                                </select>
-                                            </div>
-                                            
-                                            <div className="col-span-1">
-                                                <label className="block text-xs font-medium text-gray-700 mb-1">Route & Admin</label>
-                                                <div className="flex gap-2">
-                                                    <input
-                                                        type="text"
-                                                        value={med.route}
-                                                        onChange={(e) => updateMedication(index, 'route', e.target.value)}
-                                                        className="w-1/2 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                        placeholder="Route (PO)"
-                                                    />
-                                                    <input
-                                                        type="text"
-                                                        value={med.administration}
-                                                        onChange={(e) => updateMedication(index, 'administration', e.target.value)}
-                                                        className="w-1/2 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                        placeholder="Admin"
-                                                    />
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="col-span-1">
-                                                <label className="block text-xs font-medium text-gray-700 mb-1">Frequency & Regimen</label>
-                                                <div className="flex gap-2">
-                                                    <input
-                                                        type="text"
-                                                        value={med.frequency}
-                                                        onChange={(e) => updateMedication(index, 'frequency', e.target.value)}
-                                                        className="w-1/2 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                        placeholder="Freq (BID)"
-                                                    />
-                                                    <input
-                                                        type="text"
-                                                        value={med.regimen}
-                                                        onChange={(e) => updateMedication(index, 'regimen', e.target.value)}
-                                                        className="w-1/2 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                        placeholder="Regimen"
-                                                    />
-                                                </div>
-                                            </div>
-                                            
-                                            {/* Row 3: Timeline & Provider */}
-                                            <div className="col-span-1">
-                                                <label className="block text-xs font-medium text-gray-700 mb-1">Start Date</label>
-                                                <input
-                                                    type="date"
-                                                    value={med.start_date}
-                                                    onChange={(e) => updateMedication(index, 'start_date', e.target.value)}
-                                                    className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                />
-                                            </div>
-                                            
-                                            <div className="col-span-1">
-                                                <label className="block text-xs font-medium text-gray-700 mb-1">Stop Date</label>
-                                                <input
-                                                    type="date"
-                                                    value={med.stop_date}
-                                                    onChange={(e) => updateMedication(index, 'stop_date', e.target.value)}
-                                                    className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                />
-                                            </div>
-                                            
-                                            <div className="col-span-1">
-                                                <label className="block text-xs font-medium text-gray-700 mb-1">Cycle</label>
-                                                <input
-                                                    type="text"
-                                                    value={med.cycle}
-                                                    onChange={(e) => updateMedication(index, 'cycle', e.target.value)}
-                                                    className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                    placeholder="Cycle details"
-                                                />
-                                            </div>
-                                            
-                                            <div className="col-span-1 md:col-span-2">
-                                                <label className="block text-xs font-medium text-gray-700 mb-1">Prescriber / Pharmacy</label>
-                                                <div className="flex gap-2">
-                                                    <input
-                                                        type="text"
-                                                        value={med.prescriber_name}
-                                                        onChange={(e) => updateMedication(index, 'prescriber_name', e.target.value)}
-                                                        className="w-1/2 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                        placeholder="Prescriber Name"
-                                                    />
-                                                    <input
-                                                        type="text"
-                                                        value={med.pharmacy_name}
-                                                        onChange={(e) => updateMedication(index, 'pharmacy_name', e.target.value)}
-                                                        className="w-1/2 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                        placeholder="Pharmacy Name"
-                                                    />
-                                                </div>
-                                            </div>
-                                            
-                                            {/* Row 4: Notes */}
-                                            <div className="col-span-1 md:col-span-5">
-                                                <label className="block text-xs font-medium text-gray-700 mb-1">Clinical Notes</label>
-                                                <input
-                                                    type="text"
-                                                    value={med.notes}
-                                                    onChange={(e) => updateMedication(index, 'notes', e.target.value)}
-                                                    className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                    placeholder="Additional clinical notes about this medication..."
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                
+
                     <h2 className="text-lg font-semibold text-gray-800 mb-4">Which of the following data are you going to fill for the medication review?</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {CATEGORIES.map(category => {
@@ -1061,6 +816,251 @@ const ClinicalPharmacyTool = () => {
                             </div>
                         )}
 
+                        {/* Medications */}
+                        {selectedCategories.includes('medications') && (
+                            <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-purple-500">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                                        <FaPills className="text-purple-500" /> Medications
+                                    </h3>
+                                    <button
+                                        onClick={addMedication}
+                                        className="flex items-center gap-2 text-sm bg-purple-100 text-purple-700 px-3 py-1.5 rounded-lg hover:bg-purple-200 font-medium"
+                                    >
+                                        <FaPlus /> Add Medication
+                                    </button>
+                                </div>
+                        
+                                {formData.medications.length === 0 ? (
+                                    <div className="text-center py-6 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                                        No medications added. Click "Add Medication" to include drugs in the analysis.
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {formData.medications.map((med, index) => (
+                                            <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200 relative">
+                                                <button
+                                                    onClick={() => removeMedication(index)}
+                                                    className="absolute top-2 right-2 text-red-400 hover:text-red-600 p-1 bg-white rounded-full shadow-sm hover:shadow"
+                                                    title="Remove medication"
+                                                >
+                                                    <FaTimes className="w-3 h-3" />
+                                                </button>
+                                                
+                                                <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                                                    {/* Row 1: Core details */}
+                                                    <div className="col-span-1 md:col-span-2">
+                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Drug Name / Brand Name</label>
+                                                        <div className="flex gap-2">
+                                                            <input
+                                                                type="text"
+                                                                value={med.drug_name}
+                                                                onChange={(e) => updateMedication(index, 'drug_name', e.target.value)}
+                                                                className="w-1/2 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                placeholder="Generic Name *"
+                                                            />
+                                                            <input
+                                                                type="text"
+                                                                value={med.brand_name}
+                                                                onChange={(e) => updateMedication(index, 'brand_name', e.target.value)}
+                                                                className="w-1/2 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                placeholder="Brand Name"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div className="col-span-1">
+                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Drug Class</label>
+                                                        <input
+                                                            type="text"
+                                                            value={med.drug_class}
+                                                            onChange={(e) => updateMedication(index, 'drug_class', e.target.value)}
+                                                            className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                            placeholder="e.g. Beta Blocker"
+                                                        />
+                                                    </div>
+                                                    
+                                                    <div className="col-span-1">
+                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Indication</label>
+                                                        <input
+                                                            type="text"
+                                                            value={med.indication}
+                                                            onChange={(e) => updateMedication(index, 'indication', e.target.value)}
+                                                            className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                            placeholder="Reason for use"
+                                                        />
+                                                    </div>
+                                                    
+                                                    <div className="col-span-1">
+                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
+                                                        <select
+                                                            value={med.status}
+                                                            onChange={(e) => updateMedication(index, 'status', e.target.value)}
+                                                            className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500 bg-white"
+                                                        >
+                                                            <option value="Active">Active</option>
+                                                            <option value="Discontinued">Discontinued</option>
+                                                            <option value="On Hold">On Hold</option>
+                                                            <option value="Completed">Completed</option>
+                                                        </select>
+                                                    </div>
+                                                    
+                                                    {/* Row 2: Dosage and Admin */}
+                                                    <div className="col-span-1 md:col-span-2">
+                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Dose / Strength / Unit</label>
+                                                        <div className="flex gap-2">
+                                                            <input
+                                                                type="text"
+                                                                value={med.dose}
+                                                                onChange={(e) => updateMedication(index, 'dose', e.target.value)}
+                                                                className="w-1/3 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                placeholder="Dose"
+                                                            />
+                                                            <input
+                                                                type="text"
+                                                                value={med.strength}
+                                                                onChange={(e) => updateMedication(index, 'strength', e.target.value)}
+                                                                className="w-1/3 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                placeholder="Strength"
+                                                            />
+                                                            <input
+                                                                type="text"
+                                                                value={med.unit}
+                                                                onChange={(e) => updateMedication(index, 'unit', e.target.value)}
+                                                                className="w-1/3 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                placeholder="Unit (mg)"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div className="col-span-1">
+                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Dosage Form</label>
+                                                        <select
+                                                            value={med.dosage_form}
+                                                            onChange={(e) => updateMedication(index, 'dosage_form', e.target.value)}
+                                                            className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500 bg-white"
+                                                        >
+                                                            <option value="Tablet">Tablet</option>
+                                                            <option value="Capsule">Capsule</option>
+                                                            <option value="Injection">Injection</option>
+                                                            <option value="Syrup">Syrup</option>
+                                                            <option value="Inhaler">Inhaler</option>
+                                                            <option value="Cream/Ointment">Cream/Ointment</option>
+                                                            <option value="Drops">Drops</option>
+                                                            <option value="Other">Other</option>
+                                                        </select>
+                                                    </div>
+                                                    
+                                                    <div className="col-span-1">
+                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Route & Admin</label>
+                                                        <div className="flex gap-2">
+                                                            <input
+                                                                type="text"
+                                                                value={med.route}
+                                                                onChange={(e) => updateMedication(index, 'route', e.target.value)}
+                                                                className="w-1/2 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                placeholder="Route (PO)"
+                                                            />
+                                                            <input
+                                                                type="text"
+                                                                value={med.administration}
+                                                                onChange={(e) => updateMedication(index, 'administration', e.target.value)}
+                                                                className="w-1/2 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                placeholder="Admin"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div className="col-span-1">
+                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Frequency & Regimen</label>
+                                                        <div className="flex gap-2">
+                                                            <input
+                                                                type="text"
+                                                                value={med.frequency}
+                                                                onChange={(e) => updateMedication(index, 'frequency', e.target.value)}
+                                                                className="w-1/2 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                placeholder="Freq (BID)"
+                                                            />
+                                                            <input
+                                                                type="text"
+                                                                value={med.regimen}
+                                                                onChange={(e) => updateMedication(index, 'regimen', e.target.value)}
+                                                                className="w-1/2 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                placeholder="Regimen"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    {/* Row 3: Timeline & Provider */}
+                                                    <div className="col-span-1">
+                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Start Date</label>
+                                                        <input
+                                                            type="date"
+                                                            value={med.start_date}
+                                                            onChange={(e) => updateMedication(index, 'start_date', e.target.value)}
+                                                            className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                        />
+                                                    </div>
+                                                    
+                                                    <div className="col-span-1">
+                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Stop Date</label>
+                                                        <input
+                                                            type="date"
+                                                            value={med.stop_date}
+                                                            onChange={(e) => updateMedication(index, 'stop_date', e.target.value)}
+                                                            className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                        />
+                                                    </div>
+                                                    
+                                                    <div className="col-span-1">
+                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Cycle</label>
+                                                        <input
+                                                            type="text"
+                                                            value={med.cycle}
+                                                            onChange={(e) => updateMedication(index, 'cycle', e.target.value)}
+                                                            className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                            placeholder="Cycle details"
+                                                        />
+                                                    </div>
+                                                    
+                                                    <div className="col-span-1 md:col-span-2">
+                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Prescriber / Pharmacy</label>
+                                                        <div className="flex gap-2">
+                                                            <input
+                                                                type="text"
+                                                                value={med.prescriber_name}
+                                                                onChange={(e) => updateMedication(index, 'prescriber_name', e.target.value)}
+                                                                className="w-1/2 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                placeholder="Prescriber Name"
+                                                            />
+                                                            <input
+                                                                type="text"
+                                                                value={med.pharmacy_name}
+                                                                onChange={(e) => updateMedication(index, 'pharmacy_name', e.target.value)}
+                                                                className="w-1/2 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                placeholder="Pharmacy Name"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    {/* Row 4: Notes */}
+                                                    <div className="col-span-1 md:col-span-5">
+                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Clinical Notes</label>
+                                                        <input
+                                                            type="text"
+                                                            value={med.notes}
+                                                            onChange={(e) => updateMedication(index, 'notes', e.target.value)}
+                                                            className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                            placeholder="Additional clinical notes about this medication..."
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         <div className="flex justify-end pt-4 pb-12">
                             <button
