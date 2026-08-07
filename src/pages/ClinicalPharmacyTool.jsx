@@ -15,7 +15,9 @@ const CATEGORIES = [
     { id: 'demography', label: 'Demography (Age & Gender)', icon: FaUser },
     { id: 'anthropometry', label: 'Anthropometry', icon: FaWeight },
     { id: 'vitals', label: 'Vitals', icon: FaHeartbeat },
-    { id: 'labs', label: 'Labs', icon: FaVial },
+    { id: 'labs_renal', label: 'Renal Function & Electrolytes', icon: FaVial },
+    { id: 'labs_liver', label: 'Liver Function Tests (LFTs)', icon: FaVial },
+    { id: 'labs_hematology', label: 'Hematology (CBC)', icon: FaVial },
     { id: 'diagnosis', label: 'Diagnosis', icon: FaNotesMedical },
     { id: 'special_conditions', label: 'Special Conditions', icon: FaExclamationCircle },
     { id: 'medications', label: 'Medications', icon: FaPills }
@@ -639,116 +641,118 @@ const ClinicalPharmacyTool = () => {
                             </div>
                         )}
 
-                        {/* Labs */}
-                        {selectedCategories.includes('labs') && (
+                        {/* Renal & Electrolytes */}
+                        {selectedCategories.includes('labs_renal') && (
                             <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-yellow-500">
-                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-6">
-                                    <FaVial className="text-yellow-500" /> Labs
+                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
+                                    <FaVial className="text-yellow-500" /> Renal Function & Electrolytes
                                 </h3>
-                                <div className="space-y-8">
-                                    {/* Renal & Electrolytes */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div>
-                                        <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3 border-b border-gray-100 pb-2">Renal Function & Electrolytes</h4>
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">Creatinine</label>
-                                                <input
-                                                    type="number"
-                                                    step="0.1"
-                                                    name="creatinine"
-                                                    value={formData.creatinine}
-                                                    onChange={handleInputChange}
-                                                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">Potassium (K+)</label>
-                                                <input
-                                                    type="number"
-                                                    step="0.1"
-                                                    name="potassium"
-                                                    value={formData.potassium}
-                                                    onChange={handleInputChange}
-                                                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">Sodium (Na+)</label>
-                                                <input
-                                                    type="number"
-                                                    name="sodium"
-                                                    value={formData.sodium}
-                                                    onChange={handleInputChange}
-                                                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                                />
-                                            </div>
-                                        </div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Creatinine</label>
+                                        <input
+                                            type="number"
+                                            step="0.1"
+                                            name="creatinine"
+                                            value={formData.creatinine}
+                                            onChange={handleInputChange}
+                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+                                        />
                                     </div>
-
-                                    {/* Liver Function */}
                                     <div>
-                                        <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3 border-b border-gray-100 pb-2">Liver Function Tests (LFTs)</h4>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">ALT</label>
-                                                <input
-                                                    type="number"
-                                                    name="alt"
-                                                    value={formData.alt}
-                                                    onChange={handleInputChange}
-                                                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">AST</label>
-                                                <input
-                                                    type="number"
-                                                    name="ast"
-                                                    value={formData.ast}
-                                                    onChange={handleInputChange}
-                                                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                                />
-                                            </div>
-                                        </div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Potassium (K+)</label>
+                                        <input
+                                            type="number"
+                                            step="0.1"
+                                            name="potassium"
+                                            value={formData.potassium}
+                                            onChange={handleInputChange}
+                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+                                        />
                                     </div>
-
-                                    {/* Hematology */}
                                     <div>
-                                        <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3 border-b border-gray-100 pb-2">Hematology (CBC)</h4>
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">Hemoglobin</label>
-                                                <input
-                                                    type="number"
-                                                    step="0.1"
-                                                    name="hemoglobin"
-                                                    value={formData.hemoglobin}
-                                                    onChange={handleInputChange}
-                                                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">WBC Count</label>
-                                                <input
-                                                    type="number"
-                                                    step="0.1"
-                                                    name="wbc_count"
-                                                    value={formData.wbc_count}
-                                                    onChange={handleInputChange}
-                                                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">Platelets</label>
-                                                <input
-                                                    type="number"
-                                                    name="platelet_count"
-                                                    value={formData.platelet_count}
-                                                    onChange={handleInputChange}
-                                                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                                />
-                                            </div>
-                                        </div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Sodium (Na+)</label>
+                                        <input
+                                            type="number"
+                                            name="sodium"
+                                            value={formData.sodium}
+                                            onChange={handleInputChange}
+                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Liver Function */}
+                        {selectedCategories.includes('labs_liver') && (
+                            <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-yellow-600">
+                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
+                                    <FaVial className="text-yellow-600" /> Liver Function Tests (LFTs)
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">ALT</label>
+                                        <input
+                                            type="number"
+                                            name="alt"
+                                            value={formData.alt}
+                                            onChange={handleInputChange}
+                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">AST</label>
+                                        <input
+                                            type="number"
+                                            name="ast"
+                                            value={formData.ast}
+                                            onChange={handleInputChange}
+                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Hematology */}
+                        {selectedCategories.includes('labs_hematology') && (
+                            <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-amber-500">
+                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
+                                    <FaVial className="text-amber-500" /> Hematology (CBC)
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Hemoglobin</label>
+                                        <input
+                                            type="number"
+                                            step="0.1"
+                                            name="hemoglobin"
+                                            value={formData.hemoglobin}
+                                            onChange={handleInputChange}
+                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">WBC Count</label>
+                                        <input
+                                            type="number"
+                                            step="0.1"
+                                            name="wbc_count"
+                                            value={formData.wbc_count}
+                                            onChange={handleInputChange}
+                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Platelets</label>
+                                        <input
+                                            type="number"
+                                            name="platelet_count"
+                                            value={formData.platelet_count}
+                                            onChange={handleInputChange}
+                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+                                        />
                                     </div>
                                 </div>
                             </div>
