@@ -406,7 +406,7 @@ const Signup = () => {
                     account_type: 'individual',
                     individual_type: 'professional', // Add this field
                     selected_plan: selectedPlan,
-                    skip_verification_email: false,
+                    skip_verification_email: true,
                     referral_code: formData.referral_code?.trim() || ''
                 };
             } else {
@@ -428,7 +428,7 @@ const Signup = () => {
                     admin_phone: formData.admin_phone.trim(),
                     admin_license_number: formData.admin_license_number?.trim() || '',
                     selected_plan: selectedPlan,
-                    skip_verification_email: false,
+                    skip_verification_email: true,
                     referral_code: formData.referral_code?.trim() || ''
                 };
             }
