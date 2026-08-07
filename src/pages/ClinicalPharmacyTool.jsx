@@ -50,15 +50,55 @@ const ClinicalPharmacyTool = () => {
         respiratory_rate: '',
         temperature: '',
         oxygen_saturation: '',
-        // Labs
+        // Labs - Renal Function
+        bun: '',
         creatinine: '',
+        gfr: '',
+        // Labs - Electrolytes
+        sodium: '',
+        potassium: '',
+        chloride: '',
+        calcium: '',
+        magnesium: '',
+        phosphate: '',
+        // Labs - Liver Function
         alt: '',
         ast: '',
-        potassium: '',
-        sodium: '',
-        hemoglobin: '',
+        alp: '',
+        total_bilirubin: '',
+        direct_bilirubin: '',
+        albumin: '',
+        total_protein: '',
+        // Labs - CBC / Hematology
         wbc_count: '',
+        rbc_count: '',
+        hemoglobin: '',
+        hematocrit: '',
         platelet_count: '',
+        mcv: '',
+        mch: '',
+        mchc: '',
+        // Labs - Lipid Profile
+        total_cholesterol: '',
+        ldl: '',
+        hdl: '',
+        triglycerides: '',
+        // Labs - Coagulation
+        pt: '',
+        inr: '',
+        aptt: '',
+        fibrinogen: '',
+        // Labs - Urinalysis
+        urine_ph: '',
+        specific_gravity: '',
+        urine_protein: '',
+        urine_glucose: '',
+        urine_blood: '',
+        // Labs - General
+        fasting_glucose: '',
+        hba1c: '',
+        tsh: '',
+        uric_acid: '',
         // Diagnosis
         diagnosis: '',
         // Special Conditions
@@ -140,14 +180,20 @@ const ClinicalPharmacyTool = () => {
             oxygen_saturation: formData.oxygen_saturation,
         },
         labs: {
-            creatinine: formData.creatinine,
-            alt: formData.alt,
-            ast: formData.ast,
-            potassium: formData.potassium,
-            sodium: formData.sodium,
-            hemoglobin: formData.hemoglobin,
-            wbc_count: formData.wbc_count,
-            platelet_count: formData.platelet_count,
+            bun: formData.bun, creatinine: formData.creatinine, gfr: formData.gfr,
+            sodium: formData.sodium, potassium: formData.potassium, chloride: formData.chloride,
+            calcium: formData.calcium, magnesium: formData.magnesium, phosphate: formData.phosphate,
+            alt: formData.alt, ast: formData.ast, alp: formData.alp,
+            total_bilirubin: formData.total_bilirubin, direct_bilirubin: formData.direct_bilirubin,
+            albumin: formData.albumin, total_protein: formData.total_protein,
+            wbc_count: formData.wbc_count, rbc_count: formData.rbc_count, hemoglobin: formData.hemoglobin,
+            hematocrit: formData.hematocrit, platelet_count: formData.platelet_count,
+            mcv: formData.mcv, mch: formData.mch, mchc: formData.mchc,
+            total_cholesterol: formData.total_cholesterol, ldl: formData.ldl, hdl: formData.hdl, triglycerides: formData.triglycerides,
+            pt: formData.pt, inr: formData.inr, aptt: formData.aptt, fibrinogen: formData.fibrinogen,
+            urine_ph: formData.urine_ph, specific_gravity: formData.specific_gravity,
+            urine_protein: formData.urine_protein, urine_glucose: formData.urine_glucose, urine_blood: formData.urine_blood,
+            fasting_glucose: formData.fasting_glucose, hba1c: formData.hba1c, tsh: formData.tsh, uric_acid: formData.uric_acid,
         },
         medication_history: formData.medications,
         allergies: [], // Add if needed later
@@ -650,94 +696,75 @@ const ClinicalPharmacyTool = () => {
                         {/* Labs */}
                         {selectedCategories.includes('labs') && (
                             <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-yellow-500">
-                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                    <FaVial className="text-yellow-500" /> Labs
+                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-6">
+                                    <FaVial className="text-yellow-500" /> Laboratory Tests
                                 </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Creatinine</label>
-                                        <input
-                                            type="number"
-                                            step="0.1"
-                                            name="creatinine"
-                                            value={formData.creatinine}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
+                                <div className="space-y-6">
+
+                                    {/* Renal Function Tests */}
+                                    <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                                        <h4 className="text-sm font-bold text-blue-800 mb-3 uppercase tracking-wide">🧪 Renal Function Tests</h4>
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                            {[{n:'bun',l:'BUN (mg/dL)'},{n:'creatinine',l:'Creatinine (mg/dL)'},{n:'gfr',l:'GFR / eGFR (mL/min)'}].map(f=><div key={f.n}><label className="block text-xs font-medium text-gray-700 mb-1">{f.l}</label><input type="number" step="0.1" name={f.n} value={formData[f.n]} onChange={handleInputChange} className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" /></div>)}
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">ALT</label>
-                                        <input
-                                            type="number"
-                                            name="alt"
-                                            value={formData.alt}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
+
+                                    {/* Electrolytes */}
+                                    <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                                        <h4 className="text-sm font-bold text-green-800 mb-3 uppercase tracking-wide">⚡ Electrolytes</h4>
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                            {[{n:'sodium',l:'Sodium Na+ (mEq/L)'},{n:'potassium',l:'Potassium K+ (mEq/L)'},{n:'chloride',l:'Chloride Cl⁻ (mEq/L)'},{n:'calcium',l:'Calcium Ca²+ (mg/dL)'},{n:'magnesium',l:'Magnesium Mg²+ (mg/dL)'},{n:'phosphate',l:'Phosphate PO₄ (mg/dL)'}].map(f=><div key={f.n}><label className="block text-xs font-medium text-gray-700 mb-1">{f.l}</label><input type="number" step="0.1" name={f.n} value={formData[f.n]} onChange={handleInputChange} className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" /></div>)}
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">AST</label>
-                                        <input
-                                            type="number"
-                                            name="ast"
-                                            value={formData.ast}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
+
+                                    {/* Liver Function Tests */}
+                                    <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
+                                        <h4 className="text-sm font-bold text-amber-800 mb-3 uppercase tracking-wide">🫀 Liver Function Tests</h4>
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                            {[{n:'alt',l:'ALT (U/L)'},{n:'ast',l:'AST (U/L)'},{n:'alp',l:'ALP (U/L)'},{n:'total_bilirubin',l:'Total Bilirubin (mg/dL)'},{n:'direct_bilirubin',l:'Direct Bilirubin (mg/dL)'},{n:'albumin',l:'Albumin (g/dL)'},{n:'total_protein',l:'Total Protein (g/dL)'}].map(f=><div key={f.n}><label className="block text-xs font-medium text-gray-700 mb-1">{f.l}</label><input type="number" step="0.1" name={f.n} value={formData[f.n]} onChange={handleInputChange} className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" /></div>)}
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Potassium (K+)</label>
-                                        <input
-                                            type="number"
-                                            step="0.1"
-                                            name="potassium"
-                                            value={formData.potassium}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
+
+                                    {/* Complete Blood Count / Hematology */}
+                                    <div className="bg-red-50 rounded-lg p-4 border border-red-200">
+                                        <h4 className="text-sm font-bold text-red-800 mb-3 uppercase tracking-wide">🩸 Complete Blood Count (CBC) / Hematology</h4>
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                            {[{n:'wbc_count',l:'WBC (×10³/µL)'},{n:'rbc_count',l:'RBC (×10⁶/µL)'},{n:'hemoglobin',l:'Hemoglobin (g/dL)'},{n:'hematocrit',l:'Hematocrit (%)'},{n:'platelet_count',l:'Platelets (×10³/µL)'},{n:'mcv',l:'MCV (fL)'},{n:'mch',l:'MCH (pg)'},{n:'mchc',l:'MCHC (g/dL)'}].map(f=><div key={f.n}><label className="block text-xs font-medium text-gray-700 mb-1">{f.l}</label><input type="number" step="0.1" name={f.n} value={formData[f.n]} onChange={handleInputChange} className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" /></div>)}
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Sodium (Na+)</label>
-                                        <input
-                                            type="number"
-                                            name="sodium"
-                                            value={formData.sodium}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
+
+                                    {/* Lipid Profile */}
+                                    <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                                        <h4 className="text-sm font-bold text-purple-800 mb-3 uppercase tracking-wide">💧 Lipid Profile</h4>
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                            {[{n:'total_cholesterol',l:'Total Cholesterol (mg/dL)'},{n:'ldl',l:'LDL (mg/dL)'},{n:'hdl',l:'HDL (mg/dL)'},{n:'triglycerides',l:'Triglycerides (mg/dL)'}].map(f=><div key={f.n}><label className="block text-xs font-medium text-gray-700 mb-1">{f.l}</label><input type="number" step="0.1" name={f.n} value={formData[f.n]} onChange={handleInputChange} className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" /></div>)}
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Hemoglobin</label>
-                                        <input
-                                            type="number"
-                                            step="0.1"
-                                            name="hemoglobin"
-                                            value={formData.hemoglobin}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
+
+                                    {/* Coagulation Tests */}
+                                    <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+                                        <h4 className="text-sm font-bold text-orange-800 mb-3 uppercase tracking-wide">🩹 Coagulation Tests</h4>
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                            {[{n:'pt',l:'PT (seconds)'},{n:'inr',l:'INR'},{n:'aptt',l:'aPTT (seconds)'},{n:'fibrinogen',l:'Fibrinogen (mg/dL)'}].map(f=><div key={f.n}><label className="block text-xs font-medium text-gray-700 mb-1">{f.l}</label><input type="number" step="0.1" name={f.n} value={formData[f.n]} onChange={handleInputChange} className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" /></div>)}
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">WBC Count</label>
-                                        <input
-                                            type="number"
-                                            step="0.1"
-                                            name="wbc_count"
-                                            value={formData.wbc_count}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
+
+                                    {/* Urinalysis */}
+                                    <div className="bg-cyan-50 rounded-lg p-4 border border-cyan-200">
+                                        <h4 className="text-sm font-bold text-cyan-800 mb-3 uppercase tracking-wide">🧫 Urinalysis</h4>
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                            {[{n:'urine_ph',l:'pH'},{n:'specific_gravity',l:'Specific Gravity'},{n:'urine_protein',l:'Protein'},{n:'urine_glucose',l:'Glucose'},{n:'urine_blood',l:'Blood'}].map(f=><div key={f.n}><label className="block text-xs font-medium text-gray-700 mb-1">{f.l}</label><input type="text" name={f.n} value={formData[f.n]} onChange={handleInputChange} className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" /></div>)}
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Platelets</label>
-                                        <input
-                                            type="number"
-                                            name="platelet_count"
-                                            value={formData.platelet_count}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
+
+                                    {/* General */}
+                                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                        <h4 className="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wide">📋 General</h4>
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                            {[{n:'fasting_glucose',l:'Fasting Glucose (mg/dL)'},{n:'hba1c',l:'HbA1c (%)'},{n:'tsh',l:'TSH (mIU/L)'},{n:'uric_acid',l:'Uric Acid (mg/dL)'}].map(f=><div key={f.n}><label className="block text-xs font-medium text-gray-700 mb-1">{f.l}</label><input type="number" step="0.1" name={f.n} value={formData[f.n]} onChange={handleInputChange} className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" /></div>)}
+                                        </div>
                                     </div>
+
                                 </div>
                             </div>
                         )}
