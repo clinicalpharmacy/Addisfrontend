@@ -565,7 +565,6 @@ const ClinicalPharmacyTool = () => {
                                 {/* Temporary Storage Display - Single Line */}
                                 <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
                                     <div className="flex items-start gap-2">
-                                        <span className="text-blue-600 font-medium text-sm whitespace-nowrap">📋 Saved:</span>
                                         <span className="text-sm text-gray-700 break-all flex-1">
                                             {formData.medications
                                                 .map(med => {
