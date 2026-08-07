@@ -15,9 +15,7 @@ const CATEGORIES = [
     { id: 'demography', label: 'Demography (Age & Gender)', icon: FaUser },
     { id: 'anthropometry', label: 'Anthropometry', icon: FaWeight },
     { id: 'vitals', label: 'Vitals', icon: FaHeartbeat },
-    { id: 'labs_renal', label: 'Renal Function & Electrolytes', icon: FaVial },
-    { id: 'labs_liver', label: 'Liver Function Tests (LFTs)', icon: FaVial },
-    { id: 'labs_hematology', label: 'Hematology (CBC)', icon: FaVial },
+    { id: 'labs', label: 'Labs', icon: FaVial },
     { id: 'diagnosis', label: 'Diagnosis', icon: FaNotesMedical },
     { id: 'special_conditions', label: 'Special Conditions', icon: FaExclamationCircle },
     { id: 'medications', label: 'Medications', icon: FaPills }
@@ -466,13 +464,79 @@ const ClinicalPharmacyTool = () => {
                         </button>
                         <div>
                             <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Clinical Pharmacy Tool</h1>
-                            <p className="text-gray-600">Select the data you want to provide for clinical analysis</p>
+                            <p className="text-gray-600">Fill the data for medication review to run clinical analysis</p>
                         </div>
                     </div>
                 </div>
-
                 <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-                    <h2 className="text-lg font-semibold text-gray-800 mb-4">Which of the following data are you going to fill?</h2>
+                    <h1 className="text-2xl md:text-base font-bold text-gray-800">Fill medication(s) to be reviewed</h1>
+                    {/* Medications */}
+                    {selectedCategories.includes('medications') && (
+                        <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-purple-500">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                                    <FaPills className="text-purple-500" /> Medications
+                                </h3>
+                                <button
+                                    onClick={addMedication}
+                                    className="flex items-center gap-2 text-sm bg-purple-100 text-purple-700 px-3 py-1.5 rounded-lg hover:bg-purple-200 font-medium"
+                                >
+                                    <FaPlus /> Add Medication
+                                </button>
+                            </div>
+    
+                            {formData.medications.length === 0 ? (
+                                <div className="text-center py-6 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                                    No medications added. Click "Add Medication" to include drugs in the analysis.
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {formData.medications.map((med, index) => (
+                                        <div key={index} className="flex flex-col md:flex-row gap-3 items-start md:items-end bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                            <div className="w-full md:flex-1">
+                                                <label className="block text-xs font-medium text-gray-500 mb-1">Drug Name</label>
+                                                <input
+                                                    type="text"
+                                                    value={med.drug_name}
+                                                    onChange={(e) => updateMedication(index, 'drug_name', e.target.value)}
+                                                    className="w-full p-2 border border-gray-300 rounded bg-white text-sm focus:ring-2 focus:ring-purple-500"
+                                                    placeholder="e.g. Lisinopril"
+                                                />
+                                            </div>
+                                            <div className="w-full md:w-32">
+                                                <label className="block text-xs font-medium text-gray-500 mb-1">Dose</label>
+                                                <input
+                                                    type="text"
+                                                    value={med.dose}
+                                                    onChange={(e) => updateMedication(index, 'dose', e.target.value)}
+                                                    className="w-full p-2 border border-gray-300 rounded bg-white text-sm focus:ring-2 focus:ring-purple-500"
+                                                    placeholder="e.g. 10mg"
+                                                />
+                                            </div>
+                                            <div className="w-full md:w-40">
+                                                <label className="block text-xs font-medium text-gray-500 mb-1">Frequency</label>
+                                                <input
+                                                    type="text"
+                                                    value={med.frequency}
+                                                    onChange={(e) => updateMedication(index, 'frequency', e.target.value)}
+                                                    className="w-full p-2 border border-gray-300 rounded bg-white text-sm focus:ring-2 focus:ring-purple-500"
+                                                    placeholder="e.g. OD"
+                                                />
+                                            </div>
+                                            <button
+                                                onClick={() => removeMedication(index)}
+                                                className="w-full md:w-auto mt-2 md:mt-0 bg-red-100 text-red-600 p-2 rounded hover:bg-red-200 flex justify-center items-center h-[38px]"
+                                                title="Remove medication"
+                                            >
+                                                <FaTrash />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    <h2 className="text-lg font-semibold text-gray-800 mb-4">Which of the following data are you going to fill for the medication review?</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {CATEGORIES.map(category => {
                             const isSelected = selectedCategories.includes(category.id);
@@ -641,13 +705,13 @@ const ClinicalPharmacyTool = () => {
                             </div>
                         )}
 
-                        {/* Renal & Electrolytes */}
-                        {selectedCategories.includes('labs_renal') && (
+                        {/* Labs */}
+                        {selectedCategories.includes('labs') && (
                             <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-yellow-500">
                                 <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                    <FaVial className="text-yellow-500" /> Renal Function & Electrolytes
+                                    <FaVial className="text-yellow-500" /> Labs
                                 </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Creatinine</label>
                                         <input
@@ -656,7 +720,27 @@ const ClinicalPharmacyTool = () => {
                                             name="creatinine"
                                             value={formData.creatinine}
                                             onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">ALT</label>
+                                        <input
+                                            type="number"
+                                            name="alt"
+                                            value={formData.alt}
+                                            onChange={handleInputChange}
+                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">AST</label>
+                                        <input
+                                            type="number"
+                                            name="ast"
+                                            value={formData.ast}
+                                            onChange={handleInputChange}
+                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                                         />
                                     </div>
                                     <div>
@@ -667,7 +751,7 @@ const ClinicalPharmacyTool = () => {
                                             name="potassium"
                                             value={formData.potassium}
                                             onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                                         />
                                     </div>
                                     <div>
@@ -677,51 +761,9 @@ const ClinicalPharmacyTool = () => {
                                             name="sodium"
                                             value={formData.sodium}
                                             onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                                         />
                                     </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Liver Function */}
-                        {selectedCategories.includes('labs_liver') && (
-                            <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-yellow-600">
-                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                    <FaVial className="text-yellow-600" /> Liver Function Tests (LFTs)
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">ALT</label>
-                                        <input
-                                            type="number"
-                                            name="alt"
-                                            value={formData.alt}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">AST</label>
-                                        <input
-                                            type="number"
-                                            name="ast"
-                                            value={formData.ast}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Hematology */}
-                        {selectedCategories.includes('labs_hematology') && (
-                            <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-amber-500">
-                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                    <FaVial className="text-amber-500" /> Hematology (CBC)
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Hemoglobin</label>
                                         <input
@@ -730,7 +772,7 @@ const ClinicalPharmacyTool = () => {
                                             name="hemoglobin"
                                             value={formData.hemoglobin}
                                             onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                                         />
                                     </div>
                                     <div>
@@ -741,7 +783,7 @@ const ClinicalPharmacyTool = () => {
                                             name="wbc_count"
                                             value={formData.wbc_count}
                                             onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                                         />
                                     </div>
                                     <div>
@@ -751,7 +793,7 @@ const ClinicalPharmacyTool = () => {
                                             name="platelet_count"
                                             value={formData.platelet_count}
                                             onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                                         />
                                     </div>
                                 </div>
@@ -829,73 +871,6 @@ const ClinicalPharmacyTool = () => {
                                         </>
                                     )}
                                 </div>
-                            </div>
-                        )}
-
-                        {/* Medications */}
-                        {selectedCategories.includes('medications') && (
-                            <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-purple-500">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                                        <FaPills className="text-purple-500" /> Medications
-                                    </h3>
-                                    <button
-                                        onClick={addMedication}
-                                        className="flex items-center gap-2 text-sm bg-purple-100 text-purple-700 px-3 py-1.5 rounded-lg hover:bg-purple-200 font-medium"
-                                    >
-                                        <FaPlus /> Add Medication
-                                    </button>
-                                </div>
-
-                                {formData.medications.length === 0 ? (
-                                    <div className="text-center py-6 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                                        No medications added. Click "Add Medication" to include drugs in the analysis.
-                                    </div>
-                                ) : (
-                                    <div className="space-y-4">
-                                        {formData.medications.map((med, index) => (
-                                            <div key={index} className="flex flex-col md:flex-row gap-3 items-start md:items-end bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                                <div className="w-full md:flex-1">
-                                                    <label className="block text-xs font-medium text-gray-500 mb-1">Drug Name</label>
-                                                    <input
-                                                        type="text"
-                                                        value={med.drug_name}
-                                                        onChange={(e) => updateMedication(index, 'drug_name', e.target.value)}
-                                                        className="w-full p-2 border border-gray-300 rounded bg-white text-sm focus:ring-2 focus:ring-purple-500"
-                                                        placeholder="e.g. Lisinopril"
-                                                    />
-                                                </div>
-                                                <div className="w-full md:w-32">
-                                                    <label className="block text-xs font-medium text-gray-500 mb-1">Dose</label>
-                                                    <input
-                                                        type="text"
-                                                        value={med.dose}
-                                                        onChange={(e) => updateMedication(index, 'dose', e.target.value)}
-                                                        className="w-full p-2 border border-gray-300 rounded bg-white text-sm focus:ring-2 focus:ring-purple-500"
-                                                        placeholder="e.g. 10mg"
-                                                    />
-                                                </div>
-                                                <div className="w-full md:w-40">
-                                                    <label className="block text-xs font-medium text-gray-500 mb-1">Frequency</label>
-                                                    <input
-                                                        type="text"
-                                                        value={med.frequency}
-                                                        onChange={(e) => updateMedication(index, 'frequency', e.target.value)}
-                                                        className="w-full p-2 border border-gray-300 rounded bg-white text-sm focus:ring-2 focus:ring-purple-500"
-                                                        placeholder="e.g. OD"
-                                                    />
-                                                </div>
-                                                <button
-                                                    onClick={() => removeMedication(index)}
-                                                    className="w-full md:w-auto mt-2 md:mt-0 bg-red-100 text-red-600 p-2 rounded hover:bg-red-200 flex justify-center items-center h-[38px]"
-                                                    title="Remove medication"
-                                                >
-                                                    <FaTrash />
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
                             </div>
                         )}
 
