@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     FaUser, FaWeight, FaHeartbeat, FaVial, FaNotesMedical,
@@ -11,12 +11,13 @@ import DRNAssessment from '../components/Patient/DRNAssessment';
 import PhAssistPlan from '../components/Patient/PhAssistPlan';
 import PatientOutcome from '../components/Patient/PatientOutcome';
 import CostSection from '../components/Patient/CostSection';
+import supabase from '../utils/supabase';
 
-const CATEGORIES = [
+const STATIC_CATEGORIES = [
     { id: 'demography', label: 'Demography (Age & Gender)', icon: FaUser },
     { id: 'anthropometry', label: 'Anthropometry', icon: FaWeight },
     { id: 'vitals', label: 'Vitals', icon: FaHeartbeat },
-    { id: 'labs', label: 'Labs', icon: FaVial },
+
     { id: 'diagnosis', label: 'Diagnosis', icon: FaNotesMedical },
     { id: 'special_conditions', label: 'Special Conditions', icon: FaExclamationCircle },
     { id: 'medications', label: 'Medications', icon: FaPills }
@@ -27,6 +28,47 @@ const ClinicalPharmacyTool = () => {
     const [selectedCategories, setSelectedCategories] = useState([]);
     const [showAnalysis, setShowAnalysis] = useState(false);
     const [activeTab, setActiveTab] = useState('analysis');
+
+    // Dynamic Labs State
+    const [labTests, setLabTests] = useState([]);
+    const [dynamicLabCategories, setDynamicLabCategories] = useState([]);
+    const [allCategories, setAllCategories] = useState(STATIC_CATEGORIES);
+
+    useEffect(() => {
+        const fetchLabs = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('lab_tests')
+                    .select('*')
+                    .eq('is_active', true);
+                
+                if (data && !error) {
+                    setLabTests(data);
+                    
+                    // Extract unique categories
+                    const categories = [...new Set(data.map(test => test.category))].filter(Boolean);
+                    setDynamicLabCategories(categories);
+
+                    // Add dynamic categories to the main list
+                    const dynamicCatObjects = categories.map(cat => ({
+                        id: `dynamic_lab_${cat}`,
+                        label: cat,
+                        icon: FaVial,
+                        isDynamicLab: true,
+                        categoryName: cat
+                    }));
+
+                    // Insert them right before diagnosis (index 3)
+                    const newCategories = [...STATIC_CATEGORIES];
+                    newCategories.splice(3, 0, ...dynamicCatObjects);
+                    setAllCategories(newCategories);
+                }
+            } catch (err) {
+                console.error("Failed to fetch lab tests", err);
+            }
+        };
+        fetchLabs();
+    }, []);
 
     // Tab Data States for PDF
     const [cdssData, setCdssData] = useState([]);
@@ -50,15 +92,8 @@ const ClinicalPharmacyTool = () => {
         respiratory_rate: '',
         temperature: '',
         oxygen_saturation: '',
-        // Labs
-        creatinine: '',
-        alt: '',
-        ast: '',
-        potassium: '',
-        sodium: '',
-        hemoglobin: '',
-        wbc_count: '',
-        platelet_count: '',
+        // Dynamic Labs
+        dynamicLabs: {},
         // Diagnosis
         diagnosis: '',
         // Special Conditions
@@ -84,6 +119,16 @@ const ClinicalPharmacyTool = () => {
             ...formData,
             [name]: type === 'checkbox' ? checked : value
         });
+    };
+
+    const handleDynamicLabChange = (testName, value) => {
+        setFormData(prev => ({
+            ...prev,
+            dynamicLabs: {
+                ...prev.dynamicLabs,
+                [testName]: value
+            }
+        }));
     };
 
     // Medication handlers
@@ -133,14 +178,12 @@ const ClinicalPharmacyTool = () => {
             oxygen_saturation: formData.oxygen_saturation,
         },
         labs: {
-            creatinine: formData.creatinine,
-            alt: formData.alt,
-            ast: formData.ast,
-            potassium: formData.potassium,
-            sodium: formData.sodium,
-            hemoglobin: formData.hemoglobin,
-            wbc_count: formData.wbc_count,
-            platelet_count: formData.platelet_count,
+            // Map dynamic labs into the format expected by CDSS (lowercased, spaces to underscores)
+            ...Object.entries(formData.dynamicLabs).reduce((acc, [key, value]) => {
+                const normalizedKey = key.toLowerCase().replace(/[\s\(\)]+/g, '_').replace(/_+$/, '');
+                acc[normalizedKey] = value;
+                return acc;
+            }, {})
         },
         medication_history: formData.medications,
         allergies: [], // Add if needed later
@@ -582,7 +625,7 @@ const ClinicalPharmacyTool = () => {
                 
                     <h2 className="text-lg font-semibold text-gray-800 mb-4">Which of the following data are you going to fill for the medication review?</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {CATEGORIES.map(category => {
+                        {allCategories.map(category => {
                             const isSelected = selectedCategories.includes(category.id);
                             return (
                                 <div
@@ -749,100 +792,42 @@ const ClinicalPharmacyTool = () => {
                             </div>
                         )}
 
-                        {/* Labs */}
-                        {selectedCategories.includes('labs') && (
-                            <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-yellow-500">
-                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                    <FaVial className="text-yellow-500" /> Labs
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Creatinine</label>
-                                        <input
-                                            type="number"
-                                            step="0.1"
-                                            name="creatinine"
-                                            value={formData.creatinine}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">ALT</label>
-                                        <input
-                                            type="number"
-                                            name="alt"
-                                            value={formData.alt}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">AST</label>
-                                        <input
-                                            type="number"
-                                            name="ast"
-                                            value={formData.ast}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Potassium (K+)</label>
-                                        <input
-                                            type="number"
-                                            step="0.1"
-                                            name="potassium"
-                                            value={formData.potassium}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Sodium (Na+)</label>
-                                        <input
-                                            type="number"
-                                            name="sodium"
-                                            value={formData.sodium}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Hemoglobin</label>
-                                        <input
-                                            type="number"
-                                            step="0.1"
-                                            name="hemoglobin"
-                                            value={formData.hemoglobin}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">WBC Count</label>
-                                        <input
-                                            type="number"
-                                            step="0.1"
-                                            name="wbc_count"
-                                            value={formData.wbc_count}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Platelets</label>
-                                        <input
-                                            type="number"
-                                            name="platelet_count"
-                                            value={formData.platelet_count}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
+                        {/* Dynamic Lab Categories */}
+                        {dynamicLabCategories.map((category, idx) => {
+                            const catId = `dynamic_lab_${category}`;
+                            if (!selectedCategories.includes(catId)) return null;
+
+                            const categoryTests = labTests.filter(t => t.category === category);
+                            
+                            // Cycle through border colors for visual distinction
+                            const borderColors = ['border-blue-500', 'border-yellow-500', 'border-green-500', 'border-purple-500', 'border-red-500'];
+                            const borderColor = borderColors[idx % borderColors.length];
+                            
+                            return (
+                                <div key={catId} className={`bg-white rounded-xl shadow-sm p-6 border-l-4 ${borderColor}`}>
+                                    <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
+                                        <FaVial className="text-gray-500" /> {category}
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        {categoryTests.map(test => (
+                                            <div key={test.id}>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    {test.name} {test.unit ? `(${test.unit})` : ''}
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    step="0.01"
+                                                    value={formData.dynamicLabs[test.name] || ''}
+                                                    onChange={(e) => handleDynamicLabChange(test.name, e.target.value)}
+                                                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+                                                    placeholder={test.range_male ? `Range: ${test.range_male}` : ''}
+                                                />
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
-                            </div>
-                        )}
+                            );
+                        })}
 
                         {/* Diagnosis */}
                         {selectedCategories.includes('diagnosis') && (
