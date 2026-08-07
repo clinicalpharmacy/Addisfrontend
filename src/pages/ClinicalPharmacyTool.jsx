@@ -470,72 +470,71 @@ const ClinicalPharmacyTool = () => {
                 </div>
                 <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
                     <h1 className="text-2xl md:text-base font-bold text-gray-800">Fill medication(s) to be reviewed</h1>
-                    {/* Medications */}
-                    {selectedCategories.includes('medications') && (
-                        <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-purple-500">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                                    <FaPills className="text-purple-500" /> Medications
-                                </h3>
-                                <button
-                                    onClick={addMedication}
-                                    className="flex items-center gap-2 text-sm bg-purple-100 text-purple-700 px-3 py-1.5 rounded-lg hover:bg-purple-200 font-medium"
-                                >
-                                    <FaPlus /> Add Medication
-                                </button>
-                            </div>
-    
-                            {formData.medications.length === 0 ? (
-                                <div className="text-center py-6 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                                    No medications added. Click "Add Medication" to include drugs in the analysis.
-                                </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    {formData.medications.map((med, index) => (
-                                        <div key={index} className="flex flex-col md:flex-row gap-3 items-start md:items-end bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                            <div className="w-full md:flex-1">
-                                                <label className="block text-xs font-medium text-gray-500 mb-1">Drug Name</label>
-                                                <input
-                                                    type="text"
-                                                    value={med.drug_name}
-                                                    onChange={(e) => updateMedication(index, 'drug_name', e.target.value)}
-                                                    className="w-full p-2 border border-gray-300 rounded bg-white text-sm focus:ring-2 focus:ring-purple-500"
-                                                    placeholder="e.g. Lisinopril"
-                                                />
-                                            </div>
-                                            <div className="w-full md:w-32">
-                                                <label className="block text-xs font-medium text-gray-500 mb-1">Dose</label>
-                                                <input
-                                                    type="text"
-                                                    value={med.dose}
-                                                    onChange={(e) => updateMedication(index, 'dose', e.target.value)}
-                                                    className="w-full p-2 border border-gray-300 rounded bg-white text-sm focus:ring-2 focus:ring-purple-500"
-                                                    placeholder="e.g. 10mg"
-                                                />
-                                            </div>
-                                            <div className="w-full md:w-40">
-                                                <label className="block text-xs font-medium text-gray-500 mb-1">Frequency</label>
-                                                <input
-                                                    type="text"
-                                                    value={med.frequency}
-                                                    onChange={(e) => updateMedication(index, 'frequency', e.target.value)}
-                                                    className="w-full p-2 border border-gray-300 rounded bg-white text-sm focus:ring-2 focus:ring-purple-500"
-                                                    placeholder="e.g. OD"
-                                                />
-                                            </div>
-                                            <button
-                                                onClick={() => removeMedication(index)}
-                                                className="w-full md:w-auto mt-2 md:mt-0 bg-red-100 text-red-600 p-2 rounded hover:bg-red-200 flex justify-center items-center h-[38px]"
-                                                title="Remove medication"
-                                            >
-                                                <FaTrash />
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+                    {/* Medications - Always visible */}
+                    <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-purple-500">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                                <FaPills className="text-purple-500" /> Medications
+                            </h3>
+                            <button
+                                onClick={addMedication}
+                                className="flex items-center gap-2 text-sm bg-purple-100 text-purple-700 px-3 py-1.5 rounded-lg hover:bg-purple-200 font-medium"
+                            >
+                                <FaPlus /> Add Medication
+                            </button>
                         </div>
-                    )}
+                
+                        {formData.medications.length === 0 ? (
+                            <div className="text-center py-6 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                                No medications added. Click "Add Medication" to include drugs in the analysis.
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {formData.medications.map((med, index) => (
+                                    <div key={index} className="flex flex-col md:flex-row gap-3 items-start md:items-end bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                        <div className="w-full md:flex-1">
+                                            <label className="block text-xs font-medium text-gray-500 mb-1">Drug Name</label>
+                                            <input
+                                                type="text"
+                                                value={med.drug_name}
+                                                onChange={(e) => updateMedication(index, 'drug_name', e.target.value)}
+                                                className="w-full p-2 border border-gray-300 rounded bg-white text-sm focus:ring-2 focus:ring-purple-500"
+                                                placeholder="e.g. Lisinopril"
+                                            />
+                                        </div>
+                                        <div className="w-full md:w-32">
+                                            <label className="block text-xs font-medium text-gray-500 mb-1">Dose</label>
+                                            <input
+                                                type="text"
+                                                value={med.dose}
+                                                onChange={(e) => updateMedication(index, 'dose', e.target.value)}
+                                                className="w-full p-2 border border-gray-300 rounded bg-white text-sm focus:ring-2 focus:ring-purple-500"
+                                                placeholder="e.g. 10mg"
+                                            />
+                                        </div>
+                                        <div className="w-full md:w-40">
+                                            <label className="block text-xs font-medium text-gray-500 mb-1">Frequency</label>
+                                            <input
+                                                type="text"
+                                                value={med.frequency}
+                                                onChange={(e) => updateMedication(index, 'frequency', e.target.value)}
+                                                className="w-full p-2 border border-gray-300 rounded bg-white text-sm focus:ring-2 focus:ring-purple-500"
+                                                placeholder="e.g. OD"
+                                            />
+                                        </div>
+                                        <button
+                                            onClick={() => removeMedication(index)}
+                                            className="w-full md:w-auto mt-2 md:mt-0 bg-red-100 text-red-600 p-2 rounded hover:bg-red-200 flex justify-center items-center h-[38px]"
+                                            title="Remove medication"
+                                        >
+                                            <FaTrash />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                
                     <h2 className="text-lg font-semibold text-gray-800 mb-4">Which of the following data are you going to fill for the medication review?</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {CATEGORIES.map(category => {
