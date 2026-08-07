@@ -99,6 +99,20 @@ const ClinicalPharmacyTool = () => {
             setSelectedCategories(selectedCategories.filter(id => id !== categoryId));
         } else {
             setSelectedCategories([...selectedCategories, categoryId]);
+            // Auto-add one empty medication row when medications checkbox is ticked
+            if (categoryId === 'medications' && formData.medications.length === 0) {
+                setFormData(prev => ({
+                    ...prev,
+                    medications: [{
+                        drug_name: '', dose: '', frequency: '', route: '',
+                        start_date: '', drug_class: '', indication: '',
+                        administration: '', regimen: '', cycle: '',
+                        status: 'Active', stop_date: '', brand_name: '',
+                        dosage_form: 'Tablet', strength: '', unit: 'mg',
+                        prescriber_name: '', pharmacy_name: '', notes: ''
+                    }]
+                }));
+            }
         }
     };
 
