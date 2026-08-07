@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import {
     FaUser, FaWeight, FaHeartbeat, FaVial, FaNotesMedical,
     FaExclamationCircle, FaPills, FaArrowLeft, FaPlay, FaPlus, FaTrash,
-    FaUserShield, FaRobot, FaMoneyBillWave, FaFileMedical, FaChartLine
+    FaUserShield, FaRobot, FaMoneyBillWave, FaFileMedical, FaChartLine,
+    FaCopy
 } from 'react-icons/fa';
 import CDSSDisplay from '../components/CDSS/CDSSDisplay';
 import DRNAssessment from '../components/Patient/DRNAssessment';
@@ -489,49 +490,93 @@ const ClinicalPharmacyTool = () => {
                                 No medications added. Click "Add Medication" to include drugs in the analysis.
                             </div>
                         ) : (
-                            <div className="space-y-4">
-                                {formData.medications.map((med, index) => (
-                                    <div key={index} className="flex flex-col md:flex-row gap-3 items-start md:items-end bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                        <div className="w-full md:flex-1">
-                                            <label className="block text-xs font-medium text-gray-500 mb-1">Drug Name</label>
-                                            <input
-                                                type="text"
-                                                value={med.drug_name}
-                                                onChange={(e) => updateMedication(index, 'drug_name', e.target.value)}
-                                                className="w-full p-2 border border-gray-300 rounded bg-white text-sm focus:ring-2 focus:ring-purple-500"
-                                                placeholder="e.g. Lisinopril"
-                                            />
+                            <>
+                                <div className="space-y-2">
+                                    {formData.medications.map((med, index) => (
+                                        <div key={index} className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-200">
+                                            <div className="flex-1 flex items-center gap-2 flex-wrap">
+                                                <input
+                                                    type="text"
+                                                    value={med.drug_name}
+                                                    onChange={(e) => updateMedication(index, 'drug_name', e.target.value)}
+                                                    className="flex-1 min-w-[100px] p-1.5 border border-gray-300 rounded bg-white text-sm focus:ring-2 focus:ring-purple-500"
+                                                    placeholder="Drug name"
+                                                />
+                                                <span className="text-gray-400 text-sm font-bold">|</span>
+                                                <input
+                                                    type="text"
+                                                    value={med.dose}
+                                                    onChange={(e) => updateMedication(index, 'dose', e.target.value)}
+                                                    className="w-16 p-1.5 border border-gray-300 rounded bg-white text-sm focus:ring-2 focus:ring-purple-500"
+                                                    placeholder="Dose"
+                                                />
+                                                <span className="text-gray-400 text-sm font-bold">|</span>
+                                                <input
+                                                    type="text"
+                                                    value={med.frequency}
+                                                    onChange={(e) => updateMedication(index, 'frequency', e.target.value)}
+                                                    className="w-16 p-1.5 border border-gray-300 rounded bg-white text-sm focus:ring-2 focus:ring-purple-500"
+                                                    placeholder="Freq"
+                                                />
+                                                <span className="text-gray-400 text-sm font-bold">|</span>
+                                                <input
+                                                    type="text"
+                                                    value={med.route}
+                                                    onChange={(e) => updateMedication(index, 'route', e.target.value)}
+                                                    className="w-16 p-1.5 border border-gray-300 rounded bg-white text-sm focus:ring-2 focus:ring-purple-500"
+                                                    placeholder="Route"
+                                                />
+                                            </div>
+                                            <button
+                                                onClick={() => removeMedication(index)}
+                                                className="bg-red-100 text-red-600 p-1.5 rounded hover:bg-red-200 flex items-center justify-center"
+                                                title="Remove medication"
+                                            >
+                                                <FaTrash className="w-3 h-3" />
+                                            </button>
                                         </div>
-                                        <div className="w-full md:w-32">
-                                            <label className="block text-xs font-medium text-gray-500 mb-1">Dose</label>
-                                            <input
-                                                type="text"
-                                                value={med.dose}
-                                                onChange={(e) => updateMedication(index, 'dose', e.target.value)}
-                                                className="w-full p-2 border border-gray-300 rounded bg-white text-sm focus:ring-2 focus:ring-purple-500"
-                                                placeholder="e.g. 10mg"
-                                            />
-                                        </div>
-                                        <div className="w-full md:w-40">
-                                            <label className="block text-xs font-medium text-gray-500 mb-1">Frequency</label>
-                                            <input
-                                                type="text"
-                                                value={med.frequency}
-                                                onChange={(e) => updateMedication(index, 'frequency', e.target.value)}
-                                                className="w-full p-2 border border-gray-300 rounded bg-white text-sm focus:ring-2 focus:ring-purple-500"
-                                                placeholder="e.g. OD"
-                                            />
-                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Temporary Storage Display - Single Line */}
+                                <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                    <div className="flex items-start gap-2">
+                                        <span className="text-blue-600 font-medium text-sm whitespace-nowrap">📋 Saved:</span>
+                                        <span className="text-sm text-gray-700 break-all">
+                                            {formData.medications
+                                                .map(med => {
+                                                    const parts = [med.drug_name];
+                                                    if (med.dose) parts.push(med.dose);
+                                                    if (med.frequency) parts.push(med.frequency);
+                                                    if (med.route) parts.push(med.route);
+                                                    return parts.join(' ');
+                                                })
+                                                .join('; ')}
+                                        </span>
                                         <button
-                                            onClick={() => removeMedication(index)}
-                                            className="w-full md:w-auto mt-2 md:mt-0 bg-red-100 text-red-600 p-2 rounded hover:bg-red-200 flex justify-center items-center h-[38px]"
-                                            title="Remove medication"
+                                            onClick={() => {
+                                                const medLine = formData.medications
+                                                    .map(med => {
+                                                        const parts = [med.drug_name];
+                                                        if (med.dose) parts.push(med.dose);
+                                                        if (med.frequency) parts.push(med.frequency);
+                                                        if (med.route) parts.push(med.route);
+                                                        return parts.join(' ');
+                                                    })
+                                                    .join('; ');
+                                                navigator.clipboard.writeText(medLine).then(() => {
+                                                    alert('Medications copied to clipboard!');
+                                                }).catch(() => {
+                                                    alert('Failed to copy medications');
+                                                });
+                                            }}
+                                            className="ml-auto text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 whitespace-nowrap flex items-center gap-1"
                                         >
-                                            <FaTrash />
+                                            <FaCopy className="w-3 h-3" /> Copy
                                         </button>
                                     </div>
-                                ))}
-                            </div>
+                                </div>
+                            </>
                         )}
                     </div>
                 
