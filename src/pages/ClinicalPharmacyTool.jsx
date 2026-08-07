@@ -1,23 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     FaUser, FaWeight, FaHeartbeat, FaVial, FaNotesMedical,
     FaExclamationCircle, FaPills, FaArrowLeft, FaPlay, FaPlus, FaTrash,
     FaUserShield, FaRobot, FaMoneyBillWave, FaFileMedical, FaChartLine,
-    FaCopy
+    FaCopy, FaTimes
 } from 'react-icons/fa';
 import CDSSDisplay from '../components/CDSS/CDSSDisplay';
 import DRNAssessment from '../components/Patient/DRNAssessment';
 import PhAssistPlan from '../components/Patient/PhAssistPlan';
 import PatientOutcome from '../components/Patient/PatientOutcome';
 import CostSection from '../components/Patient/CostSection';
-import supabase from '../utils/supabase';
 
-const STATIC_CATEGORIES = [
+const CATEGORIES = [
     { id: 'demography', label: 'Demography (Age & Gender)', icon: FaUser },
     { id: 'anthropometry', label: 'Anthropometry', icon: FaWeight },
     { id: 'vitals', label: 'Vitals', icon: FaHeartbeat },
-
+    { id: 'labs', label: 'Labs', icon: FaVial },
     { id: 'diagnosis', label: 'Diagnosis', icon: FaNotesMedical },
     { id: 'special_conditions', label: 'Special Conditions', icon: FaExclamationCircle },
     { id: 'medications', label: 'Medications', icon: FaPills }
@@ -28,47 +27,8 @@ const ClinicalPharmacyTool = () => {
     const [selectedCategories, setSelectedCategories] = useState([]);
     const [showAnalysis, setShowAnalysis] = useState(false);
     const [activeTab, setActiveTab] = useState('analysis');
-
-    // Dynamic Labs State
-    const [labTests, setLabTests] = useState([]);
-    const [dynamicLabCategories, setDynamicLabCategories] = useState([]);
-    const [allCategories, setAllCategories] = useState(STATIC_CATEGORIES);
-
-    useEffect(() => {
-        const fetchLabs = async () => {
-            try {
-                const { data, error } = await supabase
-                    .from('lab_tests')
-                    .select('*')
-                    .eq('is_active', true);
-                
-                if (data && !error) {
-                    setLabTests(data);
-                    
-                    // Extract unique categories
-                    const categories = [...new Set(data.map(test => test.category))].filter(Boolean);
-                    setDynamicLabCategories(categories);
-
-                    // Add dynamic categories to the main list
-                    const dynamicCatObjects = categories.map(cat => ({
-                        id: `dynamic_lab_${cat}`,
-                        label: cat,
-                        icon: FaVial,
-                        isDynamicLab: true,
-                        categoryName: cat
-                    }));
-
-                    // Insert them right before diagnosis (index 3)
-                    const newCategories = [...STATIC_CATEGORIES];
-                    newCategories.splice(3, 0, ...dynamicCatObjects);
-                    setAllCategories(newCategories);
-                }
-            } catch (err) {
-                console.error("Failed to fetch lab tests", err);
-            }
-        };
-        fetchLabs();
-    }, []);
+    const [showMedicationInput, setShowMedicationInput] = useState(false);
+    const [newMedication, setNewMedication] = useState({ drug_name: '', dose: '', frequency: '', route: '' });
 
     // Tab Data States for PDF
     const [cdssData, setCdssData] = useState([]);
@@ -92,8 +52,15 @@ const ClinicalPharmacyTool = () => {
         respiratory_rate: '',
         temperature: '',
         oxygen_saturation: '',
-        // Dynamic Labs
-        dynamicLabs: {},
+        // Labs
+        creatinine: '',
+        alt: '',
+        ast: '',
+        potassium: '',
+        sodium: '',
+        hemoglobin: '',
+        wbc_count: '',
+        platelet_count: '',
         // Diagnosis
         diagnosis: '',
         // Special Conditions
@@ -121,31 +88,32 @@ const ClinicalPharmacyTool = () => {
         });
     };
 
-    const handleDynamicLabChange = (testName, value) => {
-        setFormData(prev => ({
-            ...prev,
-            dynamicLabs: {
-                ...prev.dynamicLabs,
-                [testName]: value
-            }
-        }));
-    };
-
     // Medication handlers
-    const addMedication = () => {
-        setFormData({
-            ...formData,
-            medications: [
-                ...formData.medications,
-                { drug_name: '', dose: '', frequency: '', route: '' }
-            ]
-        });
+    const handleAddMedicationClick = () => {
+        setShowMedicationInput(true);
+        setNewMedication({ drug_name: '', dose: '', frequency: '', route: '' });
     };
 
-    const updateMedication = (index, field, value) => {
-        const newMeds = [...formData.medications];
-        newMeds[index][field] = value;
-        setFormData({ ...formData, medications: newMeds });
+    const handleNewMedicationChange = (field, value) => {
+        setNewMedication({ ...newMedication, [field]: value });
+    };
+
+    const handleSaveMedication = () => {
+        if (newMedication.drug_name.trim()) {
+            setFormData({
+                ...formData,
+                medications: [...formData.medications, { ...newMedication }]
+            });
+            setShowMedicationInput(false);
+            setNewMedication({ drug_name: '', dose: '', frequency: '', route: '' });
+        } else {
+            alert('Please enter at least the drug name');
+        }
+    };
+
+    const handleCancelMedication = () => {
+        setShowMedicationInput(false);
+        setNewMedication({ drug_name: '', dose: '', frequency: '', route: '' });
     };
 
     const removeMedication = (index) => {
@@ -178,12 +146,14 @@ const ClinicalPharmacyTool = () => {
             oxygen_saturation: formData.oxygen_saturation,
         },
         labs: {
-            // Map dynamic labs into the format expected by CDSS (lowercased, spaces to underscores)
-            ...Object.entries(formData.dynamicLabs).reduce((acc, [key, value]) => {
-                const normalizedKey = key.toLowerCase().replace(/[\s\(\)]+/g, '_').replace(/_+$/, '');
-                acc[normalizedKey] = value;
-                return acc;
-            }, {})
+            creatinine: formData.creatinine,
+            alt: formData.alt,
+            ast: formData.ast,
+            potassium: formData.potassium,
+            sodium: formData.sodium,
+            hemoglobin: formData.hemoglobin,
+            wbc_count: formData.wbc_count,
+            platelet_count: formData.platelet_count,
         },
         medication_history: formData.medications,
         allergies: [], // Add if needed later
@@ -513,11 +483,130 @@ const ClinicalPharmacyTool = () => {
                     </div>
                 </div>
                 <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+<<<<<<< HEAD
+                    <h1 className="text-2xl md:text-base font-bold text-gray-800">Fill medication(s) to be reviewed</h1>
+                    {/* Medications - Always visible */}
+                    <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-purple-500">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                                <FaPills className="text-purple-500" /> Medications
+                            </h3>
+                            {!showMedicationInput && (
+                                <button
+                                    onClick={handleAddMedicationClick}
+                                    className="flex items-center gap-2 text-sm bg-purple-100 text-purple-700 px-3 py-1.5 rounded-lg hover:bg-purple-200 font-medium"
+                                >
+                                    <FaPlus /> Add Medication
+                                </button>
+                            )}
+                        </div>
+                
+                        {/* Medication Input Form - Only shown when Add Medication is clicked */}
+                        {showMedicationInput && (
+                            <div className="bg-purple-50 p-4 rounded-lg border border-purple-200 mb-4">
+                                <div className="flex flex-col gap-3">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <input
+                                            type="text"
+                                            value={newMedication.drug_name}
+                                            onChange={(e) => handleNewMedicationChange('drug_name', e.target.value)}
+                                            className="flex-1 min-w-[120px] p-2 border border-gray-300 rounded bg-white text-sm focus:ring-2 focus:ring-purple-500"
+                                            placeholder="Drug name *"
+                                        />
+                                        <span className="text-gray-400 text-sm font-bold">|</span>
+                                        <input
+                                            type="text"
+                                            value={newMedication.dose}
+                                            onChange={(e) => handleNewMedicationChange('dose', e.target.value)}
+                                            className="w-24 p-2 border border-gray-300 rounded bg-white text-sm focus:ring-2 focus:ring-purple-500"
+                                            placeholder="Dose"
+                                        />
+                                        <span className="text-gray-400 text-sm font-bold">|</span>
+                                        <input
+                                            type="text"
+                                            value={newMedication.frequency}
+                                            onChange={(e) => handleNewMedicationChange('frequency', e.target.value)}
+                                            className="w-24 p-2 border border-gray-300 rounded bg-white text-sm focus:ring-2 focus:ring-purple-500"
+                                            placeholder="Freq"
+                                        />
+                                        <span className="text-gray-400 text-sm font-bold">|</span>
+                                        <input
+                                            type="text"
+                                            value={newMedication.route}
+                                            onChange={(e) => handleNewMedicationChange('route', e.target.value)}
+                                            className="w-24 p-2 border border-gray-300 rounded bg-white text-sm focus:ring-2 focus:ring-purple-500"
+                                            placeholder="Route"
+                                        />
+                                    </div>
+                                    <div className="flex gap-2 justify-end">
+                                        <button
+                                            onClick={handleCancelMedication}
+                                            className="px-4 py-2 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={handleSaveMedication}
+                                            className="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium"
+                                        >
+                                            Save Medication
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
+                        {/* Saved Medications Display - Only show when medications exist */}
+                        {formData.medications.length > 0 && (
+                            <>
+                                {/* Temporary Storage Display - Single Line */}
+                                <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                    <div className="flex items-start gap-2">
+                                        <span className="text-blue-600 font-medium text-sm whitespace-nowrap">📋 Saved:</span>
+                                        <span className="text-sm text-gray-700 break-all flex-1">
+                                            {formData.medications
+                                                .map(med => {
+                                                    const parts = [med.drug_name];
+                                                    if (med.dose) parts.push(med.dose);
+                                                    if (med.frequency) parts.push(med.frequency);
+                                                    if (med.route) parts.push(med.route);
+                                                    return parts.join(' ');
+                                                })
+                                                .join('; ')}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Individual medication delete */}
+                                {!showMedicationInput && (
+                                    <div className="mt-2 flex flex-wrap gap-1">
+                                        {formData.medications.map((med, index) => (
+                                            <span key={index} className="inline-flex items-center gap-1 bg-gray-100 px-2 py-1 rounded text-xs">
+                                                {med.drug_name}
+                                                {med.dose && ` ${med.dose}`}
+                                                {med.frequency && ` ${med.frequency}`}
+                                                {med.route && ` ${med.route}`}
+                                                <button
+                                                    onClick={() => removeMedication(index)}
+                                                    className="text-red-500 hover:text-red-700 ml-1"
+                                                    title="Remove this medication"
+                                                >
+                                                    <FaTimes className="w-3 h-3" />
+                                                </button>
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
+=======
+
+>>>>>>> 3db0050 (Move Medications to conditional rendering like other categories)
                 
                     <h2 className="text-lg font-semibold text-gray-800 mb-4">Which of the following data are you going to fill for the medication review?</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {allCategories.map(category => {
+                        {CATEGORIES.map(category => {
                             const isSelected = selectedCategories.includes(category.id);
                             return (
                                 <div
@@ -684,42 +773,100 @@ const ClinicalPharmacyTool = () => {
                             </div>
                         )}
 
-                        {/* Dynamic Lab Categories */}
-                        {dynamicLabCategories.map((category, idx) => {
-                            const catId = `dynamic_lab_${category}`;
-                            if (!selectedCategories.includes(catId)) return null;
-
-                            const categoryTests = labTests.filter(t => t.category === category);
-                            
-                            // Cycle through border colors for visual distinction
-                            const borderColors = ['border-blue-500', 'border-yellow-500', 'border-green-500', 'border-purple-500', 'border-red-500'];
-                            const borderColor = borderColors[idx % borderColors.length];
-                            
-                            return (
-                                <div key={catId} className={`bg-white rounded-xl shadow-sm p-6 border-l-4 ${borderColor}`}>
-                                    <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                        <FaVial className="text-gray-500" /> {category}
-                                    </h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        {categoryTests.map(test => (
-                                            <div key={test.id}>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                    {test.name} {test.unit ? `(${test.unit})` : ''}
-                                                </label>
-                                                <input
-                                                    type="number"
-                                                    step="0.01"
-                                                    value={formData.dynamicLabs[test.name] || ''}
-                                                    onChange={(e) => handleDynamicLabChange(test.name, e.target.value)}
-                                                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
-                                                    placeholder={test.range_male ? `Range: ${test.range_male}` : ''}
-                                                />
-                                            </div>
-                                        ))}
+                        {/* Labs */}
+                        {selectedCategories.includes('labs') && (
+                            <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-yellow-500">
+                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
+                                    <FaVial className="text-yellow-500" /> Labs
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Creatinine</label>
+                                        <input
+                                            type="number"
+                                            step="0.1"
+                                            name="creatinine"
+                                            value={formData.creatinine}
+                                            onChange={handleInputChange}
+                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">ALT</label>
+                                        <input
+                                            type="number"
+                                            name="alt"
+                                            value={formData.alt}
+                                            onChange={handleInputChange}
+                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">AST</label>
+                                        <input
+                                            type="number"
+                                            name="ast"
+                                            value={formData.ast}
+                                            onChange={handleInputChange}
+                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Potassium (K+)</label>
+                                        <input
+                                            type="number"
+                                            step="0.1"
+                                            name="potassium"
+                                            value={formData.potassium}
+                                            onChange={handleInputChange}
+                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Sodium (Na+)</label>
+                                        <input
+                                            type="number"
+                                            name="sodium"
+                                            value={formData.sodium}
+                                            onChange={handleInputChange}
+                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Hemoglobin</label>
+                                        <input
+                                            type="number"
+                                            step="0.1"
+                                            name="hemoglobin"
+                                            value={formData.hemoglobin}
+                                            onChange={handleInputChange}
+                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">WBC Count</label>
+                                        <input
+                                            type="number"
+                                            step="0.1"
+                                            name="wbc_count"
+                                            value={formData.wbc_count}
+                                            onChange={handleInputChange}
+                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Platelets</label>
+                                        <input
+                                            type="number"
+                                            name="platelet_count"
+                                            value={formData.platelet_count}
+                                            onChange={handleInputChange}
+                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                        />
                                     </div>
                                 </div>
-                            );
-                        })}
+                            </div>
+                        )}
 
                         {/* Diagnosis */}
                         {selectedCategories.includes('diagnosis') && (
