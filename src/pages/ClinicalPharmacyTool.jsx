@@ -559,21 +559,6 @@ const ClinicalPharmacyTool = () => {
                         {formData.medications.length > 0 && (
                             <>
                                 {/* Temporary Storage Display - Single Line */}
-                                <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                                    <div className="flex items-start gap-2">
-                                        <span className="text-sm text-gray-700 break-all flex-1">
-                                            {formData.medications
-                                                .map(med => {
-                                                    const parts = [med.drug_name];
-                                                    if (med.dose) parts.push(med.dose);
-                                                    if (med.frequency) parts.push(med.frequency);
-                                                    if (med.route) parts.push(med.route);
-                                                    return parts.join(' ');
-                                                })
-                                                .join('; ')}
-                                        </span>
-                                    </div>
-                                </div>
 
                                 {/* Individual medication delete */}
                                 {!showMedicationInput && (
