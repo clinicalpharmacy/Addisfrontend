@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     FaUser, FaWeight, FaHeartbeat, FaVial, FaNotesMedical,
@@ -6,34 +6,60 @@ import {
     FaUserShield, FaRobot, FaMoneyBillWave, FaFileMedical, FaChartLine,
     FaCopy, FaTimes
 } from 'react-icons/fa';
+import supabase from '../utils/supabase';
 import CDSSDisplay from '../components/CDSS/CDSSDisplay';
 import DRNAssessment from '../components/Patient/DRNAssessment';
 import PhAssistPlan from '../components/Patient/PhAssistPlan';
 import PatientOutcome from '../components/Patient/PatientOutcome';
 import CostSection from '../components/Patient/CostSection';
 
-const CATEGORIES = [
+const BASE_CATEGORIES = [
     { id: 'demography', label: 'Demography (Age & Gender)', icon: FaUser },
     { id: 'anthropometry', label: 'Anthropometry', icon: FaWeight },
-    { id: 'vitals', label: 'Vitals', icon: FaHeartbeat },
-    { id: 'renal_function', label: 'Renal Function Tests', icon: FaVial },
-    { id: 'electrolytes', label: 'Electrolytes', icon: FaVial },
-    { id: 'liver_function', label: 'Liver Function Tests', icon: FaVial },
-    { id: 'cbc_hematology', label: 'CBC / Hematology', icon: FaVial },
-    { id: 'lipid_profile', label: 'Lipid Profile', icon: FaVial },
-    { id: 'coagulation', label: 'Coagulation Tests', icon: FaVial },
-    { id: 'urinalysis', label: 'Urinalysis', icon: FaVial },
-    { id: 'general_labs', label: 'General Labs', icon: FaVial },
+    { id: 'vitals', label: 'Vitals', icon: FaHeartbeat }
+];
+
+const END_CATEGORIES = [
     { id: 'diagnosis', label: 'Diagnosis', icon: FaNotesMedical },
     { id: 'special_conditions', label: 'Special Conditions', icon: FaExclamationCircle },
     { id: 'medications', label: 'Medications', icon: FaPills }
 ];
-
 const ClinicalPharmacyTool = () => {
     const navigate = useNavigate();
     const [selectedCategories, setSelectedCategories] = useState([]);
     const [showAnalysis, setShowAnalysis] = useState(false);
     const [activeTab, setActiveTab] = useState('analysis');
+    const [dbLabs, setDbLabs] = useState([]);
+
+    useEffect(() => {
+        const fetchLabs = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('lab_tests')
+                    .select('*')
+                    .eq('is_active', true)
+                    .order('category', { ascending: true })
+                    .order('name', { ascending: true });
+                if (!error && data) {
+                    setDbLabs(data);
+                }
+            } catch (err) {
+                console.error("Error fetching labs:", err);
+            }
+        };
+        fetchLabs();
+    }, []);
+
+    const dynamicCategories = useMemo(() => {
+        const labCategories = [...new Set(dbLabs.map(lab => lab.category))].map(cat => ({
+            id: cat.toLowerCase().replace(/ /g, '_'),
+            label: cat,
+            icon: FaVial,
+            isLab: true,
+            originalCategoryName: cat
+        }));
+        return [...BASE_CATEGORIES, ...labCategories, ...END_CATEGORIES];
+    }, [dbLabs]);
 
     // Tab Data States for PDF
     const [cdssData, setCdssData] = useState([]);
@@ -57,64 +83,15 @@ const ClinicalPharmacyTool = () => {
         respiratory_rate: '',
         temperature: '',
         oxygen_saturation: '',
-        // Labs - Renal Function
-        bun: '',
-        creatinine: '',
-        gfr: '',
-        // Labs - Electrolytes
-        sodium: '',
-        potassium: '',
-        chloride: '',
-        calcium: '',
-        magnesium: '',
-        phosphate: '',
-        // Labs - Liver Function
-        alt: '',
-        ast: '',
-        alp: '',
-        total_bilirubin: '',
-        direct_bilirubin: '',
-        albumin: '',
-        total_protein: '',
-        // Labs - CBC / Hematology
-        wbc_count: '',
-        rbc_count: '',
-        hemoglobin: '',
-        hematocrit: '',
-        platelet_count: '',
-        mcv: '',
-        mch: '',
-        mchc: '',
-        // Labs - Lipid Profile
-        total_cholesterol: '',
-        ldl: '',
-        hdl: '',
-        triglycerides: '',
-        // Labs - Coagulation
-        pt: '',
-        inr: '',
-        aptt: '',
-        fibrinogen: '',
-        // Labs - Urinalysis
-        urine_ph: '',
-        specific_gravity: '',
-        urine_protein: '',
-        urine_glucose: '',
-        urine_blood: '',
-        // Labs - General
-        fasting_glucose: '',
-        hba1c: '',
-        tsh: '',
-        uric_acid: '',
-        // Diagnosis
-        diagnosis: '',
         // Special Conditions
         kidney_failure: false,
         liver_failure: false,
         is_pregnant: false,
         is_lactating: false,
         // Medications
-        medications: []
+        medications: [],
+        // Dynamic Labs Storage
+        dynamic_labs: {}
     });
 
     const handleCategoryToggle = (categoryId) => {
@@ -130,6 +107,17 @@ const ClinicalPharmacyTool = () => {
         setFormData({
             ...formData,
             [name]: type === 'checkbox' ? checked : value
+        });
+    };
+
+    const handleDynamicLabChange = (e) => {
+        const { name, value } = e.target;
+        setFormData({
+            ...formData,
+            dynamic_labs: {
+                ...formData.dynamic_labs,
+                [name]: value
+            }
         });
     };
 
@@ -187,20 +175,7 @@ const ClinicalPharmacyTool = () => {
             oxygen_saturation: formData.oxygen_saturation,
         },
         labs: {
-            bun: formData.bun, creatinine: formData.creatinine, gfr: formData.gfr,
-            sodium: formData.sodium, potassium: formData.potassium, chloride: formData.chloride,
-            calcium: formData.calcium, magnesium: formData.magnesium, phosphate: formData.phosphate,
-            alt: formData.alt, ast: formData.ast, alp: formData.alp,
-            total_bilirubin: formData.total_bilirubin, direct_bilirubin: formData.direct_bilirubin,
-            albumin: formData.albumin, total_protein: formData.total_protein,
-            wbc_count: formData.wbc_count, rbc_count: formData.rbc_count, hemoglobin: formData.hemoglobin,
-            hematocrit: formData.hematocrit, platelet_count: formData.platelet_count,
-            mcv: formData.mcv, mch: formData.mch, mchc: formData.mchc,
-            total_cholesterol: formData.total_cholesterol, ldl: formData.ldl, hdl: formData.hdl, triglycerides: formData.triglycerides,
-            pt: formData.pt, inr: formData.inr, aptt: formData.aptt, fibrinogen: formData.fibrinogen,
-            urine_ph: formData.urine_ph, specific_gravity: formData.specific_gravity,
-            urine_protein: formData.urine_protein, urine_glucose: formData.urine_glucose, urine_blood: formData.urine_blood,
-            fasting_glucose: formData.fasting_glucose, hba1c: formData.hba1c, tsh: formData.tsh, uric_acid: formData.uric_acid,
+            ...formData.dynamic_labs
         },
         medication_history: formData.medications,
         allergies: [], // Add if needed later
@@ -533,7 +508,7 @@ const ClinicalPharmacyTool = () => {
 
                     <h2 className="text-lg font-semibold text-gray-800 mb-4">Which of the following data are you going to fill for the medication review?</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {CATEGORIES.map(category => {
+                        {dynamicCategories.map(category => {
                             const isSelected = selectedCategories.includes(category.id);
                             return (
                                 <div
@@ -700,117 +675,36 @@ const ClinicalPharmacyTool = () => {
                             </div>
                         )}
 
-                        {/* Renal Function Tests */}
-                        {selectedCategories.includes('renal_function') && (
-                            <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500 mb-6">
+                        {/* Dynamic Lab Categories */}
+                        {dynamicCategories.filter(c => c.isLab && selectedCategories.includes(c.id)).map(cat => (
+                            <div key={cat.id} className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500 mb-6">
                                 <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                    <FaVial className="text-blue-500" /> Renal Function Tests
+                                    <FaVial className="text-blue-500" /> {cat.label}
                                 </h3>
                                 <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                        {[{n:'bun',l:'BUN (mg/dL)'},{n:'creatinine',l:'Creatinine (mg/dL)'},{n:'gfr',l:'GFR / eGFR (mL/min)'}].map(f=><div key={f.n}><label className="block text-xs font-medium text-gray-700 mb-1">{f.l}</label><input type="number" step="0.1" name={f.n} value={formData[f.n]} onChange={handleInputChange} className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" /></div>)}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Electrolytes */}
-                        {selectedCategories.includes('electrolytes') && (
-                            <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-green-500 mb-6">
-                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                    <FaVial className="text-green-500" /> Electrolytes
-                                </h3>
-                                <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                        {[{n:'sodium',l:'Sodium Na+ (mEq/L)'},{n:'potassium',l:'Potassium K+ (mEq/L)'},{n:'chloride',l:'Chloride Cl⁻ (mEq/L)'},{n:'calcium',l:'Calcium Ca²+ (mg/dL)'},{n:'magnesium',l:'Magnesium Mg²+ (mg/dL)'},{n:'phosphate',l:'Phosphate PO₄ (mg/dL)'}].map(f=><div key={f.n}><label className="block text-xs font-medium text-gray-700 mb-1">{f.l}</label><input type="number" step="0.1" name={f.n} value={formData[f.n]} onChange={handleInputChange} className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" /></div>)}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Liver Function Tests */}
-                        {selectedCategories.includes('liver_function') && (
-                            <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-amber-500 mb-6">
-                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                    <FaVial className="text-amber-500" /> Liver Function Tests
-                                </h3>
-                                <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                        {[{n:'alt',l:'ALT (U/L)'},{n:'ast',l:'AST (U/L)'},{n:'alp',l:'ALP (U/L)'},{n:'total_bilirubin',l:'Total Bilirubin (mg/dL)'},{n:'direct_bilirubin',l:'Direct Bilirubin (mg/dL)'},{n:'albumin',l:'Albumin (g/dL)'},{n:'total_protein',l:'Total Protein (g/dL)'}].map(f=><div key={f.n}><label className="block text-xs font-medium text-gray-700 mb-1">{f.l}</label><input type="number" step="0.1" name={f.n} value={formData[f.n]} onChange={handleInputChange} className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" /></div>)}
+                                        {dbLabs.filter(lab => lab.category === cat.originalCategoryName).map(lab => {
+                                            const key = lab.name.toLowerCase().replace(/ /g, '_');
+                                            return (
+                                                <div key={lab.id}>
+                                                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                        {lab.name} {lab.unit ? `(${lab.unit})` : ''}
+                                                    </label>
+                                                    <input 
+                                                        type="number" 
+                                                        step="any" 
+                                                        name={key} 
+                                                        value={formData.dynamic_labs[key] || ''} 
+                                                        onChange={handleDynamicLabChange} 
+                                                        className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" 
+                                                    />
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             </div>
-                        )}
-
-                        {/* Complete Blood Count / Hematology */}
-                        {selectedCategories.includes('cbc_hematology') && (
-                            <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-red-500 mb-6">
-                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                    <FaVial className="text-red-500" /> CBC / Hematology
-                                </h3>
-                                <div className="bg-red-50 rounded-lg p-4 border border-red-200">
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                        {[{n:'wbc_count',l:'WBC (×10³/µL)'},{n:'rbc_count',l:'RBC (×10⁶/µL)'},{n:'hemoglobin',l:'Hemoglobin (g/dL)'},{n:'hematocrit',l:'Hematocrit (%)'},{n:'platelet_count',l:'Platelets (×10³/µL)'},{n:'mcv',l:'MCV (fL)'},{n:'mch',l:'MCH (pg)'},{n:'mchc',l:'MCHC (g/dL)'}].map(f=><div key={f.n}><label className="block text-xs font-medium text-gray-700 mb-1">{f.l}</label><input type="number" step="0.1" name={f.n} value={formData[f.n]} onChange={handleInputChange} className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" /></div>)}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Lipid Profile */}
-                        {selectedCategories.includes('lipid_profile') && (
-                            <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-purple-500 mb-6">
-                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                    <FaVial className="text-purple-500" /> Lipid Profile
-                                </h3>
-                                <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                        {[{n:'total_cholesterol',l:'Total Cholesterol (mg/dL)'},{n:'ldl',l:'LDL (mg/dL)'},{n:'hdl',l:'HDL (mg/dL)'},{n:'triglycerides',l:'Triglycerides (mg/dL)'}].map(f=><div key={f.n}><label className="block text-xs font-medium text-gray-700 mb-1">{f.l}</label><input type="number" step="0.1" name={f.n} value={formData[f.n]} onChange={handleInputChange} className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" /></div>)}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Coagulation Tests */}
-                        {selectedCategories.includes('coagulation') && (
-                            <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-orange-500 mb-6">
-                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                    <FaVial className="text-orange-500" /> Coagulation Tests
-                                </h3>
-                                <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                        {[{n:'pt',l:'PT (seconds)'},{n:'inr',l:'INR'},{n:'aptt',l:'aPTT (seconds)'},{n:'fibrinogen',l:'Fibrinogen (mg/dL)'}].map(f=><div key={f.n}><label className="block text-xs font-medium text-gray-700 mb-1">{f.l}</label><input type="number" step="0.1" name={f.n} value={formData[f.n]} onChange={handleInputChange} className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" /></div>)}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Urinalysis */}
-                        {selectedCategories.includes('urinalysis') && (
-                            <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-cyan-500 mb-6">
-                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                    <FaVial className="text-cyan-500" /> Urinalysis
-                                </h3>
-                                <div className="bg-cyan-50 rounded-lg p-4 border border-cyan-200">
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                        {[{n:'urine_ph',l:'pH'},{n:'specific_gravity',l:'Specific Gravity'},{n:'urine_protein',l:'Protein'},{n:'urine_glucose',l:'Glucose'},{n:'urine_blood',l:'Blood'}].map(f=><div key={f.n}><label className="block text-xs font-medium text-gray-700 mb-1">{f.l}</label><input type="text" name={f.n} value={formData[f.n]} onChange={handleInputChange} className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" /></div>)}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* General */}
-                        {selectedCategories.includes('general_labs') && (
-                            <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-gray-500 mb-6">
-                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                    <FaVial className="text-gray-500" /> General Labs
-                                </h3>
-                                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                        {[{n:'fasting_glucose',l:'Fasting Glucose (mg/dL)'},{n:'hba1c',l:'HbA1c (%)'},{n:'tsh',l:'TSH (mIU/L)'},{n:'uric_acid',l:'Uric Acid (mg/dL)'}].map(f=><div key={f.n}><label className="block text-xs font-medium text-gray-700 mb-1">{f.l}</label><input type="number" step="0.1" name={f.n} value={formData[f.n]} onChange={handleInputChange} className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" /></div>)}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+                        ))}
 
                         {/* Diagnosis */}
                         {selectedCategories.includes('diagnosis') && (
