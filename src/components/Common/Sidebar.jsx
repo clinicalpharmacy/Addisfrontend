@@ -190,7 +190,7 @@ const Sidebar = ({ onClose }) => {
                                 >
                                     <div className="flex items-center gap-2.5 w-full">
                                         <FaUserInjured className="text-xl group-hover:scale-110 transition-transform" />
-                                        <span className="text-lg">Clinical Pharmacy Tool</span>
+                                        <span className="text-base">Clinical Pharmacy Tool</span>
                                         {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
                                     </div>
                                 </NavLink>
