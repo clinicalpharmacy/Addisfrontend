@@ -309,6 +309,19 @@ const ClinicalPharmacyTool = () => {
                 });
             }
 
+            // --- DISCLAIMER & PAGE NUMBERS ---
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.setTextColor(156, 163, 175);
+                doc.text(
+                    'DISCLAIMER: This clinical analysis report only gives information & it cannot replace the decision of a health professional.',
+                    15, 285
+                );
+                doc.text(`Page ${i} of ${pageCount}`, 180, 285);
+            }
+
             doc.save(`Comprehensive_Report_${new Date().toISOString().split('T')[0]}.pdf`);
         } catch (error) {
             console.error('PDF Generation Error:', error);
