@@ -175,6 +175,29 @@ const QuickSafetyCheck = () => {
         return filtered;
     };
 
+    // Format interaction display text
+    const formatInteractionDisplay = (interaction) => {
+        // If it already has the warning emoji, return as is
+        if (interaction.includes('⚠️')) {
+            return interaction;
+        }
+        
+        // If it's a generic interaction without drug combination, format it
+        if (!interaction.includes(' + ')) {
+            // Extract drug name from the interaction
+            const drugMatch = interaction.match(/^([^—]+)/);
+            if (drugMatch) {
+                const drug = drugMatch[1].trim();
+                // Show the interaction with the drug name
+                return `⚠️ ${interaction}`;
+            }
+            return `⚠️ ${interaction}`;
+        }
+        
+        // For drug combinations, add warning emoji
+        return `⚠️ ${interaction}`;
+    };
+
     // Check if there are any interactions to show
     const hasInteractionsToShow = () => {
         if (!result || !result.major_interactions) return false;
@@ -383,9 +406,22 @@ const QuickSafetyCheck = () => {
                                                 })
                                                 .map((interaction, i) => {
                                                     let displayText = interaction;
-                                                    if (!displayText.includes('⚠️')) {
+                                                    
+                                                    // For single drug, format to show the drug name clearly
+                                                    if (medList.length === 1 && !interaction.includes(' + ')) {
+                                                        // Try to extract the drug name from the interaction
+                                                        const drugMatch = interaction.match(/^([^—]+)/);
+                                                        if (drugMatch) {
+                                                            const drug = drugMatch[1].trim();
+                                                            // Show the interaction with the drug name
+                                                            displayText = `⚠️ ${interaction}`;
+                                                        } else {
+                                                            displayText = `⚠️ ${interaction}`;
+                                                        }
+                                                    } else if (!displayText.includes('⚠️')) {
                                                         displayText = `⚠️ ${displayText}`;
                                                     }
+                                                    
                                                     return <li key={i}>{displayText}</li>;
                                                 })
                                             }
@@ -411,9 +447,14 @@ const QuickSafetyCheck = () => {
                                                 })
                                                 .map((incompatibility, i) => {
                                                     let displayText = incompatibility;
-                                                    if (!displayText.includes('⚠️')) {
+                                                    
+                                                    // For single drug, format to show the drug name clearly
+                                                    if (medList.length === 1 && !incompatibility.includes(' + ')) {
+                                                        displayText = `⚠️ ${incompatibility}`;
+                                                    } else if (!displayText.includes('⚠️')) {
                                                         displayText = `⚠️ ${displayText}`;
                                                     }
+                                                    
                                                     return <li key={i}>{displayText}</li>;
                                                 })
                                             }
