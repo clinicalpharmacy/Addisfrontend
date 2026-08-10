@@ -115,6 +115,11 @@ const QuickSafetyCheck = () => {
         }
     };
 
+    // Check if we're searching for a single medication
+    const isSingleMedication = () => {
+        return medList.length === 1;
+    };
+
     // Get unsafe categories only with filtering
     const getFilteredUnsafeCategories = () => {
         if (!result || !result.categories) return [];
@@ -137,26 +142,40 @@ const QuickSafetyCheck = () => {
         return getFilteredUnsafeCategories().length > 0;
     };
 
-    // Check if we're searching for a single medication
-    const isSingleMedication = () => {
-        return medList.length === 1;
+    // Helper function to check if interaction contains drug names
+    const containsSearchedDrugs = (text) => {
+        return medList.some(med => 
+            text.toLowerCase().includes(med.toLowerCase())
+        );
+    };
+
+    // Helper function to check if text is a generic message or specific interaction
+    const isGenericMessage = (text) => {
+        const genericPhrases = [
+            'አንድ ላይ ለመውሰድ የማይመከሩ',
+            'IV Drug Incompatibility',
+            'Major Drug Interactions'
+        ];
+        return genericPhrases.some(phrase => text.includes(phrase));
     };
 
     // Get filtered interactions - shows all for single drug, filtered for multiple
     const getFilteredInteractions = () => {
         if (!result || !result.major_interactions) return [];
         
-        // If only one drug is searched, show ALL interactions
+        // If only one drug is searched, show ALL interactions but filter out generic messages
         if (isSingleMedication()) {
-            return result.major_interactions;
+            return result.major_interactions.filter(interaction => 
+                !isGenericMessage(interaction)
+            );
         }
         
         // For multiple drugs, filter to show only interactions that contain the searched drugs
         const filtered = result.major_interactions.filter(interaction => {
+            // Skip generic messages
+            if (isGenericMessage(interaction)) return false;
             // Check if the interaction contains any of the searched drugs
-            return medList.some(med => 
-                interaction.toLowerCase().includes(med.toLowerCase())
-            );
+            return containsSearchedDrugs(interaction);
         });
         
         return filtered;
@@ -166,16 +185,19 @@ const QuickSafetyCheck = () => {
     const getFilteredIVIncompatibilities = () => {
         if (!result || !result.iv_incompatibility) return [];
         
-        // If only one drug is searched, show ALL incompatibilities
+        // If only one drug is searched, show ALL incompatibilities but filter out generic messages
         if (isSingleMedication()) {
-            return result.iv_incompatibility;
+            return result.iv_incompatibility.filter(incompatibility => 
+                !isGenericMessage(incompatibility)
+            );
         }
         
         // For multiple drugs, filter to show only incompatibilities that contain the searched drugs
         const filtered = result.iv_incompatibility.filter(incompatibility => {
-            return medList.some(med => 
-                incompatibility.toLowerCase().includes(med.toLowerCase())
-            );
+            // Skip generic messages
+            if (isGenericMessage(incompatibility)) return false;
+            // Check if the incompatibility contains any of the searched drugs
+            return containsSearchedDrugs(incompatibility);
         });
         
         return filtered;
@@ -189,11 +211,13 @@ const QuickSafetyCheck = () => {
         const filtered = getFilteredInteractions();
         
         if (isSingleMedication()) {
-            // For single medication, show all interactions
+            // For single medication, show if there are any specific interactions
             return filtered && filtered.length > 0;
         } else {
-            // For multiple medications, filter out entries without ' + ' to show only drug combinations
-            const withDrugCombinations = filtered.filter(item => item.includes(' + '));
+            // For multiple medications, filter to show only interactions with drug combinations
+            const withDrugCombinations = filtered.filter(item => 
+                item.includes(' + ') || item.toLowerCase().includes('with')
+            );
             return withDrugCombinations && withDrugCombinations.length > 0;
         }
     };
@@ -207,11 +231,13 @@ const QuickSafetyCheck = () => {
         const filtered = getFilteredIVIncompatibilities();
         
         if (isSingleMedication()) {
-            // For single medication, show all incompatibilities
+            // For single medication, show if there are any specific incompatibilities
             return filtered && filtered.length > 0;
         } else {
-            // For multiple medications, filter out entries without ' + ' to show only drug combinations
-            const withDrugCombinations = filtered.filter(item => item.includes(' + '));
+            // For multiple medications, filter to show only incompatibilities with drug combinations
+            const withDrugCombinations = filtered.filter(item => 
+                item.includes(' + ') || item.toLowerCase().includes('with')
+            );
             return withDrugCombinations && withDrugCombinations.length > 0;
         }
     };
@@ -233,6 +259,16 @@ const QuickSafetyCheck = () => {
 
     const shouldShowIVCategory = () => {
         return !isHealthcareClient;
+    };
+
+    // Helper function to format interaction display
+    const formatInteractionDisplay = (interaction) => {
+        // If it already has a warning emoji, return as is
+        if (interaction.includes('⚠️')) {
+            return interaction;
+        }
+        // Add warning emoji
+        return `⚠️ ${interaction}`;
     };
 
     return (
@@ -381,25 +417,20 @@ const QuickSafetyCheck = () => {
                                         </h4>
                                         <ul className="list-disc list-inside space-y-2 text-amber-800 font-medium ml-2">
                                             {isSingleMedication() ? (
-                                                // For single medication - show ALL interactions
-                                                getFilteredInteractions().map((interaction, i) => {
-                                                    let displayText = interaction;
-                                                    if (!displayText.includes('⚠️')) {
-                                                        displayText = `⚠️ ${displayText}`;
-                                                    }
-                                                    return <li key={i}>{displayText}</li>;
-                                                })
+                                                // For single medication - show ALL specific interactions
+                                                getFilteredInteractions().map((interaction, i) => (
+                                                    <li key={i}>{formatInteractionDisplay(interaction)}</li>
+                                                ))
                                             ) : (
                                                 // For multiple medications - filter to show only interactions with drug combinations
                                                 getFilteredInteractions()
-                                                    .filter(interaction => interaction.includes(' + '))
-                                                    .map((interaction, i) => {
-                                                        let displayText = interaction;
-                                                        if (!displayText.includes('⚠️')) {
-                                                            displayText = `⚠️ ${displayText}`;
-                                                        }
-                                                        return <li key={i}>{displayText}</li>;
-                                                    })
+                                                    .filter(interaction => 
+                                                        interaction.includes(' + ') || 
+                                                        interaction.toLowerCase().includes('with')
+                                                    )
+                                                    .map((interaction, i) => (
+                                                        <li key={i}>{formatInteractionDisplay(interaction)}</li>
+                                                    ))
                                             )}
                                         </ul>
                                     </div>
@@ -413,25 +444,20 @@ const QuickSafetyCheck = () => {
                                         </h4>
                                         <ul className="list-disc list-inside space-y-2 text-red-800 font-medium ml-2">
                                             {isSingleMedication() ? (
-                                                // For single medication - show ALL incompatibilities
-                                                getFilteredIVIncompatibilities().map((incompatibility, i) => {
-                                                    let displayText = incompatibility;
-                                                    if (!displayText.includes('⚠️')) {
-                                                        displayText = `⚠️ ${displayText}`;
-                                                    }
-                                                    return <li key={i}>{displayText}</li>;
-                                                })
+                                                // For single medication - show ALL specific incompatibilities
+                                                getFilteredIVIncompatibilities().map((incompatibility, i) => (
+                                                    <li key={i}>{formatInteractionDisplay(incompatibility)}</li>
+                                                ))
                                             ) : (
                                                 // For multiple medications - filter to show only incompatibilities with drug combinations
                                                 getFilteredIVIncompatibilities()
-                                                    .filter(incompatibility => incompatibility.includes(' + '))
-                                                    .map((incompatibility, i) => {
-                                                        let displayText = incompatibility;
-                                                        if (!displayText.includes('⚠️')) {
-                                                            displayText = `⚠️ ${displayText}`;
-                                                        }
-                                                        return <li key={i}>{displayText}</li>;
-                                                    })
+                                                    .filter(incompatibility => 
+                                                        incompatibility.includes(' + ') || 
+                                                        incompatibility.toLowerCase().includes('with')
+                                                    )
+                                                    .map((incompatibility, i) => (
+                                                        <li key={i}>{formatInteractionDisplay(incompatibility)}</li>
+                                                    ))
                                             )}
                                         </ul>
                                     </div>
