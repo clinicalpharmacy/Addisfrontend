@@ -155,20 +155,70 @@ const QuickSafetyCheck = () => {
         return getFilteredUnsafeCategories().length > 0;
     };
 
+    // Get filtered interactions based on category selection
+    const getFilteredInteractions = () => {
+        if (!result || !result.major_interactions) return [];
+        
+        // For single drug search (medList length === 1), show all interactions
+        if (medList.length === 1) {
+            return result.major_interactions;
+        }
+        
+        // For multiple drugs, filter to show only interactions between the searched drugs
+        return result.major_interactions.filter(interaction => {
+            // Check if the interaction contains any of the searched drugs
+            const hasSearchedDrug = medList.some(med => 
+                interaction.toLowerCase().includes(med.toLowerCase())
+            );
+            return hasSearchedDrug;
+        });
+    };
+
+    // Get filtered IV incompatibilities based on category selection
+    const getFilteredIVIncompatibilities = () => {
+        if (!result || !result.iv_incompatibility) return [];
+        
+        // For single drug search (medList length === 1), show all incompatibilities
+        if (medList.length === 1) {
+            return result.iv_incompatibility;
+        }
+        
+        // For multiple drugs, filter to show only incompatibilities between the searched drugs
+        return result.iv_incompatibility.filter(incompatibility => {
+            // Check if the incompatibility contains any of the searched drugs
+            const hasSearchedDrug = medList.some(med => 
+                incompatibility.toLowerCase().includes(med.toLowerCase())
+            );
+            return hasSearchedDrug;
+        });
+    };
+
+    // Check if there are any interactions to show
+    const hasInteractionsToShow = () => {
+        if (!result || !result.major_interactions) return false;
+        if (selectedCategory !== 'all' && selectedCategory !== 'drug_interactions') return false;
+        
+        const filtered = getFilteredInteractions();
+        return filtered && filtered.length > 0;
+    };
+
+    // Check if there are any IV incompatibilities to show
+    const hasIVIncompatibilityToShow = () => {
+        if (isHealthcareClient) return false;
+        if (!result || !result.iv_incompatibility) return false;
+        if (selectedCategory !== 'all' && selectedCategory !== 'iv_incompatibility') return false;
+        
+        const filtered = getFilteredIVIncompatibilities();
+        return filtered && filtered.length > 0;
+    };
+
     // Check if there's any data to show
     const hasAnyDataToShow = () => {
         if (!result) return false;
         
         const hasUnsafe = hasUnsafeInFiltered();
-        const hasInteractions = (selectedCategory === 'all' || selectedCategory === 'drug_interactions') && 
-                               result.major_interactions && result.major_interactions.length > 0;
-        
-        // Only check IV incompatibility if NOT healthcare_client
-        let hasIVIncompatibility = false;
-        if (!isHealthcareClient) {
-            hasIVIncompatibility = (selectedCategory === 'all' || selectedCategory === 'iv_incompatibility') && 
-                                   result.iv_incompatibility && result.iv_incompatibility.length > 0;
-        }
+        const hasInteractions = hasInteractionsToShow();
+        const hasIVIncompatibility = hasIVIncompatibilityToShow();
         
         // DEBUG: Log what's being detected
         console.log('hasUnsafe:', hasUnsafe);
@@ -320,19 +370,16 @@ const QuickSafetyCheck = () => {
                                     </div>
                                 )}
 
-                                {/* Major Drug Interactions - Simple pattern matching */}
-                                {(selectedCategory === 'all' || selectedCategory === 'drug_interactions') && 
-                                 result.major_interactions && result.major_interactions.length > 0 && (
+                                {/* Major Drug Interactions - Show only when there are interactions */}
+                                {hasInteractionsToShow() && (
                                     <div className="bg-amber-50 rounded-2xl p-6 md:p-8 shadow-sm border border-amber-200 mt-6">
                                         <h4 className="text-xl font-bold text-amber-900 flex items-center gap-2 mb-4">
                                             <FaPills className="text-amber-600" /> Major Drug Interactions (Avoid With)
                                         </h4>
                                         <ul className="list-disc list-inside space-y-2 text-amber-800 font-medium ml-2">
-                                            {result.major_interactions
-                                                // Filter to show only entries that contain " + " (space plus space)
+                                            {getFilteredInteractions()
                                                 .filter(interaction => interaction.includes(' + '))
                                                 .map((interaction, i) => {
-                                                    // Ensure it has the right format
                                                     let displayText = interaction;
                                                     if (!displayText.includes('⚠️')) {
                                                         displayText = `⚠️ ${displayText}`;
@@ -344,20 +391,16 @@ const QuickSafetyCheck = () => {
                                     </div>
                                 )}
                                 
-                                {/* IV Drug Incompatibility - Simple pattern matching */}
-                                {!isHealthcareClient && 
-                                 (selectedCategory === 'all' || selectedCategory === 'iv_incompatibility') && 
-                                 result.iv_incompatibility && result.iv_incompatibility.length > 0 && (
+                                {/* IV Drug Incompatibility - Show only when there are incompatibilities */}
+                                {hasIVIncompatibilityToShow() && (
                                     <div className="bg-red-50 rounded-2xl p-6 md:p-8 shadow-sm border border-red-200 mt-6">
                                         <h4 className="text-xl font-bold text-red-900 flex items-center gap-2 mb-4">
                                             <FaSyringe className="text-red-600" /> IV Drug Incompatibility (Do Not Mix)
                                         </h4>
                                         <ul className="list-disc list-inside space-y-2 text-red-800 font-medium ml-2">
-                                            {result.iv_incompatibility
-                                                // Filter to show only entries that contain " + " (space plus space)
+                                            {getFilteredIVIncompatibilities()
                                                 .filter(incompatibility => incompatibility.includes(' + '))
                                                 .map((incompatibility, i) => {
-                                                    // Ensure it has the right format
                                                     let displayText = incompatibility;
                                                     if (!displayText.includes('⚠️')) {
                                                         displayText = `⚠️ ${displayText}`;
