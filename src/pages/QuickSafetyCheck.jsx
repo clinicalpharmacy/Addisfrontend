@@ -42,10 +42,10 @@ const QuickSafetyCheck = () => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     
     // Check user roles
-    const isAdmin = user?.role === 'admin';
-    const isCompanyAdmin = user?.role === 'company_admin';
-    const isCompanyUser = !!user?.company_id || user?.account_type === 'company' || ['company_admin', 'company_user'].includes(user?.role);
-    const isIndividual = !isAdmin && !isCompanyUser;
+    // const isAdmin = user?.role === 'admin'; // Unused - can remove or keep
+    // const isCompanyAdmin = user?.role === 'company_admin'; // Unused
+    // const isCompanyUser = !!user?.company_id || user?.account_type === 'company' || ['company_admin', 'company_user'].includes(user?.role); // Unused
+    // const isIndividual = !isAdmin && !isCompanyUser; // Unused
     
     // Check if user is healthcare_client
     const isHealthcareClient = user?.role === 'healthcare_client' || user?.account_type === 'healthcare_client';
