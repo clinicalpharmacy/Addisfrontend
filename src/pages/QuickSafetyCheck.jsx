@@ -23,11 +23,10 @@ const CategoryTitle = ({ type }) => {
 
 const StatusBadge = ({ status }) => {
     const s = status?.toLowerCase() || '';
-    if (s.includes('contraindicate') || s.includes('avoid') || s.includes('unsafe') || 
-        s.includes('warning') || s.includes('caution') || s.includes('not recommended')) {
+    if (s.includes('contraindicate') || s.includes('avoid') || s.includes('unsafe')) {
         return <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"><FaExclamationCircle /> UNSAFE</span>;
     }
-    return <span className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"><FaInfoCircle /> CAUTION</span>;
+    return null;
 };
 
 const QuickSafetyCheck = () => {
@@ -101,7 +100,6 @@ const QuickSafetyCheck = () => {
                 const filteredProfile = filterIVIncompatibility(response.safetyProfile);
                 
                 console.log('Safety Profile:', filteredProfile);
-                console.log('Categories:', filteredProfile.categories);
                 console.log('Major Interactions:', filteredProfile.major_interactions);
                 console.log('IV Incompatibility:', filteredProfile.iv_incompatibility);
                 
@@ -117,32 +115,16 @@ const QuickSafetyCheck = () => {
         }
     };
 
-    // Get all categories with any data
-    const getAllCategories = () => {
-        if (!result || !result.categories) return [];
-        return Object.entries(result.categories);
-    };
-
-    // Get unsafe categories only with filtering - expanded status detection
+    // Get unsafe categories only with filtering
     const getFilteredUnsafeCategories = () => {
         if (!result || !result.categories) return [];
         
         const unsafe = Object.entries(result.categories)
             .filter(([key, data]) => {
                 const status = data.status?.toLowerCase() || '';
-                const details = data.details?.toLowerCase() || '';
-                // Check for any warning indicators
                 return status.includes('contraindicate') || 
                        status.includes('avoid') || 
-                       status.includes('unsafe') ||
-                       status.includes('warning') ||
-                       status.includes('caution') ||
-                       status.includes('not recommended') ||
-                       details.includes('contraindicate') ||
-                       details.includes('avoid') ||
-                       details.includes('unsafe') ||
-                       details.includes('warning') ||
-                       details.includes('caution');
+                       status.includes('unsafe');
             });
         
         if (selectedCategory === 'all') {
@@ -155,95 +137,81 @@ const QuickSafetyCheck = () => {
         return getFilteredUnsafeCategories().length > 0;
     };
 
-    // Helper function to check if interaction involves multiple searched drugs
-    const isCombinationInteraction = (interactionText) => {
-        if (!interactionText || !interactionText.includes(' + ')) return false;
-        
-        const lowerText = interactionText.toLowerCase();
-        const searchedDrugsLower = medList.map(m => m.toLowerCase());
-        
-        // Extract drug names from the combination
-        const parts = interactionText.split(' + ');
-        if (parts.length >= 2) {
-            const firstDrug = parts[0].trim().toLowerCase();
-            const secondPart = parts[1].trim();
-            const secondDrug = secondPart.split(' -')[0].split(' (')[0].trim().toLowerCase();
-            
-            // Check if both drugs are in the searched list
-            const firstInList = searchedDrugsLower.some(d => firstDrug.includes(d) || d.includes(firstDrug));
-            const secondInList = searchedDrugsLower.some(d => secondDrug.includes(d) || d.includes(secondDrug));
-            
-            return firstInList && secondInList;
-        }
-        return false;
-    };
-
-    // Get interactions that are actual combinations (contain ' + ')
-    const getCombinationInteractions = () => {
+    // Get filtered interactions - shows all for single drug, filtered for multiple
+    const getFilteredInteractions = () => {
         if (!result || !result.major_interactions) return [];
-        if (selectedCategory !== 'all' && selectedCategory !== 'drug_interactions') return [];
         
-        // Only return interactions that:
-        // 1. Contain ' + ' (are combinations)
-        // 2. Both drugs in the combination are in the search list
-        return result.major_interactions.filter(interaction => 
-            isCombinationInteraction(interaction)
-        );
+        // If only one drug is searched, show ALL interactions
+        if (medList.length === 1) {
+            return result.major_interactions;
+        }
+        
+        // For multiple drugs, filter to show only interactions that contain the searched drugs
+        const filtered = result.major_interactions.filter(interaction => {
+            // Check if the interaction contains any of the searched drugs
+            return medList.some(med => 
+                interaction.toLowerCase().includes(med.toLowerCase())
+            );
+        });
+        
+        return filtered;
     };
 
-    // Get IV incompatibilities that are actual combinations (contain ' + ')
-    const getCombinationIVIncompatibilities = () => {
-        if (isHealthcareClient) return [];
+    // Get filtered IV incompatibilities - shows all for single drug, filtered for multiple
+    const getFilteredIVIncompatibilities = () => {
         if (!result || !result.iv_incompatibility) return [];
-        if (selectedCategory !== 'all' && selectedCategory !== 'iv_incompatibility') return [];
         
-        // Only return incompatibilities that:
-        // 1. Contain ' + ' (are combinations)
-        // 2. Both drugs in the combination are in the search list
-        return result.iv_incompatibility.filter(incompatibility => 
-            isCombinationInteraction(incompatibility)
-        );
+        // If only one drug is searched, show ALL incompatibilities
+        if (medList.length === 1) {
+            return result.iv_incompatibility;
+        }
+        
+        // For multiple drugs, filter to show only incompatibilities that contain the searched drugs
+        const filtered = result.iv_incompatibility.filter(incompatibility => {
+            return medList.some(med => 
+                incompatibility.toLowerCase().includes(med.toLowerCase())
+            );
+        });
+        
+        return filtered;
     };
 
-    // Check if there are any combination interactions to show
-    const hasCombinationInteractionsToShow = () => {
-        const combinations = getCombinationInteractions();
-        return combinations && combinations.length > 0;
+    // Check if there are any interactions to show
+    const hasInteractionsToShow = () => {
+        if (!result || !result.major_interactions) return false;
+        if (selectedCategory !== 'all' && selectedCategory !== 'drug_interactions') return false;
+        
+        const filtered = getFilteredInteractions();
+        // Filter out entries without ' + ' to show only drug combinations
+        const withDrugCombinations = filtered.filter(item => item.includes(' + '));
+        return withDrugCombinations && withDrugCombinations.length > 0;
     };
 
-    // Check if there are any combination IV incompatibilities to show
-    const hasCombinationIVIncompatibilitiesToShow = () => {
-        const combinations = getCombinationIVIncompatibilities();
-        return combinations && combinations.length > 0;
+    // Check if there are any IV incompatibilities to show
+    const hasIVIncompatibilityToShow = () => {
+        if (isHealthcareClient) return false;
+        if (!result || !result.iv_incompatibility) return false;
+        if (selectedCategory !== 'all' && selectedCategory !== 'iv_incompatibility') return false;
+        
+        const filtered = getFilteredIVIncompatibilities();
+        // Filter out entries without ' + ' to show only drug combinations
+        const withDrugCombinations = filtered.filter(item => item.includes(' + '));
+        return withDrugCombinations && withDrugCombinations.length > 0;
     };
 
     // Check if there's any data to show
     const hasAnyDataToShow = () => {
         if (!result) return false;
         
-        // Check if there are ANY categories (not just unsafe ones)
-        const hasCategories = result.categories && Object.keys(result.categories).length > 0;
-        
-        // Check if there are any interactions (not just combinations)
-        const hasInteractions = result.major_interactions && result.major_interactions.length > 0;
-        
-        // Check if there are any IV incompatibilities
-        const hasIVIncompat = result.iv_incompatibility && result.iv_incompatibility.length > 0;
-        
-        // Check unsafe categories
         const hasUnsafe = hasUnsafeInFiltered();
+        const hasInteractions = hasInteractionsToShow();
+        const hasIVIncompatibility = hasIVIncompatibilityToShow();
         
-        // Check combinations
-        const hasCombinations = hasCombinationInteractionsToShow() || hasCombinationIVIncompatibilitiesToShow();
-        
-        console.log('hasCategories:', hasCategories);
-        console.log('hasInteractions:', hasInteractions);
-        console.log('hasIVIncompat:', hasIVIncompat);
         console.log('hasUnsafe:', hasUnsafe);
-        console.log('hasCombinations:', hasCombinations);
+        console.log('hasInteractions:', hasInteractions);
+        console.log('hasIVIncompatibility:', hasIVIncompatibility);
         
-        // Show data if there's ANYTHING to show
-        return hasCategories || hasInteractions || hasIVIncompat || hasUnsafe || hasCombinations;
+        return hasUnsafe || hasInteractions || hasIVIncompatibility;
     };
 
     const shouldShowIVCategory = () => {
@@ -365,150 +333,69 @@ const QuickSafetyCheck = () => {
                         {hasAnyDataToShow() ? (
                             <>
                                 <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100">
-                                    <h3 className="text-3xl font-black text-gray-900 capitalize mb-2">
-                                        {medList.length > 1 ? `Medications: ${medList.join(', ')}` : result.medication}
-                                    </h3>
+                                    <h3 className="text-3xl font-black text-gray-900 capitalize mb-2">{result.medication}</h3>
                                     <p className="text-gray-600 text-lg leading-relaxed">{result.general_overview}</p>
                                 </div>
 
-                                {/* Show ALL categories that have data */}
-                                {result.categories && Object.entries(result.categories).length > 0 && (
+                                {/* Show unsafe categories with proper filtering */}
+                                {hasUnsafeInFiltered() && (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {Object.entries(result.categories)
-                                            .filter(([key, data]) => {
-                                                // If a specific category is selected, only show that one
-                                                if (selectedCategory !== 'all' && key !== selectedCategory) {
-                                                    return false;
-                                                }
-                                                // Filter out empty or "safe" categories if needed
-                                                // but show all categories that have any data
-                                                return data && (data.status || data.details);
-                                            })
-                                            .map(([key, data]) => {
-                                                // Determine if this is a warning
-                                                const status = data.status?.toLowerCase() || '';
-                                                const details = data.details?.toLowerCase() || '';
-                                                const isWarning = status.includes('contraindicate') || 
-                                                                 status.includes('avoid') || 
-                                                                 status.includes('unsafe') ||
-                                                                 status.includes('warning') ||
-                                                                 status.includes('caution') ||
-                                                                 details.includes('contraindicate') ||
-                                                                 details.includes('avoid') ||
-                                                                 details.includes('unsafe') ||
-                                                                 details.includes('warning') ||
-                                                                 details.includes('caution');
-                                                
-                                                const bgClass = isWarning ? 'bg-red-50 border-red-400' : 'bg-yellow-50 border-yellow-400';
-                                                const textClass = isWarning ? 'text-red-700' : 'text-yellow-700';
-                                                
-                                                return (
-                                                    <div key={key} className={`${bgClass} rounded-2xl p-6 shadow-sm border-2 transition-colors`}>
-                                                        <div className="flex items-start justify-between mb-4">
-                                                            <div className="flex items-center gap-3">
-                                                                <h4 className="font-bold text-gray-800 text-lg"><CategoryTitle type={key} /></h4>
-                                                            </div>
-                                                            {isWarning ? (
-                                                                <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-                                                                    <FaExclamationCircle /> UNSAFE
-                                                                </span>
-                                                            ) : (
-                                                                <span className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-                                                                    <FaInfoCircle /> CAUTION
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                        <p className={`${textClass} leading-relaxed text-base font-bold`}>
-                                                            {data.details || data.status || 'Information available'}
-                                                        </p>
+                                        {getFilteredUnsafeCategories().map(([key, data]) => (
+                                            <div key={key} className="bg-red-50 rounded-2xl p-6 shadow-sm border-2 border-red-400 hover:border-red-600 transition-colors group">
+                                                <div className="flex items-start justify-between mb-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <h4 className="font-bold text-gray-800 text-lg"><CategoryTitle type={key} /></h4>
                                                     </div>
-                                                );
-                                            })
-                                        }
+                                                    <StatusBadge status={data.status} />
+                                                </div>
+                                                <p className="text-gray-700 leading-relaxed text-base font-bold">{data.details}</p>
+                                            </div>
+                                        ))}
                                     </div>
                                 )}
 
-                                {/* Major Drug Interactions - Show ONLY when there are actual combinations */}
-                                {hasCombinationInteractionsToShow() && (
+                                {/* Major Drug Interactions */}
+                                {(selectedCategory === 'all' || selectedCategory === 'drug_interactions') && 
+                                 result.major_interactions && result.major_interactions.length > 0 && (
                                     <div className="bg-amber-50 rounded-2xl p-6 md:p-8 shadow-sm border border-amber-200 mt-6">
                                         <h4 className="text-xl font-bold text-amber-900 flex items-center gap-2 mb-4">
-                                            <FaPills className="text-amber-600" /> Major Drug Interactions (Avoid Combining)
+                                            <FaPills className="text-amber-600" /> Major Drug Interactions (Avoid With)
                                         </h4>
-                                        <div className="space-y-3">
-                                            {getCombinationInteractions().map((interaction, i) => {
-                                                const parts = interaction.split(' + ');
-                                                if (parts.length >= 2) {
-                                                    const firstDrug = parts[0].trim();
-                                                    const secondPart = parts[1].trim();
-                                                    const secondDrug = secondPart.split(' -')[0].split(' (')[0].trim();
-                                                    const warningText = secondPart.includes(' -') ? secondPart.split(' -')[1] : '';
-                                                    
-                                                    return (
-                                                        <div key={i} className="flex items-start gap-3 p-4 bg-white rounded-xl border border-amber-200 shadow-sm">
-                                                            <div className="text-amber-600 text-xl mt-0.5 flex-shrink-0">⚠️</div>
-                                                            <div>
-                                                                <div className="text-amber-800 font-bold text-lg">
-                                                                    {firstDrug} + {secondDrug}
-                                                                </div>
-                                                                {warningText && (
-                                                                    <div className="text-amber-700 text-sm mt-1 font-medium">
-                                                                        {warningText}
-                                                                    </div>
-                                                                )}
-                                                                {!warningText && (
-                                                                    <div className="text-amber-700 text-sm mt-1 font-medium">
-                                                                        These drugs should not be taken together
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                }
-                                                return null;
-                                            })}
-                                        </div>
+                                        <ul className="list-disc list-inside space-y-2 text-amber-800 font-medium ml-2">
+                                            {result.major_interactions
+                                                .filter(interaction => interaction.includes(' + ')) // Only show drug combinations
+                                                .map((interaction, i) => {
+                                                    let displayText = interaction;
+                                                    if (!displayText.includes('⚠️')) {
+                                                        displayText = `⚠️ ${displayText}`;
+                                                    }
+                                                    return <li key={i}>{displayText}</li>;
+                                                })
+                                            }
+                                        </ul>
                                     </div>
                                 )}
                                 
-                                {/* IV Drug Incompatibility - Show ONLY when there are actual combinations */}
-                                {hasCombinationIVIncompatibilitiesToShow() && (
+                                {/* IV Drug Incompatibility - Only shown for non-healthcare_client */}
+                                {!isHealthcareClient && 
+                                 (selectedCategory === 'all' || selectedCategory === 'iv_incompatibility') && 
+                                 result.iv_incompatibility && result.iv_incompatibility.length > 0 && (
                                     <div className="bg-red-50 rounded-2xl p-6 md:p-8 shadow-sm border border-red-200 mt-6">
                                         <h4 className="text-xl font-bold text-red-900 flex items-center gap-2 mb-4">
                                             <FaSyringe className="text-red-600" /> IV Drug Incompatibility (Do Not Mix)
                                         </h4>
-                                        <div className="space-y-3">
-                                            {getCombinationIVIncompatibilities().map((incompatibility, i) => {
-                                                const parts = incompatibility.split(' + ');
-                                                if (parts.length >= 2) {
-                                                    const firstDrug = parts[0].trim();
-                                                    const secondPart = parts[1].trim();
-                                                    const secondDrug = secondPart.split(' -')[0].split(' (')[0].trim();
-                                                    const warningText = secondPart.includes(' -') ? secondPart.split(' -')[1] : '';
-                                                    
-                                                    return (
-                                                        <div key={i} className="flex items-start gap-3 p-4 bg-white rounded-xl border border-red-200 shadow-sm">
-                                                            <div className="text-red-600 text-xl mt-0.5 flex-shrink-0">⚠️</div>
-                                                            <div>
-                                                                <div className="text-red-800 font-bold text-lg">
-                                                                    {firstDrug} + {secondDrug}
-                                                                </div>
-                                                                {warningText && (
-                                                                    <div className="text-red-700 text-sm mt-1 font-medium">
-                                                                        {warningText}
-                                                                    </div>
-                                                                )}
-                                                                {!warningText && (
-                                                                    <div className="text-red-700 text-sm mt-1 font-medium">
-                                                                        These IV drugs should not be mixed
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                }
-                                                return null;
-                                            })}
-                                        </div>
+                                        <ul className="list-disc list-inside space-y-2 text-red-800 font-medium ml-2">
+                                            {result.iv_incompatibility
+                                                .filter(incompatibility => incompatibility.includes(' + ')) // Only show drug combinations
+                                                .map((incompatibility, i) => {
+                                                    let displayText = incompatibility;
+                                                    if (!displayText.includes('⚠️')) {
+                                                        displayText = `⚠️ ${displayText}`;
+                                                    }
+                                                    return <li key={i}>{displayText}</li>;
+                                                })
+                                            }
+                                        </ul>
                                     </div>
                                 )}
                             </>
@@ -518,10 +405,8 @@ const QuickSafetyCheck = () => {
                                 <div className="flex flex-col items-center gap-4">
                                     <div>
                                         <p className="text-green-600 text-lg font-black max-w-2xl mx-auto">
-                                            {medList.length > 0 ? 
-                                                `በተመረጡት የጤና ሁኔታዎች ${selectedCategory !== 'all' ? ` [${CategoryTitle({ type: selectedCategory })}]` : ''} ለ${medList.join(', ')} ደህንነት ሲባል እንዳንጠቀም የሚያስጠነቅቅ መረጃ በአዲስ ሜድ (Addis Med) ውስጥ አልተገኘም። ሁልጊዜም የጤና ባለሙያ ያማክሩ።` :
-                                                `No contraindication data found in Addis Med for safe use of ${result.medication} in the selected condition(s)${selectedCategory !== 'all' && ` [${CategoryTitle({ type: selectedCategory })}]`}. Always consult with your healthcare provider.`
-                                            }
+                                            በተመረጡት የጤና ሁኔታዎች {selectedCategory !== 'all' && ` [${CategoryTitle({ type: selectedCategory })}]`} {result.medication}ን 
+                                            ለደህንነት ሲባል እንዳንጠቀም የሚያስጠነቅቅ መረጃ በአዲስ ሜድ (Addis Med) ውስጥ አልተገኘም። ሁልጊዜም የጤና ባለሙያ ያማክሩ።
                                         </p>
                                     </div>
                                 </div>
