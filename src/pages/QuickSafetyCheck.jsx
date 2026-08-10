@@ -32,6 +32,7 @@ const StatusBadge = ({ status }) => {
 const QuickSafetyCheck = () => {
     const navigate = useNavigate();
     const [drugName, setDrugName] = useState('');
+    const [medList, setMedList] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
@@ -59,9 +60,34 @@ const QuickSafetyCheck = () => {
         return safetyProfile;
     };
 
+    const handleAddMedication = (e) => {
+        if (e.key === 'Enter' || e.type === 'click') {
+            e.preventDefault();
+            if (drugName.trim()) {
+                // Support comma-separated paste
+                const newMeds = drugName.split(',').map(m => m.trim()).filter(Boolean);
+                setMedList(prev => [...new Set([...prev, ...newMeds])]);
+                setDrugName('');
+            }
+        }
+    };
+
+    const removeMedication = (medToRemove) => {
+        setMedList(prev => prev.filter(m => m !== medToRemove));
+    };
+
     const handleSearch = async (e) => {
         e.preventDefault();
-        if (!drugName.trim()) return;
+        // If user typed something but didn't press enter, add it
+        let currentMeds = [...medList];
+        if (drugName.trim()) {
+            const newMeds = drugName.split(',').map(m => m.trim()).filter(Boolean);
+            currentMeds = [...new Set([...currentMeds, ...newMeds])];
+            setMedList(currentMeds);
+            setDrugName('');
+        }
+
+        if (currentMeds.length === 0) return;
 
         setLoading(true);
         setError('');
@@ -69,7 +95,7 @@ const QuickSafetyCheck = () => {
 
         try {
             const response = await api.post('/quick-safety', { 
-                medication: drugName.trim(),
+                medications: currentMeds,
                 category: selectedCategory === 'all' ? null : selectedCategory
             });
             
@@ -182,19 +208,41 @@ const QuickSafetyCheck = () => {
                     <div className="relative z-10">
                         <h2 className="text-3xl md:text-4xl font-black mb-4 tracking-tight">Check Medication Safety</h2>
                         <p className="text-blue-100 text-lg md:text-xl mb-8 max-w-2xl mx-auto opacity-90 font-medium">
-                            Enter generic drug name to see if it's unsafe.
+                            Enter one or more generic drug names to check safety and interactions.
                         </p>
                         
-                        <form onSubmit={handleSearch} className="max-w-3xl mx-auto relative group flex flex-col md:flex-row gap-3">
-                            <div className="relative flex-1">
-                                <input 
-                                    type="text"
-                                    placeholder="e.g., Ibuprofen, Amoxicillin..."
-                                    value={drugName}
-                                    onChange={(e) => setDrugName(e.target.value)}
-                                    className="w-full bg-white text-gray-800 px-6 py-4 pl-12 rounded-xl text-lg font-bold shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/50 transition-all placeholder:text-gray-400"
-                                />
-                                <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg" />
+                        <form onSubmit={handleSearch} className="max-w-3xl mx-auto relative group flex flex-col md:flex-row gap-3 items-start">
+                            <div className="relative flex-1 flex flex-col w-full">
+                                <div className="relative">
+                                    <input 
+                                        type="text"
+                                        placeholder="e.g., Ibuprofen (Press Enter to add)"
+                                        value={drugName}
+                                        onChange={(e) => setDrugName(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleAddMedication(e)}
+                                        className="w-full bg-white text-gray-800 px-6 py-4 pl-12 rounded-xl text-lg font-bold shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/50 transition-all placeholder:text-gray-400"
+                                    />
+                                    <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg" />
+                                    <button 
+                                        type="button"
+                                        onClick={handleAddMedication}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors"
+                                    >
+                                        Add
+                                    </button>
+                                </div>
+                                {medList.length > 0 && (
+                                    <div className="flex flex-wrap gap-2 mt-3 p-2 bg-white/10 rounded-xl">
+                                        {medList.map((med, idx) => (
+                                            <span key={idx} className="bg-white text-blue-800 px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-2 shadow-sm">
+                                                {med}
+                                                <button type="button" onClick={() => removeMedication(med)} className="text-blue-400 hover:text-red-500">
+                                                    &times;
+                                                </button>
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                             
                             <select 
@@ -217,7 +265,7 @@ const QuickSafetyCheck = () => {
 
                             <button 
                                 type="submit"
-                                disabled={loading || !drugName.trim()}
+                                disabled={loading || (medList.length === 0 && !drugName.trim())}
                                 className="bg-blue-900 hover:bg-gray-900 disabled:bg-blue-400 text-white px-8 py-4 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 shadow-sm whitespace-nowrap"
                             >
                                 {loading ? <FaSpinner className="animate-spin" /> : 'Check Safety'}
@@ -240,7 +288,7 @@ const QuickSafetyCheck = () => {
                         <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-6">
                             <FaShieldAlt className="text-4xl text-blue-600 animate-pulse" />
                         </div>
-                        <h3 className="text-2xl font-bold text-gray-800 mb-2">Analyzing {drugName}...</h3>
+                        <h3 className="text-2xl font-bold text-gray-800 mb-2">Analyzing...</h3>
                         <p className="text-gray-500">Checking clinical safety guidelines across special populations.</p>
                     </div>
                 )}
@@ -308,10 +356,9 @@ const QuickSafetyCheck = () => {
                             <div className="bg-green-50 border-2 border-green-500 rounded-2xl p-8 md:p-12 shadow-lg text-center">
                                 <div className="flex flex-col items-center gap-4">
                                     <div>
-                                        <p className="text-green-600 text-xl font-black max-w-2xl mx-auto">
-                                            No contraindication data found in Addis Med for safe use of {result.medication} in the selected condition(s)
-                                            {selectedCategory !== 'all' && ` [${CategoryTitle({ type: selectedCategory })}]`}.
-                                            Always consult with your healthcare provider.
+                                        <p className="text-green-600 text-lg font-black max-w-2xl mx-auto">
+                                            በተመረጡት የጤና ሁኔታዎች {selectedCategory !== 'all' && ` [${CategoryTitle({ type: selectedCategory })}]`} {result.medication}ን 
+                                            ለደህንነት ሲባል እንዳንጠቀም የሚያስጠነቅቅ መረጃ በአዲስ ሜድ (Addis Med) ውስጥ አልተገኘም። ሁልጊዜም የጤና ባለሙያ ያማክሩ።
                                         </p>
                                     </div>
                                 </div>
