@@ -330,13 +330,13 @@ const QuickSafetyCheck = () => {
                                         <ul className="space-y-2 text-amber-800 font-medium ml-2">
                                             {result.major_interactions.map((interaction, i) => (
                                                 <li key={i} className="flex items-start gap-2">
-                                                    <span className="text-amber-600">-</span>  {/* ✅ Custom "-" bullet */}
+                                                    <span className="text-amber-600">-</span>
                                                     <span>{interaction}</span>
                                                 </li>
                                             ))}
                                         </ul>
                                     </div>
-                                )
+                                )}
 
                                 {/* IV Drug Incompatibility - Only shown for non-healthcare_client */}
                                 {!isHealthcareClient && 
