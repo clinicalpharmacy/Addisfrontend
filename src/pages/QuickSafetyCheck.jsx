@@ -29,6 +29,26 @@ const StatusBadge = ({ status }) => {
     return null;
 };
 
+// Helper function to filter out unwanted message formats
+const filterUnwantedMessages = (messages) => {
+    if (!messages || !Array.isArray(messages)) return messages;
+    
+    return messages.filter(msg => {
+        // Keep messages that start with "INTERACTION:" or "INCOMPATIBLE:"
+        if (msg.startsWith('INTERACTION:') || msg.startsWith('INCOMPATIBLE:')) {
+            return true;
+        }
+        
+        // Discard messages that start with "... interaction" or "... IV incompatibility"
+        if (msg.startsWith('... interaction') || msg.startsWith('... IV incompatibility')) {
+            return false;
+        }
+        
+        // Keep all other messages
+        return true;
+    });
+};
+
 const QuickSafetyCheck = () => {
     const navigate = useNavigate();
     const [drugName, setDrugName] = useState('');
@@ -110,6 +130,14 @@ const QuickSafetyCheck = () => {
                 
                 // Filter IV incompatibility for healthcare_client
                 const filteredProfile = filterIVIncompatibility(response.safetyProfile);
+                
+                // Apply message filtering to major_interactions and iv_incompatibility
+                if (filteredProfile.major_interactions) {
+                    filteredProfile.major_interactions = filterUnwantedMessages(filteredProfile.major_interactions);
+                }
+                if (filteredProfile.iv_incompatibility) {
+                    filteredProfile.iv_incompatibility = filterUnwantedMessages(filteredProfile.iv_incompatibility);
+                }
                 
                 // DEBUG: Log specific fields
                 console.log('Safety Profile:', filteredProfile);
@@ -320,42 +348,34 @@ const QuickSafetyCheck = () => {
                                     </div>
                                 )}
 
-                                {/* Major Drug Interactions - Show combination medications */}
+                                {/* Major Drug Interactions */}
                                 {(selectedCategory === 'all' || selectedCategory === 'drug_interactions') && 
                                  result.major_interactions && result.major_interactions.length > 0 && (
                                     <div className="bg-amber-50 rounded-2xl p-6 md:p-8 shadow-sm border border-amber-200 mt-6">
                                         <h4 className="text-xl font-bold text-amber-900 flex items-center gap-2 mb-4">
-                                            <FaPills className="text-amber-600" /> Drug Interactions - Avoid These Combinations
+                                            <FaPills className="text-amber-600" /> Major Drug Interactions (Avoid With)
                                         </h4>
-                                        <div className="space-y-3">
+                                        <ul className="list-disc list-inside space-y-2 text-amber-800 font-medium ml-2">
                                             {result.major_interactions.map((interaction, i) => (
-                                                <div key={i} className="bg-white rounded-xl p-4 shadow-sm border border-amber-100">
-                                                    <p className="text-amber-800 font-medium">
-                                                        ⚠️ {interaction}
-                                                    </p>
-                                                </div>
+                                                <li key={i}>{interaction}</li>
                                             ))}
-                                        </div>
+                                        </ul>
                                     </div>
                                 )}
 
-                                {/* IV Drug Incompatibility - Show incompatible combinations */}
+                                {/* IV Drug Incompatibility - Only shown for non-healthcare_client */}
                                 {!isHealthcareClient && 
                                  (selectedCategory === 'all' || selectedCategory === 'iv_incompatibility') && 
                                  result.iv_incompatibility && result.iv_incompatibility.length > 0 && (
                                     <div className="bg-red-50 rounded-2xl p-6 md:p-8 shadow-sm border border-red-200 mt-6">
                                         <h4 className="text-xl font-bold text-red-900 flex items-center gap-2 mb-4">
-                                            <FaSyringe className="text-red-600" /> IV Incompatibility - Do Not Mix These Medications
+                                            <FaSyringe className="text-red-600" /> IV Drug Incompatibility (Do Not Mix)
                                         </h4>
-                                        <div className="space-y-3">
+                                        <ul className="list-disc list-inside space-y-2 text-red-800 font-medium ml-2">
                                             {result.iv_incompatibility.map((incompatibility, i) => (
-                                                <div key={i} className="bg-white rounded-xl p-4 shadow-sm border border-red-100">
-                                                    <p className="text-red-800 font-medium">
-                                                        🚫 {incompatibility}
-                                                    </p>
-                                                </div>
+                                                <li key={i}>{incompatibility}</li>
                                             ))}
-                                        </div>
+                                        </ul>
                                     </div>
                                 )}
                             </>
