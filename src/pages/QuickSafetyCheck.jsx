@@ -26,12 +26,16 @@ const StatusBadge = ({ status }) => {
     if (s.includes('contraindicate') || s.includes('avoid') || s.includes('unsafe')) {
         return <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"><FaExclamationCircle /> UNSAFE</span>;
     }
+    if (s.includes('caution') || s.includes('warning')) {
+        return <span className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"><FaExclamationTriangle /> CAUTION</span>;
+    }
     return null;
 };
 
 const QuickSafetyCheck = () => {
     const navigate = useNavigate();
     const [drugName, setDrugName] = useState('');
+    const [medList, setMedList] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
@@ -42,26 +46,39 @@ const QuickSafetyCheck = () => {
     
     // Check user roles
     const isAdmin = user?.role === 'admin';
-    const isCompanyAdmin = user?.role === 'company_admin';
     const isCompanyUser = !!user?.company_id || user?.account_type === 'company' || ['company_admin', 'company_user'].includes(user?.role);
-    const isIndividual = !isAdmin && !isCompanyUser;
     
     // Check if user is healthcare_client
     const isHealthcareClient = user?.role === 'healthcare_client' || user?.account_type === 'healthcare_client';
 
-    // Filter out IV incompatibility for healthcare_client
-    const filterIVIncompatibility = (safetyProfile) => {
-        if (isHealthcareClient && safetyProfile) {
-            // Remove iv_incompatibility from the profile
-            const { iv_incompatibility, ...filteredProfile } = safetyProfile;
-            return filteredProfile;
+    const handleAddMedication = (e) => {
+        if (e.key === 'Enter' || e.type === 'click') {
+            e.preventDefault();
+            if (drugName.trim()) {
+                // Support comma-separated paste
+                const newMeds = drugName.split(',').map(m => m.trim()).filter(Boolean);
+                setMedList(prev => [...new Set([...prev, ...newMeds])]);
+                setDrugName('');
+            }
         }
-        return safetyProfile;
+    };
+
+    const removeMedication = (medToRemove) => {
+        setMedList(prev => prev.filter(m => m !== medToRemove));
     };
 
     const handleSearch = async (e) => {
         e.preventDefault();
-        if (!drugName.trim()) return;
+        // If user typed something but didn't press enter, add it
+        let currentMeds = [...medList];
+        if (drugName.trim()) {
+            const newMeds = drugName.split(',').map(m => m.trim()).filter(Boolean);
+            currentMeds = [...new Set([...currentMeds, ...newMeds])];
+            setMedList(currentMeds);
+            setDrugName('');
+        }
+
+        if (currentMeds.length === 0) return;
 
         setLoading(true);
         setError('');
@@ -69,29 +86,30 @@ const QuickSafetyCheck = () => {
 
         try {
             const response = await api.post('/quick-safety', { 
-                medication: drugName.trim(),
+                medications: currentMeds,
                 category: selectedCategory === 'all' ? null : selectedCategory
             });
             
-            // DEBUG: Log the full response
             console.log('Full API Response:', response);
             
             if (response.success && response.safetyProfile) {
-                // Ensure iv_incompatibility is always an array for non-healthcare_client
-                if (!response.safetyProfile.iv_incompatibility && !isHealthcareClient) {
+                // Ensure arrays exist
+                if (!response.safetyProfile.major_interactions) {
+                    response.safetyProfile.major_interactions = [];
+                }
+                if (!response.safetyProfile.iv_incompatibility) {
                     response.safetyProfile.iv_incompatibility = [];
                 }
                 
-                // Filter IV incompatibility for healthcare_client
-                const filteredProfile = filterIVIncompatibility(response.safetyProfile);
+                // For healthcare_client, filter out IV incompatibility
+                let filteredProfile = { ...response.safetyProfile };
+                if (isHealthcareClient) {
+                    delete filteredProfile.iv_incompatibility;
+                }
                 
-                // DEBUG: Log specific fields
                 console.log('Safety Profile:', filteredProfile);
-                console.log('Is Healthcare Client:', isHealthcareClient);
                 console.log('Major Interactions:', filteredProfile.major_interactions);
                 console.log('IV Incompatibility:', filteredProfile.iv_incompatibility);
-                console.log('IV Incompatibility Type:', typeof filteredProfile.iv_incompatibility);
-                console.log('IV Incompatibility Length:', filteredProfile.iv_incompatibility?.length);
                 
                 setResult(filteredProfile);
             } else {
@@ -111,17 +129,21 @@ const QuickSafetyCheck = () => {
         
         const unsafe = Object.entries(result.categories)
             .filter(([key, data]) => {
+                // Skip if category doesn't match filter
+                if (selectedCategory !== 'all' && key !== selectedCategory) {
+                    return false;
+                }
+                // Skip IV incompatibility for healthcare_client
+                if (key === 'iv_incompatibility' && isHealthcareClient) {
+                    return false;
+                }
                 const status = data.status?.toLowerCase() || '';
                 return status.includes('contraindicate') || 
                        status.includes('avoid') || 
                        status.includes('unsafe');
             });
         
-        // Apply category filter
-        if (selectedCategory === 'all') {
-            return unsafe;
-        }
-        return unsafe.filter(([key]) => key === selectedCategory);
+        return unsafe;
     };
 
     // Check if there are any unsafe categories
@@ -129,26 +151,35 @@ const QuickSafetyCheck = () => {
         return getFilteredUnsafeCategories().length > 0;
     };
 
+    // Get filtered interactions based on selected category
+    const getFilteredInteractions = () => {
+        if (!result || !result.major_interactions) return [];
+        if (selectedCategory === 'all' || selectedCategory === 'drug_interactions') {
+            return result.major_interactions;
+        }
+        return [];
+    };
+
+    // Get filtered IV incompatibilities based on selected category
+    const getFilteredIVIncompatibilities = () => {
+        if (!result || !result.iv_incompatibility || isHealthcareClient) return [];
+        if (selectedCategory === 'all' || selectedCategory === 'iv_incompatibility') {
+            return result.iv_incompatibility;
+        }
+        return [];
+    };
+
     // Check if there's any data to show
     const hasAnyDataToShow = () => {
         if (!result) return false;
         
         const hasUnsafe = hasUnsafeInFiltered();
-        const hasInteractions = (selectedCategory === 'all' || selectedCategory === 'drug_interactions') && 
-                               result.major_interactions && result.major_interactions.length > 0;
+        const hasInteractions = getFilteredInteractions().length > 0;
+        const hasIVIncompatibility = getFilteredIVIncompatibilities().length > 0;
         
-        // Only check IV incompatibility if NOT healthcare_client
-        let hasIVIncompatibility = false;
-        if (!isHealthcareClient) {
-            hasIVIncompatibility = (selectedCategory === 'all' || selectedCategory === 'iv_incompatibility') && 
-                                   result.iv_incompatibility && result.iv_incompatibility.length > 0;
-        }
-        
-        // DEBUG: Log what's being detected
         console.log('hasUnsafe:', hasUnsafe);
         console.log('hasInteractions:', hasInteractions);
         console.log('hasIVIncompatibility:', hasIVIncompatibility);
-        console.log('isHealthcareClient:', isHealthcareClient);
         
         return hasUnsafe || hasInteractions || hasIVIncompatibility;
     };
@@ -182,19 +213,41 @@ const QuickSafetyCheck = () => {
                     <div className="relative z-10">
                         <h2 className="text-3xl md:text-4xl font-black mb-4 tracking-tight">Check Medication Safety</h2>
                         <p className="text-blue-100 text-lg md:text-xl mb-8 max-w-2xl mx-auto opacity-90 font-medium">
-                            Enter generic drug name to see if it's unsafe.
+                            Enter one or more generic drug names to check safety and interactions.
                         </p>
                         
-                        <form onSubmit={handleSearch} className="max-w-3xl mx-auto relative group flex flex-col md:flex-row gap-3">
-                            <div className="relative flex-1">
-                                <input 
-                                    type="text"
-                                    placeholder="e.g., Ibuprofen, Amoxicillin..."
-                                    value={drugName}
-                                    onChange={(e) => setDrugName(e.target.value)}
-                                    className="w-full bg-white text-gray-800 px-6 py-4 pl-12 rounded-xl text-lg font-bold shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/50 transition-all placeholder:text-gray-400"
-                                />
-                                <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg" />
+                        <form onSubmit={handleSearch} className="max-w-3xl mx-auto relative group flex flex-col md:flex-row gap-3 items-start">
+                            <div className="relative flex-1 flex flex-col w-full">
+                                <div className="relative">
+                                    <input 
+                                        type="text"
+                                        placeholder="e.g., Ibuprofen (Press Enter to add)"
+                                        value={drugName}
+                                        onChange={(e) => setDrugName(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleAddMedication(e)}
+                                        className="w-full bg-white text-gray-800 px-6 py-4 pl-12 rounded-xl text-lg font-bold shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/50 transition-all placeholder:text-gray-400"
+                                    />
+                                    <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg" />
+                                    <button 
+                                        type="button"
+                                        onClick={handleAddMedication}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors"
+                                    >
+                                        Add
+                                    </button>
+                                </div>
+                                {medList.length > 0 && (
+                                    <div className="flex flex-wrap gap-2 mt-3 p-2 bg-white/10 rounded-xl">
+                                        {medList.map((med, idx) => (
+                                            <span key={idx} className="bg-white text-blue-800 px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-2 shadow-sm">
+                                                {med}
+                                                <button type="button" onClick={() => removeMedication(med)} className="text-blue-400 hover:text-red-500">
+                                                    &times;
+                                                </button>
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                             
                             <select 
@@ -217,7 +270,7 @@ const QuickSafetyCheck = () => {
 
                             <button 
                                 type="submit"
-                                disabled={loading || !drugName.trim()}
+                                disabled={loading || (medList.length === 0 && !drugName.trim())}
                                 className="bg-blue-900 hover:bg-gray-900 disabled:bg-blue-400 text-white px-8 py-4 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 shadow-sm whitespace-nowrap"
                             >
                                 {loading ? <FaSpinner className="animate-spin" /> : 'Check Safety'}
@@ -240,7 +293,7 @@ const QuickSafetyCheck = () => {
                         <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-6">
                             <FaShieldAlt className="text-4xl text-blue-600 animate-pulse" />
                         </div>
-                        <h3 className="text-2xl font-bold text-gray-800 mb-2">Analyzing {drugName}...</h3>
+                        <h3 className="text-2xl font-bold text-gray-800 mb-2">Analyzing...</h3>
                         <p className="text-gray-500">Checking clinical safety guidelines across special populations.</p>
                     </div>
                 )}
@@ -248,71 +301,107 @@ const QuickSafetyCheck = () => {
                 {/* Results */}
                 {result && !loading && (
                     <div className="animate-fadeIn space-y-6">
-                        {hasAnyDataToShow() ? (
-                            <>
-                                <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100">
-                                    <h3 className="text-3xl font-black text-gray-900 capitalize mb-2">{result.medication}</h3>
-                                    <p className="text-gray-600 text-lg leading-relaxed">{result.general_overview}</p>
-                                </div>
-
-                                {/* Show unsafe categories with proper filtering */}
-                                {hasUnsafeInFiltered() && (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {getFilteredUnsafeCategories().map(([key, data]) => (
-                                            <div key={key} className="bg-red-50 rounded-2xl p-6 shadow-sm border-2 border-red-400 hover:border-red-600 transition-colors group">
-                                                <div className="flex items-start justify-between mb-4">
-                                                    <div className="flex items-center gap-3">
-                                                        <h4 className="font-bold text-gray-800 text-lg"><CategoryTitle type={key} /></h4>
-                                                    </div>
-                                                    <StatusBadge status={data.status} />
-                                                </div>
-                                                <p className="text-gray-700 leading-relaxed text-base font-bold">{data.details}</p>
-                                            </div>
+                        {/* Drug Name & Overview */}
+                        <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100">
+                            <h3 className="text-3xl font-black text-gray-900 capitalize mb-2">{result.medication}</h3>
+                            <p className="text-gray-600 text-lg leading-relaxed">{result.general_overview}</p>
+                            
+                            {/* Show searched medications list */}
+                            {medList.length > 0 && (
+                                <div className="mt-4 pt-4 border-t border-gray-200">
+                                    <p className="text-sm text-gray-500 font-medium">Searched Medications:</p>
+                                    <div className="flex flex-wrap gap-2 mt-2">
+                                        {medList.map((med, idx) => (
+                                            <span key={idx} className="bg-blue-50 text-blue-700 px-3 py-1 rounded-lg text-sm font-bold">
+                                                {med}
+                                            </span>
                                         ))}
                                     </div>
-                                )}
+                                </div>
+                            )}
+                        </div>
 
-                                {/* Major Drug Interactions */}
-                                {(selectedCategory === 'all' || selectedCategory === 'drug_interactions') && 
-                                 result.major_interactions && result.major_interactions.length > 0 && (
-                                    <div className="bg-amber-50 rounded-2xl p-6 md:p-8 shadow-sm border border-amber-200 mt-6">
-                                        <h4 className="text-xl font-bold text-amber-900 flex items-center gap-2 mb-4">
-                                            <FaPills className="text-amber-600" /> Major Drug Interactions (Avoid With)
-                                        </h4>
-                                        <ul className="list-disc list-inside space-y-2 text-amber-800 font-medium ml-2">
-                                            {result.major_interactions.map((interaction, i) => (
-                                                <li key={i}>{interaction}</li>
-                                            ))}
-                                        </ul>
+                        {/* Show unsafe categories with proper filtering */}
+                        {hasUnsafeInFiltered() && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {getFilteredUnsafeCategories().map(([key, data]) => (
+                                    <div key={key} className="bg-red-50 rounded-2xl p-6 shadow-sm border-2 border-red-400 hover:border-red-600 transition-colors group">
+                                        <div className="flex items-start justify-between mb-4">
+                                            <div className="flex items-center gap-3">
+                                                <h4 className="font-bold text-gray-800 text-lg"><CategoryTitle type={key} /></h4>
+                                            </div>
+                                            <StatusBadge status={data.status} />
+                                        </div>
+                                        <p className="text-gray-700 leading-relaxed text-base">{data.details}</p>
                                     </div>
-                                )}
+                                ))}
+                            </div>
+                        )}
 
-                                {/* IV Drug Incompatibility - Only shown for non-healthcare_client */}
-                                {!isHealthcareClient && 
-                                 (selectedCategory === 'all' || selectedCategory === 'iv_incompatibility') && 
-                                 result.iv_incompatibility && result.iv_incompatibility.length > 0 && (
-                                    <div className="bg-red-50 rounded-2xl p-6 md:p-8 shadow-sm border border-red-200 mt-6">
-                                        <h4 className="text-xl font-bold text-red-900 flex items-center gap-2 mb-4">
-                                            <FaSyringe className="text-red-600" /> IV Drug Incompatibility (Do Not Mix)
-                                        </h4>
-                                        <ul className="list-disc list-inside space-y-2 text-red-800 font-medium ml-2">
-                                            {result.iv_incompatibility.map((incompatibility, i) => (
-                                                <li key={i}>{incompatibility}</li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                )}
-                            </>
-                        ) : (
-                            /* Show when NO data is detected in the filtered results */
+                        {/* Major Drug Interactions - Shows drug combinations */}
+                        {getFilteredInteractions().length > 0 && (
+                            <div className="bg-amber-50 rounded-2xl p-6 md:p-8 shadow-sm border border-amber-200 mt-6">
+                                <h4 className="text-xl font-bold text-amber-900 flex items-center gap-2 mb-4">
+                                    <FaPills className="text-amber-600" /> Major Drug Interactions (Avoid With)
+                                </h4>
+                                <div className="space-y-3">
+                                    {getFilteredInteractions().map((interaction, i) => (
+                                        <div key={i} className="bg-white rounded-xl p-4 border border-amber-200 shadow-sm">
+                                            <div className="flex items-start gap-3">
+                                                <FaExclamationTriangle className="text-amber-600 mt-1 flex-shrink-0" />
+                                                <div>
+                                                    <p className="text-amber-800 font-bold text-base">{interaction}</p>
+                                                    <p className="text-amber-600 text-sm mt-1 font-medium">
+                                                        ⚠️ Avoid combining these medications
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* IV Drug Incompatibility - Shows drug combinations for IV */}
+                        {getFilteredIVIncompatibilities().length > 0 && (
+                            <div className="bg-red-50 rounded-2xl p-6 md:p-8 shadow-sm border border-red-200 mt-6">
+                                <h4 className="text-xl font-bold text-red-900 flex items-center gap-2 mb-4">
+                                    <FaSyringe className="text-red-600" /> IV Drug Incompatibility (Do Not Mix)
+                                </h4>
+                                <div className="space-y-3">
+                                    {getFilteredIVIncompatibilities().map((incompatibility, i) => (
+                                        <div key={i} className="bg-white rounded-xl p-4 border border-red-200 shadow-sm">
+                                            <div className="flex items-start gap-3">
+                                                <FaExclamationCircle className="text-red-600 mt-1 flex-shrink-0" />
+                                                <div>
+                                                    <p className="text-red-800 font-bold text-base">{incompatibility}</p>
+                                                    <p className="text-red-600 text-sm mt-1 font-medium">
+                                                        🚫 Do not administer together in IV
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* No warnings found - Specific medications are safe */}
+                        {!hasAnyDataToShow() && (
                             <div className="bg-green-50 border-2 border-green-500 rounded-2xl p-8 md:p-12 shadow-lg text-center">
                                 <div className="flex flex-col items-center gap-4">
+                                    <FaCheckCircle className="text-green-600 text-6xl" />
                                     <div>
-                                        <p className="text-green-600 text-xl font-black max-w-2xl mx-auto">
-                                            No contraindication data found in Addis Med for safe use of {result.medication} in the selected condition(s)
-                                            {selectedCategory !== 'all' && ` [${CategoryTitle({ type: selectedCategory })}]`}.
-                                            Always consult with your healthcare provider.
+                                        <h3 className="text-2xl font-black text-green-800 mb-2">✓ No Safety Warnings Found</h3>
+                                        <p className="text-green-600 text-lg font-medium max-w-2xl mx-auto">
+                                            {selectedCategory !== 'all' && `For ${CategoryTitle({ type: selectedCategory })} conditions, `}
+                                            <span className="font-bold">{result.medication}</span> appears to be safe based on available data.
                                         </p>
+                                        {medList.length > 0 && (
+                                            <p className="text-green-500 text-base mt-2">
+                                                No interactions detected between: {medList.join(', ')}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                             </div>
