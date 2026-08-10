@@ -302,7 +302,7 @@ const QuickSafetyCheck = () => {
                                     <h3 className="text-3xl font-black text-gray-900 capitalize mb-2">{result.medication}</h3>
                                     <p className="text-gray-600 text-lg leading-relaxed">{result.general_overview}</p>
                                 </div>
-
+                
                                 {/* Show unsafe categories with proper filtering */}
                                 {hasUnsafeInFiltered() && (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -319,18 +319,44 @@ const QuickSafetyCheck = () => {
                                         ))}
                                     </div>
                                 )}
-
-                                {/* Major Drug Interactions */}
+                
+                                {/* Major Drug Interactions - Show combination medications */}
                                 {(selectedCategory === 'all' || selectedCategory === 'drug_interactions') && 
                                  result.major_interactions && result.major_interactions.length > 0 && (
-                                    <div className="text-red-600 font-bold text-lg mt-4">INTERACTION</div>
+                                    <div className="bg-amber-50 rounded-2xl p-6 md:p-8 shadow-sm border border-amber-200 mt-6">
+                                        <h4 className="text-xl font-bold text-amber-900 flex items-center gap-2 mb-4">
+                                            <FaPills className="text-amber-600" /> Drug Interactions - Avoid These Combinations
+                                        </h4>
+                                        <div className="space-y-3">
+                                            {result.major_interactions.map((interaction, i) => (
+                                                <div key={i} className="bg-white rounded-xl p-4 shadow-sm border border-amber-100">
+                                                    <p className="text-amber-800 font-medium">
+                                                        ⚠️ {interaction}
+                                                    </p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
                                 )}
-
-                                {/* IV Drug Incompatibility - Only shown for non-healthcare_client */}
+                
+                                {/* IV Drug Incompatibility - Show incompatible combinations */}
                                 {!isHealthcareClient && 
                                  (selectedCategory === 'all' || selectedCategory === 'iv_incompatibility') && 
                                  result.iv_incompatibility && result.iv_incompatibility.length > 0 && (
-                                    <div className="text-red-600 font-bold text-lg mt-4">INCOMPATIBLE</div>
+                                    <div className="bg-red-50 rounded-2xl p-6 md:p-8 shadow-sm border border-red-200 mt-6">
+                                        <h4 className="text-xl font-bold text-red-900 flex items-center gap-2 mb-4">
+                                            <FaSyringe className="text-red-600" /> IV Incompatibility - Do Not Mix These Medications
+                                        </h4>
+                                        <div className="space-y-3">
+                                            {result.iv_incompatibility.map((incompatibility, i) => (
+                                                <div key={i} className="bg-white rounded-xl p-4 shadow-sm border border-red-100">
+                                                    <p className="text-red-800 font-medium">
+                                                        🚫 {incompatibility}
+                                                    </p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
                                 )}
                             </>
                         ) : (
@@ -346,6 +372,12 @@ const QuickSafetyCheck = () => {
                                 </div>
                             </div>
                         )}
+                        
+                        <div className="mt-8 text-center bg-gray-50 p-4 rounded-xl text-xs font-bold text-gray-400 flex items-center justify-center gap-2">
+                            <FaInfoCircle /> Disclaimer: This information is for educational purposes only and does not replace consultation with a qualified healthcare professional. Medication information may change with emerging evidence, manufacturers' current prescribing information, and evolving medical practice. Users are responsible for verifying all information and exercising health professional's judgment. 
+                        </div>
+                    </div>
+                )}
                         
                         <div className="mt-8 text-center bg-gray-50 p-4 rounded-xl text-xs font-bold text-gray-400 flex items-center justify-center gap-2">
                             <FaInfoCircle /> Disclaimer: This information is for educational purposes only and does not replace consultation with a qualified healthcare professional. Medication information may change with emerging evidence, manufacturers' current prescribing information, and evolving medical practice. Users are responsible for verifying all information and exercising health professional's judgment. 
