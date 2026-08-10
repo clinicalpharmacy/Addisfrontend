@@ -76,7 +76,7 @@ const QuickSafetyCheck = () => {
         setMedList(prev => prev.filter(m => m !== medToRemove));
     };
 
-    const handleSearch = async (e) => {
+        const handleSearch = async (e) => {
         e.preventDefault();
         // If user typed something but didn't press enter, add it
         let currentMeds = [...medList];
@@ -86,13 +86,13 @@ const QuickSafetyCheck = () => {
             setMedList(currentMeds);
             setDrugName('');
         }
-
+    
         if (currentMeds.length === 0) return;
-
+    
         setLoading(true);
         setError('');
         setResult(null);
-
+    
         try {
             const response = await api.post('/quick-safety', { 
                 medications: currentMeds,
@@ -110,6 +110,22 @@ const QuickSafetyCheck = () => {
                 
                 // Filter IV incompatibility for healthcare_client
                 const filteredProfile = filterIVIncompatibility(response.safetyProfile);
+                
+                // --- ADD THIS FILTERING CODE ---
+                // Filter out specific drug interactions
+                if (filteredProfile.major_interactions) {
+                    filteredProfile.major_interactions = filteredProfile.major_interactions.filter(
+                        interaction => !interaction.includes('Warfarin')
+                    );
+                }
+                
+                // Filter out specific IV incompatibilities
+                if (filteredProfile.iv_incompatibility) {
+                    filteredProfile.iv_incompatibility = filteredProfile.iv_incompatibility.filter(
+                        incompatibility => !incompatibility.includes('Phenytoin')
+                    );
+                }
+                // --- END OF FILTERING CODE ---
                 
                 // DEBUG: Log specific fields
                 console.log('Safety Profile:', filteredProfile);
