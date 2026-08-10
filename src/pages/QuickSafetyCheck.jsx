@@ -137,13 +137,16 @@ const QuickSafetyCheck = () => {
         return getFilteredUnsafeCategories().length > 0;
     };
 
-    // Get filtered interactions - shows all for single drug, filtered for multiple
+    // Get filtered interactions - filters for single drug, filters for multiple
     const getFilteredInteractions = () => {
         if (!result || !result.major_interactions) return [];
         
-        // If only one drug is searched, show ALL interactions
+        // If only one drug is searched, filter to show only interactions that contain that drug
         if (medList.length === 1) {
-            return result.major_interactions;
+            const searchDrug = medList[0].toLowerCase();
+            return result.major_interactions.filter(interaction => 
+                interaction.toLowerCase().includes(searchDrug)
+            );
         }
         
         // For multiple drugs, filter to show only interactions that contain the searched drugs
@@ -156,13 +159,16 @@ const QuickSafetyCheck = () => {
         return filtered;
     };
 
-    // Get filtered IV incompatibilities - shows all for single drug, filtered for multiple
+    // Get filtered IV incompatibilities - filters for single drug, filters for multiple
     const getFilteredIVIncompatibilities = () => {
         if (!result || !result.iv_incompatibility) return [];
         
-        // If only one drug is searched, show ALL incompatibilities
+        // If only one drug is searched, filter to show only incompatibilities that contain that drug
         if (medList.length === 1) {
-            return result.iv_incompatibility;
+            const searchDrug = medList[0].toLowerCase();
+            return result.iv_incompatibility.filter(incompatibility => 
+                incompatibility.toLowerCase().includes(searchDrug)
+            );
         }
         
         // For multiple drugs, filter to show only incompatibilities that contain the searched drugs
@@ -175,29 +181,6 @@ const QuickSafetyCheck = () => {
         return filtered;
     };
 
-    // Format interaction display text
-    const formatInteractionDisplay = (interaction) => {
-        // If it already has the warning emoji, return as is
-        if (interaction.includes('⚠️')) {
-            return interaction;
-        }
-        
-        // If it's a generic interaction without drug combination, format it
-        if (!interaction.includes(' + ')) {
-            // Extract drug name from the interaction
-            const drugMatch = interaction.match(/^([^—]+)/);
-            if (drugMatch) {
-                const drug = drugMatch[1].trim();
-                // Show the interaction with the drug name
-                return `⚠️ ${interaction}`;
-            }
-            return `⚠️ ${interaction}`;
-        }
-        
-        // For drug combinations, add warning emoji
-        return `⚠️ ${interaction}`;
-    };
-
     // Check if there are any interactions to show
     const hasInteractionsToShow = () => {
         if (!result || !result.major_interactions) return false;
@@ -205,7 +188,7 @@ const QuickSafetyCheck = () => {
         
         const filtered = getFilteredInteractions();
         
-        // For single drug, show all interactions
+        // For single drug, show all filtered interactions
         if (medList.length === 1) {
             return filtered && filtered.length > 0;
         }
@@ -223,7 +206,7 @@ const QuickSafetyCheck = () => {
         
         const filtered = getFilteredIVIncompatibilities();
         
-        // For single drug, show all incompatibilities
+        // For single drug, show all filtered incompatibilities
         if (medList.length === 1) {
             return filtered && filtered.length > 0;
         }
@@ -397,7 +380,7 @@ const QuickSafetyCheck = () => {
                                         <ul className="list-disc list-inside space-y-2 text-amber-800 font-medium ml-2">
                                             {getFilteredInteractions()
                                                 .filter(interaction => {
-                                                    // For single drug, show all interactions
+                                                    // For single drug, show all filtered interactions
                                                     if (medList.length === 1) {
                                                         return true;
                                                     }
@@ -406,22 +389,9 @@ const QuickSafetyCheck = () => {
                                                 })
                                                 .map((interaction, i) => {
                                                     let displayText = interaction;
-                                                    
-                                                    // For single drug, format to show the drug name clearly
-                                                    if (medList.length === 1 && !interaction.includes(' + ')) {
-                                                        // Try to extract the drug name from the interaction
-                                                        const drugMatch = interaction.match(/^([^—]+)/);
-                                                        if (drugMatch) {
-                                                            const drug = drugMatch[1].trim();
-                                                            // Show the interaction with the drug name
-                                                            displayText = `⚠️ ${interaction}`;
-                                                        } else {
-                                                            displayText = `⚠️ ${interaction}`;
-                                                        }
-                                                    } else if (!displayText.includes('⚠️')) {
+                                                    if (!displayText.includes('⚠️')) {
                                                         displayText = `⚠️ ${displayText}`;
                                                     }
-                                                    
                                                     return <li key={i}>{displayText}</li>;
                                                 })
                                             }
@@ -438,7 +408,7 @@ const QuickSafetyCheck = () => {
                                         <ul className="list-disc list-inside space-y-2 text-red-800 font-medium ml-2">
                                             {getFilteredIVIncompatibilities()
                                                 .filter(incompatibility => {
-                                                    // For single drug, show all incompatibilities
+                                                    // For single drug, show all filtered incompatibilities
                                                     if (medList.length === 1) {
                                                         return true;
                                                     }
@@ -447,14 +417,9 @@ const QuickSafetyCheck = () => {
                                                 })
                                                 .map((incompatibility, i) => {
                                                     let displayText = incompatibility;
-                                                    
-                                                    // For single drug, format to show the drug name clearly
-                                                    if (medList.length === 1 && !incompatibility.includes(' + ')) {
-                                                        displayText = `⚠️ ${incompatibility}`;
-                                                    } else if (!displayText.includes('⚠️')) {
+                                                    if (!displayText.includes('⚠️')) {
                                                         displayText = `⚠️ ${displayText}`;
                                                     }
-                                                    
                                                     return <li key={i}>{displayText}</li>;
                                                 })
                                             }
