@@ -41,19 +41,12 @@ const QuickSafetyCheck = () => {
     // Get user role from localStorage or context
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     
-    // Check user roles
-    // const isAdmin = user?.role === 'admin'; // Unused - can remove or keep
-    // const isCompanyAdmin = user?.role === 'company_admin'; // Unused
-    // const isCompanyUser = !!user?.company_id || user?.account_type === 'company' || ['company_admin', 'company_user'].includes(user?.role); // Unused
-    // const isIndividual = !isAdmin && !isCompanyUser; // Unused
-    
     // Check if user is healthcare_client
     const isHealthcareClient = user?.role === 'healthcare_client' || user?.account_type === 'healthcare_client';
 
     // Filter out IV incompatibility for healthcare_client
     const filterIVIncompatibility = (safetyProfile) => {
         if (isHealthcareClient && safetyProfile) {
-            // Remove iv_incompatibility from the profile
             const { iv_incompatibility, ...filteredProfile } = safetyProfile;
             return filteredProfile;
         }
@@ -64,7 +57,6 @@ const QuickSafetyCheck = () => {
         if (e.key === 'Enter' || e.type === 'click') {
             e.preventDefault();
             if (drugName.trim()) {
-                // Support comma-separated paste
                 const newMeds = drugName.split(',').map(m => m.trim()).filter(Boolean);
                 setMedList(prev => [...new Set([...prev, ...newMeds])]);
                 setDrugName('');
@@ -78,7 +70,6 @@ const QuickSafetyCheck = () => {
 
     const handleSearch = async (e) => {
         e.preventDefault();
-        // If user typed something but didn't press enter, add it
         let currentMeds = [...medList];
         if (drugName.trim()) {
             const newMeds = drugName.split(',').map(m => m.trim()).filter(Boolean);
@@ -99,25 +90,18 @@ const QuickSafetyCheck = () => {
                 category: selectedCategory === 'all' ? null : selectedCategory
             });
             
-            // DEBUG: Log the full response
             console.log('Full API Response:', response);
             
             if (response.success && response.safetyProfile) {
-                // Ensure iv_incompatibility is always an array for non-healthcare_client
                 if (!response.safetyProfile.iv_incompatibility && !isHealthcareClient) {
                     response.safetyProfile.iv_incompatibility = [];
                 }
                 
-                // Filter IV incompatibility for healthcare_client
                 const filteredProfile = filterIVIncompatibility(response.safetyProfile);
                 
-                // DEBUG: Log specific fields
                 console.log('Safety Profile:', filteredProfile);
-                console.log('Is Healthcare Client:', isHealthcareClient);
                 console.log('Major Interactions:', filteredProfile.major_interactions);
                 console.log('IV Incompatibility:', filteredProfile.iv_incompatibility);
-                console.log('IV Incompatibility Type:', typeof filteredProfile.iv_incompatibility);
-                console.log('IV Incompatibility Length:', filteredProfile.iv_incompatibility?.length);
                 
                 setResult(filteredProfile);
             } else {
@@ -143,54 +127,53 @@ const QuickSafetyCheck = () => {
                        status.includes('unsafe');
             });
         
-        // Apply category filter
         if (selectedCategory === 'all') {
             return unsafe;
         }
         return unsafe.filter(([key]) => key === selectedCategory);
     };
 
-    // Check if there are any unsafe categories
     const hasUnsafeInFiltered = () => {
         return getFilteredUnsafeCategories().length > 0;
     };
 
-    // Get filtered interactions based on category selection
+    // Get filtered interactions - shows all for single drug, filtered for multiple
     const getFilteredInteractions = () => {
         if (!result || !result.major_interactions) return [];
         
-        // For single drug search (medList length === 1), show all interactions
+        // If only one drug is searched, show ALL interactions
         if (medList.length === 1) {
             return result.major_interactions;
         }
         
-        // For multiple drugs, filter to show only interactions between the searched drugs
-        return result.major_interactions.filter(interaction => {
+        // For multiple drugs, filter to show only interactions that contain the searched drugs
+        const filtered = result.major_interactions.filter(interaction => {
             // Check if the interaction contains any of the searched drugs
-            const hasSearchedDrug = medList.some(med => 
+            return medList.some(med => 
                 interaction.toLowerCase().includes(med.toLowerCase())
             );
-            return hasSearchedDrug;
         });
+        
+        return filtered;
     };
 
-    // Get filtered IV incompatibilities based on category selection
+    // Get filtered IV incompatibilities - shows all for single drug, filtered for multiple
     const getFilteredIVIncompatibilities = () => {
         if (!result || !result.iv_incompatibility) return [];
         
-        // For single drug search (medList length === 1), show all incompatibilities
+        // If only one drug is searched, show ALL incompatibilities
         if (medList.length === 1) {
             return result.iv_incompatibility;
         }
         
-        // For multiple drugs, filter to show only incompatibilities between the searched drugs
-        return result.iv_incompatibility.filter(incompatibility => {
-            // Check if the incompatibility contains any of the searched drugs
-            const hasSearchedDrug = medList.some(med => 
+        // For multiple drugs, filter to show only incompatibilities that contain the searched drugs
+        const filtered = result.iv_incompatibility.filter(incompatibility => {
+            return medList.some(med => 
                 incompatibility.toLowerCase().includes(med.toLowerCase())
             );
-            return hasSearchedDrug;
         });
+        
+        return filtered;
     };
 
     // Check if there are any interactions to show
@@ -199,7 +182,9 @@ const QuickSafetyCheck = () => {
         if (selectedCategory !== 'all' && selectedCategory !== 'drug_interactions') return false;
         
         const filtered = getFilteredInteractions();
-        return filtered && filtered.length > 0;
+        // Filter out entries without ' + ' to show only drug combinations
+        const withDrugCombinations = filtered.filter(item => item.includes(' + '));
+        return withDrugCombinations && withDrugCombinations.length > 0;
     };
 
     // Check if there are any IV incompatibilities to show
@@ -209,7 +194,9 @@ const QuickSafetyCheck = () => {
         if (selectedCategory !== 'all' && selectedCategory !== 'iv_incompatibility') return false;
         
         const filtered = getFilteredIVIncompatibilities();
-        return filtered && filtered.length > 0;
+        // Filter out entries without ' + ' to show only drug combinations
+        const withDrugCombinations = filtered.filter(item => item.includes(' + '));
+        return withDrugCombinations && withDrugCombinations.length > 0;
     };
 
     // Check if there's any data to show
@@ -220,16 +207,13 @@ const QuickSafetyCheck = () => {
         const hasInteractions = hasInteractionsToShow();
         const hasIVIncompatibility = hasIVIncompatibilityToShow();
         
-        // DEBUG: Log what's being detected
         console.log('hasUnsafe:', hasUnsafe);
         console.log('hasInteractions:', hasInteractions);
         console.log('hasIVIncompatibility:', hasIVIncompatibility);
-        console.log('isHealthcareClient:', isHealthcareClient);
         
         return hasUnsafe || hasInteractions || hasIVIncompatibility;
     };
 
-    // Check if IV incompatibility should be shown in category dropdown
     const shouldShowIVCategory = () => {
         return !isHealthcareClient;
     };
@@ -370,7 +354,7 @@ const QuickSafetyCheck = () => {
                                     </div>
                                 )}
 
-                                {/* Major Drug Interactions - Show only when there are interactions */}
+                                {/* Major Drug Interactions - Show only when there are interactions with drug combinations */}
                                 {hasInteractionsToShow() && (
                                     <div className="bg-amber-50 rounded-2xl p-6 md:p-8 shadow-sm border border-amber-200 mt-6">
                                         <h4 className="text-xl font-bold text-amber-900 flex items-center gap-2 mb-4">
@@ -391,7 +375,7 @@ const QuickSafetyCheck = () => {
                                     </div>
                                 )}
                                 
-                                {/* IV Drug Incompatibility - Show only when there are incompatibilities */}
+                                {/* IV Drug Incompatibility - Show only when there are incompatibilities with drug combinations */}
                                 {hasIVIncompatibilityToShow() && (
                                     <div className="bg-red-50 rounded-2xl p-6 md:p-8 shadow-sm border border-red-200 mt-6">
                                         <h4 className="text-xl font-bold text-red-900 flex items-center gap-2 mb-4">
