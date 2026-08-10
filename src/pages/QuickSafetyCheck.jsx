@@ -23,10 +23,11 @@ const CategoryTitle = ({ type }) => {
 
 const StatusBadge = ({ status }) => {
     const s = status?.toLowerCase() || '';
-    if (s.includes('contraindicate') || s.includes('avoid') || s.includes('unsafe')) {
+    if (s.includes('contraindicate') || s.includes('avoid') || s.includes('unsafe') || 
+        s.includes('warning') || s.includes('caution') || s.includes('not recommended')) {
         return <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"><FaExclamationCircle /> UNSAFE</span>;
     }
-    return null;
+    return <span className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"><FaInfoCircle /> CAUTION</span>;
 };
 
 const QuickSafetyCheck = () => {
@@ -100,6 +101,7 @@ const QuickSafetyCheck = () => {
                 const filteredProfile = filterIVIncompatibility(response.safetyProfile);
                 
                 console.log('Safety Profile:', filteredProfile);
+                console.log('Categories:', filteredProfile.categories);
                 console.log('Major Interactions:', filteredProfile.major_interactions);
                 console.log('IV Incompatibility:', filteredProfile.iv_incompatibility);
                 
@@ -115,16 +117,32 @@ const QuickSafetyCheck = () => {
         }
     };
 
-    // Get unsafe categories only with filtering
+    // Get all categories with any data
+    const getAllCategories = () => {
+        if (!result || !result.categories) return [];
+        return Object.entries(result.categories);
+    };
+
+    // Get unsafe categories only with filtering - expanded status detection
     const getFilteredUnsafeCategories = () => {
         if (!result || !result.categories) return [];
         
         const unsafe = Object.entries(result.categories)
             .filter(([key, data]) => {
                 const status = data.status?.toLowerCase() || '';
+                const details = data.details?.toLowerCase() || '';
+                // Check for any warning indicators
                 return status.includes('contraindicate') || 
                        status.includes('avoid') || 
-                       status.includes('unsafe');
+                       status.includes('unsafe') ||
+                       status.includes('warning') ||
+                       status.includes('caution') ||
+                       status.includes('not recommended') ||
+                       details.includes('contraindicate') ||
+                       details.includes('avoid') ||
+                       details.includes('unsafe') ||
+                       details.includes('warning') ||
+                       details.includes('caution');
             });
         
         if (selectedCategory === 'all') {
@@ -203,15 +221,29 @@ const QuickSafetyCheck = () => {
     const hasAnyDataToShow = () => {
         if (!result) return false;
         
+        // Check if there are ANY categories (not just unsafe ones)
+        const hasCategories = result.categories && Object.keys(result.categories).length > 0;
+        
+        // Check if there are any interactions (not just combinations)
+        const hasInteractions = result.major_interactions && result.major_interactions.length > 0;
+        
+        // Check if there are any IV incompatibilities
+        const hasIVIncompat = result.iv_incompatibility && result.iv_incompatibility.length > 0;
+        
+        // Check unsafe categories
         const hasUnsafe = hasUnsafeInFiltered();
-        const hasInteractions = hasCombinationInteractionsToShow();
-        const hasIVIncompatibility = hasCombinationIVIncompatibilitiesToShow();
         
+        // Check combinations
+        const hasCombinations = hasCombinationInteractionsToShow() || hasCombinationIVIncompatibilitiesToShow();
+        
+        console.log('hasCategories:', hasCategories);
+        console.log('hasInteractions:', hasInteractions);
+        console.log('hasIVIncompat:', hasIVIncompat);
         console.log('hasUnsafe:', hasUnsafe);
-        console.log('hasInteractions (combinations only):', hasInteractions);
-        console.log('hasIVIncompatibility (combinations only):', hasIVIncompatibility);
+        console.log('hasCombinations:', hasCombinations);
         
-        return hasUnsafe || hasInteractions || hasIVIncompatibility;
+        // Show data if there's ANYTHING to show
+        return hasCategories || hasInteractions || hasIVIncompat || hasUnsafe || hasCombinations;
     };
 
     const shouldShowIVCategory = () => {
@@ -339,20 +371,60 @@ const QuickSafetyCheck = () => {
                                     <p className="text-gray-600 text-lg leading-relaxed">{result.general_overview}</p>
                                 </div>
 
-                                {/* Show unsafe categories with proper filtering */}
-                                {hasUnsafeInFiltered() && (
+                                {/* Show ALL categories that have data */}
+                                {result.categories && Object.entries(result.categories).length > 0 && (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {getFilteredUnsafeCategories().map(([key, data]) => (
-                                            <div key={key} className="bg-red-50 rounded-2xl p-6 shadow-sm border-2 border-red-400 hover:border-red-600 transition-colors group">
-                                                <div className="flex items-start justify-between mb-4">
-                                                    <div className="flex items-center gap-3">
-                                                        <h4 className="font-bold text-gray-800 text-lg"><CategoryTitle type={key} /></h4>
+                                        {Object.entries(result.categories)
+                                            .filter(([key, data]) => {
+                                                // If a specific category is selected, only show that one
+                                                if (selectedCategory !== 'all' && key !== selectedCategory) {
+                                                    return false;
+                                                }
+                                                // Filter out empty or "safe" categories if needed
+                                                // but show all categories that have any data
+                                                return data && (data.status || data.details);
+                                            })
+                                            .map(([key, data]) => {
+                                                // Determine if this is a warning
+                                                const status = data.status?.toLowerCase() || '';
+                                                const details = data.details?.toLowerCase() || '';
+                                                const isWarning = status.includes('contraindicate') || 
+                                                                 status.includes('avoid') || 
+                                                                 status.includes('unsafe') ||
+                                                                 status.includes('warning') ||
+                                                                 status.includes('caution') ||
+                                                                 details.includes('contraindicate') ||
+                                                                 details.includes('avoid') ||
+                                                                 details.includes('unsafe') ||
+                                                                 details.includes('warning') ||
+                                                                 details.includes('caution');
+                                                
+                                                const bgClass = isWarning ? 'bg-red-50 border-red-400' : 'bg-yellow-50 border-yellow-400';
+                                                const textClass = isWarning ? 'text-red-700' : 'text-yellow-700';
+                                                
+                                                return (
+                                                    <div key={key} className={`${bgClass} rounded-2xl p-6 shadow-sm border-2 transition-colors`}>
+                                                        <div className="flex items-start justify-between mb-4">
+                                                            <div className="flex items-center gap-3">
+                                                                <h4 className="font-bold text-gray-800 text-lg"><CategoryTitle type={key} /></h4>
+                                                            </div>
+                                                            {isWarning ? (
+                                                                <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                                                                    <FaExclamationCircle /> UNSAFE
+                                                                </span>
+                                                            ) : (
+                                                                <span className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                                                                    <FaInfoCircle /> CAUTION
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <p className={`${textClass} leading-relaxed text-base font-bold`}>
+                                                            {data.details || data.status || 'Information available'}
+                                                        </p>
                                                     </div>
-                                                    <StatusBadge status={data.status} />
-                                                </div>
-                                                <p className="text-gray-700 leading-relaxed text-base font-bold">{data.details}</p>
-                                            </div>
-                                        ))}
+                                                );
+                                            })
+                                        }
                                     </div>
                                 )}
 
@@ -364,7 +436,6 @@ const QuickSafetyCheck = () => {
                                         </h4>
                                         <div className="space-y-3">
                                             {getCombinationInteractions().map((interaction, i) => {
-                                                // Extract the drug names from the combination for better display
                                                 const parts = interaction.split(' + ');
                                                 if (parts.length >= 2) {
                                                     const firstDrug = parts[0].trim();
