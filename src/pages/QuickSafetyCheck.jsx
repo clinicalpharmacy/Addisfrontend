@@ -322,17 +322,14 @@ const QuickSafetyCheck = () => {
 
                                 {/* Major Drug Interactions */}
                                 {(selectedCategory === 'all' || selectedCategory === 'drug_interactions') && 
-                                result.major_interactions && result.major_interactions.length > 0 && (
+                                 result.major_interactions && result.major_interactions.length > 0 && (
                                     <div className="bg-amber-50 rounded-2xl p-6 md:p-8 shadow-sm border border-amber-200 mt-6">
                                         <h4 className="text-xl font-bold text-amber-900 flex items-center gap-2 mb-4">
                                             <FaPills className="text-amber-600" /> Major Drug Interactions (Avoid With)
                                         </h4>
-                                        <ul className="space-y-2 text-amber-800 font-medium ml-2">
+                                        <ul className="list-disc list-inside space-y-2 text-amber-800 font-medium ml-2">
                                             {result.major_interactions.map((interaction, i) => (
-                                                <li key={i} className="flex items-start gap-2">
-                                                    <span className="text-amber-600">-</span>
-                                                    <span>{interaction}</span>
-                                                </li>
+                                                <li key={i}>{interaction}</li>
                                             ))}
                                         </ul>
                                     </div>
@@ -346,12 +343,9 @@ const QuickSafetyCheck = () => {
                                         <h4 className="text-xl font-bold text-red-900 flex items-center gap-2 mb-4">
                                             <FaSyringe className="text-red-600" /> IV Drug Incompatibility (Do Not Mix)
                                         </h4>
-                                        <ul className="space-y-2 text-red-800 font-medium ml-2">
+                                        <ul className="list-disc list-inside space-y-2 text-red-800 font-medium ml-2">
                                             {result.iv_incompatibility.map((incompatibility, i) => (
-                                                <li key={i} className="flex items-start gap-2">
-                                                    <span className="text-red-600">-</span>
-                                                    <span>{incompatibility}</span>
-                                                </li>
+                                                <li key={i}>{incompatibility}</li>
                                             ))}
                                         </ul>
                                     </div>
