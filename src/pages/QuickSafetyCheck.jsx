@@ -44,18 +44,22 @@ const QuickSafetyCheck = () => {
     // Get user role from localStorage or context
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     
-    // Check user roles
-    const isAdmin = user?.role === 'admin';
-    const isCompanyUser = !!user?.company_id || user?.account_type === 'company' || ['company_admin', 'company_user'].includes(user?.role);
-    
     // Check if user is healthcare_client
     const isHealthcareClient = user?.role === 'healthcare_client' || user?.account_type === 'healthcare_client';
+
+    // Filter out IV incompatibility for healthcare_client
+    const filterIVIncompatibility = (safetyProfile) => {
+        if (isHealthcareClient && safetyProfile) {
+            const { iv_incompatibility, ...filteredProfile } = safetyProfile;
+            return filteredProfile;
+        }
+        return safetyProfile;
+    };
 
     const handleAddMedication = (e) => {
         if (e.key === 'Enter' || e.type === 'click') {
             e.preventDefault();
             if (drugName.trim()) {
-                // Support comma-separated paste
                 const newMeds = drugName.split(',').map(m => m.trim()).filter(Boolean);
                 setMedList(prev => [...new Set([...prev, ...newMeds])]);
                 setDrugName('');
@@ -69,7 +73,8 @@ const QuickSafetyCheck = () => {
 
     const handleSearch = async (e) => {
         e.preventDefault();
-        // If user typed something but didn't press enter, add it
+        
+        // Add any pending drug name
         let currentMeds = [...medList];
         if (drugName.trim()) {
             const newMeds = drugName.split(',').map(m => m.trim()).filter(Boolean);
@@ -78,13 +83,18 @@ const QuickSafetyCheck = () => {
             setDrugName('');
         }
 
-        if (currentMeds.length === 0) return;
+        if (currentMeds.length === 0) {
+            setError('Please enter at least one medication.');
+            return;
+        }
 
         setLoading(true);
         setError('');
         setResult(null);
 
         try {
+            // Send the first medication or all medications based on API support
+            // Using 'medications' array as the first version
             const response = await api.post('/quick-safety', { 
                 medications: currentMeds,
                 category: selectedCategory === 'all' ? null : selectedCategory
@@ -101,11 +111,7 @@ const QuickSafetyCheck = () => {
                     response.safetyProfile.iv_incompatibility = [];
                 }
                 
-                // For healthcare_client, filter out IV incompatibility
-                let filteredProfile = { ...response.safetyProfile };
-                if (isHealthcareClient) {
-                    delete filteredProfile.iv_incompatibility;
-                }
+                const filteredProfile = filterIVIncompatibility(response.safetyProfile);
                 
                 console.log('Safety Profile:', filteredProfile);
                 console.log('Major Interactions:', filteredProfile.major_interactions);
@@ -123,20 +129,14 @@ const QuickSafetyCheck = () => {
         }
     };
 
-    // Get unsafe categories only with filtering
+    // Get unsafe categories with filtering
     const getFilteredUnsafeCategories = () => {
         if (!result || !result.categories) return [];
         
         const unsafe = Object.entries(result.categories)
             .filter(([key, data]) => {
-                // Skip if category doesn't match filter
-                if (selectedCategory !== 'all' && key !== selectedCategory) {
-                    return false;
-                }
-                // Skip IV incompatibility for healthcare_client
-                if (key === 'iv_incompatibility' && isHealthcareClient) {
-                    return false;
-                }
+                if (selectedCategory !== 'all' && key !== selectedCategory) return false;
+                if (key === 'iv_incompatibility' && isHealthcareClient) return false;
                 const status = data.status?.toLowerCase() || '';
                 return status.includes('contraindicate') || 
                        status.includes('avoid') || 
@@ -146,12 +146,11 @@ const QuickSafetyCheck = () => {
         return unsafe;
     };
 
-    // Check if there are any unsafe categories
     const hasUnsafeInFiltered = () => {
         return getFilteredUnsafeCategories().length > 0;
     };
 
-    // Get filtered interactions based on selected category
+    // Get filtered interactions
     const getFilteredInteractions = () => {
         if (!result || !result.major_interactions) return [];
         if (selectedCategory === 'all' || selectedCategory === 'drug_interactions') {
@@ -160,7 +159,7 @@ const QuickSafetyCheck = () => {
         return [];
     };
 
-    // Get filtered IV incompatibilities based on selected category
+    // Get filtered IV incompatibilities
     const getFilteredIVIncompatibilities = () => {
         if (!result || !result.iv_incompatibility || isHealthcareClient) return [];
         if (selectedCategory === 'all' || selectedCategory === 'iv_incompatibility') {
@@ -169,7 +168,6 @@ const QuickSafetyCheck = () => {
         return [];
     };
 
-    // Check if there's any data to show
     const hasAnyDataToShow = () => {
         if (!result) return false;
         
@@ -184,7 +182,6 @@ const QuickSafetyCheck = () => {
         return hasUnsafe || hasInteractions || hasIVIncompatibility;
     };
 
-    // Check if IV incompatibility should be shown in category dropdown
     const shouldShowIVCategory = () => {
         return !isHealthcareClient;
     };
@@ -221,7 +218,7 @@ const QuickSafetyCheck = () => {
                                 <div className="relative">
                                     <input 
                                         type="text"
-                                        placeholder="e.g., Ibuprofen (Press Enter to add)"
+                                        placeholder="e.g., Ibuprofen, Amoxicillin (Press Enter to add)"
                                         value={drugName}
                                         onChange={(e) => setDrugName(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleAddMedication(e)}
@@ -321,7 +318,7 @@ const QuickSafetyCheck = () => {
                             )}
                         </div>
 
-                        {/* Show unsafe categories with proper filtering */}
+                        {/* Unsafe Categories */}
                         {hasUnsafeInFiltered() && (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {getFilteredUnsafeCategories().map(([key, data]) => (
@@ -362,7 +359,7 @@ const QuickSafetyCheck = () => {
                             </div>
                         )}
 
-                        {/* IV Drug Incompatibility - Shows drug combinations for IV */}
+                        {/* IV Drug Incompatibility - Shows drug combinations */}
                         {getFilteredIVIncompatibilities().length > 0 && (
                             <div className="bg-red-50 rounded-2xl p-6 md:p-8 shadow-sm border border-red-200 mt-6">
                                 <h4 className="text-xl font-bold text-red-900 flex items-center gap-2 mb-4">
@@ -386,7 +383,7 @@ const QuickSafetyCheck = () => {
                             </div>
                         )}
 
-                        {/* No warnings found - Specific medications are safe */}
+                        {/* No warnings found */}
                         {!hasAnyDataToShow() && (
                             <div className="bg-green-50 border-2 border-green-500 rounded-2xl p-8 md:p-12 shadow-lg text-center">
                                 <div className="flex flex-col items-center gap-4">
