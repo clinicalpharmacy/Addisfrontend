@@ -137,6 +137,22 @@ const QuickSafetyCheck = () => {
         return getFilteredUnsafeCategories().length > 0;
     };
 
+    // Extract drug names from interaction string
+    const extractDrugNames = (interaction) => {
+        // Try to extract drug names from patterns like "DrugA + DrugB" or "DrugA and DrugB"
+        const plusPattern = /([^+]+)\s*\+\s*([^—]+)/;
+        const andPattern = /([^and]+)\s+and\s+([^—]+)/;
+        const match = interaction.match(plusPattern) || interaction.match(andPattern);
+        
+        if (match) {
+            return {
+                drug1: match[1].trim(),
+                drug2: match[2].trim().split('—')[0].trim()
+            };
+        }
+        return null;
+    };
+
     // Get filtered interactions - filters for single drug, filters for multiple
     const getFilteredInteractions = () => {
         if (!result || !result.major_interactions) return [];
@@ -371,59 +387,97 @@ const QuickSafetyCheck = () => {
                                     </div>
                                 )}
 
-                                {/* Major Drug Interactions - Show filtered interactions */}
+                                {/* Major Drug Interactions - Show filtered interactions as a list */}
                                 {hasInteractionsToShow() && (
                                     <div className="bg-amber-50 rounded-2xl p-6 md:p-8 shadow-sm border border-amber-200 mt-6">
                                         <h4 className="text-xl font-bold text-amber-900 flex items-center gap-2 mb-4">
                                             <FaPills className="text-amber-600" /> Major Drug Interactions (Avoid With)
                                         </h4>
-                                        <ul className="list-disc list-inside space-y-2 text-amber-800 font-medium ml-2">
+                                        <div className="space-y-3">
                                             {getFilteredInteractions()
                                                 .filter(interaction => {
-                                                    // For single drug, show all filtered interactions
                                                     if (medList.length === 1) {
                                                         return true;
                                                     }
-                                                    // For multiple drugs, only show drug combinations
                                                     return interaction.includes(' + ');
                                                 })
                                                 .map((interaction, i) => {
+                                                    const drugNames = extractDrugNames(interaction);
                                                     let displayText = interaction;
                                                     if (!displayText.includes('⚠️')) {
                                                         displayText = `⚠️ ${displayText}`;
                                                     }
-                                                    return <li key={i}>{displayText}</li>;
-                                                })
-                                            }
-                                        </ul>
+                                                    
+                                                    return (
+                                                        <div key={i} className="bg-white/50 rounded-xl p-3 border border-amber-200">
+                                                            <div className="flex items-start gap-2">
+                                                                <span className="text-amber-600 font-bold">•</span>
+                                                                <div>
+                                                                    <span className="font-bold text-amber-800">⚠️</span>
+                                                                    <span className="text-amber-800 ml-1">
+                                                                        {drugNames ? (
+                                                                            <>
+                                                                                <span className="font-bold">{drugNames.drug1}</span>
+                                                                                <span className="text-amber-600 mx-1">↔</span>
+                                                                                <span className="font-bold">{drugNames.drug2}</span>
+                                                                            </>
+                                                                        ) : (
+                                                                            displayText
+                                                                        )}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                        </div>
                                     </div>
                                 )}
                                 
-                                {/* IV Drug Incompatibility - Show filtered incompatibilities */}
+                                {/* IV Drug Incompatibility - Show filtered incompatibilities as a list */}
                                 {hasIVIncompatibilityToShow() && (
                                     <div className="bg-red-50 rounded-2xl p-6 md:p-8 shadow-sm border border-red-200 mt-6">
                                         <h4 className="text-xl font-bold text-red-900 flex items-center gap-2 mb-4">
                                             <FaSyringe className="text-red-600" /> IV Drug Incompatibility (Do Not Mix)
                                         </h4>
-                                        <ul className="list-disc list-inside space-y-2 text-red-800 font-medium ml-2">
+                                        <div className="space-y-3">
                                             {getFilteredIVIncompatibilities()
                                                 .filter(incompatibility => {
-                                                    // For single drug, show all filtered incompatibilities
                                                     if (medList.length === 1) {
                                                         return true;
                                                     }
-                                                    // For multiple drugs, only show drug combinations
                                                     return incompatibility.includes(' + ');
                                                 })
                                                 .map((incompatibility, i) => {
+                                                    const drugNames = extractDrugNames(incompatibility);
                                                     let displayText = incompatibility;
                                                     if (!displayText.includes('⚠️')) {
                                                         displayText = `⚠️ ${displayText}`;
                                                     }
-                                                    return <li key={i}>{displayText}</li>;
-                                                })
-                                            }
-                                        </ul>
+                                                    
+                                                    return (
+                                                        <div key={i} className="bg-white/50 rounded-xl p-3 border border-red-200">
+                                                            <div className="flex items-start gap-2">
+                                                                <span className="text-red-600 font-bold">•</span>
+                                                                <div>
+                                                                    <span className="font-bold text-red-800">⚠️</span>
+                                                                    <span className="text-red-800 ml-1">
+                                                                        {drugNames ? (
+                                                                            <>
+                                                                                <span className="font-bold">{drugNames.drug1}</span>
+                                                                                <span className="text-red-600 mx-1">↔</span>
+                                                                                <span className="font-bold">{drugNames.drug2}</span>
+                                                                            </>
+                                                                        ) : (
+                                                                            displayText
+                                                                        )}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                        </div>
                                     </div>
                                 )}
                             </>
