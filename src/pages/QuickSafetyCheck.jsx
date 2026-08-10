@@ -32,7 +32,6 @@ const StatusBadge = ({ status }) => {
 const QuickSafetyCheck = () => {
     const navigate = useNavigate();
     const [drugName, setDrugName] = useState('');
-    const [medList, setMedList] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
@@ -41,44 +40,28 @@ const QuickSafetyCheck = () => {
     // Get user role from localStorage or context
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     
+    // Check user roles
+    const isAdmin = user?.role === 'admin';
+    const isCompanyAdmin = user?.role === 'company_admin';
+    const isCompanyUser = !!user?.company_id || user?.account_type === 'company' || ['company_admin', 'company_user'].includes(user?.role);
+    const isIndividual = !isAdmin && !isCompanyUser;
+    
     // Check if user is healthcare_client
     const isHealthcareClient = user?.role === 'healthcare_client' || user?.account_type === 'healthcare_client';
 
     // Filter out IV incompatibility for healthcare_client
     const filterIVIncompatibility = (safetyProfile) => {
         if (isHealthcareClient && safetyProfile) {
+            // Remove iv_incompatibility from the profile
             const { iv_incompatibility, ...filteredProfile } = safetyProfile;
             return filteredProfile;
         }
         return safetyProfile;
     };
 
-    const handleAddMedication = (e) => {
-        if (e.key === 'Enter' || e.type === 'click') {
-            e.preventDefault();
-            if (drugName.trim()) {
-                const newMeds = drugName.split(',').map(m => m.trim()).filter(Boolean);
-                setMedList(prev => [...new Set([...prev, ...newMeds])]);
-                setDrugName('');
-            }
-        }
-    };
-
-    const removeMedication = (medToRemove) => {
-        setMedList(prev => prev.filter(m => m !== medToRemove));
-    };
-
     const handleSearch = async (e) => {
         e.preventDefault();
-        let currentMeds = [...medList];
-        if (drugName.trim()) {
-            const newMeds = drugName.split(',').map(m => m.trim()).filter(Boolean);
-            currentMeds = [...new Set([...currentMeds, ...newMeds])];
-            setMedList(currentMeds);
-            setDrugName('');
-        }
-
-        if (currentMeds.length === 0) return;
+        if (!drugName.trim()) return;
 
         setLoading(true);
         setError('');
@@ -86,22 +69,29 @@ const QuickSafetyCheck = () => {
 
         try {
             const response = await api.post('/quick-safety', { 
-                medications: currentMeds,
+                medication: drugName.trim(),
                 category: selectedCategory === 'all' ? null : selectedCategory
             });
             
+            // DEBUG: Log the full response
             console.log('Full API Response:', response);
             
             if (response.success && response.safetyProfile) {
+                // Ensure iv_incompatibility is always an array for non-healthcare_client
                 if (!response.safetyProfile.iv_incompatibility && !isHealthcareClient) {
                     response.safetyProfile.iv_incompatibility = [];
                 }
                 
+                // Filter IV incompatibility for healthcare_client
                 const filteredProfile = filterIVIncompatibility(response.safetyProfile);
                 
+                // DEBUG: Log specific fields
                 console.log('Safety Profile:', filteredProfile);
+                console.log('Is Healthcare Client:', isHealthcareClient);
                 console.log('Major Interactions:', filteredProfile.major_interactions);
                 console.log('IV Incompatibility:', filteredProfile.iv_incompatibility);
+                console.log('IV Incompatibility Type:', typeof filteredProfile.iv_incompatibility);
+                console.log('IV Incompatibility Length:', filteredProfile.iv_incompatibility?.length);
                 
                 setResult(filteredProfile);
             } else {
@@ -113,11 +103,6 @@ const QuickSafetyCheck = () => {
         } finally {
             setLoading(false);
         }
-    };
-
-    // Check if we're searching for a single medication
-    const isSingleMedication = () => {
-        return medList.length === 1;
     };
 
     // Get unsafe categories only with filtering
@@ -132,114 +117,16 @@ const QuickSafetyCheck = () => {
                        status.includes('unsafe');
             });
         
+        // Apply category filter
         if (selectedCategory === 'all') {
             return unsafe;
         }
         return unsafe.filter(([key]) => key === selectedCategory);
     };
 
+    // Check if there are any unsafe categories
     const hasUnsafeInFiltered = () => {
         return getFilteredUnsafeCategories().length > 0;
-    };
-
-    // Helper function to check if interaction contains drug names
-    const containsSearchedDrugs = (text) => {
-        return medList.some(med => 
-            text.toLowerCase().includes(med.toLowerCase())
-        );
-    };
-
-    // Helper function to check if text is a generic message or specific interaction
-    const isGenericMessage = (text) => {
-        const genericPhrases = [
-            'አንድ ላይ ለመውሰድ የማይመከሩ',
-            'IV Drug Incompatibility',
-            'Major Drug Interactions'
-        ];
-        return genericPhrases.some(phrase => text.includes(phrase));
-    };
-
-    // Get filtered interactions - shows all for single drug, filtered for multiple
-    const getFilteredInteractions = () => {
-        if (!result || !result.major_interactions) return [];
-        
-        // If only one drug is searched, show ALL interactions but filter out generic messages
-        if (isSingleMedication()) {
-            return result.major_interactions.filter(interaction => 
-                !isGenericMessage(interaction)
-            );
-        }
-        
-        // For multiple drugs, filter to show only interactions that contain the searched drugs
-        const filtered = result.major_interactions.filter(interaction => {
-            // Skip generic messages
-            if (isGenericMessage(interaction)) return false;
-            // Check if the interaction contains any of the searched drugs
-            return containsSearchedDrugs(interaction);
-        });
-        
-        return filtered;
-    };
-
-    // Get filtered IV incompatibilities - shows all for single drug, filtered for multiple
-    const getFilteredIVIncompatibilities = () => {
-        if (!result || !result.iv_incompatibility) return [];
-        
-        // If only one drug is searched, show ALL incompatibilities but filter out generic messages
-        if (isSingleMedication()) {
-            return result.iv_incompatibility.filter(incompatibility => 
-                !isGenericMessage(incompatibility)
-            );
-        }
-        
-        // For multiple drugs, filter to show only incompatibilities that contain the searched drugs
-        const filtered = result.iv_incompatibility.filter(incompatibility => {
-            // Skip generic messages
-            if (isGenericMessage(incompatibility)) return false;
-            // Check if the incompatibility contains any of the searched drugs
-            return containsSearchedDrugs(incompatibility);
-        });
-        
-        return filtered;
-    };
-
-    // Check if there are any interactions to show
-    const hasInteractionsToShow = () => {
-        if (!result || !result.major_interactions) return false;
-        if (selectedCategory !== 'all' && selectedCategory !== 'drug_interactions') return false;
-        
-        const filtered = getFilteredInteractions();
-        
-        if (isSingleMedication()) {
-            // For single medication, show if there are any specific interactions
-            return filtered && filtered.length > 0;
-        } else {
-            // For multiple medications, filter to show only interactions with drug combinations
-            const withDrugCombinations = filtered.filter(item => 
-                item.includes(' + ') || item.toLowerCase().includes('with')
-            );
-            return withDrugCombinations && withDrugCombinations.length > 0;
-        }
-    };
-
-    // Check if there are any IV incompatibilities to show
-    const hasIVIncompatibilityToShow = () => {
-        if (isHealthcareClient) return false;
-        if (!result || !result.iv_incompatibility) return false;
-        if (selectedCategory !== 'all' && selectedCategory !== 'iv_incompatibility') return false;
-        
-        const filtered = getFilteredIVIncompatibilities();
-        
-        if (isSingleMedication()) {
-            // For single medication, show if there are any specific incompatibilities
-            return filtered && filtered.length > 0;
-        } else {
-            // For multiple medications, filter to show only incompatibilities with drug combinations
-            const withDrugCombinations = filtered.filter(item => 
-                item.includes(' + ') || item.toLowerCase().includes('with')
-            );
-            return withDrugCombinations && withDrugCombinations.length > 0;
-        }
     };
 
     // Check if there's any data to show
@@ -247,28 +134,28 @@ const QuickSafetyCheck = () => {
         if (!result) return false;
         
         const hasUnsafe = hasUnsafeInFiltered();
-        const hasInteractions = hasInteractionsToShow();
-        const hasIVIncompatibility = hasIVIncompatibilityToShow();
+        const hasInteractions = (selectedCategory === 'all' || selectedCategory === 'drug_interactions') && 
+                               result.major_interactions && result.major_interactions.length > 0;
         
+        // Only check IV incompatibility if NOT healthcare_client
+        let hasIVIncompatibility = false;
+        if (!isHealthcareClient) {
+            hasIVIncompatibility = (selectedCategory === 'all' || selectedCategory === 'iv_incompatibility') && 
+                                   result.iv_incompatibility && result.iv_incompatibility.length > 0;
+        }
+        
+        // DEBUG: Log what's being detected
         console.log('hasUnsafe:', hasUnsafe);
         console.log('hasInteractions:', hasInteractions);
         console.log('hasIVIncompatibility:', hasIVIncompatibility);
+        console.log('isHealthcareClient:', isHealthcareClient);
         
         return hasUnsafe || hasInteractions || hasIVIncompatibility;
     };
 
+    // Check if IV incompatibility should be shown in category dropdown
     const shouldShowIVCategory = () => {
         return !isHealthcareClient;
-    };
-
-    // Helper function to format interaction display
-    const formatInteractionDisplay = (interaction) => {
-        // If it already has a warning emoji, return as is
-        if (interaction.includes('⚠️')) {
-            return interaction;
-        }
-        // Add warning emoji
-        return `⚠️ ${interaction}`;
     };
 
     return (
@@ -295,41 +182,19 @@ const QuickSafetyCheck = () => {
                     <div className="relative z-10">
                         <h2 className="text-3xl md:text-4xl font-black mb-4 tracking-tight">Check Medication Safety</h2>
                         <p className="text-blue-100 text-lg md:text-xl mb-8 max-w-2xl mx-auto opacity-90 font-medium">
-                            Enter one or more generic drug names to check safety and interactions.
+                            Enter generic drug name to see if it's unsafe.
                         </p>
                         
-                        <form onSubmit={handleSearch} className="max-w-3xl mx-auto relative group flex flex-col md:flex-row gap-3 items-start">
-                            <div className="relative flex-1 flex flex-col w-full">
-                                <div className="relative">
-                                    <input 
-                                        type="text"
-                                        placeholder="e.g., Ibuprofen (Press Enter to add)"
-                                        value={drugName}
-                                        onChange={(e) => setDrugName(e.target.value)}
-                                        onKeyDown={(e) => e.key === 'Enter' && handleAddMedication(e)}
-                                        className="w-full bg-white text-gray-800 px-6 py-4 pl-12 rounded-xl text-lg font-bold shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/50 transition-all placeholder:text-gray-400"
-                                    />
-                                    <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg" />
-                                    <button 
-                                        type="button"
-                                        onClick={handleAddMedication}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors"
-                                    >
-                                        Add
-                                    </button>
-                                </div>
-                                {medList.length > 0 && (
-                                    <div className="flex flex-wrap gap-2 mt-3 p-2 bg-white/10 rounded-xl">
-                                        {medList.map((med, idx) => (
-                                            <span key={idx} className="bg-white text-blue-800 px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-2 shadow-sm">
-                                                {med}
-                                                <button type="button" onClick={() => removeMedication(med)} className="text-blue-400 hover:text-red-500">
-                                                    &times;
-                                                </button>
-                                            </span>
-                                        ))}
-                                    </div>
-                                )}
+                        <form onSubmit={handleSearch} className="max-w-3xl mx-auto relative group flex flex-col md:flex-row gap-3">
+                            <div className="relative flex-1">
+                                <input 
+                                    type="text"
+                                    placeholder="e.g., Ibuprofen, Amoxicillin..."
+                                    value={drugName}
+                                    onChange={(e) => setDrugName(e.target.value)}
+                                    className="w-full bg-white text-gray-800 px-6 py-4 pl-12 rounded-xl text-lg font-bold shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/50 transition-all placeholder:text-gray-400"
+                                />
+                                <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg" />
                             </div>
                             
                             <select 
@@ -352,7 +217,7 @@ const QuickSafetyCheck = () => {
 
                             <button 
                                 type="submit"
-                                disabled={loading || (medList.length === 0 && !drugName.trim())}
+                                disabled={loading || !drugName.trim()}
                                 className="bg-blue-900 hover:bg-gray-900 disabled:bg-blue-400 text-white px-8 py-4 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 shadow-sm whitespace-nowrap"
                             >
                                 {loading ? <FaSpinner className="animate-spin" /> : 'Check Safety'}
@@ -375,7 +240,7 @@ const QuickSafetyCheck = () => {
                         <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-6">
                             <FaShieldAlt className="text-4xl text-blue-600 animate-pulse" />
                         </div>
-                        <h3 className="text-2xl font-bold text-gray-800 mb-2">Analyzing...</h3>
+                        <h3 className="text-2xl font-bold text-gray-800 mb-2">Analyzing {drugName}...</h3>
                         <p className="text-gray-500">Checking clinical safety guidelines across special populations.</p>
                     </div>
                 )}
@@ -386,9 +251,7 @@ const QuickSafetyCheck = () => {
                         {hasAnyDataToShow() ? (
                             <>
                                 <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100">
-                                    <h3 className="text-3xl font-black text-gray-900 capitalize mb-2">
-                                        {isSingleMedication() ? result.medication : medList.join(', ')}
-                                    </h3>
+                                    <h3 className="text-3xl font-black text-gray-900 capitalize mb-2">{result.medication}</h3>
                                     <p className="text-gray-600 text-lg leading-relaxed">{result.general_overview}</p>
                                 </div>
 
@@ -409,56 +272,33 @@ const QuickSafetyCheck = () => {
                                     </div>
                                 )}
 
-                                {/* Major Drug Interactions - Conditional display based on single/multiple medications */}
-                                {hasInteractionsToShow() && (
+                                {/* Major Drug Interactions */}
+                                {(selectedCategory === 'all' || selectedCategory === 'drug_interactions') && 
+                                 result.major_interactions && result.major_interactions.length > 0 && (
                                     <div className="bg-amber-50 rounded-2xl p-6 md:p-8 shadow-sm border border-amber-200 mt-6">
                                         <h4 className="text-xl font-bold text-amber-900 flex items-center gap-2 mb-4">
                                             <FaPills className="text-amber-600" /> Major Drug Interactions (Avoid With)
                                         </h4>
                                         <ul className="list-disc list-inside space-y-2 text-amber-800 font-medium ml-2">
-                                            {isSingleMedication() ? (
-                                                // For single medication - show ALL specific interactions
-                                                getFilteredInteractions().map((interaction, i) => (
-                                                    <li key={i}>{formatInteractionDisplay(interaction)}</li>
-                                                ))
-                                            ) : (
-                                                // For multiple medications - filter to show only interactions with drug combinations
-                                                getFilteredInteractions()
-                                                    .filter(interaction => 
-                                                        interaction.includes(' + ') || 
-                                                        interaction.toLowerCase().includes('with')
-                                                    )
-                                                    .map((interaction, i) => (
-                                                        <li key={i}>{formatInteractionDisplay(interaction)}</li>
-                                                    ))
-                                            )}
+                                            {result.major_interactions.map((interaction, i) => (
+                                                <li key={i}>{interaction}</li>
+                                            ))}
                                         </ul>
                                     </div>
                                 )}
-                                
-                                {/* IV Drug Incompatibility - Conditional display based on single/multiple medications */}
-                                {hasIVIncompatibilityToShow() && (
+
+                                {/* IV Drug Incompatibility - Only shown for non-healthcare_client */}
+                                {!isHealthcareClient && 
+                                 (selectedCategory === 'all' || selectedCategory === 'iv_incompatibility') && 
+                                 result.iv_incompatibility && result.iv_incompatibility.length > 0 && (
                                     <div className="bg-red-50 rounded-2xl p-6 md:p-8 shadow-sm border border-red-200 mt-6">
                                         <h4 className="text-xl font-bold text-red-900 flex items-center gap-2 mb-4">
                                             <FaSyringe className="text-red-600" /> IV Drug Incompatibility (Do Not Mix)
                                         </h4>
                                         <ul className="list-disc list-inside space-y-2 text-red-800 font-medium ml-2">
-                                            {isSingleMedication() ? (
-                                                // For single medication - show ALL specific incompatibilities
-                                                getFilteredIVIncompatibilities().map((incompatibility, i) => (
-                                                    <li key={i}>{formatInteractionDisplay(incompatibility)}</li>
-                                                ))
-                                            ) : (
-                                                // For multiple medications - filter to show only incompatibilities with drug combinations
-                                                getFilteredIVIncompatibilities()
-                                                    .filter(incompatibility => 
-                                                        incompatibility.includes(' + ') || 
-                                                        incompatibility.toLowerCase().includes('with')
-                                                    )
-                                                    .map((incompatibility, i) => (
-                                                        <li key={i}>{formatInteractionDisplay(incompatibility)}</li>
-                                                    ))
-                                            )}
+                                            {result.iv_incompatibility.map((incompatibility, i) => (
+                                                <li key={i}>{incompatibility}</li>
+                                            ))}
                                         </ul>
                                     </div>
                                 )}
@@ -468,9 +308,10 @@ const QuickSafetyCheck = () => {
                             <div className="bg-green-50 border-2 border-green-500 rounded-2xl p-8 md:p-12 shadow-lg text-center">
                                 <div className="flex flex-col items-center gap-4">
                                     <div>
-                                        <p className="text-green-600 text-lg font-black max-w-2xl mx-auto">
-                                            በተመረጡት የጤና ሁኔታዎች {selectedCategory !== 'all' && ` [${CategoryTitle({ type: selectedCategory })}]`} {isSingleMedication() ? result.medication : medList.join(', ')}ን 
-                                            ለደህንነት ሲባል እንዳንጠቀም የሚያስጠነቅቅ መረጃ በአዲስ ሜድ (Addis Med) ውስጥ አልተገኘም። ሁልጊዜም የጤና ባለሙያ ያማክሩ።
+                                        <p className="text-green-600 text-xl font-black max-w-2xl mx-auto">
+                                            No contraindication data found in Addis Med for safe use of {result.medication} in the selected condition(s)
+                                            {selectedCategory !== 'all' && ` [${CategoryTitle({ type: selectedCategory })}]`}.
+                                            Always consult with your healthcare provider.
                                         </p>
                                     </div>
                                 </div>
