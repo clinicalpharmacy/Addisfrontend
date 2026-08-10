@@ -182,7 +182,13 @@ const QuickSafetyCheck = () => {
         if (selectedCategory !== 'all' && selectedCategory !== 'drug_interactions') return false;
         
         const filtered = getFilteredInteractions();
-        // Filter out entries without ' + ' to show only drug combinations
+        
+        // For single drug: show ALL interactions (including those without ' + ')
+        if (medList.length === 1) {
+            return filtered && filtered.length > 0;
+        }
+        
+        // For multiple drugs: only show interactions with drug combinations
         const withDrugCombinations = filtered.filter(item => item.includes(' + '));
         return withDrugCombinations && withDrugCombinations.length > 0;
     };
@@ -194,7 +200,13 @@ const QuickSafetyCheck = () => {
         if (selectedCategory !== 'all' && selectedCategory !== 'iv_incompatibility') return false;
         
         const filtered = getFilteredIVIncompatibilities();
-        // Filter out entries without ' + ' to show only drug combinations
+        
+        // For single drug: show ALL incompatibilities (including those without ' + ')
+        if (medList.length === 1) {
+            return filtered && filtered.length > 0;
+        }
+        
+        // For multiple drugs: only show incompatibilities with drug combinations
         const withDrugCombinations = filtered.filter(item => item.includes(' + '));
         return withDrugCombinations && withDrugCombinations.length > 0;
     };
@@ -216,6 +228,27 @@ const QuickSafetyCheck = () => {
 
     const shouldShowIVCategory = () => {
         return !isHealthcareClient;
+    };
+
+    // Helper function to render interaction items
+    const renderInteractionItems = (items, isSingleDrug) => {
+        if (!items || items.length === 0) return null;
+        
+        // For single drug: show all items
+        // For multiple drugs: only show items with ' + '
+        const filteredItems = isSingleDrug 
+            ? items 
+            : items.filter(item => item.includes(' + '));
+        
+        if (filteredItems.length === 0) return null;
+        
+        return filteredItems.map((item, i) => {
+            let displayText = item;
+            if (!displayText.includes('⚠️')) {
+                displayText = `⚠️ ${displayText}`;
+            }
+            return <li key={i}>{displayText}</li>;
+        });
     };
 
     return (
@@ -333,7 +366,9 @@ const QuickSafetyCheck = () => {
                         {hasAnyDataToShow() ? (
                             <>
                                 <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100">
-                                    <h3 className="text-3xl font-black text-gray-900 capitalize mb-2">{result.medication}</h3>
+                                    <h3 className="text-3xl font-black text-gray-900 capitalize mb-2">
+                                        {medList.length === 1 ? result.medication : medList.join(', ')}
+                                    </h3>
                                     <p className="text-gray-600 text-lg leading-relaxed">{result.general_overview}</p>
                                 </div>
 
@@ -354,44 +389,40 @@ const QuickSafetyCheck = () => {
                                     </div>
                                 )}
 
-                                {/* Major Drug Interactions - Show only when there are interactions with drug combinations */}
+                                {/* Major Drug Interactions */}
                                 {hasInteractionsToShow() && (
                                     <div className="bg-amber-50 rounded-2xl p-6 md:p-8 shadow-sm border border-amber-200 mt-6">
                                         <h4 className="text-xl font-bold text-amber-900 flex items-center gap-2 mb-4">
-                                            <FaPills className="text-amber-600" /> Major Drug Interactions (Avoid With)
+                                            <FaPills className="text-amber-600" /> 
+                                            {medList.length === 1 
+                                                ? 'Drug Safety Warnings & Interactions' 
+                                                : 'Major Drug Interactions (Avoid With)'
+                                            }
                                         </h4>
                                         <ul className="list-disc list-inside space-y-2 text-amber-800 font-medium ml-2">
-                                            {getFilteredInteractions()
-                                                .filter(interaction => interaction.includes(' + '))
-                                                .map((interaction, i) => {
-                                                    let displayText = interaction;
-                                                    if (!displayText.includes('⚠️')) {
-                                                        displayText = `⚠️ ${displayText}`;
-                                                    }
-                                                    return <li key={i}>{displayText}</li>;
-                                                })
-                                            }
+                                            {renderInteractionItems(
+                                                getFilteredInteractions(),
+                                                medList.length === 1
+                                            )}
                                         </ul>
                                     </div>
                                 )}
                                 
-                                {/* IV Drug Incompatibility - Show only when there are incompatibilities with drug combinations */}
+                                {/* IV Drug Incompatibility */}
                                 {hasIVIncompatibilityToShow() && (
                                     <div className="bg-red-50 rounded-2xl p-6 md:p-8 shadow-sm border border-red-200 mt-6">
                                         <h4 className="text-xl font-bold text-red-900 flex items-center gap-2 mb-4">
-                                            <FaSyringe className="text-red-600" /> IV Drug Incompatibility (Do Not Mix)
+                                            <FaSyringe className="text-red-600" /> 
+                                            {medList.length === 1
+                                                ? 'IV Drug Incompatibility Warnings'
+                                                : 'IV Drug Incompatibility (Do Not Mix)'
+                                            }
                                         </h4>
                                         <ul className="list-disc list-inside space-y-2 text-red-800 font-medium ml-2">
-                                            {getFilteredIVIncompatibilities()
-                                                .filter(incompatibility => incompatibility.includes(' + '))
-                                                .map((incompatibility, i) => {
-                                                    let displayText = incompatibility;
-                                                    if (!displayText.includes('⚠️')) {
-                                                        displayText = `⚠️ ${displayText}`;
-                                                    }
-                                                    return <li key={i}>{displayText}</li>;
-                                                })
-                                            }
+                                            {renderInteractionItems(
+                                                getFilteredIVIncompatibilities(),
+                                                medList.length === 1
+                                            )}
                                         </ul>
                                     </div>
                                 )}
