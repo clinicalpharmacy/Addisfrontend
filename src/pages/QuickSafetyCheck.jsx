@@ -137,18 +137,20 @@ const QuickSafetyCheck = () => {
         return getFilteredUnsafeCategories().length > 0;
     };
 
-    // Get filtered interactions - shows all for single drug, filtered for multiple
+    // Get filtered interactions - filters for single drug, filters for multiple
     const getFilteredInteractions = () => {
         if (!result || !result.major_interactions) return [];
         
-        // If only one drug is searched, show ALL interactions
+        // If only one drug is searched, filter to show only interactions that contain that drug
         if (medList.length === 1) {
-            return result.major_interactions;
+            const searchDrug = medList[0].toLowerCase();
+            return result.major_interactions.filter(interaction => 
+                interaction.toLowerCase().includes(searchDrug)
+            );
         }
         
         // For multiple drugs, filter to show only interactions that contain the searched drugs
         const filtered = result.major_interactions.filter(interaction => {
-            // Check if the interaction contains any of the searched drugs
             return medList.some(med => 
                 interaction.toLowerCase().includes(med.toLowerCase())
             );
@@ -157,13 +159,16 @@ const QuickSafetyCheck = () => {
         return filtered;
     };
 
-    // Get filtered IV incompatibilities - shows all for single drug, filtered for multiple
+    // Get filtered IV incompatibilities - filters for single drug, filters for multiple
     const getFilteredIVIncompatibilities = () => {
         if (!result || !result.iv_incompatibility) return [];
         
-        // If only one drug is searched, show ALL incompatibilities
+        // If only one drug is searched, filter to show only incompatibilities that contain that drug
         if (medList.length === 1) {
-            return result.iv_incompatibility;
+            const searchDrug = medList[0].toLowerCase();
+            return result.iv_incompatibility.filter(incompatibility => 
+                incompatibility.toLowerCase().includes(searchDrug)
+            );
         }
         
         // For multiple drugs, filter to show only incompatibilities that contain the searched drugs
@@ -182,7 +187,13 @@ const QuickSafetyCheck = () => {
         if (selectedCategory !== 'all' && selectedCategory !== 'drug_interactions') return false;
         
         const filtered = getFilteredInteractions();
-        // Filter out entries without ' + ' to show only drug combinations
+        
+        // For single drug, show all filtered interactions
+        if (medList.length === 1) {
+            return filtered && filtered.length > 0;
+        }
+        
+        // For multiple drugs, filter to show only drug combinations
         const withDrugCombinations = filtered.filter(item => item.includes(' + '));
         return withDrugCombinations && withDrugCombinations.length > 0;
     };
@@ -194,7 +205,13 @@ const QuickSafetyCheck = () => {
         if (selectedCategory !== 'all' && selectedCategory !== 'iv_incompatibility') return false;
         
         const filtered = getFilteredIVIncompatibilities();
-        // Filter out entries without ' + ' to show only drug combinations
+        
+        // For single drug, show all filtered incompatibilities
+        if (medList.length === 1) {
+            return filtered && filtered.length > 0;
+        }
+        
+        // For multiple drugs, filter to show only drug combinations
         const withDrugCombinations = filtered.filter(item => item.includes(' + '));
         return withDrugCombinations && withDrugCombinations.length > 0;
     };
@@ -354,7 +371,7 @@ const QuickSafetyCheck = () => {
                                     </div>
                                 )}
 
-                                {/* Major Drug Interactions - Show only when there are interactions with drug combinations */}
+                                {/* Major Drug Interactions - Show filtered interactions */}
                                 {hasInteractionsToShow() && (
                                     <div className="bg-amber-50 rounded-2xl p-6 md:p-8 shadow-sm border border-amber-200 mt-6">
                                         <h4 className="text-xl font-bold text-amber-900 flex items-center gap-2 mb-4">
@@ -362,7 +379,14 @@ const QuickSafetyCheck = () => {
                                         </h4>
                                         <ul className="list-disc list-inside space-y-2 text-amber-800 font-medium ml-2">
                                             {getFilteredInteractions()
-                                                .filter(interaction => interaction.includes(' + '))
+                                                .filter(interaction => {
+                                                    // For single drug, show all filtered interactions
+                                                    if (medList.length === 1) {
+                                                        return true;
+                                                    }
+                                                    // For multiple drugs, only show drug combinations
+                                                    return interaction.includes(' + ');
+                                                })
                                                 .map((interaction, i) => {
                                                     let displayText = interaction;
                                                     if (!displayText.includes('⚠️')) {
@@ -375,7 +399,7 @@ const QuickSafetyCheck = () => {
                                     </div>
                                 )}
                                 
-                                {/* IV Drug Incompatibility - Show only when there are incompatibilities with drug combinations */}
+                                {/* IV Drug Incompatibility - Show filtered incompatibilities */}
                                 {hasIVIncompatibilityToShow() && (
                                     <div className="bg-red-50 rounded-2xl p-6 md:p-8 shadow-sm border border-red-200 mt-6">
                                         <h4 className="text-xl font-bold text-red-900 flex items-center gap-2 mb-4">
@@ -383,7 +407,14 @@ const QuickSafetyCheck = () => {
                                         </h4>
                                         <ul className="list-disc list-inside space-y-2 text-red-800 font-medium ml-2">
                                             {getFilteredIVIncompatibilities()
-                                                .filter(incompatibility => incompatibility.includes(' + '))
+                                                .filter(incompatibility => {
+                                                    // For single drug, show all filtered incompatibilities
+                                                    if (medList.length === 1) {
+                                                        return true;
+                                                    }
+                                                    // For multiple drugs, only show drug combinations
+                                                    return incompatibility.includes(' + ');
+                                                })
                                                 .map((incompatibility, i) => {
                                                     let displayText = incompatibility;
                                                     if (!displayText.includes('⚠️')) {
