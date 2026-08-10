@@ -74,7 +74,6 @@ const QuickSafetyCheck = () => {
     const handleSearch = async (e) => {
         e.preventDefault();
         
-        // Add any pending drug name
         let currentMeds = [...medList];
         if (drugName.trim()) {
             const newMeds = drugName.split(',').map(m => m.trim()).filter(Boolean);
@@ -93,8 +92,6 @@ const QuickSafetyCheck = () => {
         setResult(null);
 
         try {
-            // Send the first medication or all medications based on API support
-            // Using 'medications' array as the first version
             const response = await api.post('/quick-safety', { 
                 medications: currentMeds,
                 category: selectedCategory === 'all' ? null : selectedCategory
@@ -113,9 +110,9 @@ const QuickSafetyCheck = () => {
                 
                 const filteredProfile = filterIVIncompatibility(response.safetyProfile);
                 
-                console.log('Safety Profile:', filteredProfile);
-                console.log('Major Interactions:', filteredProfile.major_interactions);
-                console.log('IV Incompatibility:', filteredProfile.iv_incompatibility);
+                console.log('Drug Interactions Rules:', filteredProfile.major_interactions);
+                console.log('IV Incompatibility Rules:', filteredProfile.iv_incompatibility);
+                console.log('Special Conditions Rules:', filteredProfile.categories);
                 
                 setResult(filteredProfile);
             } else {
@@ -303,10 +300,10 @@ const QuickSafetyCheck = () => {
                             <h3 className="text-3xl font-black text-gray-900 capitalize mb-2">{result.medication}</h3>
                             <p className="text-gray-600 text-lg leading-relaxed">{result.general_overview}</p>
                             
-                            {/* Show searched medications list */}
+                            {/* Show which medications were checked */}
                             {medList.length > 0 && (
                                 <div className="mt-4 pt-4 border-t border-gray-200">
-                                    <p className="text-sm text-gray-500 font-medium">Searched Medications:</p>
+                                    <p className="text-sm text-gray-500 font-medium">Medications Checked:</p>
                                     <div className="flex flex-wrap gap-2 mt-2">
                                         {medList.map((med, idx) => (
                                             <span key={idx} className="bg-blue-50 text-blue-700 px-3 py-1 rounded-lg text-sm font-bold">
@@ -318,67 +315,149 @@ const QuickSafetyCheck = () => {
                             )}
                         </div>
 
-                        {/* Unsafe Categories */}
+                        {/* Unsafe Categories - Shows rules for special conditions */}
                         {hasUnsafeInFiltered() && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {getFilteredUnsafeCategories().map(([key, data]) => (
-                                    <div key={key} className="bg-red-50 rounded-2xl p-6 shadow-sm border-2 border-red-400 hover:border-red-600 transition-colors group">
-                                        <div className="flex items-start justify-between mb-4">
-                                            <div className="flex items-center gap-3">
-                                                <h4 className="font-bold text-gray-800 text-lg"><CategoryTitle type={key} /></h4>
-                                            </div>
-                                            <StatusBadge status={data.status} />
-                                        </div>
-                                        <p className="text-gray-700 leading-relaxed text-base">{data.details}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        {/* Major Drug Interactions - Shows drug combinations */}
-                        {getFilteredInteractions().length > 0 && (
-                            <div className="bg-amber-50 rounded-2xl p-6 md:p-8 shadow-sm border border-amber-200 mt-6">
-                                <h4 className="text-xl font-bold text-amber-900 flex items-center gap-2 mb-4">
-                                    <FaPills className="text-amber-600" /> Major Drug Interactions (Avoid With)
-                                </h4>
-                                <div className="space-y-3">
-                                    {getFilteredInteractions().map((interaction, i) => (
-                                        <div key={i} className="bg-white rounded-xl p-4 border border-amber-200 shadow-sm">
-                                            <div className="flex items-start gap-3">
-                                                <FaExclamationTriangle className="text-amber-600 mt-1 flex-shrink-0" />
-                                                <div>
-                                                    <p className="text-amber-800 font-bold text-base">{interaction}</p>
-                                                    <p className="text-amber-600 text-sm mt-1 font-medium">
-                                                        ⚠️ Avoid combining these medications
-                                                    </p>
+                            <div>
+                                <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                    <FaExclamationTriangle className="text-red-500" />
+                                    Safety Rules & Contraindications
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {getFilteredUnsafeCategories().map(([key, data]) => (
+                                        <div key={key} className="bg-red-50 rounded-2xl p-6 shadow-sm border-2 border-red-400 hover:border-red-600 transition-colors group">
+                                            <div className="flex items-start justify-between mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <h4 className="font-bold text-gray-800 text-lg"><CategoryTitle type={key} /></h4>
                                                 </div>
+                                                <StatusBadge status={data.status} />
                                             </div>
+                                            <p className="text-gray-700 leading-relaxed text-base">{data.details}</p>
                                         </div>
                                     ))}
                                 </div>
                             </div>
                         )}
 
-                        {/* IV Drug Incompatibility - Shows drug combinations */}
+                        {/* Major Drug Interactions - Shows specific drug combination rules */}
+                        {getFilteredInteractions().length > 0 && (
+                            <div className="bg-amber-50 rounded-2xl p-6 md:p-8 shadow-sm border border-amber-200 mt-6">
+                                <h4 className="text-xl font-bold text-amber-900 flex items-center gap-2 mb-4">
+                                    <FaPills className="text-amber-600" /> Drug Interaction Rules
+                                </h4>
+                                <div className="space-y-3">
+                                    {getFilteredInteractions().map((interaction, i) => {
+                                        // Parse the interaction string to extract drug combinations
+                                        let drug1 = '';
+                                        let drug2 = '';
+                                        let rule = interaction;
+                                        
+                                        // Try to extract drug names from the interaction string
+                                        // Assuming format like: "Ibuprofen + Warfarin - Increased bleeding risk"
+                                        const parts = interaction.split(' - ');
+                                        if (parts.length >= 2) {
+                                            const drugParts = parts[0].split(' + ');
+                                            if (drugParts.length >= 2) {
+                                                drug1 = drugParts[0].trim();
+                                                drug2 = drugParts[1].trim();
+                                                rule = parts.slice(1).join(' - ');
+                                            }
+                                        }
+                                        
+                                        return (
+                                            <div key={i} className="bg-white rounded-xl p-4 border border-amber-200 shadow-sm">
+                                                {drug1 && drug2 ? (
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center gap-3 mb-2">
+                                                                <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-lg font-bold text-sm">
+                                                                    {drug1}
+                                                                </span>
+                                                                <span className="text-amber-400 font-bold">+</span>
+                                                                <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-lg font-bold text-sm">
+                                                                    {drug2}
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-amber-800 font-medium">{rule}</p>
+                                                            <p className="text-amber-600 text-sm mt-1">
+                                                                ⚠️ Avoid combining these medications
+                                                            </p>
+                                                        </div>
+                                                        <FaExclamationTriangle className="text-amber-600 mt-1 flex-shrink-0 text-xl" />
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-start gap-3">
+                                                        <div>
+                                                            <p className="text-amber-800 font-bold text-base">{interaction}</p>
+                                                            <p className="text-amber-600 text-sm mt-1 font-medium">
+                                                                ⚠️ Drug interaction detected
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* IV Drug Incompatibility - Shows specific IV combination rules */}
                         {getFilteredIVIncompatibilities().length > 0 && (
                             <div className="bg-red-50 rounded-2xl p-6 md:p-8 shadow-sm border border-red-200 mt-6">
                                 <h4 className="text-xl font-bold text-red-900 flex items-center gap-2 mb-4">
-                                    <FaSyringe className="text-red-600" /> IV Drug Incompatibility (Do Not Mix)
+                                    <FaSyringe className="text-red-600" /> IV Incompatibility Rules
                                 </h4>
                                 <div className="space-y-3">
-                                    {getFilteredIVIncompatibilities().map((incompatibility, i) => (
-                                        <div key={i} className="bg-white rounded-xl p-4 border border-red-200 shadow-sm">
-                                            <div className="flex items-start gap-3">
-                                                <FaExclamationCircle className="text-red-600 mt-1 flex-shrink-0" />
-                                                <div>
-                                                    <p className="text-red-800 font-bold text-base">{incompatibility}</p>
-                                                    <p className="text-red-600 text-sm mt-1 font-medium">
-                                                        🚫 Do not administer together in IV
-                                                    </p>
-                                                </div>
+                                    {getFilteredIVIncompatibilities().map((incompatibility, i) => {
+                                        // Parse the incompatibility string
+                                        let drug1 = '';
+                                        let drug2 = '';
+                                        let rule = incompatibility;
+                                        
+                                        const parts = incompatibility.split(' - ');
+                                        if (parts.length >= 2) {
+                                            const drugParts = parts[0].split(' + ');
+                                            if (drugParts.length >= 2) {
+                                                drug1 = drugParts[0].trim();
+                                                drug2 = drugParts[1].trim();
+                                                rule = parts.slice(1).join(' - ');
+                                            }
+                                        }
+                                        
+                                        return (
+                                            <div key={i} className="bg-white rounded-xl p-4 border border-red-200 shadow-sm">
+                                                {drug1 && drug2 ? (
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center gap-3 mb-2">
+                                                                <span className="bg-red-100 text-red-800 px-3 py-1 rounded-lg font-bold text-sm">
+                                                                    {drug1}
+                                                                </span>
+                                                                <span className="text-red-400 font-bold">+</span>
+                                                                <span className="bg-red-100 text-red-800 px-3 py-1 rounded-lg font-bold text-sm">
+                                                                    {drug2}
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-red-800 font-medium">{rule}</p>
+                                                            <p className="text-red-600 text-sm mt-1">
+                                                                🚫 Do not administer together in IV
+                                                            </p>
+                                                        </div>
+                                                        <FaExclamationCircle className="text-red-600 mt-1 flex-shrink-0 text-xl" />
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-start gap-3">
+                                                        <div>
+                                                            <p className="text-red-800 font-bold text-base">{incompatibility}</p>
+                                                            <p className="text-red-600 text-sm mt-1 font-medium">
+                                                                🚫 IV incompatibility detected
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
@@ -394,7 +473,7 @@ const QuickSafetyCheck = () => {
                                             {selectedCategory !== 'all' && `For ${CategoryTitle({ type: selectedCategory })} conditions, `}
                                             <span className="font-bold">{result.medication}</span> appears to be safe based on available data.
                                         </p>
-                                        {medList.length > 0 && (
+                                        {medList.length > 1 && (
                                             <p className="text-green-500 text-base mt-2">
                                                 No interactions detected between: {medList.join(', ')}
                                             </p>
