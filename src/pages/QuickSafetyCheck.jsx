@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
     FaSearch, FaArrowLeft, FaShieldAlt, FaBaby, FaBabyCarriage, 
@@ -37,21 +37,29 @@ const QuickSafetyCheck = () => {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
     const [error, setError] = useState('');
+    const abortControllerRef = useRef(null);
 
-    // Get user role from localStorage or context
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    // Get user role from localStorage or context with safe parsing
+    let user = {};
+    try {
+        const userData = localStorage.getItem('user');
+        user = userData ? JSON.parse(userData) : {};
+    } catch (e) {
+        console.error('Error parsing user data:', e);
+        user = {};
+    }
     
     // Check if user is healthcare_client
     const isHealthcareClient = user?.role === 'healthcare_client' || user?.account_type === 'healthcare_client';
 
-    // Filter out IV incompatibility for healthcare_client
-    const filterIVIncompatibility = (safetyProfile) => {
-        if (isHealthcareClient && safetyProfile) {
-            const { iv_incompatibility, ...filteredProfile } = safetyProfile;
-            return filteredProfile;
-        }
-        return safetyProfile;
-    };
+    // Cleanup function for aborting requests
+    useEffect(() => {
+        return () => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
+    }, []);
 
     const handleAddMedication = (e) => {
         if (e.key === 'Enter' || e.type === 'click') {
@@ -80,6 +88,12 @@ const QuickSafetyCheck = () => {
 
         if (currentMeds.length === 0) return;
 
+        // Cancel any ongoing request
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+        abortControllerRef.current = new AbortController();
+
         setLoading(true);
         setError('');
         setResult(null);
@@ -88,30 +102,46 @@ const QuickSafetyCheck = () => {
             const response = await api.post('/quick-safety', { 
                 medications: currentMeds,
                 category: selectedCategory === 'all' ? null : selectedCategory
+            }, {
+                signal: abortControllerRef.current.signal
             });
             
             console.log('Full API Response:', response);
             
-            if (response.success && response.safetyProfile) {
-                if (!response.safetyProfile.iv_incompatibility && !isHealthcareClient) {
-                    response.safetyProfile.iv_incompatibility = [];
+            // Fix: Check if response has safetyProfile directly (not wrapped in success)
+            if (response && response.safetyProfile) {
+                let safetyProfile = response.safetyProfile;
+                
+                // Ensure iv_incompatibility exists for non-healthcare clients
+                if (!safetyProfile.iv_incompatibility && !isHealthcareClient) {
+                    safetyProfile.iv_incompatibility = [];
                 }
                 
-                const filteredProfile = filterIVIncompatibility(response.safetyProfile);
+                // Filter out IV incompatibility for healthcare_client
+                if (isHealthcareClient && safetyProfile) {
+                    const { iv_incompatibility, ...filteredProfile } = safetyProfile;
+                    safetyProfile = filteredProfile;
+                }
                 
-                console.log('Safety Profile:', filteredProfile);
-                console.log('Major Interactions:', filteredProfile.major_interactions);
-                console.log('IV Incompatibility:', filteredProfile.iv_incompatibility);
+                console.log('Safety Profile:', safetyProfile);
+                console.log('Major Interactions:', safetyProfile.major_interactions);
+                console.log('IV Incompatibility:', safetyProfile.iv_incompatibility);
                 
-                setResult(filteredProfile);
+                setResult(safetyProfile);
             } else {
                 setError('Failed to retrieve safety data. Please try again.');
             }
         } catch (err) {
+            // Don't set error if request was aborted
+            if (err.name === 'AbortError' || err.code === 'ERR_CANCELED') {
+                console.log('Request was cancelled');
+                return;
+            }
             console.error('Error:', err);
-            setError(err.error || 'Failed to check medication. It might not be recognized.');
+            setError(err.error || err.message || 'Failed to check medication. It might not be recognized.');
         } finally {
             setLoading(false);
+            abortControllerRef.current = null;
         }
     };
 
@@ -268,7 +298,7 @@ const QuickSafetyCheck = () => {
                                 {medList.length > 0 && (
                                     <div className="flex flex-wrap gap-2 mt-3 p-2 bg-white/10 rounded-xl">
                                         {medList.map((med, idx) => (
-                                            <span key={idx} className="bg-white text-blue-800 px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-2 shadow-sm">
+                                            <span key={`${med}-${idx}`} className="bg-white text-blue-800 px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-2 shadow-sm">
                                                 {med}
                                                 <button type="button" onClick={() => removeMedication(med)} className="text-blue-400 hover:text-red-500">
                                                     &times;
