@@ -320,7 +320,7 @@ const QuickSafetyCheck = () => {
                                     </div>
                                 )}
 
-                                {/* Major Drug Interactions - Smart Filtering */}
+                                {/* Major Drug Interactions - Simple pattern matching */}
                                 {(selectedCategory === 'all' || selectedCategory === 'drug_interactions') && 
                                  result.major_interactions && result.major_interactions.length > 0 && (
                                     <div className="bg-amber-50 rounded-2xl p-6 md:p-8 shadow-sm border border-amber-200 mt-6">
@@ -329,25 +329,22 @@ const QuickSafetyCheck = () => {
                                         </h4>
                                         <ul className="list-disc list-inside space-y-2 text-amber-800 font-medium ml-2">
                                             {result.major_interactions
-                                                .filter(interaction => {
-                                                    // Keep only interactions that follow the pattern "DrugA + DrugB — description"
-                                                    const hasPlusSign = interaction.includes('+');
-                                                    const hasDash = interaction.includes('—');
-                                                    const isGeneric = interaction.toLowerCase().includes('phenytoin interaction') || 
-                                                                    interaction.toLowerCase().includes('interaction');
-                                                    
-                                                    // Return true only for specific drug combination interactions
-                                                    return hasPlusSign && hasDash && !isGeneric;
+                                                // Filter to show only entries that contain " + " (space plus space)
+                                                .filter(interaction => interaction.includes(' + '))
+                                                .map((interaction, i) => {
+                                                    // Ensure it has the right format
+                                                    let displayText = interaction;
+                                                    if (!displayText.includes('⚠️')) {
+                                                        displayText = `⚠️ ${displayText}`;
+                                                    }
+                                                    return <li key={i}>{displayText}</li>;
                                                 })
-                                                .map((interaction, i) => (
-                                                    <li key={i}>⚠️ {interaction}</li>
-                                                ))
                                             }
                                         </ul>
                                     </div>
                                 )}
                                 
-                                {/* IV Drug Incompatibility - Smart Filtering */}
+                                {/* IV Drug Incompatibility - Simple pattern matching */}
                                 {!isHealthcareClient && 
                                  (selectedCategory === 'all' || selectedCategory === 'iv_incompatibility') && 
                                  result.iv_incompatibility && result.iv_incompatibility.length > 0 && (
@@ -357,17 +354,16 @@ const QuickSafetyCheck = () => {
                                         </h4>
                                         <ul className="list-disc list-inside space-y-2 text-red-800 font-medium ml-2">
                                             {result.iv_incompatibility
-                                                .filter(incompatibility => {
-                                                    // Keep only specific drug combination incompatibilities
-                                                    const hasPlusSign = incompatibility.includes('+');
-                                                    const hasDash = incompatibility.includes('—');
-                                                    const isGeneric = incompatibility.toLowerCase().includes('incompatibility');
-                                                    
-                                                    return hasPlusSign && hasDash && !isGeneric;
+                                                // Filter to show only entries that contain " + " (space plus space)
+                                                .filter(incompatibility => incompatibility.includes(' + '))
+                                                .map((incompatibility, i) => {
+                                                    // Ensure it has the right format
+                                                    let displayText = incompatibility;
+                                                    if (!displayText.includes('⚠️')) {
+                                                        displayText = `⚠️ ${displayText}`;
+                                                    }
+                                                    return <li key={i}>{displayText}</li>;
                                                 })
-                                                .map((incompatibility, i) => (
-                                                    <li key={i}>⚠️ {incompatibility}</li>
-                                                ))
                                             }
                                         </ul>
                                     </div>
