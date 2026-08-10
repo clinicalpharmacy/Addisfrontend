@@ -137,62 +137,60 @@ const QuickSafetyCheck = () => {
         return getFilteredUnsafeCategories().length > 0;
     };
 
-    // Extract drug names from interaction string
-    const extractDrugNames = (interaction) => {
-        // Try to extract drug names from patterns like "DrugA + DrugB" or "DrugA and DrugB"
-        const plusPattern = /([^+]+)\s*\+\s*([^—]+)/;
-        const andPattern = /([^and]+)\s+and\s+([^—]+)/;
-        const match = interaction.match(plusPattern) || interaction.match(andPattern);
+    // Enhanced function to detect if an interaction involves searched drugs
+    const isInteractionInvolvingSearchedDrugs = (interactionText) => {
+        // Check if the interaction contains any of the searched medications
+        // For combinations, we want to check if ALL drugs in the combination are in the search list
+        // or if the interaction is a warning for a specific drug
         
-        if (match) {
-            return {
-                drug1: match[1].trim(),
-                drug2: match[2].trim().split('—')[0].trim()
-            };
+        const lowerText = interactionText.toLowerCase();
+        const searchedDrugsLower = medList.map(m => m.toLowerCase());
+        
+        // Check if this is a combination interaction (contains ' + ')
+        if (interactionText.includes(' + ')) {
+            // Extract drug names from the combination
+            // Format: "DrugA + DrugB" or "DrugA + DrugB - warning text"
+            const parts = interactionText.split(' + ');
+            if (parts.length >= 2) {
+                const firstDrug = parts[0].trim().toLowerCase();
+                // Get the second drug (might have additional text after it)
+                const secondPart = parts[1].trim();
+                const secondDrug = secondPart.split(' -')[0].split(' (')[0].trim().toLowerCase();
+                
+                // Check if both drugs are in the searched list
+                const firstInList = searchedDrugsLower.some(d => firstDrug.includes(d) || d.includes(firstDrug));
+                const secondInList = searchedDrugsLower.some(d => secondDrug.includes(d) || d.includes(secondDrug));
+                
+                // Return true if both drugs are searched (combination detection)
+                return firstInList && secondInList;
+            }
+            return false;
+        } else {
+            // For single-drug warnings, check if it mentions any searched drug
+            return searchedDrugsLower.some(d => lowerText.includes(d));
         }
-        return null;
     };
 
-    // Get filtered interactions - filters for single drug, filters for multiple
+    // Get filtered interactions - shows combinations involving searched drugs
     const getFilteredInteractions = () => {
         if (!result || !result.major_interactions) return [];
         
-        // If only one drug is searched, filter to show only interactions that contain that drug
-        if (medList.length === 1) {
-            const searchDrug = medList[0].toLowerCase();
-            return result.major_interactions.filter(interaction => 
-                interaction.toLowerCase().includes(searchDrug)
-            );
-        }
-        
-        // For multiple drugs, filter to show only interactions that contain the searched drugs
-        const filtered = result.major_interactions.filter(interaction => {
-            return medList.some(med => 
-                interaction.toLowerCase().includes(med.toLowerCase())
-            );
-        });
+        // Filter to show only interactions that involve the searched drugs
+        const filtered = result.major_interactions.filter(interaction => 
+            isInteractionInvolvingSearchedDrugs(interaction)
+        );
         
         return filtered;
     };
 
-    // Get filtered IV incompatibilities - filters for single drug, filters for multiple
+    // Get filtered IV incompatibilities - shows combinations involving searched drugs
     const getFilteredIVIncompatibilities = () => {
         if (!result || !result.iv_incompatibility) return [];
         
-        // If only one drug is searched, filter to show only incompatibilities that contain that drug
-        if (medList.length === 1) {
-            const searchDrug = medList[0].toLowerCase();
-            return result.iv_incompatibility.filter(incompatibility => 
-                incompatibility.toLowerCase().includes(searchDrug)
-            );
-        }
-        
-        // For multiple drugs, filter to show only incompatibilities that contain the searched drugs
-        const filtered = result.iv_incompatibility.filter(incompatibility => {
-            return medList.some(med => 
-                incompatibility.toLowerCase().includes(med.toLowerCase())
-            );
-        });
+        // Filter to show only incompatibilities that involve the searched drugs
+        const filtered = result.iv_incompatibility.filter(incompatibility => 
+            isInteractionInvolvingSearchedDrugs(incompatibility)
+        );
         
         return filtered;
     };
@@ -204,14 +202,25 @@ const QuickSafetyCheck = () => {
         
         const filtered = getFilteredInteractions();
         
-        // For single drug, show all filtered interactions
-        if (medList.length === 1) {
-            return filtered && filtered.length > 0;
-        }
+        // Filter to show only interactions that are relevant for the searched drugs
+        // For single drug: show all interactions that mention it
+        // For multiple drugs: show combination warnings and single-drug warnings
+        const relevantInteractions = filtered.filter(item => {
+            // If multiple drugs, prioritize combinations
+            if (medList.length > 1) {
+                // Show if it contains ' + ' (is a combination) OR if it's a single drug warning
+                return item.includes(' + ') || medList.some(med => 
+                    item.toLowerCase().includes(med.toLowerCase())
+                );
+            } else {
+                // For single drug, show all relevant interactions
+                return medList.some(med => 
+                    item.toLowerCase().includes(med.toLowerCase())
+                );
+            }
+        });
         
-        // For multiple drugs, filter to show only drug combinations
-        const withDrugCombinations = filtered.filter(item => item.includes(' + '));
-        return withDrugCombinations && withDrugCombinations.length > 0;
+        return relevantInteractions && relevantInteractions.length > 0;
     };
 
     // Check if there are any IV incompatibilities to show
@@ -222,14 +231,20 @@ const QuickSafetyCheck = () => {
         
         const filtered = getFilteredIVIncompatibilities();
         
-        // For single drug, show all filtered incompatibilities
-        if (medList.length === 1) {
-            return filtered && filtered.length > 0;
-        }
+        // Similar logic as above
+        const relevantIncompatibilities = filtered.filter(item => {
+            if (medList.length > 1) {
+                return item.includes(' + ') || medList.some(med => 
+                    item.toLowerCase().includes(med.toLowerCase())
+                );
+            } else {
+                return medList.some(med => 
+                    item.toLowerCase().includes(med.toLowerCase())
+                );
+            }
+        });
         
-        // For multiple drugs, filter to show only drug combinations
-        const withDrugCombinations = filtered.filter(item => item.includes(' + '));
-        return withDrugCombinations && withDrugCombinations.length > 0;
+        return relevantIncompatibilities && relevantIncompatibilities.length > 0;
     };
 
     // Check if there's any data to show
@@ -366,7 +381,9 @@ const QuickSafetyCheck = () => {
                         {hasAnyDataToShow() ? (
                             <>
                                 <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100">
-                                    <h3 className="text-3xl font-black text-gray-900 capitalize mb-2">{result.medication}</h3>
+                                    <h3 className="text-3xl font-black text-gray-900 capitalize mb-2">
+                                        {medList.length > 1 ? `Medications: ${medList.join(', ')}` : result.medication}
+                                    </h3>
                                     <p className="text-gray-600 text-lg leading-relaxed">{result.general_overview}</p>
                                 </div>
 
@@ -387,96 +404,78 @@ const QuickSafetyCheck = () => {
                                     </div>
                                 )}
 
-                                {/* Major Drug Interactions - Show filtered interactions as a list */}
+                                {/* Major Drug Interactions - Show combinations involving searched drugs */}
                                 {hasInteractionsToShow() && (
                                     <div className="bg-amber-50 rounded-2xl p-6 md:p-8 shadow-sm border border-amber-200 mt-6">
                                         <h4 className="text-xl font-bold text-amber-900 flex items-center gap-2 mb-4">
-                                            <FaPills className="text-amber-600" /> Major Drug Interactions (Avoid With)
+                                            <FaPills className="text-amber-600" /> Major Drug Interactions
                                         </h4>
-                                        <div className="space-y-3">
+                                        <div className="space-y-2">
                                             {getFilteredInteractions()
-                                                .filter(interaction => {
-                                                    if (medList.length === 1) {
-                                                        return true;
+                                                .filter(item => {
+                                                    // For multiple drugs, show combinations and single warnings
+                                                    if (medList.length > 1) {
+                                                        return item.includes(' + ') || medList.some(med => 
+                                                            item.toLowerCase().includes(med.toLowerCase())
+                                                        );
                                                     }
-                                                    return interaction.includes(' + ');
+                                                    return medList.some(med => 
+                                                        item.toLowerCase().includes(med.toLowerCase())
+                                                    );
                                                 })
                                                 .map((interaction, i) => {
-                                                    const drugNames = extractDrugNames(interaction);
                                                     let displayText = interaction;
-                                                    if (!displayText.includes('⚠️')) {
-                                                        displayText = `⚠️ ${displayText}`;
+                                                    // Add emoji based on type
+                                                    if (interaction.includes(' + ')) {
+                                                        displayText = `⚠️ ${interaction}`;
+                                                    } else {
+                                                        displayText = `⚠️ ${interaction}`;
                                                     }
-                                                    
                                                     return (
-                                                        <div key={i} className="bg-white/50 rounded-xl p-3 border border-amber-200">
-                                                            <div className="flex items-start gap-2">
-                                                                <span className="text-amber-600 font-bold">•</span>
-                                                                <div>
-                                                                    <span className="font-bold text-amber-800">⚠️</span>
-                                                                    <span className="text-amber-800 ml-1">
-                                                                        {drugNames ? (
-                                                                            <>
-                                                                                <span className="font-bold">{drugNames.drug1}</span>
-                                                                                <span className="text-amber-600 mx-1">↔</span>
-                                                                                <span className="font-bold">{drugNames.drug2}</span>
-                                                                            </>
-                                                                        ) : (
-                                                                            displayText
-                                                                        )}
-                                                                    </span>
-                                                                </div>
-                                                            </div>
+                                                        <div key={i} className="flex items-start gap-3 p-3 bg-white/50 rounded-lg border border-amber-200">
+                                                            <div className="text-amber-600 text-lg mt-0.5">⚠️</div>
+                                                            <div className="text-amber-800 font-medium">{displayText}</div>
                                                         </div>
                                                     );
-                                                })}
+                                                })
+                                            }
                                         </div>
                                     </div>
                                 )}
                                 
-                                {/* IV Drug Incompatibility - Show filtered incompatibilities as a list */}
+                                {/* IV Drug Incompatibility - Show combinations involving searched drugs */}
                                 {hasIVIncompatibilityToShow() && (
                                     <div className="bg-red-50 rounded-2xl p-6 md:p-8 shadow-sm border border-red-200 mt-6">
                                         <h4 className="text-xl font-bold text-red-900 flex items-center gap-2 mb-4">
                                             <FaSyringe className="text-red-600" /> IV Drug Incompatibility (Do Not Mix)
                                         </h4>
-                                        <div className="space-y-3">
+                                        <div className="space-y-2">
                                             {getFilteredIVIncompatibilities()
-                                                .filter(incompatibility => {
-                                                    if (medList.length === 1) {
-                                                        return true;
+                                                .filter(item => {
+                                                    if (medList.length > 1) {
+                                                        return item.includes(' + ') || medList.some(med => 
+                                                            item.toLowerCase().includes(med.toLowerCase())
+                                                        );
                                                     }
-                                                    return incompatibility.includes(' + ');
+                                                    return medList.some(med => 
+                                                        item.toLowerCase().includes(med.toLowerCase())
+                                                    );
                                                 })
                                                 .map((incompatibility, i) => {
-                                                    const drugNames = extractDrugNames(incompatibility);
                                                     let displayText = incompatibility;
-                                                    if (!displayText.includes('⚠️')) {
-                                                        displayText = `⚠️ ${displayText}`;
+                                                    if (incompatibility.includes(' + ')) {
+                                                        displayText = `⚠️ ${incompatibility}`;
+                                                    } else {
+                                                        displayText = `⚠️ ${incompatibility}`;
                                                     }
-                                                    
                                                     return (
-                                                        <div key={i} className="bg-white/50 rounded-xl p-3 border border-red-200">
-                                                            <div className="flex items-start gap-2">
-                                                                <span className="text-red-600 font-bold">•</span>
-                                                                <div>
-                                                                    <span className="font-bold text-red-800">⚠️</span>
-                                                                    <span className="text-red-800 ml-1">
-                                                                        {drugNames ? (
-                                                                            <>
-                                                                                <span className="font-bold">{drugNames.drug1}</span>
-                                                                                <span className="text-red-600 mx-1">↔</span>
-                                                                                <span className="font-bold">{drugNames.drug2}</span>
-                                                                            </>
-                                                                        ) : (
-                                                                            displayText
-                                                                        )}
-                                                                    </span>
-                                                                </div>
-                                                            </div>
+                                                        <div key={i} className="flex items-start gap-3 p-3 bg-white/50 rounded-lg border border-red-200">
+                                                            <div className="text-red-600 text-lg mt-0.5">⚠️</div>
+                                                            <div className="text-red-800 font-medium">{displayText}</div>
                                                         </div>
                                                     );
-                                                })}
+                                                })
+                                            }
                                         </div>
                                     </div>
                                 )}
@@ -487,8 +486,10 @@ const QuickSafetyCheck = () => {
                                 <div className="flex flex-col items-center gap-4">
                                     <div>
                                         <p className="text-green-600 text-lg font-black max-w-2xl mx-auto">
-                                            በተመረጡት የጤና ሁኔታዎች {selectedCategory !== 'all' && ` [${CategoryTitle({ type: selectedCategory })}]`} {result.medication}ን 
-                                            ለደህንነት ሲባል እንዳንጠቀም የሚያስጠነቅቅ መረጃ በአዲስ ሜድ (Addis Med) ውስጥ አልተገኘም። ሁልጊዜም የጤና ባለሙያ ያማክሩ።
+                                            {medList.length > 0 ? 
+                                                `በተመረጡት የጤና ሁኔታዎች ${selectedCategory !== 'all' ? ` [${CategoryTitle({ type: selectedCategory })}]` : ''} ለ${medList.join(', ')} ደህንነት ሲባል እንዳንጠቀም የሚያስጠነቅቅ መረጃ በአዲስ ሜድ (Addis Med) ውስጥ አልተገኘም። ሁልጊዜም የጤና ባለሙያ ያማክሩ።` :
+                                                `No contraindication data found in Addis Med for safe use of ${result.medication} in the selected condition(s)${selectedCategory !== 'all' && ` [${CategoryTitle({ type: selectedCategory })}]`}. Always consult with your healthcare provider.`
+                                            }
                                         </p>
                                     </div>
                                 </div>
