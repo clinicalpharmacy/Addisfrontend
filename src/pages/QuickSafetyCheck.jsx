@@ -320,7 +320,7 @@ const QuickSafetyCheck = () => {
                                     </div>
                                 )}
 
-                                {/* Major Drug Interactions */}
+                                {/* Major Drug Interactions - Smart Filtering */}
                                 {(selectedCategory === 'all' || selectedCategory === 'drug_interactions') && 
                                  result.major_interactions && result.major_interactions.length > 0 && (
                                     <div className="bg-amber-50 rounded-2xl p-6 md:p-8 shadow-sm border border-amber-200 mt-6">
@@ -328,14 +328,26 @@ const QuickSafetyCheck = () => {
                                             <FaPills className="text-amber-600" /> Major Drug Interactions (Avoid With)
                                         </h4>
                                         <ul className="list-disc list-inside space-y-2 text-amber-800 font-medium ml-2">
-                                            {result.major_interactions.map((interaction, i) => (
-                                                <li key={i}>{interaction}</li>
-                                            ))}
+                                            {result.major_interactions
+                                                .filter(interaction => {
+                                                    // Keep only interactions that follow the pattern "DrugA + DrugB — description"
+                                                    const hasPlusSign = interaction.includes('+');
+                                                    const hasDash = interaction.includes('—');
+                                                    const isGeneric = interaction.toLowerCase().includes('phenytoin interaction') || 
+                                                                    interaction.toLowerCase().includes('interaction');
+                                                    
+                                                    // Return true only for specific drug combination interactions
+                                                    return hasPlusSign && hasDash && !isGeneric;
+                                                })
+                                                .map((interaction, i) => (
+                                                    <li key={i}>⚠️ {interaction}</li>
+                                                ))
+                                            }
                                         </ul>
                                     </div>
                                 )}
-
-                                {/* IV Drug Incompatibility - Only shown for non-healthcare_client */}
+                                
+                                {/* IV Drug Incompatibility - Smart Filtering */}
                                 {!isHealthcareClient && 
                                  (selectedCategory === 'all' || selectedCategory === 'iv_incompatibility') && 
                                  result.iv_incompatibility && result.iv_incompatibility.length > 0 && (
@@ -344,9 +356,19 @@ const QuickSafetyCheck = () => {
                                             <FaSyringe className="text-red-600" /> IV Drug Incompatibility (Do Not Mix)
                                         </h4>
                                         <ul className="list-disc list-inside space-y-2 text-red-800 font-medium ml-2">
-                                            {result.iv_incompatibility.map((incompatibility, i) => (
-                                                <li key={i}>{incompatibility}</li>
-                                            ))}
+                                            {result.iv_incompatibility
+                                                .filter(incompatibility => {
+                                                    // Keep only specific drug combination incompatibilities
+                                                    const hasPlusSign = incompatibility.includes('+');
+                                                    const hasDash = incompatibility.includes('—');
+                                                    const isGeneric = incompatibility.toLowerCase().includes('incompatibility');
+                                                    
+                                                    return hasPlusSign && hasDash && !isGeneric;
+                                                })
+                                                .map((incompatibility, i) => (
+                                                    <li key={i}>⚠️ {incompatibility}</li>
+                                                ))
+                                            }
                                         </ul>
                                     </div>
                                 )}
