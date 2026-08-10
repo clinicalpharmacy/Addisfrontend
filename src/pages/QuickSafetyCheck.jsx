@@ -93,7 +93,8 @@ const QuickSafetyCheck = () => {
             console.log('Full API Response:', response);
             
             if (response.success && response.safetyProfile) {
-                if (!response.safetyProfile.iv_incompatibility && !isHealthcareClient) {
+                // Ensure iv_incompatibility is always an array
+                if (!response.safetyProfile.iv_incompatibility) {
                     response.safetyProfile.iv_incompatibility = [];
                 }
                 
@@ -244,6 +245,7 @@ const QuickSafetyCheck = () => {
         
         return filteredItems.map((item, i) => {
             let displayText = item;
+            // Don't add another ⚠️ if it already has one
             if (!displayText.includes('⚠️')) {
                 displayText = `⚠️ ${displayText}`;
             }
