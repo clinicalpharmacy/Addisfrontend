@@ -48,32 +48,11 @@ const ForgotPassword = () => {
                                 <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
                                     <FaCheckCircle className="text-green-600 text-2xl" />
                                 </div>
-                                <p className="text-green-800 font-bold text-lg text-center">Identity Found!</p>
+                                <p className="text-green-800 font-bold text-lg text-center">Check Your Email!</p>
                                 <p className="text-green-600 text-sm mt-1 text-center font-medium">
-                                    A secure reset token has been generated for your account.
+                                    A password reset link has been sent to your email address. Please check your inbox and click the link to reset your password.
                                 </p>
                             </div>
-
-                            {resetToken && (
-                                <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border border-blue-200 shadow-sm">
-                                    <div className="flex items-center gap-2 mb-4">
-                                        <FaKey className="text-blue-600" />
-                                        <p className="text-xs font-bold text-blue-800 uppercase tracking-wider">Reset Credentials</p>
-                                    </div>
-                                    <p className="text-sm text-blue-700 mb-4 font-medium leading-relaxed">
-                                        Your unique reset token is ready. Click the button below to set your new password.
-                                    </p>
-                                    <Link
-                                        to={`/reset-password?token=${resetToken}`}
-                                        className="block w-full text-center py-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
-                                    >
-                                        Proceed to Password Reset
-                                    </Link>
-                                    <div className="mt-4 text-center">
-                                        <code className="text-[10px] font-mono text-blue-400 break-all select-all p-1 bg-white/50 rounded">{resetToken}</code>
-                                    </div>
-                                </div>
-                            )}
 
                             <Link
                                 to="/login"

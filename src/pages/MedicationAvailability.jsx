@@ -42,6 +42,7 @@ const MedicationAvailability = () => {
     }, [posts]);
 
     useEffect(() => {
+        isMounted.current = true; // FIX: Reset to true for React 18 Strict Mode remounts
         fetchCurrentUser();
         fetchPosts();
         
@@ -472,10 +473,20 @@ const MedicationAvailability = () => {
                                         </label>
                                 
                                         {/* Calendar Button */}
-                                        <div className="relative w-12 h-12 flex-shrink-0">
-                                            <FaCalendarAlt className="absolute inset-0 m-auto text-2xl text-blue-600 pointer-events-none" />
+                                        <div 
+                                            className="relative w-12 h-12 flex-shrink-0 cursor-pointer flex items-center justify-center bg-blue-50 rounded-xl hover:bg-blue-100 transition"
+                                            onClick={() => {
+                                                try {
+                                                    dateInputRef.current?.showPicker();
+                                                } catch (e) {
+                                                    dateInputRef.current?.focus();
+                                                }
+                                            }}
+                                        >
+                                            <FaCalendarAlt className="text-2xl text-blue-600 pointer-events-none" />
                                 
                                             <input
+                                                ref={dateInputRef}
                                                 type="date"
                                                 value={formData.search_date}
                                                 onChange={(e) =>
@@ -486,6 +497,12 @@ const MedicationAvailability = () => {
                                                 }
                                                 min={new Date().toISOString().split("T")[0]}
                                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                onClick={(e) => {
+                                                    // Also try showPicker directly on the input if they click it
+                                                    try {
+                                                        e.target.showPicker();
+                                                    } catch (err) {}
+                                                }}
                                             />
                                         </div>
                                 

@@ -406,7 +406,7 @@ const Signup = () => {
                     account_type: 'individual',
                     individual_type: 'professional', // Add this field
                     selected_plan: selectedPlan,
-                    skip_verification_email: true,
+                    skip_verification_email: false,
                     referral_code: formData.referral_code?.trim() || ''
                 };
             } else {
@@ -428,7 +428,7 @@ const Signup = () => {
                     admin_phone: formData.admin_phone.trim(),
                     admin_license_number: formData.admin_license_number?.trim() || '',
                     selected_plan: selectedPlan,
-                    skip_verification_email: true,
+                    skip_verification_email: false,
                     referral_code: formData.referral_code?.trim() || ''
                 };
             }
@@ -514,9 +514,9 @@ const Signup = () => {
 
             setStep(4);
             if (formData.account_type === 'individual') {
-                setSuccess(`✅ Registration successful! Please proceed to payment. Note: Your verification email will be sent ONLY after a successful payment.`);
+                setSuccess(`✅ Registration successful! We've sent a verification email to your inbox. Please proceed to payment to activate your account.`);
             } else {
-                setSuccess(`✅ Company Registration successful! Please proceed to payment. Note: Verification email and admin approval will be processed after payment.`);
+                setSuccess(`✅ Company Registration successful! We've sent a verification email to your admin address. Please proceed to payment to activate your account.`);
             }
 
         } catch (err) {
