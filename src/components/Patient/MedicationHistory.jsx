@@ -399,9 +399,9 @@ const MedicationHistory = ({ patientCode }) => {
         return false;
     }
     
-       // Only validate indication for company users and health professionals
-    if (!isHealthcareClient && !formData.indication.trim()) {
-        alert('Indication is required for company users and health professionals');
+       // Validate indication for company users and healthcare clients
+    if ((isCompanyUser || isHealthcareClient) && !formData.indication.trim()) {
+        alert('Indication is required');
         return false;
    }
         
@@ -706,7 +706,7 @@ const MedicationHistory = ({ patientCode }) => {
         const activeMeds = medications.filter(m => m.status === 'Active' || m.is_active === true);
         const oralMeds = medications.filter(m => m.roa === 'po');
         // Only calculate unique classes if they exist
-        const uniqueClasses = isCompanyUser 
+        const uniqueClasses = (isCompanyUser || isHealthcareClient) 
             ? [...new Set(medications.map(m => m.drug_class).filter(Boolean))]
             : [];
     
@@ -754,7 +754,7 @@ const MedicationHistory = ({ patientCode }) => {
             </div>
 
             {/* Quick Stats - ONLY FOR COMPANY USERS */}
-            {isCompanyUser && (
+            {(isCompanyUser || isHealthcareClient) && (
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-3 mb-4 md:mb-6">
                     <div className="bg-blue-50 p-2 md:p-3 rounded-lg border border-blue-100">
                         <div className="text-xs md:text-sm text-blue-700">Total Meds</div>
@@ -769,7 +769,7 @@ const MedicationHistory = ({ patientCode }) => {
                         <div className="text-lg md:text-xl font-bold text-purple-800">{stats.oral}</div>
                     </div>
                     {/* Classes stat - ONLY FOR COMPANY USERS */}
-                    {isCompanyUser && (
+                    {(isCompanyUser || isHealthcareClient) && (
                         <div className="bg-indigo-50 p-2 md:p-3 rounded-lg border border-indigo-100">
                             <div className="text-xs md:text-sm text-indigo-700">Classes</div>
                             <div className="text-lg md:text-xl font-bold text-indigo-800">{stats.classes}</div>
@@ -851,8 +851,8 @@ const MedicationHistory = ({ patientCode }) => {
                         />
                       </div>
                 
-                      {/* Drug Class - COMPANY USERS */}
-                      {isCompanyUser && (
+                      {/* Drug Class - COMPANY USERS & HEALTHCARE CLIENTS */}
+                      {(isCompanyUser || isHealthcareClient) && (
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Drug Class *
@@ -942,8 +942,8 @@ const MedicationHistory = ({ patientCode }) => {
                     </div>
                   </div>
                 
-                  {/* Indication, Cycle, Regimen - Conditional based on healthcare client */}
-                  {!isHealthcareClient && (
+                  {/* Indication, Cycle, Regimen - Company users & Healthcare clients */}
+                  {(isCompanyUser || isHealthcareClient) && (
                       <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
                         <div className="flex flex-col md:flex-row gap-4">
                           {/* Indication */}
@@ -1214,8 +1214,8 @@ const MedicationHistory = ({ patientCode }) => {
                             </div>
                         </div>
 
-                        {/* Class Filter - ONLY FOR COMPANY USERS */}
-                        {isCompanyUser && (
+                        {/* Class Filter - COMPANY USERS & HEALTHCARE CLIENTS */}
+                        {(isCompanyUser || isHealthcareClient) && (
                             <div className="flex items-center gap-2">
                                 <span className="text-sm text-gray-600">Class:</span>
                                 <select
@@ -1307,8 +1307,8 @@ const MedicationHistory = ({ patientCode }) => {
                                         <div>Dose & Route</div>
                                         <div>Frequency</div>
                                     </th>
-                                    {/* Conditionally show Indication header only for non-healthcare clients */}
-                                    {!isHealthcareClient && (
+                                    {/* Indication header - Company users & Healthcare clients */}
+                                    {(isCompanyUser || isHealthcareClient) && (
                                         <>
                                             <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">
                                                 <div>Indication</div>
@@ -1316,8 +1316,8 @@ const MedicationHistory = ({ patientCode }) => {
                                             </th>
                                         </>
                                     )}
-                                    {/* Conditionally show Regimen & Cycle header only for non-healthcare clients */}
-                                    {!isHealthcareClient && (
+                                    {/* Regimen & Cycle header - Company users & Healthcare clients */}
+                                    {(isCompanyUser || isHealthcareClient) && (
                                         <>
                                             <th className="p-2 md:p-4 text-left font-medium text-gray-700 text-xs md:text-sm">
                                                 <div>Regimen</div>
@@ -1347,7 +1347,7 @@ const MedicationHistory = ({ patientCode }) => {
                                             </div>
                                             <div className="text-xs text-gray-500">{formatEncValue(med.frequency)}</div>
                                         </td>
-                                        {!isHealthcareClient && (
+                                        {(isCompanyUser || isHealthcareClient) && (
                                             <>
                                                 <td className="p-2 md:p-4">
                                                     <div className="text-gray-700 text-xs md:text-sm break-words">{formatEncValue(med.indication, '—')}</div>
@@ -1355,7 +1355,7 @@ const MedicationHistory = ({ patientCode }) => {
                                                 </td>
                                             </>
                                         )}
-                                        {!isHealthcareClient && (
+                                        {(isCompanyUser || isHealthcareClient) && (
                                             <>
                                                 <td className="p-2 md:p-4">
                                                     <div className="text-gray-700 text-xs md:text-sm break-words font-medium">{formatEncValue(med.regimen, '—')}</div>
