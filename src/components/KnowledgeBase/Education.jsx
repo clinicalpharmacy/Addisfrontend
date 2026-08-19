@@ -148,6 +148,18 @@ const Education = () => {
                     </div>
                 )}
 
+                {activeTab === 'clinicalpharmacyskill' && (
+                    <div className="animate-fadeIn bg-indigo-50 border border-indigo-100 rounded-xl p-8 text-center">
+                        <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <FaBookOpen className="text-indigo-600 text-2xl" />
+                        </div>
+                        <h3 className="text-xl font-bold text-indigo-900 mb-2">Clinical Pharmacy Skill</h3>
+                        <p className="text-indigo-700 max-w-md mx-auto">
+                            The clinical pharmacy skill section is currently under development. Please check back later.
+                        </p>
+                    </div>
+                )}
+                
                 {activeTab === 'guideline' && (
                     <div className="animate-fadeIn bg-indigo-50 border border-indigo-100 rounded-xl p-8 text-center">
                         <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
