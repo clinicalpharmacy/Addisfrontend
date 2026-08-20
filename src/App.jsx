@@ -280,6 +280,13 @@ const ProtectedRoute = ({ children, adminOnly = false, companyAdminOnly = false,
                     setUser(freshUser);
                 }
             } catch (error) {
+                // If the interceptor cleared the token (e.g. 401 Unauthorized), don't fallback to cached data
+                if (!localStorage.getItem('token')) {
+                    clearInvalidAuth();
+                    setLoading(false);
+                    return;
+                }
+
                 console.log('ProtectedRoute: Backend check failed, using cached data');
                 freshUser = JSON.parse(userData);
                 setUser(freshUser);
