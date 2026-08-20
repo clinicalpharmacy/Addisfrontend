@@ -226,7 +226,7 @@ const Login = () => {
                                     setLoading(true);
                                     const res = await api.post('/auth/resend-verification', { email: formData.email });
                                     if (res.success) {
-                                        alert('Verification email sent! Please check your inbox.');
+                                        alert(res.message || 'Verification email sent! Please check your inbox.');
                                     } else {
                                         alert(res.error || 'Failed to resend verification email');
                                     }
@@ -253,7 +253,7 @@ const Login = () => {
                                     const res = await api.post('/auth/resend-verification', { email: formData.email });
                                     if (res.success) {
                                         setError(''); // Clear error on success
-                                        alert('Verification email sent! Please check your inbox.');
+                                        alert(res.message || 'Verification email sent! Please check your inbox.');
                                     } else {
                                         setError(res.error || 'Failed to resend verification email');
                                     }
