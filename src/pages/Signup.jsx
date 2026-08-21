@@ -182,9 +182,12 @@ const Signup = () => {
                 if (!response.ok) throw new Error('Failed to fetch country');
                 const data = await response.json();
                 if (data.country_name) {
-                    setFormData(prev => ({ ...prev, country: data.country_name }));
+                    const detected = data.country_name;
+                    // Set country to "Ethiopia" if detected location includes "ethiopia", else "Outside Ethiopia"
+                    const isEthiopia = detected.toLowerCase().includes('ethiopia');
+                    setFormData(prev => ({ ...prev, country: isEthiopia ? 'Ethiopia' : 'Outside Ethiopia' }));
                 } else {
-                    // fallback
+                    // fallback: default to Ethiopia
                     setFormData(prev => ({ ...prev, country: 'Ethiopia' }));
                 }
             } catch (err) {
@@ -1480,20 +1483,26 @@ const Signup = () => {
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        {/* Country - auto-detected input */}
+                                        {/* Country - auto-detected, not editable */}
                                         <div>
                                             <label className="block text-gray-700 font-medium mb-2">
                                                 <FaGlobe className="inline mr-2" />
                                                 Country *
                                             </label>
-                                            <input
-                                                type="text"
-                                                required
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                                placeholder="Detected automatically"
-                                                value={formData.country}
-                                                onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                                            />
+                                            <div className="relative">
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    disabled
+                                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-gray-100 text-gray-700"
+                                                    placeholder="Auto-detected"
+                                                    value={formData.country}
+                                                />
+                                                <div className="absolute right-3 top-3 text-gray-400">
+                                                    <FaInfoCircle className="text-sm" />
+                                                </div>
+                                            </div>
+                                            <p className="text-xs text-gray-500 mt-1">Auto-detected (not editable)</p>
                                         </div>
                                         <div>
                                             <label className="block text-gray-700 font-medium mb-2">
@@ -1849,20 +1858,26 @@ const Signup = () => {
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
-                                        {/* Country - auto-detected input */}
+                                        {/* Country - auto-detected, not editable */}
                                         <div>
                                             <label className="block text-gray-700 font-medium mb-2">
                                                 <FaGlobe className="inline mr-2" />
                                                 Country *
                                             </label>
-                                            <input
-                                                type="text"
-                                                required
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                                placeholder="Detected automatically"
-                                                value={formData.country}
-                                                onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                                            />
+                                            <div className="relative">
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    disabled
+                                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-gray-100 text-gray-700"
+                                                    placeholder="Auto-detected"
+                                                    value={formData.country}
+                                                />
+                                                <div className="absolute right-3 top-3 text-gray-400">
+                                                    <FaInfoCircle className="text-sm" />
+                                                </div>
+                                            </div>
+                                            <p className="text-xs text-gray-500 mt-1">Auto-detected (not editable)</p>
                                         </div>
                                         <div>
                                             <label className="block text-gray-700 font-medium mb-2">
