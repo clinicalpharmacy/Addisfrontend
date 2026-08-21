@@ -113,6 +113,13 @@ const SUBSCRIPTION_PLANS = [
     }
 ];
 
+// Helper: adjust price based on country
+const getAdjustedPriceForPlan = (plan, country) => {
+    if (!country) return plan.price; // fallback
+    const isEthiopia = country.toLowerCase().includes('ethiopia');
+    return isEthiopia ? plan.price : plan.price * 3;
+};
+
 const Signup = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -313,7 +320,8 @@ const Signup = () => {
                     individual_type: 'client',
                     registered_at: new Date().toISOString(),
                     password: formData.password,
-                    referral_code: formData.referral_code?.trim() || ''
+                    referral_code: formData.referral_code?.trim() || '',
+                    country: formData.country // store detected country
                 };
 
                 localStorage.setItem('registered_user', JSON.stringify(userData));
@@ -330,7 +338,8 @@ const Signup = () => {
                     is_healthcare_client: true,
                     individual_type: 'client',
                     client_password: formData.password,
-                    referral_code: formData.referral_code?.trim() || ''
+                    referral_code: formData.referral_code?.trim() || '',
+                    country: formData.country
                 };
                 localStorage.setItem('payment_user_data', JSON.stringify(paymentUserData));
 
@@ -478,7 +487,8 @@ const Signup = () => {
                 },
                 registered_at: new Date().toISOString(),
                 form_email: formData.account_type === 'individual' ? formData.email.trim() : formData.admin_email.trim(),
-                form_name: formData.account_type === 'individual' ? formData.full_name.trim() : formData.admin_full_name.trim()
+                form_name: formData.account_type === 'individual' ? formData.full_name.trim() : formData.admin_full_name.trim(),
+                country: formData.country // store detected country
             };
 
             localStorage.setItem('registered_user', JSON.stringify(userData));
@@ -492,7 +502,8 @@ const Signup = () => {
                 account_type: formData.account_type,
                 individual_type: 'professional',
                 selected_plan: selectedPlan,
-                selected_plan_details: selectedPlanDetails
+                selected_plan_details: selectedPlanDetails,
+                country: formData.country
             };
             localStorage.setItem('payment_user_data', JSON.stringify(paymentUserData));
 
@@ -526,6 +537,11 @@ const Signup = () => {
             }
 
             const userData = JSON.parse(userDataStr);
+            // Get country from userData (or fallback from formData)
+            const country = userData.country || formData.country || 'Ethiopia';
+
+            // Compute adjusted price based on country
+            const adjustedPrice = getAdjustedPriceForPlan(selectedPlanDetails, country);
 
             // For healthcare client, use generated data
             if (userData.is_healthcare_client) {
@@ -540,7 +556,9 @@ const Signup = () => {
                     is_healthcare_client: true,
                     healthcare_client_id: userData.userId,
                     client_password: userData.client_password || userData.password,
-                    referral_code: userData.referral_code || ''
+                    referral_code: userData.referral_code || '',
+                    amount: adjustedPrice, // send adjusted amount
+                    country: country
                 };
 
                 const data = await api.post('/chapa/create-payment', paymentRequest);
@@ -554,13 +572,14 @@ const Signup = () => {
                         tx_ref: data.tx_ref,
                         planId: selectedPlan,
                         planName: data.plan_name,
-                        amount: data.amount,
-                        currency: data.currency,
+                        amount: adjustedPrice,
+                        currency: data.currency || 'ETB',
                         userEmail: userData.email,
                         userPhone: '0000000000',
                         status: 'pending',
                         payment_url: data.payment_url,
-                        is_healthcare_client: true
+                        is_healthcare_client: true,
+                        country: country
                     };
 
                     localStorage.setItem('pending_subscription', JSON.stringify(paymentInfo));
@@ -584,7 +603,9 @@ const Signup = () => {
                     userPhone: userData.phone,
                     userId: userData.userId || userData.id,
                     account_type: userData.account_type || 'individual',
-                    frontendUrl: window.location.origin
+                    frontendUrl: window.location.origin,
+                    amount: adjustedPrice, // send adjusted amount
+                    country: country
                 };
 
                 const data = await api.post('/chapa/create-payment', paymentRequest);
@@ -598,12 +619,13 @@ const Signup = () => {
                         tx_ref: data.tx_ref,
                         planId: selectedPlan,
                         planName: data.plan_name,
-                        amount: data.amount,
-                        currency: data.currency,
+                        amount: adjustedPrice,
+                        currency: data.currency || 'ETB',
                         userEmail: userData.email,
                         userPhone: data.user_phone || userData.phone,
                         status: 'pending',
-                        payment_url: data.payment_url
+                        payment_url: data.payment_url,
+                        country: country
                     };
 
                     localStorage.setItem('pending_subscription', JSON.stringify(paymentInfo));
@@ -2059,6 +2081,11 @@ const Signup = () => {
 
     // Step 4: Payment
     if (step === 4) {
+        // Compute adjusted price for display
+        const country = formData.country || 'Ethiopia';
+        const adjustedPrice = getAdjustedPriceForPlan(selectedPlanDetails, country);
+        const isEthiopia = country.toLowerCase().includes('ethiopia');
+
         return (
             <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
                 <div className="w-full max-w-7xl">
@@ -2137,12 +2164,20 @@ const Signup = () => {
                                     </div>
                                     <div className="text-right">
                                         <div className="text-2xl font-bold text-gray-800">
-                                            {selectedPlanDetails.price} {selectedPlanDetails.currency}
+                                            {adjustedPrice} {selectedPlanDetails.currency}
                                         </div>
                                         <div className="text-gray-600">
                                             per {selectedPlanDetails.interval}
                                         </div>
+                                        {!isEthiopia && (
+                                            <div className="text-sm text-yellow-600 mt-1">
+                                                (International pricing: 3× base)
+                                            </div>
+                                        )}
                                     </div>
+                                </div>
+                                <div className="text-sm text-gray-500 mt-2">
+                                    {isEthiopia ? '✅ Local pricing (Ethiopia)' : '🌍 International pricing applied'}
                                 </div>
                             </div>
                         )}
@@ -2181,7 +2216,7 @@ const Signup = () => {
                                     </>
                                 ) : (
                                     <>
-                                        Pay {selectedPlanDetails?.price} {selectedPlanDetails?.currency} via Chapa
+                                        Pay {adjustedPrice} {selectedPlanDetails?.currency} via Chapa
                                         <FaCreditCard />
                                     </>
                                 )}
@@ -2281,7 +2316,7 @@ const Signup = () => {
                                 </div>
                                 <div className="p-4 bg-white rounded-xl border border-blue-100">
                                     <p className="text-gray-500 text-sm mb-1">Amount Paid</p>
-                                    <p className="font-bold text-gray-800">{selectedPlanDetails?.price} {selectedPlanDetails?.currency}</p>
+                                    <p className="font-bold text-gray-800">{selectedPlanDetails ? getAdjustedPriceForPlan(selectedPlanDetails, userData.country || 'Ethiopia') : ''} {selectedPlanDetails?.currency}</p>
                                 </div>
                                 <div className="p-4 bg-white rounded-xl border border-blue-100">
                                     <p className="text-gray-500 text-sm mb-1">Transaction Ref</p>
