@@ -326,7 +326,7 @@ const Login = () => {
     const isInputValid = isEmailValid || isAddisMedIdValid;
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 flex items-start justify-center p-1 sm:p-3 relative overflow-auto">
+        <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 flex items-center justify-center p-1 sm:p-3 relative overflow-auto">
             {/* Animated Background Elements - Hidden on mobile for performance */}
             <div className="absolute inset-0 overflow-hidden hidden md:block">
                 <div className="absolute -top-40 -right-40 w-80 h-80 bg-white rounded-full opacity-10 animate-pulse"></div>
@@ -385,7 +385,7 @@ const Login = () => {
                                 </div>
                             </div>
                             <p className="text-[10px] text-gray-500 mt-1 text-center">
-                                Enter your registered email or Addis-Med ID (HCC-XXXXXX-XXXXXX)
+                                Enter your registered email or Addis-Med ID
                             </p>
                         </div>
 
