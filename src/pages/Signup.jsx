@@ -17,13 +17,13 @@ const API_URL = import.meta.env.VITE_API_URL;
 import api from '../utils/api';
 import UserAgreement from '../components/UserAgreement';
 
-// Define subscription plans with updated pricing
+// Define subscription plans with base prices in ETB
 const SUBSCRIPTION_PLANS = [
     {
         id: 'individual_monthly',
         name: 'Individual Monthly',
         price: 300,
-        currency: 'ETB',
+        currency: 'ETB', // base currency
         interval: 'month',
         description: 'For healthcare clients, health professionals & students',
         user_limit: 5,
@@ -114,40 +114,40 @@ const SUBSCRIPTION_PLANS = [
 ];
 
 /**
- * Adjusts the base price of a plan based on the user's country.
- * Uses a multiplier map for different regions; defaults to 3× for
- * countries not explicitly defined.
- *
+ * Country-specific pricing and currency configuration.
+ * For each country, define:
+ *  - multiplier: factor to apply to the base price (ETB)
+ *  - currency: local currency symbol/code
+ */
+const COUNTRY_CONFIG = {
+    'ethiopia': { multiplier: 1, currency: 'ETB' },
+    'kenya': { multiplier: 1.2, currency: 'KES' },
+    'nigeria': { multiplier: 1.1, currency: 'NGN' },
+    'south africa': { multiplier: 1.5, currency: 'ZAR' },
+    'ghana': { multiplier: 1.3, currency: 'GHS' },
+    'united states': { multiplier: 3, currency: 'USD' },
+    'us': { multiplier: 3, currency: 'USD' },
+    'united kingdom': { multiplier: 2.8, currency: 'GBP' },
+    'uk': { multiplier: 2.8, currency: 'GBP' },
+    'canada': { multiplier: 2.8, currency: 'CAD' },
+    'australia': { multiplier: 2.9, currency: 'AUD' },
+    'europe': { multiplier: 2.7, currency: 'EUR' },
+    // Add more as needed; default falls back to 3× and USD
+};
+
+/**
+ * Get the adjusted price and currency for a plan based on the user's country.
  * @param {object} plan - The subscription plan object.
- * @param {string} country - The user's country name (e.g., "Ethiopia").
- * @returns {number} The adjusted price in the plan's currency (ETB).
+ * @param {string} country - The user's country name (detected or selected).
+ * @returns {{ price: number, currency: string }}
  */
 const getAdjustedPriceForPlan = (plan, country) => {
-    if (!country) return plan.price;
+    if (!country) return { price: plan.price, currency: plan.currency || 'ETB' };
 
-    // Normalize country string for lookup
     const countryKey = country.toLowerCase().trim();
-
-    // Define country‑specific multipliers (base = 1 for Ethiopia)
-    // You can add or adjust multipliers as needed.
-    const countryMultipliers = {
-        'ethiopia': 1,
-        'kenya': 1.2,
-        'nigeria': 1.1,
-        'south africa': 1.5,
-        'ghana': 1.3,
-        'us': 3,
-        'united states': 3,
-        'uk': 2.8,
-        'united kingdom': 2.8,
-        'canada': 2.8,
-        'australia': 2.9,
-        'europe': 2.7,
-        // Add more countries as required
-    };
-
-    const multiplier = countryMultipliers[countryKey] || 3; // fallback to 3×
-    return Math.round(plan.price * multiplier);
+    const config = COUNTRY_CONFIG[countryKey] || { multiplier: 3, currency: 'USD' };
+    const adjustedPrice = Math.round(plan.price * config.multiplier);
+    return { price: adjustedPrice, currency: config.currency };
 };
 
 const Signup = () => {
@@ -204,7 +204,7 @@ const Signup = () => {
     // NEW: State for individual registration type selection
     const [individualType, setIndividualType] = useState(null); // 'professional' or 'client'
 
-    // Auto-detect country from IP on mount
+    // Auto-detect country from IP on mount, with a fallback to manual selection
     useEffect(() => {
         const detectCountry = async () => {
             try {
@@ -214,7 +214,6 @@ const Signup = () => {
                 if (data.country_name) {
                     setFormData(prev => ({ ...prev, country: data.country_name }));
                 } else {
-                    // fallback
                     setFormData(prev => ({ ...prev, country: 'Ethiopia' }));
                 }
             } catch (err) {
@@ -351,7 +350,7 @@ const Signup = () => {
                     registered_at: new Date().toISOString(),
                     password: formData.password,
                     referral_code: formData.referral_code?.trim() || '',
-                    country: formData.country // store detected country
+                    country: formData.country // store detected/selected country
                 };
 
                 localStorage.setItem('registered_user', JSON.stringify(userData));
@@ -518,7 +517,7 @@ const Signup = () => {
                 registered_at: new Date().toISOString(),
                 form_email: formData.account_type === 'individual' ? formData.email.trim() : formData.admin_email.trim(),
                 form_name: formData.account_type === 'individual' ? formData.full_name.trim() : formData.admin_full_name.trim(),
-                country: formData.country // store detected country
+                country: formData.country // store detected/selected country
             };
 
             localStorage.setItem('registered_user', JSON.stringify(userData));
@@ -570,8 +569,8 @@ const Signup = () => {
             // Get country from userData (or fallback from formData)
             const country = userData.country || formData.country || 'Ethiopia';
 
-            // Compute adjusted price based on country
-            const adjustedPrice = getAdjustedPriceForPlan(selectedPlanDetails, country);
+            // Compute adjusted price and currency
+            const { price: adjustedPrice, currency: adjustedCurrency } = getAdjustedPriceForPlan(selectedPlanDetails, country);
 
             // For healthcare client, use generated data
             if (userData.is_healthcare_client) {
@@ -587,7 +586,8 @@ const Signup = () => {
                     healthcare_client_id: userData.userId,
                     client_password: userData.client_password || userData.password,
                     referral_code: userData.referral_code || '',
-                    amount: adjustedPrice, // send adjusted amount
+                    amount: adjustedPrice,
+                    currency: adjustedCurrency,
                     country: country
                 };
 
@@ -603,7 +603,7 @@ const Signup = () => {
                         planId: selectedPlan,
                         planName: data.plan_name,
                         amount: adjustedPrice,
-                        currency: data.currency || 'ETB',
+                        currency: adjustedCurrency,
                         userEmail: userData.email,
                         userPhone: '0000000000',
                         status: 'pending',
@@ -634,7 +634,8 @@ const Signup = () => {
                     userId: userData.userId || userData.id,
                     account_type: userData.account_type || 'individual',
                     frontendUrl: window.location.origin,
-                    amount: adjustedPrice, // send adjusted amount
+                    amount: adjustedPrice,
+                    currency: adjustedCurrency,
                     country: country
                 };
 
@@ -650,7 +651,7 @@ const Signup = () => {
                         planId: selectedPlan,
                         planName: data.plan_name,
                         amount: adjustedPrice,
-                        currency: data.currency || 'ETB',
+                        currency: adjustedCurrency,
                         userEmail: userData.email,
                         userPhone: data.user_phone || userData.phone,
                         status: 'pending',
@@ -778,6 +779,9 @@ const Signup = () => {
         const filteredPlans = SUBSCRIPTION_PLANS.filter(plan => plan.account_type === accountTypeSelection);
         const isIndividual = accountTypeSelection === 'individual';
 
+        // Get the user's country (from formData) for price display
+        const userCountry = formData.country || 'Ethiopia';
+
         return (
             <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
                 <div className="w-full max-w-6xl">
@@ -810,6 +814,7 @@ const Signup = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-center">
                             {filteredPlans.map((plan) => {
                                 const PlanIcon = plan.icon;
+                                const { price: adjustedPrice, currency: adjustedCurrency } = getAdjustedPriceForPlan(plan, userCountry);
                                 return (
                                     <div
                                         key={plan.id}
@@ -835,12 +840,12 @@ const Signup = () => {
 
                                         <div className="mb-6">
                                             <div className="text-3xl font-bold text-gray-800">
-                                                {plan.price} <span className="text-base font-normal text-gray-500">{plan.currency}</span>
+                                                {adjustedPrice} <span className="text-base font-normal text-gray-500">{adjustedCurrency}</span>
                                             </div>
                                             <p className="text-gray-500 text-sm">per {plan.interval}</p>
                                             {plan.originalPrice && (
                                                 <div className="mt-2 inline-flex items-center gap-2">
-                                                    <span className="line-through text-gray-400 text-sm">{plan.originalPrice}</span>
+                                                    <span className="line-through text-gray-400 text-sm">{plan.originalPrice} {plan.currency}</span>
                                                     <span className="text-green-600 font-bold text-sm">-{plan.discount}</span>
                                                 </div>
                                             )}
@@ -1510,20 +1515,32 @@ const Signup = () => {
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        {/* Country - auto-detected input */}
+                                        {/* Country - auto-detected, but editable */}
                                         <div>
                                             <label className="block text-gray-700 font-medium mb-2">
                                                 <FaGlobe className="inline mr-2" />
                                                 Country *
                                             </label>
-                                            <input
-                                                type="text"
+                                            <select
                                                 required
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                                placeholder="Detected automatically"
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-white"
                                                 value={formData.country}
                                                 onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                                            />
+                                            >
+                                                <option value="Ethiopia">Ethiopia</option>
+                                                <option value="Kenya">Kenya</option>
+                                                <option value="Nigeria">Nigeria</option>
+                                                <option value="South Africa">South Africa</option>
+                                                <option value="Ghana">Ghana</option>
+                                                <option value="United States">United States</option>
+                                                <option value="United Kingdom">United Kingdom</option>
+                                                <option value="Canada">Canada</option>
+                                                <option value="Australia">Australia</option>
+                                                <option value="Germany">Germany</option>
+                                                <option value="France">France</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                            <p className="text-xs text-gray-400 mt-1">(Auto-detected, you can change)</p>
                                         </div>
                                         <div>
                                             <label className="block text-gray-700 font-medium mb-2">
@@ -1879,20 +1896,32 @@ const Signup = () => {
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
-                                        {/* Country - auto-detected input */}
+                                        {/* Country - auto-detected, editable */}
                                         <div>
                                             <label className="block text-gray-700 font-medium mb-2">
                                                 <FaGlobe className="inline mr-2" />
                                                 Country *
                                             </label>
-                                            <input
-                                                type="text"
+                                            <select
                                                 required
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                                placeholder="Detected automatically"
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-white"
                                                 value={formData.country}
                                                 onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                                            />
+                                            >
+                                                <option value="Ethiopia">Ethiopia</option>
+                                                <option value="Kenya">Kenya</option>
+                                                <option value="Nigeria">Nigeria</option>
+                                                <option value="South Africa">South Africa</option>
+                                                <option value="Ghana">Ghana</option>
+                                                <option value="United States">United States</option>
+                                                <option value="United Kingdom">United Kingdom</option>
+                                                <option value="Canada">Canada</option>
+                                                <option value="Australia">Australia</option>
+                                                <option value="Germany">Germany</option>
+                                                <option value="France">France</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                            <p className="text-xs text-gray-400 mt-1">(Auto-detected, you can change)</p>
                                         </div>
                                         <div>
                                             <label className="block text-gray-700 font-medium mb-2">
@@ -2111,9 +2140,9 @@ const Signup = () => {
 
     // Step 4: Payment
     if (step === 4) {
-        // Compute adjusted price for display
+        // Compute adjusted price and currency for display
         const country = formData.country || 'Ethiopia';
-        const adjustedPrice = getAdjustedPriceForPlan(selectedPlanDetails, country);
+        const { price: adjustedPrice, currency: adjustedCurrency } = getAdjustedPriceForPlan(selectedPlanDetails, country);
         const isEthiopia = country.toLowerCase().includes('ethiopia');
 
         return (
@@ -2194,7 +2223,7 @@ const Signup = () => {
                                     </div>
                                     <div className="text-right">
                                         <div className="text-2xl font-bold text-gray-800">
-                                            {adjustedPrice} {selectedPlanDetails.currency}
+                                            {adjustedPrice} {adjustedCurrency}
                                         </div>
                                         <div className="text-gray-600">
                                             per {selectedPlanDetails.interval}
@@ -2246,7 +2275,7 @@ const Signup = () => {
                                     </>
                                 ) : (
                                     <>
-                                        Pay {adjustedPrice} {selectedPlanDetails?.currency} via Chapa
+                                        Pay {adjustedPrice} {adjustedCurrency} via Chapa
                                         <FaCreditCard />
                                     </>
                                 )}
@@ -2277,6 +2306,10 @@ const Signup = () => {
     if (step === 5) {
         const userData = JSON.parse(localStorage.getItem('registered_user') || '{}');
         const paymentData = JSON.parse(localStorage.getItem('user_payment') || '{}');
+
+        // Compute adjusted price for display
+        const country = userData.country || 'Ethiopia';
+        const { price: adjustedPrice, currency: adjustedCurrency } = getAdjustedPriceForPlan(selectedPlanDetails, country);
 
         return (
             <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
@@ -2346,7 +2379,7 @@ const Signup = () => {
                                 </div>
                                 <div className="p-4 bg-white rounded-xl border border-blue-100">
                                     <p className="text-gray-500 text-sm mb-1">Amount Paid</p>
-                                    <p className="font-bold text-gray-800">{selectedPlanDetails ? getAdjustedPriceForPlan(selectedPlanDetails, userData.country || 'Ethiopia') : ''} {selectedPlanDetails?.currency}</p>
+                                    <p className="font-bold text-gray-800">{adjustedPrice} {adjustedCurrency}</p>
                                 </div>
                                 <div className="p-4 bg-white rounded-xl border border-blue-100">
                                     <p className="text-gray-500 text-sm mb-1">Transaction Ref</p>
