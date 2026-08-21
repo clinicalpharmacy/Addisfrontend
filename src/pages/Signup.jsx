@@ -113,11 +113,41 @@ const SUBSCRIPTION_PLANS = [
     }
 ];
 
-// Helper: adjust price based on country
+/**
+ * Adjusts the base price of a plan based on the user's country.
+ * Uses a multiplier map for different regions; defaults to 3× for
+ * countries not explicitly defined.
+ *
+ * @param {object} plan - The subscription plan object.
+ * @param {string} country - The user's country name (e.g., "Ethiopia").
+ * @returns {number} The adjusted price in the plan's currency (ETB).
+ */
 const getAdjustedPriceForPlan = (plan, country) => {
-    if (!country) return plan.price; // fallback
-    const isEthiopia = country.toLowerCase().includes('ethiopia');
-    return isEthiopia ? plan.price : plan.price * 3;
+    if (!country) return plan.price;
+
+    // Normalize country string for lookup
+    const countryKey = country.toLowerCase().trim();
+
+    // Define country‑specific multipliers (base = 1 for Ethiopia)
+    // You can add or adjust multipliers as needed.
+    const countryMultipliers = {
+        'ethiopia': 1,
+        'kenya': 1.2,
+        'nigeria': 1.1,
+        'south africa': 1.5,
+        'ghana': 1.3,
+        'us': 3,
+        'united states': 3,
+        'uk': 2.8,
+        'united kingdom': 2.8,
+        'canada': 2.8,
+        'australia': 2.9,
+        'europe': 2.7,
+        // Add more countries as required
+    };
+
+    const multiplier = countryMultipliers[countryKey] || 3; // fallback to 3×
+    return Math.round(plan.price * multiplier);
 };
 
 const Signup = () => {
@@ -2171,7 +2201,7 @@ const Signup = () => {
                                         </div>
                                         {!isEthiopia && (
                                             <div className="text-sm text-yellow-600 mt-1">
-                                                (International pricing: 3× base)
+                                                (International pricing: adjusted for your country)
                                             </div>
                                         )}
                                     </div>
