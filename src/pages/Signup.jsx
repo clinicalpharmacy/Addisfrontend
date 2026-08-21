@@ -17,40 +17,6 @@ const API_URL = import.meta.env.VITE_API_URL;
 import api from '../utils/api';
 import UserAgreement from '../components/UserAgreement';
 
-// List of all countries
-const COUNTRIES = [
-    "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", 
-    "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain", 
-    "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", 
-    "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", 
-    "Burkina Faso", "Burundi", "Cabo Verde", "Cambodia", "Cameroon", "Canada", 
-    "Central African Republic", "Chad", "Chile", "China", "Colombia", "Comoros", 
-    "Congo", "Costa Rica", "Côte d'Ivoire", "Croatia", "Cuba", "Cyprus", "Czech Republic", 
-    "Denmark", "Djibouti", "Dominica", "Dominican Republic", "Ecuador", "Egypt", 
-    "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia", 
-    "Fiji", "Finland", "France", "Gabon", "Gambia", "Georgia", "Germany", "Ghana", 
-    "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", 
-    "Honduras", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", 
-    "Israel", "Italy", "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", 
-    "Korea, North", "Korea, South", "Kosovo", "Kuwait", "Kyrgyzstan", "Laos", "Latvia", 
-    "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg", 
-    "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", 
-    "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", 
-    "Montenegro", "Morocco", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal", 
-    "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Macedonia", 
-    "Norway", "Oman", "Pakistan", "Palau", "Palestine", "Panama", "Papua New Guinea", 
-    "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania", "Russia", 
-    "Rwanda", "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent and the Grenadines", 
-    "Samoa", "San Marino", "Sao Tome and Principe", "Saudi Arabia", "Senegal", "Serbia", 
-    "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", 
-    "Somalia", "South Africa", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", 
-    "Sweden", "Switzerland", "Syria", "Taiwan", "Tajikistan", "Tanzania", "Thailand", 
-    "Timor-Leste", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", 
-    "Turkmenistan", "Tuvalu", "Uganda", "Ukraine", "United Arab Emirates", 
-    "United Kingdom", "United States", "Uruguay", "Uzbekistan", "Vanuatu", 
-    "Vatican City", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
-].sort();
-
 // Define subscription plans with updated pricing
 const SUBSCRIPTION_PLANS = [
     {
@@ -200,6 +166,27 @@ const Signup = () => {
 
     // NEW: State for individual registration type selection
     const [individualType, setIndividualType] = useState(null); // 'professional' or 'client'
+
+    // Auto-detect country from IP on mount
+    useEffect(() => {
+        const detectCountry = async () => {
+            try {
+                const response = await fetch('https://ipapi.co/json/');
+                if (!response.ok) throw new Error('Failed to fetch country');
+                const data = await response.json();
+                if (data.country_name) {
+                    setFormData(prev => ({ ...prev, country: data.country_name }));
+                } else {
+                    // fallback
+                    setFormData(prev => ({ ...prev, country: 'Ethiopia' }));
+                }
+            } catch (err) {
+                console.error('Country detection failed:', err);
+                setFormData(prev => ({ ...prev, country: 'Ethiopia' }));
+            }
+        };
+        detectCountry();
+    }, []);
 
     // Generate a stable healthcare client ID when user selects 'client' type
     useEffect(() => {
@@ -1471,24 +1458,20 @@ const Signup = () => {
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        {/* Country - auto-detected input */}
                                         <div>
                                             <label className="block text-gray-700 font-medium mb-2">
                                                 <FaGlobe className="inline mr-2" />
                                                 Country *
                                             </label>
-                                            <select
+                                            <input
+                                                type="text"
                                                 required
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-white"
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                placeholder="Detected automatically"
                                                 value={formData.country}
                                                 onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                                            >
-                                                <option value="">Select a country</option>
-                                                {COUNTRIES.map(country => (
-                                                    <option key={country} value={country}>
-                                                        {country}
-                                                    </option>
-                                                ))}
-                                            </select>
+                                            />
                                         </div>
                                         <div>
                                             <label className="block text-gray-700 font-medium mb-2">
@@ -1633,7 +1616,7 @@ const Signup = () => {
             );
         }
 
-        // Company Registration Form (unchanged)
+        // Company Registration Form
         return (
             <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
                 <div className="w-full max-w-4xl">
@@ -1843,25 +1826,21 @@ const Signup = () => {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+                                        {/* Country - auto-detected input */}
                                         <div>
                                             <label className="block text-gray-700 font-medium mb-2">
                                                 <FaGlobe className="inline mr-2" />
                                                 Country *
                                             </label>
-                                            <select
+                                            <input
+                                                type="text"
                                                 required
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-white"
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                placeholder="Detected automatically"
                                                 value={formData.country}
                                                 onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                                            >
-                                                <option value="">Select a country</option>
-                                                {COUNTRIES.map(country => (
-                                                    <option key={country} value={country}>
-                                                        {country}
-                                                    </option>
-                                                ))}
-                                            </select>
+                                            />
                                         </div>
                                         <div>
                                             <label className="block text-gray-700 font-medium mb-2">
@@ -1877,9 +1856,6 @@ const Signup = () => {
                                                 onChange={(e) => setFormData({ ...formData, region: e.target.value })}
                                             />
                                         </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                                         <div>
                                             <label className="block text-gray-700 font-medium mb-2">
                                                 <FaMapMarker className="inline mr-2" />
@@ -1893,6 +1869,9 @@ const Signup = () => {
                                                 onChange={(e) => setFormData({ ...formData, woreda: e.target.value })}
                                             />
                                         </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                                         <div>
                                             <label className="block text-gray-700 font-medium mb-2">
                                                 <FaUser className="inline mr-2" />
@@ -2078,7 +2057,7 @@ const Signup = () => {
         );
     }
 
-    // Step 4: Payment (unchanged)
+    // Step 4: Payment
     if (step === 4) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
@@ -2229,7 +2208,7 @@ const Signup = () => {
         );
     }
 
-    // Step 5: Success & Admin Approval Status (unchanged)
+    // Step 5: Success & Admin Approval Status
     if (step === 5) {
         const userData = JSON.parse(localStorage.getItem('registered_user') || '{}');
         const paymentData = JSON.parse(localStorage.getItem('user_payment') || '{}');
