@@ -34,9 +34,9 @@ const Login = () => {
     const [isCheckingHealth, setIsCheckingHealth] = useState(true);
     const [focusedField, setFocusedField] = useState(null);
     const [isEmailValid, setIsEmailValid] = useState(false);
+    const [isAddisMedIdValid, setIsAddisMedIdValid] = useState(false);
     const [passwordStrength, setPasswordStrength] = useState(0);
     const [currentSlide, setCurrentSlide] = useState(0);
-    const [loginMethod, setLoginMethod] = useState('email'); // 'email' or 'addisMedId'
 
     // Carousel messages for dynamic background
     const carouselMessages = [
@@ -83,19 +83,13 @@ const Login = () => {
         return () => clearInterval(interval);
     }, [navigate]);
 
-    // Email validation
+    // Unified validation: check if input is an email or Addis-Med ID
     useEffect(() => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        setIsEmailValid(emailRegex.test(formData.email));
-    }, [formData.email]);
-
-    // Addis-Med ID validation (basic format check)
-    const isAddisMedIdValid = () => {
-        if (!formData.email) return false;
-        // Check for HCC-XXXXXX-XXXXXX format (looser validation to accommodate timestamp lengths)
         const addisMedIdRegex = /^HCC-[A-Z0-9]{6,10}-[A-Z0-9]{6,10}$/i;
-        return addisMedIdRegex.test(formData.email);
-    };
+        setIsEmailValid(emailRegex.test(formData.email));
+        setIsAddisMedIdValid(addisMedIdRegex.test(formData.email));
+    }, [formData.email]);
 
     // Password strength indicator (simple version)
     useEffect(() => {
@@ -115,22 +109,32 @@ const Login = () => {
         setLoading(true);
         setError('');
 
-        if (!formData.email.trim() || !formData.password.trim()) {
+        const trimmedEmail = formData.email.trim();
+        const trimmedPassword = formData.password.trim();
+
+        if (!trimmedEmail || !trimmedPassword) {
             setError('Email/Addis-Med ID and password are required');
             setLoading(false);
             return;
         }
 
-        // Determine if this is a healthcare client login (using HCC ID format)
-        const isHealthcareClient = /^HCC-/i.test(formData.email.trim());
+        // Determine login method based on input format
+        const isHealthcareClient = /^HCC-/i.test(trimmedEmail);
+        const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail);
+
+        if (!isHealthcareClient && !isEmail) {
+            setError('Please enter a valid email address or Addis-Med ID (format: HCC-XXXXXX-XXXXXX)');
+            setLoading(false);
+            return;
+        }
 
         try {
-            console.log(`🔐 Attempting login for: ${formData.email} (${isHealthcareClient ? 'Healthcare Client' : 'Regular User'})`);
+            console.log(`🔐 Attempting login for: ${trimmedEmail} (${isHealthcareClient ? 'Healthcare Client' : 'Regular User'})`);
 
             // Using centralized api utility
             const data = await api.post('/auth/login', {
-                email: formData.email.trim().toLowerCase(),
-                password: formData.password.trim(),
+                email: trimmedEmail.toLowerCase(),
+                password: trimmedPassword,
                 login_method: isHealthcareClient ? 'addis_med_id' : 'email'
             });
 
@@ -160,7 +164,7 @@ const Login = () => {
             if (data.encryption_salt) {
                 try {
                     sessionStorage.setItem('enc_salt', data.encryption_salt);
-                    const cryptoKey = await deriveKey(formData.password.trim(), data.encryption_salt);
+                    const cryptoKey = await deriveKey(trimmedPassword, data.encryption_salt);
                     
                     // 🔐 Persist it to session (survives refreshes)
                     await persistKeyToSession(cryptoKey);
@@ -286,12 +290,6 @@ const Login = () => {
 
     const testLogin = (email, password) => {
         setFormData({ email, password });
-        // Auto-detect login method based on email format
-        if (/^HCC-/i.test(email)) {
-            setLoginMethod('addisMedId');
-        } else {
-            setLoginMethod('email');
-        }
     };
 
     const getPasswordStrengthColor = () => {
@@ -315,6 +313,17 @@ const Login = () => {
     };
 
     const CurrentIcon = carouselMessages[currentSlide].icon;
+
+    // Determine which icon to show in the input field based on input
+    const getInputIcon = () => {
+        if (isAddisMedIdValid) return FaIdCard;
+        if (isEmailValid) return FaEnvelope;
+        return FaUserMd;
+    };
+    const InputIcon = getInputIcon();
+
+    // Determine if the input is valid (either email or Addis-Med ID)
+    const isInputValid = isEmailValid || isAddisMedIdValid;
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 flex items-start justify-center p-1 sm:p-3 relative overflow-auto">
@@ -344,97 +353,41 @@ const Login = () => {
 
                 {/* Login Card - Optimized for mobile */}
                 <div className="bg-white/95 backdrop-blur-lg rounded-2xl shadow-2xl p-3 sm:p-5 border border-white/20 transform transition-all duration-300">
-                    <div className="mb-5 text-center">
-                        {/* Login Method Toggle - Compact for mobile */}
-                        <div className="flex items-center justify-center gap-1.5 mt-3 bg-gray-100 p-1 rounded-lg">
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setLoginMethod('email');
-                                    setFormData({ ...formData, email: '' });
-                                    setError('');
-                                }}
-                                className={`flex-[2] flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-base font-bold transition-all ${loginMethod === 'email'
-                                    ? 'bg-white text-blue-600 shadow-sm'
-                                    : 'text-gray-600 hover:text-gray-800'
-                                    }`}
-                            >
-                                Health Professionals & Health Science Students
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setLoginMethod('addisMedId');
-                                    setFormData({ ...formData, email: '' });
-                                    setError('');
-                                }}
-                                className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-base font-bold transition-all ${loginMethod === 'addisMedId'
-                                    ? 'bg-white text-green-600 shadow-sm'
-                                    : 'text-gray-600 hover:text-gray-800'
-                                    }`}
-                            >
-                                Healthcare Client
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Error Message with Animation - Compact for mobile */}
-                    {error && (
-                        <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-xl animate-shake">
-                            <div className="flex items-start gap-2">
-                                <FaExclamationTriangle className="text-red-500 mt-0.5 flex-shrink-0 text-xs animate-pulse" />
-                                <div className="flex-1 min-w-0">
-                                    <div className="text-red-800 font-bold text-xs mb-0.5 uppercase tracking-wider">Error</div>
-                                    <div className="text-red-600 text-xs leading-relaxed">{error}</div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Login Form - Compact for mobile */}
+                    {/* Unified Login Form - No user type toggles */}
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {/* Email/Addis-Med ID Field */}
-                    <div>
-                        <div className="flex justify-center">
-                            <div className="relative group w-full">
-                                <input
-                                    type={loginMethod === 'email' ? "email" : "text"}
-                                    value={formData.email}
-                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                    onFocus={() => setFocusedField('email')}
-                                    onBlur={() => setFocusedField(null)}
-                                    className={`w-full px-3 py-2.5 pl-9 border-2 rounded-xl outline-none transition-all duration-300 text-base font-normal text-black ${focusedField === 'email'
-                                        ? 'border-blue-500 shadow-lg shadow-blue-100'
-                                        : loginMethod === 'email'
-                                            ? isEmailValid && formData.email
-                                                ? 'border-green-500'
-                                                : 'border-gray-200 hover:border-gray-300'
-                                            : isAddisMedIdValid() && formData.email
-                                                ? 'border-green-500'
-                                                : 'border-gray-200 hover:border-gray-300'
-                                    }`}
-                                    placeholder={loginMethod === 'email' ? "Email Address" : "Addis-Med ID"}
-                                    required
-                                    disabled={loading}
-                                />
-                                {loginMethod === 'email' ? (
-                                    <FaEnvelope className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 text-sm ${focusedField === 'email' ? 'text-blue-500' : 'text-gray-400'}`} />
-                                ) : (
-                                    <FaIdCard className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 text-sm ${focusedField === 'email' ? 'text-blue-500' : 'text-gray-400'}`} />
-                                )}
-                                {loginMethod === 'email' && isEmailValid && formData.email && (
-                                    <FaCheckCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500 text-sm animate-scale-in" />
-                                )}
-                                {loginMethod === 'addisMedId' && isAddisMedIdValid() && formData.email && (
-                                    <FaCheckCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500 text-sm animate-scale-in" />
-                                )}
+                        <div>
+                            <div className="flex justify-center">
+                                <div className="relative group w-full">
+                                    <input
+                                        type="text"
+                                        value={formData.email}
+                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                        onFocus={() => setFocusedField('email')}
+                                        onBlur={() => setFocusedField(null)}
+                                        className={`w-full px-3 py-2.5 pl-9 border-2 rounded-xl outline-none transition-all duration-300 text-base font-normal text-black ${
+                                            focusedField === 'email'
+                                                ? 'border-blue-500 shadow-lg shadow-blue-100'
+                                                : isInputValid && formData.email
+                                                    ? 'border-green-500'
+                                                    : 'border-gray-200 hover:border-gray-300'
+                                        }`}
+                                        placeholder="Email or Addis-Med ID"
+                                        required
+                                        disabled={loading}
+                                    />
+                                    <InputIcon className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 text-sm ${
+                                        focusedField === 'email' ? 'text-blue-500' : 'text-gray-400'
+                                    }`} />
+                                    {isInputValid && formData.email && (
+                                        <FaCheckCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500 text-sm animate-scale-in" />
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                        {loginMethod === 'addisMedId' && (
-                            <p className="text-[10px] text-gray-500 mt-1">
+                            <p className="text-[10px] text-gray-500 mt-1 text-center">
+                                Enter your registered email or Addis-Med ID (HCC-XXXXXX-XXXXXX)
                             </p>
-                        )}
-                    </div>
+                        </div>
 
                         {/* Password Field */}
                         <div>
@@ -446,17 +399,20 @@ const Login = () => {
                                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                         onFocus={() => setFocusedField('password')}
                                         onBlur={() => setFocusedField(null)}
-                                        className={`w-full px-3 py-2.5 pl-9 pr-14 border-2 rounded-xl outline-none transition-all duration-300 text-base font-normal text-black ${focusedField === 'password'
-                                            ? 'border-blue-500 shadow-lg shadow-blue-100'
-                                            : formData.password
-                                                ? 'border-green-500'
-                                                : 'border-gray-200 hover:border-gray-300'
+                                        className={`w-full px-3 py-2.5 pl-9 pr-14 border-2 rounded-xl outline-none transition-all duration-300 text-base font-normal text-black ${
+                                            focusedField === 'password'
+                                                ? 'border-blue-500 shadow-lg shadow-blue-100'
+                                                : formData.password
+                                                    ? 'border-green-500'
+                                                    : 'border-gray-200 hover:border-gray-300'
                                         }`}
                                         placeholder="Enter password"
                                         required
                                         disabled={loading}
                                     />
-                                    <FaLock className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 text-sm ${focusedField === 'password' ? 'text-blue-500' : 'text-gray-400'}`} />
+                                    <FaLock className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 text-sm ${
+                                        focusedField === 'password' ? 'text-blue-500' : 'text-gray-400'
+                                    }`} />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
@@ -474,18 +430,20 @@ const Login = () => {
                                         {[1, 2, 3].map((level) => (
                                             <div
                                                 key={level}
-                                                className={`flex-1 h-full rounded-full transition-all duration-500 ${level <= passwordStrength
-                                                    ? getPasswordStrengthColor()
-                                                    : 'bg-gray-200'
+                                                className={`flex-1 h-full rounded-full transition-all duration-500 ${
+                                                    level <= passwordStrength
+                                                        ? getPasswordStrengthColor()
+                                                        : 'bg-gray-200'
                                                 }`}
                                             ></div>
                                         ))}
                                     </div>
-                                    <p className={`text-[10px] mt-1 font-medium text-center ${passwordStrength === 1 ? 'text-red-500' :
+                                    <p className={`text-[10px] mt-1 font-medium text-center ${
+                                        passwordStrength === 1 ? 'text-red-500' :
                                         passwordStrength === 2 ? 'text-yellow-500' :
-                                            passwordStrength === 3 ? 'text-green-500' :
-                                                'text-gray-400'
-                                        }`}>
+                                        passwordStrength === 3 ? 'text-green-500' :
+                                        'text-gray-400'
+                                    }`}>
                                         {getPasswordStrengthText()}
                                     </p>
                                 </div>
@@ -493,28 +451,29 @@ const Login = () => {
                         </div>
 
                         {/* Submit Button */}
-                      <div className="flex justify-center">
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className={`w-full py-2.5 px-4 rounded-xl font-bold text-lg transition-all transform hover:scale-[1.01] active:scale-[0.99] ${loading
-                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-xl hover:shadow-2xl'
-                            }`}
-                        >
-                            {loading ? (
-                                <span className="flex items-center justify-center gap-2">
-                                    <FaSpinner className="animate-spin text-sm" />
-                                    <span className="text-sm">Processing...</span>
-                                </span>
-                            ) : (
-                                <span className="flex items-center justify-center gap-2">
-                                    <FaSignInAlt className="text-sm" />
-                                    <span className="text-lg">Sign In</span>
-                                </span>
-                            )}
-                        </button>
-                    </div>
+                        <div className="flex justify-center">
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className={`w-full py-2.5 px-4 rounded-xl font-bold text-lg transition-all transform hover:scale-[1.01] active:scale-[0.99] ${
+                                    loading
+                                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                        : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-xl hover:shadow-2xl'
+                                }`}
+                            >
+                                {loading ? (
+                                    <span className="flex items-center justify-center gap-2">
+                                        <FaSpinner className="animate-spin text-sm" />
+                                        <span className="text-sm">Processing...</span>
+                                    </span>
+                                ) : (
+                                    <span className="flex items-center justify-center gap-2">
+                                        <FaSignInAlt className="text-sm" />
+                                        <span className="text-lg">Sign In</span>
+                                    </span>
+                                )}
+                            </button>
+                        </div>
                     </form>
 
                     {/* Quick Test Logins (For Development Only) */}
@@ -581,25 +540,28 @@ const Login = () => {
                 <div className="mt-4 flex justify-end pr-8">
                     <div className="group flex items-center gap-2 px-4 py-2 backdrop-blur-sm rounded-full border border-transparent transition-all hover:scale-105">
                         <div className="relative">
-                            <div className={`w-2 h-2 rounded-full ${isCheckingHealth
-                                ? 'bg-blue-400 animate-ping'
-                                : systemOnline
-                                    ? 'bg-green-500 animate-pulse'
-                                    : 'bg-red-500 animate-pulse'
-                                }`}></div>
-                            <div className={`absolute inset-0 w-2.5 h-2.5 rounded-full ${isCheckingHealth
-                                ? 'bg-blue-400'
-                                : systemOnline
-                                    ? 'bg-green-500'
-                                    : 'bg-red-500'
-                                } opacity-75`}></div>
+                            <div className={`w-2 h-2 rounded-full ${
+                                isCheckingHealth
+                                    ? 'bg-blue-400 animate-ping'
+                                    : systemOnline
+                                        ? 'bg-green-500 animate-pulse'
+                                        : 'bg-red-500 animate-pulse'
+                            }`}></div>
+                            <div className={`absolute inset-0 w-2.5 h-2.5 rounded-full ${
+                                isCheckingHealth
+                                    ? 'bg-blue-400'
+                                    : systemOnline
+                                        ? 'bg-green-500'
+                                        : 'bg-red-500'
+                            } opacity-75`}></div>
                         </div>
-                        <span className={`text-[10px] font-bold uppercase tracking-wider ${isCheckingHealth
-                            ? 'text-blue-600'
-                            : systemOnline
-                                ? 'text-green-600'
-                                : 'text-red-600'
-                            }`}>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ${
+                            isCheckingHealth
+                                ? 'text-blue-600'
+                                : systemOnline
+                                    ? 'text-green-600'
+                                    : 'text-red-600'
+                        }`}>
                             {isCheckingHealth ? 'Verifying...' : systemOnline ? 'Online' : 'Offline'}
                         </span>
                         <div className="w-px h-3 bg-gray-300 mx-0.5"></div>
