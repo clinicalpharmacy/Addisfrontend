@@ -53,6 +53,62 @@ const QuickSafetyCheck = () => {
         return safetyProfile;
     };
 
+    // Extract medications from interaction/incompatibility string
+    const extractMedicationsFromString = (str) => {
+        // Remove emoji and trim
+        let clean = str.replace(/⚠️/g, '').trim();
+        
+        // Split by ' + ' and clean each part
+        const meds = clean.split(' + ').map(med => med.trim()).filter(Boolean);
+        return meds;
+    };
+
+    // Get unique medications to avoid from interactions (for single drug searches)
+    const getMedicationsToAvoidFromInteractions = () => {
+        if (medList.length !== 1) return [];
+        
+        const interactions = getFilteredInteractions()
+            .filter(interaction => interaction.includes(' + '));
+        
+        const medicationsToAvoid = new Set();
+        
+        interactions.forEach(interaction => {
+            const meds = extractMedicationsFromString(interaction);
+            // Add all medications except the searched one
+            meds.forEach(med => {
+                if (!medList[0].toLowerCase().includes(med.toLowerCase()) && 
+                    !med.toLowerCase().includes(medList[0].toLowerCase())) {
+                    medicationsToAvoid.add(med);
+                }
+            });
+        });
+        
+        return Array.from(medicationsToAvoid).sort();
+    };
+
+    // Get unique medications to avoid from IV incompatibilities (for single drug searches)
+    const getMedicationsToAvoidFromIVIncompatibilities = () => {
+        if (medList.length !== 1) return [];
+        
+        const incompatibilities = getFilteredIVIncompatibilities()
+            .filter(incompatibility => incompatibility.includes(' + '));
+        
+        const medicationsToAvoid = new Set();
+        
+        incompatibilities.forEach(incompatibility => {
+            const meds = extractMedicationsFromString(incompatibility);
+            // Add all medications except the searched one
+            meds.forEach(med => {
+                if (!medList[0].toLowerCase().includes(med.toLowerCase()) && 
+                    !med.toLowerCase().includes(medList[0].toLowerCase())) {
+                    medicationsToAvoid.add(med);
+                }
+            });
+        });
+        
+        return Array.from(medicationsToAvoid).sort();
+    };
+
     const handleAddMedication = (e) => {
         if (e.key === 'Enter' || e.type === 'click') {
             e.preventDefault();
@@ -254,7 +310,7 @@ const QuickSafetyCheck = () => {
                                         value={drugName}
                                         onChange={(e) => setDrugName(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleAddMedication(e)}
-                                        className="w-full bg-white text-gray-800 px-6 py-4 pl-12 rounded-xl text-lg font-bold shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/50 transition-all placeholder:text-gray-400"
+                                        className="w-full bg-white text-gray-800 px-6 py-4 pl-12 rounded-xl text-lg font-bold shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/50 transition-all"
                                     />
                                     <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg" />
                                     <button 
@@ -282,7 +338,7 @@ const QuickSafetyCheck = () => {
                             <select 
                                 value={selectedCategory}
                                 onChange={(e) => setSelectedCategory(e.target.value)}
-                                className="bg-white text-gray-800 px-4 py-4 rounded-xl text-base font-semibold shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/50 appearance-none cursor-pointer border-r-8 border-transparent"
+                                className="bg-white text-gray-800 px-4 py-4 rounded-xl text-base font-semibold shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/50 appearance-none cursor-pointer min-w-[160px]"
                             >
                                 <option value="all">All Conditions</option>
                                 <option value="pregnancy">Pregnancy</option>
@@ -300,7 +356,7 @@ const QuickSafetyCheck = () => {
                             <button 
                                 type="submit"
                                 disabled={loading || (medList.length === 0 && !drugName.trim())}
-                                className="bg-blue-900 hover:bg-gray-900 disabled:bg-blue-400 text-white px-8 py-4 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 shadow-sm whitespace-nowrap"
+                                className="bg-blue-900 hover:bg-gray-900 disabled:bg-blue-400 text-white px-8 py-4 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 shadow-lg"
                             >
                                 {loading ? <FaSpinner className="animate-spin" /> : 'Check Safety'}
                             </button>
@@ -356,44 +412,80 @@ const QuickSafetyCheck = () => {
 
                                 {/* Major Drug Interactions - Show only when there are interactions with drug combinations */}
                                 {hasInteractionsToShow() && (
-                                    <div className="bg-amber-50 rounded-2xl p-6 md:p-8 shadow-sm border border-amber-200 mt-6">
-                                        <h4 className="text-xl font-bold text-amber-900 flex items-center gap-2 mb-4">
-                                            <FaPills className="text-amber-600" /> Major Drug Interactions (Avoid With)
-                                        </h4>
-                                        <ul className="list-disc list-inside space-y-2 text-amber-800 font-medium ml-2">
-                                            {getFilteredInteractions()
-                                                .filter(interaction => interaction.includes(' + '))
-                                                .map((interaction, i) => {
-                                                    let displayText = interaction;
-                                                    if (!displayText.includes('⚠️')) {
-                                                        displayText = `⚠️ ${displayText}`;
-                                                    }
-                                                    return <li key={i}>{displayText}</li>;
-                                                })
-                                            }
-                                        </ul>
-                                    </div>
+                                    <>
+                                        <div className="bg-amber-50 rounded-2xl p-6 md:p-8 shadow-sm border border-amber-200 mt-6">
+                                            <h4 className="text-xl font-bold text-amber-900 flex items-center gap-2 mb-4">
+                                                <FaPills className="text-amber-600" /> Major Drug Interactions (Avoid With)
+                                            </h4>
+                                            <ul className="list-disc list-inside space-y-2 text-amber-800 font-medium ml-2">
+                                                {getFilteredInteractions()
+                                                    .filter(interaction => interaction.includes(' + '))
+                                                    .map((interaction, i) => {
+                                                        let displayText = interaction;
+                                                        if (!displayText.includes('⚠️')) {
+                                                            displayText = `⚠️ ${displayText}`;
+                                                        }
+                                                        return <li key={i}>{displayText}</li>;
+                                                    })
+                                                }
+                                            </ul>
+                                        </div>
+
+                                        {/* Show medications to avoid list for single drug search */}
+                                        {medList.length === 1 && getMedicationsToAvoidFromInteractions().length > 0 && (
+                                            <div className="bg-amber-50 rounded-2xl p-6 md:p-8 shadow-sm border border-amber-200">
+                                                <h4 className="text-xl font-bold text-amber-900 flex items-center gap-2 mb-4">
+                                                    <FaPills className="text-amber-600" /> Medications to Avoid
+                                                </h4>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                                    {getMedicationsToAvoidFromInteractions().map((med, i) => (
+                                                        <div key={i} className="bg-white rounded-lg px-4 py-3 border border-amber-300 text-amber-900 font-medium shadow-sm">
+                                                            {med}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                                 
                                 {/* IV Drug Incompatibility - Show only when there are incompatibilities with drug combinations */}
                                 {hasIVIncompatibilityToShow() && (
-                                    <div className="bg-red-50 rounded-2xl p-6 md:p-8 shadow-sm border border-red-200 mt-6">
-                                        <h4 className="text-xl font-bold text-red-900 flex items-center gap-2 mb-4">
-                                            <FaSyringe className="text-red-600" /> IV Drug Incompatibility (Do Not Mix)
-                                        </h4>
-                                        <ul className="list-disc list-inside space-y-2 text-red-800 font-medium ml-2">
-                                            {getFilteredIVIncompatibilities()
-                                                .filter(incompatibility => incompatibility.includes(' + '))
-                                                .map((incompatibility, i) => {
-                                                    let displayText = incompatibility;
-                                                    if (!displayText.includes('⚠️')) {
-                                                        displayText = `⚠️ ${displayText}`;
-                                                    }
-                                                    return <li key={i}>{displayText}</li>;
-                                                })
-                                            }
-                                        </ul>
-                                    </div>
+                                    <>
+                                        <div className="bg-red-50 rounded-2xl p-6 md:p-8 shadow-sm border border-red-200 mt-6">
+                                            <h4 className="text-xl font-bold text-red-900 flex items-center gap-2 mb-4">
+                                                <FaSyringe className="text-red-600" /> IV Drug Incompatibility (Do Not Mix)
+                                            </h4>
+                                            <ul className="list-disc list-inside space-y-2 text-red-800 font-medium ml-2">
+                                                {getFilteredIVIncompatibilities()
+                                                    .filter(incompatibility => incompatibility.includes(' + '))
+                                                    .map((incompatibility, i) => {
+                                                        let displayText = incompatibility;
+                                                        if (!displayText.includes('⚠️')) {
+                                                            displayText = `⚠️ ${displayText}`;
+                                                        }
+                                                        return <li key={i}>{displayText}</li>;
+                                                    })
+                                                }
+                                            </ul>
+                                        </div>
+
+                                        {/* Show medications to avoid list for single drug search */}
+                                        {medList.length === 1 && getMedicationsToAvoidFromIVIncompatibilities().length > 0 && (
+                                            <div className="bg-red-50 rounded-2xl p-6 md:p-8 shadow-sm border border-red-200">
+                                                <h4 className="text-xl font-bold text-red-900 flex items-center gap-2 mb-4">
+                                                    <FaSyringe className="text-red-600" /> IV Medications to Avoid Mixing With
+                                                </h4>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                                    {getMedicationsToAvoidFromIVIncompatibilities().map((med, i) => (
+                                                        <div key={i} className="bg-white rounded-lg px-4 py-3 border border-red-300 text-red-900 font-medium shadow-sm">
+                                                            {med}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </>
                         ) : (
@@ -403,7 +495,7 @@ const QuickSafetyCheck = () => {
                                     <div>
                                         <p className="text-green-600 text-lg font-black max-w-2xl mx-auto">
                                             በተመረጡት የጤና ሁኔታዎች {selectedCategory !== 'all' && ` [${CategoryTitle({ type: selectedCategory })}]`} {result.medication}ን 
-                                            ለደህንነት ሲባል እንዳንጠቀም የሚያስጠነቅቅ መረጃ በአዲስ ሜድ (Addis Med) ውስጥ አልተገኘም። ሁልጊዜም የጤና ባለሙያ ያማክሩ።
+                                            ለደህንነት ሲባል እንዳንጠቀም የሚያስጠነቅቅ መረጃ በአዲስ ሜድ (Addis Med) ውስጥ አልተገኘም።
                                         </p>
                                     </div>
                                 </div>
@@ -411,7 +503,7 @@ const QuickSafetyCheck = () => {
                         )}
                         
                         <div className="mt-8 text-center bg-gray-50 p-4 rounded-xl text-xs font-bold text-gray-400 flex items-center justify-center gap-2">
-                            <FaInfoCircle /> Disclaimer: This information is for educational purposes only and does not replace consultation with a qualified healthcare professional. Medication information may change with emerging evidence, manufacturers' current prescribing information, and evolving medical practice. Users are responsible for verifying all information and exercising health professional's judgment. 
+                            <FaInfoCircle /> Disclaimer: This information is for educational purposes only and does not replace consultation with a qualified healthcare professional. Medication information may vary by region and should be verified with current clinical guidelines.
                         </div>
                     </div>
                 )}
