@@ -313,7 +313,12 @@ const QuickSafetyCheck = () => {
                                             <div key={key} className="bg-red-50 rounded-2xl p-6 shadow-sm border-2 border-red-400 hover:border-red-600 transition-colors group">
                                                 <div className="flex items-start justify-between mb-4">
                                                     <div className="flex items-center gap-3">
-                                                        <h4 className="font-bold text-gray-800 text-lg"><CategoryTitle type={key} /></h4>
+                                                        <h4 className="font-bold text-gray-800 text-lg">
+                                                            <CategoryTitle type={key} />
+                                                            <span className="text-gray-500 font-normal text-sm ml-2">
+                                                                ({result.medication})
+                                                            </span>
+                                                        </h4>
                                                     </div>
                                                     <StatusBadge status={data.status} />
                                                 </div>
