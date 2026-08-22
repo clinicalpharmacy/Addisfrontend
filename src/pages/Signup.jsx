@@ -762,6 +762,10 @@ const Signup = () => {
 
         const filteredPlans = SUBSCRIPTION_PLANS.filter(plan => plan.account_type === accountTypeSelection);
         const isIndividual = accountTypeSelection === 'individual';
+        
+        // 🔥 FIX: Get country and calculate adjusted prices
+        const country = formData.country || 'Ethiopia';
+        const isEthiopia = country.toLowerCase().includes('ethiopia');
 
         return (
             <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
@@ -775,6 +779,24 @@ const Signup = () => {
                                 <FaArrowLeft className="mr-2" /> Back to Account Selection
                             </button>
                         )}
+                        {/* 🔥 FIX: Show detected country and pricing info */}
+                        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-3">
+                            <FaGlobe className="text-blue-500 text-lg" />
+                            <div>
+                                <span className="text-sm text-gray-700">
+                                    Detected Country: <span className="font-bold">{country}</span>
+                                </span>
+                                {!isEthiopia ? (
+                                    <span className="ml-3 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                                        🌍 International Pricing (3× base)
+                                    </span>
+                                ) : (
+                                    <span className="ml-3 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                                        ✅ Local Pricing (Ethiopia)
+                                    </span>
+                                )}
+                            </div>
+                        </div>
                     </div>
 
                     <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-10">
@@ -795,6 +817,9 @@ const Signup = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-center">
                             {filteredPlans.map((plan) => {
                                 const PlanIcon = plan.icon;
+                                // 🔥 FIX: Calculate adjusted price for each plan
+                                const adjustedPrice = getAdjustedPriceForPlan(plan, country);
+                                
                                 return (
                                     <div
                                         key={plan.id}
@@ -820,13 +845,24 @@ const Signup = () => {
 
                                         <div className="mb-6">
                                             <div className="text-3xl font-bold text-gray-800">
-                                                {plan.price} <span className="text-base font-normal text-gray-500">{plan.currency}</span>
+                                                {adjustedPrice} <span className="text-base font-normal text-gray-500">{plan.currency}</span>
                                             </div>
                                             <p className="text-gray-500 text-sm">per {plan.interval}</p>
-                                            {plan.originalPrice && (
+                                            {!isEthiopia && plan.originalPrice && (
+                                                <div className="mt-2 inline-flex items-center gap-2">
+                                                    <span className="line-through text-gray-400 text-sm">{plan.originalPrice * 3}</span>
+                                                    <span className="text-green-600 font-bold text-sm">Save {(plan.originalPrice * 3) - adjustedPrice} ETB</span>
+                                                </div>
+                                            )}
+                                            {isEthiopia && plan.originalPrice && (
                                                 <div className="mt-2 inline-flex items-center gap-2">
                                                     <span className="line-through text-gray-400 text-sm">{plan.originalPrice}</span>
-                                                    <span className="text-green-600 font-bold text-sm">-{plan.discount}</span>
+                                                    <span className="text-green-600 font-bold text-sm">{plan.discount}</span>
+                                                </div>
+                                            )}
+                                            {!isEthiopia && (
+                                                <div className="mt-1 text-xs text-yellow-600">
+                                                    🌍 International pricing applied
                                                 </div>
                                             )}
                                         </div>
@@ -846,7 +882,7 @@ const Signup = () => {
                                                 : 'bg-gray-50 text-gray-800 hover:bg-gray-100'
                                                 }`}
                                         >
-                                            {selectedPlan === plan.id ? 'Selected' : 'Choose Plan'}
+                                            {selectedPlan === plan.id ? 'Selected' : `Choose ${adjustedPrice} ${plan.currency}`}
                                         </button>
                                     </div>
                                 );
