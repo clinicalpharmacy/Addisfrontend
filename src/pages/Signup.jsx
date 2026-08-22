@@ -417,7 +417,7 @@ const Signup = () => {
                     license_number: formData.license_number?.trim() || '',
                     role: formData.role,
                     account_type: 'individual',
-                    individual_type: 'professional', // Add this field
+                    individual_type: 'professional',
                     selected_plan: selectedPlan,
                     skip_verification_email: false,
                     referral_code: formData.referral_code?.trim() || ''
@@ -677,7 +677,7 @@ const Signup = () => {
             setError('');
             setSelectedPlan('');
             setSelectedPlanDetails(null);
-            setIndividualType(null); // Reset individual type when going back
+            setIndividualType(null);
         } else if (step === 5) {
             setStep(4);
         }
@@ -703,7 +703,6 @@ const Signup = () => {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
-                                {/* Individual Selection */}
                                 <div
                                     onClick={() => setAccountTypeSelection('individual')}
                                     className="group relative bg-white border-2 border-gray-100 rounded-2xl md:rounded-3xl p-6 md:p-8 cursor-pointer hover:border-blue-500 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
@@ -725,7 +724,6 @@ const Signup = () => {
                                     </div>
                                 </div>
 
-                                {/* Organization Selection */}
                                 <div
                                     onClick={() => setAccountTypeSelection('company')}
                                     className="group relative bg-white border-2 border-gray-100 rounded-2xl md:rounded-3xl p-6 md:p-8 cursor-pointer hover:border-green-500 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
@@ -855,7 +853,6 @@ const Signup = () => {
                             })}
                         </div>
 
-                        {/* Navigation */}
                         <div className="flex flex-col md:flex-row gap-4 md:gap-6 mt-10">
                             <Link
                                 to="/login"
@@ -917,7 +914,6 @@ const Signup = () => {
             return (
                 <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
                     <div className="w-full max-w-2xl">
-                        {/* Progress Bar */}
                         <div className="mb-6 md:mb-8">
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
@@ -950,7 +946,6 @@ const Signup = () => {
                             </p>
                         </div>
 
-                        {/* Selected Plan Info */}
                         {selectedPlanDetails && (
                             <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl">
                                 <div className="flex items-center justify-between">
@@ -996,7 +991,6 @@ const Signup = () => {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                                {/* Health Professional Option */}
                                 <div
                                     onClick={() => setIndividualType('professional')}
                                     className="group relative bg-white border-2 border-gray-100 rounded-2xl p-6 cursor-pointer hover:border-blue-500 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
@@ -1018,7 +1012,6 @@ const Signup = () => {
                                     </div>
                                 </div>
 
-                                {/* Health Care Client Option */}
                                 <div
                                     onClick={() => setIndividualType('client')}
                                     className="group relative bg-white border-2 border-gray-100 rounded-2xl p-6 cursor-pointer hover:border-green-500 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
@@ -1062,7 +1055,6 @@ const Signup = () => {
             return (
                 <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
                     <div className="w-full max-w-2xl">
-                        {/* Progress Bar */}
                         <div className="mb-6 md:mb-8">
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
@@ -1104,7 +1096,6 @@ const Signup = () => {
                             </p>
                         </div>
 
-                        {/* Selected Plan Info */}
                         {selectedPlanDetails && (
                             <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl">
                                 <div className="flex items-center justify-between">
@@ -1188,7 +1179,53 @@ const Signup = () => {
                                 </p>
                             </div>
 
+                            {/* FIX: Added country display for healthcare clients */}
+                            <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                                <div className="flex items-center gap-3">
+                                    <FaGlobe className="text-gray-500 text-xl" />
+                                    <div>
+                                        <p className="text-sm text-gray-600">Detected Country</p>
+                                        <p className="font-bold text-gray-800">
+                                            {formData.country || 'Detecting...'}
+                                            {formData.country && formData.country.toLowerCase().includes('ethiopia') ? (
+                                                <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Ethiopia (Local Pricing)</span>
+                                            ) : formData.country && (
+                                                <span className="ml-2 text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">International (3× Pricing)</span>
+                                            )}
+                                        </p>
+                                        <p className="text-xs text-gray-400 mt-1">Auto-detected based on your location</p>
+                                    </div>
+                                </div>
+                            </div>
+
                             <form onSubmit={handleRegistrationSubmit} className="space-y-6">
+                                <div>
+                                    <label className="block text-gray-700 font-medium mb-2">
+                                        <FaUser className="inline mr-2" />
+                                        Full Name (Optional)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                        placeholder="Enter your full name"
+                                        value={formData.full_name}
+                                        onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-gray-700 font-medium mb-2">
+                                        <FaPhone className="inline mr-2" />
+                                        Phone Number (Optional)
+                                    </label>
+                                    <input
+                                        type="tel"
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                        placeholder="Enter your phone number"
+                                        value={formData.phone}
+                                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                    />
+                                </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
@@ -1250,6 +1287,7 @@ const Signup = () => {
                                         </div>
                                     </div>
                                 </div>
+
                                 <div className="mt-6 mb-6">
                                     <label className="block text-gray-700 font-medium mb-2">
                                         <FaUser className="inline mr-2" />
@@ -1302,7 +1340,6 @@ const Signup = () => {
             return (
                 <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
                     <div className="w-full max-w-4xl">
-                        {/* Progress Bar */}
                         <div className="mb-6 md:mb-8">
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
@@ -1344,7 +1381,6 @@ const Signup = () => {
                             </p>
                         </div>
 
-                        {/* Selected Plan Info */}
                         {selectedPlanDetails && (
                             <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl">
                                 <div className="flex items-center justify-between">
@@ -1497,7 +1533,6 @@ const Signup = () => {
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        {/* Country - auto-detected, not editable */}
                                         <div>
                                             <label className="block text-gray-700 font-medium mb-2">
                                                 <FaGlobe className="inline mr-2" />
@@ -1665,7 +1700,6 @@ const Signup = () => {
         return (
             <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
                 <div className="w-full max-w-4xl">
-                    {/* Progress Bar */}
                     <div className="mb-6 md:mb-8">
                         <div className="flex items-center justify-between mb-2">
                             <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
@@ -1698,7 +1732,6 @@ const Signup = () => {
                         </p>
                     </div>
 
-                    {/* Selected Plan Info */}
                     {selectedPlanDetails && (
                         <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl">
                             <div className="flex items-center justify-between">
@@ -1872,7 +1905,6 @@ const Signup = () => {
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
-                                        {/* Country - auto-detected, not editable */}
                                         <div>
                                             <label className="block text-gray-700 font-medium mb-2">
                                                 <FaGlobe className="inline mr-2" />
@@ -2110,7 +2142,6 @@ const Signup = () => {
 
     // Step 4: Payment
     if (step === 4) {
-        // Compute adjusted price for display
         const country = formData.country || 'Ethiopia';
         const adjustedPrice = getAdjustedPriceForPlan(selectedPlanDetails, country);
         const isEthiopia = country.toLowerCase().includes('ethiopia');
@@ -2118,7 +2149,6 @@ const Signup = () => {
         return (
             <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
                 <div className="w-full max-w-7xl">
-                    {/* Progress Bar */}
                     <div className="mb-8 md:mb-10">
                         <div className="flex items-center justify-between mb-3 md:mb-4">
                             <div className="flex items-center gap-2 md:gap-3">
@@ -2171,7 +2201,6 @@ const Signup = () => {
                             </p>
                         </div>
 
-                        {/* Selected Plan Summary */}
                         {selectedPlanDetails && (
                             <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl border-2 border-blue-200">
                                 <div className="flex items-center justify-between mb-4">
@@ -2211,7 +2240,6 @@ const Signup = () => {
                             </div>
                         )}
 
-                        {/* Payment Instructions */}
                         <div className="mb-8 p-6 bg-blue-50 border-2 border-blue-200 rounded-2xl">
                             <div className="flex items-center gap-4">
                                 <FaCreditCard className="text-blue-500 text-xl flex-shrink-0" />
@@ -2224,7 +2252,6 @@ const Signup = () => {
                             </div>
                         </div>
 
-                        {/* Action Buttons */}
                         <div className="flex flex-col md:flex-row gap-4 md:gap-6">
                             <button
                                 onClick={goBack}
@@ -2291,7 +2318,6 @@ const Signup = () => {
                             </p>
                         </div>
 
-                        {/* Success Summary */}
                         <div className="mb-8 md:mb-10 p-6 md:p-8 bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl border-2 border-green-200">
                             <div className="flex items-center gap-4 md:gap-6 mb-6">
                                 <div className="w-12 h-12 md:w-16 md:h-16 bg-green-100 rounded-full flex items-center justify-center">
@@ -2326,7 +2352,6 @@ const Signup = () => {
                             </div>
                         </div>
 
-                        {/* Subscription Details */}
                         <div className="mb-8 md:mb-10 p-6 md:p-8 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl border-2 border-blue-200">
                             <div className="flex items-center gap-4 md:gap-6 mb-6">
                                 <div className="w-12 h-12 md:w-16 md:h-16 bg-blue-100 rounded-full flex items-center justify-center">
@@ -2361,7 +2386,6 @@ const Signup = () => {
                             </div>
                         </div>
 
-                        {/* Next Steps */}
                         <div className="mb-8 md:mb-10 p-6 md:p-8 bg-gradient-to-r from-purple-50 to-purple-100 rounded-2xl border-2 border-purple-200">
                             <div className="flex items-center gap-4 md:gap-6 mb-6">
                                 <div className="w-12 h-12 md:w-16 md:h-16 bg-purple-100 rounded-full flex items-center justify-center">
@@ -2410,7 +2434,6 @@ const Signup = () => {
                             </div>
                         </div>
 
-                        {/* Important Notes */}
                         <div className="mb-8 md:mb-10 p-6 md:p-8 bg-yellow-50 rounded-2xl border-2 border-yellow-200">
                             <div className="flex items-start gap-4">
                                 <FaInfoCircle className="text-yellow-500 text-xl md:text-2xl flex-shrink-0 mt-1" />
@@ -2438,7 +2461,6 @@ const Signup = () => {
                             </div>
                         </div>
 
-                        {/* Final Action Buttons */}
                         <div className="flex flex-col md:flex-row gap-4 md:gap-6">
                             <button
                                 onClick={() => navigate('/')}
