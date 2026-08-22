@@ -176,6 +176,33 @@ const QuickSafetyCheck = () => {
         return filtered;
     };
 
+    // Get filtered clinical rules - shows all for single drug, filtered for multiple
+    const getFilteredClinicalRules = () => {
+        if (!result || !result.clinical_rules) return [];
+        
+        // If only one drug is searched, show ALL clinical rules
+        if (medList.length === 1) {
+            return result.clinical_rules;
+        }
+        
+        // For multiple drugs, filter to show only rules that contain the searched drugs
+        const filtered = result.clinical_rules.filter(rule => {
+            return medList.some(med => 
+                rule.toLowerCase().includes(med.toLowerCase())
+            );
+        });
+        
+        return filtered;
+    };
+
+    // Check if there are any clinical rules to show
+    const hasClinicalRulesToShow = () => {
+        if (!result || !result.clinical_rules) return false;
+        
+        const filtered = getFilteredClinicalRules();
+        return filtered && filtered.length > 0;
+    };
+
     // Check if there are any interactions to show
     const hasInteractionsToShow = () => {
         if (!result || !result.major_interactions) return false;
@@ -206,12 +233,14 @@ const QuickSafetyCheck = () => {
         const hasUnsafe = hasUnsafeInFiltered();
         const hasInteractions = hasInteractionsToShow();
         const hasIVIncompatibility = hasIVIncompatibilityToShow();
+        const hasClinicalRules = hasClinicalRulesToShow();
         
         console.log('hasUnsafe:', hasUnsafe);
         console.log('hasInteractions:', hasInteractions);
         console.log('hasIVIncompatibility:', hasIVIncompatibility);
+        console.log('hasClinicalRules:', hasClinicalRules);
         
-        return hasUnsafe || hasInteractions || hasIVIncompatibility;
+        return hasUnsafe || hasInteractions || hasIVIncompatibility || hasClinicalRules;
     };
 
     const shouldShowIVCategory = () => {
@@ -351,6 +380,20 @@ const QuickSafetyCheck = () => {
                                                 <p className="text-gray-700 leading-relaxed text-base font-bold">{data.details}</p>
                                             </div>
                                         ))}
+                                    </div>
+                                )}
+
+                                {/* Clinical Rules - Show for single drug */}
+                                {hasClinicalRulesToShow() && (
+                                    <div className="bg-blue-50 rounded-2xl p-6 md:p-8 shadow-sm border border-blue-200 mt-6">
+                                        <h4 className="text-xl font-bold text-blue-900 flex items-center gap-2 mb-4">
+                                            <FaInfoCircle className="text-blue-600" /> Clinical Guidelines & Rules
+                                        </h4>
+                                        <ul className="list-disc list-inside space-y-2 text-blue-800 font-medium ml-2">
+                                            {getFilteredClinicalRules().map((rule, i) => (
+                                                <li key={i}>{rule}</li>
+                                            ))}
+                                        </ul>
                                     </div>
                                 )}
 
