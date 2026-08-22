@@ -1184,7 +1184,6 @@ const Signup = () => {
                                 <div className="flex items-center gap-3">
                                     <FaGlobe className="text-gray-500 text-xl" />
                                     <div>
-                                        <p className="text-sm text-gray-600">Detected Country</p>
                                         <p className="font-bold text-gray-800">
                                             {formData.country || 'Detecting...'}
                                             {formData.country && formData.country.toLowerCase().includes('ethiopia') ? (
@@ -1193,40 +1192,11 @@ const Signup = () => {
                                                 <span className="ml-2 text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">International (3× Pricing)</span>
                                             )}
                                         </p>
-                                        <p className="text-xs text-gray-400 mt-1">Auto-detected based on your location</p>
                                     </div>
                                 </div>
                             </div>
 
                             <form onSubmit={handleRegistrationSubmit} className="space-y-6">
-                                <div>
-                                    <label className="block text-gray-700 font-medium mb-2">
-                                        <FaUser className="inline mr-2" />
-                                        Full Name (Optional)
-                                    </label>
-                                    <input
-                                        type="text"
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                        placeholder="Enter your full name"
-                                        value={formData.full_name}
-                                        onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-gray-700 font-medium mb-2">
-                                        <FaPhone className="inline mr-2" />
-                                        Phone Number (Optional)
-                                    </label>
-                                    <input
-                                        type="tel"
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                        placeholder="Enter your phone number"
-                                        value={formData.phone}
-                                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                    />
-                                </div>
-
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <label className="block text-gray-700 font-medium mb-2">
@@ -1517,19 +1487,6 @@ const Signup = () => {
                                                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                             />
                                         </div>
-                                        <div>
-                                            <label className="block text-gray-700 font-medium mb-2">
-                                                <FaFileInvoiceDollar className="inline mr-2" />
-                                                TIN Number (Optional)
-                                            </label>
-                                            <input
-                                                type="text"
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                                placeholder="Enter TIN number (optional)"
-                                                value={formData.tin_number}
-                                                onChange={(e) => setFormData({ ...formData, tin_number: e.target.value })}
-                                            />
-                                        </div>
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -1551,34 +1508,6 @@ const Signup = () => {
                                                     <FaInfoCircle className="text-sm" />
                                                 </div>
                                             </div>
-                                            <p className="text-xs text-gray-500 mt-1">Auto-detected (not editable)</p>
-                                        </div>
-                                        <div>
-                                            <label className="block text-gray-700 font-medium mb-2">
-                                                <FaMapMarker className="inline mr-2" />
-                                                Region/State *
-                                            </label>
-                                            <input
-                                                type="text"
-                                                required
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                                placeholder="Enter your region"
-                                                value={formData.region}
-                                                onChange={(e) => setFormData({ ...formData, region: e.target.value })}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-gray-700 font-medium mb-2">
-                                                <FaMapMarker className="inline mr-2" />
-                                                Woreda/Zone (Optional)
-                                            </label>
-                                            <input
-                                                type="text"
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                                placeholder="Enter your woreda"
-                                                value={formData.woreda}
-                                                onChange={(e) => setFormData({ ...formData, woreda: e.target.value })}
-                                            />
                                         </div>
                                     </div>
 
