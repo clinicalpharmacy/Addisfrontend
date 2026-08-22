@@ -102,7 +102,6 @@ const QuickSafetyCheck = () => {
                 console.log('Safety Profile:', filteredProfile);
                 console.log('Major Interactions:', filteredProfile.major_interactions);
                 console.log('IV Incompatibility:', filteredProfile.iv_incompatibility);
-                console.log('Clinical Rules:', filteredProfile.clinical_rules);
                 
                 setResult(filteredProfile);
             } else {
@@ -177,106 +176,13 @@ const QuickSafetyCheck = () => {
         return filtered;
     };
 
-    // Get filtered clinical rules - shows all for single drug, filtered for multiple
-    const getFilteredClinicalRules = () => {
-        if (!result || !result.clinical_rules) return [];
-        
-        // If only one drug is searched, show ALL clinical rules
-        if (medList.length === 1) {
-            return result.clinical_rules;
-        }
-        
-        // For multiple drugs, filter to show only rules that contain the searched drugs
-        const filtered = result.clinical_rules.filter(rule => {
-            return medList.some(med => 
-                rule.toLowerCase().includes(med.toLowerCase())
-            );
-        });
-        
-        return filtered;
-    };
-
-    // Parse clinical rules to extract medication lists
-    const parseClinicalRules = (rules) => {
-        if (!rules || rules.length === 0) return [];
-        
-        const parsedRules = [];
-        
-        rules.forEach(rule => {
-            // Check if the rule contains a list of medications
-            // Common patterns: "with X, Y, and Z" or "with X, Y, Z" or "with X & Y"
-            const medicationListMatch = rule.match(/with\s+([^,.]+(?:,\s*[^,.]+)*(?:\s+and\s+[^,.]+)?)/i);
-            
-            if (medicationListMatch) {
-                // Extract the medication list part
-                const medListPart = medicationListMatch[1];
-                // Split by commas and "and"
-                const medications = medListPart.split(/\s*,\s*|\s+and\s+/).map(m => m.trim());
-                
-                // Get the context before "with"
-                const context = rule.split(/with\s+/i)[0].trim();
-                
-                parsedRules.push({
-                    context: context || 'Interaction',
-                    medications: medications,
-                    fullText: rule
-                });
-            } else {
-                // If no "with" pattern found, try to extract medications from the rule
-                // Look for medication names (capitalized words)
-                const medNames = rule.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\b/g);
-                if (medNames && medNames.length > 1) {
-                    // Filter out common words
-                    const commonWords = ['Drug', 'Medication', 'Incompatibility', 'Interaction', 'Precautions', 'Avoid'];
-                    const filteredMeds = medNames.filter(name => !commonWords.includes(name));
-                    
-                    if (filteredMeds.length > 0) {
-                        parsedRules.push({
-                            context: 'Interaction',
-                            medications: filteredMeds,
-                            fullText: rule
-                        });
-                    } else {
-                        parsedRules.push({
-                            context: 'Note',
-                            medications: [],
-                            fullText: rule
-                        });
-                    }
-                } else {
-                    parsedRules.push({
-                        context: 'Note',
-                        medications: [],
-                        fullText: rule
-                    });
-                }
-            }
-        });
-        
-        return parsedRules;
-    };
-
-    // Check if there are any clinical rules to show
-    const hasClinicalRulesToShow = () => {
-        if (!result || !result.clinical_rules) return false;
-        
-        const filtered = getFilteredClinicalRules();
-        return filtered && filtered.length > 0;
-    };
-
     // Check if there are any interactions to show
     const hasInteractionsToShow = () => {
         if (!result || !result.major_interactions) return false;
         if (selectedCategory !== 'all' && selectedCategory !== 'drug_interactions') return false;
         
         const filtered = getFilteredInteractions();
-        
-        // For single drug, show ALL interactions (including those without ' + ')
-        if (medList.length === 1) {
-            return filtered && filtered.length > 0;
-        }
-        
-        // For multiple drugs, filter to show only drug combinations with ' + '
+        // Filter out entries without ' + ' to show only drug combinations
         const withDrugCombinations = filtered.filter(item => item.includes(' + '));
         return withDrugCombinations && withDrugCombinations.length > 0;
     };
@@ -288,13 +194,7 @@ const QuickSafetyCheck = () => {
         if (selectedCategory !== 'all' && selectedCategory !== 'iv_incompatibility') return false;
         
         const filtered = getFilteredIVIncompatibilities();
-        
-        // For single drug, show ALL incompatibilities (including those without ' + ')
-        if (medList.length === 1) {
-            return filtered && filtered.length > 0;
-        }
-        
-        // For multiple drugs, filter to show only drug combinations with ' + '
+        // Filter out entries without ' + ' to show only drug combinations
         const withDrugCombinations = filtered.filter(item => item.includes(' + '));
         return withDrugCombinations && withDrugCombinations.length > 0;
     };
@@ -306,14 +206,12 @@ const QuickSafetyCheck = () => {
         const hasUnsafe = hasUnsafeInFiltered();
         const hasInteractions = hasInteractionsToShow();
         const hasIVIncompatibility = hasIVIncompatibilityToShow();
-        const hasClinicalRules = hasClinicalRulesToShow();
         
         console.log('hasUnsafe:', hasUnsafe);
         console.log('hasInteractions:', hasInteractions);
         console.log('hasIVIncompatibility:', hasIVIncompatibility);
-        console.log('hasClinicalRules:', hasClinicalRules);
         
-        return hasUnsafe || hasInteractions || hasIVIncompatibility || hasClinicalRules;
+        return hasUnsafe || hasInteractions || hasIVIncompatibility;
     };
 
     const shouldShowIVCategory = () => {
@@ -456,58 +354,18 @@ const QuickSafetyCheck = () => {
                                     </div>
                                 )}
 
-                                {/* Clinical Rules - Show for single drug with medication lists */}
-                                {hasClinicalRulesToShow() && (
-                                    <div className="bg-blue-50 rounded-2xl p-6 md:p-8 shadow-sm border border-blue-200 mt-6">
-                                        <h4 className="text-xl font-bold text-blue-900 flex items-center gap-2 mb-4">
-                                            <FaInfoCircle className="text-blue-600" /> Clinical Guidelines & Rules
-                                        </h4>
-                                        <div className="space-y-3">
-                                            {parseClinicalRules(getFilteredClinicalRules()).map((parsedRule, idx) => (
-                                                <div key={idx} className="bg-white rounded-xl p-4 shadow-sm border border-blue-100">
-                                                    {parsedRule.medications && parsedRule.medications.length > 0 ? (
-                                                        <>
-                                                            <p className="text-gray-700 font-semibold mb-2">
-                                                                {parsedRule.context}:
-                                                            </p>
-                                                            <div className="flex flex-wrap gap-2">
-                                                                {parsedRule.medications.map((med, medIdx) => (
-                                                                    <span key={medIdx} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-lg text-sm font-bold">
-                                                                        {med}
-                                                                    </span>
-                                                                ))}
-                                                            </div>
-                                                            <p className="text-gray-600 text-sm mt-2 italic">
-                                                                {parsedRule.fullText}
-                                                            </p>
-                                                        </>
-                                                    ) : (
-                                                        <p className="text-gray-700">{parsedRule.fullText}</p>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Major Drug Interactions */}
+                                {/* Major Drug Interactions - Show only when there are interactions with drug combinations */}
                                 {hasInteractionsToShow() && (
                                     <div className="bg-amber-50 rounded-2xl p-6 md:p-8 shadow-sm border border-amber-200 mt-6">
                                         <h4 className="text-xl font-bold text-amber-900 flex items-center gap-2 mb-4">
-                                            <FaPills className="text-amber-600" /> Major Drug Interactions {medList.length === 1 ? '(Precautions)' : '(Avoid With)'}
+                                            <FaPills className="text-amber-600" /> Major Drug Interactions (Avoid With)
                                         </h4>
                                         <ul className="list-disc list-inside space-y-2 text-amber-800 font-medium ml-2">
                                             {getFilteredInteractions()
-                                                .filter(interaction => {
-                                                    // For single drug, show all interactions
-                                                    if (medList.length === 1) return true;
-                                                    // For multiple drugs, show only those with ' + '
-                                                    return interaction.includes(' + ');
-                                                })
+                                                .filter(interaction => interaction.includes(' + '))
                                                 .map((interaction, i) => {
                                                     let displayText = interaction;
-                                                    // Only add emoji if it's a drug combination
-                                                    if (interaction.includes(' + ') && !displayText.includes('⚠️')) {
+                                                    if (!displayText.includes('⚠️')) {
                                                         displayText = `⚠️ ${displayText}`;
                                                     }
                                                     return <li key={i}>{displayText}</li>;
@@ -517,24 +375,18 @@ const QuickSafetyCheck = () => {
                                     </div>
                                 )}
                                 
-                                {/* IV Drug Incompatibility */}
+                                {/* IV Drug Incompatibility - Show only when there are incompatibilities with drug combinations */}
                                 {hasIVIncompatibilityToShow() && (
                                     <div className="bg-red-50 rounded-2xl p-6 md:p-8 shadow-sm border border-red-200 mt-6">
                                         <h4 className="text-xl font-bold text-red-900 flex items-center gap-2 mb-4">
-                                            <FaSyringe className="text-red-600" /> IV Drug Incompatibility {medList.length === 1 ? '(Precautions)' : '(Do Not Mix)'}
+                                            <FaSyringe className="text-red-600" /> IV Drug Incompatibility (Do Not Mix)
                                         </h4>
                                         <ul className="list-disc list-inside space-y-2 text-red-800 font-medium ml-2">
                                             {getFilteredIVIncompatibilities()
-                                                .filter(incompatibility => {
-                                                    // For single drug, show all incompatibilities
-                                                    if (medList.length === 1) return true;
-                                                    // For multiple drugs, show only those with ' + '
-                                                    return incompatibility.includes(' + ');
-                                                })
+                                                .filter(incompatibility => incompatibility.includes(' + '))
                                                 .map((incompatibility, i) => {
                                                     let displayText = incompatibility;
-                                                    // Only add emoji if it's a drug combination
-                                                    if (incompatibility.includes(' + ') && !displayText.includes('⚠️')) {
+                                                    if (!displayText.includes('⚠️')) {
                                                         displayText = `⚠️ ${displayText}`;
                                                     }
                                                     return <li key={i}>{displayText}</li>;
