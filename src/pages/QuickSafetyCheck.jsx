@@ -137,26 +137,17 @@ const QuickSafetyCheck = () => {
         return getFilteredUnsafeCategories().length > 0;
     };
 
-    // IMPORTANT CHANGE: The backend now returns the correctly filtered interactions
-    // We no longer need to filter client-side - just display what the backend returns
-    const getFilteredInteractions = () => {
+    // Get interactions - now just display what the backend returns
+    const getInteractions = () => {
         if (!result || !result.major_interactions) return [];
-        
-        // The backend already handles the filtering logic based on number of medications
-        // For single drug: returns all interactions involving that drug
-        // For multiple drugs: returns only interactions BETWEEN the searched drugs
-        // We just need to filter out entries without ' + ' to show only drug combinations
+        // Filter out any entries without ' + ' to ensure we only show drug combinations
         return result.major_interactions.filter(item => item.includes(' + '));
     };
 
-    // IMPORTANT CHANGE: The backend now returns the correctly filtered IV incompatibilities
-    const getFilteredIVIncompatibilities = () => {
+    // Get IV incompatibilities - now just display what the backend returns
+    const getIVIncompatibilities = () => {
         if (!result || !result.iv_incompatibility) return [];
-        
-        // The backend already handles the filtering logic based on number of medications
-        // For single drug: returns all incompatibilities involving that drug
-        // For multiple drugs: returns only incompatibilities BETWEEN the searched drugs
-        // We just need to filter out entries without ' + ' to show only drug combinations
+        // Filter out any entries without ' + ' to ensure we only show drug combinations
         return result.iv_incompatibility.filter(item => item.includes(' + '));
     };
 
@@ -164,9 +155,8 @@ const QuickSafetyCheck = () => {
     const hasInteractionsToShow = () => {
         if (!result || !result.major_interactions) return false;
         if (selectedCategory !== 'all' && selectedCategory !== 'drug_interactions') return false;
-        
-        const filtered = getFilteredInteractions();
-        return filtered && filtered.length > 0;
+        const interactions = getInteractions();
+        return interactions && interactions.length > 0;
     };
 
     // Check if there are any IV incompatibilities to show
@@ -174,9 +164,8 @@ const QuickSafetyCheck = () => {
         if (isHealthcareClient) return false;
         if (!result || !result.iv_incompatibility) return false;
         if (selectedCategory !== 'all' && selectedCategory !== 'iv_incompatibility') return false;
-        
-        const filtered = getFilteredIVIncompatibilities();
-        return filtered && filtered.length > 0;
+        const incompatibilities = getIVIncompatibilities();
+        return incompatibilities && incompatibilities.length > 0;
     };
 
     // Check if there's any data to show
@@ -334,28 +323,28 @@ const QuickSafetyCheck = () => {
                                     </div>
                                 )}
 
-                                {/* Major Drug Interactions - Backend now handles the filtering */}
+                                {/* Major Drug Interactions - Display backend results directly */}
                                 {hasInteractionsToShow() && (
                                     <div className="bg-amber-50 rounded-2xl p-6 md:p-8 shadow-sm border border-amber-200 mt-6">
                                         <h4 className="text-xl font-bold text-amber-900 flex items-center gap-2 mb-4">
                                             <FaPills className="text-amber-600" /> Major Drug Interactions (Avoid With)
                                         </h4>
                                         <ul className="list-disc list-inside space-y-2 text-amber-800 font-medium ml-2">
-                                            {getFilteredInteractions().map((interaction, i) => (
+                                            {getInteractions().map((interaction, i) => (
                                                 <li key={i}>{interaction}</li>
                                             ))}
                                         </ul>
                                     </div>
                                 )}
                                 
-                                {/* IV Drug Incompatibility - Backend now handles the filtering */}
+                                {/* IV Drug Incompatibility - Display backend results directly */}
                                 {hasIVIncompatibilityToShow() && (
                                     <div className="bg-red-50 rounded-2xl p-6 md:p-8 shadow-sm border border-red-200 mt-6">
                                         <h4 className="text-xl font-bold text-red-900 flex items-center gap-2 mb-4">
                                             <FaSyringe className="text-red-600" /> IV Drug Incompatibility (Do Not Mix)
                                         </h4>
                                         <ul className="list-disc list-inside space-y-2 text-red-800 font-medium ml-2">
-                                            {getFilteredIVIncompatibilities().map((incompatibility, i) => (
+                                            {getIVIncompatibilities().map((incompatibility, i) => (
                                                 <li key={i}>{incompatibility}</li>
                                             ))}
                                         </ul>
