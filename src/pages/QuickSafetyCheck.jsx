@@ -137,43 +137,27 @@ const QuickSafetyCheck = () => {
         return getFilteredUnsafeCategories().length > 0;
     };
 
-    // Get filtered interactions - shows all for single drug, filtered for multiple
+    // IMPORTANT CHANGE: The backend now returns the correctly filtered interactions
+    // We no longer need to filter client-side - just display what the backend returns
     const getFilteredInteractions = () => {
         if (!result || !result.major_interactions) return [];
         
-        // If only one drug is searched, show ALL interactions
-        if (medList.length === 1) {
-            return result.major_interactions;
-        }
-        
-        // For multiple drugs, filter to show only interactions that contain the searched drugs
-        const filtered = result.major_interactions.filter(interaction => {
-            // Check if the interaction contains any of the searched drugs
-            return medList.some(med => 
-                interaction.toLowerCase().includes(med.toLowerCase())
-            );
-        });
-        
-        return filtered;
+        // The backend already handles the filtering logic based on number of medications
+        // For single drug: returns all interactions involving that drug
+        // For multiple drugs: returns only interactions BETWEEN the searched drugs
+        // We just need to filter out entries without ' + ' to show only drug combinations
+        return result.major_interactions.filter(item => item.includes(' + '));
     };
 
-    // Get filtered IV incompatibilities - shows all for single drug, filtered for multiple
+    // IMPORTANT CHANGE: The backend now returns the correctly filtered IV incompatibilities
     const getFilteredIVIncompatibilities = () => {
         if (!result || !result.iv_incompatibility) return [];
         
-        // If only one drug is searched, show ALL incompatibilities
-        if (medList.length === 1) {
-            return result.iv_incompatibility;
-        }
-        
-        // For multiple drugs, filter to show only incompatibilities that contain the searched drugs
-        const filtered = result.iv_incompatibility.filter(incompatibility => {
-            return medList.some(med => 
-                incompatibility.toLowerCase().includes(med.toLowerCase())
-            );
-        });
-        
-        return filtered;
+        // The backend already handles the filtering logic based on number of medications
+        // For single drug: returns all incompatibilities involving that drug
+        // For multiple drugs: returns only incompatibilities BETWEEN the searched drugs
+        // We just need to filter out entries without ' + ' to show only drug combinations
+        return result.iv_incompatibility.filter(item => item.includes(' + '));
     };
 
     // Check if there are any interactions to show
@@ -182,9 +166,7 @@ const QuickSafetyCheck = () => {
         if (selectedCategory !== 'all' && selectedCategory !== 'drug_interactions') return false;
         
         const filtered = getFilteredInteractions();
-        // Filter out entries without ' + ' to show only drug combinations
-        const withDrugCombinations = filtered.filter(item => item.includes(' + '));
-        return withDrugCombinations && withDrugCombinations.length > 0;
+        return filtered && filtered.length > 0;
     };
 
     // Check if there are any IV incompatibilities to show
@@ -194,9 +176,7 @@ const QuickSafetyCheck = () => {
         if (selectedCategory !== 'all' && selectedCategory !== 'iv_incompatibility') return false;
         
         const filtered = getFilteredIVIncompatibilities();
-        // Filter out entries without ' + ' to show only drug combinations
-        const withDrugCombinations = filtered.filter(item => item.includes(' + '));
-        return withDrugCombinations && withDrugCombinations.length > 0;
+        return filtered && filtered.length > 0;
     };
 
     // Check if there's any data to show
@@ -354,44 +334,30 @@ const QuickSafetyCheck = () => {
                                     </div>
                                 )}
 
-                                {/* Major Drug Interactions - Show only when there are interactions with drug combinations */}
+                                {/* Major Drug Interactions - Backend now handles the filtering */}
                                 {hasInteractionsToShow() && (
                                     <div className="bg-amber-50 rounded-2xl p-6 md:p-8 shadow-sm border border-amber-200 mt-6">
                                         <h4 className="text-xl font-bold text-amber-900 flex items-center gap-2 mb-4">
                                             <FaPills className="text-amber-600" /> Major Drug Interactions (Avoid With)
                                         </h4>
                                         <ul className="list-disc list-inside space-y-2 text-amber-800 font-medium ml-2">
-                                            {getFilteredInteractions()
-                                                .filter(interaction => interaction.includes(' + '))
-                                                .map((interaction, i) => {
-                                                    let displayText = interaction;
-                                                    if (!displayText.includes('')) {
-                                                        displayText = ` ${displayText}`;
-                                                    }
-                                                    return <li key={i}>{displayText}</li>;
-                                                })
-                                            }
+                                            {getFilteredInteractions().map((interaction, i) => (
+                                                <li key={i}>{interaction}</li>
+                                            ))}
                                         </ul>
                                     </div>
                                 )}
                                 
-                                {/* IV Drug Incompatibility - Show only when there are incompatibilities with drug combinations */}
+                                {/* IV Drug Incompatibility - Backend now handles the filtering */}
                                 {hasIVIncompatibilityToShow() && (
                                     <div className="bg-red-50 rounded-2xl p-6 md:p-8 shadow-sm border border-red-200 mt-6">
                                         <h4 className="text-xl font-bold text-red-900 flex items-center gap-2 mb-4">
                                             <FaSyringe className="text-red-600" /> IV Drug Incompatibility (Do Not Mix)
                                         </h4>
                                         <ul className="list-disc list-inside space-y-2 text-red-800 font-medium ml-2">
-                                            {getFilteredIVIncompatibilities()
-                                                .filter(incompatibility => incompatibility.includes(' + '))
-                                                .map((incompatibility, i) => {
-                                                    let displayText = incompatibility;
-                                                    if (!displayText.includes('')) {
-                                                        displayText = ` ${displayText}`;
-                                                    }
-                                                    return <li key={i}>{displayText}</li>;
-                                                })
-                                            }
+                                            {getFilteredIVIncompatibilities().map((incompatibility, i) => (
+                                                <li key={i}>{incompatibility}</li>
+                                            ))}
                                         </ul>
                                     </div>
                                 )}
