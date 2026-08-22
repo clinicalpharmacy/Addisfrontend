@@ -148,7 +148,10 @@ const QuickSafetyCheck = () => {
             
             console.log('Full API Response:', response);
             
-            if (response.success && response.safetyProfile) {
+            // FIXED: Backend returns { success: true, safetyProfile: {...} }
+            // API interceptor (api.js line 28) returns response.data directly
+            // So 'response' here is already { success: true, safetyProfile: {...} }
+            if (response?.success && response?.safetyProfile) {
                 if (!response.safetyProfile.iv_incompatibility && !isHealthcareClient) {
                     response.safetyProfile.iv_incompatibility = [];
                 }
@@ -165,7 +168,9 @@ const QuickSafetyCheck = () => {
             }
         } catch (err) {
             console.error('Error:', err);
-            setError(err.error || 'Failed to check medication. It might not be recognized.');
+            // FIXED: Handle error object correctly
+            // Backend rejects with error.response.data, so err is { success: false, error: '...' }
+            setError(err?.error || 'Failed to check medication. It might not be recognized.');
         } finally {
             setLoading(false);
         }
@@ -330,13 +335,13 @@ const QuickSafetyCheck = () => {
                                         value={drugName}
                                         onChange={(e) => setDrugName(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleAddMedication(e)}
-                                        className="w-full bg-white text-gray-800 px-6 py-4 pl-12 rounded-xl text-lg font-bold shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/50 tran[...]
+                                        className="w-full bg-white text-gray-800 px-6 py-4 pl-12 rounded-xl text-lg font-bold shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/50 transition-all"
                                     />
                                     <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg" />
                                     <button 
                                         type="button"
                                         onClick={handleAddMedication}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors[...]
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors"
                                     >
                                         Add
                                     </button>
@@ -358,7 +363,7 @@ const QuickSafetyCheck = () => {
                             <select 
                                 value={selectedCategory}
                                 onChange={(e) => setSelectedCategory(e.target.value)}
-                                className="bg-white text-gray-800 px-4 py-4 rounded-xl text-base font-semibold shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/50 appearance-none cur[...]
+                                className="bg-white text-gray-800 px-4 py-4 rounded-xl text-base font-semibold shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/50 appearance-none cursor-pointer"
                             >
                                 <option value="all">All Conditions</option>
                                 <option value="pregnancy">Pregnancy</option>
@@ -376,7 +381,7 @@ const QuickSafetyCheck = () => {
                             <button 
                                 type="submit"
                                 disabled={loading || (medList.length === 0 && !drugName.trim())}
-                                className="bg-blue-900 hover:bg-gray-900 disabled:bg-blue-400 text-white px-8 py-4 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 sh[...]
+                                className="bg-blue-900 hover:bg-gray-900 disabled:bg-blue-400 text-white px-8 py-4 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 shadow-md"
                             >
                                 {loading ? <FaSpinner className="animate-spin" /> : 'Check Safety'}
                             </button>
@@ -523,7 +528,7 @@ const QuickSafetyCheck = () => {
                         )}
                         
                         <div className="mt-8 text-center bg-gray-50 p-4 rounded-xl text-xs font-bold text-gray-400 flex items-center justify-center gap-2">
-                            <FaInfoCircle /> Disclaimer: This information is for educational purposes only and does not replace consultation with a qualified healthcare professional. Medication i[...]
+                            <FaInfoCircle /> Disclaimer: This information is for educational purposes only and does not replace consultation with a qualified healthcare professional. Always consult a pharmacist or doctor before making medication decisions.
                         </div>
                     </div>
                 )}
