@@ -542,6 +542,7 @@ const Signup = () => {
         }
     };
 
+    // 🔥 FIXED: handleChapaPayment with fallback for selectedPlanDetails
     const handleChapaPayment = async () => {
         setPaymentLoading(true);
 
@@ -557,8 +558,20 @@ const Signup = () => {
             // Get country from userData (or fallback from formData)
             const country = userData.country || formData.country || 'Ethiopia';
 
+            // 🔥 FIX: Ensure we have plan details
+            let planDetails = selectedPlanDetails;
+            if (!planDetails) {
+                // Try to get from SUBSCRIPTION_PLANS
+                planDetails = SUBSCRIPTION_PLANS.find(p => p.id === selectedPlan);
+                if (!planDetails) {
+                    setPlanError('Plan details not found. Please select a plan again.');
+                    setPaymentLoading(false);
+                    return;
+                }
+            }
+
             // Compute adjusted price based on country
-            const adjustedPrice = getAdjustedPriceForPlan(selectedPlanDetails, country);
+            const adjustedPrice = getAdjustedPriceForPlan(planDetails, country);
 
             // For healthcare client, use generated data
             if (userData.is_healthcare_client) {
@@ -1630,8 +1643,7 @@ const Signup = () => {
                             </form>
 
                             <div className="flex flex-col md:flex-row gap-4 pt-6 border-t mt-6">
-                                <button
-                                    type="button"
+                                <button                                    type="button"
                                     onClick={() => setIndividualType(null)}
                                     className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 px-4 rounded-xl transition"
                                 >
