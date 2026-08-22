@@ -365,8 +365,8 @@ const QuickSafetyCheck = () => {
                                                 .filter(interaction => interaction.includes(' + '))
                                                 .map((interaction, i) => {
                                                     let displayText = interaction;
-                                                    if (!displayText.includes('⚠️')) {
-                                                        displayText = `⚠️ ${displayText}`;
+                                                    if (!displayText.includes('')) {
+                                                        displayText = ` ${displayText}`;
                                                     }
                                                     return <li key={i}>{displayText}</li>;
                                                 })
@@ -386,8 +386,8 @@ const QuickSafetyCheck = () => {
                                                 .filter(incompatibility => incompatibility.includes(' + '))
                                                 .map((incompatibility, i) => {
                                                     let displayText = incompatibility;
-                                                    if (!displayText.includes('⚠️')) {
-                                                        displayText = `⚠️ ${displayText}`;
+                                                    if (!displayText.includes('')) {
+                                                        displayText = ` ${displayText}`;
                                                     }
                                                     return <li key={i}>{displayText}</li>;
                                                 })
