@@ -235,6 +235,16 @@ const QuickSafetyCheck = () => {
     // Check if there are any interactions to show
     const hasInteractionsToShow = () => {
         if (!result || !result.major_interactions) return false;
+        
+        // For single drug searches, show interactions regardless of category filter
+        // (interactions are drug-specific, not category-specific)
+        if (medList.length === 1) {
+            const filtered = getFilteredInteractions();
+            const withDrugCombinations = filtered.filter(item => item.includes(' + '));
+            return withDrugCombinations && withDrugCombinations.length > 0;
+        }
+        
+        // For multiple drugs, only show if category allows it
         if (selectedCategory !== 'all' && selectedCategory !== 'drug_interactions') return false;
         
         const filtered = getFilteredInteractions();
@@ -247,6 +257,16 @@ const QuickSafetyCheck = () => {
     const hasIVIncompatibilityToShow = () => {
         if (isHealthcareClient) return false;
         if (!result || !result.iv_incompatibility) return false;
+        
+        // For single drug searches, show incompatibilities regardless of category filter
+        // (incompatibilities are drug-specific, not category-specific)
+        if (medList.length === 1) {
+            const filtered = getFilteredIVIncompatibilities();
+            const withDrugCombinations = filtered.filter(item => item.includes(' + '));
+            return withDrugCombinations && withDrugCombinations.length > 0;
+        }
+        
+        // For multiple drugs, only show if category allows it
         if (selectedCategory !== 'all' && selectedCategory !== 'iv_incompatibility') return false;
         
         const filtered = getFilteredIVIncompatibilities();
@@ -310,13 +330,13 @@ const QuickSafetyCheck = () => {
                                         value={drugName}
                                         onChange={(e) => setDrugName(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleAddMedication(e)}
-                                        className="w-full bg-white text-gray-800 px-6 py-4 pl-12 rounded-xl text-lg font-bold shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/50 transition-all"
+                                        className="w-full bg-white text-gray-800 px-6 py-4 pl-12 rounded-xl text-lg font-bold shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/50 tran[...]
                                     />
                                     <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg" />
                                     <button 
                                         type="button"
                                         onClick={handleAddMedication}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors"
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors[...]
                                     >
                                         Add
                                     </button>
@@ -338,7 +358,7 @@ const QuickSafetyCheck = () => {
                             <select 
                                 value={selectedCategory}
                                 onChange={(e) => setSelectedCategory(e.target.value)}
-                                className="bg-white text-gray-800 px-4 py-4 rounded-xl text-base font-semibold shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/50 appearance-none cursor-pointer min-w-[160px]"
+                                className="bg-white text-gray-800 px-4 py-4 rounded-xl text-base font-semibold shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/50 appearance-none cur[...]
                             >
                                 <option value="all">All Conditions</option>
                                 <option value="pregnancy">Pregnancy</option>
@@ -356,7 +376,7 @@ const QuickSafetyCheck = () => {
                             <button 
                                 type="submit"
                                 disabled={loading || (medList.length === 0 && !drugName.trim())}
-                                className="bg-blue-900 hover:bg-gray-900 disabled:bg-blue-400 text-white px-8 py-4 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 shadow-lg"
+                                className="bg-blue-900 hover:bg-gray-900 disabled:bg-blue-400 text-white px-8 py-4 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 sh[...]
                             >
                                 {loading ? <FaSpinner className="animate-spin" /> : 'Check Safety'}
                             </button>
@@ -503,7 +523,7 @@ const QuickSafetyCheck = () => {
                         )}
                         
                         <div className="mt-8 text-center bg-gray-50 p-4 rounded-xl text-xs font-bold text-gray-400 flex items-center justify-center gap-2">
-                            <FaInfoCircle /> Disclaimer: This information is for educational purposes only and does not replace consultation with a qualified healthcare professional. Medication information may vary by region and should be verified with current clinical guidelines.
+                            <FaInfoCircle /> Disclaimer: This information is for educational purposes only and does not replace consultation with a qualified healthcare professional. Medication i[...]
                         </div>
                     </div>
                 )}
