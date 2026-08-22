@@ -373,6 +373,20 @@ const Signup = () => {
             (formData.admin_confirm_password ? formData.admin_confirm_password.trim() : '') : '';
 
         // Validation
+        const emailRegex = /^[a-zA-Z0-9._%+-]{2,}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+
+        if (formData.account_type === 'individual' && (!formData.email || !emailRegex.test(formData.email.trim()))) {
+            setError('Please enter a valid email address');
+            setLoading(false);
+            return;
+        }
+
+        if (formData.account_type === 'company' && (!formData.admin_email || !emailRegex.test(formData.admin_email.trim()))) {
+            setError('Please enter a valid admin email address');
+            setLoading(false);
+            return;
+        }
+
         if (trimmedPassword !== trimmedConfirmPassword) {
             setError('Passwords do not match');
             setLoading(false);

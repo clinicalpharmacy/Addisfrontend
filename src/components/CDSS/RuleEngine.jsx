@@ -1142,11 +1142,11 @@ const evaluateSingleCondition = (condition, facts, debug = false) => {
         if (Array.isArray(patientValue)) {
             return patientValue.some(item => {
                 const itemStr = String(item).toLowerCase().trim();
-                return itemStr.includes(searchValue) || itemStr === searchValue;
+                return itemStr.includes(searchValue) || searchValue.includes(itemStr);
             });
         }
 
-        return String(patientValue).toLowerCase().includes(searchValue);
+        return String(patientValue).toLowerCase().includes(searchValue) || searchValue.includes(String(patientValue).toLowerCase());
     }
 
     if (operator === 'not_contains') {
@@ -1380,7 +1380,7 @@ const getMatchedMedications = (condition, facts) => {
                 if (Array.isArray(patientMeds)) {
                     const found = patientMeds.some(med => {
                         const medStr = String(med).toLowerCase().trim();
-                        return medStr.includes(searchValue) || medStr === searchValue;
+                        return medStr.includes(searchValue) || searchValue.includes(medStr);
                     });
                     if (found) {
                         // Capitalize first letter for display

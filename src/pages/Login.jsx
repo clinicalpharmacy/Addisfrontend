@@ -353,6 +353,14 @@ const Login = () => {
 
                 {/* Login Card - Optimized for mobile */}
                 <div className="bg-white/95 backdrop-blur-lg rounded-2xl shadow-2xl p-3 sm:p-5 border border-white/20 transform transition-all duration-300">
+                    {/* Error Display */}
+                    {error && (
+                        <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm flex items-start gap-2 animate-shake">
+                            <FaExclamationTriangle className="mt-0.5 flex-shrink-0" />
+                            <div className="flex-1">{error}</div>
+                        </div>
+                    )}
+
                     {/* Unified Login Form - No user type toggles */}
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {/* Email/Addis-Med ID Field */}
