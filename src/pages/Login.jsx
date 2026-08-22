@@ -326,7 +326,7 @@ const Login = () => {
     const isInputValid = isEmailValid || isAddisMedIdValid;
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 flex items-start justify-center pt-8 sm:pt-12 px-1 sm:px-3 pb-1 sm:pb-3 relative overflow-auto">
+        <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 flex items-start justify-center pt-1 sm:p-3 relative overflow-auto">
             {/* Animated Background Elements - Hidden on mobile for performance */}
             <div className="absolute inset-0 overflow-hidden hidden md:block">
                 <div className="absolute -top-40 -right-40 w-80 h-80 bg-white rounded-full opacity-10 animate-pulse"></div>
@@ -356,7 +356,7 @@ const Login = () => {
                     {/* Unified Login Form - No user type toggles */}
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {/* Email/Addis-Med ID Field */}
-                        <div>
+                        <div className="mt-6">
                             <div className="flex justify-center">
                                 <div className="relative group w-full">
                                     <input
