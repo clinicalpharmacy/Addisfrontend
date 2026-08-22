@@ -102,6 +102,7 @@ const QuickSafetyCheck = () => {
                 console.log('Safety Profile:', filteredProfile);
                 console.log('Major Interactions:', filteredProfile.major_interactions);
                 console.log('IV Incompatibility:', filteredProfile.iv_incompatibility);
+                console.log('Clinical Rules:', filteredProfile.clinical_rules);
                 
                 setResult(filteredProfile);
             } else {
@@ -193,6 +194,66 @@ const QuickSafetyCheck = () => {
         });
         
         return filtered;
+    };
+
+    // Parse clinical rules to extract medication lists
+    const parseClinicalRules = (rules) => {
+        if (!rules || rules.length === 0) return [];
+        
+        const parsedRules = [];
+        
+        rules.forEach(rule => {
+            // Check if the rule contains a list of medications
+            // Common patterns: "with X, Y, and Z" or "with X, Y, Z" or "with X & Y"
+            const medicationListMatch = rule.match(/with\s+([^,.]+(?:,\s*[^,.]+)*(?:\s+and\s+[^,.]+)?)/i);
+            
+            if (medicationListMatch) {
+                // Extract the medication list part
+                const medListPart = medicationListMatch[1];
+                // Split by commas and "and"
+                const medications = medListPart.split(/\s*,\s*|\s+and\s+/).map(m => m.trim());
+                
+                // Get the context before "with"
+                const context = rule.split(/with\s+/i)[0].trim();
+                
+                parsedRules.push({
+                    context: context || 'Interaction',
+                    medications: medications,
+                    fullText: rule
+                });
+            } else {
+                // If no "with" pattern found, try to extract medications from the rule
+                // Look for medication names (capitalized words)
+                const medNames = rule.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\b/g);
+                if (medNames && medNames.length > 1) {
+                    // Filter out common words
+                    const commonWords = ['Drug', 'Medication', 'Incompatibility', 'Interaction', 'Precautions', 'Avoid'];
+                    const filteredMeds = medNames.filter(name => !commonWords.includes(name));
+                    
+                    if (filteredMeds.length > 0) {
+                        parsedRules.push({
+                            context: 'Interaction',
+                            medications: filteredMeds,
+                            fullText: rule
+                        });
+                    } else {
+                        parsedRules.push({
+                            context: 'Note',
+                            medications: [],
+                            fullText: rule
+                        });
+                    }
+                } else {
+                    parsedRules.push({
+                        context: 'Note',
+                        medications: [],
+                        fullText: rule
+                    });
+                }
+            }
+        });
+        
+        return parsedRules;
     };
 
     // Check if there are any clinical rules to show
@@ -395,17 +456,37 @@ const QuickSafetyCheck = () => {
                                     </div>
                                 )}
 
-                                {/* Clinical Rules - Show for single drug */}
+                                {/* Clinical Rules - Show for single drug with medication lists */}
                                 {hasClinicalRulesToShow() && (
                                     <div className="bg-blue-50 rounded-2xl p-6 md:p-8 shadow-sm border border-blue-200 mt-6">
                                         <h4 className="text-xl font-bold text-blue-900 flex items-center gap-2 mb-4">
                                             <FaInfoCircle className="text-blue-600" /> Clinical Guidelines & Rules
                                         </h4>
-                                        <ul className="list-disc list-inside space-y-2 text-blue-800 font-medium ml-2">
-                                            {getFilteredClinicalRules().map((rule, i) => (
-                                                <li key={i}>{rule}</li>
+                                        <div className="space-y-3">
+                                            {parseClinicalRules(getFilteredClinicalRules()).map((parsedRule, idx) => (
+                                                <div key={idx} className="bg-white rounded-xl p-4 shadow-sm border border-blue-100">
+                                                    {parsedRule.medications && parsedRule.medications.length > 0 ? (
+                                                        <>
+                                                            <p className="text-gray-700 font-semibold mb-2">
+                                                                {parsedRule.context}:
+                                                            </p>
+                                                            <div className="flex flex-wrap gap-2">
+                                                                {parsedRule.medications.map((med, medIdx) => (
+                                                                    <span key={medIdx} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-lg text-sm font-bold">
+                                                                        {med}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                            <p className="text-gray-600 text-sm mt-2 italic">
+                                                                {parsedRule.fullText}
+                                                            </p>
+                                                        </>
+                                                    ) : (
+                                                        <p className="text-gray-700">{parsedRule.fullText}</p>
+                                                    )}
+                                                </div>
                                             ))}
-                                        </ul>
+                                        </div>
                                     </div>
                                 )}
 
