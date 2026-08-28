@@ -143,6 +143,29 @@ const ClinicalPharmacyTool = () => {
         labs: {}
     });
 
+    // Add this useEffect after the formData state declaration
+    useEffect(() => {
+        // Calculate BMI only when weight and height are both provided
+        if (formData.weight && formData.height) {
+            const weight = parseFloat(formData.weight);
+            const height = parseFloat(formData.height) / 100; // Convert cm to meters
+            
+            if (weight > 0 && height > 0) {
+                const bmi = weight / (height * height);
+                // Round to 1 decimal place
+                const bmiRounded = Math.round(bmi * 10) / 10;
+                
+                // Only update if BMI has changed to avoid infinite loop
+                if (formData.bmi !== bmiRounded.toString()) {
+                    setFormData(prev => ({
+                        ...prev,
+                        bmi: bmiRounded.toString()
+                    }));
+                }
+            }
+        }
+    }, [formData.weight, formData.height]);
+    
     const handleCategoryToggle = (categoryId) => {
         if (selectedCategories.includes(categoryId)) {
             setSelectedCategories(selectedCategories.filter(id => id !== categoryId));
@@ -702,6 +725,8 @@ const ClinicalPharmacyTool = () => {
                                             value={formData.weight}
                                             onChange={handleInputChange}
                                             className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                            placeholder="e.g. 70"
+                                            step="0.1"
                                         />
                                     </div>
                                     <div>
@@ -712,6 +737,8 @@ const ClinicalPharmacyTool = () => {
                                             value={formData.height}
                                             onChange={handleInputChange}
                                             className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                            placeholder="e.g. 175"
+                                            step="0.1"
                                         />
                                     </div>
                                     <div>
@@ -721,9 +748,19 @@ const ClinicalPharmacyTool = () => {
                                             name="bmi"
                                             value={formData.bmi}
                                             onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                            placeholder="Auto-calculated if omitted"
+                                            className="w-full p-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Auto-calculated"
+                                            step="0.1"
+                                            readOnly
                                         />
+                                        {formData.bmi && (
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                {parseFloat(formData.bmi) < 18.5 && 'Underweight'}
+                                                {parseFloat(formData.bmi) >= 18.5 && parseFloat(formData.bmi) < 25 && 'Normal weight'}
+                                                {parseFloat(formData.bmi) >= 25 && parseFloat(formData.bmi) < 30 && 'Overweight'}
+                                                {parseFloat(formData.bmi) >= 30 && 'Obese'}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -966,9 +1003,9 @@ const ClinicalPharmacyTool = () => {
                                                     <FaTimes className="w-3 h-3" />
                                                 </button>
                                                 
-                                                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                                                     {/* Drug Name */}
-                                                    <div className="col-span-1">
+                                                    <div>
                                                         <label className="block text-xs font-medium text-gray-700 mb-1">Drug Name</label>
                                                         <input
                                                             type="text"
@@ -980,7 +1017,7 @@ const ClinicalPharmacyTool = () => {
                                                     </div>
                                                     
                                                     {/* Brand Name */}
-                                                    <div className="col-span-1">
+                                                    <div>
                                                         <label className="block text-xs font-medium text-gray-700 mb-1">Brand Name</label>
                                                         <input
                                                             type="text"
@@ -992,7 +1029,7 @@ const ClinicalPharmacyTool = () => {
                                                     </div>
                                                     
                                                     {/* Indication */}
-                                                    <div className="col-span-1">
+                                                    <div>
                                                         <label className="block text-xs font-medium text-gray-700 mb-1">Indication</label>
                                                         <input
                                                             type="text"
@@ -1004,28 +1041,28 @@ const ClinicalPharmacyTool = () => {
                                                     </div>
                                                     
                                                     {/* Dose / Unit */}
-                                                    <div className="col-span-1 md:col-span-2">
+                                                    <div>
                                                         <label className="block text-xs font-medium text-gray-700 mb-1">Dose / Unit</label>
-                                                        <div className="flex gap-2">
+                                                        <div className="flex gap-1">
                                                             <input
                                                                 type="text"
                                                                 value={med.dose}
                                                                 onChange={(e) => updateMedication(index, 'dose', e.target.value)}
-                                                                className="w-1/3 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                className="flex-1 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
                                                                 placeholder="Dose"
                                                             />
                                                             <input
                                                                 type="text"
                                                                 value={med.unit}
                                                                 onChange={(e) => updateMedication(index, 'unit', e.target.value)}
-                                                                className="w-1/3 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                className="w-16 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
                                                                 placeholder="Unit"
                                                             />
                                                         </div>
                                                     </div>
                                                     
                                                     {/* Dosage Form */}
-                                                    <div className="col-span-1">
+                                                    <div>
                                                         <label className="block text-xs font-medium text-gray-700 mb-1">Dosage Form</label>
                                                         <select
                                                             value={med.dosage_form}
@@ -1044,7 +1081,7 @@ const ClinicalPharmacyTool = () => {
                                                     </div>
                                                     
                                                     {/* Route */}
-                                                    <div className="col-span-1">
+                                                    <div>
                                                         <label className="block text-xs font-medium text-gray-700 mb-1">Route</label>
                                                         <input
                                                             type="text"
@@ -1056,7 +1093,7 @@ const ClinicalPharmacyTool = () => {
                                                     </div>
                                                     
                                                     {/* Frequency */}
-                                                    <div className="col-span-1">
+                                                    <div>
                                                         <label className="block text-xs font-medium text-gray-700 mb-1">Frequency</label>
                                                         <input
                                                             type="text"
@@ -1068,7 +1105,7 @@ const ClinicalPharmacyTool = () => {
                                                     </div>
                                                     
                                                     {/* Duration */}
-                                                    <div className="col-span-1">
+                                                    <div>
                                                         <label className="block text-xs font-medium text-gray-700 mb-1">Duration</label>
                                                         <input
                                                             type="text"
