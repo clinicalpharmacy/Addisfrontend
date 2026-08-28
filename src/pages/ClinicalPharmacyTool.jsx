@@ -24,13 +24,12 @@ const MAIN_CATEGORIES = [
     { id: 'labs', label: 'Labs', icon: FaVial }
 ];
 
-// Static lab categories with their specific tests
-const LAB_CATEGORIES = [
+// Static lab categories with their specific tests (sub-categories under Labs)
+const LAB_SUB_CATEGORIES = [
     {
         id: 'coagulation',
         label: 'Coagulation test',
         icon: FaVial,
-        isLab: true,
         tests: [
             { name: 'PT', unit: 'sec' },
             { name: 'APTT', unit: 'sec' },
@@ -42,7 +41,6 @@ const LAB_CATEGORIES = [
         id: 'cbc',
         label: 'Complete blood count (CBC)',
         icon: FaVial,
-        isLab: true,
         tests: [
             { name: 'WBC', unit: 'x10³/µL' },
             { name: 'RBC', unit: 'x10⁶/µL' },
@@ -55,7 +53,6 @@ const LAB_CATEGORIES = [
         id: 'general',
         label: 'General',
         icon: FaVial,
-        isLab: true,
         tests: [
             { name: 'Glucose', unit: 'mg/dL' },
             { name: 'Urea', unit: 'mg/dL' },
@@ -69,7 +66,6 @@ const LAB_CATEGORIES = [
         id: 'liver_function',
         label: 'Liver function tests',
         icon: FaVial,
-        isLab: true,
         tests: [
             { name: 'ALT', unit: 'U/L' },
             { name: 'AST', unit: 'U/L' },
@@ -85,7 +81,6 @@ const LAB_CATEGORIES = [
         id: 'renal_function',
         label: 'Renal function tests',
         icon: FaVial,
-        isLab: true,
         tests: [
             { name: 'Serum Creatinine', unit: 'mg/dL' },
             { name: 'BUN', unit: 'mg/dL' },
@@ -99,6 +94,7 @@ const LAB_CATEGORIES = [
 const ClinicalPharmacyTool = () => {
     const navigate = useNavigate();
     const [selectedCategories, setSelectedCategories] = useState([]);
+    const [selectedLabSubCategories, setSelectedLabSubCategories] = useState([]);
     const [showAnalysis, setShowAnalysis] = useState(false);
     const [activeTab, setActiveTab] = useState('analysis');
 
@@ -109,8 +105,8 @@ const ClinicalPharmacyTool = () => {
     const isIndividual = !user?.role?.includes('admin') && !user?.company_id;
     const isPharmacistOrStudent = isIndividual && (isPharmacist || isPharmacyStudent);
 
-    // All categories - main categories + lab categories
-    const allCategories = [...MAIN_CATEGORIES, ...LAB_CATEGORIES];
+    // All categories - main categories only (labs is the main category, sub-categories are handled separately)
+    const allCategories = MAIN_CATEGORIES;
 
     // Tab Data States for PDF
     const [cdssData, setCdssData] = useState([]);
@@ -150,6 +146,10 @@ const ClinicalPharmacyTool = () => {
     const handleCategoryToggle = (categoryId) => {
         if (selectedCategories.includes(categoryId)) {
             setSelectedCategories(selectedCategories.filter(id => id !== categoryId));
+            // If unchecking labs, clear lab sub-categories
+            if (categoryId === 'labs') {
+                setSelectedLabSubCategories([]);
+            }
         } else {
             setSelectedCategories([...selectedCategories, categoryId]);
             // Auto-add one empty medication row when medications checkbox is ticked
@@ -173,6 +173,14 @@ const ClinicalPharmacyTool = () => {
                     }]
                 }));
             }
+        }
+    };
+
+    const handleLabSubCategoryToggle = (subCategoryId) => {
+        if (selectedLabSubCategories.includes(subCategoryId)) {
+            setSelectedLabSubCategories(selectedLabSubCategories.filter(id => id !== subCategoryId));
+        } else {
+            setSelectedLabSubCategories([...selectedLabSubCategories, subCategoryId]);
         }
     };
 
@@ -1008,43 +1016,6 @@ const ClinicalPharmacyTool = () => {
                                                             placeholder="e.g. 7 days, 4 weeks"
                                                         />
                                                     </div>
-                                                    
-                                                    {/* Start Date */}
-                                                    <div className="col-span-1">
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Start Date</label>
-                                                        <input
-                                                            type="date"
-                                                            value={med.start_date}
-                                                            onChange={(e) => updateMedication(index, 'start_date', e.target.value)}
-                                                            className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                        />
-                                                    </div>
-                                                    
-                                                    {/* Stop Date */}
-                                                    <div className="col-span-1">
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Stop Date</label>
-                                                        <input
-                                                            type="date"
-                                                            value={med.stop_date}
-                                                            onChange={(e) => updateMedication(index, 'stop_date', e.target.value)}
-                                                            className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                        />
-                                                    </div>
-                                                    
-                                                    {/* Status */}
-                                                    <div className="col-span-1">
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
-                                                        <select
-                                                            value={med.status}
-                                                            onChange={(e) => updateMedication(index, 'status', e.target.value)}
-                                                            className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500 bg-white"
-                                                        >
-                                                            <option value="Active">Active</option>
-                                                            <option value="Discontinued">Discontinued</option>
-                                                            <option value="On Hold">On Hold</option>
-                                                            <option value="Completed">Completed</option>
-                                                        </select>
-                                                    </div>
                                                 </div>
                                             </div>
                                         ))}
@@ -1053,14 +1024,41 @@ const ClinicalPharmacyTool = () => {
                             </div>
                         )}
 
-                        {/* Labs - Now showing the 5 specific lab categories */}
+                        {/* Labs - Main category with sub-categories */}
                         {selectedCategories.includes('labs') && (
                             <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-yellow-500">
                                 <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
                                     <FaVial className="text-yellow-500" /> Labs
                                 </h3>
+                                
+                                {/* Sub-category selection */}
+                                <div className="mb-4">
+                                    <p className="text-sm text-gray-600 mb-2">Select which lab tests you want to fill:</p>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                        {LAB_SUB_CATEGORIES.map((subCat) => (
+                                            <label 
+                                                key={subCat.id}
+                                                className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all ${
+                                                    selectedLabSubCategories.includes(subCat.id)
+                                                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                                        : 'border-gray-200 hover:border-blue-200 text-gray-600'
+                                                }`}
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedLabSubCategories.includes(subCat.id)}
+                                                    onChange={() => handleLabSubCategoryToggle(subCat.id)}
+                                                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                                                />
+                                                <span className="text-sm font-medium">{subCat.label}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Show selected lab categories */}
                                 <div className="space-y-6">
-                                    {LAB_CATEGORIES.map((labCategory) => (
+                                    {LAB_SUB_CATEGORIES.filter(subCat => selectedLabSubCategories.includes(subCat.id)).map((labCategory) => (
                                         <div key={labCategory.id} className="bg-blue-50 rounded-lg p-4 border border-blue-200">
                                             <h4 className="text-md font-semibold text-gray-700 mb-3">{labCategory.label}</h4>
                                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -1085,6 +1083,12 @@ const ClinicalPharmacyTool = () => {
                                             </div>
                                         </div>
                                     ))}
+                                    
+                                    {selectedLabSubCategories.length === 0 && (
+                                        <div className="text-center py-4 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                                            Please select at least one lab test category from above.
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}
