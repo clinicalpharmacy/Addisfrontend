@@ -18,10 +18,10 @@ const MAIN_CATEGORIES = [
     { id: 'demography', label: 'Demography (Age & Gender)', icon: FaUser },
     { id: 'anthropometry', label: 'Anthropometry', icon: FaWeight },
     { id: 'vitals', label: 'Vitals', icon: FaHeartbeat },
+    { id: 'labs', label: 'Labs', icon: FaVial },
     { id: 'diagnosis', label: 'Diagnosis', icon: FaNotesMedical },
     { id: 'special_conditions', label: 'Special Conditions', icon: FaExclamationCircle },
-    { id: 'medications', label: 'Medications', icon: FaPills },
-    { id: 'labs', label: 'Labs', icon: FaVial }
+    { id: 'medications', label: 'Medications', icon: FaPills }
 ];
 
 // Static lab categories with their specific tests (sub-categories under Labs)
