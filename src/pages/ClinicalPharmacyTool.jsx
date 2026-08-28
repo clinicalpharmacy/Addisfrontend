@@ -123,7 +123,7 @@ const ClinicalPharmacyTool = () => {
         // Anthropometry
         weight: '',
         height: '',
-        bmi: '',
+        bsa: '', // Changed from bmi to bsa
         // Vitals
         blood_pressure: '',
         heart_rate: '',
@@ -143,23 +143,31 @@ const ClinicalPharmacyTool = () => {
         labs: {}
     });
 
+    // Calculate BSA using Du Bois method: BSA = 0.007184 × W^0.425 × H^0.725
+    // Weight in kg, Height in cm
+    const calculateBSA = (weight, height) => {
+        if (!weight || !height || weight <= 0 || height <= 0) return '';
+        const w = parseFloat(weight);
+        const h = parseFloat(height);
+        const bsa = 0.007184 * Math.pow(w, 0.425) * Math.pow(h, 0.725);
+        return bsa.toFixed(2);
+    };
+
     // Add this useEffect after the formData state declaration
     useEffect(() => {
-        // Calculate BMI only when weight and height are both provided
+        // Calculate BSA when weight and height are both provided
         if (formData.weight && formData.height) {
             const weight = parseFloat(formData.weight);
-            const height = parseFloat(formData.height) / 100; // Convert cm to meters
+            const height = parseFloat(formData.height);
             
             if (weight > 0 && height > 0) {
-                const bmi = weight / (height * height);
-                // Round to 1 decimal place
-                const bmiRounded = Math.round(bmi * 10) / 10;
+                const calculatedBSA = calculateBSA(weight, height);
                 
-                // Only update if BMI has changed to avoid infinite loop
-                if (formData.bmi !== bmiRounded.toString()) {
+                // Only update if BSA has changed to avoid infinite loop
+                if (formData.bsa !== calculatedBSA) {
                     setFormData(prev => ({
                         ...prev,
-                        bmi: bmiRounded.toString()
+                        bsa: calculatedBSA
                     }));
                 }
             }
@@ -281,7 +289,7 @@ const ClinicalPharmacyTool = () => {
         vitals: {
             weight: formData.weight,
             height: formData.height,
-            bmi: formData.bmi,
+            bsa: formData.bsa, // Changed from bmi to bsa
             blood_pressure: formData.blood_pressure,
             heart_rate: formData.heart_rate,
             respiratory_rate: formData.respiratory_rate,
@@ -333,7 +341,7 @@ const ClinicalPharmacyTool = () => {
                 startY: currentY + 5,
                 body: [
                     ['Age & Gender:', `${formData.age || 'N/A'} - ${formData.gender || 'N/A'}`],
-                    ['Vitals:', `Weight: ${formData.weight || '-'} kg, BP: ${formData.blood_pressure || '-'}`],
+                    ['Vitals:', `Weight: ${formData.weight || '-'} kg, BSA: ${formData.bsa || '-'} m², BP: ${formData.blood_pressure || '-'}`],
                     ['Diagnosis:', constructedPatientData.diagnosis]
                 ],
                 theme: 'plain',
@@ -742,25 +750,23 @@ const ClinicalPharmacyTool = () => {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">BMI</label>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            BSA (m²)
+                                            <span className="text-xs text-gray-500 ml-1">(auto-calculated)</span>
+                                        </label>
                                         <input
                                             type="number"
-                                            name="bmi"
-                                            value={formData.bmi}
+                                            name="bsa"
+                                            value={formData.bsa}
                                             onChange={handleInputChange}
                                             className="w-full p-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed focus:ring-2 focus:ring-blue-500"
                                             placeholder="Auto-calculated"
-                                            step="0.1"
+                                            step="0.01"
                                             readOnly
                                         />
-                                        {formData.bmi && (
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                {parseFloat(formData.bmi) < 18.5 && 'Underweight'}
-                                                {parseFloat(formData.bmi) >= 18.5 && parseFloat(formData.bmi) < 25 && 'Normal weight'}
-                                                {parseFloat(formData.bmi) >= 25 && parseFloat(formData.bmi) < 30 && 'Overweight'}
-                                                {parseFloat(formData.bmi) >= 30 && 'Obese'}
-                                            </p>
-                                        )}
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Du Bois method: BSA = 0.007184 × W^0.425 × H^0.725
+                                        </p>
                                     </div>
                                 </div>
                             </div>
