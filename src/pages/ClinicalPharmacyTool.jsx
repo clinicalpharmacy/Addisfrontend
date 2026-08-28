@@ -4,7 +4,7 @@ import {
     FaUser, FaWeight, FaHeartbeat, FaVial, FaNotesMedical,
     FaExclamationCircle, FaPills, FaArrowLeft, FaPlay, FaPlus, FaTrash,
     FaUserShield, FaRobot, FaMoneyBillWave, FaFileMedical, FaChartLine,
-    FaCopy, FaTimes
+    FaCopy, FaTimes, FaLock
 } from 'react-icons/fa';
 import supabase from '../utils/supabase';
 import CDSSDisplay from '../components/CDSS/CDSSDisplay';
@@ -24,12 +24,20 @@ const END_CATEGORIES = [
     { id: 'special_conditions', label: 'Special Conditions', icon: FaExclamationCircle },
     { id: 'medications', label: 'Medications', icon: FaPills }
 ];
+
 const ClinicalPharmacyTool = () => {
     const navigate = useNavigate();
     const [selectedCategories, setSelectedCategories] = useState([]);
     const [showAnalysis, setShowAnalysis] = useState(false);
     const [activeTab, setActiveTab] = useState('analysis');
     const [dbLabs, setDbLabs] = useState([]);
+
+    // ✅ Get user role from localStorage (same logic as sidebar)
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const isPharmacist = user?.role === 'pharmacist';
+    const isPharmacyStudent = user?.role === 'pharmacy_student';
+    const isIndividual = !user?.role?.includes('admin') && !user?.company_id;
+    const isPharmacistOrStudent = isIndividual && (isPharmacist || isPharmacyStudent);
 
     useEffect(() => {
         const fetchLabs = async () => {
@@ -297,7 +305,7 @@ const ClinicalPharmacyTool = () => {
             }
 
             // --- 3. DRN Assessment ---
-            if (drnData && drnData.length > 0) {
+            if (isPharmacistOrStudent && drnData && drnData.length > 0) {
                 if (currentY > 250) { doc.addPage(); currentY = 20; }
                 doc.setFontSize(14);
                 doc.setFont('helvetica', 'bold');
@@ -313,7 +321,7 @@ const ClinicalPharmacyTool = () => {
             }
 
             // --- 4. Pharmacy Plan ---
-            if (planData && planData.length > 0) {
+            if (isPharmacistOrStudent && planData && planData.length > 0) {
                 if (currentY > 250) { doc.addPage(); currentY = 20; }
                 doc.setFontSize(14);
                 doc.setFont('helvetica', 'bold');
@@ -329,7 +337,7 @@ const ClinicalPharmacyTool = () => {
             }
 
             // --- 5. Outcome ---
-            if (outcomeData && outcomeData.length > 0) {
+            if (isPharmacistOrStudent && outcomeData && outcomeData.length > 0) {
                 if (currentY > 250) { doc.addPage(); currentY = 20; }
                 doc.setFontSize(14);
                 doc.setFont('helvetica', 'bold');
@@ -345,7 +353,7 @@ const ClinicalPharmacyTool = () => {
             }
 
             // --- 6. Cost ---
-            if (costData && costData.length > 0) {
+            if (isPharmacistOrStudent && costData && costData.length > 0) {
                 if (currentY > 250) { doc.addPage(); currentY = 20; }
                 doc.setFontSize(14);
                 doc.setFont('helvetica', 'bold');
@@ -401,7 +409,9 @@ const ClinicalPharmacyTool = () => {
                         </button>
                     </div>
 
+                    {/* ✅ Tab Navigation - Conditionally show restricted tabs */}
                     <div className="flex overflow-x-auto gap-2 mb-6 bg-white p-2 rounded-xl shadow-sm hide-scrollbar">
+                        {/* Clinical Case Review - Always visible */}
                         <button
                             onClick={() => setActiveTab('analysis')}
                             className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
@@ -412,45 +422,69 @@ const ClinicalPharmacyTool = () => {
                         >
                             <FaUserShield /> Clinical Case Review
                         </button>
+
+                        {/* ✅ DRN Assessment - Only for Pharmacists & Pharmacy Students */}
                         <button
-                            onClick={() => setActiveTab('drn')}
+                            onClick={() => isPharmacistOrStudent ? setActiveTab('drn') : null}
                             className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
-                                activeTab === 'drn' 
-                                ? 'bg-blue-600 text-white shadow-md font-medium' 
-                                : 'text-gray-600 hover:bg-gray-50'
+                                !isPharmacistOrStudent 
+                                ? 'opacity-50 cursor-not-allowed text-gray-400' 
+                                : activeTab === 'drn' 
+                                    ? 'bg-blue-600 text-white shadow-md font-medium' 
+                                    : 'text-gray-600 hover:bg-gray-50'
                             }`}
+                            title={!isPharmacistOrStudent ? 'Restricted to Pharmacists and Pharmacy Students' : ''}
                         >
                             <FaRobot /> DRN Assessment
+                            {!isPharmacistOrStudent && <FaLock className="text-xs" />}
                         </button>
+
+                        {/* ✅ Ph-Asst & Plan - Only for Pharmacists & Pharmacy Students */}
                         <button
-                            onClick={() => setActiveTab('plan')}
+                            onClick={() => isPharmacistOrStudent ? setActiveTab('plan') : null}
                             className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
-                                activeTab === 'plan' 
-                                ? 'bg-blue-600 text-white shadow-md font-medium' 
-                                : 'text-gray-600 hover:bg-gray-50'
+                                !isPharmacistOrStudent 
+                                ? 'opacity-50 cursor-not-allowed text-gray-400' 
+                                : activeTab === 'plan' 
+                                    ? 'bg-blue-600 text-white shadow-md font-medium' 
+                                    : 'text-gray-600 hover:bg-gray-50'
                             }`}
+                            title={!isPharmacistOrStudent ? 'Restricted to Pharmacists and Pharmacy Students' : ''}
                         >
                             <FaFileMedical /> Ph-Asst & Plan
+                            {!isPharmacistOrStudent && <FaLock className="text-xs" />}
                         </button>
+
+                        {/* ✅ Outcome - Only for Pharmacists & Pharmacy Students */}
                         <button
-                            onClick={() => setActiveTab('outcome')}
+                            onClick={() => isPharmacistOrStudent ? setActiveTab('outcome') : null}
                             className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
-                                activeTab === 'outcome' 
-                                ? 'bg-blue-600 text-white shadow-md font-medium' 
-                                : 'text-gray-600 hover:bg-gray-50'
+                                !isPharmacistOrStudent 
+                                ? 'opacity-50 cursor-not-allowed text-gray-400' 
+                                : activeTab === 'outcome' 
+                                    ? 'bg-blue-600 text-white shadow-md font-medium' 
+                                    : 'text-gray-600 hover:bg-gray-50'
                             }`}
+                            title={!isPharmacistOrStudent ? 'Restricted to Pharmacists and Pharmacy Students' : ''}
                         >
                             <FaChartLine /> Outcome
+                            {!isPharmacistOrStudent && <FaLock className="text-xs" />}
                         </button>
+
+                        {/* ✅ Cost - Only for Pharmacists & Pharmacy Students */}
                         <button
-                            onClick={() => setActiveTab('cost')}
+                            onClick={() => isPharmacistOrStudent ? setActiveTab('cost') : null}
                             className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
-                                activeTab === 'cost' 
-                                ? 'bg-blue-600 text-white shadow-md font-medium' 
-                                : 'text-gray-600 hover:bg-gray-50'
+                                !isPharmacistOrStudent 
+                                ? 'opacity-50 cursor-not-allowed text-gray-400' 
+                                : activeTab === 'cost' 
+                                    ? 'bg-blue-600 text-white shadow-md font-medium' 
+                                    : 'text-gray-600 hover:bg-gray-50'
                             }`}
+                            title={!isPharmacistOrStudent ? 'Restricted to Pharmacists and Pharmacy Students' : ''}
                         >
                             <FaMoneyBillWave /> Cost
+                            {!isPharmacistOrStudent && <FaLock className="text-xs" />}
                         </button>
                     </div>
 
@@ -462,7 +496,9 @@ const ClinicalPharmacyTool = () => {
                                 onDataChange={(data) => setCdssData(data)}
                             />
                         )}
-                        {activeTab === 'drn' && (
+                        
+                        {/* ✅ Only render DRN if user is pharmacist/student */}
+                        {activeTab === 'drn' && isPharmacistOrStudent && (
                             <DRNAssessment
                                 patientCode={constructedPatientData.id}
                                 patientData={constructedPatientData}
@@ -471,7 +507,9 @@ const ClinicalPharmacyTool = () => {
                                 onDataChange={(data) => setDrnData(data)}
                             />
                         )}
-                        {activeTab === 'plan' && (
+                        
+                        {/* ✅ Only render Ph-Asst if user is pharmacist/student */}
+                        {activeTab === 'plan' && isPharmacistOrStudent && (
                             <PhAssistPlan
                                 patientCode={constructedPatientData.id}
                                 patientData={constructedPatientData}
@@ -479,7 +517,9 @@ const ClinicalPharmacyTool = () => {
                                 onDataChange={(data) => setPlanData(data)}
                             />
                         )}
-                        {activeTab === 'outcome' && (
+                        
+                        {/* ✅ Only render Outcome if user is pharmacist/student */}
+                        {activeTab === 'outcome' && isPharmacistOrStudent && (
                             <PatientOutcome
                                 patientCode={constructedPatientData.id}
                                 patientData={constructedPatientData}
@@ -487,13 +527,29 @@ const ClinicalPharmacyTool = () => {
                                 onDataChange={(data) => setOutcomeData(data)}
                             />
                         )}
-                        {activeTab === 'cost' && (
+                        
+                        {/* ✅ Only render Cost if user is pharmacist/student */}
+                        {activeTab === 'cost' && isPharmacistOrStudent && (
                             <CostSection
                                 patientCode={constructedPatientData.id}
                                 patientData={constructedPatientData}
                                 standalone={true}
                                 onDataChange={(data) => setCostData(data)}
                             />
+                        )}
+
+                        {/* ✅ Show restricted message if non-pharmacist tries to access restricted tab */}
+                        {!isPharmacistOrStudent && ['drn', 'plan', 'outcome', 'cost'].includes(activeTab) && (
+                            <div className="p-12 text-center">
+                                <div className="inline-flex items-center justify-center w-20 h-20 bg-gray-100 rounded-full mb-4">
+                                    <FaLock className="text-4xl text-gray-400" />
+                                </div>
+                                <h3 className="text-xl font-bold text-gray-700 mb-2">Access Restricted</h3>
+                                <p className="text-gray-500 max-w-md mx-auto">
+                                    This feature is only available to Pharmacists and Pharmacy Students.
+                                    Please contact your administrator if you need access.
+                                </p>
+                            </div>
                         )}
                     </div>
                 </div>
@@ -1044,10 +1100,11 @@ const ClinicalPharmacyTool = () => {
                             <button
                                 onClick={handleRunAnalysis}
                                 disabled={selectedCategories.length === 0}
-                                className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold shadow-lg transition-all text-lg ${selectedCategories.length > 0
+                                className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold shadow-lg transition-all text-lg ${
+                                    selectedCategories.length > 0
                                         ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:shadow-xl hover:-translate-y-1'
                                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                    }`}
+                                }`}
                             >
                                 <FaPlay /> Run Clinical Analysis
                             </button>
