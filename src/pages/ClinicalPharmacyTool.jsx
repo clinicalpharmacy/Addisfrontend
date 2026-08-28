@@ -15,7 +15,7 @@ import CostSection from '../components/Patient/CostSection';
 
 // Main categories in the correct order
 const MAIN_CATEGORIES = [
-    { id: 'demography', label: 'Demography (Age & Gender)', icon: FaUser },
+    { id: 'demography', label: 'Demography', icon: FaUser },
     { id: 'anthropometry', label: 'Anthropometry', icon: FaWeight },
     { id: 'vitals', label: 'Vitals', icon: FaHeartbeat },
     { id: 'labs', label: 'Labs', icon: FaVial },
