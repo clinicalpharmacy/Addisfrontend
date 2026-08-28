@@ -13,20 +13,18 @@ import PhAssistPlan from '../components/Patient/PhAssistPlan';
 import PatientOutcome from '../components/Patient/PatientOutcome';
 import CostSection from '../components/Patient/CostSection';
 
-// Reordered categories: Demography, Anthropometry, Vitals, Labs, Diagnosis, Special Conditions, Medications
-const BASE_CATEGORIES = [
+// Main categories in the correct order
+const MAIN_CATEGORIES = [
     { id: 'demography', label: 'Demography (Age & Gender)', icon: FaUser },
     { id: 'anthropometry', label: 'Anthropometry', icon: FaWeight },
-    { id: 'vitals', label: 'Vitals', icon: FaHeartbeat }
-];
-
-// Labs will be added dynamically after fetching from database
-
-const END_CATEGORIES = [
+    { id: 'vitals', label: 'Vitals', icon: FaHeartbeat },
     { id: 'diagnosis', label: 'Diagnosis', icon: FaNotesMedical },
     { id: 'special_conditions', label: 'Special Conditions', icon: FaExclamationCircle },
     { id: 'medications', label: 'Medications', icon: FaPills }
 ];
+
+// Labs will be added at the end
+const LAB_CATEGORY = { id: 'labs', label: 'Labs', icon: FaVial };
 
 const ClinicalPharmacyTool = () => {
     const navigate = useNavigate();
@@ -61,7 +59,9 @@ const ClinicalPharmacyTool = () => {
         fetchLabs();
     }, []);
 
-    const dynamicCategories = useMemo(() => {
+    // All categories - labs at the end
+    const allCategories = useMemo(() => {
+        // Get unique lab categories from the database
         const labCategories = [...new Set(dbLabs.map(lab => lab.category))].map(cat => ({
             id: cat.toLowerCase().replace(/ /g, '_'),
             label: cat,
@@ -69,7 +69,9 @@ const ClinicalPharmacyTool = () => {
             isLab: true,
             originalCategoryName: cat
         }));
-        return [...BASE_CATEGORIES, ...labCategories, ...END_CATEGORIES];
+        
+        // Return main categories first, then labs at the end
+        return [...MAIN_CATEGORIES, ...labCategories];
     }, [dbLabs]);
 
     // Tab Data States for PDF
@@ -94,6 +96,8 @@ const ClinicalPharmacyTool = () => {
         respiratory_rate: '',
         temperature: '',
         oxygen_saturation: '',
+        // Diagnosis
+        diagnosis: '',
         // Special Conditions
         kidney_failure: false,
         liver_failure: false,
@@ -575,7 +579,7 @@ const ClinicalPharmacyTool = () => {
 
                     <h2 className="text-lg font-semibold text-gray-800 mb-4">Which of the following data are you going to fill for the medication review?</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {dynamicCategories.map(category => {
+                        {allCategories.map(category => {
                             const isSelected = selectedCategories.includes(category.id);
                             return (
                                 <div
@@ -741,37 +745,6 @@ const ClinicalPharmacyTool = () => {
                                 </div>
                             </div>
                         )}
-
-                        {/* Dynamic Lab Categories */}
-                        {dynamicCategories.filter(c => c.isLab && selectedCategories.includes(c.id)).map(cat => (
-                            <div key={cat.id} className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500 mb-6">
-                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                    <FaVial className="text-blue-500" /> {cat.label}
-                                </h3>
-                                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                        {dbLabs.filter(lab => lab.category === cat.originalCategoryName).map(lab => {
-                                            const key = lab.name.toLowerCase().replace(/ /g, '_');
-                                            return (
-                                                <div key={lab.id}>
-                                                    <label className="block text-xs font-medium text-gray-700 mb-1">
-                                                        {lab.name} {lab.unit ? `(${lab.unit})` : ''}
-                                                    </label>
-                                                    <input 
-                                                        type="number" 
-                                                        step="any" 
-                                                        name={key} 
-                                                        value={formData.dynamic_labs[key] || ''} 
-                                                        onChange={handleDynamicLabChange} 
-                                                        className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" 
-                                                    />
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
 
                         {/* Diagnosis */}
                         {selectedCategories.includes('diagnosis') && (
@@ -1041,6 +1014,37 @@ const ClinicalPharmacyTool = () => {
                                 )}
                             </div>
                         )}
+
+                        {/* Dynamic Lab Categories - Now at the END */}
+                        {allCategories.filter(c => c.isLab && selectedCategories.includes(c.id)).map(cat => (
+                            <div key={cat.id} className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500">
+                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
+                                    <FaVial className="text-blue-500" /> {cat.label}
+                                </h3>
+                                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                        {dbLabs.filter(lab => lab.category === cat.originalCategoryName).map(lab => {
+                                            const key = lab.name.toLowerCase().replace(/ /g, '_');
+                                            return (
+                                                <div key={lab.id}>
+                                                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                        {lab.name} {lab.unit ? `(${lab.unit})` : ''}
+                                                    </label>
+                                                    <input 
+                                                        type="number" 
+                                                        step="any" 
+                                                        name={key} 
+                                                        value={formData.dynamic_labs[key] || ''} 
+                                                        onChange={handleDynamicLabChange} 
+                                                        className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" 
+                                                    />
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
 
                         <div className="flex justify-end pt-4 pb-12">
                             <button
