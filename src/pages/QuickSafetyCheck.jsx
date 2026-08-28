@@ -38,17 +38,11 @@ const QuickSafetyCheck = () => {
     const [result, setResult] = useState(null);
     const [error, setError] = useState('');
 
-    // Get user role from localStorage
+    // Get user role from localStorage or context
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     
     // Check if user is healthcare_client
     const isHealthcareClient = user?.role === 'healthcare_client' || user?.account_type === 'healthcare_client';
-    
-    // ✅ NEW: Check if user is pharmacist or pharmacy student (same logic as sidebar)
-    const isPharmacist = user?.role === 'pharmacist';
-    const isPharmacyStudent = user?.role === 'pharmacy_student';
-    const isIndividual = !user?.role?.includes('admin') && !user?.company_id;
-    const isPharmacistOrStudent = isIndividual && (isPharmacist || isPharmacyStudent);
 
     // Filter out IV incompatibility for healthcare_client
     const filterIVIncompatibility = (safetyProfile) => {
@@ -222,11 +216,6 @@ const QuickSafetyCheck = () => {
 
     const shouldShowIVCategory = () => {
         return !isHealthcareClient;
-    };
-
-    // ✅ NEW: Check if we should show DRN, Ph-Asst & Plan, Outcome, Cost sections
-    const shouldShowAdvancedFeatures = () => {
-        return isPharmacistOrStudent;
     };
 
     return (
@@ -404,46 +393,6 @@ const QuickSafetyCheck = () => {
                                                 })
                                             }
                                         </ul>
-                                    </div>
-                                )}
-
-                                {/* 🆕 DRN Assessment - Only for Pharmacists and Pharmacy Students */}
-                                {shouldShowAdvancedFeatures() && result.drn_assessment && (
-                                    <div className="bg-purple-50 rounded-2xl p-6 md:p-8 shadow-sm border-2 border-purple-300 mt-6">
-                                        <h4 className="text-xl font-bold text-purple-900 flex items-center gap-2 mb-4">
-                                            <FaProcedures className="text-purple-600" /> DRN Assessment
-                                        </h4>
-                                        <p className="text-purple-800 leading-relaxed">{result.drn_assessment}</p>
-                                    </div>
-                                )}
-
-                                {/* 🆕 Ph-Asst & Plan - Only for Pharmacists and Pharmacy Students */}
-                                {shouldShowAdvancedFeatures() && result.plan && (
-                                    <div className="bg-teal-50 rounded-2xl p-6 md:p-8 shadow-sm border-2 border-teal-300 mt-6">
-                                        <h4 className="text-xl font-bold text-teal-900 flex items-center gap-2 mb-4">
-                                            <FaUserEdit className="text-teal-600" /> Ph-Asst &amp; Plan
-                                        </h4>
-                                        <p className="text-teal-800 leading-relaxed">{result.plan}</p>
-                                    </div>
-                                )}
-
-                                {/* 🆕 Outcome - Only for Pharmacists and Pharmacy Students */}
-                                {shouldShowAdvancedFeatures() && result.outcome && (
-                                    <div className="bg-green-50 rounded-2xl p-6 md:p-8 shadow-sm border-2 border-green-300 mt-6">
-                                        <h4 className="text-xl font-bold text-green-900 flex items-center gap-2 mb-4">
-                                            <FaCheckCircle className="text-green-600" /> Outcome
-                                        </h4>
-                                        <p className="text-green-800 leading-relaxed">{result.outcome}</p>
-                                    </div>
-                                )}
-
-                                {/* 🆕 Cost - Only for Pharmacists and Pharmacy Students */}
-                                {shouldShowAdvancedFeatures() && result.cost && (
-                                    <div className="bg-blue-50 rounded-2xl p-6 md:p-8 shadow-sm border-2 border-blue-300 mt-6">
-                                        <h4 className="text-xl font-bold text-blue-900 flex items-center gap-2 mb-4">
-                                            <FaSearch className="text-blue-600" /> Cost
-                                        </h4>
-                                        <p className="text-blue-800 leading-relaxed">{result.cost}</p>
                                     </div>
                                 )}
                             </>
