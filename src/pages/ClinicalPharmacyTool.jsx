@@ -20,18 +20,87 @@ const MAIN_CATEGORIES = [
     { id: 'vitals', label: 'Vitals', icon: FaHeartbeat },
     { id: 'diagnosis', label: 'Diagnosis', icon: FaNotesMedical },
     { id: 'special_conditions', label: 'Special Conditions', icon: FaExclamationCircle },
-    { id: 'medications', label: 'Medications', icon: FaPills }
+    { id: 'medications', label: 'Medications', icon: FaPills },
+    { id: 'labs', label: 'Labs', icon: FaVial }
 ];
 
-// Labs will be added at the end
-const LAB_CATEGORY = { id: 'labs', label: 'Labs', icon: FaVial };
+// Static lab categories with their specific tests
+const LAB_CATEGORIES = [
+    {
+        id: 'coagulation',
+        label: 'Coagulation test',
+        icon: FaVial,
+        isLab: true,
+        tests: [
+            { name: 'PT', unit: 'sec' },
+            { name: 'APTT', unit: 'sec' },
+            { name: 'INR', unit: '' },
+            { name: 'Fibrinogen', unit: 'mg/dL' }
+        ]
+    },
+    {
+        id: 'cbc',
+        label: 'Complete blood count (CBC)',
+        icon: FaVial,
+        isLab: true,
+        tests: [
+            { name: 'WBC', unit: 'x10³/µL' },
+            { name: 'RBC', unit: 'x10⁶/µL' },
+            { name: 'Hemoglobin', unit: 'g/dL' },
+            { name: 'Hematocrit', unit: '%' },
+            { name: 'Platelets', unit: 'x10³/µL' }
+        ]
+    },
+    {
+        id: 'general',
+        label: 'General',
+        icon: FaVial,
+        isLab: true,
+        tests: [
+            { name: 'Glucose', unit: 'mg/dL' },
+            { name: 'Urea', unit: 'mg/dL' },
+            { name: 'Creatinine', unit: 'mg/dL' },
+            { name: 'Sodium', unit: 'mEq/L' },
+            { name: 'Potassium', unit: 'mEq/L' },
+            { name: 'Chloride', unit: 'mEq/L' }
+        ]
+    },
+    {
+        id: 'liver_function',
+        label: 'Liver function tests',
+        icon: FaVial,
+        isLab: true,
+        tests: [
+            { name: 'ALT', unit: 'U/L' },
+            { name: 'AST', unit: 'U/L' },
+            { name: 'ALP', unit: 'U/L' },
+            { name: 'GGT', unit: 'U/L' },
+            { name: 'Total Bilirubin', unit: 'mg/dL' },
+            { name: 'Direct Bilirubin', unit: 'mg/dL' },
+            { name: 'Total Protein', unit: 'g/dL' },
+            { name: 'Albumin', unit: 'g/dL' }
+        ]
+    },
+    {
+        id: 'renal_function',
+        label: 'Renal function tests',
+        icon: FaVial,
+        isLab: true,
+        tests: [
+            { name: 'Serum Creatinine', unit: 'mg/dL' },
+            { name: 'BUN', unit: 'mg/dL' },
+            { name: 'eGFR', unit: 'mL/min/1.73m²' },
+            { name: 'Uric Acid', unit: 'mg/dL' },
+            { name: 'Urine Protein', unit: 'mg/dL' }
+        ]
+    }
+];
 
 const ClinicalPharmacyTool = () => {
     const navigate = useNavigate();
     const [selectedCategories, setSelectedCategories] = useState([]);
     const [showAnalysis, setShowAnalysis] = useState(false);
     const [activeTab, setActiveTab] = useState('analysis');
-    const [dbLabs, setDbLabs] = useState([]);
 
     // ✅ Get user role from localStorage (same logic as sidebar)
     const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -40,39 +109,8 @@ const ClinicalPharmacyTool = () => {
     const isIndividual = !user?.role?.includes('admin') && !user?.company_id;
     const isPharmacistOrStudent = isIndividual && (isPharmacist || isPharmacyStudent);
 
-    useEffect(() => {
-        const fetchLabs = async () => {
-            try {
-                const { data, error } = await supabase
-                    .from('lab_tests')
-                    .select('*')
-                    .eq('is_active', true)
-                    .order('category', { ascending: true })
-                    .order('name', { ascending: true });
-                if (!error && data) {
-                    setDbLabs(data);
-                }
-            } catch (err) {
-                console.error("Error fetching labs:", err);
-            }
-        };
-        fetchLabs();
-    }, []);
-
-    // All categories - labs at the end
-    const allCategories = useMemo(() => {
-        // Get unique lab categories from the database
-        const labCategories = [...new Set(dbLabs.map(lab => lab.category))].map(cat => ({
-            id: cat.toLowerCase().replace(/ /g, '_'),
-            label: cat,
-            icon: FaVial,
-            isLab: true,
-            originalCategoryName: cat
-        }));
-        
-        // Return main categories first, then labs at the end
-        return [...MAIN_CATEGORIES, ...labCategories];
-    }, [dbLabs]);
+    // All categories - main categories + lab categories
+    const allCategories = [...MAIN_CATEGORIES, ...LAB_CATEGORIES];
 
     // Tab Data States for PDF
     const [cdssData, setCdssData] = useState([]);
@@ -105,8 +143,8 @@ const ClinicalPharmacyTool = () => {
         is_lactating: false,
         // Medications - simplified fields
         medications: [],
-        // Dynamic Labs Storage
-        dynamic_labs: {}
+        // Labs Storage - for all lab tests
+        labs: {}
     });
 
     const handleCategoryToggle = (categoryId) => {
@@ -146,12 +184,12 @@ const ClinicalPharmacyTool = () => {
         });
     };
 
-    const handleDynamicLabChange = (e) => {
+    const handleLabChange = (e) => {
         const { name, value } = e.target;
         setFormData({
             ...formData,
-            dynamic_labs: {
-                ...formData.dynamic_labs,
+            labs: {
+                ...formData.labs,
                 [name]: value
             }
         });
@@ -220,7 +258,7 @@ const ClinicalPharmacyTool = () => {
             oxygen_saturation: formData.oxygen_saturation,
         },
         labs: {
-            ...formData.dynamic_labs
+            ...formData.labs
         },
         medication_history: formData.medications,
         allergies: [], // Add if needed later
@@ -1015,36 +1053,41 @@ const ClinicalPharmacyTool = () => {
                             </div>
                         )}
 
-                        {/* Dynamic Lab Categories - Now at the END */}
-                        {allCategories.filter(c => c.isLab && selectedCategories.includes(c.id)).map(cat => (
-                            <div key={cat.id} className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500">
+                        {/* Labs - Now showing the 5 specific lab categories */}
+                        {selectedCategories.includes('labs') && (
+                            <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-yellow-500">
                                 <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                    <FaVial className="text-blue-500" /> {cat.label}
+                                    <FaVial className="text-yellow-500" /> Labs
                                 </h3>
-                                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                        {dbLabs.filter(lab => lab.category === cat.originalCategoryName).map(lab => {
-                                            const key = lab.name.toLowerCase().replace(/ /g, '_');
-                                            return (
-                                                <div key={lab.id}>
-                                                    <label className="block text-xs font-medium text-gray-700 mb-1">
-                                                        {lab.name} {lab.unit ? `(${lab.unit})` : ''}
-                                                    </label>
-                                                    <input 
-                                                        type="number" 
-                                                        step="any" 
-                                                        name={key} 
-                                                        value={formData.dynamic_labs[key] || ''} 
-                                                        onChange={handleDynamicLabChange} 
-                                                        className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" 
-                                                    />
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
+                                <div className="space-y-6">
+                                    {LAB_CATEGORIES.map((labCategory) => (
+                                        <div key={labCategory.id} className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                                            <h4 className="text-md font-semibold text-gray-700 mb-3">{labCategory.label}</h4>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                {labCategory.tests.map((test) => {
+                                                    const key = test.name.toLowerCase().replace(/ /g, '_').replace(/[^a-z0-9_]/g, '');
+                                                    return (
+                                                        <div key={key}>
+                                                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                                {test.name} {test.unit ? `(${test.unit})` : ''}
+                                                            </label>
+                                                            <input 
+                                                                type="number" 
+                                                                step="any" 
+                                                                name={key} 
+                                                                value={formData.labs[key] || ''} 
+                                                                onChange={handleLabChange} 
+                                                                className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" 
+                                                            />
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
-                        ))}
+                        )}
 
                         <div className="flex justify-end pt-4 pb-12">
                             <button
