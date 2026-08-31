@@ -827,7 +827,7 @@ const Signup = () => {
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-center">
+                        <div className="flex flex-wrap justify-center gap-8">
                             {filteredPlans.map((plan) => {
                                 const PlanIcon = plan.icon;
                                 // 🔥 FIX: Calculate adjusted price for each plan
@@ -836,7 +836,7 @@ const Signup = () => {
                                 return (
                                     <div
                                         key={plan.id}
-                                        className={`flex flex-col border-3 rounded-2xl p-6 md:p-8 cursor-pointer transition-all duration-300 transform hover:scale-[1.03] ${selectedPlan === plan.id
+                                        className={`flex flex-col flex-1 min-w-[300px] max-w-[380px] w-full border-3 rounded-2xl p-6 md:p-8 cursor-pointer transition-all duration-300 transform hover:scale-[1.03] ${selectedPlan === plan.id
                                             ? `${isIndividual ? 'border-blue-500 bg-blue-50/30' : 'border-green-500 bg-green-50/30'} shadow-2xl`
                                             : 'border-gray-100 hover:border-gray-300 bg-white'
                                             }`}
