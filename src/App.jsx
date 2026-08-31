@@ -692,19 +692,7 @@ const Dashboard = () => {
                                 <p className="text-sm text-gray-600">Role</p>
                                 <p className="font-medium text-sm capitalize text-right">{user.role?.replace('_', ' ')}</p>
                             </div>
-                            <div className="flex justify-between items-center py-1 border-b border-gray-50 last:border-0">
-                                <p className="text-sm text-gray-600">User ID</p>
-                                <p className="font-mono text-[10px] text-gray-500 text-right">{user.id || user._id || 'N/A'}</p>
-                            </div>
-                            <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
-                                <p className="text-sm text-gray-600">Approval Status</p>
-                                <div className={`inline-block px-3 py-1 rounded-full text-[10px] font-bold ${user.approved
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-yellow-100 text-yellow-800'
-                                    }`}>
-                                    {user.approved ? '✓ Approved' : '⏳ Pending'}
-                                </div>
-                            </div>
+
                             <div className="flex justify-between items-start py-2">
                                 <p className="text-sm text-gray-600">Subscription</p>
                                 <div className="flex flex-col items-end gap-1">
@@ -790,8 +778,10 @@ const Dashboard = () => {
                                                 <p className="font-medium text-gray-800">
                                                     {patient.full_name || patient.name || `Patient ${patient.patientCode || index + 1}`}
                                                 </p>
-                                                <p className="text-sm text-gray-600">
-                                                    {patient.patient_code || patient.patientCode || 'No Code'}
+                                                <p className="text-sm text-gray-600 truncate max-w-[120px]">
+                                                    {(patient.patient_code || patient.patientCode || 'No Code').length > 15 
+                                                        ? `${(patient.patient_code || patient.patientCode).substring(0, 10)}...` 
+                                                        : (patient.patient_code || patient.patientCode || 'No Code')}
                                                 </p>
                                             </div>
                                             <div className={`px-2 py-1 rounded text-xs font-medium ${patient.is_active || patient.status === 'active'
@@ -870,49 +860,7 @@ const Dashboard = () => {
                         </div>
                     </div>
 
-                    {/* System Status Card - LOCKED if no subscription */}
-                    <div className={`bg-white rounded-xl shadow-lg p-6 relative ${!hasValidSubscription(user) && user.role !== 'admin' ? 'opacity-75 grayscale' : ''}`}>
-                        {!hasValidSubscription(user) && user.role !== 'admin' && (
-                            <div className="absolute inset-0 bg-white/20 backdrop-blur-[1px] z-10 rounded-xl flex items-center justify-center">
-                                <div className="bg-white/90 p-4 rounded-lg shadow-xl border border-blue-100 text-center mx-4">
-                                    <div className="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2 text-blue-600">
-                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                        </svg>
-                                    </div>
-                                    <h4 className="font-bold text-gray-800 text-sm">Feature Locked</h4>
-                                    <p className="text-xs text-gray-600 mb-2">Subscribe to view system status</p>
-                                    <button
-                                        onClick={handleGetSubscription}
-                                        className="text-xs font-bold text-blue-600 hover:underline"
-                                    >
-                                        Unlock Now
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-                        <h3 className="text-lg font-bold text-gray-800 mb-4">System Status</h3>
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <span className="text-gray-600">Database</span>
-                                <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                                    Connected ✓
-                                </span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <span className="text-gray-600">API Service</span>
-                                <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                                    Active ✓
-                                </span>
-                            </div>
-                            <div className="pt-4 border-t">
-                                <p className="text-sm text-gray-600">Last Login</p>
-                                <p className="font-medium">
-                                    {new Date().toLocaleDateString()}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+
 
                     {/* Subscription Info Card */}
                     <div className="bg-white rounded-xl shadow-lg p-6">
