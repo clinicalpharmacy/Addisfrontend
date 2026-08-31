@@ -13,53 +13,100 @@ import PhAssistPlan from '../components/Patient/PhAssistPlan';
 import PatientOutcome from '../components/Patient/PatientOutcome';
 import CostSection from '../components/Patient/CostSection';
 
-const BASE_CATEGORIES = [
-    { id: 'demography', label: 'Demography (Age & Gender)', icon: FaUser },
+// Main categories in the correct order
+const MAIN_CATEGORIES = [
+    { id: 'demography', label: 'Demography', icon: FaUser },
     { id: 'anthropometry', label: 'Anthropometry', icon: FaWeight },
-    { id: 'vitals', label: 'Vitals', icon: FaHeartbeat }
-];
-
-const END_CATEGORIES = [
+    { id: 'vitals', label: 'Vitals', icon: FaHeartbeat },
+    { id: 'labs', label: 'Labs', icon: FaVial },
     { id: 'diagnosis', label: 'Diagnosis', icon: FaNotesMedical },
     { id: 'special_conditions', label: 'Special Conditions', icon: FaExclamationCircle },
     { id: 'medications', label: 'Medications', icon: FaPills }
 ];
+
+// Static lab categories with their specific tests (sub-categories under Labs)
+const LAB_SUB_CATEGORIES = [
+    {
+        id: 'coagulation',
+        label: 'Coagulation test',
+        icon: FaVial,
+        tests: [
+            { name: 'PT', unit: 'sec' },
+            { name: 'APTT', unit: 'sec' },
+            { name: 'INR', unit: '' },
+            { name: 'Fibrinogen', unit: 'mg/dL' }
+        ]
+    },
+    {
+        id: 'cbc',
+        label: 'Complete blood count (CBC)',
+        icon: FaVial,
+        tests: [
+            { name: 'WBC', unit: 'x10³/µL' },
+            { name: 'RBC', unit: 'x10⁶/µL' },
+            { name: 'Hemoglobin', unit: 'g/dL' },
+            { name: 'Hematocrit', unit: '%' },
+            { name: 'Platelets', unit: 'x10³/µL' }
+        ]
+    },
+    {
+        id: 'general',
+        label: 'General',
+        icon: FaVial,
+        tests: [
+            { name: 'Glucose', unit: 'mg/dL' },
+            { name: 'Urea', unit: 'mg/dL' },
+            { name: 'Creatinine', unit: 'mg/dL' },
+            { name: 'Sodium', unit: 'mEq/L' },
+            { name: 'Potassium', unit: 'mEq/L' },
+            { name: 'Chloride', unit: 'mEq/L' }
+        ]
+    },
+    {
+        id: 'liver_function',
+        label: 'Liver function tests',
+        icon: FaVial,
+        tests: [
+            { name: 'ALT', unit: 'U/L' },
+            { name: 'AST', unit: 'U/L' },
+            { name: 'ALP', unit: 'U/L' },
+            { name: 'GGT', unit: 'U/L' },
+            { name: 'Total Bilirubin', unit: 'mg/dL' },
+            { name: 'Direct Bilirubin', unit: 'mg/dL' },
+            { name: 'Total Protein', unit: 'g/dL' },
+            { name: 'Albumin', unit: 'g/dL' }
+        ]
+    },
+    {
+        id: 'renal_function',
+        label: 'Renal function tests',
+        icon: FaVial,
+        tests: [
+            { name: 'Serum Creatinine', unit: 'mg/dL' },
+            { name: 'BUN', unit: 'mg/dL' },
+            { name: 'eGFR', unit: 'mL/min/1.73m²' },
+            { name: 'Uric Acid', unit: 'mg/dL' },
+            { name: 'Urine Protein', unit: 'mg/dL' }
+        ]
+    }
+];
+
 const ClinicalPharmacyTool = () => {
     const navigate = useNavigate();
     const [selectedCategories, setSelectedCategories] = useState([]);
+    const [selectedLabSubCategories, setSelectedLabSubCategories] = useState([]);
     const [showAnalysis, setShowAnalysis] = useState(false);
     const [activeTab, setActiveTab] = useState('analysis');
-    const [dbLabs, setDbLabs] = useState([]);
 
-    useEffect(() => {
-        const fetchLabs = async () => {
-            try {
-                const { data, error } = await supabase
-                    .from('lab_tests')
-                    .select('*')
-                    .eq('is_active', true)
-                    .order('category', { ascending: true })
-                    .order('name', { ascending: true });
-                if (!error && data) {
-                    setDbLabs(data);
-                }
-            } catch (err) {
-                console.error("Error fetching labs:", err);
-            }
-        };
-        fetchLabs();
-    }, []);
+    // ✅ Get user role from localStorage (same logic as sidebar)
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const isPharmacist = user?.role === 'pharmacist';
+    const isPharmacyStudent = user?.role === 'pharmacy_student';
+    const isIndividual = !user?.role?.includes('admin') && !user?.company_id;
+    const isPharmacistOrStudent = isIndividual && (isPharmacist || isPharmacyStudent);
 
-    const dynamicCategories = useMemo(() => {
-        const labCategories = [...new Set(dbLabs.map(lab => lab.category))].map(cat => ({
-            id: cat.toLowerCase().replace(/ /g, '_'),
-            label: cat,
-            icon: FaVial,
-            isLab: true,
-            originalCategoryName: cat
-        }));
-        return [...BASE_CATEGORIES, ...labCategories, ...END_CATEGORIES];
-    }, [dbLabs]);
+    // All categories - main categories only (labs is the main category, sub-categories are handled separately)
+    const allCategories = MAIN_CATEGORIES;
 
     // Tab Data States for PDF
     const [cdssData, setCdssData] = useState([]);
@@ -76,27 +123,64 @@ const ClinicalPharmacyTool = () => {
         // Anthropometry
         weight: '',
         height: '',
-        bmi: '',
+        bsa: '', // Changed from bmi to bsa
         // Vitals
         blood_pressure: '',
         heart_rate: '',
         respiratory_rate: '',
         temperature: '',
         oxygen_saturation: '',
+        // Diagnosis
+        diagnosis: '',
         // Special Conditions
         kidney_failure: false,
         liver_failure: false,
         is_pregnant: false,
         is_lactating: false,
-        // Medications
+        // Medications - simplified fields
         medications: [],
-        // Dynamic Labs Storage
-        dynamic_labs: {}
+        // Labs Storage - for all lab tests
+        labs: {}
     });
 
+    // Calculate BSA using Du Bois method: BSA = 0.007184 × W^0.425 × H^0.725
+    // Weight in kg, Height in cm
+    const calculateBSA = (weight, height) => {
+        if (!weight || !height || weight <= 0 || height <= 0) return '';
+        const w = parseFloat(weight);
+        const h = parseFloat(height);
+        const bsa = 0.007184 * Math.pow(w, 0.425) * Math.pow(h, 0.725);
+        return bsa.toFixed(2);
+    };
+
+    // Add this useEffect after the formData state declaration
+    useEffect(() => {
+        // Calculate BSA when weight and height are both provided
+        if (formData.weight && formData.height) {
+            const weight = parseFloat(formData.weight);
+            const height = parseFloat(formData.height);
+            
+            if (weight > 0 && height > 0) {
+                const calculatedBSA = calculateBSA(weight, height);
+                
+                // Only update if BSA has changed to avoid infinite loop
+                if (formData.bsa !== calculatedBSA) {
+                    setFormData(prev => ({
+                        ...prev,
+                        bsa: calculatedBSA
+                    }));
+                }
+            }
+        }
+    }, [formData.weight, formData.height]);
+    
     const handleCategoryToggle = (categoryId) => {
         if (selectedCategories.includes(categoryId)) {
             setSelectedCategories(selectedCategories.filter(id => id !== categoryId));
+            // If unchecking labs, clear lab sub-categories
+            if (categoryId === 'labs') {
+                setSelectedLabSubCategories([]);
+            }
         } else {
             setSelectedCategories([...selectedCategories, categoryId]);
             // Auto-add one empty medication row when medications checkbox is ticked
@@ -104,15 +188,30 @@ const ClinicalPharmacyTool = () => {
                 setFormData(prev => ({
                     ...prev,
                     medications: [{
-                        drug_name: '', dose: '', frequency: '', route: '',
-                        start_date: '', drug_class: '', indication: '',
-                        administration: '', regimen: '', cycle: '',
-                        status: 'Active', stop_date: '', brand_name: '',
-                        dosage_form: 'Tablet', strength: '', unit: 'mg',
-                        prescriber_name: '', pharmacy_name: '', notes: ''
+                        drug_name: '',
+                        brand_name: '',
+                        indication: '',
+                        dose: '',
+                        strength: '',
+                        unit: 'mg',
+                        dosage_form: 'Tablet',
+                        route: '',
+                        frequency: '',
+                        duration: '',
+                        start_date: '',
+                        stop_date: '',
+                        status: 'Active'
                     }]
                 }));
             }
+        }
+    };
+
+    const handleLabSubCategoryToggle = (subCategoryId) => {
+        if (selectedLabSubCategories.includes(subCategoryId)) {
+            setSelectedLabSubCategories(selectedLabSubCategories.filter(id => id !== subCategoryId));
+        } else {
+            setSelectedLabSubCategories([...selectedLabSubCategories, subCategoryId]);
         }
     };
 
@@ -124,30 +223,37 @@ const ClinicalPharmacyTool = () => {
         });
     };
 
-    const handleDynamicLabChange = (e) => {
+    const handleLabChange = (e) => {
         const { name, value } = e.target;
         setFormData({
             ...formData,
-            dynamic_labs: {
-                ...formData.dynamic_labs,
+            labs: {
+                ...formData.labs,
                 [name]: value
             }
         });
     };
 
-    // Medication handlers
+    // Medication handlers - simplified
     const addMedication = () => {
         setFormData({
             ...formData,
             medications: [
                 ...formData.medications,
                 {
-                    drug_name: '', dose: '', frequency: '', route: '',
-                    start_date: '', drug_class: '', indication: '',
-                    administration: '', regimen: '', cycle: '',
-                    status: 'Active', stop_date: '', brand_name: '',
-                    dosage_form: 'Tablet', strength: '', unit: 'mg',
-                    prescriber_name: '', pharmacy_name: '', notes: ''
+                    drug_name: '',
+                    brand_name: '',
+                    indication: '',
+                    dose: '',
+                    strength: '',
+                    unit: 'mg',
+                    dosage_form: 'Tablet',
+                    route: '',
+                    frequency: '',
+                    duration: '',
+                    start_date: '',
+                    stop_date: '',
+                    status: 'Active'
                 }
             ]
         });
@@ -166,6 +272,8 @@ const ClinicalPharmacyTool = () => {
 
     const handleRunAnalysis = () => {
         setShowAnalysis(true);
+        // ✅ Set default tab to 'analysis' when showing results
+        setActiveTab('analysis');
     };
 
     const sessionId = React.useMemo(() => 'TEMP-' + Math.floor(Math.random() * 10000), []);
@@ -181,7 +289,7 @@ const ClinicalPharmacyTool = () => {
         vitals: {
             weight: formData.weight,
             height: formData.height,
-            bmi: formData.bmi,
+            bsa: formData.bsa, // Changed from bmi to bsa
             blood_pressure: formData.blood_pressure,
             heart_rate: formData.heart_rate,
             respiratory_rate: formData.respiratory_rate,
@@ -189,7 +297,7 @@ const ClinicalPharmacyTool = () => {
             oxygen_saturation: formData.oxygen_saturation,
         },
         labs: {
-            ...formData.dynamic_labs
+            ...formData.labs
         },
         medication_history: formData.medications,
         allergies: [], // Add if needed later
@@ -233,7 +341,7 @@ const ClinicalPharmacyTool = () => {
                 startY: currentY + 5,
                 body: [
                     ['Age & Gender:', `${formData.age || 'N/A'} - ${formData.gender || 'N/A'}`],
-                    ['Vitals:', `Weight: ${formData.weight || '-'} kg, BP: ${formData.blood_pressure || '-'}`],
+                    ['Vitals:', `Weight: ${formData.weight || '-'} kg, BSA: ${formData.bsa || '-'} m², BP: ${formData.blood_pressure || '-'}`],
                     ['Diagnosis:', constructedPatientData.diagnosis]
                 ],
                 theme: 'plain',
@@ -296,8 +404,8 @@ const ClinicalPharmacyTool = () => {
                 currentY = doc.lastAutoTable.finalY + 10;
             }
 
-            // --- 3. DRN Assessment ---
-            if (drnData && drnData.length > 0) {
+            // --- 3. DRN Assessment --- (✅ Only if pharmacist/student)
+            if (isPharmacistOrStudent && drnData && drnData.length > 0) {
                 if (currentY > 250) { doc.addPage(); currentY = 20; }
                 doc.setFontSize(14);
                 doc.setFont('helvetica', 'bold');
@@ -312,8 +420,8 @@ const ClinicalPharmacyTool = () => {
                 currentY = doc.lastAutoTable.finalY + 10;
             }
 
-            // --- 4. Pharmacy Plan ---
-            if (planData && planData.length > 0) {
+            // --- 4. Pharmacy Plan --- (✅ Only if pharmacist/student)
+            if (isPharmacistOrStudent && planData && planData.length > 0) {
                 if (currentY > 250) { doc.addPage(); currentY = 20; }
                 doc.setFontSize(14);
                 doc.setFont('helvetica', 'bold');
@@ -328,8 +436,8 @@ const ClinicalPharmacyTool = () => {
                 currentY = doc.lastAutoTable.finalY + 10;
             }
 
-            // --- 5. Outcome ---
-            if (outcomeData && outcomeData.length > 0) {
+            // --- 5. Outcome --- (✅ Only if pharmacist/student)
+            if (isPharmacistOrStudent && outcomeData && outcomeData.length > 0) {
                 if (currentY > 250) { doc.addPage(); currentY = 20; }
                 doc.setFontSize(14);
                 doc.setFont('helvetica', 'bold');
@@ -344,8 +452,8 @@ const ClinicalPharmacyTool = () => {
                 currentY = doc.lastAutoTable.finalY + 10;
             }
 
-            // --- 6. Cost ---
-            if (costData && costData.length > 0) {
+            // --- 6. Cost --- (✅ Only if pharmacist/student)
+            if (isPharmacistOrStudent && costData && costData.length > 0) {
                 if (currentY > 250) { doc.addPage(); currentY = 20; }
                 doc.setFontSize(14);
                 doc.setFont('helvetica', 'bold');
@@ -401,7 +509,9 @@ const ClinicalPharmacyTool = () => {
                         </button>
                     </div>
 
+                    {/* ✅ Tab Navigation - Only show restricted tabs for Pharmacists & Pharmacy Students */}
                     <div className="flex overflow-x-auto gap-2 mb-6 bg-white p-2 rounded-xl shadow-sm hide-scrollbar">
+                        {/* Clinical Case Review - Always visible */}
                         <button
                             onClick={() => setActiveTab('analysis')}
                             className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
@@ -412,46 +522,62 @@ const ClinicalPharmacyTool = () => {
                         >
                             <FaUserShield /> Clinical Case Review
                         </button>
-                        <button
-                            onClick={() => setActiveTab('drn')}
-                            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
-                                activeTab === 'drn' 
-                                ? 'bg-blue-600 text-white shadow-md font-medium' 
-                                : 'text-gray-600 hover:bg-gray-50'
-                            }`}
-                        >
-                            <FaRobot /> DRN Assessment
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('plan')}
-                            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
-                                activeTab === 'plan' 
-                                ? 'bg-blue-600 text-white shadow-md font-medium' 
-                                : 'text-gray-600 hover:bg-gray-50'
-                            }`}
-                        >
-                            <FaFileMedical /> Ph-Asst & Plan
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('outcome')}
-                            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
-                                activeTab === 'outcome' 
-                                ? 'bg-blue-600 text-white shadow-md font-medium' 
-                                : 'text-gray-600 hover:bg-gray-50'
-                            }`}
-                        >
-                            <FaChartLine /> Outcome
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('cost')}
-                            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
-                                activeTab === 'cost' 
-                                ? 'bg-blue-600 text-white shadow-md font-medium' 
-                                : 'text-gray-600 hover:bg-gray-50'
-                            }`}
-                        >
-                            <FaMoneyBillWave /> Cost
-                        </button>
+
+                        {/* ✅ DRN Assessment - ONLY for Pharmacists & Pharmacy Students (HIDDEN otherwise) */}
+                        {isPharmacistOrStudent && (
+                            <button
+                                onClick={() => setActiveTab('drn')}
+                                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
+                                    activeTab === 'drn' 
+                                    ? 'bg-blue-600 text-white shadow-md font-medium' 
+                                    : 'text-gray-600 hover:bg-gray-50'
+                                }`}
+                            >
+                                <FaRobot /> DRN Assessment
+                            </button>
+                        )}
+
+                        {/* ✅ Ph-Asst & Plan - ONLY for Pharmacists & Pharmacy Students (HIDDEN otherwise) */}
+                        {isPharmacistOrStudent && (
+                            <button
+                                onClick={() => setActiveTab('plan')}
+                                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
+                                    activeTab === 'plan' 
+                                    ? 'bg-blue-600 text-white shadow-md font-medium' 
+                                    : 'text-gray-600 hover:bg-gray-50'
+                                }`}
+                            >
+                                <FaFileMedical /> Ph-Asst & Plan
+                            </button>
+                        )}
+
+                        {/* ✅ Outcome - ONLY for Pharmacists & Pharmacy Students (HIDDEN otherwise) */}
+                        {isPharmacistOrStudent && (
+                            <button
+                                onClick={() => setActiveTab('outcome')}
+                                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
+                                    activeTab === 'outcome' 
+                                    ? 'bg-blue-600 text-white shadow-md font-medium' 
+                                    : 'text-gray-600 hover:bg-gray-50'
+                                }`}
+                            >
+                                <FaChartLine /> Outcome
+                            </button>
+                        )}
+
+                        {/* ✅ Cost - ONLY for Pharmacists & Pharmacy Students (HIDDEN otherwise) */}
+                        {isPharmacistOrStudent && (
+                            <button
+                                onClick={() => setActiveTab('cost')}
+                                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
+                                    activeTab === 'cost' 
+                                    ? 'bg-blue-600 text-white shadow-md font-medium' 
+                                    : 'text-gray-600 hover:bg-gray-50'
+                                }`}
+                            >
+                                <FaMoneyBillWave /> Cost
+                            </button>
+                        )}
                     </div>
 
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -462,7 +588,9 @@ const ClinicalPharmacyTool = () => {
                                 onDataChange={(data) => setCdssData(data)}
                             />
                         )}
-                        {activeTab === 'drn' && (
+                        
+                        {/* ✅ Only render DRN if user is pharmacist/student */}
+                        {activeTab === 'drn' && isPharmacistOrStudent && (
                             <DRNAssessment
                                 patientCode={constructedPatientData.id}
                                 patientData={constructedPatientData}
@@ -471,7 +599,9 @@ const ClinicalPharmacyTool = () => {
                                 onDataChange={(data) => setDrnData(data)}
                             />
                         )}
-                        {activeTab === 'plan' && (
+                        
+                        {/* ✅ Only render Ph-Asst if user is pharmacist/student */}
+                        {activeTab === 'plan' && isPharmacistOrStudent && (
                             <PhAssistPlan
                                 patientCode={constructedPatientData.id}
                                 patientData={constructedPatientData}
@@ -479,7 +609,9 @@ const ClinicalPharmacyTool = () => {
                                 onDataChange={(data) => setPlanData(data)}
                             />
                         )}
-                        {activeTab === 'outcome' && (
+                        
+                        {/* ✅ Only render Outcome if user is pharmacist/student */}
+                        {activeTab === 'outcome' && isPharmacistOrStudent && (
                             <PatientOutcome
                                 patientCode={constructedPatientData.id}
                                 patientData={constructedPatientData}
@@ -487,7 +619,9 @@ const ClinicalPharmacyTool = () => {
                                 onDataChange={(data) => setOutcomeData(data)}
                             />
                         )}
-                        {activeTab === 'cost' && (
+                        
+                        {/* ✅ Only render Cost if user is pharmacist/student */}
+                        {activeTab === 'cost' && isPharmacistOrStudent && (
                             <CostSection
                                 patientCode={constructedPatientData.id}
                                 patientData={constructedPatientData}
@@ -522,7 +656,7 @@ const ClinicalPharmacyTool = () => {
 
                     <h2 className="text-lg font-semibold text-gray-800 mb-4">Which of the following data are you going to fill for the medication review?</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {dynamicCategories.map(category => {
+                        {allCategories.map(category => {
                             const isSelected = selectedCategories.includes(category.id);
                             return (
                                 <div
@@ -599,6 +733,8 @@ const ClinicalPharmacyTool = () => {
                                             value={formData.weight}
                                             onChange={handleInputChange}
                                             className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                            placeholder="e.g. 70"
+                                            step="0.1"
                                         />
                                     </div>
                                     <div>
@@ -609,18 +745,28 @@ const ClinicalPharmacyTool = () => {
                                             value={formData.height}
                                             onChange={handleInputChange}
                                             className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                            placeholder="e.g. 175"
+                                            step="0.1"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">BMI</label>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            BSA (m²)
+                                            <span className="text-xs text-gray-500 ml-1">(auto-calculated)</span>
+                                        </label>
                                         <input
                                             type="number"
-                                            name="bmi"
-                                            value={formData.bmi}
+                                            name="bsa"
+                                            value={formData.bsa}
                                             onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                            placeholder="Auto-calculated if omitted"
+                                            className="w-full p-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Auto-calculated"
+                                            step="0.01"
+                                            readOnly
                                         />
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Du Bois method: BSA = 0.007184 × W^0.425 × H^0.725
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -689,36 +835,74 @@ const ClinicalPharmacyTool = () => {
                             </div>
                         )}
 
-                        {/* Dynamic Lab Categories */}
-                        {dynamicCategories.filter(c => c.isLab && selectedCategories.includes(c.id)).map(cat => (
-                            <div key={cat.id} className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500 mb-6">
+                        {/* Labs - Main category with sub-categories */}
+                        {selectedCategories.includes('labs') && (
+                            <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-yellow-500">
                                 <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                    <FaVial className="text-blue-500" /> {cat.label}
+                                    <FaVial className="text-yellow-500" /> Labs
                                 </h3>
-                                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                        {dbLabs.filter(lab => lab.category === cat.originalCategoryName).map(lab => {
-                                            const key = lab.name.toLowerCase().replace(/ /g, '_');
-                                            return (
-                                                <div key={lab.id}>
-                                                    <label className="block text-xs font-medium text-gray-700 mb-1">
-                                                        {lab.name} {lab.unit ? `(${lab.unit})` : ''}
-                                                    </label>
-                                                    <input 
-                                                        type="number" 
-                                                        step="any" 
-                                                        name={key} 
-                                                        value={formData.dynamic_labs[key] || ''} 
-                                                        onChange={handleDynamicLabChange} 
-                                                        className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" 
-                                                    />
-                                                </div>
-                                            );
-                                        })}
+                                
+                                {/* Sub-category selection */}
+                                <div className="mb-4">
+                                    <p className="text-sm text-gray-600 mb-2">Select which lab tests you want to fill:</p>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                        {LAB_SUB_CATEGORIES.map((subCat) => (
+                                            <label 
+                                                key={subCat.id}
+                                                className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all ${
+                                                    selectedLabSubCategories.includes(subCat.id)
+                                                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                                        : 'border-gray-200 hover:border-blue-200 text-gray-600'
+                                                }`}
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedLabSubCategories.includes(subCat.id)}
+                                                    onChange={() => handleLabSubCategoryToggle(subCat.id)}
+                                                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                                                />
+                                                <span className="text-sm font-medium">{subCat.label}</span>
+                                            </label>
+                                        ))}
                                     </div>
                                 </div>
+
+                                {/* Show selected lab categories */}
+                                <div className="space-y-6">
+                                    {LAB_SUB_CATEGORIES.filter(subCat => selectedLabSubCategories.includes(subCat.id)).map((labCategory) => (
+                                        <div key={labCategory.id} className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                                            <h4 className="text-md font-semibold text-gray-700 mb-3">{labCategory.label}</h4>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                {labCategory.tests.map((test) => {
+                                                    const key = test.name.toLowerCase().replace(/ /g, '_').replace(/[^a-z0-9_]/g, '');
+                                                    return (
+                                                        <div key={key}>
+                                                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                                {test.name} {test.unit ? `(${test.unit})` : ''}
+                                                            </label>
+                                                            <input 
+                                                                type="number" 
+                                                                step="any" 
+                                                                name={key} 
+                                                                value={formData.labs[key] || ''} 
+                                                                onChange={handleLabChange} 
+                                                                className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" 
+                                                            />
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    ))}
+                                    
+                                    {selectedLabSubCategories.length === 0 && (
+                                        <div className="text-center py-4 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                                            Please select at least one lab test category from above.
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        ))}
+                        )}
 
                         {/* Diagnosis */}
                         {selectedCategories.includes('diagnosis') && (
@@ -794,7 +978,7 @@ const ClinicalPharmacyTool = () => {
                             </div>
                         )}
 
-                        {/* Medications */}
+                        {/* Medications - Simplified */}
                         {selectedCategories.includes('medications') && (
                             <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-purple-500">
                                 <div className="flex items-center justify-between mb-4">
@@ -825,40 +1009,33 @@ const ClinicalPharmacyTool = () => {
                                                     <FaTimes className="w-3 h-3" />
                                                 </button>
                                                 
-                                                <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                                                    {/* Row 1: Core details */}
-                                                    <div className="col-span-1 md:col-span-2">
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Drug Name / Brand Name</label>
-                                                        <div className="flex gap-2">
-                                                            <input
-                                                                type="text"
-                                                                value={med.drug_name}
-                                                                onChange={(e) => updateMedication(index, 'drug_name', e.target.value)}
-                                                                className="w-1/2 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                                placeholder="Generic Name *"
-                                                            />
-                                                            <input
-                                                                type="text"
-                                                                value={med.brand_name}
-                                                                onChange={(e) => updateMedication(index, 'brand_name', e.target.value)}
-                                                                className="w-1/2 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                                placeholder="Brand Name"
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    <div className="col-span-1">
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Drug Class</label>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                                                    {/* Drug Name */}
+                                                    <div>
+                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Drug Name</label>
                                                         <input
                                                             type="text"
-                                                            value={med.drug_class}
-                                                            onChange={(e) => updateMedication(index, 'drug_class', e.target.value)}
+                                                            value={med.drug_name}
+                                                            onChange={(e) => updateMedication(index, 'drug_name', e.target.value)}
                                                             className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                            placeholder="e.g. Beta Blocker"
+                                                            placeholder="Generic Name"
                                                         />
                                                     </div>
                                                     
-                                                    <div className="col-span-1">
+                                                    {/* Brand Name */}
+                                                    <div>
+                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Brand Name</label>
+                                                        <input
+                                                            type="text"
+                                                            value={med.brand_name}
+                                                            onChange={(e) => updateMedication(index, 'brand_name', e.target.value)}
+                                                            className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                            placeholder="Brand Name"
+                                                        />
+                                                    </div>
+                                                    
+                                                    {/* Indication */}
+                                                    <div>
                                                         <label className="block text-xs font-medium text-gray-700 mb-1">Indication</label>
                                                         <input
                                                             type="text"
@@ -869,49 +1046,29 @@ const ClinicalPharmacyTool = () => {
                                                         />
                                                     </div>
                                                     
-                                                    <div className="col-span-1">
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
-                                                        <select
-                                                            value={med.status}
-                                                            onChange={(e) => updateMedication(index, 'status', e.target.value)}
-                                                            className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500 bg-white"
-                                                        >
-                                                            <option value="Active">Active</option>
-                                                            <option value="Discontinued">Discontinued</option>
-                                                            <option value="On Hold">On Hold</option>
-                                                            <option value="Completed">Completed</option>
-                                                        </select>
-                                                    </div>
-                                                    
-                                                    {/* Row 2: Dosage and Admin */}
-                                                    <div className="col-span-1 md:col-span-2">
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Dose / Strength / Unit</label>
-                                                        <div className="flex gap-2">
+                                                    {/* Dose / Unit */}
+                                                    <div>
+                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Dose / Unit</label>
+                                                        <div className="flex gap-1">
                                                             <input
                                                                 type="text"
                                                                 value={med.dose}
                                                                 onChange={(e) => updateMedication(index, 'dose', e.target.value)}
-                                                                className="w-1/3 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                className="flex-1 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
                                                                 placeholder="Dose"
-                                                            />
-                                                            <input
-                                                                type="text"
-                                                                value={med.strength}
-                                                                onChange={(e) => updateMedication(index, 'strength', e.target.value)}
-                                                                className="w-1/3 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                                placeholder="Strength"
                                                             />
                                                             <input
                                                                 type="text"
                                                                 value={med.unit}
                                                                 onChange={(e) => updateMedication(index, 'unit', e.target.value)}
-                                                                className="w-1/3 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                                placeholder="Unit (mg)"
+                                                                className="w-16 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                placeholder="Unit"
                                                             />
                                                         </div>
                                                     </div>
                                                     
-                                                    <div className="col-span-1">
+                                                    {/* Dosage Form */}
+                                                    <div>
                                                         <label className="block text-xs font-medium text-gray-700 mb-1">Dosage Form</label>
                                                         <select
                                                             value={med.dosage_form}
@@ -929,107 +1086,39 @@ const ClinicalPharmacyTool = () => {
                                                         </select>
                                                     </div>
                                                     
-                                                    <div className="col-span-1">
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Route & Admin</label>
-                                                        <div className="flex gap-2">
-                                                            <input
-                                                                type="text"
-                                                                value={med.route}
-                                                                onChange={(e) => updateMedication(index, 'route', e.target.value)}
-                                                                className="w-1/2 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                                placeholder="Route (PO)"
-                                                            />
-                                                            <input
-                                                                type="text"
-                                                                value={med.administration}
-                                                                onChange={(e) => updateMedication(index, 'administration', e.target.value)}
-                                                                className="w-1/2 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                                placeholder="Admin"
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    <div className="col-span-1">
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Frequency & Regimen</label>
-                                                        <div className="flex gap-2">
-                                                            <input
-                                                                type="text"
-                                                                value={med.frequency}
-                                                                onChange={(e) => updateMedication(index, 'frequency', e.target.value)}
-                                                                className="w-1/2 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                                placeholder="Freq (BID)"
-                                                            />
-                                                            <input
-                                                                type="text"
-                                                                value={med.regimen}
-                                                                onChange={(e) => updateMedication(index, 'regimen', e.target.value)}
-                                                                className="w-1/2 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                                placeholder="Regimen"
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    {/* Row 3: Timeline & Provider */}
-                                                    <div className="col-span-1">
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Start Date</label>
-                                                        <input
-                                                            type="date"
-                                                            value={med.start_date}
-                                                            onChange={(e) => updateMedication(index, 'start_date', e.target.value)}
-                                                            className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                        />
-                                                    </div>
-                                                    
-                                                    <div className="col-span-1">
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Stop Date</label>
-                                                        <input
-                                                            type="date"
-                                                            value={med.stop_date}
-                                                            onChange={(e) => updateMedication(index, 'stop_date', e.target.value)}
-                                                            className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                        />
-                                                    </div>
-                                                    
-                                                    <div className="col-span-1">
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Cycle</label>
+                                                    {/* Route */}
+                                                    <div>
+                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Route</label>
                                                         <input
                                                             type="text"
-                                                            value={med.cycle}
-                                                            onChange={(e) => updateMedication(index, 'cycle', e.target.value)}
+                                                            value={med.route}
+                                                            onChange={(e) => updateMedication(index, 'route', e.target.value)}
                                                             className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                            placeholder="Cycle details"
+                                                            placeholder="e.g. PO, IV, IM"
                                                         />
                                                     </div>
                                                     
-                                                    <div className="col-span-1 md:col-span-2">
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Prescriber / Pharmacy</label>
-                                                        <div className="flex gap-2">
-                                                            <input
-                                                                type="text"
-                                                                value={med.prescriber_name}
-                                                                onChange={(e) => updateMedication(index, 'prescriber_name', e.target.value)}
-                                                                className="w-1/2 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                                placeholder="Prescriber Name"
-                                                            />
-                                                            <input
-                                                                type="text"
-                                                                value={med.pharmacy_name}
-                                                                onChange={(e) => updateMedication(index, 'pharmacy_name', e.target.value)}
-                                                                className="w-1/2 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                                placeholder="Pharmacy Name"
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    {/* Row 4: Notes */}
-                                                    <div className="col-span-1 md:col-span-5">
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Clinical Notes</label>
+                                                    {/* Frequency */}
+                                                    <div>
+                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Frequency</label>
                                                         <input
                                                             type="text"
-                                                            value={med.notes}
-                                                            onChange={(e) => updateMedication(index, 'notes', e.target.value)}
+                                                            value={med.frequency}
+                                                            onChange={(e) => updateMedication(index, 'frequency', e.target.value)}
                                                             className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                            placeholder="Additional clinical notes about this medication..."
+                                                            placeholder="e.g. BID, TID, OD"
+                                                        />
+                                                    </div>
+                                                    
+                                                    {/* Duration */}
+                                                    <div>
+                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Duration</label>
+                                                        <input
+                                                            type="text"
+                                                            value={med.duration}
+                                                            onChange={(e) => updateMedication(index, 'duration', e.target.value)}
+                                                            className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                            placeholder="e.g. 7 days, 4 weeks"
                                                         />
                                                     </div>
                                                 </div>
@@ -1044,10 +1133,11 @@ const ClinicalPharmacyTool = () => {
                             <button
                                 onClick={handleRunAnalysis}
                                 disabled={selectedCategories.length === 0}
-                                className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold shadow-lg transition-all text-lg ${selectedCategories.length > 0
+                                className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold shadow-lg transition-all text-lg ${
+                                    selectedCategories.length > 0
                                         ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:shadow-xl hover:-translate-y-1'
                                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                    }`}
+                                }`}
                             >
                                 <FaPlay /> Run Clinical Analysis
                             </button>

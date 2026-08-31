@@ -358,15 +358,15 @@ const QuickSafetyCheck = () => {
                                 {hasInteractionsToShow() && (
                                     <div className="bg-amber-50 rounded-2xl p-6 md:p-8 shadow-sm border border-amber-200 mt-6">
                                         <h4 className="text-xl font-bold text-amber-900 flex items-center gap-2 mb-4">
-                                            <FaPills className="text-amber-600" /> Major Drug Interactions (Avoid With)
+                                            <FaPills className="text-amber-600" /> Drug Interactions (Avoid With)
                                         </h4>
                                         <ul className="list-disc list-inside space-y-2 text-amber-800 font-medium ml-2">
                                             {getFilteredInteractions()
                                                 .filter(interaction => interaction.includes(' + '))
                                                 .map((interaction, i) => {
                                                     let displayText = interaction;
-                                                    if (!displayText.includes('⚠️')) {
-                                                        displayText = `⚠️ ${displayText}`;
+                                                    if (!displayText.includes('')) {
+                                                        displayText = ` ${displayText}`;
                                                     }
                                                     return <li key={i}>{displayText}</li>;
                                                 })
@@ -386,8 +386,8 @@ const QuickSafetyCheck = () => {
                                                 .filter(incompatibility => incompatibility.includes(' + '))
                                                 .map((incompatibility, i) => {
                                                     let displayText = incompatibility;
-                                                    if (!displayText.includes('⚠️')) {
-                                                        displayText = `⚠️ ${displayText}`;
+                                                    if (!displayText.includes('')) {
+                                                        displayText = ` ${displayText}`;
                                                     }
                                                     return <li key={i}>{displayText}</li>;
                                                 })
@@ -402,8 +402,8 @@ const QuickSafetyCheck = () => {
                                 <div className="flex flex-col items-center gap-4">
                                     <div>
                                         <p className="text-green-600 text-lg font-black max-w-2xl mx-auto">
-                                            በተመረጡት የጤና ሁኔታዎች {selectedCategory !== 'all' && ` [${CategoryTitle({ type: selectedCategory })}]`} {result.medication}ን 
-                                            ለደህንነት ሲባል እንዳንጠቀም የሚያስጠነቅቅ መረጃ በአዲስ ሜድ (Addis Med) ውስጥ አልተገኘም። ሁልጊዜም የጤና ባለሙያ ያማክሩ።
+                                            {selectedCategory !== 'all' && ` [${CategoryTitle({ type: selectedCategory })}]`} {result.medication}ን 
+                                            በተመለከተ አዲስ ሜድ (Addis Med) ውስጥ መረጃ አልተገኘም። ሁልጊዜም የጤና ባለሙያ ያማክሩ።
                                         </p>
                                     </div>
                                 </div>

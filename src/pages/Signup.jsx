@@ -417,7 +417,7 @@ const Signup = () => {
                     license_number: formData.license_number?.trim() || '',
                     role: formData.role,
                     account_type: 'individual',
-                    individual_type: 'professional', // Add this field
+                    individual_type: 'professional',
                     selected_plan: selectedPlan,
                     skip_verification_email: false,
                     referral_code: formData.referral_code?.trim() || ''
@@ -542,6 +542,7 @@ const Signup = () => {
         }
     };
 
+    // 🔥 FIXED: handleChapaPayment with fallback for selectedPlanDetails
     const handleChapaPayment = async () => {
         setPaymentLoading(true);
 
@@ -557,8 +558,20 @@ const Signup = () => {
             // Get country from userData (or fallback from formData)
             const country = userData.country || formData.country || 'Ethiopia';
 
+            // 🔥 FIX: Ensure we have plan details
+            let planDetails = selectedPlanDetails;
+            if (!planDetails) {
+                // Try to get from SUBSCRIPTION_PLANS
+                planDetails = SUBSCRIPTION_PLANS.find(p => p.id === selectedPlan);
+                if (!planDetails) {
+                    setPlanError('Plan details not found. Please select a plan again.');
+                    setPaymentLoading(false);
+                    return;
+                }
+            }
+
             // Compute adjusted price based on country
-            const adjustedPrice = getAdjustedPriceForPlan(selectedPlanDetails, country);
+            const adjustedPrice = getAdjustedPriceForPlan(planDetails, country);
 
             // For healthcare client, use generated data
             if (userData.is_healthcare_client) {
@@ -677,7 +690,7 @@ const Signup = () => {
             setError('');
             setSelectedPlan('');
             setSelectedPlanDetails(null);
-            setIndividualType(null); // Reset individual type when going back
+            setIndividualType(null);
         } else if (step === 5) {
             setStep(4);
         }
@@ -703,7 +716,6 @@ const Signup = () => {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
-                                {/* Individual Selection */}
                                 <div
                                     onClick={() => setAccountTypeSelection('individual')}
                                     className="group relative bg-white border-2 border-gray-100 rounded-2xl md:rounded-3xl p-6 md:p-8 cursor-pointer hover:border-blue-500 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
@@ -725,7 +737,6 @@ const Signup = () => {
                                     </div>
                                 </div>
 
-                                {/* Organization Selection */}
                                 <div
                                     onClick={() => setAccountTypeSelection('company')}
                                     className="group relative bg-white border-2 border-gray-100 rounded-2xl md:rounded-3xl p-6 md:p-8 cursor-pointer hover:border-green-500 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
@@ -764,6 +775,10 @@ const Signup = () => {
 
         const filteredPlans = SUBSCRIPTION_PLANS.filter(plan => plan.account_type === accountTypeSelection);
         const isIndividual = accountTypeSelection === 'individual';
+        
+        // 🔥 FIX: Get country and calculate adjusted prices
+        const country = formData.country || 'Ethiopia';
+        const isEthiopia = country.toLowerCase().includes('ethiopia');
 
         return (
             <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
@@ -777,6 +792,24 @@ const Signup = () => {
                                 <FaArrowLeft className="mr-2" /> Back to Account Selection
                             </button>
                         )}
+                        {/* 🔥 FIX: Show detected country and pricing info */}
+                        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-3">
+                            <FaGlobe className="text-blue-500 text-lg" />
+                            <div>
+                                <span className="text-sm text-gray-700">
+                                    Detected Country: <span className="font-bold">{country}</span>
+                                </span>
+                                {!isEthiopia ? (
+                                    <span className="ml-3 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                                        🌍 International Pricing (3× base)
+                                    </span>
+                                ) : (
+                                    <span className="ml-3 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                                        ✅ Local Pricing (Ethiopia)
+                                    </span>
+                                )}
+                            </div>
+                        </div>
                     </div>
 
                     <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-10">
@@ -797,6 +830,9 @@ const Signup = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-center">
                             {filteredPlans.map((plan) => {
                                 const PlanIcon = plan.icon;
+                                // 🔥 FIX: Calculate adjusted price for each plan
+                                const adjustedPrice = getAdjustedPriceForPlan(plan, country);
+                                
                                 return (
                                     <div
                                         key={plan.id}
@@ -822,17 +858,37 @@ const Signup = () => {
 
                                         <div className="mb-6">
                                             <div className="text-3xl font-bold text-gray-800">
+<<<<<<< HEAD
                                                 {getAdjustedPriceForPlan(plan, formData.country)} <span className="text-base font-normal text-gray-500">{plan.currency}</span>
+=======
+                                                {adjustedPrice} <span className="text-base font-normal text-gray-500">{plan.currency}</span>
+>>>>>>> c357385899c3521b124990592b4347bed88f87eb
                                             </div>
                                             <p className="text-gray-500 text-sm">per {plan.interval}</p>
-                                            {plan.originalPrice && (
+                                            {!isEthiopia && plan.originalPrice && (
                                                 <div className="mt-2 inline-flex items-center gap-2">
+                                                    <span className="line-through text-gray-400 text-sm">{plan.originalPrice * 3}</span>
+                                                    <span className="text-green-600 font-bold text-sm">Save {(plan.originalPrice * 3) - adjustedPrice} ETB</span>
+                                                </div>
+                                            )}
+                                            {isEthiopia && plan.originalPrice && (
+                                                <div className="mt-2 inline-flex items-center gap-2">
+<<<<<<< HEAD
                                                     <span className="line-through text-gray-400 text-sm">
                                                         {(!formData.country || (formData.country.toLowerCase().includes('ethiopia') && !formData.country.toLowerCase().includes('outside'))) ? plan.originalPrice : plan.originalPrice * 3}
                                                     </span>
                                                     <span className="text-green-600 font-bold text-sm">
                                                         -Save {(!formData.country || (formData.country.toLowerCase().includes('ethiopia') && !formData.country.toLowerCase().includes('outside'))) ? (plan.originalPrice - plan.price) : (plan.originalPrice * 3 - plan.price * 3)} {plan.currency}
                                                     </span>
+=======
+                                                    <span className="line-through text-gray-400 text-sm">{plan.originalPrice}</span>
+                                                    <span className="text-green-600 font-bold text-sm">{plan.discount}</span>
+                                                </div>
+                                            )}
+                                            {!isEthiopia && (
+                                                <div className="mt-1 text-xs text-yellow-600">
+                                                    🌍 International pricing applied
+>>>>>>> c357385899c3521b124990592b4347bed88f87eb
                                                 </div>
                                             )}
                                         </div>
@@ -852,14 +908,13 @@ const Signup = () => {
                                                 : 'bg-gray-50 text-gray-800 hover:bg-gray-100'
                                                 }`}
                                         >
-                                            {selectedPlan === plan.id ? 'Selected' : 'Choose Plan'}
+                                            {selectedPlan === plan.id ? 'Selected' : `Choose ${adjustedPrice} ${plan.currency}`}
                                         </button>
                                     </div>
                                 );
                             })}
                         </div>
 
-                        {/* Navigation */}
                         <div className="flex flex-col md:flex-row gap-4 md:gap-6 mt-10">
                             <Link
                                 to="/login"
@@ -921,7 +976,6 @@ const Signup = () => {
             return (
                 <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
                     <div className="w-full max-w-2xl">
-                        {/* Progress Bar */}
                         <div className="mb-6 md:mb-8">
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
@@ -954,7 +1008,6 @@ const Signup = () => {
                             </p>
                         </div>
 
-                        {/* Selected Plan Info */}
                         {selectedPlanDetails && (
                             <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl">
                                 <div className="flex items-center justify-between">
@@ -1000,7 +1053,6 @@ const Signup = () => {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                                {/* Health Professional Option */}
                                 <div
                                     onClick={() => setIndividualType('professional')}
                                     className="group relative bg-white border-2 border-gray-100 rounded-2xl p-6 cursor-pointer hover:border-blue-500 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
@@ -1022,7 +1074,6 @@ const Signup = () => {
                                     </div>
                                 </div>
 
-                                {/* Health Care Client Option */}
                                 <div
                                     onClick={() => setIndividualType('client')}
                                     className="group relative bg-white border-2 border-gray-100 rounded-2xl p-6 cursor-pointer hover:border-green-500 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
@@ -1066,7 +1117,6 @@ const Signup = () => {
             return (
                 <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
                     <div className="w-full max-w-2xl">
-                        {/* Progress Bar */}
                         <div className="mb-6 md:mb-8">
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
@@ -1108,7 +1158,6 @@ const Signup = () => {
                             </p>
                         </div>
 
-                        {/* Selected Plan Info */}
                         {selectedPlanDetails && (
                             <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl">
                                 <div className="flex items-center justify-between">
@@ -1192,8 +1241,24 @@ const Signup = () => {
                                 </p>
                             </div>
 
-                            <form onSubmit={handleRegistrationSubmit} className="space-y-6">
+                            {/* FIX: Added country display for healthcare clients */}
+                            <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                                <div className="flex items-center gap-3">
+                                    <FaGlobe className="text-gray-500 text-xl" />
+                                    <div>
+                                        <p className="font-bold text-gray-800">
+                                            {formData.country || 'Detecting...'}
+                                            {formData.country && formData.country.toLowerCase().includes('ethiopia') ? (
+                                                <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Ethiopia (Local Pricing)</span>
+                                            ) : formData.country && (
+                                                <span className="ml-2 text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">International (3× Pricing)</span>
+                                            )}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
 
+                            <form onSubmit={handleRegistrationSubmit} className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <label className="block text-gray-700 font-medium mb-2">
@@ -1254,6 +1319,7 @@ const Signup = () => {
                                         </div>
                                     </div>
                                 </div>
+
                                 <div className="mt-6 mb-6">
                                     <label className="block text-gray-700 font-medium mb-2">
                                         <FaUser className="inline mr-2" />
@@ -1306,7 +1372,6 @@ const Signup = () => {
             return (
                 <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
                     <div className="w-full max-w-4xl">
-                        {/* Progress Bar */}
                         <div className="mb-6 md:mb-8">
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
@@ -1348,7 +1413,6 @@ const Signup = () => {
                             </p>
                         </div>
 
-                        {/* Selected Plan Info */}
                         {selectedPlanDetails && (
                             <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl">
                                 <div className="flex items-center justify-between">
@@ -1485,23 +1549,9 @@ const Signup = () => {
                                                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                             />
                                         </div>
-                                        <div>
-                                            <label className="block text-gray-700 font-medium mb-2">
-                                                <FaFileInvoiceDollar className="inline mr-2" />
-                                                TIN Number (Optional)
-                                            </label>
-                                            <input
-                                                type="text"
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                                placeholder="Enter TIN number (optional)"
-                                                value={formData.tin_number}
-                                                onChange={(e) => setFormData({ ...formData, tin_number: e.target.value })}
-                                            />
-                                        </div>
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        {/* Country - auto-detected, not editable */}
                                         <div>
                                             <label className="block text-gray-700 font-medium mb-2">
                                                 <FaGlobe className="inline mr-2" />
@@ -1520,34 +1570,6 @@ const Signup = () => {
                                                     <FaInfoCircle className="text-sm" />
                                                 </div>
                                             </div>
-                                            <p className="text-xs text-gray-500 mt-1">Auto-detected (not editable)</p>
-                                        </div>
-                                        <div>
-                                            <label className="block text-gray-700 font-medium mb-2">
-                                                <FaMapMarker className="inline mr-2" />
-                                                Region/State *
-                                            </label>
-                                            <input
-                                                type="text"
-                                                required
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                                placeholder="Enter your region"
-                                                value={formData.region}
-                                                onChange={(e) => setFormData({ ...formData, region: e.target.value })}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-gray-700 font-medium mb-2">
-                                                <FaMapMarker className="inline mr-2" />
-                                                Woreda/Zone (Optional)
-                                            </label>
-                                            <input
-                                                type="text"
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                                placeholder="Enter your woreda"
-                                                value={formData.woreda}
-                                                onChange={(e) => setFormData({ ...formData, woreda: e.target.value })}
-                                            />
                                         </div>
                                     </div>
 
@@ -1634,8 +1656,7 @@ const Signup = () => {
                             </form>
 
                             <div className="flex flex-col md:flex-row gap-4 pt-6 border-t mt-6">
-                                <button
-                                    type="button"
+                                <button                                    type="button"
                                     onClick={() => setIndividualType(null)}
                                     className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 px-4 rounded-xl transition"
                                 >
@@ -1669,7 +1690,6 @@ const Signup = () => {
         return (
             <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
                 <div className="w-full max-w-4xl">
-                    {/* Progress Bar */}
                     <div className="mb-6 md:mb-8">
                         <div className="flex items-center justify-between mb-2">
                             <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
@@ -1702,7 +1722,6 @@ const Signup = () => {
                         </p>
                     </div>
 
-                    {/* Selected Plan Info */}
                     {selectedPlanDetails && (
                         <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl">
                             <div className="flex items-center justify-between">
@@ -1876,7 +1895,6 @@ const Signup = () => {
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
-                                        {/* Country - auto-detected, not editable */}
                                         <div>
                                             <label className="block text-gray-700 font-medium mb-2">
                                                 <FaGlobe className="inline mr-2" />
@@ -2114,7 +2132,6 @@ const Signup = () => {
 
     // Step 4: Payment
     if (step === 4) {
-        // Compute adjusted price for display
         const country = formData.country || 'Ethiopia';
         const adjustedPrice = getAdjustedPriceForPlan(selectedPlanDetails, country);
         const isEthiopia = country.toLowerCase().includes('ethiopia');
@@ -2122,7 +2139,6 @@ const Signup = () => {
         return (
             <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
                 <div className="w-full max-w-7xl">
-                    {/* Progress Bar */}
                     <div className="mb-8 md:mb-10">
                         <div className="flex items-center justify-between mb-3 md:mb-4">
                             <div className="flex items-center gap-2 md:gap-3">
@@ -2175,7 +2191,6 @@ const Signup = () => {
                             </p>
                         </div>
 
-                        {/* Selected Plan Summary */}
                         {selectedPlanDetails && (
                             <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl border-2 border-blue-200">
                                 <div className="flex items-center justify-between mb-4">
@@ -2215,7 +2230,6 @@ const Signup = () => {
                             </div>
                         )}
 
-                        {/* Payment Instructions */}
                         <div className="mb-8 p-6 bg-blue-50 border-2 border-blue-200 rounded-2xl">
                             <div className="flex items-center gap-4">
                                 <FaCreditCard className="text-blue-500 text-xl flex-shrink-0" />
@@ -2228,7 +2242,6 @@ const Signup = () => {
                             </div>
                         </div>
 
-                        {/* Action Buttons */}
                         <div className="flex flex-col md:flex-row gap-4 md:gap-6">
                             <button
                                 onClick={goBack}
@@ -2295,7 +2308,6 @@ const Signup = () => {
                             </p>
                         </div>
 
-                        {/* Success Summary */}
                         <div className="mb-8 md:mb-10 p-6 md:p-8 bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl border-2 border-green-200">
                             <div className="flex items-center gap-4 md:gap-6 mb-6">
                                 <div className="w-12 h-12 md:w-16 md:h-16 bg-green-100 rounded-full flex items-center justify-center">
@@ -2330,7 +2342,6 @@ const Signup = () => {
                             </div>
                         </div>
 
-                        {/* Subscription Details */}
                         <div className="mb-8 md:mb-10 p-6 md:p-8 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl border-2 border-blue-200">
                             <div className="flex items-center gap-4 md:gap-6 mb-6">
                                 <div className="w-12 h-12 md:w-16 md:h-16 bg-blue-100 rounded-full flex items-center justify-center">
@@ -2365,7 +2376,6 @@ const Signup = () => {
                             </div>
                         </div>
 
-                        {/* Next Steps */}
                         <div className="mb-8 md:mb-10 p-6 md:p-8 bg-gradient-to-r from-purple-50 to-purple-100 rounded-2xl border-2 border-purple-200">
                             <div className="flex items-center gap-4 md:gap-6 mb-6">
                                 <div className="w-12 h-12 md:w-16 md:h-16 bg-purple-100 rounded-full flex items-center justify-center">
@@ -2414,7 +2424,6 @@ const Signup = () => {
                             </div>
                         </div>
 
-                        {/* Important Notes */}
                         <div className="mb-8 md:mb-10 p-6 md:p-8 bg-yellow-50 rounded-2xl border-2 border-yellow-200">
                             <div className="flex items-start gap-4">
                                 <FaInfoCircle className="text-yellow-500 text-xl md:text-2xl flex-shrink-0 mt-1" />
@@ -2442,7 +2451,6 @@ const Signup = () => {
                             </div>
                         </div>
 
-                        {/* Final Action Buttons */}
                         <div className="flex flex-col md:flex-row gap-4 md:gap-6">
                             <button
                                 onClick={() => navigate('/')}
