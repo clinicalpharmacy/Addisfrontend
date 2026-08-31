@@ -116,7 +116,7 @@ const SUBSCRIPTION_PLANS = [
 // Helper: adjust price based on country
 const getAdjustedPriceForPlan = (plan, country) => {
     if (!country) return plan.price; // fallback
-    const isEthiopia = country.toLowerCase().includes('ethiopia');
+    const isEthiopia = country.toLowerCase().includes('ethiopia') && !country.toLowerCase().includes('outside');
     return isEthiopia ? plan.price : plan.price * 3;
 };
 
@@ -822,13 +822,17 @@ const Signup = () => {
 
                                         <div className="mb-6">
                                             <div className="text-3xl font-bold text-gray-800">
-                                                {plan.price} <span className="text-base font-normal text-gray-500">{plan.currency}</span>
+                                                {getAdjustedPriceForPlan(plan, formData.country)} <span className="text-base font-normal text-gray-500">{plan.currency}</span>
                                             </div>
                                             <p className="text-gray-500 text-sm">per {plan.interval}</p>
                                             {plan.originalPrice && (
                                                 <div className="mt-2 inline-flex items-center gap-2">
-                                                    <span className="line-through text-gray-400 text-sm">{plan.originalPrice}</span>
-                                                    <span className="text-green-600 font-bold text-sm">-{plan.discount}</span>
+                                                    <span className="line-through text-gray-400 text-sm">
+                                                        {(!formData.country || (formData.country.toLowerCase().includes('ethiopia') && !formData.country.toLowerCase().includes('outside'))) ? plan.originalPrice : plan.originalPrice * 3}
+                                                    </span>
+                                                    <span className="text-green-600 font-bold text-sm">
+                                                        -Save {(!formData.country || (formData.country.toLowerCase().includes('ethiopia') && !formData.country.toLowerCase().includes('outside'))) ? (plan.originalPrice - plan.price) : (plan.originalPrice * 3 - plan.price * 3)} {plan.currency}
+                                                    </span>
                                                 </div>
                                             )}
                                         </div>
