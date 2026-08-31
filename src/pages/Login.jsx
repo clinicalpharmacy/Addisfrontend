@@ -28,6 +28,7 @@ const Login = () => {
     });
 
     const [showPassword, setShowPassword] = useState(false);
+    const [rememberMe, setRememberMe] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [systemOnline, setSystemOnline] = useState(null);
@@ -54,6 +55,13 @@ const Login = () => {
         // Check if user is already logged in
         const token = localStorage.getItem('token');
         const userRole = localStorage.getItem('userRole');
+
+        // Load remembered email/ID
+        const savedEmail = localStorage.getItem('rememberedEmail');
+        if (savedEmail) {
+            setFormData(prev => ({ ...prev, email: savedEmail }));
+            setRememberMe(true);
+        }
 
         if (token) {
             // Redirect based on role
@@ -142,6 +150,14 @@ const Login = () => {
 
             // Store authentication data
             localStorage.setItem('token', data.token);
+            
+            // Handle Remember Me
+            if (rememberMe) {
+                localStorage.setItem('rememberedEmail', trimmedEmail);
+            } else {
+                localStorage.removeItem('rememberedEmail');
+            }
+
             if (data.user) {
                 localStorage.setItem('user', JSON.stringify(data.user));
                 localStorage.setItem('userRole', data.user.role || '');
@@ -456,6 +472,19 @@ const Login = () => {
                                     </p>
                                 </div>
                             )}
+                        </div>
+
+                        {/* Remember Me Checkbox */}
+                        <div className="flex items-center justify-between px-2 py-1">
+                            <label className="flex items-center cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={rememberMe}
+                                    onChange={(e) => setRememberMe(e.target.checked)}
+                                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                                />
+                                <span className="ml-2 text-sm font-medium text-gray-700">Remember me</span>
+                            </label>
                         </div>
 
                         {/* Submit Button */}
