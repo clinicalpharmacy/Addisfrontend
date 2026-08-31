@@ -858,11 +858,7 @@ const Signup = () => {
 
                                         <div className="mb-6">
                                             <div className="text-3xl font-bold text-gray-800">
-<<<<<<< HEAD
                                                 {getAdjustedPriceForPlan(plan, formData.country)} <span className="text-base font-normal text-gray-500">{plan.currency}</span>
-=======
-                                                {adjustedPrice} <span className="text-base font-normal text-gray-500">{plan.currency}</span>
->>>>>>> c357385899c3521b124990592b4347bed88f87eb
                                             </div>
                                             <p className="text-gray-500 text-sm">per {plan.interval}</p>
                                             {!isEthiopia && plan.originalPrice && (
@@ -873,22 +869,17 @@ const Signup = () => {
                                             )}
                                             {isEthiopia && plan.originalPrice && (
                                                 <div className="mt-2 inline-flex items-center gap-2">
-<<<<<<< HEAD
                                                     <span className="line-through text-gray-400 text-sm">
                                                         {(!formData.country || (formData.country.toLowerCase().includes('ethiopia') && !formData.country.toLowerCase().includes('outside'))) ? plan.originalPrice : plan.originalPrice * 3}
                                                     </span>
                                                     <span className="text-green-600 font-bold text-sm">
                                                         -Save {(!formData.country || (formData.country.toLowerCase().includes('ethiopia') && !formData.country.toLowerCase().includes('outside'))) ? (plan.originalPrice - plan.price) : (plan.originalPrice * 3 - plan.price * 3)} {plan.currency}
                                                     </span>
-=======
-                                                    <span className="line-through text-gray-400 text-sm">{plan.originalPrice}</span>
-                                                    <span className="text-green-600 font-bold text-sm">{plan.discount}</span>
                                                 </div>
                                             )}
                                             {!isEthiopia && (
                                                 <div className="mt-1 text-xs text-yellow-600">
                                                     🌍 International pricing applied
->>>>>>> c357385899c3521b124990592b4347bed88f87eb
                                                 </div>
                                             )}
                                         </div>
