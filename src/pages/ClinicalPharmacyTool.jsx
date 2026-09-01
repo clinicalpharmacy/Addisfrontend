@@ -98,6 +98,17 @@ const ClinicalPharmacyTool = () => {
     const [showAnalysis, setShowAnalysis] = useState(false);
     const [activeTab, setActiveTab] = useState('analysis');
     const [isCategorySelectorOpen, setIsCategorySelectorOpen] = useState(true);
+    
+    // State for individual section collapse/expand
+    const [expandedSections, setExpandedSections] = useState({
+        demography: true,
+        anthropometry: true,
+        vitals: true,
+        labs: true,
+        diagnosis: true,
+        special_conditions: true,
+        medications: true
+    });
 
     // ✅ Get user role from localStorage (same logic as sidebar)
     const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -143,6 +154,14 @@ const ClinicalPharmacyTool = () => {
         // Labs Storage - for all lab tests
         labs: {}
     });
+
+    // Toggle section expansion
+    const toggleSection = (sectionId) => {
+        setExpandedSections(prev => ({
+            ...prev,
+            [sectionId]: !prev[sectionId]
+        }));
+    };
 
     // Calculate BSA using Du Bois method: BSA = 0.007184 × W^0.425 × H^0.725
     // Weight in kg, Height in cm
@@ -779,179 +798,214 @@ const ClinicalPharmacyTool = () => {
                         <div className="space-y-6">
                             {/* Demography - Left */}
                             {selectedCategories.includes('demography') && (
-                                <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500">
-                                    <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                        <FaUser className="text-blue-500" /> Demography
-                                    </h3>
-                                    <div className="grid grid-cols-1 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Age (Years)</label>
-                                            <input
-                                                type="number"
-                                                name="age"
-                                                value={formData.age}
-                                                onChange={handleInputChange}
-                                                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                placeholder="e.g. 45"
-                                            />
+                                <div className="bg-white rounded-xl shadow-sm border-l-4 border-blue-500 overflow-hidden">
+                                    <button
+                                        onClick={() => toggleSection('demography')}
+                                        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                                    >
+                                        <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                                            <FaUser className="text-blue-500" /> Demography
+                                        </h3>
+                                        <div className="text-gray-400">
+                                            {expandedSections.demography ? <FaChevronDown /> : <FaChevronRight />}
                                         </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-                                            <select
-                                                name="gender"
-                                                value={formData.gender}
-                                                onChange={handleInputChange}
-                                                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                            >
-                                                <option value="">Select Gender</option>
-                                                <option value="male">Male</option>
-                                                <option value="female">Female</option>
-                                            </select>
+                                    </button>
+                                    {expandedSections.demography && (
+                                        <div className="p-4 pt-0">
+                                            <div className="grid grid-cols-1 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Age (Years)</label>
+                                                    <input
+                                                        type="number"
+                                                        name="age"
+                                                        value={formData.age}
+                                                        onChange={handleInputChange}
+                                                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                        placeholder="e.g. 45"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                                                    <select
+                                                        name="gender"
+                                                        value={formData.gender}
+                                                        onChange={handleInputChange}
+                                                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                    >
+                                                        <option value="">Select Gender</option>
+                                                        <option value="male">Male</option>
+                                                        <option value="female">Female</option>
+                                                    </select>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
                                 </div>
                             )}
 
                             {/* Anthropometry - Left */}
                             {selectedCategories.includes('anthropometry') && (
-                                <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-green-500">
-                                    <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                        <FaWeight className="text-green-500" /> Anthropometry
-                                    </h3>
-                                    <div className="grid grid-cols-1 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Weight (kg)</label>
-                                            <input
-                                                type="number"
-                                                name="weight"
-                                                value={formData.weight}
-                                                onChange={handleInputChange}
-                                                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                                placeholder="e.g. 70"
-                                                step="0.1"
-                                            />
+                                <div className="bg-white rounded-xl shadow-sm border-l-4 border-green-500 overflow-hidden">
+                                    <button
+                                        onClick={() => toggleSection('anthropometry')}
+                                        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                                    >
+                                        <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                                            <FaWeight className="text-green-500" /> Anthropometry
+                                        </h3>
+                                        <div className="text-gray-400">
+                                            {expandedSections.anthropometry ? <FaChevronDown /> : <FaChevronRight />}
                                         </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Height (cm)</label>
-                                            <input
-                                                type="number"
-                                                name="height"
-                                                value={formData.height}
-                                                onChange={handleInputChange}
-                                                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                                placeholder="e.g. 175"
-                                                step="0.1"
-                                            />
+                                    </button>
+                                    {expandedSections.anthropometry && (
+                                        <div className="p-4 pt-0">
+                                            <div className="grid grid-cols-1 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Weight (kg)</label>
+                                                    <input
+                                                        type="number"
+                                                        name="weight"
+                                                        value={formData.weight}
+                                                        onChange={handleInputChange}
+                                                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                        placeholder="e.g. 70"
+                                                        step="0.1"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Height (cm)</label>
+                                                    <input
+                                                        type="number"
+                                                        name="height"
+                                                        value={formData.height}
+                                                        onChange={handleInputChange}
+                                                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                        placeholder="e.g. 175"
+                                                        step="0.1"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                        BSA (m²)
+                                                        <span className="text-xs text-gray-500 ml-1">(auto-calculated)</span>
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        name="bsa"
+                                                        value={formData.bsa}
+                                                        onChange={handleInputChange}
+                                                        className="w-full p-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed focus:ring-2 focus:ring-blue-500"
+                                                        placeholder="Auto-calculated"
+                                                        step="0.01"
+                                                        readOnly
+                                                    />
+                                                    <p className="text-xs text-gray-500 mt-1">
+                                                        Du Bois method: BSA = 0.007184 × W^0.425 × H^0.725
+                                                    </p>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                BSA (m²)
-                                                <span className="text-xs text-gray-500 ml-1">(auto-calculated)</span>
-                                            </label>
-                                            <input
-                                                type="number"
-                                                name="bsa"
-                                                value={formData.bsa}
-                                                onChange={handleInputChange}
-                                                className="w-full p-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed focus:ring-2 focus:ring-blue-500"
-                                                placeholder="Auto-calculated"
-                                                step="0.01"
-                                                readOnly
-                                            />
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                Du Bois method: BSA = 0.007184 × W^0.425 × H^0.725
-                                            </p>
-                                        </div>
-                                    </div>
+                                    )}
                                 </div>
                             )}
 
                             {/* Labs - Left Bottom */}
                             {selectedCategories.includes('labs') && (
-                                <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-yellow-500">
-                                    <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                        <FaVial className="text-yellow-500" /> Labs
-                                    </h3>
-                                    
-                                    {/* Sub-category selection */}
-                                    <div className="mb-4">
-                                        <p className="text-sm text-gray-600 mb-2">Select which lab tests you want to fill:</p>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                            {LAB_SUB_CATEGORIES.map((subCat) => (
-                                                <label 
-                                                    key={subCat.id}
-                                                    className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all ${
-                                                        selectedLabSubCategories.includes(subCat.id)
-                                                            ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                                            : 'border-gray-200 hover:border-blue-200 text-gray-600'
-                                                    }`}
-                                                >
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selectedLabSubCategories.includes(subCat.id)}
-                                                        onChange={() => handleLabSubCategoryToggle(subCat.id)}
-                                                        className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                                                    />
-                                                    <span className="text-sm font-medium">{subCat.label}</span>
-                                                </label>
-                                            ))}
+                                <div className="bg-white rounded-xl shadow-sm border-l-4 border-yellow-500 overflow-hidden">
+                                    <button
+                                        onClick={() => toggleSection('labs')}
+                                        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                                    >
+                                        <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                                            <FaVial className="text-yellow-500" /> Labs
+                                        </h3>
+                                        <div className="text-gray-400">
+                                            {expandedSections.labs ? <FaChevronDown /> : <FaChevronRight />}
                                         </div>
-                                    </div>
-
-                                    {/* Show selected lab categories */}
-                                    <div className="space-y-6">
-                                        {LAB_SUB_CATEGORIES.filter(subCat => selectedLabSubCategories.includes(subCat.id)).map((labCategory) => (
-                                            <div key={labCategory.id} className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                                                <h4 className="text-md font-semibold text-gray-700 mb-3">{labCategory.label}</h4>
-                                                <div className="grid grid-cols-2 gap-3">
-                                                    {labCategory.tests.map((test) => {
-                                                        const key = test.name.toLowerCase().replace(/ /g, '_').replace(/[^a-z0-9_]/g, '');
-                                                        const isEGFR = key === 'egfr';
-                                                        const hasRequiredFields = formData.age && formData.gender && 
-                                                                                 formData.labs?.serum_creatinine &&
-                                                                                 parseFloat(formData.age) > 0 &&
-                                                                                 parseFloat(formData.labs.serum_creatinine) > 0;
-                                                        
-                                                        return (
-                                                            <div key={key}>
-                                                                <label className="block text-xs font-medium text-gray-700 mb-1">
-                                                                    {test.name} {test.unit ? `(${test.unit})` : ''}
-                                                                </label>
-                                                                <input 
-                                                                    type="number" 
-                                                                    step="any" 
-                                                                    name={key} 
-                                                                    value={formData.labs[key] || ''} 
-                                                                    onChange={handleLabChange} 
-                                                                    className={`w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 ${
-                                                                        isEGFR ? 'bg-gray-100 cursor-not-allowed' : ''
-                                                                    }`}
-                                                                    readOnly={isEGFR}
-                                                                    placeholder={isEGFR && !hasRequiredFields ? 'Please fill required fields' : ''}
-                                                                />
-                                                                {isEGFR && formData.labs.egfr && hasRequiredFields && (
-                                                                    <p className="text-xs text-blue-600 mt-1">
-                                                                        Auto-calculated (2021 CKD-EPI)
-                                                                    </p>
-                                                                )}
-                                                                {isEGFR && !hasRequiredFields && formData.labs.serum_creatinine && (
-                                                                    <p className="text-xs text-orange-500 mt-1">
-                                                                        Please fill Age and Gender
-                                                                    </p>
-                                                                )}
-                                                            </div>
-                                                        );
-                                                    })}
+                                    </button>
+                                    {expandedSections.labs && (
+                                        <div className="p-4 pt-0">
+                                            {/* Sub-category selection */}
+                                            <div className="mb-4">
+                                                <p className="text-sm text-gray-600 mb-2">Select which lab tests you want to fill:</p>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                    {LAB_SUB_CATEGORIES.map((subCat) => (
+                                                        <label 
+                                                            key={subCat.id}
+                                                            className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all ${
+                                                                selectedLabSubCategories.includes(subCat.id)
+                                                                    ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                                                    : 'border-gray-200 hover:border-blue-200 text-gray-600'
+                                                            }`}
+                                                        >
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={selectedLabSubCategories.includes(subCat.id)}
+                                                                onChange={() => handleLabSubCategoryToggle(subCat.id)}
+                                                                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                                                            />
+                                                            <span className="text-sm font-medium">{subCat.label}</span>
+                                                        </label>
+                                                    ))}
                                                 </div>
                                             </div>
-                                        ))}
-                                        
-                                        {selectedLabSubCategories.length === 0 && (
-                                            <div className="text-center py-4 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                                                Please select at least one lab test category from above.
+
+                                            {/* Show selected lab categories */}
+                                            <div className="space-y-6">
+                                                {LAB_SUB_CATEGORIES.filter(subCat => selectedLabSubCategories.includes(subCat.id)).map((labCategory) => (
+                                                    <div key={labCategory.id} className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                                                        <h4 className="text-md font-semibold text-gray-700 mb-3">{labCategory.label}</h4>
+                                                        <div className="grid grid-cols-2 gap-3">
+                                                            {labCategory.tests.map((test) => {
+                                                                const key = test.name.toLowerCase().replace(/ /g, '_').replace(/[^a-z0-9_]/g, '');
+                                                                const isEGFR = key === 'egfr';
+                                                                const hasRequiredFields = formData.age && formData.gender && 
+                                                                                         formData.labs?.serum_creatinine &&
+                                                                                         parseFloat(formData.age) > 0 &&
+                                                                                         parseFloat(formData.labs.serum_creatinine) > 0;
+                                                                
+                                                                return (
+                                                                    <div key={key}>
+                                                                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                                            {test.name} {test.unit ? `(${test.unit})` : ''}
+                                                                        </label>
+                                                                        <input 
+                                                                            type="number" 
+                                                                            step="any" 
+                                                                            name={key} 
+                                                                            value={formData.labs[key] || ''} 
+                                                                            onChange={handleLabChange} 
+                                                                            className={`w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 ${
+                                                                                isEGFR ? 'bg-gray-100 cursor-not-allowed' : ''
+                                                                            }`}
+                                                                            readOnly={isEGFR}
+                                                                            placeholder={isEGFR && !hasRequiredFields ? 'Please fill required fields' : ''}
+                                                                        />
+                                                                        {isEGFR && formData.labs.egfr && hasRequiredFields && (
+                                                                            <p className="text-xs text-blue-600 mt-1">
+                                                                                Auto-calculated (2021 CKD-EPI)
+                                                                            </p>
+                                                                        )}
+                                                                        {isEGFR && !hasRequiredFields && formData.labs.serum_creatinine && (
+                                                                            <p className="text-xs text-orange-500 mt-1">
+                                                                                Please fill Age and Gender
+                                                                            </p>
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                
+                                                {selectedLabSubCategories.length === 0 && (
+                                                    <div className="text-center py-4 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                                                        Please select at least one lab test category from above.
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
-                                    </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -960,287 +1014,347 @@ const ClinicalPharmacyTool = () => {
                         <div className="space-y-6">
                             {/* Vitals - Right */}
                             {selectedCategories.includes('vitals') && (
-                                <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-red-500">
-                                    <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                        <FaHeartbeat className="text-red-500" /> Vitals
-                                    </h3>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Blood Pressure (mmHg)</label>
-                                            <input
-                                                type="text"
-                                                name="blood_pressure"
-                                                value={formData.blood_pressure}
-                                                onChange={handleInputChange}
-                                                placeholder="120/80"
-                                                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                            />
+                                <div className="bg-white rounded-xl shadow-sm border-l-4 border-red-500 overflow-hidden">
+                                    <button
+                                        onClick={() => toggleSection('vitals')}
+                                        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                                    >
+                                        <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                                            <FaHeartbeat className="text-red-500" /> Vitals
+                                        </h3>
+                                        <div className="text-gray-400">
+                                            {expandedSections.vitals ? <FaChevronDown /> : <FaChevronRight />}
                                         </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Heart Rate (bpm)</label>
-                                            <input
-                                                type="number"
-                                                name="heart_rate"
-                                                value={formData.heart_rate}
-                                                onChange={handleInputChange}
-                                                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                            />
+                                    </button>
+                                    {expandedSections.vitals && (
+                                        <div className="p-4 pt-0">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Blood Pressure (mmHg)</label>
+                                                    <input
+                                                        type="text"
+                                                        name="blood_pressure"
+                                                        value={formData.blood_pressure}
+                                                        onChange={handleInputChange}
+                                                        placeholder="120/80"
+                                                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Heart Rate (bpm)</label>
+                                                    <input
+                                                        type="number"
+                                                        name="heart_rate"
+                                                        value={formData.heart_rate}
+                                                        onChange={handleInputChange}
+                                                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Respiratory Rate</label>
+                                                    <input
+                                                        type="number"
+                                                        name="respiratory_rate"
+                                                        value={formData.respiratory_rate}
+                                                        onChange={handleInputChange}
+                                                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Temperature (°C)</label>
+                                                    <input
+                                                        type="number"
+                                                        step="0.1"
+                                                        name="temperature"
+                                                        value={formData.temperature}
+                                                        onChange={handleInputChange}
+                                                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">O2 Saturation (%)</label>
+                                                    <input
+                                                        type="number"
+                                                        name="oxygen_saturation"
+                                                        value={formData.oxygen_saturation}
+                                                        onChange={handleInputChange}
+                                                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                    />
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Respiratory Rate</label>
-                                            <input
-                                                type="number"
-                                                name="respiratory_rate"
-                                                value={formData.respiratory_rate}
-                                                onChange={handleInputChange}
-                                                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Temperature (°C)</label>
-                                            <input
-                                                type="number"
-                                                step="0.1"
-                                                name="temperature"
-                                                value={formData.temperature}
-                                                onChange={handleInputChange}
-                                                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">O2 Saturation (%)</label>
-                                            <input
-                                                type="number"
-                                                name="oxygen_saturation"
-                                                value={formData.oxygen_saturation}
-                                                onChange={handleInputChange}
-                                                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                            />
-                                        </div>
-                                    </div>
+                                    )}
                                 </div>
                             )}
 
                             {/* Diagnosis - Right */}
                             {selectedCategories.includes('diagnosis') && (
-                                <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-indigo-500">
-                                    <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                        <FaNotesMedical className="text-indigo-500" /> Diagnosis
-                                    </h3>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Primary/Secondary Diagnosis</label>
-                                        <textarea
-                                            name="diagnosis"
-                                            value={formData.diagnosis}
-                                            onChange={handleInputChange}
-                                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 h-24"
-                                            placeholder="e.g. Hypertension, Type 2 Diabetes"
-                                        />
-                                    </div>
+                                <div className="bg-white rounded-xl shadow-sm border-l-4 border-indigo-500 overflow-hidden">
+                                    <button
+                                        onClick={() => toggleSection('diagnosis')}
+                                        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                                    >
+                                        <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                                            <FaNotesMedical className="text-indigo-500" /> Diagnosis
+                                        </h3>
+                                        <div className="text-gray-400">
+                                            {expandedSections.diagnosis ? <FaChevronDown /> : <FaChevronRight />}
+                                        </div>
+                                    </button>
+                                    {expandedSections.diagnosis && (
+                                        <div className="p-4 pt-0">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Primary/Secondary Diagnosis</label>
+                                                <textarea
+                                                    name="diagnosis"
+                                                    value={formData.diagnosis}
+                                                    onChange={handleInputChange}
+                                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 h-24"
+                                                    placeholder="e.g. Hypertension, Type 2 Diabetes"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
                             {/* Special Conditions - Right */}
                             {selectedCategories.includes('special_conditions') && (
-                                <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-orange-500">
-                                    <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                        <FaExclamationCircle className="text-orange-500" /> Special Conditions
-                                    </h3>
-                                    <div className="grid grid-cols-1 gap-3">
-                                        <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-                                            <input
-                                                type="checkbox"
-                                                name="kidney_failure"
-                                                checked={formData.kidney_failure}
-                                                onChange={handleInputChange}
-                                                className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
-                                            />
-                                            <span className="font-medium text-gray-700">Kidney Failure / Impaired Renal Function</span>
-                                        </label>
-                                        <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-                                            <input
-                                                type="checkbox"
-                                                name="liver_failure"
-                                                checked={formData.liver_failure}
-                                                onChange={handleInputChange}
-                                                className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
-                                            />
-                                            <span className="font-medium text-gray-700">Liver Failure / Hepatic Impairment</span>
-                                        </label>
-                                        {formData.gender === 'female' && (
-                                            <>
+                                <div className="bg-white rounded-xl shadow-sm border-l-4 border-orange-500 overflow-hidden">
+                                    <button
+                                        onClick={() => toggleSection('special_conditions')}
+                                        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                                    >
+                                        <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                                            <FaExclamationCircle className="text-orange-500" /> Special Conditions
+                                        </h3>
+                                        <div className="text-gray-400">
+                                            {expandedSections.special_conditions ? <FaChevronDown /> : <FaChevronRight />}
+                                        </div>
+                                    </button>
+                                    {expandedSections.special_conditions && (
+                                        <div className="p-4 pt-0">
+                                            <div className="grid grid-cols-1 gap-3">
                                                 <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
                                                     <input
                                                         type="checkbox"
-                                                        name="is_pregnant"
-                                                        checked={formData.is_pregnant}
+                                                        name="kidney_failure"
+                                                        checked={formData.kidney_failure}
                                                         onChange={handleInputChange}
                                                         className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
                                                     />
-                                                    <span className="font-medium text-gray-700">Pregnant</span>
+                                                    <span className="font-medium text-gray-700">Kidney Failure / Impaired Renal Function</span>
                                                 </label>
                                                 <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
                                                     <input
                                                         type="checkbox"
-                                                        name="is_lactating"
-                                                        checked={formData.is_lactating}
+                                                        name="liver_failure"
+                                                        checked={formData.liver_failure}
                                                         onChange={handleInputChange}
                                                         className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
                                                     />
-                                                    <span className="font-medium text-gray-700">Lactating / Breastfeeding</span>
+                                                    <span className="font-medium text-gray-700">Liver Failure / Hepatic Impairment</span>
                                                 </label>
-                                            </>
-                                        )}
-                                    </div>
+                                                {formData.gender === 'female' && (
+                                                    <>
+                                                        <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                                                            <input
+                                                                type="checkbox"
+                                                                name="is_pregnant"
+                                                                checked={formData.is_pregnant}
+                                                                onChange={handleInputChange}
+                                                                className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                                                            />
+                                                            <span className="font-medium text-gray-700">Pregnant</span>
+                                                        </label>
+                                                        <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                                                            <input
+                                                                type="checkbox"
+                                                                name="is_lactating"
+                                                                checked={formData.is_lactating}
+                                                                onChange={handleInputChange}
+                                                                className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                                                            />
+                                                            <span className="font-medium text-gray-700">Lactating / Breastfeeding</span>
+                                                        </label>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
                             {/* Medications - Right Bottom */}
                             {selectedCategories.includes('medications') && (
-                                <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-purple-500">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                                            <FaPills className="text-purple-500" /> Medications
-                                        </h3>
-                                        <button
-                                            onClick={addMedication}
-                                            className="flex items-center gap-2 text-sm bg-purple-100 text-purple-700 px-3 py-1.5 rounded-lg hover:bg-purple-200 font-medium"
-                                        >
-                                            <FaPlus /> Add Medication
-                                        </button>
-                                    </div>
-                            
-                                    {formData.medications.length === 0 ? (
-                                        <div className="text-center py-6 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                                            No medications added. Click "Add Medication" to include drugs in the analysis.
+                                <div className="bg-white rounded-xl shadow-sm border-l-4 border-purple-500 overflow-hidden">
+                                    <button
+                                        onClick={() => toggleSection('medications')}
+                                        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                                                <FaPills className="text-purple-500" /> Medications
+                                            </h3>
+                                            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                                                {formData.medications.length}
+                                            </span>
                                         </div>
-                                    ) : (
-                                        <div className="space-y-4 max-h-[400px] overflow-y-auto pr-1">
-                                            {formData.medications.map((med, index) => (
-                                                <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200 relative">
-                                                    <button
-                                                        onClick={() => removeMedication(index)}
-                                                        className="absolute top-2 right-2 text-red-400 hover:text-red-600 p-1 bg-white rounded-full shadow-sm hover:shadow"
-                                                        title="Remove medication"
-                                                    >
-                                                        <FaTimes className="w-3 h-3" />
-                                                    </button>
-                                                    
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                        {/* Drug Name */}
-                                                        <div>
-                                                            <label className="block text-xs font-medium text-gray-700 mb-1">Drug Name</label>
-                                                            <input
-                                                                type="text"
-                                                                value={med.drug_name}
-                                                                onChange={(e) => updateMedication(index, 'drug_name', e.target.value)}
-                                                                className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                                placeholder="Generic Name"
-                                                            />
-                                                        </div>
-                                                        
-                                                        {/* Brand Name */}
-                                                        <div>
-                                                            <label className="block text-xs font-medium text-gray-700 mb-1">Brand Name</label>
-                                                            <input
-                                                                type="text"
-                                                                value={med.brand_name}
-                                                                onChange={(e) => updateMedication(index, 'brand_name', e.target.value)}
-                                                                className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                                placeholder="Brand Name"
-                                                            />
-                                                        </div>
-                                                        
-                                                        {/* Indication */}
-                                                        <div>
-                                                            <label className="block text-xs font-medium text-gray-700 mb-1">Indication</label>
-                                                            <input
-                                                                type="text"
-                                                                value={med.indication}
-                                                                onChange={(e) => updateMedication(index, 'indication', e.target.value)}
-                                                                className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                                placeholder="Reason for use"
-                                                            />
-                                                        </div>
-                                                        
-                                                        {/* Dose / Unit */}
-                                                        <div>
-                                                            <label className="block text-xs font-medium text-gray-700 mb-1">Dose / Unit</label>
-                                                            <div className="flex gap-1">
-                                                                <input
-                                                                    type="text"
-                                                                    value={med.dose}
-                                                                    onChange={(e) => updateMedication(index, 'dose', e.target.value)}
-                                                                    className="flex-1 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                                    placeholder="Dose"
-                                                                />
-                                                                <input
-                                                                    type="text"
-                                                                    value={med.unit}
-                                                                    onChange={(e) => updateMedication(index, 'unit', e.target.value)}
-                                                                    className="w-16 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                                    placeholder="Unit"
-                                                                />
+                                        <div className="flex items-center gap-2">
+                                            {!expandedSections.medications && formData.medications.length > 0 && (
+                                                <span className="text-xs text-gray-400 mr-2">
+                                                    {formData.medications.length} medication{formData.medications.length > 1 ? 's' : ''}
+                                                </span>
+                                            )}
+                                            <div className="text-gray-400">
+                                                {expandedSections.medications ? <FaChevronDown /> : <FaChevronRight />}
+                                            </div>
+                                        </div>
+                                    </button>
+                                    {expandedSections.medications && (
+                                        <div className="p-4 pt-0">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <button
+                                                    onClick={addMedication}
+                                                    className="flex items-center gap-2 text-sm bg-purple-100 text-purple-700 px-3 py-1.5 rounded-lg hover:bg-purple-200 font-medium"
+                                                >
+                                                    <FaPlus /> Add Medication
+                                                </button>
+                                            </div>
+                                    
+                                            {formData.medications.length === 0 ? (
+                                                <div className="text-center py-6 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                                                    No medications added. Click "Add Medication" to include drugs in the analysis.
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-4 max-h-[400px] overflow-y-auto pr-1">
+                                                    {formData.medications.map((med, index) => (
+                                                        <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200 relative">
+                                                            <button
+                                                                onClick={() => removeMedication(index)}
+                                                                className="absolute top-2 right-2 text-red-400 hover:text-red-600 p-1 bg-white rounded-full shadow-sm hover:shadow"
+                                                                title="Remove medication"
+                                                            >
+                                                                <FaTimes className="w-3 h-3" />
+                                                            </button>
+                                                            
+                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                                {/* Drug Name */}
+                                                                <div>
+                                                                    <label className="block text-xs font-medium text-gray-700 mb-1">Drug Name</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={med.drug_name}
+                                                                        onChange={(e) => updateMedication(index, 'drug_name', e.target.value)}
+                                                                        className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                        placeholder="Generic Name"
+                                                                    />
+                                                                </div>
+                                                                
+                                                                {/* Brand Name */}
+                                                                <div>
+                                                                    <label className="block text-xs font-medium text-gray-700 mb-1">Brand Name</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={med.brand_name}
+                                                                        onChange={(e) => updateMedication(index, 'brand_name', e.target.value)}
+                                                                        className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                        placeholder="Brand Name"
+                                                                    />
+                                                                </div>
+                                                                
+                                                                {/* Indication */}
+                                                                <div>
+                                                                    <label className="block text-xs font-medium text-gray-700 mb-1">Indication</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={med.indication}
+                                                                        onChange={(e) => updateMedication(index, 'indication', e.target.value)}
+                                                                        className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                        placeholder="Reason for use"
+                                                                    />
+                                                                </div>
+                                                                
+                                                                {/* Dose / Unit */}
+                                                                <div>
+                                                                    <label className="block text-xs font-medium text-gray-700 mb-1">Dose / Unit</label>
+                                                                    <div className="flex gap-1">
+                                                                        <input
+                                                                            type="text"
+                                                                            value={med.dose}
+                                                                            onChange={(e) => updateMedication(index, 'dose', e.target.value)}
+                                                                            className="flex-1 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                            placeholder="Dose"
+                                                                        />
+                                                                        <input
+                                                                            type="text"
+                                                                            value={med.unit}
+                                                                            onChange={(e) => updateMedication(index, 'unit', e.target.value)}
+                                                                            className="w-16 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                            placeholder="Unit"
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                                
+                                                                {/* Dosage Form */}
+                                                                <div>
+                                                                    <label className="block text-xs font-medium text-gray-700 mb-1">Dosage Form</label>
+                                                                    <select
+                                                                        value={med.dosage_form}
+                                                                        onChange={(e) => updateMedication(index, 'dosage_form', e.target.value)}
+                                                                        className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500 bg-white"
+                                                                    >
+                                                                        <option value="Tablet">Tablet</option>
+                                                                        <option value="Capsule">Capsule</option>
+                                                                        <option value="Injection">Injection</option>
+                                                                        <option value="Syrup">Syrup</option>
+                                                                        <option value="Inhaler">Inhaler</option>
+                                                                        <option value="Cream/Ointment">Cream/Ointment</option>
+                                                                        <option value="Drops">Drops</option>
+                                                                        <option value="Other">Other</option>
+                                                                    </select>
+                                                                </div>
+                                                                
+                                                                {/* Route */}
+                                                                <div>
+                                                                    <label className="block text-xs font-medium text-gray-700 mb-1">Route</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={med.route}
+                                                                        onChange={(e) => updateMedication(index, 'route', e.target.value)}
+                                                                        className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                        placeholder="e.g. PO, IV, IM"
+                                                                    />
+                                                                </div>
+                                                                
+                                                                {/* Frequency */}
+                                                                <div>
+                                                                    <label className="block text-xs font-medium text-gray-700 mb-1">Frequency</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={med.frequency}
+                                                                        onChange={(e) => updateMedication(index, 'frequency', e.target.value)}
+                                                                        className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                        placeholder="e.g. BID, TID, OD"
+                                                                    />
+                                                                </div>
+                                                                
+                                                                {/* Duration */}
+                                                                <div>
+                                                                    <label className="block text-xs font-medium text-gray-700 mb-1">Duration</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={med.duration}
+                                                                        onChange={(e) => updateMedication(index, 'duration', e.target.value)}
+                                                                        className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                        placeholder="e.g. 7 days, 4 weeks"
+                                                                    />
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                        
-                                                        {/* Dosage Form */}
-                                                        <div>
-                                                            <label className="block text-xs font-medium text-gray-700 mb-1">Dosage Form</label>
-                                                            <select
-                                                                value={med.dosage_form}
-                                                                onChange={(e) => updateMedication(index, 'dosage_form', e.target.value)}
-                                                                className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500 bg-white"
-                                                            >
-                                                                <option value="Tablet">Tablet</option>
-                                                                <option value="Capsule">Capsule</option>
-                                                                <option value="Injection">Injection</option>
-                                                                <option value="Syrup">Syrup</option>
-                                                                <option value="Inhaler">Inhaler</option>
-                                                                <option value="Cream/Ointment">Cream/Ointment</option>
-                                                                <option value="Drops">Drops</option>
-                                                                <option value="Other">Other</option>
-                                                            </select>
-                                                        </div>
-                                                        
-                                                        {/* Route */}
-                                                        <div>
-                                                            <label className="block text-xs font-medium text-gray-700 mb-1">Route</label>
-                                                            <input
-                                                                type="text"
-                                                                value={med.route}
-                                                                onChange={(e) => updateMedication(index, 'route', e.target.value)}
-                                                                className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                                placeholder="e.g. PO, IV, IM"
-                                                            />
-                                                        </div>
-                                                        
-                                                        {/* Frequency */}
-                                                        <div>
-                                                            <label className="block text-xs font-medium text-gray-700 mb-1">Frequency</label>
-                                                            <input
-                                                                type="text"
-                                                                value={med.frequency}
-                                                                onChange={(e) => updateMedication(index, 'frequency', e.target.value)}
-                                                                className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                                placeholder="e.g. BID, TID, OD"
-                                                            />
-                                                        </div>
-                                                        
-                                                        {/* Duration */}
-                                                        <div>
-                                                            <label className="block text-xs font-medium text-gray-700 mb-1">Duration</label>
-                                                            <input
-                                                                type="text"
-                                                                value={med.duration}
-                                                                onChange={(e) => updateMedication(index, 'duration', e.target.value)}
-                                                                className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                                placeholder="e.g. 7 days, 4 weeks"
-                                                            />
-                                                        </div>
-                                                    </div>
+                                                    ))}
                                                 </div>
-                                            ))}
+                                            )}
                                         </div>
                                     )}
                                 </div>
