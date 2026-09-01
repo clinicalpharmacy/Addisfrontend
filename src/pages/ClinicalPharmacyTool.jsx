@@ -153,6 +153,33 @@ const ClinicalPharmacyTool = () => {
         return bsa.toFixed(2);
     };
 
+    // Calculate eGFR using 2021 CKD-EPI creatinine formula
+    // eGFR = 142 × min(Scr/κ, 1)^α × max(Scr/κ, 1)^-1.200 × 0.9938^Age × 1.012 [if female]
+    // Where:
+    // - Scr = Serum creatinine in mg/dL
+    // - κ = 0.7 (female) or 0.9 (male)
+    // - α = -0.241 (female) or -0.302 (male)
+    const calculateEGFR = (creatinine, age, gender) => {
+        if (!creatinine || !age || !gender || creatinine <= 0 || age <= 0) return '';
+        
+        const scr = parseFloat(creatinine);
+        const ageNum = parseFloat(age);
+        const isFemale = gender.toLowerCase() === 'female';
+        
+        // Constants for 2021 CKD-EPI formula
+        const kappa = isFemale ? 0.7 : 0.9;
+        const alpha = isFemale ? -0.241 : -0.302;
+        const sexFactor = isFemale ? 1.012 : 1.0;
+        
+        // Calculate eGFR
+        const minRatio = Math.min(scr / kappa, 1);
+        const maxRatio = Math.max(scr / kappa, 1);
+        
+        const egfr = 142 * Math.pow(minRatio, alpha) * Math.pow(maxRatio, -1.200) * Math.pow(0.9938, ageNum) * sexFactor;
+        
+        return Math.round(egfr).toString();
+    };
+
     // Add this useEffect after the formData state declaration
     useEffect(() => {
         // Calculate BSA when weight and height are both provided
@@ -173,6 +200,28 @@ const ClinicalPharmacyTool = () => {
             }
         }
     }, [formData.weight, formData.height]);
+
+    // Auto-calculate eGFR when creatinine, age, or gender changes
+    useEffect(() => {
+        const creatinine = formData.labs?.serum_creatinine;
+        const age = formData.age;
+        const gender = formData.gender;
+        
+        if (creatinine && age && gender) {
+            const calculatedEGFR = calculateEGFR(creatinine, age, gender);
+            
+            // Only update if eGFR has changed to avoid infinite loop
+            if (formData.labs?.egfr !== calculatedEGFR) {
+                setFormData(prev => ({
+                    ...prev,
+                    labs: {
+                        ...prev.labs,
+                        egfr: calculatedEGFR
+                    }
+                }));
+            }
+        }
+    }, [formData.labs?.serum_creatinine, formData.age, formData.gender]);
     
     const handleCategoryToggle = (categoryId) => {
         if (selectedCategories.includes(categoryId)) {
@@ -887,7 +936,13 @@ const ClinicalPharmacyTool = () => {
                                                                 value={formData.labs[key] || ''} 
                                                                 onChange={handleLabChange} 
                                                                 className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" 
+                                                                readOnly={key === 'egfr'}
                                                             />
+                                                            {key === 'egfr' && formData.labs.egfr && (
+                                                                <p className="text-xs text-blue-600 mt-1">
+                                                                    Auto-calculated (2021 CKD-EPI)
+                                                                </p>
+                                                            )}
                                                         </div>
                                                     );
                                                 })}
