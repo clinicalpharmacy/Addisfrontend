@@ -288,7 +288,7 @@ const QuickSafetyCheck = () => {
                                 <option value="pregnancy">Pregnancy</option>
                                 <option value="lactation">Breastfeeding</option>
                                 <option value="elderly">Elderly (≥ 65 years old)</option>
-                                <option value="neonate">Neonates</option>
+                                <option value="neonate">ጨቅላ ህጻን</option>
                                 <option value="kidney_failure">Kidney Failure</option>
                                 <option value="liver_failure">Liver Failure</option>
                                 <option value="drug_interactions">Drug Interactions</option>
