@@ -207,7 +207,12 @@ const ClinicalPharmacyTool = () => {
         const age = formData.age;
         const gender = formData.gender;
         
-        if (creatinine && age && gender) {
+        // Check if all required fields are filled
+        const hasRequiredFields = creatinine && age && gender && 
+                                  parseFloat(creatinine) > 0 && 
+                                  parseFloat(age) > 0;
+        
+        if (hasRequiredFields) {
             const calculatedEGFR = calculateEGFR(creatinine, age, gender);
             
             // Only update if eGFR has changed to avoid infinite loop
@@ -217,6 +222,18 @@ const ClinicalPharmacyTool = () => {
                     labs: {
                         ...prev.labs,
                         egfr: calculatedEGFR
+                    }
+                }));
+            }
+        } else {
+            // If required fields are missing, set eGFR to empty string
+            // This will show the placeholder message
+            if (formData.labs?.egfr !== '') {
+                setFormData(prev => ({
+                    ...prev,
+                    labs: {
+                        ...prev.labs,
+                        egfr: ''
                     }
                 }));
             }
@@ -924,6 +941,12 @@ const ClinicalPharmacyTool = () => {
                                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                                 {labCategory.tests.map((test) => {
                                                     const key = test.name.toLowerCase().replace(/ /g, '_').replace(/[^a-z0-9_]/g, '');
+                                                    const isEGFR = key === 'egfr';
+                                                    const hasRequiredFields = formData.age && formData.gender && 
+                                                                             formData.labs?.serum_creatinine &&
+                                                                             parseFloat(formData.age) > 0 &&
+                                                                             parseFloat(formData.labs.serum_creatinine) > 0;
+                                                    
                                                     return (
                                                         <div key={key}>
                                                             <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -935,12 +958,20 @@ const ClinicalPharmacyTool = () => {
                                                                 name={key} 
                                                                 value={formData.labs[key] || ''} 
                                                                 onChange={handleLabChange} 
-                                                                className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" 
-                                                                readOnly={key === 'egfr'}
+                                                                className={`w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 ${
+                                                                    isEGFR ? 'bg-gray-100 cursor-not-allowed' : ''
+                                                                }`}
+                                                                readOnly={isEGFR}
+                                                                placeholder={isEGFR && !hasRequiredFields ? 'Please fill required fields' : ''}
                                                             />
-                                                            {key === 'egfr' && formData.labs.egfr && (
+                                                            {isEGFR && formData.labs.egfr && hasRequiredFields && (
                                                                 <p className="text-xs text-blue-600 mt-1">
                                                                     Auto-calculated (2021 CKD-EPI)
+                                                                </p>
+                                                            )}
+                                                            {isEGFR && !hasRequiredFields && formData.labs.serum_creatinine && (
+                                                                <p className="text-xs text-orange-500 mt-1">
+                                                                    Please fill Age and Gender
                                                                 </p>
                                                             )}
                                                         </div>
