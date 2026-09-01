@@ -4,7 +4,7 @@ import {
     FaUser, FaWeight, FaHeartbeat, FaVial, FaNotesMedical,
     FaExclamationCircle, FaPills, FaArrowLeft, FaPlay, FaPlus, FaTrash,
     FaUserShield, FaRobot, FaMoneyBillWave, FaFileMedical, FaChartLine,
-    FaCopy, FaTimes
+    FaCopy, FaTimes, FaChevronDown, FaChevronRight
 } from 'react-icons/fa';
 import supabase from '../utils/supabase';
 import CDSSDisplay from '../components/CDSS/CDSSDisplay';
@@ -97,6 +97,7 @@ const ClinicalPharmacyTool = () => {
     const [selectedLabSubCategories, setSelectedLabSubCategories] = useState([]);
     const [showAnalysis, setShowAnalysis] = useState(false);
     const [activeTab, setActiveTab] = useState('analysis');
+    const [isCategorySelectorOpen, setIsCategorySelectorOpen] = useState(true);
 
     // ✅ Get user role from localStorage (same logic as sidebar)
     const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -703,7 +704,7 @@ const ClinicalPharmacyTool = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 p-4 md:p-6">
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-6xl mx-auto">
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-4">
                         <button
@@ -718,516 +719,545 @@ const ClinicalPharmacyTool = () => {
                         </div>
                     </div>
                 </div>
-                <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
 
-                    <h2 className="text-lg font-semibold text-gray-800 mb-4">Which of the following data are you going to fill for the medication review?</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {allCategories.map(category => {
-                            const isSelected = selectedCategories.includes(category.id);
-                            return (
-                                <div
-                                    key={category.id}
-                                    onClick={() => handleCategoryToggle(category.id)}
-                                    className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${isSelected
-                                            ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                            : 'border-gray-200 hover:border-blue-200 text-gray-600'
-                                        }`}
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={isSelected}
-                                        onChange={() => { }} // Handled by div click
-                                        className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 pointer-events-none"
-                                    />
-                                    <category.icon className={isSelected ? 'text-blue-500' : 'text-gray-400'} />
-                                    <span className="font-medium">{category.label}</span>
-                                </div>
-                            );
-                        })}
-                    </div>
+                {/* Category Selector - Collapsible, Top-Left */}
+                <div className="bg-white rounded-xl shadow-sm p-4 mb-6 border border-gray-100">
+                    <button
+                        onClick={() => setIsCategorySelectorOpen(!isCategorySelectorOpen)}
+                        className="flex items-center justify-between w-full text-left"
+                    >
+                        <div className="flex items-center gap-2">
+                            <h2 className="text-md font-semibold text-gray-800">
+                                Which data are you going to fill for the medication review?
+                            </h2>
+                            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                                {selectedCategories.length} selected
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-blue-600">
+                            <span className="text-sm font-medium">
+                                {isCategorySelectorOpen ? 'Hide' : 'Show'}
+                            </span>
+                            {isCategorySelectorOpen ? <FaChevronDown /> : <FaChevronRight />}
+                        </div>
+                    </button>
+                    
+                    {isCategorySelectorOpen && (
+                        <div className="mt-4 pt-4 border-t border-gray-100">
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                {allCategories.map(category => {
+                                    const isSelected = selectedCategories.includes(category.id);
+                                    return (
+                                        <div
+                                            key={category.id}
+                                            onClick={() => handleCategoryToggle(category.id)}
+                                            className={`flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                                                isSelected
+                                                    ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                                    : 'border-gray-200 hover:border-blue-200 text-gray-600'
+                                            }`}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={isSelected}
+                                                onChange={() => {}}
+                                                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 pointer-events-none"
+                                            />
+                                            <category.icon className={isSelected ? 'text-blue-500' : 'text-gray-400'} size={14} />
+                                            <span className="font-medium text-sm">{category.label}</span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {selectedCategories.length > 0 && (
-                    <div className="space-y-6">
-                        {/* Demography */}
-                        {selectedCategories.includes('demography') && (
-                            <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500">
-                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                    <FaUser className="text-blue-500" /> Demography
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Age (Years)</label>
-                                        <input
-                                            type="number"
-                                            name="age"
-                                            value={formData.age}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                            placeholder="e.g. 45"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-                                        <select
-                                            name="gender"
-                                            value={formData.gender}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                        >
-                                            <option value="">Select Gender</option>
-                                            <option value="male">Male</option>
-                                            <option value="female">Female</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Anthropometry */}
-                        {selectedCategories.includes('anthropometry') && (
-                            <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-green-500">
-                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                    <FaWeight className="text-green-500" /> Anthropometry
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Weight (kg)</label>
-                                        <input
-                                            type="number"
-                                            name="weight"
-                                            value={formData.weight}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                            placeholder="e.g. 70"
-                                            step="0.1"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Height (cm)</label>
-                                        <input
-                                            type="number"
-                                            name="height"
-                                            value={formData.height}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                            placeholder="e.g. 175"
-                                            step="0.1"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            BSA (m²)
-                                            <span className="text-xs text-gray-500 ml-1">(auto-calculated)</span>
-                                        </label>
-                                        <input
-                                            type="number"
-                                            name="bsa"
-                                            value={formData.bsa}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed focus:ring-2 focus:ring-blue-500"
-                                            placeholder="Auto-calculated"
-                                            step="0.01"
-                                            readOnly
-                                        />
-                                        <p className="text-xs text-gray-500 mt-1">
-                                            Du Bois method: BSA = 0.007184 × W^0.425 × H^0.725
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Vitals */}
-                        {selectedCategories.includes('vitals') && (
-                            <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-red-500">
-                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                    <FaHeartbeat className="text-red-500" /> Vitals
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Blood Pressure (mmHg)</label>
-                                        <input
-                                            type="text"
-                                            name="blood_pressure"
-                                            value={formData.blood_pressure}
-                                            onChange={handleInputChange}
-                                            placeholder="120/80"
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Heart Rate (bpm)</label>
-                                        <input
-                                            type="number"
-                                            name="heart_rate"
-                                            value={formData.heart_rate}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Respiratory Rate</label>
-                                        <input
-                                            type="number"
-                                            name="respiratory_rate"
-                                            value={formData.respiratory_rate}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Temperature (°C)</label>
-                                        <input
-                                            type="number"
-                                            step="0.1"
-                                            name="temperature"
-                                            value={formData.temperature}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">O2 Saturation (%)</label>
-                                        <input
-                                            type="number"
-                                            name="oxygen_saturation"
-                                            value={formData.oxygen_saturation}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Labs - Main category with sub-categories */}
-                        {selectedCategories.includes('labs') && (
-                            <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-yellow-500">
-                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                    <FaVial className="text-yellow-500" /> Labs
-                                </h3>
-                                
-                                {/* Sub-category selection */}
-                                <div className="mb-4">
-                                    <p className="text-sm text-gray-600 mb-2">Select which lab tests you want to fill:</p>
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                        {LAB_SUB_CATEGORIES.map((subCat) => (
-                                            <label 
-                                                key={subCat.id}
-                                                className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all ${
-                                                    selectedLabSubCategories.includes(subCat.id)
-                                                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                                        : 'border-gray-200 hover:border-blue-200 text-gray-600'
-                                                }`}
-                                            >
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedLabSubCategories.includes(subCat.id)}
-                                                    onChange={() => handleLabSubCategoryToggle(subCat.id)}
-                                                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                                                />
-                                                <span className="text-sm font-medium">{subCat.label}</span>
-                                            </label>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Show selected lab categories */}
-                                <div className="space-y-6">
-                                    {LAB_SUB_CATEGORIES.filter(subCat => selectedLabSubCategories.includes(subCat.id)).map((labCategory) => (
-                                        <div key={labCategory.id} className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                                            <h4 className="text-md font-semibold text-gray-700 mb-3">{labCategory.label}</h4>
-                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                                {labCategory.tests.map((test) => {
-                                                    const key = test.name.toLowerCase().replace(/ /g, '_').replace(/[^a-z0-9_]/g, '');
-                                                    const isEGFR = key === 'egfr';
-                                                    const hasRequiredFields = formData.age && formData.gender && 
-                                                                             formData.labs?.serum_creatinine &&
-                                                                             parseFloat(formData.age) > 0 &&
-                                                                             parseFloat(formData.labs.serum_creatinine) > 0;
-                                                    
-                                                    return (
-                                                        <div key={key}>
-                                                            <label className="block text-xs font-medium text-gray-700 mb-1">
-                                                                {test.name} {test.unit ? `(${test.unit})` : ''}
-                                                            </label>
-                                                            <input 
-                                                                type="number" 
-                                                                step="any" 
-                                                                name={key} 
-                                                                value={formData.labs[key] || ''} 
-                                                                onChange={handleLabChange} 
-                                                                className={`w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 ${
-                                                                    isEGFR ? 'bg-gray-100 cursor-not-allowed' : ''
-                                                                }`}
-                                                                readOnly={isEGFR}
-                                                                placeholder={isEGFR && !hasRequiredFields ? 'Please fill required fields' : ''}
-                                                            />
-                                                            {isEGFR && formData.labs.egfr && hasRequiredFields && (
-                                                                <p className="text-xs text-blue-600 mt-1">
-                                                                    Auto-calculated (2021 CKD-EPI)
-                                                                </p>
-                                                            )}
-                                                            {isEGFR && !hasRequiredFields && formData.labs.serum_creatinine && (
-                                                                <p className="text-xs text-orange-500 mt-1">
-                                                                    Please fill Age and Gender
-                                                                </p>
-                                                            )}
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                    ))}
-                                    
-                                    {selectedLabSubCategories.length === 0 && (
-                                        <div className="text-center py-4 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                                            Please select at least one lab test category from above.
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Diagnosis */}
-                        {selectedCategories.includes('diagnosis') && (
-                            <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-indigo-500">
-                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                    <FaNotesMedical className="text-indigo-500" /> Diagnosis
-                                </h3>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Primary/Secondary Diagnosis</label>
-                                    <textarea
-                                        name="diagnosis"
-                                        value={formData.diagnosis}
-                                        onChange={handleInputChange}
-                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 h-24"
-                                        placeholder="e.g. Hypertension, Type 2 Diabetes"
-                                    ></textarea>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Special Conditions */}
-                        {selectedCategories.includes('special_conditions') && (
-                            <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-orange-500">
-                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                    <FaExclamationCircle className="text-orange-500" /> Special Conditions
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-                                        <input
-                                            type="checkbox"
-                                            name="kidney_failure"
-                                            checked={formData.kidney_failure}
-                                            onChange={handleInputChange}
-                                            className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
-                                        />
-                                        <span className="font-medium text-gray-700">Kidney Failure / Impaired Renal Function</span>
-                                    </label>
-                                    <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-                                        <input
-                                            type="checkbox"
-                                            name="liver_failure"
-                                            checked={formData.liver_failure}
-                                            onChange={handleInputChange}
-                                            className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
-                                        />
-                                        <span className="font-medium text-gray-700">Liver Failure / Hepatic Impairment</span>
-                                    </label>
-                                    {formData.gender === 'female' && (
-                                        <>
-                                            <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-                                                <input
-                                                    type="checkbox"
-                                                    name="is_pregnant"
-                                                    checked={formData.is_pregnant}
-                                                    onChange={handleInputChange}
-                                                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
-                                                />
-                                                <span className="font-medium text-gray-700">Pregnant</span>
-                                            </label>
-                                            <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-                                                <input
-                                                    type="checkbox"
-                                                    name="is_lactating"
-                                                    checked={formData.is_lactating}
-                                                    onChange={handleInputChange}
-                                                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
-                                                />
-                                                <span className="font-medium text-gray-700">Lactating / Breastfeeding</span>
-                                            </label>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Medications - Simplified */}
-                        {selectedCategories.includes('medications') && (
-                            <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-purple-500">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                                        <FaPills className="text-purple-500" /> Medications
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* LEFT COLUMN */}
+                        <div className="space-y-6">
+                            {/* Demography - Left */}
+                            {selectedCategories.includes('demography') && (
+                                <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500">
+                                    <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
+                                        <FaUser className="text-blue-500" /> Demography
                                     </h3>
-                                    <button
-                                        onClick={addMedication}
-                                        className="flex items-center gap-2 text-sm bg-purple-100 text-purple-700 px-3 py-1.5 rounded-lg hover:bg-purple-200 font-medium"
-                                    >
-                                        <FaPlus /> Add Medication
-                                    </button>
-                                </div>
-                        
-                                {formData.medications.length === 0 ? (
-                                    <div className="text-center py-6 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                                        No medications added. Click "Add Medication" to include drugs in the analysis.
+                                    <div className="grid grid-cols-1 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Age (Years)</label>
+                                            <input
+                                                type="number"
+                                                name="age"
+                                                value={formData.age}
+                                                onChange={handleInputChange}
+                                                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                placeholder="e.g. 45"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                                            <select
+                                                name="gender"
+                                                value={formData.gender}
+                                                onChange={handleInputChange}
+                                                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            >
+                                                <option value="">Select Gender</option>
+                                                <option value="male">Male</option>
+                                                <option value="female">Female</option>
+                                            </select>
+                                        </div>
                                     </div>
-                                ) : (
-                                    <div className="space-y-4">
-                                        {formData.medications.map((med, index) => (
-                                            <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200 relative">
-                                                <button
-                                                    onClick={() => removeMedication(index)}
-                                                    className="absolute top-2 right-2 text-red-400 hover:text-red-600 p-1 bg-white rounded-full shadow-sm hover:shadow"
-                                                    title="Remove medication"
+                                </div>
+                            )}
+
+                            {/* Anthropometry - Left */}
+                            {selectedCategories.includes('anthropometry') && (
+                                <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-green-500">
+                                    <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
+                                        <FaWeight className="text-green-500" /> Anthropometry
+                                    </h3>
+                                    <div className="grid grid-cols-1 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Weight (kg)</label>
+                                            <input
+                                                type="number"
+                                                name="weight"
+                                                value={formData.weight}
+                                                onChange={handleInputChange}
+                                                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                placeholder="e.g. 70"
+                                                step="0.1"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Height (cm)</label>
+                                            <input
+                                                type="number"
+                                                name="height"
+                                                value={formData.height}
+                                                onChange={handleInputChange}
+                                                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                placeholder="e.g. 175"
+                                                step="0.1"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                BSA (m²)
+                                                <span className="text-xs text-gray-500 ml-1">(auto-calculated)</span>
+                                            </label>
+                                            <input
+                                                type="number"
+                                                name="bsa"
+                                                value={formData.bsa}
+                                                onChange={handleInputChange}
+                                                className="w-full p-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed focus:ring-2 focus:ring-blue-500"
+                                                placeholder="Auto-calculated"
+                                                step="0.01"
+                                                readOnly
+                                            />
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                Du Bois method: BSA = 0.007184 × W^0.425 × H^0.725
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Labs - Left Bottom */}
+                            {selectedCategories.includes('labs') && (
+                                <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-yellow-500">
+                                    <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
+                                        <FaVial className="text-yellow-500" /> Labs
+                                    </h3>
+                                    
+                                    {/* Sub-category selection */}
+                                    <div className="mb-4">
+                                        <p className="text-sm text-gray-600 mb-2">Select which lab tests you want to fill:</p>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                            {LAB_SUB_CATEGORIES.map((subCat) => (
+                                                <label 
+                                                    key={subCat.id}
+                                                    className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all ${
+                                                        selectedLabSubCategories.includes(subCat.id)
+                                                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                                            : 'border-gray-200 hover:border-blue-200 text-gray-600'
+                                                    }`}
                                                 >
-                                                    <FaTimes className="w-3 h-3" />
-                                                </button>
-                                                
-                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                                                    {/* Drug Name */}
-                                                    <div>
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Drug Name</label>
-                                                        <input
-                                                            type="text"
-                                                            value={med.drug_name}
-                                                            onChange={(e) => updateMedication(index, 'drug_name', e.target.value)}
-                                                            className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                            placeholder="Generic Name"
-                                                        />
-                                                    </div>
-                                                    
-                                                    {/* Brand Name */}
-                                                    <div>
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Brand Name</label>
-                                                        <input
-                                                            type="text"
-                                                            value={med.brand_name}
-                                                            onChange={(e) => updateMedication(index, 'brand_name', e.target.value)}
-                                                            className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                            placeholder="Brand Name"
-                                                        />
-                                                    </div>
-                                                    
-                                                    {/* Indication */}
-                                                    <div>
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Indication</label>
-                                                        <input
-                                                            type="text"
-                                                            value={med.indication}
-                                                            onChange={(e) => updateMedication(index, 'indication', e.target.value)}
-                                                            className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                            placeholder="Reason for use"
-                                                        />
-                                                    </div>
-                                                    
-                                                    {/* Dose / Unit */}
-                                                    <div>
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Dose / Unit</label>
-                                                        <div className="flex gap-1">
-                                                            <input
-                                                                type="text"
-                                                                value={med.dose}
-                                                                onChange={(e) => updateMedication(index, 'dose', e.target.value)}
-                                                                className="flex-1 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                                placeholder="Dose"
-                                                            />
-                                                            <input
-                                                                type="text"
-                                                                value={med.unit}
-                                                                onChange={(e) => updateMedication(index, 'unit', e.target.value)}
-                                                                className="w-16 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                                placeholder="Unit"
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    {/* Dosage Form */}
-                                                    <div>
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Dosage Form</label>
-                                                        <select
-                                                            value={med.dosage_form}
-                                                            onChange={(e) => updateMedication(index, 'dosage_form', e.target.value)}
-                                                            className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500 bg-white"
-                                                        >
-                                                            <option value="Tablet">Tablet</option>
-                                                            <option value="Capsule">Capsule</option>
-                                                            <option value="Injection">Injection</option>
-                                                            <option value="Syrup">Syrup</option>
-                                                            <option value="Inhaler">Inhaler</option>
-                                                            <option value="Cream/Ointment">Cream/Ointment</option>
-                                                            <option value="Drops">Drops</option>
-                                                            <option value="Other">Other</option>
-                                                        </select>
-                                                    </div>
-                                                    
-                                                    {/* Route */}
-                                                    <div>
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Route</label>
-                                                        <input
-                                                            type="text"
-                                                            value={med.route}
-                                                            onChange={(e) => updateMedication(index, 'route', e.target.value)}
-                                                            className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                            placeholder="e.g. PO, IV, IM"
-                                                        />
-                                                    </div>
-                                                    
-                                                    {/* Frequency */}
-                                                    <div>
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Frequency</label>
-                                                        <input
-                                                            type="text"
-                                                            value={med.frequency}
-                                                            onChange={(e) => updateMedication(index, 'frequency', e.target.value)}
-                                                            className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                            placeholder="e.g. BID, TID, OD"
-                                                        />
-                                                    </div>
-                                                    
-                                                    {/* Duration */}
-                                                    <div>
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Duration</label>
-                                                        <input
-                                                            type="text"
-                                                            value={med.duration}
-                                                            onChange={(e) => updateMedication(index, 'duration', e.target.value)}
-                                                            className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                            placeholder="e.g. 7 days, 4 weeks"
-                                                        />
-                                                    </div>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedLabSubCategories.includes(subCat.id)}
+                                                        onChange={() => handleLabSubCategoryToggle(subCat.id)}
+                                                        className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                                                    />
+                                                    <span className="text-sm font-medium">{subCat.label}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Show selected lab categories */}
+                                    <div className="space-y-6">
+                                        {LAB_SUB_CATEGORIES.filter(subCat => selectedLabSubCategories.includes(subCat.id)).map((labCategory) => (
+                                            <div key={labCategory.id} className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                                                <h4 className="text-md font-semibold text-gray-700 mb-3">{labCategory.label}</h4>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    {labCategory.tests.map((test) => {
+                                                        const key = test.name.toLowerCase().replace(/ /g, '_').replace(/[^a-z0-9_]/g, '');
+                                                        const isEGFR = key === 'egfr';
+                                                        const hasRequiredFields = formData.age && formData.gender && 
+                                                                                 formData.labs?.serum_creatinine &&
+                                                                                 parseFloat(formData.age) > 0 &&
+                                                                                 parseFloat(formData.labs.serum_creatinine) > 0;
+                                                        
+                                                        return (
+                                                            <div key={key}>
+                                                                <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                                    {test.name} {test.unit ? `(${test.unit})` : ''}
+                                                                </label>
+                                                                <input 
+                                                                    type="number" 
+                                                                    step="any" 
+                                                                    name={key} 
+                                                                    value={formData.labs[key] || ''} 
+                                                                    onChange={handleLabChange} 
+                                                                    className={`w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 ${
+                                                                        isEGFR ? 'bg-gray-100 cursor-not-allowed' : ''
+                                                                    }`}
+                                                                    readOnly={isEGFR}
+                                                                    placeholder={isEGFR && !hasRequiredFields ? 'Please fill required fields' : ''}
+                                                                />
+                                                                {isEGFR && formData.labs.egfr && hasRequiredFields && (
+                                                                    <p className="text-xs text-blue-600 mt-1">
+                                                                        Auto-calculated (2021 CKD-EPI)
+                                                                    </p>
+                                                                )}
+                                                                {isEGFR && !hasRequiredFields && formData.labs.serum_creatinine && (
+                                                                    <p className="text-xs text-orange-500 mt-1">
+                                                                        Please fill Age and Gender
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
                                                 </div>
                                             </div>
                                         ))}
+                                        
+                                        {selectedLabSubCategories.length === 0 && (
+                                            <div className="text-center py-4 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                                                Please select at least one lab test category from above.
+                                            </div>
+                                        )}
                                     </div>
-                                )}
-                            </div>
-                        )}
-
-                        <div className="flex justify-end pt-4 pb-12">
-                            <button
-                                onClick={handleRunAnalysis}
-                                disabled={selectedCategories.length === 0}
-                                className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold shadow-lg transition-all text-lg ${
-                                    selectedCategories.length > 0
-                                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:shadow-xl hover:-translate-y-1'
-                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                }`}
-                            >
-                                <FaPlay /> Run Clinical Analysis
-                            </button>
+                                </div>
+                            )}
                         </div>
+
+                        {/* RIGHT COLUMN */}
+                        <div className="space-y-6">
+                            {/* Vitals - Right */}
+                            {selectedCategories.includes('vitals') && (
+                                <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-red-500">
+                                    <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
+                                        <FaHeartbeat className="text-red-500" /> Vitals
+                                    </h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Blood Pressure (mmHg)</label>
+                                            <input
+                                                type="text"
+                                                name="blood_pressure"
+                                                value={formData.blood_pressure}
+                                                onChange={handleInputChange}
+                                                placeholder="120/80"
+                                                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Heart Rate (bpm)</label>
+                                            <input
+                                                type="number"
+                                                name="heart_rate"
+                                                value={formData.heart_rate}
+                                                onChange={handleInputChange}
+                                                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Respiratory Rate</label>
+                                            <input
+                                                type="number"
+                                                name="respiratory_rate"
+                                                value={formData.respiratory_rate}
+                                                onChange={handleInputChange}
+                                                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Temperature (°C)</label>
+                                            <input
+                                                type="number"
+                                                step="0.1"
+                                                name="temperature"
+                                                value={formData.temperature}
+                                                onChange={handleInputChange}
+                                                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">O2 Saturation (%)</label>
+                                            <input
+                                                type="number"
+                                                name="oxygen_saturation"
+                                                value={formData.oxygen_saturation}
+                                                onChange={handleInputChange}
+                                                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Diagnosis - Right */}
+                            {selectedCategories.includes('diagnosis') && (
+                                <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-indigo-500">
+                                    <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
+                                        <FaNotesMedical className="text-indigo-500" /> Diagnosis
+                                    </h3>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Primary/Secondary Diagnosis</label>
+                                        <textarea
+                                            name="diagnosis"
+                                            value={formData.diagnosis}
+                                            onChange={handleInputChange}
+                                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 h-24"
+                                            placeholder="e.g. Hypertension, Type 2 Diabetes"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Special Conditions - Right */}
+                            {selectedCategories.includes('special_conditions') && (
+                                <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-orange-500">
+                                    <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
+                                        <FaExclamationCircle className="text-orange-500" /> Special Conditions
+                                    </h3>
+                                    <div className="grid grid-cols-1 gap-3">
+                                        <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                                            <input
+                                                type="checkbox"
+                                                name="kidney_failure"
+                                                checked={formData.kidney_failure}
+                                                onChange={handleInputChange}
+                                                className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                                            />
+                                            <span className="font-medium text-gray-700">Kidney Failure / Impaired Renal Function</span>
+                                        </label>
+                                        <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                                            <input
+                                                type="checkbox"
+                                                name="liver_failure"
+                                                checked={formData.liver_failure}
+                                                onChange={handleInputChange}
+                                                className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                                            />
+                                            <span className="font-medium text-gray-700">Liver Failure / Hepatic Impairment</span>
+                                        </label>
+                                        {formData.gender === 'female' && (
+                                            <>
+                                                <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                                                    <input
+                                                        type="checkbox"
+                                                        name="is_pregnant"
+                                                        checked={formData.is_pregnant}
+                                                        onChange={handleInputChange}
+                                                        className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                                                    />
+                                                    <span className="font-medium text-gray-700">Pregnant</span>
+                                                </label>
+                                                <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                                                    <input
+                                                        type="checkbox"
+                                                        name="is_lactating"
+                                                        checked={formData.is_lactating}
+                                                        onChange={handleInputChange}
+                                                        className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                                                    />
+                                                    <span className="font-medium text-gray-700">Lactating / Breastfeeding</span>
+                                                </label>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Medications - Right Bottom */}
+                            {selectedCategories.includes('medications') && (
+                                <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-purple-500">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                                            <FaPills className="text-purple-500" /> Medications
+                                        </h3>
+                                        <button
+                                            onClick={addMedication}
+                                            className="flex items-center gap-2 text-sm bg-purple-100 text-purple-700 px-3 py-1.5 rounded-lg hover:bg-purple-200 font-medium"
+                                        >
+                                            <FaPlus /> Add Medication
+                                        </button>
+                                    </div>
+                            
+                                    {formData.medications.length === 0 ? (
+                                        <div className="text-center py-6 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                                            No medications added. Click "Add Medication" to include drugs in the analysis.
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4 max-h-[400px] overflow-y-auto pr-1">
+                                            {formData.medications.map((med, index) => (
+                                                <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200 relative">
+                                                    <button
+                                                        onClick={() => removeMedication(index)}
+                                                        className="absolute top-2 right-2 text-red-400 hover:text-red-600 p-1 bg-white rounded-full shadow-sm hover:shadow"
+                                                        title="Remove medication"
+                                                    >
+                                                        <FaTimes className="w-3 h-3" />
+                                                    </button>
+                                                    
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                        {/* Drug Name */}
+                                                        <div>
+                                                            <label className="block text-xs font-medium text-gray-700 mb-1">Drug Name</label>
+                                                            <input
+                                                                type="text"
+                                                                value={med.drug_name}
+                                                                onChange={(e) => updateMedication(index, 'drug_name', e.target.value)}
+                                                                className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                placeholder="Generic Name"
+                                                            />
+                                                        </div>
+                                                        
+                                                        {/* Brand Name */}
+                                                        <div>
+                                                            <label className="block text-xs font-medium text-gray-700 mb-1">Brand Name</label>
+                                                            <input
+                                                                type="text"
+                                                                value={med.brand_name}
+                                                                onChange={(e) => updateMedication(index, 'brand_name', e.target.value)}
+                                                                className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                placeholder="Brand Name"
+                                                            />
+                                                        </div>
+                                                        
+                                                        {/* Indication */}
+                                                        <div>
+                                                            <label className="block text-xs font-medium text-gray-700 mb-1">Indication</label>
+                                                            <input
+                                                                type="text"
+                                                                value={med.indication}
+                                                                onChange={(e) => updateMedication(index, 'indication', e.target.value)}
+                                                                className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                placeholder="Reason for use"
+                                                            />
+                                                        </div>
+                                                        
+                                                        {/* Dose / Unit */}
+                                                        <div>
+                                                            <label className="block text-xs font-medium text-gray-700 mb-1">Dose / Unit</label>
+                                                            <div className="flex gap-1">
+                                                                <input
+                                                                    type="text"
+                                                                    value={med.dose}
+                                                                    onChange={(e) => updateMedication(index, 'dose', e.target.value)}
+                                                                    className="flex-1 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                    placeholder="Dose"
+                                                                />
+                                                                <input
+                                                                    type="text"
+                                                                    value={med.unit}
+                                                                    onChange={(e) => updateMedication(index, 'unit', e.target.value)}
+                                                                    className="w-16 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                    placeholder="Unit"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        {/* Dosage Form */}
+                                                        <div>
+                                                            <label className="block text-xs font-medium text-gray-700 mb-1">Dosage Form</label>
+                                                            <select
+                                                                value={med.dosage_form}
+                                                                onChange={(e) => updateMedication(index, 'dosage_form', e.target.value)}
+                                                                className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500 bg-white"
+                                                            >
+                                                                <option value="Tablet">Tablet</option>
+                                                                <option value="Capsule">Capsule</option>
+                                                                <option value="Injection">Injection</option>
+                                                                <option value="Syrup">Syrup</option>
+                                                                <option value="Inhaler">Inhaler</option>
+                                                                <option value="Cream/Ointment">Cream/Ointment</option>
+                                                                <option value="Drops">Drops</option>
+                                                                <option value="Other">Other</option>
+                                                            </select>
+                                                        </div>
+                                                        
+                                                        {/* Route */}
+                                                        <div>
+                                                            <label className="block text-xs font-medium text-gray-700 mb-1">Route</label>
+                                                            <input
+                                                                type="text"
+                                                                value={med.route}
+                                                                onChange={(e) => updateMedication(index, 'route', e.target.value)}
+                                                                className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                placeholder="e.g. PO, IV, IM"
+                                                            />
+                                                        </div>
+                                                        
+                                                        {/* Frequency */}
+                                                        <div>
+                                                            <label className="block text-xs font-medium text-gray-700 mb-1">Frequency</label>
+                                                            <input
+                                                                type="text"
+                                                                value={med.frequency}
+                                                                onChange={(e) => updateMedication(index, 'frequency', e.target.value)}
+                                                                className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                placeholder="e.g. BID, TID, OD"
+                                                            />
+                                                        </div>
+                                                        
+                                                        {/* Duration */}
+                                                        <div>
+                                                            <label className="block text-xs font-medium text-gray-700 mb-1">Duration</label>
+                                                            <input
+                                                                type="text"
+                                                                value={med.duration}
+                                                                onChange={(e) => updateMedication(index, 'duration', e.target.value)}
+                                                                className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                placeholder="e.g. 7 days, 4 weeks"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* Run Analysis Button - Full Width */}
+                {selectedCategories.length > 0 && (
+                    <div className="flex justify-center pt-6 pb-6 mt-4">
+                        <button
+                            onClick={handleRunAnalysis}
+                            className="flex items-center gap-2 px-10 py-3.5 rounded-xl font-bold shadow-lg transition-all text-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:shadow-xl hover:-translate-y-1"
+                        >
+                            <FaPlay /> Run Clinical Analysis
+                        </button>
                     </div>
                 )}
             </div>
