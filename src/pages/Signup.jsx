@@ -74,12 +74,8 @@ const SUBSCRIPTION_PLANS = [
         color: 'from-green-500 to-green-600',
         badge: 'Team',
         features: [
-            'Everything in Individual plan',
             'Up to 5 users',
-            'Comprehensive medication management database',
-            'Team management',
             'Company dashboard',
-            'Multi-user access',
             'Basic training included'
         ],
         limitations: ['Limited to 5 users'],
@@ -99,14 +95,10 @@ const SUBSCRIPTION_PLANS = [
         originalPrice: 30000,
         discount: 'Save 5000 ETB',
         features: [
-            'Everything in Company Basic',
             'Up to 20 users',
-            'Custom user roles',
-            'Advanced reporting',
-            'Bulk operations',
+            'Multi-user access',
+            'Company dashboard',
             'Dedicated support',
-            'API integration',
-            'Custom workflows'
         ],
         popular: true,
         account_type: 'company'
