@@ -575,19 +575,35 @@ const Sidebar = ({ onClose }) => {
                         <ul className="space-y-1.5">
                             <li className="mb-2">
                                 <NavLink
-                                    to={isSubscribed ? "/company/dashboard" : "/subscription/plans"}
+                                    to="/company/dashboard"
                                     onClick={onClose}
                                     className={({ isActive }) =>
-                                        `flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isActive && isSubscribed
+                                        `flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isActive
                                             ? 'bg-purple-50 text-purple-600 border-l-4 border-purple-600 shadow-sm'
                                             : 'text-gray-600 hover:bg-purple-50 hover:text-purple-600 hover:shadow-sm'
-                                        } ${!isSubscribed ? 'opacity-60' : ''}`
+                                        }`
                                     }
                                 >
                                     <div className="flex items-center gap-2.5 w-full">
                                         <FaChartBar className="text-lg" />
                                         <span className="font-medium">Company Dashboard</span>
-                                        {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
+                                    </div>
+                                </NavLink>
+                            </li>
+                            <li className="mb-2">
+                                <NavLink
+                                    to="/company/users"
+                                    onClick={onClose}
+                                    className={({ isActive }) =>
+                                        `flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isActive
+                                            ? 'bg-purple-50 text-purple-600 border-l-4 border-purple-600 shadow-sm'
+                                            : 'text-gray-600 hover:bg-purple-50 hover:text-purple-600 hover:shadow-sm'
+                                        }`
+                                    }
+                                >
+                                    <div className="flex items-center gap-2.5 w-full">
+                                        <FaUserCircle className="text-lg" />
+                                        <span className="font-medium">Company Users</span>
                                     </div>
                                 </NavLink>
                             </li>

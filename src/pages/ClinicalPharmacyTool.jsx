@@ -115,7 +115,9 @@ const ClinicalPharmacyTool = () => {
     const isPharmacist = user?.role === 'pharmacist';
     const isPharmacyStudent = user?.role === 'pharmacy_student';
     const isIndividual = !user?.role?.includes('admin') && !user?.company_id;
-    const isPharmacistOrStudent = isIndividual && (isPharmacist || isPharmacyStudent);
+    // Allow organizations (company_admin and company_user) to get the features that pharmacy students have
+    const isCompanyUser = user?.role === 'company_admin' || user?.role === 'company_user' || user?.account_type === 'company_user';
+    const isPharmacistOrStudent = (isIndividual && (isPharmacist || isPharmacyStudent)) || isCompanyUser;
 
     // All categories - main categories only (labs is the main category, sub-categories are handled separately)
     const allCategories = MAIN_CATEGORIES;
