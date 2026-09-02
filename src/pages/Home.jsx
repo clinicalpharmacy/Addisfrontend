@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';  // Added NavLink import
 import {
     FaUserInjured,
     FaPills,
@@ -22,11 +22,20 @@ const Home = () => {
     const isCompanyUser = !!user?.company_id || user?.account_type === 'company' || ['company_admin', 'company_user'].includes(user?.role);
     const isIndividual = !isAdmin && !isCompanyUser;
     
+    // Define isSubscribed - you need to determine this based on your logic
+    const isSubscribed = user?.subscription_status === 'active' || false; // Adjust this logic as needed
+    
     const getGreeting = () => {
         const hour = new Date().getHours();
         if (hour < 12) return 'Good morning';
         if (hour < 18) return 'Good afternoon';
         return 'Good evening';
+    };
+
+    // Placeholder for onClose - you need to define this
+    const onClose = () => {
+        // Your close logic here
+        console.log('Close menu');
     };
 
     return (
@@ -121,36 +130,33 @@ const Home = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 {/* 4. Clinical Pharmacy Tool */}
                 {!isAdmin && user?.role !== 'healthcare_client' && (
-                    <div className="mb-2">  {/* Changed from li to div */}
-                        <NavLink
-                            to={isSubscribed ? "/clinical-pharmacy-tool" : "/subscription/plans"}
-                            onClick={onClose}
-                            className={({ isActive }) =>
-                                `flex items-center gap-2.5 p-2.5 rounded-xl transition-all duration-300 group ${
-                                    isActive && isSubscribed
-                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-100 font-black'
-                                        : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 font-bold'
-                                } ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`
-                            }
-                        >
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="p-2 bg-blue-100 rounded-lg">
-                                    <FaUserInjured className="text-blue-600 text-lg" />
-                                </div>
-                                <div>
-                                    <h2 className="text-sm font-bold text-gray-800">Clinical Pharmacy Tool</h2>
-                                    <p className="text-xs text-gray-500">Review medication use</p>
-                                </div>
+                    <NavLink
+                        to={isSubscribed ? "/clinical-pharmacy-tool" : "/subscription/plans"}
+                        onClick={onClose}
+                        className={({ isActive }) =>
+                            `flex items-center gap-2.5 p-2.5 rounded-xl transition-all duration-300 group ${
+                                isActive && isSubscribed
+                                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-100 font-black'
+                                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 font-bold'
+                            } ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`
+                        }
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-blue-100 rounded-lg">
+                                <FaUserInjured className="text-blue-600 text-lg" />
                             </div>
-                            <div className="flex justify-end">
-                                <span className="text-blue-600 text-sm flex items-center gap-1">
-                                    Open <FaArrowRight className="text-xs" />
-                                </span>
+                            <div>
+                                <h2 className="text-sm font-bold text-gray-800">Clinical Pharmacy Tool</h2>
+                                <p className="text-xs text-gray-500">Review medication use</p>
                             </div>
-                        </NavLink>
-                    </div>
+                        </div>
+                        <div className="flex justify-end">
+                            <span className="text-blue-600 text-sm flex items-center gap-1">
+                                Open <FaArrowRight className="text-xs" />
+                            </span>
+                        </div>
+                    </NavLink>
                 )}
-            </div>
 
                 {/* 5. Useful Links */}
                 {(user?.role !== 'healthcare_client' || !isIndividual) && (
