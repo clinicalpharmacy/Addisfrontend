@@ -134,14 +134,14 @@ const Home = () => {
                         to={isSubscribed ? "/clinical-pharmacy-tool" : "/subscription/plans"}
                         onClick={onClose}
                         className={({ isActive }) =>
-                            `flex items-center gap-2.5 p-2.5 rounded-xl transition-all duration-300 group ${
+                            `bg-white rounded-xl shadow p-4 hover:shadow-md transition ${
                                 isActive && isSubscribed
-                                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-100 font-black'
-                                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 font-bold'
+                                    ? 'border-2 border-blue-500'
+                                    : 'border-2 border-transparent hover:border-blue-100'
                             } ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`
                         }
                     >
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 mb-2">
                             <div className="p-2 bg-blue-100 rounded-lg">
                                 <FaUserInjured className="text-blue-600 text-lg" />
                             </div>
