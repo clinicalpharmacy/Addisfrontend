@@ -121,23 +121,36 @@ const Home = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 {/* 4. Clinical Pharmacy Tool */}
                 {!isAdmin && user?.role !== 'healthcare_client' && (
-                    <Link to="/patients" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-blue-100 rounded-lg">
-                                <FaUserInjured className="text-blue-600 text-lg" />
+                    <div className="mb-2">  {/* Changed from li to div */}
+                        <NavLink
+                            to={isSubscribed ? "/clinical-pharmacy-tool" : "/subscription/plans"}
+                            onClick={onClose}
+                            className={({ isActive }) =>
+                                `flex items-center gap-2.5 p-2.5 rounded-xl transition-all duration-300 group ${
+                                    isActive && isSubscribed
+                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-100 font-black'
+                                        : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 font-bold'
+                                } ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`
+                            }
+                        >
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="p-2 bg-blue-100 rounded-lg">
+                                    <FaUserInjured className="text-blue-600 text-lg" />
+                                </div>
+                                <div>
+                                    <h2 className="text-sm font-bold text-gray-800">Clinical Pharmacy Tool</h2>
+                                    <p className="text-xs text-gray-500">Review medication use</p>
+                                </div>
                             </div>
-                            <div>
-                                <h2 className="text-sm font-bold text-gray-800">Clinical Pharmacy Tool</h2>
-                                <p className="text-xs text-gray-500">Review medication use</p>
+                            <div className="flex justify-end">
+                                <span className="text-blue-600 text-sm flex items-center gap-1">
+                                    Open <FaArrowRight className="text-xs" />
+                                </span>
                             </div>
-                        </div>
-                        <div className="flex justify-end">
-                            <span className="text-blue-600 text-sm flex items-center gap-1">
-                                Open <FaArrowRight className="text-xs" />
-                            </span>
-                        </div>
-                    </Link>
+                        </NavLink>
+                    </div>
                 )}
+            </div>
 
                 {/* 5. Useful Links */}
                 {(user?.role !== 'healthcare_client' || !isIndividual) && (
