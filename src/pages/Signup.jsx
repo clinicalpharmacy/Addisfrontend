@@ -1842,10 +1842,10 @@ const Signup = () => {
                                                 value={formData.company_type}
                                                 onChange={(e) => setFormData({ ...formData, company_type: e.target.value })}
                                             >
-                                                <option value="pharmacy">Pharmacy</option>
+                                                <option value="pharmacy">Pharmacy/ Drug Store</option>
                                                 <option value="hospital">Hospital</option>
-                                                <option value="clinic">Clinic</option>
-                                                <option value="pharmaceutical">Pharmaceutical Company</option>
+                                                <option value="clinic">Clinic/ Speciality Center</option>
+                                                <option value="pharmaceutical">Pharmacy School</option>
                                                 <option value="health_center">Health Center</option>
                                             </select>
                                         </div>
