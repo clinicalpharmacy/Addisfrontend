@@ -402,6 +402,9 @@ Support: support@addismed.com
                                         <span className="text-blue-600 mt-0.5"><FaEnvelope /></span>
                                         <span>Check your email! We've sent a verification link.</span>
                                     </div>
+                                    <div className="flex items-start gap-2 text-blue-700 text-sm ml-7">
+                                        <span>(Please make sure to check your spam or junk folder if you don't see it in your inbox)</span>
+                                    </div>
                                     <div className="ml-7">
                                         <button
                                             onClick={resendVerification}
