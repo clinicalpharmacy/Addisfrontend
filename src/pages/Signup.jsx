@@ -396,7 +396,7 @@ const Signup = () => {
             let requestData = {};
 
             if (formData.account_type === 'individual') {
-                endpoint = '/auth/register';
+                endpoint = '/auth/validate-registration';
                 requestData = {
                     email: formData.email.trim(),
                     password: trimmedPassword,
@@ -415,7 +415,7 @@ const Signup = () => {
                     referral_code: formData.referral_code?.trim() || ''
                 };
             } else {
-                endpoint = '/auth/register-company';
+                endpoint = '/auth/validate-company-registration';
                 requestData = {
                     company_name: formData.company_name.trim(),
                     company_email: formData.company_email.trim(),
@@ -444,34 +444,10 @@ const Signup = () => {
                 throw new Error(data.error || 'Registration failed');
             }
 
-            // Extract user ID
+            // Extract user ID (Not present anymore since we just validated)
             let userId = null;
-            let userEmail = '';
-            let userName = '';
-
-            if (data.user && data.user.id) {
-                userId = data.user.id;
-                userEmail = data.user.email || data.user_email || '';
-                userName = data.user.full_name || data.user.name || data.user_name || '';
-            } else if (data.id) {
-                userId = data.id;
-                userEmail = data.email || data.user_email || '';
-                userName = data.full_name || data.name || data.user_name || '';
-            } else if (data.userId) {
-                userId = data.userId;
-                userEmail = data.email || data.user_email || '';
-                userName = data.full_name || data.name || data.user_name || '';
-            } else if (data.user_id) {
-                userId = data.user_id;
-                userEmail = data.email || data.user_email || '';
-                userName = data.full_name || data.name || data.user_name || '';
-            }
-
-            // Fallback: Use email from form
-            if (!userEmail) {
-                userEmail = formData.account_type === 'individual' ? formData.email.trim() : formData.admin_email.trim();
-                userName = formData.account_type === 'individual' ? formData.full_name.trim() : formData.admin_full_name.trim();
-            }
+            let userEmail = formData.account_type === 'individual' ? formData.email.trim() : formData.admin_email.trim();
+            let userName = formData.account_type === 'individual' ? formData.full_name.trim() : formData.admin_full_name.trim();
 
             // Store user data
             const userData = {
@@ -484,20 +460,19 @@ const Signup = () => {
                 userId: userId,
                 id: userId,
                 user_id: userId,
-                company_id: data.company?.id || data.user?.company_id,
-                company_name: data.company?.company_name || formData.company_name?.trim(),
+                company_id: null,
+                company_name: formData.company_name?.trim(),
                 selected_plan: selectedPlan,
                 selected_plan_details: selectedPlanDetails,
                 backendResponse: {
                     success: data.success,
-                    message: data.message,
-                    user: data.user,
-                    company: data.company
+                    message: data.message
                 },
                 registered_at: new Date().toISOString(),
                 form_email: formData.account_type === 'individual' ? formData.email.trim() : formData.admin_email.trim(),
                 form_name: formData.account_type === 'individual' ? formData.full_name.trim() : formData.admin_full_name.trim(),
-                country: formData.country // store detected country
+                country: formData.country, // store detected country
+                registration_payload: requestData
             };
 
             localStorage.setItem('registered_user', JSON.stringify(userData));
@@ -520,11 +495,8 @@ const Signup = () => {
             setRegistrationComplete(true);
 
             setStep(4);
-            if (formData.account_type === 'individual') {
-                setSuccess(`✅ Registration successful! We've sent a verification email to your inbox. Please proceed to payment to activate your account.`);
-            } else {
-                setSuccess(`✅ Company Registration successful! We've sent a verification email to your admin address. Please proceed to payment to activate your account.`);
-            }
+            setSuccess(`✅ Validation successful! Please proceed to payment to complete your registration.`);
+
 
         } catch (err) {
             const errorMessage = err.error || err.message || (typeof err === 'string' ? err : 'An error occurred during registration');
@@ -627,7 +599,8 @@ const Signup = () => {
                     account_type: userData.account_type || 'individual',
                     frontendUrl: window.location.origin,
                     amount: adjustedPrice, // send adjusted amount
-                    country: country
+                    country: country,
+                    registration_payload: userData.registration_payload
                 };
 
                 const data = await api.post('/chapa/create-payment', paymentRequest);
