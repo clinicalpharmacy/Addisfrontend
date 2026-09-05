@@ -1,6 +1,5 @@
 // ClinicalPharmacySkill.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
     FaUserMd,
     FaSearch,
@@ -8,13 +7,13 @@ import {
     FaExclamationTriangle,
     FaSync,
     FaUser,
-    FaArrowLeft
+    FaArrowLeft,
+    FaPlus
 } from 'react-icons/fa';
 import api from '../../utils/api';
 import PatientDetails from '../Patient/PatientDetails';
 
 const ClinicalPharmacySkill = () => {
-    const navigate = useNavigate();
     const [patients, setPatients] = useState([]);
     const [selectedPatientId, setSelectedPatientId] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -84,12 +83,10 @@ const ClinicalPharmacySkill = () => {
         }
     }, [user, fetchPatients]);
 
-    // Handle patient selection
+    // Handle patient selection - just set the ID, don't navigate
     const handlePatientSelect = (patientId) => {
         setSelectedPatientId(patientId);
         setViewMode('patient');
-        // Navigate to patient details route
-        navigate(`/patients/${patientId}`);
     };
 
     // Handle back to list
@@ -232,8 +229,8 @@ const ClinicalPharmacySkill = () => {
                     <FaArrowLeft /> Back to Patient List
                 </button>
 
-                {/* Patient Details - this will render based on URL params */}
-                <PatientDetails />
+                {/* Patient Details - pass the patient code as a prop */}
+                <PatientDetails patientCode={selectedPatientId} />
             </div>
         );
     };
