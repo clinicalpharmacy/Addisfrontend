@@ -129,7 +129,7 @@ const Home = () => {
             {/* Quick Access Grid - Row 2 */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 {/* 4. Clinical Pharmacy Tool */}
-                {!isAdmin && user?.role !== 'healthcare_client' && (
+                {user?.role !== 'healthcare_client' && (
                     <NavLink
                         to={isSubscribed ? "/clinical-pharmacy-tool" : "/subscription/plans"}
                         onClick={onClose}
