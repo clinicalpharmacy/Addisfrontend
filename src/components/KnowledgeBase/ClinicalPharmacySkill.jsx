@@ -11,7 +11,8 @@ import {
     FaPlus
 } from 'react-icons/fa';
 import api from '../../utils/api';
-import PatientDetails from '../Patient/PatientDetails';
+// Remove the PatientDetails import or replace with the correct path
+// import PatientDetails from '../Patient/PatientDetails';
 
 const ClinicalPharmacySkill = () => {
     const [patients, setPatients] = useState([]);
@@ -20,9 +21,8 @@ const ClinicalPharmacySkill = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [error, setError] = useState(null);
     const [user, setUser] = useState(null);
-    const [viewMode, setViewMode] = useState('list'); // 'list' | 'patient'
+    const [viewMode, setViewMode] = useState('list');
 
-    // Load user from localStorage
     useEffect(() => {
         const userData = localStorage.getItem('user');
         if (userData) {
@@ -35,13 +35,11 @@ const ClinicalPharmacySkill = () => {
         }
     }, []);
 
-    // Fetch patients based on user role
     const fetchPatients = useCallback(async () => {
         try {
             setLoading(true);
             setError(null);
 
-            // Different endpoints based on user role
             let endpoint = '/patients';
             const isCompanyUser = user?.company_id || 
                 user?.account_type === 'company' ||
@@ -63,11 +61,10 @@ const ClinicalPharmacySkill = () => {
 
             const response = await api.get(endpoint);
             
-            if (response.success) {
-                setPatients(response.patients || []);
-            } else {
-                setError('Failed to load patients');
-            }
+            // Fix: Handle response structure correctly
+            // The API interceptor returns response.data, so check if data exists
+            const patientData = response?.patients || response || [];
+            setPatients(Array.isArray(patientData) ? patientData : []);
         } catch (err) {
             console.error('Failed to fetch patients:', err);
             setError('Failed to load patients. Please try again.');
@@ -76,27 +73,23 @@ const ClinicalPharmacySkill = () => {
         }
     }, [user]);
 
-    // Load patients when user is available
     useEffect(() => {
         if (user) {
             fetchPatients();
         }
     }, [user, fetchPatients]);
 
-    // Handle patient selection - just set the ID, don't navigate
     const handlePatientSelect = (patientId) => {
         setSelectedPatientId(patientId);
         setViewMode('patient');
     };
 
-    // Handle back to list
     const handleBackToList = () => {
         setSelectedPatientId(null);
         setViewMode('list');
         fetchPatients();
     };
 
-    // Filter patients based on search
     const filteredPatients = patients.filter(patient => {
         const searchLower = searchTerm.toLowerCase();
         return (
@@ -106,7 +99,6 @@ const ClinicalPharmacySkill = () => {
         );
     });
 
-    // Render patient list
     const renderPatientList = () => {
         if (loading) {
             return (
@@ -150,7 +142,6 @@ const ClinicalPharmacySkill = () => {
 
         return (
             <div className="space-y-4">
-                {/* Search Bar */}
                 <div className="relative">
                     <input
                         type="text"
@@ -162,7 +153,6 @@ const ClinicalPharmacySkill = () => {
                     <FaSearch className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 </div>
 
-                {/* Patient Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredPatients.map((patient) => (
                         <div
@@ -215,13 +205,11 @@ const ClinicalPharmacySkill = () => {
         );
     };
 
-    // Render patient details view
     const renderPatientView = () => {
         if (!selectedPatientId) return null;
 
         return (
             <div className="space-y-4">
-                {/* Back Button */}
                 <button
                     onClick={handleBackToList}
                     className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 transition-colors font-medium text-sm bg-gray-100 hover:bg-indigo-50 px-4 py-2 rounded-lg"
@@ -229,8 +217,12 @@ const ClinicalPharmacySkill = () => {
                     <FaArrowLeft /> Back to Patient List
                 </button>
 
-                {/* Patient Details - pass the patient code as a prop */}
-                <PatientDetails patientCode={selectedPatientId} />
+                {/* TODO: Import and use the actual PatientDetails component 
+                    Replace this with the correct PatientDetails component once it's available
+                */}
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <p className="text-blue-700">Patient Details for: {selectedPatientId}</p>
+                </div>
             </div>
         );
     };
