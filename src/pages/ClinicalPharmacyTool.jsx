@@ -614,7 +614,7 @@ const ClinicalPharmacyTool = () => {
                         </button>
 
                         {/* ✅ DRN Assessment - ONLY for Admin (HIDDEN otherwise) */}
-                        {isAdmin && (
+                        {(isPharmacistOrStudent || isAdmin) && (
                             <button
                                 onClick={() => setActiveTab('drn')}
                                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
@@ -628,7 +628,7 @@ const ClinicalPharmacyTool = () => {
                         )}
 
                         {/* ✅ Ph-Asst & Plan - ONLY for Admin (HIDDEN otherwise) */}
-                        {isAdmin && (
+                        {(isPharmacistOrStudent || isAdmin) && (
                             <button
                                 onClick={() => setActiveTab('plan')}
                                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
@@ -642,7 +642,7 @@ const ClinicalPharmacyTool = () => {
                         )}
 
                         {/* ✅ Outcome - ONLY for Admin (HIDDEN otherwise) */}
-                        {isAdmin && (
+                        {(isPharmacistOrStudent || isAdmin) && (
                             <button
                                 onClick={() => setActiveTab('outcome')}
                                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
@@ -656,7 +656,7 @@ const ClinicalPharmacyTool = () => {
                         )}
 
                         {/* ✅ Cost - ONLY for Admin (HIDDEN otherwise) */}
-                        {isAdmin && (
+                        {(isPharmacistOrStudent || isAdmin) && (
                             <button
                                 onClick={() => setActiveTab('cost')}
                                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
@@ -680,7 +680,7 @@ const ClinicalPharmacyTool = () => {
                         )}
                         
                         {/* ✅ Only render DRN if user is pharmacist/student */}
-                        {activeTab === 'drn' && isAdmin && (
+                        {activeTab === 'drn' && (isPharmacistOrStudent || isAdmin) && (
                             <DRNAssessment
                                 patientCode={constructedPatientData.id}
                                 patientData={constructedPatientData}
@@ -691,7 +691,7 @@ const ClinicalPharmacyTool = () => {
                         )}
                         
                         {/* ✅ Only render Ph-Asst if user is pharmacist/student */}
-                        {activeTab === 'plan' && isAdmin && (
+                        {activeTab === 'plan' && (isPharmacistOrStudent || isAdmin) && (
                             <PhAssistPlan
                                 patientCode={constructedPatientData.id}
                                 patientData={constructedPatientData}
@@ -701,7 +701,7 @@ const ClinicalPharmacyTool = () => {
                         )}
                         
                         {/* ✅ Only render Outcome if user is pharmacist/student */}
-                        {activeTab === 'outcome' && isAdmin && (
+                        {activeTab === 'outcome' && (isPharmacistOrStudent || isAdmin) && (
                             <PatientOutcome
                                 patientCode={constructedPatientData.id}
                                 patientData={constructedPatientData}
@@ -711,7 +711,7 @@ const ClinicalPharmacyTool = () => {
                         )}
                         
                         {/* ✅ Only render Cost if user is pharmacist/student */}
-                        {activeTab === 'cost' && isAdmin && (
+                        {activeTab === 'cost' && (isPharmacistOrStudent || isAdmin) && (
                             <CostSection
                                 patientCode={constructedPatientData.id}
                                 patientData={constructedPatientData}
