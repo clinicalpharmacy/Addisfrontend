@@ -4,18 +4,15 @@ import {
     FaBookOpen,
     FaClipboardList,
     FaSearch,
-    FaSpinner,
-    FaArrowLeft
+    FaSpinner
 } from 'react-icons/fa';
 import api from '../../utils/api';
 import ExamModule from './ExamModule';
-import ClinicalPharmacyTool from './ClinicalPharmacyTool';
 
 const Education = () => {
     const [activeTab, setActiveTab] = useState('exam');
     const [selectedExam, setSelectedExam] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const [showClinicalTool, setShowClinicalTool] = useState(false);
 
     // API State
     const [exams, setExams] = useState([]);
@@ -64,23 +61,6 @@ const Education = () => {
                 examSubject={selectedExam.subject}
                 onBack={() => setSelectedExam(null)}
             />
-        );
-    }
-
-    // Show ClinicalPharmacyTool in full view
-    if (showClinicalTool) {
-        return (
-            <div className="min-h-screen bg-gray-50">
-                <div className="max-w-7xl mx-auto px-4 py-4">
-                    <button
-                        onClick={() => setShowClinicalTool(false)}
-                        className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm hover:bg-gray-100 transition-colors text-gray-600 border border-gray-200 mb-4"
-                    >
-                        <FaArrowLeft /> Back to Education Center
-                    </button>
-                    <ClinicalPharmacyTool embedded={true} />
-                </div>
-            </div>
         );
     }
 
@@ -137,10 +117,9 @@ const Education = () => {
 
                     {/* Clinical Pharmacy Skill Tab */}
                     <button
-                        onClick={() => {
-                            setActiveTab('clinicalpharmacyskill');
-                            setShowClinicalTool(true);
-                        }}
+                        onClick={() =>
+                            setActiveTab('clinicalpharmacyskill')
+                        }
                         className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-bold text-sm transition-all duration-300 ${
                             activeTab === 'clinicalpharmacyskill'
                                 ? 'bg-white text-indigo-700 shadow-sm'
@@ -229,7 +208,7 @@ const Education = () => {
                                             onClick={() =>
                                                 setSelectedExam(exam)
                                             }
-                                            className="flex items-center p-4 bg-white rounded-xl border border-gray-100 hover:border-purple-300 hover:shadow-lg hover:-translate-y-1 transition-all duration-200 group"
+                                            className="flex items-center p-4 bg-white rounded-xl border border-gray-100 hover:border-purple-300 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group text-left"
                                         >
 
                                             <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center mr-4 group-hover:bg-purple-600 transition-colors duration-300 flex-shrink-0">
@@ -276,30 +255,34 @@ const Education = () => {
                 )}
 
                 {/* =====================================================
-                    CLINICAL PHARMACY SKILL TAB CONTENT (Placeholder when not expanded)
+                    CLINICAL PHARMACY SKILL TAB CONTENT
                 ====================================================== */}
-                {activeTab === 'clinicalpharmacyskill' && !showClinicalTool && (
+                {activeTab === 'clinicalpharmacyskill' && (
                     <div className="animate-fadeIn">
-                        <div 
-                            className="bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-dashed border-indigo-300 rounded-2xl p-12 text-center cursor-pointer hover:bg-indigo-100 transition-all duration-200"
-                            onClick={() => setShowClinicalTool(true)}
-                        >
-                            <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <FaBookOpen className="text-indigo-600 text-3xl" />
+
+                        <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-8 text-center">
+
+                            {/* Icon */}
+                            <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+
+                                <FaBookOpen className="text-indigo-600 text-2xl" />
+
                             </div>
-                            <h3 className="text-2xl font-bold text-indigo-900 mb-2">
-                                Clinical Pharmacy Skill Tool
+
+                            {/* Title */}
+                            <h3 className="text-xl font-bold text-indigo-900 mb-2">
+                                Clinical Pharmacy Skill
                             </h3>
-                            <p className="text-indigo-700 max-w-md mx-auto mb-4">
-                                Launch the comprehensive clinical pharmacy tool to analyze patient data, 
-                                run CDSS assessments, and develop pharmacy care plans.
+
+                            {/* Description */}
+                            <p className="text-indigo-700 max-w-md mx-auto">
+                                The clinical pharmacy skill section is
+                                currently under development. Please check
+                                back later.
                             </p>
-                            <button 
-                                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
-                            >
-                                Launch Tool →
-                            </button>
+
                         </div>
+
                     </div>
                 )}
 
