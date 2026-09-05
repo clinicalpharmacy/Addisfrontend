@@ -576,8 +576,11 @@ const SubscriptionPlans = () => {
                 </div>
 
                 <div className="mb-6">
+                  <div className="text-sm text-gray-500 font-medium mb-1">
+                    ETB {Math.round(plan.price / 1.15).toLocaleString()} + ETB {(plan.price - Math.round(plan.price / 1.15)).toLocaleString()} (15% VAT)
+                  </div>
                   <div className="flex items-baseline">
-                    <span className="text-4xl font-bold text-gray-900">ETB {plan.price}</span>
+                    <span className="text-4xl font-bold text-gray-900">ETB {plan.price.toLocaleString()}</span>
                     <span className="ml-2 text-gray-500">/{plan.interval}</span>
                   </div>
                   {plan.originalPrice && plan.originalPrice > plan.price && (
@@ -676,8 +679,11 @@ const SubscriptionPlans = () => {
                           </p>
                         </div>
                         <div className="text-right">
+                          <div className="text-xs text-gray-500 font-medium mb-1">
+                            Base: ETB {Math.round(plans.find(p => p.id === selectedPlan)?.price / 1.15).toLocaleString()} + 15% VAT
+                          </div>
                           <div className="text-2xl font-bold text-blue-600">
-                            ETB {plans.find(p => p.id === selectedPlan)?.price}
+                            ETB {plans.find(p => p.id === selectedPlan)?.price.toLocaleString()}
                           </div>
                           <div className="text-sm text-gray-500">
                             per {plans.find(p => p.id === selectedPlan)?.interval}
