@@ -680,7 +680,7 @@ const ClinicalPharmacyTool = () => {
                         )}
                         
                         {/* ✅ Only render DRN if user is pharmacist/student */}
-                        {activeTab === 'drn' && {isAdmin && (
+                        {activeTab === 'drn' && isAdmin && (
                             <DRNAssessment
                                 patientCode={constructedPatientData.id}
                                 patientData={constructedPatientData}
@@ -691,7 +691,7 @@ const ClinicalPharmacyTool = () => {
                         )}
                         
                         {/* ✅ Only render Ph-Asst if user is pharmacist/student */}
-                        {activeTab === 'plan' && {isAdmin && (
+                        {activeTab === 'plan' && isAdmin && (
                             <PhAssistPlan
                                 patientCode={constructedPatientData.id}
                                 patientData={constructedPatientData}
@@ -701,7 +701,7 @@ const ClinicalPharmacyTool = () => {
                         )}
                         
                         {/* ✅ Only render Outcome if user is pharmacist/student */}
-                        {activeTab === 'outcome' && {isAdmin && (
+                        {activeTab === 'outcome' && isAdmin && (
                             <PatientOutcome
                                 patientCode={constructedPatientData.id}
                                 patientData={constructedPatientData}
@@ -711,7 +711,7 @@ const ClinicalPharmacyTool = () => {
                         )}
                         
                         {/* ✅ Only render Cost if user is pharmacist/student */}
-                        {activeTab === 'cost' && {isAdmin && (
+                        {activeTab === 'cost' && isAdmin && (
                             <CostSection
                                 patientCode={constructedPatientData.id}
                                 patientData={constructedPatientData}
