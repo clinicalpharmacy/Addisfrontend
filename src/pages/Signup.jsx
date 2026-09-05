@@ -1018,6 +1018,11 @@ const Signup = () => {
                                         <p className="text-gray-600 text-sm mb-6 flex-grow">{plan.description}</p>
 
                                         <div className="mb-6">
+                                            {isEthiopia && (
+                                                <div className="text-xs text-gray-500 font-medium mb-1">
+                                                    Base: {Math.round(plan.price / 1.15).toLocaleString()} + 15% VAT
+                                                </div>
+                                            )}
                                             <div className="text-3xl font-bold text-gray-800">
                                                 {getAdjustedPriceForPlan(plan, formData.country)} <span className="text-base font-normal text-gray-500">{plan.currency}</span>
                                             </div>
