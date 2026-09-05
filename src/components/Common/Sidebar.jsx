@@ -314,8 +314,8 @@ const Sidebar = ({ onClose }) => {
                             </li>
                         )}
 
-                        {/* Clinical Pharmacy Tool - Direct Link for Individuals and Organizations (except clients and admins) */}
-                        {!isAdmin && user?.role !== 'healthcare_client' && (
+                        {/* Clinical Pharmacy Tool - Direct Link for Individuals and Organizations (except clients) */}
+                        {user?.role !== 'healthcare_client' && (
                             <li className="mb-2">
                                 <NavLink
                                     to={isSubscribed ? "/clinical-pharmacy-tool" : "/subscription/plans"}
