@@ -12,8 +12,6 @@ import DRNAssessment from '../components/Patient/DRNAssessment';
 import PhAssistPlan from '../components/Patient/PhAssistPlan';
 import PatientOutcome from '../components/Patient/PatientOutcome';
 import CostSection from '../components/Patient/CostSection';
-
-const ClinicalPharmacyTool = ({ embedded = false }) => {
     
 // Main categories in the correct order
 const MAIN_CATEGORIES = [
@@ -733,7 +731,7 @@ const ClinicalPharmacyTool = () => {
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-4">
                         <button
-                            onClick={() => embedded ? navigate(-1) : navigate(-1)}
+                            onClick={() => navigate(-1)}
                             className="bg-white p-2.5 rounded-lg shadow-sm hover:bg-gray-100 transition-colors text-gray-600 border border-gray-100"
                         >
                             <FaArrowLeft />
