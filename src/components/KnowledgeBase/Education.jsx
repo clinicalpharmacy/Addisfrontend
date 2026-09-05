@@ -8,7 +8,6 @@ import {
 } from 'react-icons/fa';
 import api from '../../utils/api';
 import ExamModule from './ExamModule';
-import ClinicalPharmacySkill from './ClinicalPharmacySkill';
 
 const Education = () => {
     const [activeTab, setActiveTab] = useState('exam');
@@ -260,7 +259,30 @@ const Education = () => {
                 ====================================================== */}
                 {activeTab === 'clinicalpharmacyskill' && (
                     <div className="animate-fadeIn">
-                        <ClinicalPharmacySkill />
+
+                        <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-8 text-center">
+
+                            {/* Icon */}
+                            <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+
+                                <FaBookOpen className="text-indigo-600 text-2xl" />
+
+                            </div>
+
+                            {/* Title */}
+                            <h3 className="text-xl font-bold text-indigo-900 mb-2">
+                                Clinical Pharmacy Skill
+                            </h3>
+
+                            {/* Description */}
+                            <p className="text-indigo-700 max-w-md mx-auto">
+                                The clinical pharmacy skill section is
+                                currently under development. Please check
+                                back later.
+                            </p>
+
+                        </div>
+
                     </div>
                 )}
 
