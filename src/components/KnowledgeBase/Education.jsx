@@ -229,7 +229,7 @@ const Education = () => {
                                             onClick={() =>
                                                 setSelectedExam(exam)
                                             }
-                                            className="flex items-center p-4 bg-white rounded-xl border border-gray-100 hover:border-purple-300 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group text-left"
+                                            className="flex items-center p-4 bg-white rounded-xl border border-gray-100 hover:border-purple-300 hover:shadow-lg hover:-translate-y-1 transition-all duration-200 group"
                                         >
 
                                             <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center mr-4 group-hover:bg-purple-600 transition-colors duration-300 flex-shrink-0">
@@ -281,7 +281,7 @@ const Education = () => {
                 {activeTab === 'clinicalpharmacyskill' && !showClinicalTool && (
                     <div className="animate-fadeIn">
                         <div 
-                            className="bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-dashed border-indigo-300 rounded-2xl p-12 text-center cursor-pointer hover:bg-indigo-100 transition-all duration-300"
+                            className="bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-dashed border-indigo-300 rounded-2xl p-12 text-center cursor-pointer hover:bg-indigo-100 transition-all duration-200"
                             onClick={() => setShowClinicalTool(true)}
                         >
                             <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
