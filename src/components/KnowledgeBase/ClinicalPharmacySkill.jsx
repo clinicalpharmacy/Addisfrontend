@@ -41,6 +41,7 @@ const ClinicalPharmacySkill = () => {
             setError(null);
 
             let endpoint = '/patients';
+            const isAdmin = user?.role === 'admin';
             const isCompanyUser = user?.company_id || 
                 user?.account_type === 'company' ||
                 ['company_admin', 'company_user'].includes(user?.role);
@@ -51,7 +52,9 @@ const ClinicalPharmacySkill = () => {
             const isIndividual = user?.account_type === 'individual' && 
                 user?.role !== 'admin';
 
-            if (isIndividual) {
+            if (isAdmin) {
+                endpoint = '/patients';
+            } else if (isIndividual) {
                 endpoint = '/patients/my-patients';
             } else if (isHealthcareClient) {
                 endpoint = '/patients/assigned';
