@@ -17,19 +17,20 @@ const API_URL = import.meta.env.VITE_API_URL;
 import api from '../utils/api';
 import UserAgreement from '../components/UserAgreement';
 
-// Define subscription plans with updated pricing
+// Facility-type based subscription plans (all prices include 15% VAT)
 const SUBSCRIPTION_PLANS = [
+    // ── Individual ────────────────────────────────────────────────────────
     {
         id: 'individual_monthly',
         name: 'Individual Monthly',
-        price: 300,
+        price: 345, // 300 + 15% VAT
         currency: 'ETB',
         interval: 'month',
-        description: 'For healthcare clients, health professionals & students',
-        user_limit: 5,
+        description: 'For individual pharmacists, health professionals & students',
+        user_limit: 1,
         icon: FaUserMd,
         color: 'from-blue-500 to-blue-600',
-        badge: 'Popular',
+        badge: 'Monthly',
         features: [
             'Medication information',
             'Home remedies',
@@ -42,66 +43,261 @@ const SUBSCRIPTION_PLANS = [
     {
         id: 'individual_yearly',
         name: 'Individual Yearly',
-        price: 3000,
+        price: 3450, // 3000 + 15% VAT
         currency: 'ETB',
         interval: 'year',
         description: 'Best value for individuals',
-        user_limit: 5,
+        user_limit: 1,
         icon: FaStar,
         color: 'from-purple-500 to-purple-600',
         badge: 'Best Value',
-        originalPrice: 3600,
-        discount: 'Save 600 ETB',
+        originalPrice: 4140, // 3600 + 15% VAT
+        discount: 'Save 690 ETB',
         features: [
             'Everything in Monthly plan',
             'Priority support',
-            'Minor illness management for pharmacy professionals/students',
-            'Compounding for pharmacy professionals/students',
+            'Minor illness management',
+            'Compounding resources',
             'Early access to new features'
         ],
         popular: true,
         account_type: 'individual'
     },
+    // ── Pharmacy / Drug Store ─────────────────────────────────────────────
+
     {
-        id: 'company_basic',
-        name: 'Company Monthly',
-        price: 3000,
+        id: 'pharmacy_monthly',
+        name: 'Pharmacy / Drug Store Monthly',
+        price: 1035, // 900 + 15% VAT
         currency: 'ETB',
         interval: 'month',
-        description: 'For a single pharmacy and small healthcare facilities',
+        description: 'For pharmacies and drug stores',
         user_limit: 5,
-        icon: FaBuilding,
-        color: 'from-green-500 to-green-600',
-        badge: 'Team',
+        icon: FaStore,
+        color: 'from-blue-500 to-blue-600',
+        badge: 'Monthly',
         features: [
-            'Up to 5 users',
-            'Company dashboard',
-            'Basic training included'
+            'Full medication knowledge base',
+            'Patient management system',
+            'Clinical decision support',
+            'Drug interaction checking',
+            'Medication availability checks',
+            'Up to 5 users'
         ],
-        limitations: ['Limited to 5 users'],
-        account_type: 'company'
+        account_type: 'company',
+        facility_type: 'pharmacy'
     },
     {
-        id: 'company_pro',
-        name: 'Company Yearly',
-        price: 25000,
+        id: 'pharmacy_yearly',
+        name: 'Pharmacy / Drug Store Yearly',
+        price: 10350, // 9000 + 15% VAT
         currency: 'ETB',
         interval: 'year',
-        description: 'For chain pharmacies and medium to large healthcare facilities',
+        description: 'Best value for pharmacies and drug stores',
+        user_limit: 5,
+        icon: FaStore,
+        color: 'from-blue-600 to-indigo-600',
+        badge: 'Best Value',
+        originalPrice: 12420,
+        discount: 'Save 2,070 ETB',
+        features: [
+            'Everything in Monthly plan',
+            'Priority support',
+            'Advanced analytics',
+            'Custom reports',
+            'Up to 5 users'
+        ],
+        popular: true,
+        account_type: 'company',
+        facility_type: 'pharmacy'
+    },
+    // ── Clinic / Specialty Center ─────────────────────────────────────────
+    {
+        id: 'clinic_monthly',
+        name: 'Clinic / Specialty Center Monthly',
+        price: 1035, // 900 + 15% VAT
+        currency: 'ETB',
+        interval: 'month',
+        description: 'For clinics and specialty centers',
+        user_limit: 5,
+        icon: FaBriefcase,
+        color: 'from-teal-500 to-teal-600',
+        badge: 'Monthly',
+        features: [
+            'Full medication knowledge base',
+            'Patient management system',
+            'Clinical decision support',
+            'Drug interaction checking',
+            'Medication availability checks',
+            'Up to 5 users'
+        ],
+        account_type: 'company',
+        facility_type: 'clinic'
+    },
+    {
+        id: 'clinic_yearly',
+        name: 'Clinic / Specialty Center Yearly',
+        price: 10350, // 9000 + 15% VAT
+        currency: 'ETB',
+        interval: 'year',
+        description: 'Best value for clinics and specialty centers',
+        user_limit: 5,
+        icon: FaBriefcase,
+        color: 'from-teal-600 to-cyan-600',
+        badge: 'Best Value',
+        originalPrice: 12420,
+        discount: 'Save 2,070 ETB',
+        features: [
+            'Everything in Monthly plan',
+            'Priority support',
+            'Advanced analytics',
+            'Custom reports',
+            'Up to 5 users'
+        ],
+        popular: true,
+        account_type: 'company',
+        facility_type: 'clinic'
+    },
+    // ── Health Center ─────────────────────────────────────────────────────
+    {
+        id: 'health_center_monthly',
+        name: 'Health Center Monthly',
+        price: 1035, // 900 + 15% VAT
+        currency: 'ETB',
+        interval: 'month',
+        description: 'For health centers',
+        user_limit: 5,
+        icon: FaUsers,
+        color: 'from-green-500 to-green-600',
+        badge: 'Monthly',
+        features: [
+            'Full medication knowledge base',
+            'Patient management system',
+            'Clinical decision support',
+            'Drug interaction checking',
+            'Medication availability checks',
+            'Up to 5 users'
+        ],
+        account_type: 'company',
+        facility_type: 'health_center'
+    },
+    {
+        id: 'health_center_yearly',
+        name: 'Health Center Yearly',
+        price: 10350, // 9000 + 15% VAT
+        currency: 'ETB',
+        interval: 'year',
+        description: 'Best value for health centers',
+        user_limit: 5,
+        icon: FaUsers,
+        color: 'from-green-600 to-emerald-600',
+        badge: 'Best Value',
+        originalPrice: 12420,
+        discount: 'Save 2,070 ETB',
+        features: [
+            'Everything in Monthly plan',
+            'Priority support',
+            'Advanced analytics',
+            'Custom reports',
+            'Up to 5 users'
+        ],
+        popular: true,
+        account_type: 'company',
+        facility_type: 'health_center'
+    },
+    // ── Hospital ──────────────────────────────────────────────────────────
+    {
+        id: 'hospital_monthly',
+        name: 'Hospital Monthly',
+        price: 3450, // 3000 + 15% VAT
+        currency: 'ETB',
+        interval: 'month',
+        description: 'For hospitals',
+        user_limit: 20,
+        icon: FaBuilding,
+        color: 'from-purple-500 to-purple-600',
+        badge: 'Monthly',
+        features: [
+            'Full medication knowledge base',
+            'Patient management system',
+            'Clinical decision support',
+            'Drug interaction checking',
+            'Team management',
+            'Up to 20 users'
+        ],
+        account_type: 'company',
+        facility_type: 'hospital'
+    },
+    {
+        id: 'hospital_yearly',
+        name: 'Hospital Yearly',
+        price: 28750, // 25000 + 15% VAT
+        currency: 'ETB',
+        interval: 'year',
+        description: 'Best value for hospitals',
+        user_limit: 20,
+        icon: FaBuilding,
+        color: 'from-purple-600 to-violet-600',
+        badge: 'Best Value',
+        originalPrice: 41400,
+        discount: 'Save 12,650 ETB',
+        features: [
+            'Everything in Monthly plan',
+            'Dedicated support',
+            'Advanced reporting',
+            'Bulk operations',
+            'Up to 20 users'
+        ],
+        popular: true,
+        account_type: 'company',
+        facility_type: 'hospital'
+    },
+    // ── Pharmacy School ───────────────────────────────────────────────────
+    {
+        id: 'pharmacy_school_monthly',
+        name: 'Pharmacy School Monthly',
+        price: 3450, // 3000 + 15% VAT
+        currency: 'ETB',
+        interval: 'month',
+        description: 'For pharmacy schools and academic institutions',
         user_limit: 20,
         icon: FaRocket,
         color: 'from-orange-500 to-orange-600',
-        badge: 'Enterprise',
-        originalPrice: 30000,
-        discount: 'Save 5000 ETB',
+        badge: 'Monthly',
         features: [
-            'Up to 20 users',
-            'Multi-user access',
-            'Company dashboard',
+            'Full medication knowledge base',
+            'Clinical decision support',
+            'Minor illness management',
+            'Compounding resources',
+            'Team management',
+            'Up to 20 users'
+        ],
+        account_type: 'company',
+        facility_type: 'pharmacy_school'
+    },
+    {
+        id: 'pharmacy_school_yearly',
+        name: 'Pharmacy School Yearly',
+        price: 28750, // 25000 + 15% VAT
+        currency: 'ETB',
+        interval: 'year',
+        description: 'Best value for pharmacy schools',
+        user_limit: 20,
+        icon: FaRocket,
+        color: 'from-orange-600 to-red-600',
+        badge: 'Best Value',
+        originalPrice: 41400,
+        discount: 'Save 12,650 ETB',
+        features: [
+            'Everything in Monthly plan',
             'Dedicated support',
+            'Advanced reporting',
+            'Early access to new features',
+            'Up to 20 users'
         ],
         popular: true,
-        account_type: 'company'
+        account_type: 'company',
+        facility_type: 'pharmacy_school'
     }
 ];
 

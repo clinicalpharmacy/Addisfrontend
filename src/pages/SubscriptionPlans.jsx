@@ -18,7 +18,7 @@ const SubscriptionPlans = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [accountType, setAccountType] = useState('individual');
+  const [facilityType, setFacilityType] = useState('pharmacy');
   const [paymentMethod, setPaymentMethod] = useState('chapa');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [user, setUser] = useState(null);
@@ -87,93 +87,246 @@ const SubscriptionPlans = () => {
     setTimeout(() => navigate('/signup'), 3000);
   };
 
-  // Define plans based on account type
-  // In SubscriptionPlans component, update the getPlans function:
-  const getPlans = () => {
-    if (accountType === 'individual') {
-      return [
-        {
-          id: 'individual_monthly',
-          name: 'Individual Monthly',
-          price: 300,
-          currency: 'ETB',
-          interval: 'month',
-          originalPrice: 300,
-          description: 'Perfect for individual pharmacists',
-          features: [
-            'Full medication knowledge base',
-            'Patient management system',
-            'Clinical decision support',
-            'Drug interaction checking',
-            'Basic analytics',
-            'Email support'
-          ],
-          recommended: false,
-          icon: <FaUserTie className="text-blue-500" />
-        },
-        {
-          id: 'individual_yearly',
-          name: 'Individual Yearly',
-          price: 3000,
-          currency: 'ETB',
-          interval: 'year',
-          originalPrice: 3600,
-          description: 'Best value for individuals',
-          features: [
-            'Everything in Monthly plan',
-            'Priority support',
-            'Advanced analytics',
-            'Custom reports',
-            'API access'
-          ],
-          popular: true,
-          recommended: true,
-          icon: <FaUserTie className="text-green-500" />
-        }
-      ];
-    } else {
-      return [
-        {
-          id: 'company_basic',
-          name: 'Company Monthly',
-          price: 3000,
-          currency: 'ETB',
-          interval: 'month',
-          originalPrice: 3000,
-          description: 'For small healthcare facilities',
-          features: [
-            'Everything in Individual plan',
-            'Up to 5 users',
-            'Centralized patient database',
-            'Team management',
-            'Company dashboard',
-            'Multi-user access'
-          ],
-          recommended: false,
-          icon: <FaBuilding className="text-blue-500" />
-        },
-        {
-          id: 'company_pro',
-          name: 'Company Yearly',
-          price: 25000,
-          currency: 'ETB',
-          interval: 'year',
-          originalPrice: 30000,
-          description: 'For medium to large organizations',
-          features: [
-            'Everything in Company Basic',
-            'Up to 20 users',
-            'Custom user roles',
-            'Advanced reporting',
-            'Bulk operations',
-            'Dedicated support'
-          ],
-          popular: true,
-          recommended: true,
-          icon: <FaBuilding className="text-purple-500" />
-        }
-      ];
+  // All plans — all prices include 15% VAT
+  const ALL_PLANS = [
+    // Individual — 300/month, 3000/year (base) + 15% VAT
+    {
+      id: 'individual_monthly',
+      name: 'Individual',
+      price: 345, // 300 + 15% VAT
+      currency: 'ETB',
+      interval: 'month',
+      originalPrice: 345,
+      description: 'For individual pharmacists, health professionals & students',
+      features: [
+        'Medication information',
+        'Home remedies',
+        'Clinical alerts',
+        'Medication availability checks',
+        'Single user'
+      ],
+      recommended: false,
+      icon: <FaUserTie className="text-blue-500" />
+    },
+    {
+      id: 'individual_yearly',
+      name: 'Individual',
+      price: 3450, // 3000 + 15% VAT
+      currency: 'ETB',
+      interval: 'year',
+      originalPrice: 4140, // 3600 + 15% VAT
+      description: 'Best value for individuals',
+      features: [
+        'Everything in Monthly plan',
+        'Priority support',
+        'Minor illness management',
+        'Compounding resources',
+        'Early access to new features'
+      ],
+      popular: true,
+      recommended: true,
+      icon: <FaUserTie className="text-green-500" />
+    },
+    // Pharmacy / Drug Store — 900/month, 9,000/year (base) + 15% VAT
+    {
+      id: 'pharmacy_monthly',
+      name: 'Pharmacy / Drug Store',
+      price: 1035, // 900 + 15% VAT
+      currency: 'ETB',
+      interval: 'month',
+      originalPrice: 1035,
+      description: 'For pharmacies and drug stores',
+      features: [
+        'Full medication knowledge base',
+        'Patient management system',
+        'Clinical decision support',
+        'Drug interaction checking',
+        'Medication availability checks',
+        'Up to 5 users'
+      ],
+      recommended: false,
+      icon: <FaBuilding className="text-blue-500" />
+    },
+    {
+      id: 'pharmacy_yearly',
+      name: 'Pharmacy / Drug Store',
+      price: 10350, // 9000 + 15% VAT
+      currency: 'ETB',
+      interval: 'year',
+      originalPrice: 12420,
+      description: 'Best value for pharmacies and drug stores',
+      features: [
+        'Everything in Monthly plan',
+        'Priority support',
+        'Advanced analytics',
+        'Custom reports',
+        'Up to 5 users'
+      ],
+      popular: true,
+      recommended: true,
+      icon: <FaBuilding className="text-blue-600" />
+    },
+    // Clinic / Specialty Center — 900/month, 9,000/year
+    {
+      id: 'clinic_monthly',
+      name: 'Clinic / Specialty Center',
+      price: 1035, // 900 + 15% VAT
+      currency: 'ETB',
+      interval: 'month',
+      originalPrice: 1035,
+      description: 'For clinics and specialty centers',
+      features: [
+        'Full medication knowledge base',
+        'Patient management system',
+        'Clinical decision support',
+        'Drug interaction checking',
+        'Medication availability checks',
+        'Up to 5 users'
+      ],
+      recommended: false,
+      icon: <FaBuilding className="text-teal-500" />
+    },
+    {
+      id: 'clinic_yearly',
+      name: 'Clinic / Specialty Center',
+      price: 10350, // 9000 + 15% VAT
+      currency: 'ETB',
+      interval: 'year',
+      originalPrice: 12420,
+      description: 'Best value for clinics and specialty centers',
+      features: [
+        'Everything in Monthly plan',
+        'Priority support',
+        'Advanced analytics',
+        'Custom reports',
+        'Up to 5 users'
+      ],
+      popular: true,
+      recommended: true,
+      icon: <FaBuilding className="text-teal-600" />
+    },
+    // Health Center — 900/month, 9,000/year
+    {
+      id: 'health_center_monthly',
+      name: 'Health Center',
+      price: 1035, // 900 + 15% VAT
+      currency: 'ETB',
+      interval: 'month',
+      originalPrice: 1035,
+      description: 'For health centers',
+      features: [
+        'Full medication knowledge base',
+        'Patient management system',
+        'Clinical decision support',
+        'Drug interaction checking',
+        'Medication availability checks',
+        'Up to 5 users'
+      ],
+      recommended: false,
+      icon: <FaBuilding className="text-green-500" />
+    },
+    {
+      id: 'health_center_yearly',
+      name: 'Health Center',
+      price: 10350, // 9000 + 15% VAT
+      currency: 'ETB',
+      interval: 'year',
+      originalPrice: 12420,
+      description: 'Best value for health centers',
+      features: [
+        'Everything in Monthly plan',
+        'Priority support',
+        'Advanced analytics',
+        'Custom reports',
+        'Up to 5 users'
+      ],
+      popular: true,
+      recommended: true,
+      icon: <FaBuilding className="text-green-600" />
+    },
+    // Hospital — 3,000/month, 25,000/year
+    {
+      id: 'hospital_monthly',
+      name: 'Hospital',
+      price: 3450, // 3000 + 15% VAT
+      currency: 'ETB',
+      interval: 'month',
+      originalPrice: 3450,
+      description: 'For hospitals',
+      features: [
+        'Full medication knowledge base',
+        'Patient management system',
+        'Clinical decision support',
+        'Drug interaction checking',
+        'Team management',
+        'Up to 20 users'
+      ],
+      recommended: false,
+      icon: <FaBuilding className="text-purple-500" />
+    },
+    {
+      id: 'hospital_yearly',
+      name: 'Hospital',
+      price: 28750, // 25000 + 15% VAT
+      currency: 'ETB',
+      interval: 'year',
+      originalPrice: 41400,
+      description: 'Best value for hospitals',
+      features: [
+        'Everything in Monthly plan',
+        'Dedicated support',
+        'Advanced reporting',
+        'Bulk operations',
+        'Up to 20 users'
+      ],
+      popular: true,
+      recommended: true,
+      icon: <FaBuilding className="text-purple-600" />
+    },
+    // Pharmacy School — 3,000/month, 25,000/year
+    {
+      id: 'pharmacy_school_monthly',
+      name: 'Pharmacy School',
+      price: 3450, // 3000 + 15% VAT
+      currency: 'ETB',
+      interval: 'month',
+      originalPrice: 3450,
+      description: 'For pharmacy schools and academic institutions',
+      features: [
+        'Full medication knowledge base',
+        'Clinical decision support',
+        'Minor illness management',
+        'Compounding resources',
+        'Team management',
+        'Up to 20 users'
+      ],
+      recommended: false,
+      icon: <FaBuilding className="text-orange-500" />
+    },
+    {
+      id: 'pharmacy_school_yearly',
+      name: 'Pharmacy School',
+      price: 28750, // 25000 + 15% VAT
+      currency: 'ETB',
+      interval: 'year',
+      originalPrice: 41400,
+      description: 'Best value for pharmacy schools',
+      features: [
+        'Everything in Monthly plan',
+        'Dedicated support',
+        'Advanced reporting',
+        'Early access to new features',
+        'Up to 20 users'
+      ],
+      popular: true,
+      recommended: true,
+      icon: <FaBuilding className="text-orange-600" />
     }
+  ];
+
+  // Filter by selected facility type
+  const getPlans = () => {
+    return ALL_PLANS.filter(p => p.id === `${facilityType}_monthly` || p.id === `${facilityType}_yearly`);
   };
   const plans = getPlans();
 
@@ -330,8 +483,32 @@ const SubscriptionPlans = () => {
             Choose Your Subscription Plan
           </h1>
           <p className="text-sm md:text-lg text-gray-600">
-            Select the perfect plan for your {accountType === 'individual' ? 'individual' : 'company'} needs
+            Select your facility type and billing interval
           </p>
+
+          {/* Facility Type Selector */}
+          <div className="mt-6 flex flex-wrap justify-center gap-2">
+            {[
+              { id: 'individual', label: 'Individual' },
+              { id: 'pharmacy', label: 'Pharmacy / Drug Store' },
+              { id: 'clinic', label: 'Clinic / Specialty Center' },
+              { id: 'health_center', label: 'Health Center' },
+              { id: 'hospital', label: 'Hospital' },
+              { id: 'pharmacy_school', label: 'Pharmacy School' }
+            ].map(f => (
+              <button
+                key={f.id}
+                onClick={() => { setFacilityType(f.id); setSelectedPlan(''); }}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  facilityType === f.id
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow'
+                    : 'bg-white text-gray-600 border border-gray-300 hover:border-blue-400'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Registration Info Banner */}
@@ -348,12 +525,19 @@ const SubscriptionPlans = () => {
                 </p>
               </div>
             </div>
-            <div className="text-center md:text-right border-t md:border-t-0 pt-3 md:pt-0 w-full md:w-auto">
-              <p className="text-[10px] md:text-sm text-gray-500 uppercase tracking-wider">Account Type</p>
-              <p className="font-bold text-blue-600 text-sm md:text-base">
-                {accountType === 'individual' ? 'Individual' : 'Company'}
-              </p>
-            </div>
+              <div className="text-center md:text-right border-t md:border-t-0 pt-3 md:pt-0 w-full md:w-auto">
+                <p className="text-[10px] md:text-sm text-gray-500 uppercase tracking-wider">Facility Type</p>
+                <p className="font-bold text-blue-600 text-sm md:text-base">
+                  {{
+                    individual: 'Individual',
+                    pharmacy: 'Pharmacy / Drug Store',
+                    clinic: 'Clinic / Specialty Center',
+                    health_center: 'Health Center',
+                    hospital: 'Hospital',
+                    pharmacy_school: 'Pharmacy School'
+                  }[facilityType]}
+                </p>
+              </div>
           </div>
         </div>
 
