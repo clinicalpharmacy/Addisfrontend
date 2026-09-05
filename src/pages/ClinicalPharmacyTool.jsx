@@ -599,6 +599,7 @@ const ClinicalPharmacyTool = () => {
 
                     {/* ✅ Tab Navigation - Only show restricted tabs for Pharmacists & Pharmacy Students */}
                     <div className="flex overflow-x-auto gap-2 mb-6 bg-white p-2 rounded-xl shadow-sm hide-scrollbar">
+
                         {/* Clinical Case Review - Always visible */}
                         <button
                             onClick={() => setActiveTab('analysis')}
@@ -611,8 +612,8 @@ const ClinicalPharmacyTool = () => {
                             <FaUserShield /> Clinical Case Review
                         </button>
 
-                        {/* ✅ DRN Assessment - ONLY for Pharmacists & Pharmacy Students (HIDDEN otherwise) */}
-                        {isPharmacistOrStudent && (
+                        {/* ✅ DRN Assessment - ONLY for Admin (HIDDEN otherwise) */}
+                        {isAdmin && (
                             <button
                                 onClick={() => setActiveTab('drn')}
                                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
@@ -625,8 +626,8 @@ const ClinicalPharmacyTool = () => {
                             </button>
                         )}
 
-                        {/* ✅ Ph-Asst & Plan - ONLY for Pharmacists & Pharmacy Students (HIDDEN otherwise) */}
-                        {isPharmacistOrStudent && (
+                        {/* ✅ Ph-Asst & Plan - ONLY for Admin (HIDDEN otherwise) */}
+                        {isAdmin && (
                             <button
                                 onClick={() => setActiveTab('plan')}
                                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
@@ -639,8 +640,8 @@ const ClinicalPharmacyTool = () => {
                             </button>
                         )}
 
-                        {/* ✅ Outcome - ONLY for Pharmacists & Pharmacy Students (HIDDEN otherwise) */}
-                        {isPharmacistOrStudent && (
+                        {/* ✅ Outcome - ONLY for Admin (HIDDEN otherwise) */}
+                        {isAdmin && (
                             <button
                                 onClick={() => setActiveTab('outcome')}
                                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
@@ -653,8 +654,8 @@ const ClinicalPharmacyTool = () => {
                             </button>
                         )}
 
-                        {/* ✅ Cost - ONLY for Pharmacists & Pharmacy Students (HIDDEN otherwise) */}
-                        {isPharmacistOrStudent && (
+                        {/* ✅ Cost - ONLY for Admin (HIDDEN otherwise) */}
+                        {isAdmin && (
                             <button
                                 onClick={() => setActiveTab('cost')}
                                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
