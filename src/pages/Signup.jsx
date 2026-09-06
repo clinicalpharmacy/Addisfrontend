@@ -101,12 +101,10 @@ const SUBSCRIPTION_PLANS = [
         originalPrice: 12420,
         discount: 'Save 2,070 ETB',
         features: [
-            'Medication information',
-            'Medication safety checks',
-            'Medication availability posts',
-            'Other features for practitioners',
+            'All features in the monthly plan',
             'Priority support',
             'Early access to new features',
+            'Request content to add',
             'Up to 10 users'
         ],
         popular: true,
@@ -149,12 +147,10 @@ const SUBSCRIPTION_PLANS = [
         originalPrice: 12420,
         discount: 'Save 2,070 ETB',
         features: [
-            'Medication information',
-            'Medication safety checks',
-            'Medication availability posts',
-            'Other features for practitioners',
+            'All features in the monthly plan',
             'Priority support',
             'Early access to new features',
+            'Request content to add',
             'Up to 10 users'
         ],
         popular: true,
@@ -197,12 +193,10 @@ const SUBSCRIPTION_PLANS = [
         originalPrice: 12420,
         discount: 'Save 2,070 ETB',
         features: [
-            'Medication information',
-            'Medication safety checks',
-            'Medication availability posts',
-            'Other features for practitioners',
+            'All features in the monthly plan',
             'Priority support',
             'Early access to new features',
+            'Request content to add',
             'Up to 10 users'
         ],
         popular: true,
@@ -245,12 +239,10 @@ const SUBSCRIPTION_PLANS = [
         originalPrice: 41400,
         discount: 'Save 12,650 ETB',
         features: [
-            'Medication information',
-            'Medication safety checks',
-            'Medication availability posts',
-            'Other features for practitioners',
+            'All features in the monthly plan',
             'Priority support',
             'Early access to new features',
+            'Request content to add',
             'Up to 20 users'
         ],
         popular: true,
@@ -293,12 +285,10 @@ const SUBSCRIPTION_PLANS = [
         originalPrice: 41400,
         discount: 'Save 12,650 ETB',
         features: [
-            'Medication information',
-            'Medication safety checks',
-            'Medication availability posts',
-            'Education',
+            'All features in the monthly plan',
             'Priority support',
             'Early access to new features',
+            'Request content to add',
             'Up to 20 users'
         ],
         popular: true,
