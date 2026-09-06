@@ -26,16 +26,16 @@ const SUBSCRIPTION_PLANS = [
         price: 345, // 300 + 15% VAT
         currency: 'ETB',
         interval: 'month',
-        description: 'For individual pharmacists, health professionals & students',
+        description: 'For individual healthcare professionals, students  & clients',
         user_limit: 1,
         icon: FaUserMd,
         color: 'from-blue-500 to-blue-600',
         badge: 'Monthly',
         features: [
             'Medication information',
-            'Home remedies',
-            'Clinical alerts',
-            'Medication availability checks'
+            'Medication safety checks',
+            'Medication availability posts',
+            'Other features for practitioners & students'
         ],
         limitations: ['Single user only'],
         account_type: 'individual'
@@ -54,10 +54,11 @@ const SUBSCRIPTION_PLANS = [
         originalPrice: 4140, // 3600 + 15% VAT
         discount: 'Save 690 ETB',
         features: [
-            'Everything in Monthly plan',
+            'Medication information',
+            'Medication safety checks',
+            'Medication availability posts',
+            'Other features for practitioners & students',
             'Priority support',
-            'Minor illness management',
-            'Compounding resources',
             'Early access to new features'
         ],
         popular: true,
@@ -77,11 +78,10 @@ const SUBSCRIPTION_PLANS = [
         color: 'from-blue-500 to-blue-600',
         badge: 'Monthly',
         features: [
-            'Full medication knowledge base',
-            'Patient management system',
-            'Clinical decision support',
-            'Drug interaction checking',
-            'Medication availability checks',
+            'Medication information',
+            'Medication safety checks',
+            'Medication availability posts',
+            'Other features for practitioners',
             'Up to 5 users'
         ],
         account_type: 'company',
@@ -101,11 +101,13 @@ const SUBSCRIPTION_PLANS = [
         originalPrice: 12420,
         discount: 'Save 2,070 ETB',
         features: [
-            'Everything in Monthly plan',
+            'Medication information',
+            'Medication safety checks',
+            'Medication availability posts',
+            'Other features for practitioners',
             'Priority support',
-            'Advanced analytics',
-            'Custom reports',
-            'Up to 5 users'
+            'Early access to new features',
+            'Up to 10 users'
         ],
         popular: true,
         account_type: 'company',
@@ -124,11 +126,10 @@ const SUBSCRIPTION_PLANS = [
         color: 'from-teal-500 to-teal-600',
         badge: 'Monthly',
         features: [
-            'Full medication knowledge base',
-            'Patient management system',
-            'Clinical decision support',
-            'Drug interaction checking',
-            'Medication availability checks',
+            'Medication information',
+            'Medication safety checks',
+            'Medication availability posts',
+            'Other features for practitioners',
             'Up to 5 users'
         ],
         account_type: 'company',
@@ -148,11 +149,13 @@ const SUBSCRIPTION_PLANS = [
         originalPrice: 12420,
         discount: 'Save 2,070 ETB',
         features: [
-            'Everything in Monthly plan',
+            'Medication information',
+            'Medication safety checks',
+            'Medication availability posts',
+            'Other features for practitioners',
             'Priority support',
-            'Advanced analytics',
-            'Custom reports',
-            'Up to 5 users'
+            'Early access to new features',
+            'Up to 10 users'
         ],
         popular: true,
         account_type: 'company',
@@ -171,11 +174,10 @@ const SUBSCRIPTION_PLANS = [
         color: 'from-green-500 to-green-600',
         badge: 'Monthly',
         features: [
-            'Full medication knowledge base',
-            'Patient management system',
-            'Clinical decision support',
-            'Drug interaction checking',
-            'Medication availability checks',
+            'Medication information',
+            'Medication safety checks',
+            'Medication availability posts',
+            'Other features for practitioners',
             'Up to 5 users'
         ],
         account_type: 'company',
@@ -195,11 +197,13 @@ const SUBSCRIPTION_PLANS = [
         originalPrice: 12420,
         discount: 'Save 2,070 ETB',
         features: [
-            'Everything in Monthly plan',
+            'Medication information',
+            'Medication safety checks',
+            'Medication availability posts',
+            'Other features for practitioners',
             'Priority support',
-            'Advanced analytics',
-            'Custom reports',
-            'Up to 5 users'
+            'Early access to new features',
+            'Up to 10 users'
         ],
         popular: true,
         account_type: 'company',
@@ -218,12 +222,11 @@ const SUBSCRIPTION_PLANS = [
         color: 'from-purple-500 to-purple-600',
         badge: 'Monthly',
         features: [
-            'Full medication knowledge base',
-            'Patient management system',
-            'Clinical decision support',
-            'Drug interaction checking',
-            'Team management',
-            'Up to 20 users'
+            'Medication information',
+            'Medication safety checks',
+            'Medication availability posts',
+            'Other features for practitioners',
+            'Up to 10 users'
         ],
         account_type: 'company',
         facility_type: 'hospital'
@@ -242,10 +245,12 @@ const SUBSCRIPTION_PLANS = [
         originalPrice: 41400,
         discount: 'Save 12,650 ETB',
         features: [
-            'Everything in Monthly plan',
-            'Dedicated support',
-            'Advanced reporting',
-            'Bulk operations',
+            'Medication information',
+            'Medication safety checks',
+            'Medication availability posts',
+            'Other features for practitioners',
+            'Priority support',
+            'Early access to new features',
             'Up to 20 users'
         ],
         popular: true,
@@ -265,12 +270,11 @@ const SUBSCRIPTION_PLANS = [
         color: 'from-orange-500 to-orange-600',
         badge: 'Monthly',
         features: [
-            'Full medication knowledge base',
-            'Clinical decision support',
-            'Minor illness management',
-            'Compounding resources',
-            'Team management',
-            'Up to 20 users'
+            'Medication information',
+            'Medication safety checks',
+            'Medication availability posts',
+            'Education',
+            'Up to 10 users'
         ],
         account_type: 'company',
         facility_type: 'pharmacy_school'
@@ -289,9 +293,11 @@ const SUBSCRIPTION_PLANS = [
         originalPrice: 41400,
         discount: 'Save 12,650 ETB',
         features: [
-            'Everything in Monthly plan',
-            'Dedicated support',
-            'Advanced reporting',
+            'Medication information',
+            'Medication safety checks',
+            'Medication availability posts',
+            'Education',
+            'Priority support',
             'Early access to new features',
             'Up to 20 users'
         ],
