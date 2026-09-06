@@ -642,7 +642,7 @@ const Login = () => {
                                             </div>
                                         </div>
                                         <p className="text-[8px] sm:text-[10px] text-white font-bold tracking-wider uppercase">
-                                            Backed By AAU STARTUPS
+                                            Backed By Addis Ababa University Startups Center
                                         </p>
                                     </div>
                                 </div>
