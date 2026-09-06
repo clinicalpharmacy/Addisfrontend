@@ -4,7 +4,7 @@ import {
     FaUserMd, FaLock, FaExclamationTriangle, FaSignInAlt,
     FaSpinner, FaUserCheck, FaBuilding, FaEnvelope, FaEye, FaEyeSlash,
     FaUserShield, FaHeartbeat, FaCheckCircle, FaArrowRight, FaIdCard,
-    FaInfoCircle
+    FaInfoCircle, FaUniversity
 } from 'react-icons/fa';
 
 // IMPORTANT: Update this URL to your actual backend URL
@@ -38,6 +38,7 @@ const Login = () => {
     const [isAddisMedIdValid, setIsAddisMedIdValid] = useState(false);
     const [passwordStrength, setPasswordStrength] = useState(0);
     const [currentSlide, setCurrentSlide] = useState(0);
+    const [backedSlide, setBackedSlide] = useState(0);
 
     // Carousel messages for dynamic background
     const carouselMessages = [
@@ -46,11 +47,26 @@ const Login = () => {
         { icon: FaCheckCircle, text: "Optimize Medicines Use", color: "from-green-600 to-teal-600" }
     ];
 
+    // Backed by AAU STARTUPS dynamic backgrounds
+    const backedBackgrounds = [
+        "from-blue-500 to-purple-500",
+        "from-purple-500 to-pink-500",
+        "from-pink-500 to-orange-500",
+        "from-orange-500 to-yellow-500",
+        "from-yellow-500 to-green-500",
+        "from-green-500 to-teal-500"
+    ];
+
     useEffect(() => {
         // Rotate carousel messages
         const interval = setInterval(() => {
             setCurrentSlide((prev) => (prev + 1) % carouselMessages.length);
         }, 3000);
+
+        // Rotate backed by background
+        const backedInterval = setInterval(() => {
+            setBackedSlide((prev) => (prev + 1) % backedBackgrounds.length);
+        }, 4000);
 
         // Check if user is already logged in
         const token = localStorage.getItem('token');
@@ -88,7 +104,10 @@ const Login = () => {
 
         checkHealth();
 
-        return () => clearInterval(interval);
+        return () => {
+            clearInterval(interval);
+            clearInterval(backedInterval);
+        };
     }, [navigate]);
 
     // Unified validation: check if input is an email or Addis-Med ID
@@ -613,16 +632,33 @@ const Login = () => {
                     <div className="px-2 sm:px-3 py-2 sm:py-3 min-w-[100px] sm:min-w-[150px] space-y-2 sm:space-y-3">
                         {/* About Section */}
                         <div className="border border-transparent rounded-xl p-2 sm:p-3">
-                            <div className="flex items-start gap-1.5 sm:gap-2">
-                                <div className="flex-shrink-0 mt-0.5">
-                                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                                        <FaInfoCircle className="text-white text-[8px] sm:text-xs" />
+                            <div className="flex flex-col gap-1.5 sm:gap-2">
+                                {/* Backed By AAU STARTUPS - Dynamic Background */}
+                                <div className={`bg-gradient-to-r ${backedBackgrounds[backedSlide]} rounded-lg p-1.5 sm:p-2.5 px-2 sm:px-3 transition-all duration-700 ease-in-out shadow-lg`}>
+                                    <div className="flex items-center gap-1.5 sm:gap-2">
+                                        <div className="flex-shrink-0">
+                                            <div className="w-4 h-4 sm:w-5 sm:h-5 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                                                <FaUniversity className="text-white text-[8px] sm:text-xs" />
+                                            </div>
+                                        </div>
+                                        <p className="text-[8px] sm:text-[10px] text-white font-bold tracking-wider uppercase">
+                                            Backed By AAU STARTUPS
+                                        </p>
                                     </div>
                                 </div>
-                                <div className="text-left">
-                                    <p className="text-[8px] sm:text-[10px] text-white leading-tight sm:leading-relaxed font-medium">
-                                        Addis Med is a digital platform that provides information and educational contents in health with a primary focus on medications.
-                                    </p>
+
+                                {/* Description */}
+                                <div className="flex items-start gap-1.5 sm:gap-2">
+                                    <div className="flex-shrink-0 mt-0.5">
+                                        <div className="w-4 h-4 sm:w-5 sm:h-5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                                            <FaInfoCircle className="text-white text-[6px] sm:text-[10px]" />
+                                        </div>
+                                    </div>
+                                    <div className="text-left">
+                                        <p className="text-[8px] sm:text-[10px] text-white leading-tight sm:leading-relaxed font-medium">
+                                            Addis Med is a digital platform that provides information and educational contents in health with a primary focus on medications.
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
