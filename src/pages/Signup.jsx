@@ -2314,7 +2314,7 @@ const Signup = () => {
     // Step 4: Payment
     if (step === 4) {
         const country = formData.country || 'Ethiopia';
-        const adjustedPrice = getAdjustedPriceForPlan(selectedPlanDetails, country);
+        const pricing = getDynamicPricing(selectedPlanDetails, country);
         const isEthiopia = country.toLowerCase().includes('ethiopia');
 
         return (
@@ -2393,7 +2393,7 @@ const Signup = () => {
                                     </div>
                                     <div className="text-right">
                                         <div className="text-2xl font-bold text-gray-800">
-                                            {adjustedPrice} {selectedPlanDetails.currency}
+                                            {pricing.amount.toLocaleString()} {pricing.currency}
                                         </div>
                                         <div className="text-gray-600">
                                             per {selectedPlanDetails.interval}
