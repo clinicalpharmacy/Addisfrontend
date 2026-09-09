@@ -861,6 +861,20 @@ function App() {
         api.get('/health')
             .then(data => console.log('API Health:', data))
             .catch(err => console.error('API Health check failed:', err));
+
+        // 🛡️ ONE ACTIVE SESSION PER USER ACCOUNT: Proactive check every 30 seconds
+        const sessionCheckInterval = setInterval(() => {
+            const token = localStorage.getItem('token');
+            if (token) {
+                // If session is invalidated from another device, 
+                // the api interceptor will catch the 401 and redirect to /login automatically.
+                api.get('/auth/me').catch(() => {
+                    // Silently catch errors; the interceptor handles the critical 401 logic
+                });
+            }
+        }, 30000);
+
+        return () => clearInterval(sessionCheckInterval);
     }, []);
 
     return (

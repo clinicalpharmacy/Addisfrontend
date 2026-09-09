@@ -38,6 +38,7 @@ api.interceptors.response.use(
                     console.warn('Unauthorized request. Clearing local storage and redirecting to login.');
                     localStorage.removeItem('token');
                     localStorage.removeItem('user');
+                    window.location.href = '/login';
                 }
             }
             return Promise.reject(error.response.data);

@@ -12,6 +12,42 @@ import {
 } from 'react-icons/fa';
 import api from '../utils/api';
 
+// Helper: Dynamic pricing based on country
+const getDynamicPricing = (plan, country) => {
+    const isEthiopia = !country || (country.toLowerCase().includes('ethiopia') && !country.toLowerCase().includes('outside'));
+    
+    // Calculate base and VAT from the total Ethiopian price (which includes 15% VAT)
+    const baseETB = Math.round(plan.price / 1.15);
+    const vatETB = plan.price - baseETB;
+
+    if (isEthiopia) {
+        return {
+            currency: 'ETB',
+            amount: plan.price,
+            originalAmount: plan.originalPrice,
+            showVat: true,
+            baseAmount: baseETB,
+            vatAmount: vatETB
+        };
+    } else {
+        // Outside Ethiopia: Multiply by 3, keep in ETB, and show VAT breakdown
+        const multiplier = 3;
+        
+        const totalETB = plan.price * multiplier;
+        const totalBaseETB = baseETB * multiplier;
+        const totalVatETB = vatETB * multiplier;
+
+        return {
+            currency: 'ETB',
+            amount: totalETB,
+            originalAmount: plan.originalPrice ? plan.originalPrice * multiplier : null,
+            showVat: true,
+            baseAmount: totalBaseETB,
+            vatAmount: totalVatETB
+        };
+    }
+};
+
 const SubscriptionPlans = () => {
   const navigate = useNavigate();
   const [selectedPlan, setSelectedPlan] = useState('');
@@ -24,6 +60,26 @@ const SubscriptionPlans = () => {
   const [user, setUser] = useState(null);
   const [company, setCompany] = useState(null);
   const [isRegistered, setIsRegistered] = useState(false);
+  const [country, setCountry] = useState('Ethiopia');
+
+  useEffect(() => {
+    if (user?.country) {
+      setCountry(user.country);
+    } else {
+      const detectCountry = async () => {
+        try {
+          const response = await fetch('https://ipapi.co/json/');
+          if (response.ok) {
+            const data = await response.json();
+            if (data.country_name) setCountry(data.country_name);
+          }
+        } catch (err) {
+          console.error('Country detection failed');
+        }
+      };
+      detectCountry();
+    }
+  }, [user]);
 
 
 
@@ -391,12 +447,14 @@ const SubscriptionPlans = () => {
         localStorage.setItem('chapa_tx_ref', data.tx_ref);
       }
 
+      const dynamicPricing = getDynamicPricing(plan, country);
+
       // Save pending subscription info
       const pendingSubscription = {
         planId: selectedPlan,
         planName: plan.name,
-        amount: plan.price,
-        currency: plan.currency,
+        amount: dynamicPricing.amount,
+        currency: dynamicPricing.currency,
         userEmail: userData.email,
         tx_ref: data.tx_ref
       };
@@ -576,21 +634,30 @@ const SubscriptionPlans = () => {
                 </div>
 
                 <div className="mb-6">
-                  <div className="text-sm text-gray-500 font-medium mb-1">
-                    ETB {Math.round(plan.price / 1.15).toLocaleString()} + ETB {(plan.price - Math.round(plan.price / 1.15)).toLocaleString()} (15% VAT)
-                  </div>
-                  <div className="flex items-baseline">
-                    <span className="text-4xl font-bold text-gray-900">ETB {plan.price.toLocaleString()}</span>
-                    <span className="ml-2 text-gray-500">/{plan.interval}</span>
-                  </div>
-                  {plan.originalPrice && plan.originalPrice > plan.price && (
-                    <div className="flex items-center mt-2">
-                      <span className="text-gray-400 line-through mr-2">ETB {plan.originalPrice}</span>
-                      <span className="text-green-600 font-semibold">
-                        Save ETB {plan.originalPrice - plan.price}
-                      </span>
-                    </div>
-                  )}
+                  {(() => {
+                    const pricing = getDynamicPricing(plan, country);
+                    return (
+                      <>
+                        {pricing.showVat && (
+                          <div className="text-sm text-gray-500 font-medium mb-1">
+                            Base: {pricing.baseAmount.toLocaleString()} + {pricing.vatAmount.toLocaleString()} (15% VAT)
+                          </div>
+                        )}
+                        <div className="flex items-baseline">
+                          <span className="text-4xl font-bold text-gray-900">{pricing.currency} {pricing.amount.toLocaleString()}</span>
+                          <span className="ml-2 text-gray-500">/{plan.interval}</span>
+                        </div>
+                        {pricing.originalAmount && pricing.originalAmount > pricing.amount && (
+                          <div className="flex items-center mt-2">
+                            <span className="text-gray-400 line-through mr-2">{pricing.currency} {pricing.originalAmount.toLocaleString()}</span>
+                            <span className="text-green-600 font-semibold">
+                              Save {pricing.currency} {(pricing.originalAmount - pricing.amount).toLocaleString()}
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
 
                 <div className="mb-8">

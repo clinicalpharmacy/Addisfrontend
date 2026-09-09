@@ -297,11 +297,40 @@ const SUBSCRIPTION_PLANS = [
     }
 ];
 
-// Helper: adjust price based on country
-const getAdjustedPriceForPlan = (plan, country) => {
-    if (!country) return plan.price; // fallback
-    const isEthiopia = country.toLowerCase().includes('ethiopia') && !country.toLowerCase().includes('outside');
-    return isEthiopia ? plan.price : plan.price * 3;
+// Helper: Dynamic pricing based on country
+const getDynamicPricing = (plan, country) => {
+    const isEthiopia = !country || (country.toLowerCase().includes('ethiopia') && !country.toLowerCase().includes('outside'));
+    
+    // Calculate base and VAT from the total Ethiopian price (which includes 15% VAT)
+    const baseETB = Math.round(plan.price / 1.15);
+    const vatETB = plan.price - baseETB;
+
+    if (isEthiopia) {
+        return {
+            currency: 'ETB',
+            amount: plan.price,
+            originalAmount: plan.originalPrice,
+            showVat: true,
+            baseAmount: baseETB,
+            vatAmount: vatETB
+        };
+    } else {
+        // Outside Ethiopia: Multiply by 3, keep in ETB, and show VAT breakdown
+        const multiplier = 3;
+        
+        const totalETB = plan.price * multiplier;
+        const totalBaseETB = baseETB * multiplier;
+        const totalVatETB = vatETB * multiplier;
+
+        return {
+            currency: 'ETB',
+            amount: totalETB,
+            originalAmount: plan.originalPrice ? plan.originalPrice * multiplier : null,
+            showVat: true,
+            baseAmount: totalBaseETB,
+            vatAmount: totalVatETB
+        };
+    }
 };
 
 const Signup = () => {
@@ -726,8 +755,8 @@ const Signup = () => {
                 }
             }
 
-            // Compute adjusted price based on country
-            const adjustedPrice = getAdjustedPriceForPlan(planDetails, country);
+            // Compute dynamic price based on country
+            const dynamicPricing = getDynamicPricing(planDetails, country);
 
             // For healthcare client, use generated data
             if (userData.is_healthcare_client) {
@@ -743,7 +772,8 @@ const Signup = () => {
                     healthcare_client_id: userData.userId,
                     client_password: userData.client_password || userData.password,
                     referral_code: userData.referral_code || '',
-                    amount: adjustedPrice, // send adjusted amount
+                    amount: dynamicPricing.amount,
+                    currency: dynamicPricing.currency,
                     country: country
                 };
 
@@ -758,8 +788,8 @@ const Signup = () => {
                         tx_ref: data.tx_ref,
                         planId: selectedPlan,
                         planName: data.plan_name,
-                        amount: adjustedPrice,
-                        currency: data.currency || 'ETB',
+                        amount: dynamicPricing.amount,
+                        currency: dynamicPricing.currency,
                         userEmail: userData.email,
                         userPhone: '0000000000',
                         status: 'pending',
@@ -782,18 +812,21 @@ const Signup = () => {
                     return;
                 }
 
-                const paymentRequest = {
-                    planId: selectedPlan,
-                    userEmail: userData.email,
-                    userName: userData.name || userData.full_name || 'User',
-                    userPhone: userData.phone,
-                    userId: userData.userId || userData.id,
-                    account_type: userData.account_type || 'individual',
-                    frontendUrl: window.location.origin,
-                    amount: adjustedPrice, // send adjusted amount
-                    country: country,
-                    registration_payload: userData.registration_payload
-                };
+                    const dynamicPricing = getDynamicPricing(planDetails, country);
+
+                    const paymentRequest = {
+                        planId: selectedPlan,
+                        userEmail: userData.email,
+                        userName: userData.name || userData.full_name || 'User',
+                        userPhone: userData.phone,
+                        userId: userData.userId || userData.id,
+                        account_type: userData.account_type || 'individual',
+                        frontendUrl: window.location.origin,
+                        amount: dynamicPricing.amount,
+                        currency: dynamicPricing.currency,
+                        country: country,
+                        registration_payload: userData.registration_payload
+                    };
 
                 const data = await api.post('/chapa/create-payment', paymentRequest);
 
@@ -806,8 +839,8 @@ const Signup = () => {
                         tx_ref: data.tx_ref,
                         planId: selectedPlan,
                         planName: data.plan_name,
-                        amount: adjustedPrice,
-                        currency: data.currency || 'ETB',
+                        amount: dynamicPricing.amount,
+                        currency: dynamicPricing.currency,
                         userEmail: userData.email,
                         userPhone: data.user_phone || userData.phone,
                         status: 'pending',
@@ -987,8 +1020,6 @@ const Signup = () => {
                         <div className="flex flex-wrap justify-center gap-8">
                             {filteredPlans.map((plan) => {
                                 const PlanIcon = plan.icon;
-                                // 🔥 FIX: Calculate adjusted price for each plan
-                                const adjustedPrice = getAdjustedPriceForPlan(plan, country);
                                 
                                 return (
                                     <div
@@ -1014,36 +1045,33 @@ const Signup = () => {
                                         <p className="text-gray-600 text-sm mb-6 flex-grow">{plan.description}</p>
 
                                         <div className="mb-6">
-                                            {isEthiopia && (
-                                                <div className="text-xs text-gray-500 font-medium mb-1">
-                                                    Base: {Math.round(plan.price / 1.15).toLocaleString()} + 15% VAT
-                                                </div>
-                                            )}
-                                            <div className="text-3xl font-bold text-gray-800">
-                                                {getAdjustedPriceForPlan(plan, formData.country)} <span className="text-base font-normal text-gray-500">{plan.currency}</span>
-                                            </div>
-                                            <p className="text-gray-500 text-sm">per {plan.interval}</p>
-                                            {!isEthiopia && plan.originalPrice && (
-                                                <div className="mt-2 inline-flex items-center gap-2">
-                                                    <span className="line-through text-gray-400 text-sm">{plan.originalPrice * 3}</span>
-                                                    <span className="text-green-600 font-bold text-sm">Save {(plan.originalPrice * 3) - adjustedPrice} ETB</span>
-                                                </div>
-                                            )}
-                                            {isEthiopia && plan.originalPrice && (
-                                                <div className="mt-2 inline-flex items-center gap-2">
-                                                    <span className="line-through text-gray-400 text-sm">
-                                                        {(!formData.country || (formData.country.toLowerCase().includes('ethiopia') && !formData.country.toLowerCase().includes('outside'))) ? plan.originalPrice : plan.originalPrice * 3}
-                                                    </span>
-                                                    <span className="text-green-600 font-bold text-sm">
-                                                        -Save {(!formData.country || (formData.country.toLowerCase().includes('ethiopia') && !formData.country.toLowerCase().includes('outside'))) ? (plan.originalPrice - plan.price) : (plan.originalPrice * 3 - plan.price * 3)} {plan.currency}
-                                                    </span>
-                                                </div>
-                                            )}
-                                            {!isEthiopia && (
-                                                <div className="mt-1 text-xs text-yellow-600">
-                                                    🌍 International pricing applied
-                                                </div>
-                                            )}
+                                            {(() => {
+                                                const pricing = getDynamicPricing(plan, formData.country);
+                                                return (
+                                                    <>
+                                                        {pricing.showVat ? (
+                                                            <div className="text-xs text-gray-500 font-medium mb-1">
+                                                                Base: {pricing.baseAmount.toLocaleString()} + {pricing.vatAmount.toLocaleString()} (15% VAT)
+                                                            </div>
+                                                        ) : (
+                                                            <div className="text-xs text-blue-500 font-medium mb-1">
+                                                                🌍 International Pricing (Tax Exempt)
+                                                            </div>
+                                                        )}
+                                                        <div className="text-3xl font-bold text-gray-800">
+                                                            {pricing.amount.toLocaleString()} <span className="text-base font-normal text-gray-500">{pricing.currency}</span>
+                                                        </div>
+                                                        <p className="text-gray-500 text-sm">per {plan.interval}</p>
+                                                        
+                                                        {pricing.originalAmount && (
+                                                            <div className="mt-2 inline-flex items-center gap-2">
+                                                                <span className="line-through text-gray-400 text-sm">{pricing.originalAmount.toLocaleString()}</span>
+                                                                <span className="text-green-600 font-bold text-sm">Save {(pricing.originalAmount - pricing.amount).toLocaleString()} {pricing.currency}</span>
+                                                            </div>
+                                                        )}
+                                                    </>
+                                                );
+                                            })()}
                                         </div>
 
                                         <div className="space-y-3 mb-8">
@@ -1061,7 +1089,7 @@ const Signup = () => {
                                                 : 'bg-gray-50 text-gray-800 hover:bg-gray-100'
                                                 }`}
                                         >
-                                            {selectedPlan === plan.id ? 'Selected' : `Choose ${adjustedPrice} ${plan.currency}`}
+                                            {selectedPlan === plan.id ? 'Selected' : 'Choose Plan'}
                                         </button>
                                     </div>
                                 );
@@ -2415,7 +2443,7 @@ const Signup = () => {
                                     </>
                                 ) : (
                                     <>
-                                        Pay {adjustedPrice} {selectedPlanDetails?.currency} via Chapa
+                                        Pay {pricing.amount.toLocaleString()} {pricing.currency} via Chapa
                                         <FaCreditCard />
                                     </>
                                 )}
@@ -2513,7 +2541,7 @@ const Signup = () => {
                                 </div>
                                 <div className="p-4 bg-white rounded-xl border border-blue-100">
                                     <p className="text-gray-500 text-sm mb-1">Amount Paid</p>
-                                    <p className="font-bold text-gray-800">{selectedPlanDetails ? getAdjustedPriceForPlan(selectedPlanDetails, userData.country || 'Ethiopia') : ''} {selectedPlanDetails?.currency}</p>
+                                    <p className="font-bold text-gray-800">{selectedPlanDetails ? getDynamicPricing(selectedPlanDetails, userData.country || 'Ethiopia').amount.toLocaleString() : ''} {selectedPlanDetails ? getDynamicPricing(selectedPlanDetails, userData.country || 'Ethiopia').currency : ''}</p>
                                 </div>
                                 <div className="p-4 bg-white rounded-xl border border-blue-100">
                                     <p className="text-gray-500 text-sm mb-1">Transaction Ref</p>
