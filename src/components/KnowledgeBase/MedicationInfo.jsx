@@ -684,7 +684,7 @@ const MedicationInfo = () => {
                                 type="text"
                                 value={searchTerm}
                                 onChange={handleSearchChange}
-                                placeholder="የሚፈልጉትን መድሃኒት ስም ይጻፉ..."
+                                placeholder="የሚፈልጉትን መድሃኒት ስም ይጻፉ (Generic Name)"
                                 className="w-full pl-10 pr-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm md:text-base"
                             />
                         </div>
