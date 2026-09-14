@@ -423,7 +423,7 @@ const ClinicalPharmacyTool = () => {
             doc.setTextColor(31, 41, 55);
             doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
-            doc.text('Patient Information', 15, currentY);
+            doc.text('Case Reviewed', 15, currentY);
             doc.line(15, currentY + 2, 195, currentY + 2);
 
             autoTable(doc, {
