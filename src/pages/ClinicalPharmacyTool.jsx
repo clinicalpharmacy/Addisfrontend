@@ -670,54 +670,64 @@ const ClinicalPharmacyTool = () => {
                         )}
                     </div>
 
+                    {/* ✅ All tabs stay mounted; visibility toggled with CSS so component state is preserved */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                        {activeTab === 'analysis' && (
+                        {/* Medication Review - Always mounted */}
+                        <div className={activeTab === 'analysis' ? 'block' : 'hidden'}>
                             <CDSSDisplay
                                 patientData={constructedPatientData}
                                 onBack={() => setShowAnalysis(false)}
                                 onDataChange={(data) => setCdssData(data)}
                             />
+                        </div>
+
+                        {/* DRN Assessment - Always mounted for pharmacist/student/admin */}
+                        {(isPharmacistOrStudent || isAdmin) && (
+                            <div className={activeTab === 'drn' ? 'block' : 'hidden'}>
+                                <DRNAssessment
+                                    patientCode={constructedPatientData.id}
+                                    patientData={constructedPatientData}
+                                    medicationHistory={constructedPatientData.medication_history}
+                                    standalone={true}
+                                    onDataChange={(data) => setDrnData(data)}
+                                />
+                            </div>
                         )}
-                        
-                        {/* ✅ Only render DRN if user is pharmacist/student */}
-                        {activeTab === 'drn' && (isPharmacistOrStudent || isAdmin) && (
-                            <DRNAssessment
-                                patientCode={constructedPatientData.id}
-                                patientData={constructedPatientData}
-                                medicationHistory={constructedPatientData.medication_history}
-                                standalone={true}
-                                onDataChange={(data) => setDrnData(data)}
-                            />
+
+                        {/* Ph-Asst & Plan - Always mounted for pharmacist/student/admin */}
+                        {(isPharmacistOrStudent || isAdmin) && (
+                            <div className={activeTab === 'plan' ? 'block' : 'hidden'}>
+                                <PhAssistPlan
+                                    patientCode={constructedPatientData.id}
+                                    patientData={constructedPatientData}
+                                    standalone={true}
+                                    onDataChange={(data) => setPlanData(data)}
+                                />
+                            </div>
                         )}
-                        
-                        {/* ✅ Only render Ph-Asst if user is pharmacist/student */}
-                        {activeTab === 'plan' && (isPharmacistOrStudent || isAdmin) && (
-                            <PhAssistPlan
-                                patientCode={constructedPatientData.id}
-                                patientData={constructedPatientData}
-                                standalone={true}
-                                onDataChange={(data) => setPlanData(data)}
-                            />
+
+                        {/* Outcome - Always mounted for pharmacist/student/admin */}
+                        {(isPharmacistOrStudent || isAdmin) && (
+                            <div className={activeTab === 'outcome' ? 'block' : 'hidden'}>
+                                <PatientOutcome
+                                    patientCode={constructedPatientData.id}
+                                    patientData={constructedPatientData}
+                                    standalone={true}
+                                    onDataChange={(data) => setOutcomeData(data)}
+                                />
+                            </div>
                         )}
-                        
-                        {/* ✅ Only render Outcome if user is pharmacist/student */}
-                        {activeTab === 'outcome' && (isPharmacistOrStudent || isAdmin) && (
-                            <PatientOutcome
-                                patientCode={constructedPatientData.id}
-                                patientData={constructedPatientData}
-                                standalone={true}
-                                onDataChange={(data) => setOutcomeData(data)}
-                            />
-                        )}
-                        
-                        {/* ✅ Only render Cost if user is pharmacist/student */}
-                        {activeTab === 'cost' && (isPharmacistOrStudent || isAdmin) && (
-                            <CostSection
-                                patientCode={constructedPatientData.id}
-                                patientData={constructedPatientData}
-                                standalone={true}
-                                onDataChange={(data) => setCostData(data)}
-                            />
+
+                        {/* Cost - Always mounted for pharmacist/student/admin */}
+                        {(isPharmacistOrStudent || isAdmin) && (
+                            <div className={activeTab === 'cost' ? 'block' : 'hidden'}>
+                                <CostSection
+                                    patientCode={constructedPatientData.id}
+                                    patientData={constructedPatientData}
+                                    standalone={true}
+                                    onDataChange={(data) => setCostData(data)}
+                                />
+                            </div>
                         )}
                     </div>
                 </div>
