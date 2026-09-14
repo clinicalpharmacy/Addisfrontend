@@ -112,9 +112,7 @@ const ClinicalPharmacyTool = () => {
 
     // ✅ Get user role from localStorage (same logic as sidebar)
     const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const userRole = (user?.role || '').toLowerCase();
-    const isSuperAdmin = userRole === 'super_admin';
-    const isAdmin = user?.role === 'admin' || user?.role?.includes('admin'); 
+    const isAdmin = user?.role === 'admin' || user?.role?.includes('admin');
     const isPharmacist = user?.role === 'pharmacist';
     const isPharmacyStudent = user?.role === 'pharmacy_student';
     const isIndividual = !user?.role?.includes('admin') && !user?.company_id;
@@ -616,7 +614,7 @@ const ClinicalPharmacyTool = () => {
                         </button>
 
                         {/* ✅ DRN Assessment - ONLY for Admin (HIDDEN otherwise) */}
-                        {isSuperAdmin && (
+                        {(isPharmacistOrStudent || isAdmin) && (
                             <button
                                 onClick={() => setActiveTab('drn')}
                                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
@@ -630,7 +628,7 @@ const ClinicalPharmacyTool = () => {
                         )}
 
                         {/* ✅ Ph-Asst & Plan - ONLY for Admin (HIDDEN otherwise) */}
-                        {isSuperAdmin && (
+                        {(isPharmacistOrStudent || isAdmin) && (
                             <button
                                 onClick={() => setActiveTab('plan')}
                                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
@@ -644,7 +642,7 @@ const ClinicalPharmacyTool = () => {
                         )}
 
                         {/* ✅ Outcome - ONLY for Admin (HIDDEN otherwise) */}
-                        {isSuperAdmin && (
+                        {(isPharmacistOrStudent || isAdmin) && (
                             <button
                                 onClick={() => setActiveTab('outcome')}
                                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
@@ -658,7 +656,7 @@ const ClinicalPharmacyTool = () => {
                         )}
 
                         {/* ✅ Cost - ONLY for Admin (HIDDEN otherwise) */}
-                        {isSuperAdmin && (
+                        {(isPharmacistOrStudent || isAdmin) && (
                             <button
                                 onClick={() => setActiveTab('cost')}
                                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
@@ -681,8 +679,8 @@ const ClinicalPharmacyTool = () => {
                             />
                         )}
                         
-                        {/* ✅ Only render DRN if user is Admin */}
-                        {activeTab === 'drn' && isSuperAdmin && (
+                        {/* ✅ Only render DRN if user is pharmacist/student */}
+                        {activeTab === 'drn' && (isPharmacistOrStudent || isAdmin) && (
                             <DRNAssessment
                                 patientCode={constructedPatientData.id}
                                 patientData={constructedPatientData}
@@ -692,8 +690,8 @@ const ClinicalPharmacyTool = () => {
                             />
                         )}
                         
-                        {/* ✅ Only render Ph-Asst if user is Admin */}
-                        {activeTab === 'plan' && isSuperAdmin && (
+                        {/* ✅ Only render Ph-Asst if user is pharmacist/student */}
+                        {activeTab === 'plan' && (isPharmacistOrStudent || isAdmin) && (
                             <PhAssistPlan
                                 patientCode={constructedPatientData.id}
                                 patientData={constructedPatientData}
@@ -702,8 +700,8 @@ const ClinicalPharmacyTool = () => {
                             />
                         )}
                         
-                        {/* ✅ Only render Outcome if user is Admin */}
-                        {activeTab === 'outcome' && isSuperAdmin && (
+                        {/* ✅ Only render Outcome if user is pharmacist/student */}
+                        {activeTab === 'outcome' && (isPharmacistOrStudent || isAdmin) && (
                             <PatientOutcome
                                 patientCode={constructedPatientData.id}
                                 patientData={constructedPatientData}
@@ -712,8 +710,8 @@ const ClinicalPharmacyTool = () => {
                             />
                         )}
                         
-                        {/* ✅ Only render Cost if user is Admin */}
-                        {activeTab === 'cost' && isSuperAdmin && (
+                        {/* ✅ Only render Cost if user is pharmacist/student */}
+                        {activeTab === 'cost' && (isPharmacistOrStudent || isAdmin) && (
                             <CostSection
                                 patientCode={constructedPatientData.id}
                                 patientData={constructedPatientData}
