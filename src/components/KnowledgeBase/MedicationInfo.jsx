@@ -1421,7 +1421,7 @@ const MedicationInfo = () => {
                                         >
                                             <h3 className="font-semibold text-purple-800 flex items-center gap-2">
                                                 <FaBook className="text-purple-600" />
-                                                ማጣቀሻ:
+                                                Reference:
                                             </h3>
                                             <span className="text-purple-600 text-xl font-bold">
                                                 {expandedSections.reference ? '−' : '+'}
