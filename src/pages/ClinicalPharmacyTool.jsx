@@ -113,8 +113,8 @@ const ClinicalPharmacyTool = () => {
     // ✅ Get user role from localStorage (same logic as sidebar)
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     const userRole = (user?.role || '').toLowerCase();
-    const isAdmin = user?.role === 'admin' || user?.role?.includes('admin');
-    const isSuperAdmin = userRole === 'super_admin'; 
+    const isSuperAdmin = userRole === 'super_admin';
+    const isAdmin = user?.role === 'admin' || user?.role?.includes('admin'); 
     const isPharmacist = user?.role === 'pharmacist';
     const isPharmacyStudent = user?.role === 'pharmacy_student';
     const isIndividual = !user?.role?.includes('admin') && !user?.company_id;
