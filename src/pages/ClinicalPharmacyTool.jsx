@@ -679,7 +679,7 @@ const ClinicalPharmacyTool = () => {
                             />
                         )}
                         
-                        {/* ✅ Only render DRN if user is Admin}
+                        {/* ✅ Only render DRN if user is Admin */}
                         {activeTab === 'drn' && isAdmin && (
                             <DRNAssessment
                                 patientCode={constructedPatientData.id}
@@ -690,7 +690,7 @@ const ClinicalPharmacyTool = () => {
                             />
                         )}
                         
-                        {/* ✅ Only render Ph-Asst if user is Admin}
+                        {/* ✅ Only render Ph-Asst if user is Admin */}
                         {activeTab === 'plan' && isAdmin && (
                             <PhAssistPlan
                                 patientCode={constructedPatientData.id}
@@ -700,7 +700,7 @@ const ClinicalPharmacyTool = () => {
                             />
                         )}
                         
-                        {/* ✅ Only render Outcome if user is Admin}
+                        {/* ✅ Only render Outcome if user is Admin */}
                         {activeTab === 'outcome' && isAdmin && (
                             <PatientOutcome
                                 patientCode={constructedPatientData.id}
@@ -710,7 +710,7 @@ const ClinicalPharmacyTool = () => {
                             />
                         )}
                         
-                        {/* ✅ Only render Cost if user is Admin}
+                        {/* ✅ Only render Cost if user is Admin */}
                         {activeTab === 'cost' && isAdmin && (
                             <CostSection
                                 patientCode={constructedPatientData.id}
