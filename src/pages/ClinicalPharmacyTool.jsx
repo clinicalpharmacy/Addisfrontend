@@ -335,7 +335,7 @@ const ClinicalPharmacyTool = () => {
                     indication: '',
                     dose: '',
                     strength: '',
-                    unit: 'mg',
+                    unit: '',
                     dosage_form: 'Tablet',
                     route: '',
                     frequency: '',
@@ -1255,18 +1255,6 @@ const ClinicalPharmacyTool = () => {
                                                                     />
                                                                 </div>
                                                                 
-                                                                {/* Brand Name */}
-                                                                <div>
-                                                                    <label className="block text-xs font-medium text-gray-700 mb-1">Brand Name</label>
-                                                                    <input
-                                                                        type="text"
-                                                                        value={med.brand_name}
-                                                                        onChange={(e) => updateMedication(index, 'brand_name', e.target.value)}
-                                                                        className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                                        placeholder="Brand Name"
-                                                                    />
-                                                                </div>
-                                                                
                                                                 {/* Indication */}
                                                                 <div>
                                                                     <label className="block text-xs font-medium text-gray-700 mb-1">Indication</label>
@@ -1295,7 +1283,7 @@ const ClinicalPharmacyTool = () => {
                                                                             value={med.unit}
                                                                             onChange={(e) => updateMedication(index, 'unit', e.target.value)}
                                                                             className="w-16 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                                            placeholder="Unit"
+                                                                            placeholder="e.g. mg"
                                                                         />
                                                                     </div>
                                                                 </div>
