@@ -601,7 +601,7 @@ const ClinicalPharmacyTool = () => {
                     {/* ✅ Tab Navigation - Only show restricted tabs for Pharmacists & Pharmacy Students */}
                     <div className="flex overflow-x-auto gap-2 mb-6 bg-white p-2 rounded-xl shadow-sm hide-scrollbar">
 
-                        {/* Clinical Case Review - Always visible */}
+                        {/* Medication Review - Always visible */}
                         <button
                             onClick={() => setActiveTab('analysis')}
                             className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
@@ -610,7 +610,7 @@ const ClinicalPharmacyTool = () => {
                                 : 'text-gray-600 hover:bg-gray-50'
                             }`}
                         >
-                            <FaUserShield /> Clinical Case Review
+                            <FaUserShield /> Medication Review
                         </button>
 
                         {/* ✅ DRN Assessment - ONLY for Admin (HIDDEN otherwise) */}
