@@ -1085,7 +1085,7 @@ const MedicationInfo = () => {
                                     {/* Reference Field with Formatting Toolbar */}
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            ማጣቀሻ:
+                                            Reference:
                                         </label>
                                         <div className="mb-2 flex flex-wrap gap-1 p-1 bg-gray-100 rounded-lg">
                                             <button
