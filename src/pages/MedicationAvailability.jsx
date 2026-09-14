@@ -419,7 +419,7 @@ const MedicationAvailability = () => {
                         <span className="bg-gray-100 px-3 py-1 rounded-full">• Deletes if expired</span>
                     </div>
                     
-                    <p className="text-gray-600 mt-1">Found a shortage? See who has it or post what you can share.</p>
+                    <p className="text-gray-600 mt-1">መድሃኒት እያፈላለጉ ነው? የሚፈለገው መድሃኒት ለፋርማሲ ባለሙያዎች እንዲደርስ በዚህ ያጋሩን</p>
                 </div>
                 <button
                     onClick={() => {
