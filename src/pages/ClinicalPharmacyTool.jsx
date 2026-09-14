@@ -113,6 +113,7 @@ const ClinicalPharmacyTool = () => {
     // ✅ Get user role from localStorage (same logic as sidebar)
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     const isAdmin = user?.role === 'admin' || user?.role?.includes('admin');
+    const isSuperAdmin = userRole === 'super_admin'; 
     const isPharmacist = user?.role === 'pharmacist';
     const isPharmacyStudent = user?.role === 'pharmacy_student';
     const isIndividual = !user?.role?.includes('admin') && !user?.company_id;
@@ -614,7 +615,7 @@ const ClinicalPharmacyTool = () => {
                         </button>
 
                         {/* ✅ DRN Assessment - ONLY for Admin (HIDDEN otherwise) */}
-                        {isAdmin && (
+                        {isSuperAdmin && (
                             <button
                                 onClick={() => setActiveTab('drn')}
                                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
@@ -628,7 +629,7 @@ const ClinicalPharmacyTool = () => {
                         )}
 
                         {/* ✅ Ph-Asst & Plan - ONLY for Admin (HIDDEN otherwise) */}
-                        {isAdmin && (
+                        {isSuperAdmin && (
                             <button
                                 onClick={() => setActiveTab('plan')}
                                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
@@ -642,7 +643,7 @@ const ClinicalPharmacyTool = () => {
                         )}
 
                         {/* ✅ Outcome - ONLY for Admin (HIDDEN otherwise) */}
-                        {isAdmin && (
+                        {isSuperAdmin && (
                             <button
                                 onClick={() => setActiveTab('outcome')}
                                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
@@ -656,7 +657,7 @@ const ClinicalPharmacyTool = () => {
                         )}
 
                         {/* ✅ Cost - ONLY for Admin (HIDDEN otherwise) */}
-                        {isAdmin && (
+                        {isSuperAdmin && (
                             <button
                                 onClick={() => setActiveTab('cost')}
                                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
@@ -680,7 +681,7 @@ const ClinicalPharmacyTool = () => {
                         )}
                         
                         {/* ✅ Only render DRN if user is Admin */}
-                        {activeTab === 'drn' && isAdmin && (
+                        {activeTab === 'drn' && isSuperAdmin && (
                             <DRNAssessment
                                 patientCode={constructedPatientData.id}
                                 patientData={constructedPatientData}
@@ -691,7 +692,7 @@ const ClinicalPharmacyTool = () => {
                         )}
                         
                         {/* ✅ Only render Ph-Asst if user is Admin */}
-                        {activeTab === 'plan' && isAdmin && (
+                        {activeTab === 'plan' && isSuperAdmin && (
                             <PhAssistPlan
                                 patientCode={constructedPatientData.id}
                                 patientData={constructedPatientData}
@@ -701,7 +702,7 @@ const ClinicalPharmacyTool = () => {
                         )}
                         
                         {/* ✅ Only render Outcome if user is Admin */}
-                        {activeTab === 'outcome' && isAdmin && (
+                        {activeTab === 'outcome' && isSuperAdmin && (
                             <PatientOutcome
                                 patientCode={constructedPatientData.id}
                                 patientData={constructedPatientData}
@@ -711,7 +712,7 @@ const ClinicalPharmacyTool = () => {
                         )}
                         
                         {/* ✅ Only render Cost if user is Admin */}
-                        {activeTab === 'cost' && isAdmin && (
+                        {activeTab === 'cost' && isSuperAdmin && (
                             <CostSection
                                 patientCode={constructedPatientData.id}
                                 patientData={constructedPatientData}
