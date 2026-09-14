@@ -24,7 +24,7 @@ const CategoryTitle = ({ type }) => {
 const StatusBadge = ({ status }) => {
     const s = status?.toLowerCase() || '';
     if (s.includes('contraindicate') || s.includes('avoid') || s.includes('unsafe')) {
-        return <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"><FaExclamationCircle /> UNSAFE</span>;
+        return <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"><FaExclamationCircle /> CAUTION</span>;
     }
     return null;
 };
