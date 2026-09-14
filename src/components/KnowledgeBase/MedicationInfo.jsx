@@ -30,7 +30,8 @@ import {
     FaOutdent,
     FaBold,
     FaItalic,
-    FaHashtag
+    FaHashtag,
+    FaBook
 } from 'react-icons/fa';
 import { useOutletContext } from 'react-router-dom';
 import useScreenshotProtection from '../../hooks/useScreenshotProtection';
@@ -69,7 +70,8 @@ const MedicationInfo = () => {
         usage: '',
         administration_and_cautions: '',
         side_effects: '',
-        storage: ''
+        storage: '',
+        reference: ''
     });
 
     // Check user role on component mount
@@ -296,6 +298,7 @@ const MedicationInfo = () => {
                     administration_and_cautions: formData.administration_and_cautions,
                     side_effects: formData.side_effects,
                     storage: formData.storage,
+                    reference: formData.reference,
                     created_at: new Date().toISOString()
                 }])
                 .select();
@@ -316,7 +319,8 @@ const MedicationInfo = () => {
                 usage: '',
                 administration_and_cautions: '',
                 side_effects: '',
-                storage: ''
+                storage: '',
+                reference: ''
             });
 
             setShowAddForm(false);
@@ -349,7 +353,8 @@ const MedicationInfo = () => {
             usage: medication.usage || '',
             administration_and_cautions: medication.administration_and_cautions || '',
             side_effects: medication.side_effects || '',
-            storage: medication.storage || ''
+            storage: medication.storage || '',
+            reference: medication.reference || ''
         });
         setShowAddForm(true);
     };
@@ -383,6 +388,7 @@ const MedicationInfo = () => {
                     administration_and_cautions: formData.administration_and_cautions,
                     side_effects: formData.side_effects,
                     storage: formData.storage,
+                    reference: formData.reference,
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', editingMedication.id)
@@ -404,7 +410,8 @@ const MedicationInfo = () => {
                 usage: '',
                 administration_and_cautions: '',
                 side_effects: '',
-                storage: ''
+                storage: '',
+                reference: ''
             });
 
             setShowAddForm(false);
@@ -485,7 +492,8 @@ const MedicationInfo = () => {
                     usage: '• Bacterial infections: otitis media\n• Pneumonia\n• Urinary tract infections (UTIs)',
                     administration_and_cautions: '• Take orally with or without food\n• Complete full course of treatment\n• Take at evenly spaced intervals',
                     side_effects: '• Diarrhea\n• Nausea\n• Skin rash\n• Allergic reactions in sensitive individuals',
-                    storage: '• Store at room temperature\n• Keep away from moisture\n• Protect from light'
+                    storage: '• Store at room temperature\n• Keep away from moisture\n• Protect from light',
+                    reference: '• World Health Organization (WHO) Model List of Essential Medicines\n• Lexicomp Drug Information Handbook'
                 },
                 {
                     name: 'Paracetamol',
@@ -493,7 +501,8 @@ const MedicationInfo = () => {
                     usage: '• Fever reduction\n• Mild to moderate pain relief\n• Headache\n• Muscle aches',
                     administration_and_cautions: '• Do not exceed recommended dose\n• Maximum 4g per day for adults\n• Avoid with severe liver disease',
                     side_effects: '• Usually well tolerated\n• Rare skin rash\n• Liver damage with overdose',
-                    storage: '• Store below 25°C\n• Keep in original container\n• Protect from light'
+                    storage: '• Store below 25°C\n• Keep in original container\n• Protect from light',
+                    reference: '• World Health Organization (WHO) Model List of Essential Medicines\n• British National Formulary (BNF)'
                 },
                 {
                     name: 'Ibuprofen',
@@ -501,7 +510,8 @@ const MedicationInfo = () => {
                     usage: '• Inflammation reduction\n• Pain relief\n• Fever reduction\n• Arthritis symptoms',
                     administration_and_cautions: '• Take with food or milk\n• Avoid with stomach ulcers\n• Not for long-term use without supervision',
                     side_effects: '• Stomach upset\n• Heartburn\n• Dizziness\n• Fluid retention',
-                    storage: '• Store at room temperature\n• Keep container tightly closed\n• Protect from light'
+                    storage: '• Store at room temperature\n• Keep container tightly closed\n• Protect from light',
+                    reference: '• World Health Organization (WHO) Model List of Essential Medicines\n• Lexicomp Drug Information Handbook'
                 }
             ];
 
@@ -725,7 +735,8 @@ const MedicationInfo = () => {
                                                     usage: '',
                                                     administration_and_cautions: '',
                                                     side_effects: '',
-                                                    storage: ''
+                                                    storage: '',
+                                                    reference: ''
                                                 });
                                             }}
                                             className="text-gray-500 hover:text-gray-700 text-2xl"
@@ -1070,6 +1081,71 @@ const MedicationInfo = () => {
                                             disabled={saving}
                                         />
                                     </div>
+
+                                    {/* Reference Field with Formatting Toolbar */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            ማጣቀሻ:
+                                        </label>
+                                        <div className="mb-2 flex flex-wrap gap-1 p-1 bg-gray-100 rounded-lg">
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('reference', 'bullet')}
+                                                className="p-2 hover:bg-indigo-100 rounded text-indigo-600 transition-colors"
+                                                title="Add bullet point"
+                                                disabled={saving}
+                                            >
+                                                <FaListUl />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('reference', 'subbullet')}
+                                                className="p-2 hover:bg-indigo-100 rounded text-indigo-600 transition-colors"
+                                                title="Add sub-bullet"
+                                                disabled={saving}
+                                            >
+                                                <span className="text-lg font-bold">◦</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('reference', 'number')}
+                                                className="p-2 hover:bg-indigo-100 rounded text-indigo-600 transition-colors"
+                                                title="Add numbered list"
+                                                disabled={saving}
+                                            >
+                                                <FaHashtag />
+                                            </button>
+                                            <div className="w-px h-6 bg-gray-300 mx-1 self-center"></div>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('reference', 'indent')}
+                                                className="p-2 hover:bg-indigo-100 rounded text-indigo-600 transition-colors"
+                                                title="Indent"
+                                                disabled={saving}
+                                            >
+                                                <FaIndent />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => insertFormatting('reference', 'outdent')}
+                                                className="p-2 hover:bg-indigo-100 rounded text-indigo-600 transition-colors"
+                                                title="Outdent"
+                                                disabled={saving}
+                                            >
+                                                <FaOutdent />
+                                            </button>
+                                        </div>
+                                        <textarea
+                                            id="reference"
+                                            value={formData.reference}
+                                            onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
+                                            onFocus={() => setActiveFormatField('reference')}
+                                            rows="3"
+                                            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
+                                            placeholder="• World Health Organization (WHO) guidelines&#10;• Lexicomp Drug Information Handbook&#10;• British National Formulary (BNF)"
+                                            disabled={saving}
+                                        />
+                                    </div>
                                 </div>
 
                                 <div className="flex gap-3 mt-8 pt-6 border-t">
@@ -1100,7 +1176,8 @@ const MedicationInfo = () => {
                                                 usage: '',
                                                 administration_and_cautions: '',
                                                 side_effects: '',
-                                                storage: ''
+                                                storage: '',
+                                                reference: ''
                                             });
                                         }}
                                         disabled={saving}
@@ -1328,6 +1405,35 @@ const MedicationInfo = () => {
                                                 </div>
                                                 {selectedMedication.storage.length > 300 && (
                                                     <div className="mt-2 text-xs text-green-600 flex items-center gap-1">
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Reference Section */}
+                                {selectedMedication.reference && (
+                                    <div className="bg-purple-50 rounded-lg overflow-hidden border border-purple-100">
+                                        <button
+                                            onClick={() => toggleSection('reference')}
+                                            className="w-full bg-purple-100 hover:bg-purple-200 p-3 text-left flex justify-between items-center transition-colors"
+                                        >
+                                            <h3 className="font-semibold text-purple-800 flex items-center gap-2">
+                                                <FaBook className="text-purple-600" />
+                                                ማጣቀሻ:
+                                            </h3>
+                                            <span className="text-purple-600 text-xl font-bold">
+                                                {expandedSections.reference ? '−' : '+'}
+                                            </span>
+                                        </button>
+                                        {expandedSections.reference && (
+                                            <div className="p-4 max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-purple-300 scrollbar-track-purple-100">
+                                                <div className="space-y-1">
+                                                    {renderFormattedText(selectedMedication.reference)}
+                                                </div>
+                                                {selectedMedication.reference.length > 300 && (
+                                                    <div className="mt-2 text-xs text-purple-600 flex items-center gap-1">
                                                     </div>
                                                 )}
                                             </div>
