@@ -412,7 +412,7 @@ const ClinicalPharmacyTool = () => {
             doc.setTextColor(255, 255, 255);
             doc.setFontSize(22);
             doc.setFont('helvetica', 'bold');
-            doc.text('COMPREHENSIVE CLINICAL REPORT', 15, 20);
+            doc.text('MEDICATION REVIEW REPORT', 15, 20);
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
             doc.text(`Generated on: ${new Date().toLocaleString()}`, 15, 30);
@@ -442,7 +442,7 @@ const ClinicalPharmacyTool = () => {
             if (currentY > 250) { doc.addPage(); currentY = 20; }
             doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
-            doc.text('CDSS Clinical Analysis Findings', 15, currentY);
+            doc.text('Medication Review Findings', 15, currentY);
             
             if (cdssData && cdssData.length > 0) {
                 const alertRows = cdssData.map((alert, index) => {
