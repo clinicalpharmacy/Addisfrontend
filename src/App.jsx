@@ -64,6 +64,15 @@ const LoadingSpinner = () => (
     </div>
 );
 
+// Admin or Under Development Route wrapper
+const AdminOrDevRoute = ({ children, title }) => {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (user?.role === 'admin') {
+        return children;
+    }
+    return <UnderDevelopment title={title} />;
+};
+
 // Main Layout Wrapper
 const MainLayout = ({ children, showSidebar = true, showNavbar = true }) => {
     const [sidebarOpen, setSidebarOpen] = useState(false);           // Mobile overlay
@@ -1152,10 +1161,9 @@ function App() {
                     <Route index element={<Navigate to="medications" replace />} />
                     <Route path="medications" element={<MedicationInfo />} />
                     <Route path="remedies" element={
-                        (() => {
-                            const user = JSON.parse(localStorage.getItem('user') || '{}');
-                            return user?.role === 'admin' ? <HomeRemedies /> : <UnderDevelopment title="Home Remedies" />;
-                        })()
+                        <AdminOrDevRoute title="Home Remedies">
+                            <HomeRemedies />
+                        </AdminOrDevRoute>
                     } />
                     <Route
                         path="illnesses"
@@ -1168,12 +1176,11 @@ function App() {
                     <Route
                         path="compounding"
                         element={
-                            (() => {
-                                const user = JSON.parse(localStorage.getItem('user') || '{}');
-                                return user?.role === 'admin'
-                                    ? <ProtectedRoute allowedRoles={['pharmacist', 'pharmacy_student']} allowCompanyUsers={true} showLayout={false}><ExtemporaneousPrep /></ProtectedRoute>
-                                    : <UnderDevelopment title="Compounding" />;
-                            })()
+                            <AdminOrDevRoute title="Compounding">
+                                <ProtectedRoute allowedRoles={['pharmacist', 'pharmacy_student']} allowCompanyUsers={true} showLayout={false}>
+                                    <ExtemporaneousPrep />
+                                </ProtectedRoute>
+                            </AdminOrDevRoute>
                         }
                     />
                     <Route
