@@ -7,6 +7,7 @@ import Navbar from "./components/Common/Navbar";
 import Sidebar from "./components/Common/Sidebar";
 
 // Pages
+import LandingPage from "./pages/LandingPage";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -43,6 +44,7 @@ import ExtemporaneousPrep from "./components/KnowledgeBase/ExtemporaneousPrep";
 // Knowledge Base Layout
 import KnowledgeBaseLayout from "./components/KnowledgeBase/KnowledgeBaseLayout";
 import Education from "./components/KnowledgeBase/Education";
+import UnderDevelopment from "./pages/UnderDevelopment";
 
 // CDSS Components (ADMIN ONLY)
 import ClinicalRulesAdmin from "./components/CDSS/ClinicalRulesAdmin";
@@ -128,7 +130,7 @@ const MainLayout = ({ children, showSidebar = true, showNavbar = true }) => {
     );
 };
 
-// Root Redirector Component - FIXED: Proper role-based redirects
+// Root Redirector Component - No longer used for '/', but keeping for reference if needed elsewhere
 const RootRedirector = () => {
     const [loading, setLoading] = useState(true);
 
@@ -197,8 +199,8 @@ const RootRedirector = () => {
         }
     }
 
-    // Not authenticated, go to login
-    return <Navigate to="/login" replace />;
+    // Not authenticated, show landing page
+    return <LandingPage />;
 };
 
 // Public Route Component - Allows access without authentication
@@ -880,8 +882,8 @@ function App() {
     return (
         <Router>
             <Routes>
-                {/* Root route */}
-                <Route path="/" element={<RootRedirector />} />
+                {/* Root route - Always show the Landing Page */}
+                <Route path="/" element={<LandingPage />} />
 
                 {/* Public Routes */}
                 <Route
@@ -1149,7 +1151,12 @@ function App() {
                 >
                     <Route index element={<Navigate to="medications" replace />} />
                     <Route path="medications" element={<MedicationInfo />} />
-                    <Route path="remedies" element={<HomeRemedies />} />
+                    <Route path="remedies" element={
+                        (() => {
+                            const user = JSON.parse(localStorage.getItem('user') || '{}');
+                            return user?.role === 'admin' ? <HomeRemedies /> : <UnderDevelopment title="Home Remedies" />;
+                        })()
+                    } />
                     <Route
                         path="illnesses"
                         element={
@@ -1161,9 +1168,12 @@ function App() {
                     <Route
                         path="compounding"
                         element={
-                            <ProtectedRoute allowedRoles={['pharmacist', 'pharmacy_student']} allowCompanyUsers={true} showLayout={false}>
-                                <ExtemporaneousPrep />
-                            </ProtectedRoute>
+                            (() => {
+                                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                                return user?.role === 'admin'
+                                    ? <ProtectedRoute allowedRoles={['pharmacist', 'pharmacy_student']} allowCompanyUsers={true} showLayout={false}><ExtemporaneousPrep /></ProtectedRoute>
+                                    : <UnderDevelopment title="Compounding" />;
+                            })()
                         }
                     />
                     <Route

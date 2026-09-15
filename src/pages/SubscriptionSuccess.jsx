@@ -195,10 +195,10 @@ Support: support@addismed.com
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-50 flex items-center justify-center p-4">
+            <div className="min-h-screen bg-gradient-to-br from-green-50 to-gray-50 flex items-center justify-center p-4">
                 <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
                     <div className="relative inline-block mb-6">
-                        <FaSpinner className="animate-spin text-4xl text-blue-600" />
+                        <FaSpinner className="animate-spin text-4xl text-green-600" />
                     </div>
                     <h2 className="text-2xl font-bold text-gray-800 mb-2">
                         {verifying ? 'Verifying Payment...' : 'Processing...'}
@@ -255,7 +255,7 @@ Support: support@addismed.com
                         </button>
                         <button
                             onClick={() => navigate('/subscription')}
-                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition flex items-center justify-center gap-2"
+                            className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition flex items-center justify-center gap-2"
                         >
                             <FaHome />
                             Try Payment Again
@@ -268,7 +268,7 @@ Support: support@addismed.com
 
     // SUCCESS PAGE
     return (
-        <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-8 px-4">
+        <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-50 py-8 px-4">
             <div className="max-w-lg mx-auto">
                 {/* Header */}
                 <div className="text-center mb-8">
@@ -289,21 +289,21 @@ Support: support@addismed.com
                     {/* Status Section */}
                     <div className="mb-8">
                         <h2 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
-                            <FaInfoCircle className="text-blue-500" />
+                            <FaInfoCircle className="text-green-500" />
                             Account Status
                         </h2>
-                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4">
+                        <div className="bg-gradient-to-r from-green-50 to-green-50 border border-green-200 rounded-xl p-4">
                             <div className="flex items-start gap-3">
                                 <div className="flex-shrink-0">
-                                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                        <span className="text-blue-600 font-bold">⏳</span>
+                                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                                        <span className="text-green-600 font-bold">⏳</span>
                                     </div>
                                 </div>
                                 <div>
-                                    <p className="text-blue-800 font-bold text-lg">
+                                    <p className="text-green-800 font-bold text-lg">
                                         {isHealthcareClient ? 'Account Activated!' : (localStorage.getItem('user') ? 'Updating Subscription' : 'Processing Your Account')}
                                     </p>
-                                    <p className="text-blue-600 text-sm mt-1">
+                                    <p className="text-green-600 text-sm mt-1">
                                         {isHealthcareClient
                                             ? 'Your healthcare client account is now active. Use your unique ID to access clinical tools.'
                                             : (localStorage.getItem('user')
@@ -327,7 +327,7 @@ Support: support@addismed.com
                                     </code>
                                     <button
                                         onClick={copyTransactionId}
-                                        className="ml-2 text-blue-600 hover:text-blue-800 text-sm whitespace-nowrap"
+                                        className="ml-2 text-green-600 hover:text-green-800 text-sm whitespace-nowrap"
                                     >
                                         Copy
                                     </button>
@@ -373,14 +373,14 @@ Support: support@addismed.com
                         </h3>
                         {isHealthcareClient ? (
                             <div className="space-y-4">
-                                <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
-                                    <p className="text-blue-800 font-bold mb-2 flex items-center gap-2">
+                                <div className="p-4 bg-green-50 rounded-xl border border-green-100">
+                                    <p className="text-green-800 font-bold mb-2 flex items-center gap-2">
                                         <FaLock /> Your Healthcare Client ID
                                     </p>
-                                    <div className="bg-white p-3 rounded-lg border border-blue-200 text-center">
-                                        <code className="text-lg font-bold text-blue-600 break-all">{healthcareClientId}</code>
+                                    <div className="bg-white p-3 rounded-lg border border-green-200 text-center">
+                                        <code className="text-lg font-bold text-green-600 break-all">{healthcareClientId}</code>
                                     </div>
-                                    <p className="text-xs text-blue-600 mt-2">
+                                    <p className="text-xs text-green-600 mt-2">
                                         Please save this ID. You will use it to log in and access clinical information.
                                     </p>
                                 </div>
@@ -397,19 +397,19 @@ Support: support@addismed.com
                             </div>
                         ) : (
                             <ul className="space-y-2 text-sm text-green-700">
-                                <li className="flex flex-col gap-2 p-3 bg-blue-50 rounded-xl border border-blue-100">
-                                    <div className="flex items-start gap-2 text-blue-800 font-bold">
-                                        <span className="text-blue-600 mt-0.5"><FaEnvelope /></span>
+                                <li className="flex flex-col gap-2 p-3 bg-green-50 rounded-xl border border-green-100">
+                                    <div className="flex items-start gap-2 text-green-800 font-bold">
+                                        <span className="text-green-600 mt-0.5"><FaEnvelope /></span>
                                         <span>Check your email! We've sent a verification link.</span>
                                     </div>
-                                    <div className="flex items-start gap-2 text-blue-700 text-sm ml-7">
+                                    <div className="flex items-start gap-2 text-green-700 text-sm ml-7">
                                         <span>(Please make sure to check your spam or junk folder if you don't see it in your inbox)</span>
                                     </div>
                                     <div className="ml-7">
                                         <button
                                             onClick={resendVerification}
                                             disabled={resending}
-                                            className="text-xs text-blue-600 hover:text-blue-800 underline font-medium flex items-center gap-1"
+                                            className="text-xs text-green-600 hover:text-green-800 underline font-medium flex items-center gap-1"
                                         >
                                             {resending ? <FaSpinner className="animate-spin" /> : null}
                                             Didn't receive it? Click here to resend
@@ -450,7 +450,7 @@ Support: support@addismed.com
 
                     <button
                         onClick={goToLogin}
-                        className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium py-4 px-4 rounded-xl transition flex items-center justify-center gap-3"
+                        className="w-full bg-gradient-to-r from-green-600 to-green-600 hover:from-green-700 hover:to-green-700 text-white font-medium py-4 px-4 rounded-xl transition flex items-center justify-center gap-3"
                     >
                         <FaLock />
                         {isHealthcareClient ? 'Access Clinical Tools' : (localStorage.getItem('user') ? 'Go to Dashboard' : 'Go to Login Page')}
@@ -468,7 +468,7 @@ Support: support@addismed.com
                 {/* Footer */}
                 <div className="text-center mt-8 pt-6 border-t border-gray-200">
                     <p className="text-gray-600 text-sm">
-                        Thank you for choosing <span className="font-bold text-blue-700">Addismed</span>
+                        Thank you for choosing <span className="font-bold text-green-700">Addismed</span>
                     </p>
                     <p className="text-xs text-gray-500 mt-2">
                         Need help? Contact: support@addismed.com | +251 911 234 567

@@ -35,10 +35,10 @@ api.interceptors.response.use(
                 const isLoginReq = error.config && error.config.url && error.config.url.includes('/auth/login');
 
                 if (!isLoginReq) {
-                    console.warn('Unauthorized request. Clearing local storage and redirecting to login.');
+                    console.warn('Unauthorized request. Clearing local storage and redirecting to landing page.');
                     localStorage.removeItem('token');
                     localStorage.removeItem('user');
-                    window.location.href = '/login';
+                    window.location.href = '/';
                 }
             }
             return Promise.reject(error.response.data);

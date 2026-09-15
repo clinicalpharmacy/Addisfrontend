@@ -162,7 +162,7 @@ const SubscriptionPlans = () => {
         'Single user'
       ],
       recommended: false,
-      icon: <FaUserTie className="text-blue-500" />
+      icon: <FaUserTie className="text-green-500" />
     },
     {
       id: 'individual_yearly',
@@ -201,7 +201,7 @@ const SubscriptionPlans = () => {
         'Up to 5 users'
       ],
       recommended: false,
-      icon: <FaBuilding className="text-blue-500" />
+      icon: <FaBuilding className="text-green-500" />
     },
     {
       id: 'pharmacy_yearly',
@@ -220,7 +220,7 @@ const SubscriptionPlans = () => {
       ],
       popular: true,
       recommended: true,
-      icon: <FaBuilding className="text-blue-600" />
+      icon: <FaBuilding className="text-green-600" />
     },
     // Clinic / Specialty Center — 900/month, 9,000/year
     {
@@ -318,7 +318,7 @@ const SubscriptionPlans = () => {
         'Up to 20 users'
       ],
       recommended: false,
-      icon: <FaBuilding className="text-purple-500" />
+      icon: <FaBuilding className="text-green-500" />
     },
     {
       id: 'hospital_yearly',
@@ -337,7 +337,7 @@ const SubscriptionPlans = () => {
       ],
       popular: true,
       recommended: true,
-      icon: <FaBuilding className="text-purple-600" />
+      icon: <FaBuilding className="text-green-600" />
     },
     // Pharmacy School — 3,000/month, 25,000/year
     {
@@ -482,11 +482,11 @@ const SubscriptionPlans = () => {
 
   if (!isRegistered) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-50 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
-            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FaLock className="text-blue-500 text-3xl" />
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FaLock className="text-green-500 text-3xl" />
             </div>
 
             <h1 className="text-2xl font-bold text-gray-800 mb-4">
@@ -506,7 +506,7 @@ const SubscriptionPlans = () => {
             <div className="space-y-3">
               <button
                 onClick={() => navigate('/signup')}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium py-3 px-6 rounded-xl transition hover:from-blue-700 hover:to-purple-700"
+                className="w-full bg-gradient-to-r from-green-600 to-green-600 text-white font-medium py-3 px-6 rounded-xl transition hover:from-green-700 hover:to-green-700"
               >
                 Complete Registration
               </button>
@@ -525,7 +525,7 @@ const SubscriptionPlans = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-6 md:py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-50 py-6 md:py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Header with Registration Status */}
         <div className="text-center mb-8 md:mb-12">
@@ -559,8 +559,8 @@ const SubscriptionPlans = () => {
                 onClick={() => { setFacilityType(f.id); setSelectedPlan(''); }}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                   facilityType === f.id
-                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow'
-                    : 'bg-white text-gray-600 border border-gray-300 hover:border-blue-400'
+                    ? 'bg-gradient-to-r from-green-600 to-green-600 text-white shadow'
+                    : 'bg-white text-gray-600 border border-gray-300 hover:border-green-400'
                 }`}
               >
                 {f.label}
@@ -570,7 +570,7 @@ const SubscriptionPlans = () => {
         </div>
 
         {/* Registration Info Banner */}
-        <div className="mb-6 md:mb-8 bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-xl p-4 md:p-6">
+        <div className="mb-6 md:mb-8 bg-gradient-to-r from-green-50 to-green-50 border border-green-200 rounded-xl p-4 md:p-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3 md:gap-4">
               <div className="bg-green-100 p-2 md:p-3 rounded-full flex-shrink-0">
@@ -585,7 +585,7 @@ const SubscriptionPlans = () => {
             </div>
               <div className="text-center md:text-right border-t md:border-t-0 pt-3 md:pt-0 w-full md:w-auto">
                 <p className="text-[10px] md:text-sm text-gray-500 uppercase tracking-wider">Facility Type</p>
-                <p className="font-bold text-blue-600 text-sm md:text-base">
+                <p className="font-bold text-green-600 text-sm md:text-base">
                   {{
                     individual: 'Individual',
                     pharmacy: 'Pharmacy / Drug Store',
@@ -604,12 +604,12 @@ const SubscriptionPlans = () => {
           {plans.map((plan) => (
             <div
               key={plan.id}
-              className={`bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl ${selectedPlan === plan.id ? 'ring-2 ring-blue-500 ring-offset-2 transform scale-[1.02]' : ''
-                } ${plan.popular ? 'border-2 border-blue-500' : 'border border-gray-200'}`}
+              className={`bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl ${selectedPlan === plan.id ? 'ring-2 ring-green-500 ring-offset-2 transform scale-[1.02]' : ''
+                } ${plan.popular ? 'border-2 border-green-500' : 'border border-gray-200'}`}
               onClick={() => setSelectedPlan(plan.id)}
             >
               {plan.popular && (
-                <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-center py-2">
+                <div className="bg-gradient-to-r from-green-500 to-green-500 text-white text-center py-2">
                   <span className="font-bold">MOST POPULAR</span>
                 </div>
               )}
@@ -617,7 +617,7 @@ const SubscriptionPlans = () => {
               <div className="p-8">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center">
-                    <div className="p-3 bg-blue-50 rounded-lg">
+                    <div className="p-3 bg-green-50 rounded-lg">
                       {plan.icon}
                     </div>
                     <div className="ml-4">
@@ -674,7 +674,7 @@ const SubscriptionPlans = () => {
 
                 <button
                   className={`w-full py-3 px-4 rounded-lg font-semibold transition-colors ${selectedPlan === plan.id
-                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700'
+                    ? 'bg-gradient-to-r from-green-600 to-green-600 text-white hover:from-green-700 hover:to-green-700'
                     : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                     }`}
                   onClick={() => setSelectedPlan(plan.id)}
@@ -697,12 +697,12 @@ const SubscriptionPlans = () => {
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Method</h3>
                 <div className="space-y-4">
                   {/* Chapa Payment - Only Option */}
-                  <div className="border-2 border-blue-500 bg-blue-50 rounded-lg p-4">
+                  <div className="border-2 border-green-500 bg-green-50 rounded-lg p-4">
                     <div className="flex items-center">
-                      <div className="w-5 h-5 rounded-full border mr-3 flex items-center justify-center border-blue-500 bg-blue-500">
+                      <div className="w-5 h-5 rounded-full border mr-3 flex items-center justify-center border-green-500 bg-green-500">
                         <div className="w-2 h-2 rounded-full bg-white"></div>
                       </div>
-                      <FaCreditCard className="text-blue-600 mr-2" />
+                      <FaCreditCard className="text-green-600 mr-2" />
                       <span className="font-medium">Chapa Payment (Recommended)</span>
                     </div>
                     <p className="text-sm text-gray-600 mt-2 ml-8">
@@ -749,7 +749,7 @@ const SubscriptionPlans = () => {
                           <div className="text-xs text-gray-500 font-medium mb-1">
                             Base: ETB {Math.round(plans.find(p => p.id === selectedPlan)?.price / 1.15).toLocaleString()} + 15% VAT
                           </div>
-                          <div className="text-2xl font-bold text-blue-600">
+                          <div className="text-2xl font-bold text-green-600">
                             ETB {plans.find(p => p.id === selectedPlan)?.price.toLocaleString()}
                           </div>
                           <div className="text-sm text-gray-500">
@@ -760,13 +760,13 @@ const SubscriptionPlans = () => {
 
                       <ul className="space-y-3">
                         <li className="flex items-start gap-2">
-                          <FaUserCheck className="text-blue-600 mt-0.5" />
+                          <FaUserCheck className="text-green-600 mt-0.5" />
                           <span>
                             Registration Status: <strong className="text-green-600">Complete ✓</strong>
                           </span>
                         </li>
                         <li className="flex items-start gap-2">
-                          <FaUserShield className="text-blue-600 mt-0.5" />
+                          <FaUserShield className="text-green-600 mt-0.5" />
                           <span>
                             Payment Method: <strong>Chapa (Secure Online)</strong>
                           </span>
@@ -782,15 +782,15 @@ const SubscriptionPlans = () => {
                           <span>Admin approval required after payment</span>
                         </li>
                         <li className="flex items-start gap-2">
-                          <FaHeadset className="text-blue-600 mt-0.5" />
+                          <FaHeadset className="text-green-600 mt-0.5" />
                           <span>Complete payment to proceed to admin approval</span>
                         </li>
                       </ul>
                     </div>
 
                     {/* Payment Process Info */}
-                    <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                      <p className="text-sm text-blue-700">
+                    <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                      <p className="text-sm text-green-700">
                         <strong>Process:</strong> Payment → Verification Email → Success Page → Login
                       </p>
                     </div>
@@ -799,7 +799,7 @@ const SubscriptionPlans = () => {
                     <div className="text-center">
                       <p className="text-sm text-gray-500 flex items-center justify-center gap-2">
                         <FaHeadset className="text-gray-400" />
-                        Need help? <a href="mailto:support@pharmacare.com" className="text-blue-600 hover:underline">Contact Support</a>
+                        Need help? <a href="mailto:support@pharmacare.com" className="text-green-600 hover:underline">Contact Support</a>
                       </p>
                     </div>
                   </>
@@ -837,7 +837,7 @@ const SubscriptionPlans = () => {
                 disabled={!selectedPlan || loading || isProcessingPayment}
                 className={`w-full py-4 px-6 rounded-lg font-semibold text-lg transition-colors ${!selectedPlan || loading || isProcessingPayment
                   ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700'
+                  : 'bg-gradient-to-r from-green-600 to-green-600 text-white hover:from-green-700 hover:to-green-700'
                   }`}
               >
                 {loading || isProcessingPayment ? (
@@ -864,8 +864,8 @@ const SubscriptionPlans = () => {
         {/* Process Steps */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="bg-white rounded-xl p-6 shadow text-center">
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <span className="font-bold text-blue-600">1</span>
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <span className="font-bold text-green-600">1</span>
             </div>
             <h4 className="font-bold text-gray-800 mb-2">Registration</h4>
             <p className="text-sm text-gray-600">Complete your account setup</p>
@@ -877,21 +877,21 @@ const SubscriptionPlans = () => {
           </div>
 
           <div className="bg-white rounded-xl p-6 shadow text-center">
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <span className="font-bold text-blue-600">2</span>
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <span className="font-bold text-green-600">2</span>
             </div>
             <h4 className="font-bold text-gray-800 mb-2">Subscription</h4>
             <p className="text-sm text-gray-600">Choose and pay for your plan</p>
             <div className="mt-3">
-              <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+              <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
                 Current Step
               </span>
             </div>
           </div>
 
           <div className="bg-white rounded-xl p-6 shadow text-center">
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <span className="font-bold text-blue-600">3</span>
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <span className="font-bold text-green-600">3</span>
             </div>
             <h4 className="font-bold text-gray-800 mb-2">Verification</h4>
             <p className="text-sm text-gray-600">Verify email received after payment</p>

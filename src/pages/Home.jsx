@@ -179,9 +179,13 @@ const Home = () => {
                 )}
 
                 {/* 6. Home Remedies */}
-                <Link to="/knowledge/remedies" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
+                <Link 
+                    to="/knowledge/remedies"
+                    className="bg-white rounded-xl shadow p-4 hover:shadow-md transition relative group cursor-pointer"
+                >
+                    {!isAdmin && <div className="absolute top-2 right-2 bg-slate-200 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Under Development</div>}
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-green-100 rounded-lg">
+                        <div className="p-2 bg-green-100 rounded-lg group-hover:scale-110 transition-transform">
                             <FaVial className="text-green-600 text-lg" />
                         </div>
                         <div>
@@ -189,9 +193,9 @@ const Home = () => {
                             <p className="text-xs text-gray-500">Home remedies</p>
                         </div>
                     </div>
-                    <div className="flex justify-end">
-                        <span className="text-green-600 text-sm flex items-center gap-1">
-                            Browse <FaArrowRight className="text-xs" />
+                    <div className="flex justify-end mt-2">
+                        <span className="text-green-600 text-sm flex items-center gap-1 font-medium group-hover:translate-x-1 transition-transform">
+                            {isAdmin ? "Browse" : "Coming Soon"} <FaArrowRight className="text-xs" />
                         </span>
                     </div>
                 </Link>
@@ -221,9 +225,13 @@ const Home = () => {
 
                 {/* 8. Compounding */}
                 {['company_admin', 'company_user', 'pharmacist', 'pharmacy_student'].includes(role) && (
-                    <Link to="/knowledge/compounding" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-orange-100 rounded-lg">
+                    <Link 
+                        to="/knowledge/compounding"
+                        className="bg-white rounded-xl shadow p-4 hover:shadow-md transition relative group cursor-pointer"
+                    >
+                        {!isAdmin && <div className="absolute top-2 right-2 bg-slate-200 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Under Development</div>}
+                        <div className="flex items-center gap-3 mb-2 mt-1">
+                            <div className="p-2 bg-orange-100 rounded-lg group-hover:scale-110 transition-transform">
                                 <FaUserMd className="text-orange-600 text-lg" />
                             </div>
                             <div>
@@ -231,9 +239,9 @@ const Home = () => {
                                 <p className="text-xs text-gray-500">Compounding SOPs</p>
                             </div>
                         </div>
-                        <div className="flex justify-end">
-                            <span className="text-orange-600 text-sm flex items-center gap-1">
-                                View <FaArrowRight className="text-xs" />
+                        <div className="flex justify-end mt-2">
+                            <span className="text-orange-600 text-sm flex items-center gap-1 font-medium group-hover:translate-x-1 transition-transform">
+                                {isAdmin ? "View" : "Coming Soon"} <FaArrowRight className="text-xs" />
                             </span>
                         </div>
                     </Link>

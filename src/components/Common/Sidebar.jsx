@@ -133,12 +133,12 @@ const Sidebar = ({ onClose }) => {
     return (
         <aside className="w-72 bg-white h-full flex flex-col border-r border-gray-100 shadow-xl z-[60] relative overflow-hidden">
             {/* Design Element: Subtle Gradient Overlay */}
-            <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-blue-50/20 to-transparent pointer-events-none" />
+            <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-green-50/20 to-transparent pointer-events-none" />
 
             {/* Close button for mobile */}
             <div className="p-5 border-b border-gray-50 flex justify-between items-center md:hidden bg-white/80 backdrop-blur-md sticky top-0 z-10">
                 <div className="flex items-center gap-2.5">
-                    <div className="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-100">
+                    <div className="bg-green-600 p-2 rounded-xl shadow-lg shadow-green-100">
                         <FaHospital className="text-white text-base" />
                     </div>
                     <span className="font-black text-gray-900 tracking-tight">Addis Med</span>
@@ -162,7 +162,7 @@ const Sidebar = ({ onClose }) => {
                                 onClick={onClose}
                                 className={({ isActive }) =>
                                     `flex items-center gap-2.5 p-2.5 rounded-xl transition-all duration-300 group ${isActive && isSubscribed
-                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-100 font-black'
+                                        ? 'bg-green-600 text-white shadow-lg shadow-green-100 font-black'
                                         : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 font-bold'
                                     } ${!isSubscribed ? 'opacity-60' : ''}`
                                 }
@@ -202,8 +202,8 @@ const Sidebar = ({ onClose }) => {
                                 to={isSubscribed ? "/knowledge" : "/subscription/plans"}
                                 onClick={onClose}
                                 className={`flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isDrugInfoActive && isSubscribed
-                                        ? 'bg-indigo-50 text-indigo-600 border-l-4 border-indigo-600 shadow-sm'
-                                        : 'text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 hover:shadow-sm'
+                                        ? 'bg-green-50 text-green-600 border-l-4 border-green-600 shadow-sm'
+                                        : 'text-gray-600 hover:bg-green-50 hover:text-green-600 hover:shadow-sm'
                                     } ${!isSubscribed ? 'opacity-60' : ''}`}
                             >
                                 <div className="flex items-center gap-2.5 w-full">
@@ -220,8 +220,8 @@ const Sidebar = ({ onClose }) => {
                                 to={isSubscribed ? "/quick-safety" : "/subscription/plans"}
                                 onClick={onClose}
                                 className={`flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${location.pathname === '/quick-safety' && isSubscribed
-                                        ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600 shadow-sm'
-                                        : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:shadow-sm'
+                                        ? 'bg-green-50 text-green-600 border-l-4 border-green-600 shadow-sm'
+                                        : 'text-gray-600 hover:bg-green-50 hover:text-green-600 hover:shadow-sm'
                                     } ${!isSubscribed ? 'opacity-60' : ''}`}
                             >
                                 <div className="flex items-center gap-2.5 w-full">
@@ -242,8 +242,8 @@ const Sidebar = ({ onClose }) => {
                                     onClick={onClose}
                                     className={({ isActive }) =>
                                         `flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isActive && isSubscribed
-                                            ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600 shadow-sm'
-                                            : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm'
+                                            ? 'bg-green-50 text-green-600 border-l-4 border-green-600 shadow-sm'
+                                            : 'text-gray-600 hover:bg-gray-50 hover:text-green-600 hover:shadow-sm'
                                         } ${!isSubscribed ? 'opacity-60' : ''}`
                                     }
                                 >
@@ -259,17 +259,14 @@ const Sidebar = ({ onClose }) => {
                         {/* Home Remedies */}
                         <li className="mb-2">
                             <NavLink
-                                to={isSubscribed ? "/knowledge/remedies" : "/subscription/plans"}
+                                to="/knowledge/remedies"
                                 onClick={onClose}
-                                className={`flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isRemediesActive && isSubscribed
-                                        ? 'bg-emerald-50 text-emerald-600 border-l-4 border-emerald-600 shadow-sm'
-                                        : 'text-gray-600 hover:bg-emerald-50 hover:text-emerald-600 hover:shadow-sm'
-                                    } ${!isSubscribed ? 'opacity-60' : ''}`}
+                                className="flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 text-gray-600 hover:bg-emerald-50 hover:text-emerald-600 hover:shadow-sm relative"
                             >
+                                {!isAdmin && <div className="absolute right-2 text-[9px] font-bold uppercase tracking-wider bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded">In Dev</div>}
                                 <div className="flex items-center gap-2.5 w-full">
                                     <FaLeaf className="text-xl" />
                                     <span className="font-medium text-base">የቤት ውስጥ ጤና ክብካቤ</span>
-                                    {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
                                 </div>
                             </NavLink>
                         </li>
@@ -298,17 +295,14 @@ const Sidebar = ({ onClose }) => {
                         {(!isIndividual || ['pharmacist', 'pharmacy_student'].includes(user?.role)) && (
                             <li className="mb-2">
                                 <NavLink
-                                    to={isSubscribed ? "/knowledge/compounding" : "/subscription/plans"}
+                                    to="/knowledge/compounding"
                                     onClick={onClose}
-                                    className={`flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isCompoundingActive && isSubscribed
-                                            ? 'bg-amber-50 text-amber-600 border-l-4 border-amber-600 shadow-sm'
-                                            : 'text-gray-600 hover:bg-amber-50 hover:text-amber-600 hover:shadow-sm'
-                                        } ${!isSubscribed ? 'opacity-60' : ''}`}
+                                    className="flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 text-gray-600 hover:bg-amber-50 hover:text-amber-600 hover:shadow-sm relative"
                                 >
+                                    {!isAdmin && <div className="absolute right-2 text-[9px] font-bold uppercase tracking-wider bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded">In Dev</div>}
                                     <div className="flex items-center gap-2.5 w-full">
                                         <FaMortarPestle className="text-xl" />
                                         <span className="font-medium text-base">Compounding</span>
-                                        {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
                                     </div>
                                 </NavLink>
                             </li>
@@ -322,7 +316,7 @@ const Sidebar = ({ onClose }) => {
                                     onClick={onClose}
                                     className={({ isActive }) =>
                                         `flex items-center gap-2.5 p-2.5 rounded-xl transition-all duration-300 group ${isActive && isSubscribed
-                                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-100 font-black'
+                                            ? 'bg-green-600 text-white shadow-lg shadow-green-100 font-black'
                                             : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 font-bold'
                                         } ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`
                                     }
@@ -343,8 +337,8 @@ const Sidebar = ({ onClose }) => {
                                     to={isSubscribed ? "/knowledge/education" : "/subscription/plans"}
                                     onClick={onClose}
                                     className={`flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isEducationActive && isSubscribed
-                                            ? 'bg-purple-50 text-purple-600 border-l-4 border-purple-600 shadow-sm'
-                                            : 'text-gray-600 hover:bg-purple-50 hover:text-purple-600 hover:shadow-sm'
+                                            ? 'bg-green-50 text-green-600 border-l-4 border-green-600 shadow-sm'
+                                            : 'text-gray-600 hover:bg-green-50 hover:text-green-600 hover:shadow-sm'
                                         } ${!isSubscribed ? 'opacity-60' : ''}`}
                                 >
                                     <div className="flex items-center gap-2.5 w-full">
@@ -363,12 +357,12 @@ const Sidebar = ({ onClose }) => {
                                     onClick={onClose}
                                     className={({ isActive }) =>
                                         `flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isActive
-                                            ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-700 shadow-sm'
-                                            : 'text-gray-600 hover:bg-blue-50 hover:text-blue-700 hover:shadow-sm'
+                                            ? 'bg-green-100 text-green-700 border-l-4 border-green-700 shadow-sm'
+                                            : 'text-gray-600 hover:bg-green-50 hover:text-green-700 hover:shadow-sm'
                                         }`
                                     }
                                 >
-                                    <FaCreditCard className="text-xl text-blue-600" />
+                                    <FaCreditCard className="text-xl text-green-600" />
                                     <span className="font-medium text-base">My Subscription</span>
                                 </NavLink>
                             </li>
@@ -381,12 +375,12 @@ const Sidebar = ({ onClose }) => {
                                     onClick={onClose}
                                     className={({ isActive }) =>
                                         `flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isActive
-                                            ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-700 shadow-sm'
-                                            : 'text-gray-600 hover:bg-blue-50 hover:text-blue-700 hover:shadow-sm'
+                                            ? 'bg-green-100 text-green-700 border-l-4 border-green-700 shadow-sm'
+                                            : 'text-gray-600 hover:bg-green-50 hover:text-green-700 hover:shadow-sm'
                                         }`
                                     }
                                 >
-                                    <FaCreditCard className="text-xl text-blue-600" />
+                                    <FaCreditCard className="text-xl text-green-600" />
                                     <span className="font-medium text-base">Manage Subscription</span>
                                 </NavLink>
                             </li>
@@ -397,7 +391,7 @@ const Sidebar = ({ onClose }) => {
                                 onClick={onClose}
                                 className={({ isActive }) =>
                                     `flex items-center gap-2.5 p-2.5 rounded-xl transition-all duration-300 group ${isActive && isSubscribed
-                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-100 font-black'
+                                        ? 'bg-green-600 text-white shadow-lg shadow-green-100 font-black'
                                         : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 font-bold'
                                     } ${!isSubscribed ? 'opacity-60' : ''}`
                                 }
@@ -421,13 +415,13 @@ const Sidebar = ({ onClose }) => {
                             <li className="mb-2">
                                 <button
                                     onClick={() => toggleSection('cdss')}
-                                    className="flex items-center justify-between w-full p-2.5 rounded-lg text-purple-600 hover:bg-purple-50 transition-all duration-200 hover:shadow-sm border-l-4 border-purple-500"
+                                    className="flex items-center justify-between w-full p-2.5 rounded-lg text-green-600 hover:bg-green-50 transition-all duration-200 hover:shadow-sm border-l-4 border-green-500"
                                 >
                                     <div className="flex items-center gap-2.5">
                                         <FaBrain className="text-lg" />
                                         <span className="font-medium">CDSS Admin Tools</span>
                                     </div>
-                                    {expandedSections.cdss ? <FaChevronDown className="text-purple-400" /> : <FaChevronRight className="text-purple-400" />}
+                                    {expandedSections.cdss ? <FaChevronDown className="text-green-400" /> : <FaChevronRight className="text-green-400" />}
                                 </button>
 
                                 {expandedSections.cdss && (
@@ -437,8 +431,8 @@ const Sidebar = ({ onClose }) => {
                                             onClick={onClose}
                                             className={({ isActive }) =>
                                                 `flex items-center gap-2.5 px-4 py-2 text-sm rounded-lg transition-all duration-200 ${isActive
-                                                    ? 'text-purple-600 bg-purple-50 font-medium'
-                                                    : 'text-gray-600 hover:bg-purple-50 hover:text-purple-700'
+                                                    ? 'text-green-600 bg-green-50 font-medium'
+                                                    : 'text-gray-600 hover:bg-green-50 hover:text-green-700'
                                                 }`
                                             }
                                         >
@@ -514,8 +508,8 @@ const Sidebar = ({ onClose }) => {
                                     onClick={onClose}
                                     className={({ isActive }) =>
                                         `flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isActive
-                                            ? 'bg-purple-50 text-purple-600 border-l-4 border-purple-600 shadow-sm'
-                                            : 'text-gray-600 hover:bg-purple-50 hover:text-purple-600 hover:shadow-sm'
+                                            ? 'bg-green-50 text-green-600 border-l-4 border-green-600 shadow-sm'
+                                            : 'text-gray-600 hover:bg-green-50 hover:text-green-600 hover:shadow-sm'
                                         }`
                                     }
                                 >
@@ -531,8 +525,8 @@ const Sidebar = ({ onClose }) => {
                                     onClick={onClose}
                                     className={({ isActive }) =>
                                         `flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isActive
-                                            ? 'bg-purple-50 text-purple-600 border-l-4 border-purple-600 shadow-sm'
-                                            : 'text-gray-600 hover:bg-purple-50 hover:text-purple-600 hover:shadow-sm'
+                                            ? 'bg-green-50 text-green-600 border-l-4 border-green-600 shadow-sm'
+                                            : 'text-gray-600 hover:bg-green-50 hover:text-green-600 hover:shadow-sm'
                                         }`
                                     }
                                 >
@@ -569,8 +563,8 @@ const Sidebar = ({ onClose }) => {
             {/* User Info & Logout */}
             <div className="p-4 border-t border-gray-200 bg-gray-50">
                 <div className="flex items-center gap-2.5 mb-4">
-                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <FaUserCircle className="text-blue-600 text-lg" />
+                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                        <FaUserCircle className="text-green-600 text-lg" />
                     </div>
                     <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-800 truncate">
@@ -584,7 +578,7 @@ const Sidebar = ({ onClose }) => {
                                 </span>
                             )}
                             {isCompanyAdmin && (
-                                <span className="ml-2 bg-purple-100 text-purple-800 text-xs px-2 py-0.5 rounded-full">
+                                <span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full">
                                     Company Admin
                                 </span>
                             )}

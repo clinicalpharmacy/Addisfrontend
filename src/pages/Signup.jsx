@@ -29,7 +29,7 @@ const SUBSCRIPTION_PLANS = [
         description: 'For individual healthcare professionals, students  & clients',
         user_limit: 1,
         icon: FaUserMd,
-        color: 'from-blue-500 to-blue-600',
+        color: 'from-green-500 to-green-600',
         badge: 'Monthly',
         features: [
             'Medication information',
@@ -49,7 +49,7 @@ const SUBSCRIPTION_PLANS = [
         description: 'Best value for individuals',
         user_limit: 1,
         icon: FaStar,
-        color: 'from-purple-500 to-purple-600',
+        color: 'from-green-500 to-green-600',
         badge: 'Best Value',
         originalPrice: 4140, // 3600 + 15% VAT
         discount: 'Save 690 ETB',
@@ -75,7 +75,7 @@ const SUBSCRIPTION_PLANS = [
         description: 'For pharmacies and drug stores',
         user_limit: 5,
         icon: FaStore,
-        color: 'from-blue-500 to-blue-600',
+        color: 'from-green-500 to-green-600',
         badge: 'Monthly',
         features: [
             'Medication information',
@@ -96,7 +96,7 @@ const SUBSCRIPTION_PLANS = [
         description: 'Best value for pharmacies and drug stores',
         user_limit: 5,
         icon: FaStore,
-        color: 'from-blue-600 to-indigo-600',
+        color: 'from-green-600 to-green-600',
         badge: 'Best Value',
         originalPrice: 12420,
         discount: 'Save 2,070 ETB',
@@ -213,7 +213,7 @@ const SUBSCRIPTION_PLANS = [
         description: 'For hospitals',
         user_limit: 20,
         icon: FaBuilding,
-        color: 'from-purple-500 to-purple-600',
+        color: 'from-green-500 to-green-600',
         badge: 'Monthly',
         features: [
             'Medication information',
@@ -234,7 +234,7 @@ const SUBSCRIPTION_PLANS = [
         description: 'Best value for hospitals',
         user_limit: 20,
         icon: FaBuilding,
-        color: 'from-purple-600 to-violet-600',
+        color: 'from-green-600 to-violet-600',
         badge: 'Best Value',
         originalPrice: 41400,
         discount: 'Save 12,650 ETB',
@@ -894,11 +894,11 @@ const Signup = () => {
     if (step === 1) {
         if (!accountTypeSelection) {
             return (
-                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
+                <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-50 flex items-center justify-center p-4">
                     <div className="w-full max-w-4xl">
                         <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-12">
                             <div className="text-center mb-12">
-                                <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl md:rounded-3xl mb-4 md:mb-6 shadow-lg">
+                                <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-gradient-to-r from-green-600 to-green-600 rounded-2xl md:rounded-3xl mb-4 md:mb-6 shadow-lg">
                                     <FaRocket className="text-white text-2xl md:text-3xl" />
                                 </div>
                                 <h1 className="text-2xl md:text-4xl font-bold text-gray-800 mb-2 md:mb-4">Welcome to Addis Clinical Pharmacy</h1>
@@ -908,21 +908,21 @@ const Signup = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
                                 <div
                                     onClick={() => setAccountTypeSelection('individual')}
-                                    className="group relative bg-white border-2 border-gray-100 rounded-2xl md:rounded-3xl p-6 md:p-8 cursor-pointer hover:border-blue-500 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
+                                    className="group relative bg-white border-2 border-gray-100 rounded-2xl md:rounded-3xl p-6 md:p-8 cursor-pointer hover:border-green-500 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
                                 >
                                     <div className="absolute top-4 right-4 opacity-0 md:group-hover:opacity-100 transition-opacity">
-                                        <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white">
+                                        <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white">
                                             <FaArrowRight className="text-sm" />
                                         </div>
                                     </div>
-                                    <div className="w-12 h-12 md:w-16 md:h-16 bg-blue-100 rounded-xl md:rounded-2xl flex items-center justify-center mb-4 md:mb-6 group-hover:scale-110 transition-transform">
-                                        <FaUserTie className="text-blue-600 text-2xl md:text-3xl" />
+                                    <div className="w-12 h-12 md:w-16 md:h-16 bg-green-100 rounded-xl md:rounded-2xl flex items-center justify-center mb-4 md:mb-6 group-hover:scale-110 transition-transform">
+                                        <FaUserTie className="text-green-600 text-2xl md:text-3xl" />
                                     </div>
                                     <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2 md:mb-3">Individual</h2>
                                     <p className="text-gray-600 text-sm md:text-base leading-relaxed">
                                         For healthcare professionals, pharmacists, students, and healthcare clients looking for personal clinical decision support tools.
                                     </p>
-                                    <div className="mt-6 md:mt-8 flex items-center text-blue-600 text-sm md:text-base font-bold group-hover:translate-x-2 transition-transform">
+                                    <div className="mt-6 md:mt-8 flex items-center text-green-600 text-sm md:text-base font-bold group-hover:translate-x-2 transition-transform">
                                         View Individual Plans <FaArrowRight className="ml-2" />
                                     </div>
                                 </div>
@@ -952,7 +952,7 @@ const Signup = () => {
                             <div className="mt-8 md:mt-12 text-center border-t border-gray-100 pt-6 md:pt-8">
                                 <p className="text-gray-600 text-sm md:text-base">
                                     Already have an account?
-                                    <Link to="/login" className="ml-2 text-blue-600 font-bold hover:underline">
+                                    <Link to="/login" className="ml-2 text-green-600 font-bold hover:underline">
                                         Log in here
                                     </Link>
                                 </p>
@@ -971,20 +971,20 @@ const Signup = () => {
         const isEthiopia = country.toLowerCase().includes('ethiopia');
 
         return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
+            <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-50 flex items-center justify-center p-4">
                 <div className="w-full max-w-6xl">
                     <div className="mb-8">
                         {!searchParams.get('type') && (
                             <button
                                 onClick={() => setAccountTypeSelection(null)}
-                                className="flex items-center text-gray-600 hover:text-blue-600 font-bold transition-colors"
+                                className="flex items-center text-gray-600 hover:text-green-600 font-bold transition-colors"
                             >
                                 <FaArrowLeft className="mr-2" /> Back to Account Selection
                             </button>
                         )}
                         {/* 🔥 FIX: Show detected country and pricing info */}
-                        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-3">
-                            <FaGlobe className="text-blue-500 text-lg" />
+                        <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3">
+                            <FaGlobe className="text-green-500 text-lg" />
                             <div>
                                 <span className="text-sm text-gray-700">
                                     Detected Country: <span className="font-bold">{country}</span>
@@ -1004,7 +1004,7 @@ const Signup = () => {
 
                     <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-10">
                         <div className="text-center mb-10">
-                            <div className={`inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r ${isIndividual ? 'from-blue-600 to-blue-500' : 'from-green-600 to-green-500'} rounded-3xl mb-6 shadow-lg`}>
+                            <div className={`inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r ${isIndividual ? 'from-green-600 to-green-500' : 'from-green-600 to-green-500'} rounded-3xl mb-6 shadow-lg`}>
                                 {isIndividual ? <FaUserTie className="text-white text-3xl" /> : <FaBuilding className="text-white text-3xl" />}
                             </div>
                             <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
@@ -1025,17 +1025,17 @@ const Signup = () => {
                                     <div
                                         key={plan.id}
                                         className={`flex flex-col flex-1 min-w-[300px] max-w-[380px] w-full border-3 rounded-2xl p-6 md:p-8 cursor-pointer transition-all duration-300 transform hover:scale-[1.03] ${selectedPlan === plan.id
-                                            ? `${isIndividual ? 'border-blue-500 bg-blue-50/30' : 'border-green-500 bg-green-50/30'} shadow-2xl`
+                                            ? `${isIndividual ? 'border-green-500 bg-green-50/30' : 'border-green-500 bg-green-50/30'} shadow-2xl`
                                             : 'border-gray-100 hover:border-gray-300 bg-white'
                                             }`}
                                         onClick={() => handlePlanSelect(plan)}
                                     >
                                         <div className="flex items-center justify-between mb-6">
-                                            <div className={`p-3 ${isIndividual ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'} rounded-xl`}>
+                                            <div className={`p-3 ${isIndividual ? 'bg-green-100 text-green-600' : 'bg-green-100 text-green-600'} rounded-xl`}>
                                                 <PlanIcon className="text-2xl" />
                                             </div>
                                             {plan.badge && (
-                                                <span className={`text-xs font-bold px-3 py-1 rounded-full ${isIndividual ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
+                                                <span className={`text-xs font-bold px-3 py-1 rounded-full ${isIndividual ? 'bg-green-100 text-green-800' : 'bg-green-100 text-green-800'}`}>
                                                     {plan.badge}
                                                 </span>
                                             )}
@@ -1054,7 +1054,7 @@ const Signup = () => {
                                                                 Base: {pricing.baseAmount.toLocaleString()} + {pricing.vatAmount.toLocaleString()} (15% VAT)
                                                             </div>
                                                         ) : (
-                                                            <div className="text-xs text-blue-500 font-medium mb-1">
+                                                            <div className="text-xs text-green-500 font-medium mb-1">
                                                                 🌍 International Pricing (Tax Exempt)
                                                             </div>
                                                         )}
@@ -1077,7 +1077,7 @@ const Signup = () => {
                                         <div className="space-y-3 mb-8">
                                             {plan.features.slice(0, 5).map((feature, index) => (
                                                 <div key={index} className="flex items-start gap-3 text-sm text-gray-600">
-                                                    <FaCheck className={`mt-1 flex-shrink-0 ${isIndividual ? 'text-blue-500' : 'text-green-500'}`} />
+                                                    <FaCheck className={`mt-1 flex-shrink-0 ${isIndividual ? 'text-green-500' : 'text-green-500'}`} />
                                                     <span>{feature}</span>
                                                 </div>
                                             ))}
@@ -1085,7 +1085,7 @@ const Signup = () => {
 
                                         <button
                                             className={`w-full py-4 rounded-xl font-bold transition-all duration-300 ${selectedPlan === plan.id
-                                                ? `${isIndividual ? 'bg-blue-600 shadow-blue-200' : 'bg-green-600 shadow-green-200'} text-white shadow-xl`
+                                                ? `${isIndividual ? 'bg-green-600 shadow-green-200' : 'bg-green-600 shadow-green-200'} text-white shadow-xl`
                                                 : 'bg-gray-50 text-gray-800 hover:bg-gray-100'
                                                 }`}
                                         >
@@ -1113,7 +1113,7 @@ const Signup = () => {
                                     }
                                     setStep(2);
                                 }}
-                                className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium py-3 md:py-4 px-4 md:px-6 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 md:gap-3 shadow-lg hover:shadow-xl"
+                                className="flex-1 bg-gradient-to-r from-green-600 to-green-600 hover:from-green-700 hover:to-green-700 text-white font-medium py-3 md:py-4 px-4 md:px-6 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 md:gap-3 shadow-lg hover:shadow-xl"
                                 disabled={!selectedPlan}
                             >
                                 <span>Continue to Registration</span>
@@ -1138,7 +1138,7 @@ const Signup = () => {
     // Step 2: User Agreement
     if (step === 2) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
+            <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-50 flex items-center justify-center p-4">
                 <UserAgreement
                     accountType={selectedPlanDetails?.account_type || 'individual'}
                     onAgree={() => setStep(3)}
@@ -1155,7 +1155,7 @@ const Signup = () => {
         // For individual plans, show the type selection first
         if (isIndividual && !individualType) {
             return (
-                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
+                <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-50 flex items-center justify-center p-4">
                     <div className="w-full max-w-2xl">
                         <div className="mb-6 md:mb-8">
                             <div className="flex items-center justify-between mb-2">
@@ -1169,10 +1169,10 @@ const Signup = () => {
                                     <div className="h-full w-full bg-green-500 rounded-full"></div>
                                 </div>
                                 <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
-                                    <div className="w-6 h-6 md:w-8 md:h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
+                                    <div className="w-6 h-6 md:w-8 md:h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
                                         3
                                     </div>
-                                    <span className="text-[10px] md:text-sm font-semibold text-blue-600 text-center">Registration Type</span>
+                                    <span className="text-[10px] md:text-sm font-semibold text-green-600 text-center">Registration Type</span>
                                 </div>
                                 <div className="flex-1 h-1 md:h-2 mx-2 md:mx-4 bg-gray-200 rounded-full">
                                     <div className="h-full w-0 bg-green-500 rounded-full"></div>
@@ -1190,15 +1190,15 @@ const Signup = () => {
                         </div>
 
                         {selectedPlanDetails && (
-                            <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl">
+                            <div className="mb-6 p-4 bg-gradient-to-r from-green-50 to-green-100 border-2 border-green-200 rounded-xl">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <div className="p-2 bg-white rounded-lg">
                                             {selectedPlanDetails.icon &&
                                                 React.createElement(selectedPlanDetails.icon, {
-                                                    className: `text-xl ${selectedPlanDetails.color.includes('blue') ? 'text-blue-600' :
+                                                    className: `text-xl ${selectedPlanDetails.color.includes('blue') ? 'text-green-600' :
                                                         selectedPlanDetails.color.includes('green') ? 'text-green-600' :
-                                                            selectedPlanDetails.color.includes('purple') ? 'text-purple-600' :
+                                                            selectedPlanDetails.color.includes('purple') ? 'text-green-600' :
                                                                 'text-orange-600'}`
                                                 })
                                             }
@@ -1212,7 +1212,7 @@ const Signup = () => {
                                     </div>
                                     <button
                                         onClick={() => setStep(1)}
-                                        className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                                        className="text-sm text-green-600 hover:text-green-800 font-medium"
                                     >
                                         Change Plan
                                     </button>
@@ -1222,7 +1222,7 @@ const Signup = () => {
 
                         <div className="bg-white rounded-3xl shadow-2xl p-8">
                             <div className="text-center mb-8">
-                                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl mb-4">
+                                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-green-600 to-green-600 rounded-2xl mb-4">
                                     <FaUser className="text-white text-2xl" />
                                 </div>
                                 <h1 className="text-2xl font-bold text-gray-800 mb-2">
@@ -1236,21 +1236,21 @@ const Signup = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                                 <div
                                     onClick={() => setIndividualType('professional')}
-                                    className="group relative bg-white border-2 border-gray-100 rounded-2xl p-6 cursor-pointer hover:border-blue-500 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
+                                    className="group relative bg-white border-2 border-gray-100 rounded-2xl p-6 cursor-pointer hover:border-green-500 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
                                 >
                                     <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white">
+                                        <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white">
                                             <FaArrowRight className="text-sm" />
                                         </div>
                                     </div>
-                                    <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                        <FaUserMd className="text-blue-600 text-2xl" />
+                                    <div className="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                        <FaUserMd className="text-green-600 text-2xl" />
                                     </div>
                                     <h3 className="text-xl font-bold text-gray-800 mb-2">Health Professional</h3>
                                     <p className="text-gray-600 text-sm">
                                         For pharmacists, physicians, nurses, and health science students who need full access to clinical tools and resources.
                                     </p>
-                                    <div className="mt-4 text-sm text-blue-600 font-medium">
+                                    <div className="mt-4 text-sm text-green-600 font-medium">
                                         Complete registration form →
                                     </div>
                                 </div>
@@ -1296,7 +1296,7 @@ const Signup = () => {
             const generatedId = healthcareClientId || '';
 
             return (
-                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
+                <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-50 flex items-center justify-center p-4">
                     <div className="w-full max-w-2xl">
                         <div className="mb-6 md:mb-8">
                             <div className="flex items-center justify-between mb-2">
@@ -1319,10 +1319,10 @@ const Signup = () => {
                                     <div className="h-full w-full bg-green-500 rounded-full"></div>
                                 </div>
                                 <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
-                                    <div className="w-6 h-6 md:w-8 md:h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
+                                    <div className="w-6 h-6 md:w-8 md:h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
                                         3
                                     </div>
-                                    <span className="text-[10px] md:text-sm font-semibold text-blue-600 text-center">Registration</span>
+                                    <span className="text-[10px] md:text-sm font-semibold text-green-600 text-center">Registration</span>
                                 </div>
                                 <div className="flex-1 h-1 md:h-2 mx-2 md:mx-4 bg-gray-200 rounded-full">
                                     <div className="h-full w-0 bg-green-500 rounded-full"></div>
@@ -1340,15 +1340,15 @@ const Signup = () => {
                         </div>
 
                         {selectedPlanDetails && (
-                            <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl">
+                            <div className="mb-6 p-4 bg-gradient-to-r from-green-50 to-green-100 border-2 border-green-200 rounded-xl">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <div className="p-2 bg-white rounded-lg">
                                             {selectedPlanDetails.icon &&
                                                 React.createElement(selectedPlanDetails.icon, {
-                                                    className: `text-xl ${selectedPlanDetails.color.includes('blue') ? 'text-blue-600' :
+                                                    className: `text-xl ${selectedPlanDetails.color.includes('blue') ? 'text-green-600' :
                                                         selectedPlanDetails.color.includes('green') ? 'text-green-600' :
-                                                            selectedPlanDetails.color.includes('purple') ? 'text-purple-600' :
+                                                            selectedPlanDetails.color.includes('purple') ? 'text-green-600' :
                                                                 'text-orange-600'}`
                                                 })
                                             }
@@ -1362,7 +1362,7 @@ const Signup = () => {
                                     </div>
                                     <button
                                         onClick={() => setStep(1)}
-                                        className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                                        className="text-sm text-green-600 hover:text-green-800 font-medium"
                                     >
                                         Change Plan
                                     </button>
@@ -1407,13 +1407,13 @@ const Signup = () => {
                                 </div>
                             )}
 
-                            <div className="mb-8 p-6 bg-blue-50 rounded-xl border-2 border-blue-200">
+                            <div className="mb-8 p-6 bg-green-50 rounded-xl border-2 border-green-200">
                                 <div className="flex items-center gap-4 mb-4">
-                                    <FaIdCard className="text-blue-500 text-2xl" />
+                                    <FaIdCard className="text-green-500 text-2xl" />
                                     <h3 className="font-bold text-gray-800 text-lg">Your Unique Healthcare Client ID</h3>
                                 </div>
-                                <div className="bg-white p-4 rounded-lg border-2 border-blue-300 mb-4">
-                                    <p className="text-2xl font-mono font-bold text-center text-blue-600 break-all">
+                                <div className="bg-white p-4 rounded-lg border-2 border-green-300 mb-4">
+                                    <p className="text-2xl font-mono font-bold text-center text-green-600 break-all">
                                         {healthcareClientId}
                                     </p>
                                 </div>
@@ -1450,7 +1450,7 @@ const Signup = () => {
                                             <input
                                                 type={showPassword ? "text" : "password"}
                                                 required
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition pr-12"
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition pr-12"
                                                 placeholder="Create a password"
                                                 value={formData.password}
                                                 onChange={(e) => handlePasswordChange(e.target.value)}
@@ -1468,7 +1468,7 @@ const Signup = () => {
                                                 Password strength:
                                                 <span className={`ml-2 font-bold ${passwordStrength === 'weak' ? 'text-red-500' :
                                                     passwordStrength === 'fair' ? 'text-yellow-500' :
-                                                        passwordStrength === 'good' ? 'text-blue-500' :
+                                                        passwordStrength === 'good' ? 'text-green-500' :
                                                             'text-green-500'
                                                     }`}>
                                                     {passwordStrength.charAt(0).toUpperCase() + passwordStrength.slice(1)}
@@ -1485,7 +1485,7 @@ const Signup = () => {
                                             <input
                                                 type={showConfirmPassword ? "text" : "password"}
                                                 required
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition pr-12"
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition pr-12"
                                                 placeholder="Confirm password"
                                                 value={formData.confirmPassword}
                                                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
@@ -1508,7 +1508,7 @@ const Signup = () => {
                                     </label>
                                     <input
                                         type="text"
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
                                         placeholder="Enter referral code"
                                         value={formData.referral_code}
                                         onChange={(e) => setFormData({ ...formData, referral_code: e.target.value })}
@@ -1551,7 +1551,7 @@ const Signup = () => {
         // Regular registration form for health professional users (individual + professional type)
         if (isIndividual && individualType === 'professional') {
             return (
-                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
+                <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-50 flex items-center justify-center p-4">
                     <div className="w-full max-w-4xl">
                         <div className="mb-6 md:mb-8">
                             <div className="flex items-center justify-between mb-2">
@@ -1574,10 +1574,10 @@ const Signup = () => {
                                     <div className="h-full w-full bg-green-500 rounded-full"></div>
                                 </div>
                                 <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
-                                    <div className="w-6 h-6 md:w-8 md:h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
+                                    <div className="w-6 h-6 md:w-8 md:h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
                                         3
                                     </div>
-                                    <span className="text-[10px] md:text-sm font-semibold text-blue-600 text-center">Registration</span>
+                                    <span className="text-[10px] md:text-sm font-semibold text-green-600 text-center">Registration</span>
                                 </div>
                                 <div className="flex-1 h-1 md:h-2 mx-2 md:mx-4 bg-gray-200 rounded-full">
                                     <div className="h-full w-0 bg-green-500 rounded-full"></div>
@@ -1595,15 +1595,15 @@ const Signup = () => {
                         </div>
 
                         {selectedPlanDetails && (
-                            <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl">
+                            <div className="mb-6 p-4 bg-gradient-to-r from-green-50 to-green-100 border-2 border-green-200 rounded-xl">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <div className="p-2 bg-white rounded-lg">
                                             {selectedPlanDetails.icon &&
                                                 React.createElement(selectedPlanDetails.icon, {
-                                                    className: `text-xl ${selectedPlanDetails.color.includes('blue') ? 'text-blue-600' :
+                                                    className: `text-xl ${selectedPlanDetails.color.includes('blue') ? 'text-green-600' :
                                                         selectedPlanDetails.color.includes('green') ? 'text-green-600' :
-                                                            selectedPlanDetails.color.includes('purple') ? 'text-purple-600' :
+                                                            selectedPlanDetails.color.includes('purple') ? 'text-green-600' :
                                                                 'text-orange-600'}`
                                                 })
                                             }
@@ -1617,7 +1617,7 @@ const Signup = () => {
                                     </div>
                                     <button
                                         onClick={() => setStep(1)}
-                                        className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                                        className="text-sm text-green-600 hover:text-green-800 font-medium"
                                     >
                                         Change Plan
                                     </button>
@@ -1627,7 +1627,7 @@ const Signup = () => {
 
                         <div className="bg-white rounded-3xl shadow-2xl p-8">
                             <div className="text-center mb-8">
-                                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl mb-4">
+                                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-green-600 to-green-600 rounded-2xl mb-4">
                                     <FaUserMd className="text-white text-2xl" />
                                 </div>
                                 <h1 className="text-2xl font-bold text-gray-800 mb-2">
@@ -1671,7 +1671,7 @@ const Signup = () => {
                                         </label>
                                         <select
                                             required
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-white"
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition bg-white"
                                             value={formData.role}
                                             onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                                         >
@@ -1693,7 +1693,7 @@ const Signup = () => {
                                             <input
                                                 type="text"
                                                 required
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
                                                 placeholder="Enter your full name"
                                                 value={formData.full_name}
                                                 onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
@@ -1707,7 +1707,7 @@ const Signup = () => {
                                             <input
                                                 type="email"
                                                 required
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
                                                 placeholder="Enter your email"
                                                 value={formData.email}
                                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -1724,7 +1724,7 @@ const Signup = () => {
                                             <input
                                                 type="tel"
                                                 required
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
                                                 placeholder="Enter your phone number"
                                                 value={formData.phone}
                                                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -1743,7 +1743,7 @@ const Signup = () => {
                                                     type="text"
                                                     required
                                                     disabled
-                                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-gray-100 text-gray-700"
+                                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition bg-gray-100 text-gray-700"
                                                     placeholder="Auto-detected"
                                                     value={formData.country}
                                                 />
@@ -1762,7 +1762,7 @@ const Signup = () => {
                                             </label>
                                             <input
                                                 type="text"
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
                                                 placeholder="Enter referral code"
                                                 value={formData.referral_code}
                                                 onChange={(e) => setFormData({ ...formData, referral_code: e.target.value })}
@@ -1780,7 +1780,7 @@ const Signup = () => {
                                                 <input
                                                     type={showPassword ? "text" : "password"}
                                                     required
-                                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition pr-12"
+                                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition pr-12"
                                                     placeholder="Create a password"
                                                     value={formData.password}
                                                     onChange={(e) => handlePasswordChange(e.target.value)}
@@ -1798,7 +1798,7 @@ const Signup = () => {
                                                     Password strength:
                                                     <span className={`ml-2 font-bold ${passwordStrength === 'weak' ? 'text-red-500' :
                                                         passwordStrength === 'fair' ? 'text-yellow-500' :
-                                                            passwordStrength === 'good' ? 'text-blue-500' :
+                                                            passwordStrength === 'good' ? 'text-green-500' :
                                                                 'text-green-500'
                                                         }`}>
                                                         {passwordStrength.charAt(0).toUpperCase() + passwordStrength.slice(1)}
@@ -1815,7 +1815,7 @@ const Signup = () => {
                                                 <input
                                                     type={showConfirmPassword ? "text" : "password"}
                                                     required
-                                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition pr-12"
+                                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition pr-12"
                                                     placeholder="Confirm your password"
                                                     value={formData.confirmPassword}
                                                     onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
@@ -1846,7 +1846,7 @@ const Signup = () => {
                                 <button
                                     onClick={handleRegistrationSubmit}
                                     disabled={loading}
-                                    className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium py-3 px-4 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
+                                    className="flex-1 bg-gradient-to-r from-green-600 to-green-600 hover:from-green-700 hover:to-green-700 text-white font-medium py-3 px-4 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
                                 >
                                     {loading ? (
                                         <>
@@ -1869,7 +1869,7 @@ const Signup = () => {
 
         // Company Registration Form
         return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
+            <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-50 flex items-center justify-center p-4">
                 <div className="w-full max-w-4xl">
                     <div className="mb-6 md:mb-8">
                         <div className="flex items-center justify-between mb-2">
@@ -1883,10 +1883,10 @@ const Signup = () => {
                                 <div className="h-full w-full bg-green-500 rounded-full"></div>
                             </div>
                             <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
-                                <div className="w-6 h-6 md:w-8 md:h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
+                                <div className="w-6 h-6 md:w-8 md:h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold text-xs md:text-sm">
                                     3
                                 </div>
-                                <span className="text-[10px] md:text-sm font-semibold text-blue-600 text-center">Registration</span>
+                                <span className="text-[10px] md:text-sm font-semibold text-green-600 text-center">Registration</span>
                             </div>
                             <div className="flex-1 h-1 md:h-2 mx-2 md:mx-4 bg-gray-200 rounded-full">
                                 <div className="h-full w-0 bg-green-500 rounded-full"></div>
@@ -1904,15 +1904,15 @@ const Signup = () => {
                     </div>
 
                     {selectedPlanDetails && (
-                        <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl">
+                        <div className="mb-6 p-4 bg-gradient-to-r from-green-50 to-green-100 border-2 border-green-200 rounded-xl">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="p-2 bg-white rounded-lg">
                                         {selectedPlanDetails.icon &&
                                             React.createElement(selectedPlanDetails.icon, {
-                                                className: `text-xl ${selectedPlanDetails.color.includes('blue') ? 'text-blue-600' :
+                                                className: `text-xl ${selectedPlanDetails.color.includes('blue') ? 'text-green-600' :
                                                     selectedPlanDetails.color.includes('green') ? 'text-green-600' :
-                                                        selectedPlanDetails.color.includes('purple') ? 'text-purple-600' :
+                                                        selectedPlanDetails.color.includes('purple') ? 'text-green-600' :
                                                             'text-orange-600'}`
                                             })
                                         }
@@ -1926,7 +1926,7 @@ const Signup = () => {
                                 </div>
                                 <button
                                     onClick={() => setStep(1)}
-                                    className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                                    className="text-sm text-green-600 hover:text-green-800 font-medium"
                                 >
                                     Change Plan
                                 </button>
@@ -1936,7 +1936,7 @@ const Signup = () => {
 
                     <div className="bg-white rounded-3xl shadow-2xl p-8">
                         <div className="text-center mb-8">
-                            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl mb-4">
+                            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-green-600 to-green-600 rounded-2xl mb-4">
                                 <FaBuilding className="text-white text-2xl" />
                             </div>
                             <h1 className="text-2xl font-bold text-gray-800 mb-2">
@@ -1973,7 +1973,7 @@ const Signup = () => {
 
                         <form onSubmit={handleRegistrationSubmit} className="space-y-6">
                             <>
-                                <div className="bg-blue-50 p-6 rounded-xl mb-6">
+                                <div className="bg-green-50 p-6 rounded-xl mb-6">
                                     <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
                                         <FaBuilding /> Company Information
                                     </h3>
@@ -1985,7 +1985,7 @@ const Signup = () => {
                                             <input
                                                 type="text"
                                                 required
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
                                                 placeholder="Enter company name"
                                                 value={formData.company_name}
                                                 onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
@@ -1999,7 +1999,7 @@ const Signup = () => {
                                             <input
                                                 type="email"
                                                 required
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
                                                 placeholder="Enter company email"
                                                 value={formData.company_email}
                                                 onChange={(e) => setFormData({ ...formData, company_email: e.target.value })}
@@ -2016,7 +2016,7 @@ const Signup = () => {
                                             <input
                                                 type="text"
                                                 required
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
                                                 placeholder="Enter company address"
                                                 value={formData.company_address}
                                                 onChange={(e) => setFormData({ ...formData, company_address: e.target.value })}
@@ -2028,7 +2028,7 @@ const Signup = () => {
                                                 Company Type
                                             </label>
                                             <select
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
                                                 value={formData.company_type}
                                                 onChange={(e) => setFormData({ ...formData, company_type: e.target.value })}
                                             >
@@ -2050,7 +2050,7 @@ const Signup = () => {
                                             <input
                                                 type="text"
                                                 required
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
                                                 placeholder="Enter company TIN number"
                                                 value={formData.tin_number}
                                                 onChange={(e) => setFormData({ ...formData, tin_number: e.target.value })}
@@ -2062,7 +2062,7 @@ const Signup = () => {
                                                 Company Size
                                             </label>
                                             <select
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
                                                 value={formData.company_size}
                                                 onChange={(e) => setFormData({ ...formData, company_size: e.target.value })}
                                             >
@@ -2086,7 +2086,7 @@ const Signup = () => {
                                                     type="text"
                                                     required
                                                     disabled
-                                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-gray-100 text-gray-700"
+                                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition bg-gray-100 text-gray-700"
                                                     placeholder="Auto-detected"
                                                     value={formData.country}
                                                 />
@@ -2104,7 +2104,7 @@ const Signup = () => {
                                             <input
                                                 type="text"
                                                 required
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
                                                 placeholder="Enter region"
                                                 value={formData.region}
                                                 onChange={(e) => setFormData({ ...formData, region: e.target.value })}
@@ -2117,7 +2117,7 @@ const Signup = () => {
                                             </label>
                                             <input
                                                 type="text"
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
                                                 placeholder="Enter woreda/zone"
                                                 value={formData.woreda}
                                                 onChange={(e) => setFormData({ ...formData, woreda: e.target.value })}
@@ -2133,7 +2133,7 @@ const Signup = () => {
                                             </label>
                                             <input
                                                 type="text"
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
                                                 placeholder="Enter referral code"
                                                 value={formData.referral_code}
                                                 onChange={(e) => setFormData({ ...formData, referral_code: e.target.value })}
@@ -2151,7 +2151,7 @@ const Signup = () => {
                                             required
                                             min="1"
                                             max={selectedPlanDetails?.user_limit || 20}
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
                                             placeholder="Enter number of users"
                                             value={formData.user_capacity}
                                             onChange={(e) => setFormData({ ...formData, user_capacity: e.target.value })}
@@ -2175,7 +2175,7 @@ const Signup = () => {
                                             <input
                                                 type="text"
                                                 required
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
                                                 placeholder="Enter admin full name"
                                                 value={formData.admin_full_name}
                                                 onChange={(e) => setFormData({ ...formData, admin_full_name: e.target.value })}
@@ -2189,7 +2189,7 @@ const Signup = () => {
                                             <input
                                                 type="email"
                                                 required
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
                                                 placeholder="Enter admin email"
                                                 value={formData.admin_email}
                                                 onChange={(e) => setFormData({ ...formData, admin_email: e.target.value })}
@@ -2205,7 +2205,7 @@ const Signup = () => {
                                             <input
                                                 type="tel"
                                                 required
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
                                                 placeholder="Enter admin phone number"
                                                 value={formData.admin_phone}
                                                 onChange={(e) => setFormData({ ...formData, admin_phone: e.target.value })}
@@ -2222,7 +2222,7 @@ const Signup = () => {
                                                 <input
                                                     type={showAdminPassword ? "text" : "password"}
                                                     required
-                                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition pr-12"
+                                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition pr-12"
                                                     placeholder="Create admin password"
                                                     value={formData.admin_password}
                                                     onChange={(e) => handleAdminPasswordChange(e.target.value)}
@@ -2240,7 +2240,7 @@ const Signup = () => {
                                                     Password strength:
                                                     <span className={`ml-2 font-bold ${adminPasswordStrength === 'weak' ? 'text-red-500' :
                                                         adminPasswordStrength === 'fair' ? 'text-yellow-500' :
-                                                            adminPasswordStrength === 'good' ? 'text-blue-500' :
+                                                            adminPasswordStrength === 'good' ? 'text-green-500' :
                                                                 'text-green-500'
                                                         }`}>
                                                         {adminPasswordStrength.charAt(0).toUpperCase() + adminPasswordStrength.slice(1)}
@@ -2257,7 +2257,7 @@ const Signup = () => {
                                                 <input
                                                     type={showAdminConfirmPassword ? "text" : "password"}
                                                     required
-                                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition pr-12"
+                                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition pr-12"
                                                     placeholder="Confirm admin password"
                                                     value={formData.admin_confirm_password}
                                                     onChange={(e) => setFormData({ ...formData, admin_confirm_password: e.target.value })}
@@ -2289,7 +2289,7 @@ const Signup = () => {
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium py-3 px-4 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
+                                    className="flex-1 bg-gradient-to-r from-green-600 to-green-600 hover:from-green-700 hover:to-green-700 text-white font-medium py-3 px-4 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
                                 >
                                     {loading ? (
                                         <>
@@ -2318,7 +2318,7 @@ const Signup = () => {
         const isEthiopia = country.toLowerCase().includes('ethiopia');
 
         return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
+            <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-50 flex items-center justify-center p-4">
                 <div className="w-full max-w-7xl">
                     <div className="mb-8 md:mb-10">
                         <div className="flex items-center justify-between mb-3 md:mb-4">
@@ -2347,11 +2347,11 @@ const Signup = () => {
                                 <div className="h-full w-full bg-green-500 rounded-full"></div>
                             </div>
                             <div className="flex items-center gap-2 md:gap-3">
-                                <div className="w-8 h-8 md:w-10 md:h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold shadow-lg text-xs md:text-sm">
+                                <div className="w-8 h-8 md:w-10 md:h-10 bg-green-600 text-white rounded-full flex items-center justify-center font-bold shadow-lg text-xs md:text-sm">
                                     4
                                 </div>
                                 <div className="hidden md:block">
-                                    <span className="font-semibold text-blue-600 text-sm md:text-base">Payment</span>
+                                    <span className="font-semibold text-green-600 text-sm md:text-base">Payment</span>
                                     <p className="text-xs text-gray-500">Complete payment</p>
                                 </div>
                             </div>
@@ -2363,7 +2363,7 @@ const Signup = () => {
 
                     <div className="bg-white rounded-3xl shadow-2xl p-6 md:p-8 lg:p-10">
                         <div className="text-center mb-8 md:mb-10">
-                            <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl mb-4 md:mb-6 shadow-lg">
+                            <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 bg-gradient-to-r from-green-600 to-green-600 rounded-3xl mb-4 md:mb-6 shadow-lg">
                                 <FaCreditCard className="text-white text-2xl md:text-3xl lg:text-4xl" />
                             </div>
                             <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2 md:mb-3">Complete Your Payment</h1>
@@ -2373,15 +2373,15 @@ const Signup = () => {
                         </div>
 
                         {selectedPlanDetails && (
-                            <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl border-2 border-blue-200">
+                            <div className="mb-8 p-6 bg-gradient-to-r from-green-50 to-green-100 rounded-2xl border-2 border-green-200">
                                 <div className="flex items-center justify-between mb-4">
                                     <div className="flex items-center gap-4">
                                         <div className="p-3 bg-white rounded-xl">
                                             {selectedPlanDetails.icon &&
                                                 React.createElement(selectedPlanDetails.icon, {
-                                                    className: `text-2xl ${selectedPlanDetails.color.includes('blue') ? 'text-blue-600' :
+                                                    className: `text-2xl ${selectedPlanDetails.color.includes('blue') ? 'text-green-600' :
                                                         selectedPlanDetails.color.includes('green') ? 'text-green-600' :
-                                                            selectedPlanDetails.color.includes('purple') ? 'text-purple-600' :
+                                                            selectedPlanDetails.color.includes('purple') ? 'text-green-600' :
                                                                 'text-orange-600'}`
                                                 })
                                             }
@@ -2411,12 +2411,12 @@ const Signup = () => {
                             </div>
                         )}
 
-                        <div className="mb-8 p-6 bg-blue-50 border-2 border-blue-200 rounded-2xl">
+                        <div className="mb-8 p-6 bg-green-50 border-2 border-green-200 rounded-2xl">
                             <div className="flex items-center gap-4">
-                                <FaCreditCard className="text-blue-500 text-xl flex-shrink-0" />
+                                <FaCreditCard className="text-green-500 text-xl flex-shrink-0" />
                                 <div className="flex-1">
-                                    <p className="text-blue-700 font-bold text-lg">Secure Payment via Chapa</p>
-                                    <p className="text-blue-600 mt-2">
+                                    <p className="text-green-700 font-bold text-lg">Secure Payment via Chapa</p>
+                                    <p className="text-green-600 mt-2">
                                         Click the button below to proceed to Chapa's secure payment page to complete your subscription.
                                     </p>
                                 </div>
@@ -2476,7 +2476,7 @@ const Signup = () => {
         const paymentData = JSON.parse(localStorage.getItem('user_payment') || '{}');
 
         return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
+            <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-50 flex items-center justify-center p-4">
                 <div className="w-full max-w-4xl">
                     <div className="bg-white rounded-3xl shadow-2xl p-6 md:p-8 lg:p-10">
                         <div className="text-center mb-8 md:mb-10">
@@ -2523,10 +2523,10 @@ const Signup = () => {
                             </div>
                         </div>
 
-                        <div className="mb-8 md:mb-10 p-6 md:p-8 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl border-2 border-blue-200">
+                        <div className="mb-8 md:mb-10 p-6 md:p-8 bg-gradient-to-r from-green-50 to-green-100 rounded-2xl border-2 border-green-200">
                             <div className="flex items-center gap-4 md:gap-6 mb-6">
-                                <div className="w-12 h-12 md:w-16 md:h-16 bg-blue-100 rounded-full flex items-center justify-center">
-                                    <FaCreditCard className="text-blue-600 text-xl md:text-2xl" />
+                                <div className="w-12 h-12 md:w-16 md:h-16 bg-green-100 rounded-full flex items-center justify-center">
+                                    <FaCreditCard className="text-green-600 text-xl md:text-2xl" />
                                 </div>
                                 <div>
                                     <h3 className="text-xl md:text-2xl font-bold text-gray-800">Subscription Details</h3>
@@ -2535,19 +2535,19 @@ const Signup = () => {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                                <div className="p-4 bg-white rounded-xl border border-blue-100">
+                                <div className="p-4 bg-white rounded-xl border border-green-100">
                                     <p className="text-gray-500 text-sm mb-1">Plan</p>
                                     <p className="font-bold text-gray-800">{selectedPlanDetails?.name || 'N/A'}</p>
                                 </div>
-                                <div className="p-4 bg-white rounded-xl border border-blue-100">
+                                <div className="p-4 bg-white rounded-xl border border-green-100">
                                     <p className="text-gray-500 text-sm mb-1">Amount Paid</p>
                                     <p className="font-bold text-gray-800">{selectedPlanDetails ? getDynamicPricing(selectedPlanDetails, userData.country || 'Ethiopia').amount.toLocaleString() : ''} {selectedPlanDetails ? getDynamicPricing(selectedPlanDetails, userData.country || 'Ethiopia').currency : ''}</p>
                                 </div>
-                                <div className="p-4 bg-white rounded-xl border border-blue-100">
+                                <div className="p-4 bg-white rounded-xl border border-green-100">
                                     <p className="text-gray-500 text-sm mb-1">Transaction Ref</p>
                                     <p className="font-bold text-gray-800 text-sm">{chapaTxRef || paymentData.tx_ref || 'N/A'}</p>
                                 </div>
-                                <div className="p-4 bg-white rounded-xl border border-blue-100">
+                                <div className="p-4 bg-white rounded-xl border border-green-100">
                                     <p className="text-gray-500 text-sm mb-1">Payment Status</p>
                                     <div className="flex items-center gap-2">
                                         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -2557,10 +2557,10 @@ const Signup = () => {
                             </div>
                         </div>
 
-                        <div className="mb-8 md:mb-10 p-6 md:p-8 bg-gradient-to-r from-purple-50 to-purple-100 rounded-2xl border-2 border-purple-200">
+                        <div className="mb-8 md:mb-10 p-6 md:p-8 bg-gradient-to-r from-green-50 to-green-100 rounded-2xl border-2 border-green-200">
                             <div className="flex items-center gap-4 md:gap-6 mb-6">
-                                <div className="w-12 h-12 md:w-16 md:h-16 bg-purple-100 rounded-full flex items-center justify-center">
-                                    <FaRegClock className="text-purple-600 text-xl md:text-2xl" />
+                                <div className="w-12 h-12 md:w-16 md:h-16 bg-green-100 rounded-full flex items-center justify-center">
+                                    <FaRegClock className="text-green-600 text-xl md:text-2xl" />
                                 </div>
                                 <div>
                                     <h3 className="text-xl md:text-2xl font-bold text-gray-800">What Happens Next?</h3>
@@ -2581,8 +2581,8 @@ const Signup = () => {
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-4 p-4 bg-white rounded-xl">
-                                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                        <span className="text-blue-600 font-bold">2</span>
+                                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <span className="text-green-600 font-bold">2</span>
                                     </div>
                                     <div>
                                         <h4 className="font-bold text-gray-800 mb-1">Approval Notification</h4>
