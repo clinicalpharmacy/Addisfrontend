@@ -38,7 +38,13 @@ api.interceptors.response.use(
                     console.warn('Unauthorized request. Clearing local storage and redirecting to landing page.');
                     localStorage.removeItem('token');
                     localStorage.removeItem('user');
-                    window.location.href = '/';
+                    
+                    // Check if it's specifically a multiple-device session expiration
+                    if (error.response.data && error.response.data.error && error.response.data.error.includes('Session expired')) {
+                        window.location.href = '/login?session_expired=true';
+                    } else {
+                        window.location.href = '/';
+                    }
                 }
             }
             return Promise.reject(error.response.data);

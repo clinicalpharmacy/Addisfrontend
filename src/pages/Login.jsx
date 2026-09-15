@@ -73,6 +73,13 @@ const Login = () => {
         const token = localStorage.getItem('token');
         const userRole = localStorage.getItem('userRole');
 
+        // Check for session expired from another device
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('session_expired') === 'true') {
+            setError('Your session expired because you logged in from another device. Please log in again.');
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
         // Load remembered email/ID
         const savedEmail = localStorage.getItem('rememberedEmail');
         if (savedEmail) {
