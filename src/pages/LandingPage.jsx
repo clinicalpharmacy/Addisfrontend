@@ -173,11 +173,11 @@ const LandingPage = () => {
                             <div className="relative">
                                 <div className="absolute inset-0 bg-white rounded-3xl transform rotate-3 opacity-10"></div>
                                 <div className="relative bg-white border border-green-100 rounded-3xl p-8 sm:p-12 shadow-2xl flex flex-col items-center text-center">
-                                    <div className="bg-white p-3 rounded-full mb-6 border border-green-50 shadow-sm">
+                                    <div className="bg-white p-4 rounded-full mb-6 border border-green-50 shadow-sm">
                                         <img
                                             src="/Addis Ababa University Logo.svg"
                                             alt="AAU Logo"
-                                            className="w-24 h-24 object-contain"
+                                            className="w-40 h-40 object-contain"
                                         />
                                     </div>
                                     <span className="text-green-600 font-bold tracking-widest uppercase text-sm mb-2">Proudly Backed By</span>
