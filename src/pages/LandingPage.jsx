@@ -86,7 +86,7 @@ const LandingPage = () => {
                             Your Trusted Partner in <span className="text-green-500">Digital Health</span>
                         </h1>
                         <p className="mt-6 text-lg md:text-2xl text-slate-600 max-w-3xl mx-auto leading-relaxed mb-10 font-medium">
-                            Addis Med provides evidence-based medical information, clinical decision support, and educational resources tailored for healthcare professionals.
+                            Addis Med is the leading healthcare software in Addis Ababa, providing evidence-based medical information, clinical decision support, and an Ethiopian drug formulary tailored for hospitals, pharmacists, and healthcare professionals across Ethiopia.
                         </p>
                         <div className="flex flex-col sm:flex-row justify-center gap-4">
                             <button
@@ -129,7 +129,7 @@ const LandingPage = () => {
                                 {
                                     icon: <FaBookMedical className="text-green-500 text-3xl" />,
                                     title: 'Clinical Support',
-                                    desc: 'Advanced tools to assist pharmacists and doctors in medication reviews.'
+                                    desc: 'Advanced tools to assist Ethiopian pharmacists and doctors in medication reviews and hospital settings.'
                                 },
                                 {
                                     icon: <FaHeartbeat className="text-green-500 text-3xl" />,
