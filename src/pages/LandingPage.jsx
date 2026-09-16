@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-    FaUserMd, FaHeartbeat, FaShieldAlt, FaPills,
+    FaUserMd, FaHeartbeat, FaShieldAlt, FaPills, FaClipboardList,
     FaArrowRight, FaCheckCircle, FaBookMedical, FaBookOpen,
     FaBars, FaBook, FaCapsules, FaNotesMedical, FaTimes
 } from 'react-icons/fa';
@@ -131,13 +131,13 @@ const LandingPage = () => {
                                     desc: 'Automated quick checks for pregnancy, elderly patients, and interactions.'
                                 },
                                 {
-                                    icon: <FaNotesMedical className="text-green-500 text-3xl" />,
+                                    icon: <FaClipboardList className="text-green-500 text-3xl" />,
                                     title: 'Medication Review',
                                     desc: 'Advanced tool providing information and consultation support for healthcare professionals and students in medication reviews.'
                                 },
                                 {
                                     icon: <FaBookOpen className="text-green-500 text-3xl" />,
-                                    title: 'Health Education',
+                                    title: 'Education',
                                     desc: 'Automated features that provide educational contents for healthcare professionals and students'
                                 }
                             ].map((feature, idx) => (
