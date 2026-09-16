@@ -18,8 +18,12 @@ const LandingPage = () => {
                     <div className="flex justify-between items-center h-20">
                         {/* Logo */}
                         <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.scrollTo(0,0)}>
-                            <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-green-400 to-green-500 rounded-lg shadow-sm">
-                                <FaUserMd className="text-white text-xl" />
+                            <div className="flex items-center justify-center w-8 h-8 rounded-lg shadow-sm overflow-hidden">
+                                <img 
+                                    src="/logo.png" 
+                                    alt="Addis Med Logo" 
+                                    className="w-full h-full object-contain"
+                                />
                             </div>
                             <span className="text-2xl font-bold tracking-tight text-slate-900">Addis Med</span>
                         </div>
@@ -117,18 +121,22 @@ const LandingPage = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                             {[
                                 {
+                                    icon: <FaPills className="text-green-500 text-3xl" />,
                                     title: 'Medication Database',
                                     desc: 'Access medication information in local language.'
                                 },
                                 {
+                                    icon: <FaShieldAlt className="text-green-500 text-3xl" />,
                                     title: 'Safety Screening',
                                     desc: 'Automated quick checks for pregnancy, elderly patients, and interactions.'
                                 },
                                 {
+                                    icon: <FaBookMedical className="text-green-500 text-3xl" />,
                                     title: 'Medication Review',
                                     desc: 'Advanced tool providing information and consultation support for healthcare professionals and students in medication reviews.'
                                 },
                                 {
+                                    icon: <FaHeartbeat className="text-green-500 text-3xl" />,
                                     title: 'Health Education',
                                     desc: 'Automated features that provide educational contents for healthcare professionals and students'
                                 }
@@ -190,8 +198,12 @@ const LandingPage = () => {
             <footer id="contact" className="bg-slate-50 border-t border-slate-200 pt-16 pb-8">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                     <div className="flex items-center justify-center gap-2 mb-6">
-                        <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-green-500 rounded-lg flex items-center justify-center shadow-sm">
-                            <FaUserMd className="text-white text-sm" />
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm overflow-hidden">
+                            <img 
+                                src="/logo.png" 
+                                alt="Addis Med Logo" 
+                                className="w-full h-full object-contain"
+                            />
                         </div>
                         <span className="text-xl font-bold text-slate-900">Addis Med</span>
                     </div>
