@@ -114,7 +114,7 @@ const LandingPage = () => {
                 <div id="features" className="bg-white py-20 border-t border-slate-200 pt-28 -mt-8">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="text-center mb-16">
-                            <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Comprehensive Healthcare Tools</h2>
+                            <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Digital Health Tools</h2>
                             <p className="mt-4 text-slate-600 max-w-2xl mx-auto">Designed to enhance patient safety and optimize medicines use.</p>
                         </div>
                         
