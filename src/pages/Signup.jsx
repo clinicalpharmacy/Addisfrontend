@@ -157,14 +157,14 @@ const SUBSCRIPTION_PLANS = [
         account_type: 'company',
         facility_type: 'clinic'
     },
-    // ── Other Health-related Company ─────────────────────────────────────────────────────
+    // ── Other Company ─────────────────────────────────────────────────────
     {
-        id: 'other_health_monthly',
-        name: 'Other Health-related Company Monthly',
+        id: 'other_company_monthly',
+        name: 'Other Company Monthly',
         price: 1035, // 900 + 15% VAT
         currency: 'ETB',
         interval: 'month',
-        description: 'For other health-related company',
+        description: 'For other company',
         user_limit: 5,
         icon: FaUsers,
         color: 'from-green-500 to-green-600',
@@ -177,15 +177,15 @@ const SUBSCRIPTION_PLANS = [
             'Up to 5 users'
         ],
         account_type: 'company',
-        facility_type: 'other_health'
+        facility_type: 'other_company'
     },
     {
-        id: 'other_health_yearly',
-        name: 'Other Health-related Company Yearly',
+        id: 'other_company_yearly',
+        name: 'Other Company Yearly',
         price: 10350, // 9000 + 15% VAT
         currency: 'ETB',
         interval: 'year',
-        description: 'Best value for other health-related company',
+        description: 'Best value for other company',
         user_limit: 10,
         icon: FaUsers,
         color: 'from-green-600 to-emerald-600',
@@ -201,7 +201,7 @@ const SUBSCRIPTION_PLANS = [
         ],
         popular: true,
         account_type: 'company',
-        facility_type: 'other_health'
+        facility_type: 'other_company'
     },
     // ── Hospital ──────────────────────────────────────────────────────────
     {
@@ -2036,7 +2036,7 @@ const Signup = () => {
                                                 <option value="hospital">Hospital</option>
                                                 <option value="clinic">Clinic/ Speciality Center/ Health Center</option>
                                                 <option value="pharmaceutical">Pharmacy School</option>
-                                                <option value="other_health">Other Health-related Company</option>
+                                                <option value="other_company">Other Company</option>
                                             </select>
                                         </div>
                                     </div>
