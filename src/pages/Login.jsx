@@ -386,8 +386,12 @@ const Login = () => {
                 {/* Logo and Brand */}
                 <div className="text-center mb-4">
                     <div className="relative inline-block">
-                        <div className="relative flex items-center justify-center w-14 h-14 bg-gradient-to-r from-green-400 to-green-500 rounded-xl mb-2 mx-auto shadow-2xl">
-                            <FaUserMd className="text-white text-xl" />
+                        <div className="relative flex items-center justify-center w-14 h-14 rounded-xl mb-2 mx-auto shadow-2xl overflow-hidden">
+                            <img 
+                                src="/logo.png" 
+                                alt="Addis Med Logo" 
+                                className="w-full h-full object-contain"
+                            />
                         </div>
                     </div>
                     <h1 className="text-3xl font-bold text-gray-800 mb-1 tracking-tight">Addis Med</h1>
