@@ -157,52 +157,6 @@ const SUBSCRIPTION_PLANS = [
         account_type: 'company',
         facility_type: 'clinic'
     },
-    // ── Other Company ─────────────────────────────────────────────────────
-    {
-        id: 'other_company_monthly',
-        name: 'Other Company Monthly',
-        price: 1035, // 900 + 15% VAT
-        currency: 'ETB',
-        interval: 'month',
-        description: 'For other company',
-        user_limit: 5,
-        icon: FaUsers,
-        color: 'from-green-500 to-green-600',
-        badge: 'Monthly',
-        features: [
-            'Medication information',
-            'Medication safety checks',
-            'Medication availability posts',
-            'Other features for practitioners',
-            'Up to 5 users'
-        ],
-        account_type: 'company',
-        facility_type: 'other_company'
-    },
-    {
-        id: 'other_company_yearly',
-        name: 'Other Company Yearly',
-        price: 10350, // 9000 + 15% VAT
-        currency: 'ETB',
-        interval: 'year',
-        description: 'Best value for other company',
-        user_limit: 10,
-        icon: FaUsers,
-        color: 'from-green-600 to-emerald-600',
-        badge: 'Best Value',
-        originalPrice: 12420,
-        discount: 'Save 2,070 ETB',
-        features: [
-            'All features in the monthly plan',
-            'Priority support',
-            'Early access to new features',
-            'Request content to add',
-            'Up to 10 users'
-        ],
-        popular: true,
-        account_type: 'company',
-        facility_type: 'other_company'
-    },
     // ── Hospital ──────────────────────────────────────────────────────────
     {
         id: 'hospital_monthly',
@@ -294,6 +248,52 @@ const SUBSCRIPTION_PLANS = [
         popular: true,
         account_type: 'company',
         facility_type: 'pharmacy_school'
+    },
+    // ── Other Company ─────────────────────────────────────────────────────
+    {
+        id: 'other_company_monthly',
+        name: 'Other Company Monthly',
+        price: 1035, // 900 + 15% VAT
+        currency: 'ETB',
+        interval: 'month',
+        description: 'For other company',
+        user_limit: 5,
+        icon: FaUsers,
+        color: 'from-green-500 to-green-600',
+        badge: 'Monthly',
+        features: [
+            'Medication information',
+            'Medication safety checks',
+            'Medication availability posts',
+            'Other features for practitioners',
+            'Up to 5 users'
+        ],
+        account_type: 'company',
+        facility_type: 'other_company'
+    },
+    {
+        id: 'other_company_yearly',
+        name: 'Other Company Yearly',
+        price: 10350, // 9000 + 15% VAT
+        currency: 'ETB',
+        interval: 'year',
+        description: 'Best value for other company',
+        user_limit: 10,
+        icon: FaUsers,
+        color: 'from-green-600 to-emerald-600',
+        badge: 'Best Value',
+        originalPrice: 12420,
+        discount: 'Save 2,070 ETB',
+        features: [
+            'All features in the monthly plan',
+            'Priority support',
+            'Early access to new features',
+            'Request content to add',
+            'Up to 10 users'
+        ],
+        popular: true,
+        account_type: 'company',
+        facility_type: 'other_company'
     }
 ];
 
