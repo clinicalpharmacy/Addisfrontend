@@ -133,7 +133,7 @@ const LandingPage = () => {
                                 {
                                     icon: <FaClipboardList className="text-green-500 text-3xl" />,
                                     title: 'Medication Review',
-                                    desc: 'Advanced tool providing information and consultation support for healthcare professionals and students in medication reviews.'
+                                    desc: 'Advanced tool providing information and consultation support in medication reviews.'
                                 },
                                 {
                                     icon: <FaBookOpen className="text-green-500 text-3xl" />,
