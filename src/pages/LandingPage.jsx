@@ -138,7 +138,7 @@ const LandingPage = () => {
                                 {
                                     icon: <FaBookOpen className="text-green-500 text-3xl" />,
                                     title: 'Education',
-                                    desc: 'Automated features that provide educational contents for healthcare professionals and students'
+                                    desc: 'Automated features that provide educational contents for pharmacy students & professionals'
                                 }
                             ].map((feature, idx) => (
                                 <div key={idx} className="p-8 bg-slate-50 rounded-3xl border border-slate-200 hover:border-green-300 hover:shadow-xl transition-all duration-300 group">
