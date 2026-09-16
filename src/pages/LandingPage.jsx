@@ -87,7 +87,7 @@ const LandingPage = () => {
                             Advancing Pharmacy Practice & Education in Ethiopia
                         </div>
                         <h1 className="text-5xl md:text-7xl font-black text-slate-900 tracking-tighter leading-[1.1] mb-6 max-w-4xl mx-auto">
-                            Your Trusted Partner in <span className="text-green-500">Digital Health</span>
+                            Your Partner in <span className="text-green-500">Digital Health</span>
                         </h1>
                         <p className="mt-6 text-base md:text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed mb-10 font-medium">
                             Addis Med is a digital health platform providing information and educational content in healthcare, with a primary focus on medicines and their safe and effective use. It is designed to support healthcare professionals, students, organizations, and the public with accessible, evidence-based health and medication information. 
