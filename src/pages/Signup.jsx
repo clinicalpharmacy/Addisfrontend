@@ -94,7 +94,7 @@ const SUBSCRIPTION_PLANS = [
         currency: 'ETB',
         interval: 'year',
         description: 'Best value for pharmacies and drug stores',
-        user_limit: 5,
+        user_limit: 10,
         icon: FaStore,
         color: 'from-green-600 to-green-600',
         badge: 'Best Value',
@@ -111,10 +111,10 @@ const SUBSCRIPTION_PLANS = [
         account_type: 'company',
         facility_type: 'pharmacy'
     },
-    // ── Clinic / Specialty Center ─────────────────────────────────────────
+    // ── Clinic / Specialty Center / Health Center ─────────────────────────────────────────
     {
         id: 'clinic_monthly',
-        name: 'Clinic / Specialty Center Monthly',
+        name: 'Clinic / Specialty Center / Health Center Monthly',
         price: 1035, // 900 + 15% VAT
         currency: 'ETB',
         interval: 'month',
@@ -135,12 +135,12 @@ const SUBSCRIPTION_PLANS = [
     },
     {
         id: 'clinic_yearly',
-        name: 'Clinic / Specialty Center Yearly',
+        name: 'Clinic / Specialty Center / Health Center Yearly',
         price: 10350, // 9000 + 15% VAT
         currency: 'ETB',
         interval: 'year',
         description: 'Best value for clinics and specialty centers',
-        user_limit: 5,
+        user_limit: 10,
         icon: FaBriefcase,
         color: 'from-teal-600 to-cyan-600',
         badge: 'Best Value',
@@ -157,14 +157,14 @@ const SUBSCRIPTION_PLANS = [
         account_type: 'company',
         facility_type: 'clinic'
     },
-    // ── Health Center ─────────────────────────────────────────────────────
+    // ── Other Health-related Company ─────────────────────────────────────────────────────
     {
-        id: 'health_center_monthly',
-        name: 'Health Center Monthly',
+        id: 'other_health_monthly',
+        name: 'Other Health-related Company Monthly',
         price: 1035, // 900 + 15% VAT
         currency: 'ETB',
         interval: 'month',
-        description: 'For health centers',
+        description: 'For other health-related company',
         user_limit: 5,
         icon: FaUsers,
         color: 'from-green-500 to-green-600',
@@ -177,16 +177,16 @@ const SUBSCRIPTION_PLANS = [
             'Up to 5 users'
         ],
         account_type: 'company',
-        facility_type: 'health_center'
+        facility_type: 'other_health'
     },
     {
-        id: 'health_center_yearly',
-        name: 'Health Center Yearly',
+        id: 'other_health_yearly',
+        name: 'Other Health-related Company Yearly',
         price: 10350, // 9000 + 15% VAT
         currency: 'ETB',
         interval: 'year',
-        description: 'Best value for health centers',
-        user_limit: 5,
+        description: 'Best value for other health-related company',
+        user_limit: 10,
         icon: FaUsers,
         color: 'from-green-600 to-emerald-600',
         badge: 'Best Value',
@@ -201,7 +201,7 @@ const SUBSCRIPTION_PLANS = [
         ],
         popular: true,
         account_type: 'company',
-        facility_type: 'health_center'
+        facility_type: 'other_health'
     },
     // ── Hospital ──────────────────────────────────────────────────────────
     {
@@ -211,7 +211,7 @@ const SUBSCRIPTION_PLANS = [
         currency: 'ETB',
         interval: 'month',
         description: 'For hospitals',
-        user_limit: 20,
+        user_limit: 10,
         icon: FaBuilding,
         color: 'from-green-500 to-green-600',
         badge: 'Monthly',
@@ -257,7 +257,7 @@ const SUBSCRIPTION_PLANS = [
         currency: 'ETB',
         interval: 'month',
         description: 'For pharmacy schools and academic institutions',
-        user_limit: 20,
+        user_limit: 10,
         icon: FaRocket,
         color: 'from-orange-500 to-orange-600',
         badge: 'Monthly',
@@ -2034,9 +2034,9 @@ const Signup = () => {
                                             >
                                                 <option value="pharmacy">Pharmacy/ Drug Store</option>
                                                 <option value="hospital">Hospital</option>
-                                                <option value="clinic">Clinic/ Speciality Center</option>
+                                                <option value="clinic">Clinic/ Speciality Center/ Health Center</option>
                                                 <option value="pharmaceutical">Pharmacy School</option>
-                                                <option value="health_center">Health Center</option>
+                                                <option value="other_health">Other Health-related Company</option>
                                             </select>
                                         </div>
                                     </div>
