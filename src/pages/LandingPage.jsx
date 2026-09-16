@@ -86,7 +86,7 @@ const LandingPage = () => {
                             <FaHeartbeat className="text-slate-600" />
                             Advancing Pharmacy Practice & Education in Ethiopia
                         </div>
-                        <h1 className="text-5xl md:text-7xl font-black text-slate-900 tracking-tighter leading-[1.1] mb-6 max-w-4xl mx-auto">
+                        <h1 className="text-5xl md:text-6xl font-black text-slate-900 tracking-tighter leading-[1.1] mb-6 max-w-4xl mx-auto">
                             Your Partner in <span className="text-green-500">Digital Health</span>
                         </h1>
                         <p className="mt-6 text-base md:text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed mb-10 font-medium">
