@@ -131,7 +131,7 @@ const LandingPage = () => {
                                     desc: 'Automated quick checks for pregnancy, elderly patients, and interactions.'
                                 },
                                 {
-                                    icon: (FaNotesMedical className="text-green-500 text-3xl" />,
+                                    icon: <FaNotesMedical className="text-green-500 text-3xl" />,
                                     title: 'Medication Review',
                                     desc: 'Advanced tool providing information and consultation support for healthcare professionals and students in medication reviews.'
                                 },
