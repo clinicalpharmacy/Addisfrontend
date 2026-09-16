@@ -901,7 +901,7 @@ const Signup = () => {
                                 <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-gradient-to-r from-green-600 to-green-600 rounded-2xl md:rounded-3xl mb-4 md:mb-6 shadow-lg">
                                     <FaRocket className="text-white text-2xl md:text-3xl" />
                                 </div>
-                                <h1 className="text-2xl md:text-4xl font-bold text-gray-800 mb-2 md:mb-4">Welcome to Addis Clinical Pharmacy</h1>
+                                <h1 className="text-2xl md:text-4xl font-bold text-gray-800 mb-2 md:mb-4">Welcome to Addis Med Digital Platform</h1>
                                 <p className="text-gray-600 text-sm md:text-lg">Please select your account type to get started</p>
                             </div>
 
