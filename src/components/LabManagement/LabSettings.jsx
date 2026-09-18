@@ -50,7 +50,7 @@ const LabSettings = ({ onUpdate }) => {
         'Coagulation test', 
         'Microbiology',
         'Serology & Immunology',
-        'Endocrinology,
+        'Endocrinology',
         'Tumor Markers',
         'Molecular & Genetic Testing',
         'Histopathology & Cytology'
