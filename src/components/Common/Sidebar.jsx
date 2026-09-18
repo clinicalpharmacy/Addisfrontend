@@ -137,13 +137,13 @@ const Sidebar = ({ onClose }) => {
             user?.company_type === 'pharmacy_school' ||
             user?.company_type === 'pharmaceutical');
 
-    // Show Minor Illnesses + Compounding to pharmacists & pharmacy companies
+    // Show Minor Illnesses + Compounding to admins, pharmacists & pharmacy companies
     const showPharmacyTools =
-        isIndividualPharmacist || isCompanyPharmacy;
+        isAdmin || isIndividualPharmacist || isCompanyPharmacy;
 
-    // Show Education to pharmacy students & pharmacy schools
+    // Show Education to admins, pharmacy students & pharmacy schools
     const showEducation =
-        isIndividualPharmacyStudent || isCompanyPharmacySchool;
+        isAdmin || isIndividualPharmacyStudent || isCompanyPharmacySchool;
 
     // Check near expiry for subscription (within 7 days)
     const diff = user?.subscription_end_date ? new Date(user.subscription_end_date) - new Date() : null;
@@ -300,7 +300,7 @@ const Sidebar = ({ onClose }) => {
                             </NavLink>
                         </li>
 
-                        {/* Minor Illnesses - Only for pharmacists & pharmacy companies */}
+                        {/* Minor Illnesses - Admins, pharmacists & pharmacy companies */}
                         {showPharmacyTools && (
                             <li className="mb-2">
                                 <NavLink
@@ -320,7 +320,7 @@ const Sidebar = ({ onClose }) => {
                             </li>
                         )}
 
-                        {/* Compounding - Only for pharmacists & pharmacy companies */}
+                        {/* Compounding - Admins, pharmacists & pharmacy companies */}
                         {showPharmacyTools && (
                             <li className="mb-2">
                                 <NavLink
@@ -359,7 +359,7 @@ const Sidebar = ({ onClose }) => {
                             </li>
                         )}
 
-                        {/* Education - Only for pharmacy students & pharmacy schools */}
+                        {/* Education - Admins, pharmacy students & pharmacy schools */}
                         {showEducation && (
                             <li className="mb-2">
                                 <NavLink
