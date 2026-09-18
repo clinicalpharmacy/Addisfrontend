@@ -129,7 +129,7 @@ const LandingPage = () => {
                                 },
                                 {
                                     icon: <FaShieldAlt className="text-green-500 text-3xl" />,
-                                    title: 'Safety Screening',
+                                    title: 'Quick Screening',
                                     desc: 'Automated quick checks for pregnancy, elderly patients, and interactions.'
                                 },
                                 {
