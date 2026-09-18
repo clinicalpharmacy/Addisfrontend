@@ -244,7 +244,7 @@ const Sidebar = ({ onClose }) => {
                             </NavLink>
                         </li>
 
-                        {/* Quick Safety Check */}
+                        {/* Quick Check */}
                         <li className="mb-2">
                             <NavLink
                                 to={isSubscribed ? "/quick-safety" : "/subscription/plans"}
@@ -256,7 +256,7 @@ const Sidebar = ({ onClose }) => {
                             >
                                 <div className="flex items-center gap-2.5 w-full">
                                     <FaShieldAlt className="text-xl" />
-                                    <span className="font-bold text-base">Quick Safety Check</span>
+                                    <span className="font-bold text-base">Quick Check</span>
                                     {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
                                 </div>
                             </NavLink>
