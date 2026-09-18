@@ -25,6 +25,8 @@ import LabSettingsPage from './pages/LabSettingsPage';
 import CompanyPerformanceReport from './pages/CompanyPerformanceReport';
 import AdminUsefulLinks from './pages/AdminUsefulLinks';
 import UsefulLinks from './pages/UsefulLinks';
+import Vacancies from './pages/Vacancies';
+import AdminVacancies from './pages/AdminVacancies';
 import MedicationAvailability from './pages/MedicationAvailability';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
@@ -896,6 +898,10 @@ function App() {
 
                 {/* Public Routes */}
                 <Route
+                    path="/vacancies"
+                    element={<Vacancies />}
+                />
+                <Route
                     path="/login"
                     element={
                         <PublicRoute>
@@ -1040,6 +1046,15 @@ function App() {
                     element={
                         <ProtectedRoute adminOnly={true}>
                             <AdminUsefulLinks />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/admin/vacancies"
+                    element={
+                        <ProtectedRoute adminOnly={true}>
+                            <AdminVacancies />
                         </ProtectedRoute>
                     }
                 />

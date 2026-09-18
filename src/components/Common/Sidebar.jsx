@@ -33,7 +33,8 @@ import {
     FaLeaf,
     FaMortarPestle,
     FaGraduationCap,
-    FaShieldAlt
+    FaShieldAlt,
+    FaBriefcase
 } from 'react-icons/fa';
 
 // Force rebuild - ensuring all icons are properly bundled
@@ -491,6 +492,23 @@ const Sidebar = ({ onClose }) => {
                                 >
                                     <FaLink className="text-xl" />
                                     <span className="font-medium text-base">Manage Links</span>
+                                </NavLink>
+                            </li>
+
+                            {/* Admin Vacancies Management Link */}
+                            <li className="mb-2">
+                                <NavLink
+                                    to="/admin/vacancies"
+                                    onClick={onClose}
+                                    className={({ isActive }) =>
+                                        `flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isActive
+                                            ? 'bg-red-50 text-red-600 border-l-4 border-red-600 shadow-sm'
+                                            : 'text-gray-600 hover:bg-gray-50 hover:text-red-500 hover:shadow-sm'
+                                        }`
+                                    }
+                                >
+                                    <FaBriefcase className="text-xl" />
+                                    <span className="font-medium text-base">Manage Vacancies</span>
                                 </NavLink>
                             </li>
                         </ul>
