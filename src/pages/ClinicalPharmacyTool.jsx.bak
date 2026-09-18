@@ -1,19 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     FaUser, FaWeight, FaHeartbeat, FaVial, FaNotesMedical,
     FaExclamationCircle, FaPills, FaArrowLeft, FaPlay, FaPlus, FaTrash,
     FaUserShield, FaRobot, FaMoneyBillWave, FaFileMedical, FaChartLine,
-    FaCopy, FaTimes
+    FaChevronDown, FaChevronRight, FaSpinner, FaExclamationTriangle
 } from 'react-icons/fa';
+import supabase from '../utils/supabase';
 import CDSSDisplay from '../components/CDSS/CDSSDisplay';
 import DRNAssessment from '../components/Patient/DRNAssessment';
 import PhAssistPlan from '../components/Patient/PhAssistPlan';
 import PatientOutcome from '../components/Patient/PatientOutcome';
 import CostSection from '../components/Patient/CostSection';
 
-const CATEGORIES = [
-    { id: 'demography', label: 'Demography (Age & Gender)', icon: FaUser },
+// Main categories in the correct order
+const MAIN_CATEGORIES = [
+    { id: 'demography', label: 'Demography', icon: FaUser },
     { id: 'anthropometry', label: 'Anthropometry', icon: FaWeight },
     { id: 'vitals', label: 'Vitals', icon: FaHeartbeat },
     { id: 'labs', label: 'Labs', icon: FaVial },
@@ -22,13 +24,83 @@ const CATEGORIES = [
     { id: 'medications', label: 'Medications', icon: FaPills }
 ];
 
+/**
+ * Generate a stable key from a lab test name.
+ * e.g. "Serum Creatinine" -> "serum_creatinine"
+ *      "eGFR"             -> "egfr"
+ *      "Total Bilirubin"  -> "total_bilirubin"
+ */
+const slugifyLabName = (name) =>
+    String(name || '')
+        .toLowerCase()
+        .trim()
+        .replace(/ /g, '_')
+        .replace(/[^a-z0-9_]/g, '');
+
+/**
+ * Map specific display names to CDSS-expected keys.
+ * If LabSettings adds a `cdss_key` column later, prefer that.
+ */
+const LAB_KEY_ALIASES = {
+    'creatinine': 'serum_creatinine',
+    'serum_creatinine': 'serum_creatinine',
+    'estimated_gfr': 'egfr',
+    'gfr': 'egfr',
+    'egfr': 'egfr',
+    'platelets': 'platelet_count',
+    'platelet_count': 'platelet_count',
+    'platelet': 'platelet_count',
+    'wbc': 'wbc_count',
+    'wbc_count': 'wbc_count',
+    'hemoglobin': 'hemoglobin',
+    'haemoglobin': 'hemoglobin',
+    'hgb': 'hemoglobin'
+};
+
+const getLabKey = (test) => {
+    if (test.cdss_key) return test.cdss_key;
+    const slug = slugifyLabName(test.name);
+    return LAB_KEY_ALIASES[slug] || slug;
+};
+
 const ClinicalPharmacyTool = () => {
     const navigate = useNavigate();
     const [selectedCategories, setSelectedCategories] = useState([]);
+    const [selectedLabSubCategories, setSelectedLabSubCategories] = useState([]);
     const [showAnalysis, setShowAnalysis] = useState(false);
     const [activeTab, setActiveTab] = useState('analysis');
-    const [showMedicationInput, setShowMedicationInput] = useState(false);
-    const [newMedication, setNewMedication] = useState({ drug_name: '', dose: '', frequency: '', route: '' });
+    const [isCategorySelectorOpen, setIsCategorySelectorOpen] = useState(true);
+
+    // Dynamic lab categories fetched from Supabase
+    const [labSubCategories, setLabSubCategories] = useState([]);
+    const [labsLoading, setLabsLoading] = useState(false);
+    const [labsError, setLabsError] = useState('');
+
+    // State for individual section collapse/expand
+    const [expandedSections, setExpandedSections] = useState({
+        demography: true,
+        anthropometry: true,
+        vitals: true,
+        labs: true,
+        diagnosis: true,
+        special_conditions: true,
+        medications: true
+    });
+
+    // Get user role from localStorage (same logic as sidebar)
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const isAdmin = user?.role === 'admin' || user?.role?.includes('admin');
+    const isPharmacist = user?.role === 'pharmacist';
+    const isPharmacyStudent = user?.role === 'pharmacy_student';
+    const isIndividual = !user?.role?.includes('admin') && !user?.company_id;
+    const isCompanyUser =
+        user?.role === 'company_admin' ||
+        user?.role === 'company_user' ||
+        user?.account_type === 'company_user';
+    const isPharmacistOrStudent =
+        (isIndividual && (isPharmacist || isPharmacyStudent)) || isCompanyUser;
+
+    const allCategories = MAIN_CATEGORIES;
 
     // Tab Data States for PDF
     const [cdssData, setCdssData] = useState([]);
@@ -39,68 +111,214 @@ const ClinicalPharmacyTool = () => {
 
     // Form State
     const [formData, setFormData] = useState({
-        // Demography
         age: '',
         gender: '',
-        // Anthropometry
         weight: '',
         height: '',
-        bsa: '', // Changed from bmi to bsa
-        // Vitals
+        bsa: '',
         blood_pressure: '',
         heart_rate: '',
         respiratory_rate: '',
         temperature: '',
         oxygen_saturation: '',
-        // Labs
-        creatinine: '',
-        alt: '',
-        ast: '',
-        potassium: '',
-        sodium: '',
-        hemoglobin: '',
-        wbc_count: '',
-        platelet_count: '',
-        // Diagnosis
         diagnosis: '',
-        // Special Conditions
         kidney_failure: false,
         liver_failure: false,
         is_pregnant: false,
         is_lactating: false,
-        // Medications
-        medications: []
+        medications: [],
+        labs: {}
     });
 
+    // ─────────────────────────────────────────────────────────────────────
+    // Fetch lab tests from Supabase and group them by category
+    // ─────────────────────────────────────────────────────────────────────
+    useEffect(() => {
+        let cancelled = false;
+
+        const fetchLabTests = async () => {
+            setLabsLoading(true);
+            setLabsError('');
+            try {
+                const { data, error } = await supabase
+                    .from('lab_tests')
+                    .select('*')
+                    .eq('is_active', true)
+                    .order('category', { ascending: true })
+                    .order('name', { ascending: true });
+
+                if (error) throw error;
+                if (cancelled) return;
+
+                const grouped = (data || []).reduce((acc, test) => {
+                    const catLabel = test.category || 'General';
+                    if (!acc[catLabel]) {
+                        acc[catLabel] = {
+                            id: slugifyLabName(catLabel),
+                            label: catLabel,
+                            icon: FaVial,
+                            tests: []
+                        };
+                    }
+                    acc[catLabel].tests.push({
+                        id: test.id,
+                        name: test.name,
+                        unit: test.unit || '',
+                        range_male: test.range_male || '',
+                        range_female: test.range_female || '',
+                        description: test.description || '',
+                        cdss_key: test.cdss_key || null,
+                        key: getLabKey(test)
+                    });
+                    return acc;
+                }, {});
+
+                setLabSubCategories(Object.values(grouped));
+            } catch (err) {
+                console.error('Error fetching lab tests:', err);
+                if (!cancelled) setLabsError('Failed to load lab tests. Please try again.');
+            } finally {
+                if (!cancelled) setLabsLoading(false);
+            }
+        };
+
+        fetchLabTests();
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    // Toggle section expansion
+    const toggleSection = (sectionId) => {
+        setExpandedSections((prev) => ({
+            ...prev,
+            [sectionId]: !prev[sectionId]
+        }));
+    };
+
     // Calculate BSA using Du Bois method: BSA = 0.007184 × W^0.425 × H^0.725
-    // Weight in kg, Height in cm
     const calculateBSA = (weight, height) => {
         if (!weight || !height || weight <= 0 || height <= 0) return '';
-        const bsa = 0.007184 * Math.pow(weight, 0.425) * Math.pow(height, 0.725);
+        const w = parseFloat(weight);
+        const h = parseFloat(height);
+        const bsa = 0.007184 * Math.pow(w, 0.425) * Math.pow(h, 0.725);
         return bsa.toFixed(2);
     };
 
-    // Auto-calculate BSA when weight or height changes
+    // Calculate eGFR using 2021 CKD-EPI creatinine formula
+    const calculateEGFR = (creatinine, age, gender) => {
+        if (!creatinine || !age || !gender || creatinine <= 0 || age <= 0) return '';
+
+        const scr = parseFloat(creatinine);
+        const ageNum = parseFloat(age);
+        const isFemale = gender.toLowerCase() === 'female';
+
+        const kappa = isFemale ? 0.7 : 0.9;
+        const alpha = isFemale ? -0.241 : -0.302;
+        const sexFactor = isFemale ? 1.012 : 1.0;
+
+        const minRatio = Math.min(scr / kappa, 1);
+        const maxRatio = Math.max(scr / kappa, 1);
+
+        const egfr =
+            142 *
+            Math.pow(minRatio, alpha) *
+            Math.pow(maxRatio, -1.2) *
+            Math.pow(0.9938, ageNum) *
+            sexFactor;
+
+        return Math.round(egfr).toString();
+    };
+
+    // Auto-calculate BSA
     useEffect(() => {
         if (formData.weight && formData.height) {
-            const calculatedBSA = calculateBSA(
-                parseFloat(formData.weight),
-                parseFloat(formData.height)
-            );
-            if (calculatedBSA) {
-                setFormData(prev => ({
+            const weight = parseFloat(formData.weight);
+            const height = parseFloat(formData.height);
+
+            if (weight > 0 && height > 0) {
+                const calculatedBSA = calculateBSA(weight, height);
+                if (formData.bsa !== calculatedBSA) {
+                    setFormData((prev) => ({ ...prev, bsa: calculatedBSA }));
+                }
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [formData.weight, formData.height]);
+
+    // Auto-calculate eGFR when creatinine, age, or gender changes
+    useEffect(() => {
+        const creatinine = formData.labs?.serum_creatinine;
+        const age = formData.age;
+        const gender = formData.gender;
+
+        const hasRequiredFields =
+            creatinine &&
+            age &&
+            gender &&
+            parseFloat(creatinine) > 0 &&
+            parseFloat(age) > 0;
+
+        if (hasRequiredFields) {
+            const calculatedEGFR = calculateEGFR(creatinine, age, gender);
+            if (formData.labs?.egfr !== calculatedEGFR) {
+                setFormData((prev) => ({
                     ...prev,
-                    bsa: calculatedBSA
+                    labs: { ...prev.labs, egfr: calculatedEGFR }
+                }));
+            }
+        } else {
+            if (formData.labs?.egfr !== '') {
+                setFormData((prev) => ({
+                    ...prev,
+                    labs: { ...prev.labs, egfr: '' }
                 }));
             }
         }
-    }, [formData.weight, formData.height]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [formData.labs?.serum_creatinine, formData.age, formData.gender]);
 
     const handleCategoryToggle = (categoryId) => {
         if (selectedCategories.includes(categoryId)) {
-            setSelectedCategories(selectedCategories.filter(id => id !== categoryId));
+            setSelectedCategories(selectedCategories.filter((id) => id !== categoryId));
+            if (categoryId === 'labs') {
+                setSelectedLabSubCategories([]);
+            }
         } else {
             setSelectedCategories([...selectedCategories, categoryId]);
+            if (categoryId === 'medications' && formData.medications.length === 0) {
+                setFormData((prev) => ({
+                    ...prev,
+                    medications: [
+                        {
+                            drug_name: '',
+                            brand_name: '',
+                            indication: '',
+                            dose: '',
+                            strength: '',
+                            unit: 'mg',
+                            dosage_form: 'Tablet',
+                            route: '',
+                            frequency: '',
+                            duration: '',
+                            start_date: '',
+                            stop_date: '',
+                            status: 'Active'
+                        }
+                    ]
+                }));
+            }
+        }
+    };
+
+    const handleLabSubCategoryToggle = (subCategoryId) => {
+        if (selectedLabSubCategories.includes(subCategoryId)) {
+            setSelectedLabSubCategories(
+                selectedLabSubCategories.filter((id) => id !== subCategoryId)
+            );
+        } else {
+            setSelectedLabSubCategories([...selectedLabSubCategories, subCategoryId]);
         }
     };
 
@@ -112,32 +330,46 @@ const ClinicalPharmacyTool = () => {
         });
     };
 
+    const handleLabChange = (e) => {
+        const { name, value } = e.target;
+        setFormData({
+            ...formData,
+            labs: {
+                ...formData.labs,
+                [name]: value
+            }
+        });
+    };
+
     // Medication handlers
-    const handleAddMedicationClick = () => {
-        setShowMedicationInput(true);
-        setNewMedication({ drug_name: '', dose: '', frequency: '', route: '' });
+    const addMedication = () => {
+        setFormData({
+            ...formData,
+            medications: [
+                ...formData.medications,
+                {
+                    drug_name: '',
+                    brand_name: '',
+                    indication: '',
+                    dose: '',
+                    strength: '',
+                    unit: '',
+                    dosage_form: 'Tablet',
+                    route: '',
+                    frequency: '',
+                    duration: '',
+                    start_date: '',
+                    stop_date: '',
+                    status: 'Active'
+                }
+            ]
+        });
     };
 
-    const handleNewMedicationChange = (field, value) => {
-        setNewMedication({ ...newMedication, [field]: value });
-    };
-
-    const handleSaveMedication = () => {
-        if (newMedication.drug_name.trim()) {
-            setFormData({
-                ...formData,
-                medications: [...formData.medications, { ...newMedication }]
-            });
-            setShowMedicationInput(false);
-            setNewMedication({ drug_name: '', dose: '', frequency: '', route: '' });
-        } else {
-            alert('Please enter at least the drug name');
-        }
-    };
-
-    const handleCancelMedication = () => {
-        setShowMedicationInput(false);
-        setNewMedication({ drug_name: '', dose: '', frequency: '', route: '' });
+    const updateMedication = (index, field, value) => {
+        const newMeds = [...formData.medications];
+        newMeds[index][field] = value;
+        setFormData({ ...formData, medications: newMeds });
     };
 
     const removeMedication = (index) => {
@@ -145,56 +377,51 @@ const ClinicalPharmacyTool = () => {
         setFormData({ ...formData, medications: newMeds });
     };
 
-    const updateMedication = (index, field, value) => {
-        const updatedMeds = [...formData.medications];
-        updatedMeds[index] = { ...updatedMeds[index], [field]: value };
-        setFormData({ ...formData, medications: updatedMeds });
-    };
-
     const handleRunAnalysis = () => {
         setShowAnalysis(true);
+        setActiveTab('analysis');
     };
 
-    const sessionId = React.useMemo(() => 'TEMP-' + Math.floor(Math.random() * 10000), []);
+    const sessionId = useMemo(
+        () => 'TEMP-' + Math.floor(Math.random() * 10000),
+        []
+    );
 
     // Construct patientData object for CDSSDisplay
-    const constructedPatientData = React.useMemo(() => ({
-        id: sessionId, // Stable ID for the session
-        full_name: 'Individual Review',
-        age: formData.age,
-        gender: formData.gender,
-        is_pregnant: formData.is_pregnant,
-        is_lactating: formData.is_lactating,
-        vitals: {
-            weight: formData.weight,
-            height: formData.height,
-            bsa: formData.bsa, // Changed from bmi to bsa
-            blood_pressure: formData.blood_pressure,
-            heart_rate: formData.heart_rate,
-            respiratory_rate: formData.respiratory_rate,
-            temperature: formData.temperature,
-            oxygen_saturation: formData.oxygen_saturation,
-        },
-        labs: {
-            creatinine: formData.creatinine,
-            alt: formData.alt,
-            ast: formData.ast,
-            potassium: formData.potassium,
-            sodium: formData.sodium,
-            hemoglobin: formData.hemoglobin,
-            wbc_count: formData.wbc_count,
-            platelet_count: formData.platelet_count,
-        },
-        medication_history: formData.medications,
-        allergies: [], // Add if needed later
-        // Note: CDSS rule engine checks for specific terms in diagnosis or fields for kidney/liver failure.
-        // We ensure these terms exist in the diagnosis if checked manually.
-        diagnosis: [
-            formData.diagnosis,
-            formData.kidney_failure ? 'Kidney Failure' : '',
-            formData.liver_failure ? 'Liver Failure' : ''
-        ].filter(Boolean).join(', ') || 'None provided'
-    }), [formData, sessionId]);
+    const constructedPatientData = useMemo(
+        () => ({
+            id: sessionId,
+            full_name: 'Individual Review',
+            age: formData.age,
+            gender: formData.gender,
+            is_pregnant: formData.is_pregnant,
+            is_lactating: formData.is_lactating,
+            vitals: {
+                weight: formData.weight,
+                height: formData.height,
+                bsa: formData.bsa,
+                blood_pressure: formData.blood_pressure,
+                heart_rate: formData.heart_rate,
+                respiratory_rate: formData.respiratory_rate,
+                temperature: formData.temperature,
+                oxygen_saturation: formData.oxygen_saturation
+            },
+            labs: {
+                ...formData.labs
+            },
+            medication_history: formData.medications,
+            allergies: [],
+            diagnosis:
+                [
+                    formData.diagnosis,
+                    formData.kidney_failure ? 'Kidney Failure' : '',
+                    formData.liver_failure ? 'Liver Failure' : ''
+                ]
+                    .filter(Boolean)
+                    .join(', ') || 'None provided'
+        }),
+        [formData, sessionId]
+    );
 
     const generateFullPDF = async () => {
         try {
@@ -203,31 +430,37 @@ const ClinicalPharmacyTool = () => {
 
             const doc = jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
 
-            // Header
             doc.setFillColor(37, 99, 235);
             doc.rect(0, 0, 210, 40, 'F');
             doc.setTextColor(255, 255, 255);
             doc.setFontSize(22);
             doc.setFont('helvetica', 'bold');
-            doc.text('COMPREHENSIVE CLINICAL REPORT', 15, 20);
+            doc.text('MEDICATION REVIEW REPORT', 15, 20);
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
             doc.text(`Generated on: ${new Date().toLocaleString()}`, 15, 30);
 
             let currentY = 50;
 
-            // --- 1. Patient Summary ---
             doc.setTextColor(31, 41, 55);
             doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
-            doc.text('Patient Information', 15, currentY);
+            doc.text('Case Reviewed', 15, currentY);
             doc.line(15, currentY + 2, 195, currentY + 2);
 
             autoTable(doc, {
                 startY: currentY + 5,
                 body: [
-                    ['Age & Gender:', `${formData.age || 'N/A'} - ${formData.gender || 'N/A'}`],
-                    ['Vitals:', `Weight: ${formData.weight || '-'} kg, BSA: ${formData.bsa || '-'} m², BP: ${formData.blood_pressure || '-'}`],
+                    [
+                        'Age & Gender:',
+                        `${formData.age || 'N/A'} - ${formData.gender || 'N/A'}`
+                    ],
+                    [
+                        'Vitals:',
+                        `Weight: ${formData.weight || '-'} kg, BSA: ${
+                            formData.bsa || '-'
+                        } m², BP: ${formData.blood_pressure || '-'}`
+                    ],
                     ['Diagnosis:', constructedPatientData.diagnosis]
                 ],
                 theme: 'plain',
@@ -235,20 +468,28 @@ const ClinicalPharmacyTool = () => {
             });
             currentY = doc.lastAutoTable.finalY + 10;
 
-            // --- CDSS Clinical Analysis ---
-            if (currentY > 250) { doc.addPage(); currentY = 20; }
+            // CDSS Findings
+            if (currentY > 250) {
+                doc.addPage();
+                currentY = 20;
+            }
             doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
-            doc.text('CDSS Clinical Analysis Findings', 15, currentY);
-            
+            doc.text('Medication Review Findings', 15, currentY);
+
             if (cdssData && cdssData.length > 0) {
                 const alertRows = cdssData.map((alert, index) => {
-                    const finding = localStorage.getItem('userRole') === 'healthcare_client' || localStorage.getItem('pharmacare_userRole') === 'healthcare_client'
-                        ? (alert.client_message || alert.message)
-                        : (alert.professional_message || alert.message);
-                    const recommendation = (localStorage.getItem('userRole') === 'healthcare_client' || localStorage.getItem('pharmacare_userRole') === 'healthcare_client'
-                        ? (alert.client_recommendation || alert.details)
-                        : (alert.professional_recommendation || alert.details)) || 'Review clinical guidelines';
+                    const isClient =
+                        localStorage.getItem('userRole') === 'healthcare_client' ||
+                        localStorage.getItem('pharmacare_userRole') === 'healthcare_client';
+                    const finding = isClient
+                        ? alert.client_message || alert.message
+                        : alert.professional_message || alert.message;
+                    const recommendation =
+                        (isClient
+                            ? alert.client_recommendation || alert.details
+                            : alert.professional_recommendation || alert.details) ||
+                        'Review clinical guidelines';
                     return [index + 1, finding, recommendation];
                 });
 
@@ -269,91 +510,131 @@ const ClinicalPharmacyTool = () => {
             } else {
                 doc.setFontSize(10);
                 doc.setFont('helvetica', 'normal');
-                doc.setTextColor(21, 128, 61); // Green color
-                doc.text('No drug-related problems detected based on current analysis.', 15, currentY + 7);
+                doc.setTextColor(21, 128, 61);
+                doc.text(
+                    'No drug-related problems detected based on current analysis.',
+                    15,
+                    currentY + 7
+                );
                 currentY += 15;
             }
 
-            // --- 2. Current Medications ---
+            // Current Medications
             if (formData.medications.length > 0) {
-                if (currentY > 250) { doc.addPage(); currentY = 20; }
+                if (currentY > 250) {
+                    doc.addPage();
+                    currentY = 20;
+                }
                 doc.setFontSize(14);
                 doc.setFont('helvetica', 'bold');
+                doc.setTextColor(31, 41, 55);
                 doc.text('Current Medications', 15, currentY);
                 autoTable(doc, {
                     startY: currentY + 5,
                     head: [['#', 'Drug Name', 'Dose']],
-                    body: formData.medications.map((m, i) => [i + 1, m.drug_name, m.dose]),
+                    body: formData.medications.map((m, i) => [
+                        i + 1,
+                        m.drug_name,
+                        m.dose
+                    ]),
                     theme: 'grid',
                     headStyles: { fillColor: [107, 114, 128] }
                 });
                 currentY = doc.lastAutoTable.finalY + 10;
             }
 
-            // --- 3. DRN Assessment ---
-            if (drnData && drnData.length > 0) {
-                if (currentY > 250) { doc.addPage(); currentY = 20; }
+            // DRN Assessment
+            if (isPharmacistOrStudent && drnData && drnData.length > 0) {
+                if (currentY > 250) {
+                    doc.addPage();
+                    currentY = 20;
+                }
                 doc.setFontSize(14);
                 doc.setFont('helvetica', 'bold');
                 doc.text('DRN Assessment', 15, currentY);
                 autoTable(doc, {
                     startY: currentY + 5,
                     head: [['Category', 'DTP Type', 'Severity', 'Status']],
-                    body: drnData.map(d => [d.category, d.dtp_type, d.severity, d.status]),
+                    body: drnData.map((d) => [
+                        d.category,
+                        d.dtp_type,
+                        d.severity,
+                        d.status
+                    ]),
                     theme: 'grid',
                     headStyles: { fillColor: [37, 99, 235] }
                 });
                 currentY = doc.lastAutoTable.finalY + 10;
             }
 
-            // --- 4. Pharmacy Plan ---
-            if (planData && planData.length > 0) {
-                if (currentY > 250) { doc.addPage(); currentY = 20; }
+            // Pharmacy Plan
+            if (isPharmacistOrStudent && planData && planData.length > 0) {
+                if (currentY > 250) {
+                    doc.addPage();
+                    currentY = 20;
+                }
                 doc.setFontSize(14);
                 doc.setFont('helvetica', 'bold');
                 doc.text('Pharmacy Plan & Assessment', 15, currentY);
                 autoTable(doc, {
                     startY: currentY + 5,
                     head: [['Goals/Assessment', 'Plan Notes', 'Follow Up']],
-                    body: planData.map(p => [p.goals || '-', p.notes || '-', p.follow_up || 'None']),
+                    body: planData.map((p) => [
+                        p.goals || '-',
+                        p.notes || '-',
+                        p.follow_up || 'None'
+                    ]),
                     theme: 'grid',
                     headStyles: { fillColor: [16, 185, 129] }
                 });
                 currentY = doc.lastAutoTable.finalY + 10;
             }
 
-            // --- 5. Outcome ---
-            if (outcomeData && outcomeData.length > 0) {
-                if (currentY > 250) { doc.addPage(); currentY = 20; }
+            // Outcome
+            if (isPharmacistOrStudent && outcomeData && outcomeData.length > 0) {
+                if (currentY > 250) {
+                    doc.addPage();
+                    currentY = 20;
+                }
                 doc.setFontSize(14);
                 doc.setFont('helvetica', 'bold');
                 doc.text('Patient Outcome', 15, currentY);
                 autoTable(doc, {
                     startY: currentY + 5,
                     head: [['Status', 'Notes']],
-                    body: outcomeData.map(o => [o.outcome_status || '-', o.notes || '-']),
+                    body: outcomeData.map((o) => [
+                        o.outcome_status || '-',
+                        o.notes || '-'
+                    ]),
                     theme: 'grid',
                     headStyles: { fillColor: [245, 158, 11] }
                 });
                 currentY = doc.lastAutoTable.finalY + 10;
             }
 
-            // --- 6. Cost ---
-            if (costData && costData.length > 0) {
-                if (currentY > 250) { doc.addPage(); currentY = 20; }
+            // Cost
+            if (isPharmacistOrStudent && costData && costData.length > 0) {
+                if (currentY > 250) {
+                    doc.addPage();
+                    currentY = 20;
+                }
                 doc.setFontSize(14);
                 doc.setFont('helvetica', 'bold');
                 doc.text('Cost Analysis', 15, currentY);
                 autoTable(doc, {
                     startY: currentY + 5,
                     head: [['Type', 'Category', 'Amount', 'Description']],
-                    body: costData.map(c => [c.type, c.category, `${c.amount} ETB`, c.description || '-']),
+                    body: costData.map((c) => [
+                        c.type,
+                        c.category,
+                        `${c.amount} ETB`,
+                        c.description || '-'
+                    ]),
                     theme: 'grid',
                     headStyles: { fillColor: [239, 68, 68] }
                 });
             }
 
-            // --- DISCLAIMER & PAGE NUMBERS ---
             const pageCount = doc.internal.getNumberOfPages();
             for (let i = 1; i <= pageCount; i++) {
                 doc.setPage(i);
@@ -361,18 +642,24 @@ const ClinicalPharmacyTool = () => {
                 doc.setTextColor(156, 163, 175);
                 doc.text(
                     'DISCLAIMER: This clinical analysis report only gives information & it cannot replace the decision of a health professional.',
-                    15, 285
+                    15,
+                    285
                 );
                 doc.text(`Page ${i} of ${pageCount}`, 180, 285);
             }
 
-            doc.save(`Comprehensive_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+            doc.save(
+                `Comprehensive_Report_${new Date().toISOString().split('T')[0]}.pdf`
+            );
         } catch (error) {
             console.error('PDF Generation Error:', error);
             alert('PDF generation failed. Please check console.');
         }
     };
 
+    // ─────────────────────────────────────────────────────────────────────
+    // ANALYSIS RESULTS VIEW
+    // ─────────────────────────────────────────────────────────────────────
     if (showAnalysis) {
         return (
             <div className="min-h-screen bg-gray-50 p-4 md:p-6 animate-in fade-in duration-500">
@@ -385,13 +672,15 @@ const ClinicalPharmacyTool = () => {
                             >
                                 <FaArrowLeft />
                             </button>
-                            <h1 className="text-2xl font-bold text-gray-800">Clinical Analysis Results</h1>
+                            <h1 className="text-2xl font-bold text-gray-800">
+                                Clinical Analysis Results
+                            </h1>
                         </div>
                         <button
                             onClick={generateFullPDF}
                             className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-all text-sm"
                         >
-                            <FaNotesMedical /> Download Full Report
+                            <FaNotesMedical /> Download Report
                         </button>
                     </div>
 
@@ -399,95 +688,119 @@ const ClinicalPharmacyTool = () => {
                         <button
                             onClick={() => setActiveTab('analysis')}
                             className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
-                                activeTab === 'analysis' 
-                                ? 'bg-blue-600 text-white shadow-md font-medium' 
-                                : 'text-gray-600 hover:bg-gray-50'
+                                activeTab === 'analysis'
+                                    ? 'bg-blue-600 text-white shadow-md font-medium'
+                                    : 'text-gray-600 hover:bg-gray-50'
                             }`}
                         >
-                            <FaUserShield /> Clinical Case Review
+                            <FaUserShield /> Medication Review
                         </button>
-                        <button
-                            onClick={() => setActiveTab('drn')}
-                            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
-                                activeTab === 'drn' 
-                                ? 'bg-blue-600 text-white shadow-md font-medium' 
-                                : 'text-gray-600 hover:bg-gray-50'
-                            }`}
-                        >
-                            <FaRobot /> DRN Assessment
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('plan')}
-                            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
-                                activeTab === 'plan' 
-                                ? 'bg-blue-600 text-white shadow-md font-medium' 
-                                : 'text-gray-600 hover:bg-gray-50'
-                            }`}
-                        >
-                            <FaFileMedical /> Ph-Asst & Plan
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('outcome')}
-                            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
-                                activeTab === 'outcome' 
-                                ? 'bg-blue-600 text-white shadow-md font-medium' 
-                                : 'text-gray-600 hover:bg-gray-50'
-                            }`}
-                        >
-                            <FaChartLine /> Outcome
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('cost')}
-                            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
-                                activeTab === 'cost' 
-                                ? 'bg-blue-600 text-white shadow-md font-medium' 
-                                : 'text-gray-600 hover:bg-gray-50'
-                            }`}
-                        >
-                            <FaMoneyBillWave /> Cost
-                        </button>
+
+                        {(isPharmacistOrStudent || isAdmin) && (
+                            <button
+                                onClick={() => setActiveTab('drn')}
+                                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
+                                    activeTab === 'drn'
+                                        ? 'bg-blue-600 text-white shadow-md font-medium'
+                                        : 'text-gray-600 hover:bg-gray-50'
+                                }`}
+                            >
+                                <FaRobot /> DRN Assessment
+                            </button>
+                        )}
+
+                        {(isPharmacistOrStudent || isAdmin) && (
+                            <button
+                                onClick={() => setActiveTab('plan')}
+                                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
+                                    activeTab === 'plan'
+                                        ? 'bg-blue-600 text-white shadow-md font-medium'
+                                        : 'text-gray-600 hover:bg-gray-50'
+                                }`}
+                            >
+                                <FaFileMedical /> Ph-Asst & Plan
+                            </button>
+                        )}
+
+                        {(isPharmacistOrStudent || isAdmin) && (
+                            <button
+                                onClick={() => setActiveTab('outcome')}
+                                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
+                                    activeTab === 'outcome'
+                                        ? 'bg-blue-600 text-white shadow-md font-medium'
+                                        : 'text-gray-600 hover:bg-gray-50'
+                                }`}
+                            >
+                                <FaChartLine /> Outcome
+                            </button>
+                        )}
+
+                        {(isPharmacistOrStudent || isAdmin) && (
+                            <button
+                                onClick={() => setActiveTab('cost')}
+                                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all ${
+                                    activeTab === 'cost'
+                                        ? 'bg-blue-600 text-white shadow-md font-medium'
+                                        : 'text-gray-600 hover:bg-gray-50'
+                                }`}
+                            >
+                                <FaMoneyBillWave /> Cost
+                            </button>
+                        )}
                     </div>
 
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                        {activeTab === 'analysis' && (
+                        <div className={activeTab === 'analysis' ? 'block' : 'hidden'}>
                             <CDSSDisplay
                                 patientData={constructedPatientData}
                                 onBack={() => setShowAnalysis(false)}
                                 onDataChange={(data) => setCdssData(data)}
                             />
+                        </div>
+
+                        {(isPharmacistOrStudent || isAdmin) && (
+                            <div className={activeTab === 'drn' ? 'block' : 'hidden'}>
+                                <DRNAssessment
+                                    patientCode={constructedPatientData.id}
+                                    patientData={constructedPatientData}
+                                    medicationHistory={constructedPatientData.medication_history}
+                                    standalone={true}
+                                    onDataChange={(data) => setDrnData(data)}
+                                />
+                            </div>
                         )}
-                        {activeTab === 'drn' && (
-                            <DRNAssessment
-                                patientCode={constructedPatientData.id}
-                                patientData={constructedPatientData}
-                                medicationHistory={constructedPatientData.medication_history}
-                                standalone={true}
-                                onDataChange={(data) => setDrnData(data)}
-                            />
+
+                        {(isPharmacistOrStudent || isAdmin) && (
+                            <div className={activeTab === 'plan' ? 'block' : 'hidden'}>
+                                <PhAssistPlan
+                                    patientCode={constructedPatientData.id}
+                                    patientData={constructedPatientData}
+                                    standalone={true}
+                                    onDataChange={(data) => setPlanData(data)}
+                                />
+                            </div>
                         )}
-                        {activeTab === 'plan' && (
-                            <PhAssistPlan
-                                patientCode={constructedPatientData.id}
-                                patientData={constructedPatientData}
-                                standalone={true}
-                                onDataChange={(data) => setPlanData(data)}
-                            />
+
+                        {(isPharmacistOrStudent || isAdmin) && (
+                            <div className={activeTab === 'outcome' ? 'block' : 'hidden'}>
+                                <PatientOutcome
+                                    patientCode={constructedPatientData.id}
+                                    patientData={constructedPatientData}
+                                    standalone={true}
+                                    onDataChange={(data) => setOutcomeData(data)}
+                                />
+                            </div>
                         )}
-                        {activeTab === 'outcome' && (
-                            <PatientOutcome
-                                patientCode={constructedPatientData.id}
-                                patientData={constructedPatientData}
-                                standalone={true}
-                                onDataChange={(data) => setOutcomeData(data)}
-                            />
-                        )}
-                        {activeTab === 'cost' && (
-                            <CostSection
-                                patientCode={constructedPatientData.id}
-                                patientData={constructedPatientData}
-                                standalone={true}
-                                onDataChange={(data) => setCostData(data)}
-                            />
+
+                        {(isPharmacistOrStudent || isAdmin) && (
+                            <div className={activeTab === 'cost' ? 'block' : 'hidden'}>
+                                <CostSection
+                                    patientCode={constructedPatientData.id}
+                                    patientData={constructedPatientData}
+                                    standalone={true}
+                                    onDataChange={(data) => setCostData(data)}
+                                />
+                            </div>
                         )}
                     </div>
                 </div>
@@ -495,9 +808,12 @@ const ClinicalPharmacyTool = () => {
         );
     }
 
+    // ─────────────────────────────────────────────────────────────────────
+    // DATA ENTRY VIEW
+    // ─────────────────────────────────────────────────────────────────────
     return (
         <div className="min-h-screen bg-gray-50 p-4 md:p-6">
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-6xl mx-auto">
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-4">
                         <button
@@ -507,546 +823,838 @@ const ClinicalPharmacyTool = () => {
                             <FaArrowLeft />
                         </button>
                         <div>
-                            <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Clinical Pharmacy Tool</h1>
-                            <p className="text-gray-600">Fill the data for medication review to run clinical analysis</p>
+                            <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+                                Clinical Pharmacy Tool
+                            </h1>
+                            <p className="text-gray-600">
+                                Fill the data for medication review to run clinical analysis
+                            </p>
                         </div>
                     </div>
                 </div>
-                <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-                    <h2 className="text-lg font-semibold text-gray-800 mb-4">Which of the following data are you going to fill for the medication review?</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {CATEGORIES.map(category => {
-                            const isSelected = selectedCategories.includes(category.id);
-                            return (
-                                <div
-                                    key={category.id}
-                                    onClick={() => handleCategoryToggle(category.id)}
-                                    className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${isSelected
-                                            ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                            : 'border-gray-200 hover:border-blue-200 text-gray-600'
-                                        }`}
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={isSelected}
-                                        onChange={() => { }} // Handled by div click
-                                        className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 pointer-events-none"
-                                    />
-                                    <category.icon className={isSelected ? 'text-blue-500' : 'text-gray-400'} />
-                                    <span className="font-medium">{category.label}</span>
-                                </div>
-                            );
-                        })}
-                    </div>
+
+                {/* Category Selector */}
+                <div className="bg-white rounded-xl shadow-sm p-4 mb-6 border border-gray-100">
+                    <button
+                        onClick={() => setIsCategorySelectorOpen(!isCategorySelectorOpen)}
+                        className="flex items-center justify-between w-full text-left"
+                    >
+                        <div className="flex items-center gap-2">
+                            <h2 className="text-md font-semibold text-gray-800">
+                                Which data are you going to fill for the medication review?
+                            </h2>
+                            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                                {selectedCategories.length} selected
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-blue-600">
+                            <span className="text-sm font-medium">
+                                {isCategorySelectorOpen ? 'Hide' : 'Show'}
+                            </span>
+                            {isCategorySelectorOpen ? <FaChevronDown /> : <FaChevronRight />}
+                        </div>
+                    </button>
+
+                    {isCategorySelectorOpen && (
+                        <div className="mt-4 pt-4 border-t border-gray-100">
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                {allCategories.map((category) => {
+                                    const isSelected = selectedCategories.includes(category.id);
+                                    return (
+                                        <div
+                                            key={category.id}
+                                            onClick={() => handleCategoryToggle(category.id)}
+                                            className={`flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                                                isSelected
+                                                    ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                                    : 'border-gray-200 hover:border-blue-200 text-gray-600'
+                                            }`}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={isSelected}
+                                                onChange={() => {}}
+                                                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 pointer-events-none"
+                                            />
+                                            <category.icon
+                                                className={isSelected ? 'text-blue-500' : 'text-gray-400'}
+                                                size={14}
+                                            />
+                                            <span className="font-medium text-sm">
+                                                {category.label}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {selectedCategories.length > 0 && (
-                    <div className="space-y-6">
-                        {/* Demography */}
-                        {selectedCategories.includes('demography') && (
-                            <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500">
-                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                    <FaUser className="text-blue-500" /> Demography
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Age (Years)</label>
-                                        <input
-                                            type="number"
-                                            name="age"
-                                            value={formData.age}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                            placeholder="e.g. 45"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-                                        <select
-                                            name="gender"
-                                            value={formData.gender}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                        >
-                                            <option value="">Select Gender</option>
-                                            <option value="male">Male</option>
-                                            <option value="female">Female</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Anthropometry */}
-                        {selectedCategories.includes('anthropometry') && (
-                            <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-green-500">
-                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                    <FaWeight className="text-green-500" /> Anthropometry
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Weight (kg)</label>
-                                        <input
-                                            type="number"
-                                            step="0.1"
-                                            name="weight"
-                                            value={formData.weight}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                            placeholder="e.g. 70"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Height (cm)</label>
-                                        <input
-                                            type="number"
-                                            step="0.1"
-                                            name="height"
-                                            value={formData.height}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                            placeholder="e.g. 175"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            BSA (m²) 
-                                            <span className="text-xs text-gray-500 ml-1">(auto-calculated)</span>
-                                        </label>
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            name="bsa"
-                                            value={formData.bsa}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-50"
-                                            placeholder="Auto-calculated"
-                                            readOnly
-                                        />
-                                    </div>
-                                </div>
-                                <div className="mt-2 text-xs text-gray-500">
-                                    BSA calculated using Du Bois method: BSA = 0.007184 × W^0.425 × H^0.725
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Vitals */}
-                        {selectedCategories.includes('vitals') && (
-                            <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-red-500">
-                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                    <FaHeartbeat className="text-red-500" /> Vitals
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Blood Pressure (mmHg)</label>
-                                        <input
-                                            type="text"
-                                            name="blood_pressure"
-                                            value={formData.blood_pressure}
-                                            onChange={handleInputChange}
-                                            placeholder="120/80"
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Heart Rate (bpm)</label>
-                                        <input
-                                            type="number"
-                                            name="heart_rate"
-                                            value={formData.heart_rate}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Respiratory Rate</label>
-                                        <input
-                                            type="number"
-                                            name="respiratory_rate"
-                                            value={formData.respiratory_rate}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Temperature (°C)</label>
-                                        <input
-                                            type="number"
-                                            step="0.1"
-                                            name="temperature"
-                                            value={formData.temperature}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">O2 Saturation (%)</label>
-                                        <input
-                                            type="number"
-                                            name="oxygen_saturation"
-                                            value={formData.oxygen_saturation}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Labs */}
-                        {selectedCategories.includes('labs') && (
-                            <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-yellow-500">
-                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                    <FaVial className="text-yellow-500" /> Labs
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Creatinine</label>
-                                        <input
-                                            type="number"
-                                            step="0.1"
-                                            name="creatinine"
-                                            value={formData.creatinine}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">ALT</label>
-                                        <input
-                                            type="number"
-                                            name="alt"
-                                            value={formData.alt}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">AST</label>
-                                        <input
-                                            type="number"
-                                            name="ast"
-                                            value={formData.ast}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Potassium (K+)</label>
-                                        <input
-                                            type="number"
-                                            step="0.1"
-                                            name="potassium"
-                                            value={formData.potassium}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Sodium (Na+)</label>
-                                        <input
-                                            type="number"
-                                            name="sodium"
-                                            value={formData.sodium}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Hemoglobin</label>
-                                        <input
-                                            type="number"
-                                            step="0.1"
-                                            name="hemoglobin"
-                                            value={formData.hemoglobin}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">WBC Count</label>
-                                        <input
-                                            type="number"
-                                            step="0.1"
-                                            name="wbc_count"
-                                            value={formData.wbc_count}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Platelets</label>
-                                        <input
-                                            type="number"
-                                            name="platelet_count"
-                                            value={formData.platelet_count}
-                                            onChange={handleInputChange}
-                                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Diagnosis */}
-                        {selectedCategories.includes('diagnosis') && (
-                            <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-indigo-500">
-                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                    <FaNotesMedical className="text-indigo-500" /> Diagnosis
-                                </h3>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Primary/Secondary Diagnosis</label>
-                                    <textarea
-                                        name="diagnosis"
-                                        value={formData.diagnosis}
-                                        onChange={handleInputChange}
-                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 h-24"
-                                        placeholder="e.g. Hypertension, Type 2 Diabetes"
-                                    ></textarea>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Special Conditions */}
-                        {selectedCategories.includes('special_conditions') && (
-                            <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-orange-500">
-                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                                    <FaExclamationCircle className="text-orange-500" /> Special Conditions
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-                                        <input
-                                            type="checkbox"
-                                            name="kidney_failure"
-                                            checked={formData.kidney_failure}
-                                            onChange={handleInputChange}
-                                            className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
-                                        />
-                                        <span className="font-medium text-gray-700">Kidney Failure / Impaired Renal Function</span>
-                                    </label>
-                                    <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-                                        <input
-                                            type="checkbox"
-                                            name="liver_failure"
-                                            checked={formData.liver_failure}
-                                            onChange={handleInputChange}
-                                            className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
-                                        />
-                                        <span className="font-medium text-gray-700">Liver Failure / Hepatic Impairment</span>
-                                    </label>
-                                    {formData.gender === 'female' && (
-                                        <>
-                                            <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-                                                <input
-                                                    type="checkbox"
-                                                    name="is_pregnant"
-                                                    checked={formData.is_pregnant}
-                                                    onChange={handleInputChange}
-                                                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
-                                                />
-                                                <span className="font-medium text-gray-700">Pregnant</span>
-                                            </label>
-                                            <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-                                                <input
-                                                    type="checkbox"
-                                                    name="is_lactating"
-                                                    checked={formData.is_lactating}
-                                                    onChange={handleInputChange}
-                                                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
-                                                />
-                                                <span className="font-medium text-gray-700">Lactating / Breastfeeding</span>
-                                            </label>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Medications */}
-                        {selectedCategories.includes('medications') && (
-                            <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-purple-500">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                                        <FaPills className="text-purple-500" /> Medications
-                                    </h3>
-                                    {!showMedicationInput && (
-                                        <button
-                                            onClick={handleAddMedicationClick}
-                                            className="flex items-center gap-2 text-sm bg-purple-100 text-purple-700 px-3 py-1.5 rounded-lg hover:bg-purple-200 font-medium"
-                                        >
-                                            <FaPlus /> Add Medication
-                                        </button>
-                                    )}
-                                </div>
-                        
-                                {/* Medication Input Form - Only shown when Add Medication is clicked */}
-                                {showMedicationInput && (
-                                    <div className="bg-purple-50 p-4 rounded-lg border border-purple-200 mb-4">
-                                        <div className="flex flex-col gap-3">
-                                            <div className="flex flex-wrap items-center gap-2">
-                                                <input
-                                                    type="text"
-                                                    value={newMedication.drug_name}
-                                                    onChange={(e) => handleNewMedicationChange('drug_name', e.target.value)}
-                                                    className="flex-1 min-w-[120px] p-2 border border-gray-300 rounded bg-white text-sm focus:ring-2 focus:ring-purple-500"
-                                                    placeholder="Drug name *"
-                                                />
-                                                <span className="text-gray-400 text-sm font-bold">|</span>
-                                                <input
-                                                    type="text"
-                                                    value={newMedication.dose}
-                                                    onChange={(e) => handleNewMedicationChange('dose', e.target.value)}
-                                                    className="w-24 p-2 border border-gray-300 rounded bg-white text-sm focus:ring-2 focus:ring-purple-500"
-                                                    placeholder="Dose"
-                                                />
-                                                <span className="text-gray-400 text-sm font-bold">|</span>
-                                                <input
-                                                    type="text"
-                                                    value={newMedication.frequency}
-                                                    onChange={(e) => handleNewMedicationChange('frequency', e.target.value)}
-                                                    className="w-24 p-2 border border-gray-300 rounded bg-white text-sm focus:ring-2 focus:ring-purple-500"
-                                                    placeholder="Freq"
-                                                />
-                                                <span className="text-gray-400 text-sm font-bold">|</span>
-                                                <input
-                                                    type="text"
-                                                    value={newMedication.route}
-                                                    onChange={(e) => handleNewMedicationChange('route', e.target.value)}
-                                                    className="w-24 p-2 border border-gray-300 rounded bg-white text-sm focus:ring-2 focus:ring-purple-500"
-                                                    placeholder="Route"
-                                                />
-                                            </div>
-                                            <div className="flex gap-2 justify-end">
-                                                <button
-                                                    onClick={handleCancelMedication}
-                                                    className="px-4 py-2 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium"
-                                                >
-                                                    Cancel
-                                                </button>
-                                                <button
-                                                    onClick={handleSaveMedication}
-                                                    className="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium"
-                                                >
-                                                    Save Medication
-                                                </button>
-                                            </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* LEFT COLUMN */}
+                        <div className="space-y-6">
+                            {/* Demography */}
+                            {selectedCategories.includes('demography') && (
+                                <div className="bg-white rounded-xl shadow-sm border-l-4 border-blue-500 overflow-hidden">
+                                    <button
+                                        onClick={() => toggleSection('demography')}
+                                        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                                    >
+                                        <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                                            <FaUser className="text-blue-500" /> Demography
+                                        </h3>
+                                        <div className="text-gray-400">
+                                            {expandedSections.demography ? (
+                                                <FaChevronDown />
+                                            ) : (
+                                                <FaChevronRight />
+                                            )}
                                         </div>
-                                    </div>
-                                )}
-
-                                {formData.medications.length === 0 && !showMedicationInput ? (
-                                    <div className="text-center py-6 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                                        No medications added. Click "Add Medication" to include drugs in the analysis.
-                                    </div>
-                                ) : (
-                                    <>
-                                        {formData.medications.length > 0 && (
-                                            <div className="space-y-2">
-                                                {formData.medications.map((med, index) => (
-                                                    <div key={index} className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-200">
-                                                        <div className="flex-1 flex items-center gap-2 flex-wrap">
-                                                            <input
-                                                                type="text"
-                                                                value={med.drug_name}
-                                                                onChange={(e) => updateMedication(index, 'drug_name', e.target.value)}
-                                                                className="flex-1 min-w-[100px] p-1.5 border border-gray-300 rounded bg-white text-sm focus:ring-2 focus:ring-purple-500"
-                                                                placeholder="Drug name"
-                                                            />
-                                                            <span className="text-gray-400 text-sm font-bold">|</span>
-                                                            <input
-                                                                type="text"
-                                                                value={med.dose}
-                                                                onChange={(e) => updateMedication(index, 'dose', e.target.value)}
-                                                                className="w-16 p-1.5 border border-gray-300 rounded bg-white text-sm focus:ring-2 focus:ring-purple-500"
-                                                                placeholder="Dose"
-                                                            />
-                                                            <span className="text-gray-400 text-sm font-bold">|</span>
-                                                            <input
-                                                                type="text"
-                                                                value={med.frequency}
-                                                                onChange={(e) => updateMedication(index, 'frequency', e.target.value)}
-                                                                className="w-16 p-1.5 border border-gray-300 rounded bg-white text-sm focus:ring-2 focus:ring-purple-500"
-                                                                placeholder="Freq"
-                                                            />
-                                                            <span className="text-gray-400 text-sm font-bold">|</span>
-                                                            <input
-                                                                type="text"
-                                                                value={med.route}
-                                                                onChange={(e) => updateMedication(index, 'route', e.target.value)}
-                                                                className="w-16 p-1.5 border border-gray-300 rounded bg-white text-sm focus:ring-2 focus:ring-purple-500"
-                                                                placeholder="Route"
-                                                            />
-                                                        </div>
-                                                        <button
-                                                            onClick={() => removeMedication(index)}
-                                                            className="bg-red-100 text-red-600 p-1.5 rounded hover:bg-red-200 flex items-center justify-center"
-                                                            title="Remove medication"
-                                                        >
-                                                            <FaTrash className="w-3 h-3" />
-                                                        </button>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-
-                                        {/* Temporary Storage Display - Single Line */}
-                                        {formData.medications.length > 0 && (
-                                            <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                                                <div className="flex items-start gap-2">
-                                                    <span className="text-blue-600 font-medium text-sm whitespace-nowrap">📋 Saved:</span>
-                                                    <span className="text-sm text-gray-700 break-all flex-1">
-                                                        {formData.medications
-                                                            .map(med => {
-                                                                const parts = [med.drug_name];
-                                                                if (med.dose) parts.push(med.dose);
-                                                                if (med.frequency) parts.push(med.frequency);
-                                                                if (med.route) parts.push(med.route);
-                                                                return parts.join(' ');
-                                                            })
-                                                            .join('; ')}
-                                                    </span>
-                                                    <button
-                                                        onClick={() => {
-                                                            const medLine = formData.medications
-                                                                .map(med => {
-                                                                    const parts = [med.drug_name];
-                                                                    if (med.dose) parts.push(med.dose);
-                                                                    if (med.frequency) parts.push(med.frequency);
-                                                                    if (med.route) parts.push(med.route);
-                                                                    return parts.join(' ');
-                                                                })
-                                                                .join('; ');
-                                                            navigator.clipboard.writeText(medLine).then(() => {
-                                                                alert('Medications copied to clipboard!');
-                                                            }).catch(() => {
-                                                                alert('Failed to copy medications');
-                                                            });
-                                                        }}
-                                                        className="ml-auto text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 whitespace-nowrap flex items-center gap-1"
+                                    </button>
+                                    {expandedSections.demography && (
+                                        <div className="p-4 pt-0">
+                                            <div className="grid grid-cols-1 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                        Age (Years)
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        name="age"
+                                                        value={formData.age}
+                                                        onChange={handleInputChange}
+                                                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                        placeholder="e.g. 45"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                        Gender
+                                                    </label>
+                                                    <select
+                                                        name="gender"
+                                                        value={formData.gender}
+                                                        onChange={handleInputChange}
+                                                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                     >
-                                                        <FaCopy className="w-3 h-3" /> Copy
-                                                    </button>
+                                                        <option value="">Select Gender</option>
+                                                        <option value="male">Male</option>
+                                                        <option value="female">Female</option>
+                                                    </select>
                                                 </div>
                                             </div>
-                                        )}
-                                    </>
-                                )}
-                            </div>
-                        )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
-                        <div className="flex justify-end pt-4 pb-12">
-                            <button
-                                onClick={handleRunAnalysis}
-                                disabled={selectedCategories.length === 0}
-                                className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold shadow-lg transition-all text-lg ${selectedCategories.length > 0
-                                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:shadow-xl hover:-translate-y-1'
-                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                    }`}
-                            >
-                                <FaPlay /> Run Clinical Analysis
-                            </button>
+                            {/* Anthropometry */}
+                            {selectedCategories.includes('anthropometry') && (
+                                <div className="bg-white rounded-xl shadow-sm border-l-4 border-green-500 overflow-hidden">
+                                    <button
+                                        onClick={() => toggleSection('anthropometry')}
+                                        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                                    >
+                                        <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                                            <FaWeight className="text-green-500" /> Anthropometry
+                                        </h3>
+                                        <div className="text-gray-400">
+                                            {expandedSections.anthropometry ? (
+                                                <FaChevronDown />
+                                            ) : (
+                                                <FaChevronRight />
+                                            )}
+                                        </div>
+                                    </button>
+                                    {expandedSections.anthropometry && (
+                                        <div className="p-4 pt-0">
+                                            <div className="grid grid-cols-1 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                        Weight (kg)
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        name="weight"
+                                                        value={formData.weight}
+                                                        onChange={handleInputChange}
+                                                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                        placeholder="e.g. 70"
+                                                        step="0.1"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                        Height (cm)
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        name="height"
+                                                        value={formData.height}
+                                                        onChange={handleInputChange}
+                                                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                        placeholder="e.g. 175"
+                                                        step="0.1"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                        BSA (m²)
+                                                        <span className="text-xs text-gray-500 ml-1">
+                                                            (auto-calculated)
+                                                        </span>
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        name="bsa"
+                                                        value={formData.bsa}
+                                                        onChange={handleInputChange}
+                                                        className="w-full p-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed focus:ring-2 focus:ring-blue-500"
+                                                        placeholder="Auto-calculated"
+                                                        step="0.01"
+                                                        readOnly
+                                                    />
+                                                    <p className="text-xs text-gray-500 mt-1">
+                                                        Du Bois method: BSA = 0.007184 × W^0.425 × H^0.725
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Labs - Dynamic from Supabase */}
+                            {selectedCategories.includes('labs') && (
+                                <div className="bg-white rounded-xl shadow-sm border-l-4 border-yellow-500 overflow-hidden">
+                                    <button
+                                        onClick={() => toggleSection('labs')}
+                                        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                                    >
+                                        <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                                            <FaVial className="text-yellow-500" /> Labs / Dx Tests
+                                        </h3>
+                                        <div className="text-gray-400">
+                                            {expandedSections.labs ? <FaChevronDown /> : <FaChevronRight />}
+                                        </div>
+                                    </button>
+                                    {expandedSections.labs && (
+                                        <div className="p-4 pt-0">
+                                            {/* Loading / Error states */}
+                                            {labsLoading && (
+                                                <div className="flex items-center justify-center py-8 text-gray-500">
+                                                    <FaSpinner className="animate-spin mr-2 text-yellow-500" />
+                                                    Loading lab tests...
+                                                </div>
+                                            )}
+
+                                            {labsError && !labsLoading && (
+                                                <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm mb-4">
+                                                    <FaExclamationTriangle />
+                                                    <span>{labsError}</span>
+                                                </div>
+                                            )}
+
+                                            {!labsLoading && !labsError && labSubCategories.length === 0 && (
+                                                <div className="text-center py-6 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                                                    No lab tests configured. Please add them in Lab Settings.
+                                                </div>
+                                            )}
+
+                                            {!labsLoading && !labsError && labSubCategories.length > 0 && (
+                                                <>
+                                                    {/* Sub-category selection */}
+                                                    <div className="mb-4">
+                                                        <p className="text-sm text-gray-600 mb-2">
+                                                            Select which lab test categories you want to fill:
+                                                        </p>
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                            {labSubCategories.map((subCat) => (
+                                                                <label
+                                                                    key={subCat.id}
+                                                                    className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all ${
+                                                                        selectedLabSubCategories.includes(subCat.id)
+                                                                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                                                            : 'border-gray-200 hover:border-blue-200 text-gray-600'
+                                                                    }`}
+                                                                >
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={selectedLabSubCategories.includes(subCat.id)}
+                                                                        onChange={() => handleLabSubCategoryToggle(subCat.id)}
+                                                                        className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                                                                    />
+                                                                    <span className="text-sm font-medium">
+                                                                        {subCat.label}
+                                                                    </span>
+                                                                    <span className="ml-auto text-[10px] text-gray-400 bg-white px-1.5 py-0.5 rounded-full border border-gray-200">
+                                                                        {subCat.tests.length}
+                                                                    </span>
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Show selected lab categories */}
+                                                    <div className="space-y-6">
+                                                        {labSubCategories
+                                                            .filter((subCat) =>
+                                                                selectedLabSubCategories.includes(subCat.id)
+                                                            )
+                                                            .map((labCategory) => (
+                                                                <div
+                                                                    key={labCategory.id}
+                                                                    className="bg-blue-50 rounded-lg p-4 border border-blue-200"
+                                                                >
+                                                                    <h4 className="text-md font-semibold text-gray-700 mb-3">
+                                                                        {labCategory.label}
+                                                                    </h4>
+                                                                    <div className="grid grid-cols-2 gap-3">
+                                                                        {labCategory.tests.map((test) => {
+                                                                            const key = test.key;
+                                                                            const isEGFR = key === 'egfr';
+                                                                            const isCreatinine =
+                                                                                key === 'serum_creatinine';
+                                                                            const hasRequiredFields =
+                                                                                formData.age &&
+                                                                                formData.gender &&
+                                                                                formData.labs?.serum_creatinine &&
+                                                                                parseFloat(formData.age) > 0 &&
+                                                                                parseFloat(
+                                                                                    formData.labs.serum_creatinine
+                                                                                ) > 0;
+
+                                                                            // Reference range hint (gender-aware)
+                                                                            const refRange =
+                                                                                formData.gender === 'female'
+                                                                                    ? test.range_female
+                                                                                    : formData.gender === 'male'
+                                                                                    ? test.range_male
+                                                                                    : test.range_male || test.range_female;
+
+                                                                            return (
+                                                                                <div key={key}>
+                                                                                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                                                        {test.name}{' '}
+                                                                                        {test.unit
+                                                                                            ? `(${test.unit})`
+                                                                                            : ''}
+                                                                                    </label>
+                                                                                    <input
+                                                                                        type="number"
+                                                                                        step="any"
+                                                                                        name={key}
+                                                                                        value={
+                                                                                            formData.labs[key] || ''
+                                                                                        }
+                                                                                        onChange={handleLabChange}
+                                                                                        className={`w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 ${
+                                                                                            isEGFR
+                                                                                                ? 'bg-gray-100 cursor-not-allowed'
+                                                                                                : ''
+                                                                                        }`}
+                                                                                        readOnly={isEGFR}
+                                                                                        placeholder={
+                                                                                            isEGFR &&
+                                                                                            !hasRequiredFields
+                                                                                                ? 'Fill Age, Gender & Creatinine'
+                                                                                                : ''
+                                                                                        }
+                                                                                    />
+                                                                                    {refRange && (
+                                                                                        <p className="text-[10px] text-gray-500 mt-0.5">
+                                                                                            Ref: {refRange}
+                                                                                        </p>
+                                                                                    )}
+                                                                                    {isEGFR &&
+                                                                                        formData.labs.egfr &&
+                                                                                        hasRequiredFields && (
+                                                                                            <p className="text-xs text-blue-600 mt-1">
+                                                                                                Auto-calculated
+                                                                                                (2021 CKD-EPI)
+                                                                                            </p>
+                                                                                        )}
+                                                                                    {isCreatinine &&
+                                                                                        !formData.age && (
+                                                                                            <p className="text-[10px] text-orange-500 mt-0.5">
+                                                                                                Fill Age & Gender to
+                                                                                                auto-calc eGFR
+                                                                                            </p>
+                                                                                        )}
+                                                                                </div>
+                                                                            );
+                                                                        })}
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+
+                                                        {selectedLabSubCategories.length === 0 && (
+                                                            <div className="text-center py-4 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                                                                Please select at least one lab test
+                                                                category from above.
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
+
+                        {/* RIGHT COLUMN */}
+                        <div className="space-y-6">
+                            {/* Vitals */}
+                            {selectedCategories.includes('vitals') && (
+                                <div className="bg-white rounded-xl shadow-sm border-l-4 border-red-500 overflow-hidden">
+                                    <button
+                                        onClick={() => toggleSection('vitals')}
+                                        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                                    >
+                                        <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                                            <FaHeartbeat className="text-red-500" /> Vitals
+                                        </h3>
+                                        <div className="text-gray-400">
+                                            {expandedSections.vitals ? (
+                                                <FaChevronDown />
+                                            ) : (
+                                                <FaChevronRight />
+                                            )}
+                                        </div>
+                                    </button>
+                                    {expandedSections.vitals && (
+                                        <div className="p-4 pt-0">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                        Blood Pressure (mmHg)
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        name="blood_pressure"
+                                                        value={formData.blood_pressure}
+                                                        onChange={handleInputChange}
+                                                        placeholder="120/80"
+                                                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                        Heart Rate (bpm)
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        name="heart_rate"
+                                                        value={formData.heart_rate}
+                                                        onChange={handleInputChange}
+                                                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                        Respiratory Rate
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        name="respiratory_rate"
+                                                        value={formData.respiratory_rate}
+                                                        onChange={handleInputChange}
+                                                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                        Temperature (°C)
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        step="0.1"
+                                                        name="temperature"
+                                                        value={formData.temperature}
+                                                        onChange={handleInputChange}
+                                                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                        O2 Saturation (%)
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        name="oxygen_saturation"
+                                                        value={formData.oxygen_saturation}
+                                                        onChange={handleInputChange}
+                                                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Diagnosis */}
+                            {selectedCategories.includes('diagnosis') && (
+                                <div className="bg-white rounded-xl shadow-sm border-l-4 border-indigo-500 overflow-hidden">
+                                    <button
+                                        onClick={() => toggleSection('diagnosis')}
+                                        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                                    >
+                                        <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                                            <FaNotesMedical className="text-indigo-500" /> Diagnosis
+                                        </h3>
+                                        <div className="text-gray-400">
+                                            {expandedSections.diagnosis ? (
+                                                <FaChevronDown />
+                                            ) : (
+                                                <FaChevronRight />
+                                            )}
+                                        </div>
+                                    </button>
+                                    {expandedSections.diagnosis && (
+                                        <div className="p-4 pt-0">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Primary/Secondary Diagnosis
+                                                </label>
+                                                <textarea
+                                                    name="diagnosis"
+                                                    value={formData.diagnosis}
+                                                    onChange={handleInputChange}
+                                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 h-24"
+                                                    placeholder="e.g. Hypertension, Type 2 Diabetes"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Special Conditions */}
+                            {selectedCategories.includes('special_conditions') && (
+                                <div className="bg-white rounded-xl shadow-sm border-l-4 border-orange-500 overflow-hidden">
+                                    <button
+                                        onClick={() => toggleSection('special_conditions')}
+                                        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                                    >
+                                        <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                                            <FaExclamationCircle className="text-orange-500" /> Special
+                                            Conditions
+                                        </h3>
+                                        <div className="text-gray-400">
+                                            {expandedSections.special_conditions ? (
+                                                <FaChevronDown />
+                                            ) : (
+                                                <FaChevronRight />
+                                            )}
+                                        </div>
+                                    </button>
+                                    {expandedSections.special_conditions && (
+                                        <div className="p-4 pt-0">
+                                            <div className="grid grid-cols-1 gap-3">
+                                                <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                                                    <input
+                                                        type="checkbox"
+                                                        name="kidney_failure"
+                                                        checked={formData.kidney_failure}
+                                                        onChange={handleInputChange}
+                                                        className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                                                    />
+                                                    <span className="font-medium text-gray-700">
+                                                        Kidney Failure / Impaired Renal Function
+                                                    </span>
+                                                </label>
+                                                <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                                                    <input
+                                                        type="checkbox"
+                                                        name="liver_failure"
+                                                        checked={formData.liver_failure}
+                                                        onChange={handleInputChange}
+                                                        className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                                                    />
+                                                    <span className="font-medium text-gray-700">
+                                                        Liver Failure / Hepatic Impairment
+                                                    </span>
+                                                </label>
+                                                {formData.gender === 'female' && (
+                                                    <>
+                                                        <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                                                            <input
+                                                                type="checkbox"
+                                                                name="is_pregnant"
+                                                                checked={formData.is_pregnant}
+                                                                onChange={handleInputChange}
+                                                                className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                                                            />
+                                                            <span className="font-medium text-gray-700">
+                                                                Pregnant
+                                                            </span>
+                                                        </label>
+                                                        <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                                                            <input
+                                                                type="checkbox"
+                                                                name="is_lactating"
+                                                                checked={formData.is_lactating}
+                                                                onChange={handleInputChange}
+                                                                className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                                                            />
+                                                            <span className="font-medium text-gray-700">
+                                                                Lactating / Breastfeeding
+                                                            </span>
+                                                        </label>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Medications */}
+                            {selectedCategories.includes('medications') && (
+                                <div className="bg-white rounded-xl shadow-sm border-l-4 border-purple-500 overflow-hidden">
+                                    <button
+                                        onClick={() => toggleSection('medications')}
+                                        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                                                <FaPills className="text-purple-500" /> Medications
+                                            </h3>
+                                            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                                                {formData.medications.length}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            {!expandedSections.medications &&
+                                                formData.medications.length > 0 && (
+                                                    <span className="text-xs text-gray-400 mr-2">
+                                                        {formData.medications.length} medication
+                                                        {formData.medications.length > 1 ? 's' : ''}
+                                                    </span>
+                                                )}
+                                            <div className="text-gray-400">
+                                                {expandedSections.medications ? (
+                                                    <FaChevronDown />
+                                                ) : (
+                                                    <FaChevronRight />
+                                                )}
+                                            </div>
+                                        </div>
+                                    </button>
+                                    {expandedSections.medications && (
+                                        <div className="p-4 pt-0">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <button
+                                                    onClick={addMedication}
+                                                    className="flex items-center gap-2 text-sm bg-purple-100 text-purple-700 px-3 py-1.5 rounded-lg hover:bg-purple-200 font-medium"
+                                                >
+                                                    <FaPlus /> Add Medication
+                                                </button>
+                                            </div>
+
+                                            {formData.medications.length === 0 ? (
+                                                <div className="text-center py-6 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                                                    No medications added. Click "Add Medication" to
+                                                    include drugs in the analysis.
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-4 max-h-[400px] overflow-y-auto pr-1">
+                                                    {formData.medications.map((med, index) => (
+                                                        <div
+                                                            key={index}
+                                                            className="bg-gray-50 p-4 rounded-lg border border-gray-200 relative"
+                                                        >
+                                                            <button
+                                                                onClick={() => removeMedication(index)}
+                                                                className="absolute top-2 right-2 text-red-400 hover:text-red-600 p-1 bg-white rounded-full shadow-sm hover:shadow"
+                                                                title="Remove medication"
+                                                            >
+                                                                <FaTrash className="w-3 h-3" />
+                                                            </button>
+
+                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                                <div>
+                                                                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                                        Drug Name
+                                                                    </label>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={med.drug_name}
+                                                                        onChange={(e) =>
+                                                                            updateMedication(
+                                                                                index,
+                                                                                'drug_name',
+                                                                                e.target.value
+                                                                            )
+                                                                        }
+                                                                        className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                        placeholder="Generic Name"
+                                                                    />
+                                                                </div>
+
+                                                                <div>
+                                                                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                                        Indication
+                                                                    </label>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={med.indication}
+                                                                        onChange={(e) =>
+                                                                            updateMedication(
+                                                                                index,
+                                                                                'indication',
+                                                                                e.target.value
+                                                                            )
+                                                                        }
+                                                                        className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                        placeholder="Reason for use"
+                                                                    />
+                                                                </div>
+
+                                                                <div>
+                                                                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                                        Dose / Unit
+                                                                    </label>
+                                                                    <div className="flex gap-1">
+                                                                        <input
+                                                                            type="text"
+                                                                            value={med.dose}
+                                                                            onChange={(e) =>
+                                                                                updateMedication(
+                                                                                    index,
+                                                                                    'dose',
+                                                                                    e.target.value
+                                                                                )
+                                                                            }
+                                                                            className="flex-1 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                            placeholder="Dose"
+                                                                        />
+                                                                        <input
+                                                                            type="text"
+                                                                            value={med.unit}
+                                                                            onChange={(e) =>
+                                                                                updateMedication(
+                                                                                    index,
+                                                                                    'unit',
+                                                                                    e.target.value
+                                                                                )
+                                                                            }
+                                                                            className="w-16 p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                            placeholder="e.g. mg"
+                                                                        />
+                                                                    </div>
+                                                                </div>
+
+                                                                <div>
+                                                                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                                        Dosage Form
+                                                                    </label>
+                                                                    <select
+                                                                        value={med.dosage_form}
+                                                                        onChange={(e) =>
+                                                                            updateMedication(
+                                                                                index,
+                                                                                'dosage_form',
+                                                                                e.target.value
+                                                                            )
+                                                                        }
+                                                                        className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500 bg-white"
+                                                                    >
+                                                                        <option value="Tablet">Tablet</option>
+                                                                        <option value="Capsule">Capsule</option>
+                                                                        <option value="Injection">Injection</option>
+                                                                        <option value="Syrup">Syrup</option>
+                                                                        <option value="Inhaler">Inhaler</option>
+                                                                        <option value="Cream/Ointment">
+                                                                            Cream/Ointment
+                                                                        </option>
+                                                                        <option value="Drops">Drops</option>
+                                                                        <option value="Other">Other</option>
+                                                                    </select>
+                                                                </div>
+
+                                                                <div>
+                                                                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                                        Route
+                                                                    </label>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={med.route}
+                                                                        onChange={(e) =>
+                                                                            updateMedication(
+                                                                                index,
+                                                                                'route',
+                                                                                e.target.value
+                                                                            )
+                                                                        }
+                                                                        className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                        placeholder="e.g. PO, IV, IM"
+                                                                    />
+                                                                </div>
+
+                                                                <div>
+                                                                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                                        Frequency
+                                                                    </label>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={med.frequency}
+                                                                        onChange={(e) =>
+                                                                            updateMedication(
+                                                                                index,
+                                                                                'frequency',
+                                                                                e.target.value
+                                                                            )
+                                                                        }
+                                                                        className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                        placeholder="e.g. BID, TID, OD"
+                                                                    />
+                                                                </div>
+
+                                                                <div>
+                                                                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                                        Duration
+                                                                    </label>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={med.duration}
+                                                                        onChange={(e) =>
+                                                                            updateMedication(
+                                                                                index,
+                                                                                'duration',
+                                                                                e.target.value
+                                                                            )
+                                                                        }
+                                                                        className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                        placeholder="e.g. 7 days, 4 weeks"
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* Run Analysis Button - Full Width */}
+                {selectedCategories.length > 0 && (
+                    <div className="flex justify-center pt-6 pb-6 mt-4">
+                        <button
+                            onClick={handleRunAnalysis}
+                            className="flex items-center gap-2 px-10 py-3.5 rounded-xl font-bold shadow-lg transition-all text-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:shadow-xl hover:-translate-y-1"
+                        >
+                            <FaPlay /> Run Clinical Analysis
+                        </button>
                     </div>
                 )}
             </div>

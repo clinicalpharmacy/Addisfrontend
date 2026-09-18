@@ -21,10 +21,39 @@ const Home = () => {
     const isCompanyAdmin = user?.role === 'company_admin';
     const isCompanyUser = !!user?.company_id || user?.account_type === 'company' || ['company_admin', 'company_user'].includes(user?.role);
     const isIndividual = !isAdmin && !isCompanyUser;
-    
+
     // Define isSubscribed - you need to determine this based on your logic
     const isSubscribed = user?.subscription_status === 'active' || false; // Adjust this logic as needed
-    
+
+    // ── Determine access to Clinical / Pharmacy-specific tools ─────────────
+    // Individual pharmacists (role === 'pharmacist')
+    const isIndividualPharmacist =
+        isIndividual && role === 'pharmacist';
+
+    // Company users belonging to a pharmacy / drug store
+    const isCompanyPharmacy =
+        isCompanyUser &&
+        (user?.facility_type === 'pharmacy' || user?.company_type === 'pharmacy');
+
+    // Individual pharmacy students
+    const isIndividualPharmacyStudent =
+        isIndividual && role === 'pharmacy_student';
+
+    // Company users belonging to a pharmacy school
+    const isCompanyPharmacySchool =
+        isCompanyUser &&
+        (user?.facility_type === 'pharmacy_school' ||
+            user?.company_type === 'pharmacy_school' ||
+            user?.company_type === 'pharmaceutical');
+
+    // Show Minor Illnesses + Compounding to admins, pharmacists & pharmacy companies
+    const showPharmacyTools =
+        isAdmin || isIndividualPharmacist || isCompanyPharmacy;
+
+    // Show Education to admins, pharmacy students & pharmacy schools
+    const showEducation =
+        isAdmin || isIndividualPharmacyStudent || isCompanyPharmacySchool;
+
     const getGreeting = () => {
         const hour = new Date().getHours();
         if (hour < 12) return 'Good morning';
@@ -204,7 +233,7 @@ const Home = () => {
             {/* Quick Access Grid - Row 3 */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 {/* 7. Minor Illnesses */}
-                {['company_admin', 'company_user', 'pharmacist', 'pharmacy_student'].includes(role) && (
+                {showPharmacyTools && (
                     <Link to="/knowledge/illnesses" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
                         <div className="flex items-center gap-3 mb-2">
                             <div className="p-2 bg-orange-100 rounded-lg">
@@ -224,7 +253,7 @@ const Home = () => {
                 )}
 
                 {/* 8. Compounding */}
-                {['company_admin', 'company_user', 'pharmacist', 'pharmacy_student'].includes(role) && (
+                {showPharmacyTools && (
                     <Link 
                         to="/knowledge/compounding"
                         className="bg-white rounded-xl shadow p-4 hover:shadow-md transition relative group cursor-pointer"
@@ -248,7 +277,7 @@ const Home = () => {
                 )}
 
                 {/* 9. Education */}
-                {['company_admin', 'company_user', 'pharmacist', 'pharmacy_student'].includes(role) && (
+                {showEducation && (
                     <Link to="/knowledge/Education" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
                         <div className="flex items-center gap-3 mb-2">
                             <div className="p-2 bg-purple-100 rounded-lg">

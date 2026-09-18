@@ -94,7 +94,7 @@ const SUBSCRIPTION_PLANS = [
         currency: 'ETB',
         interval: 'year',
         description: 'Best value for pharmacies and drug stores',
-        user_limit: 5,
+        user_limit: 10,
         icon: FaStore,
         color: 'from-green-600 to-green-600',
         badge: 'Best Value',
@@ -111,10 +111,10 @@ const SUBSCRIPTION_PLANS = [
         account_type: 'company',
         facility_type: 'pharmacy'
     },
-    // ── Clinic / Specialty Center ─────────────────────────────────────────
+    // ── Clinic / Specialty Center / Health Center ─────────────────────────────────────────
     {
         id: 'clinic_monthly',
-        name: 'Clinic / Specialty Center Monthly',
+        name: 'Clinic / Specialty Center / Health Center Monthly',
         price: 1035, // 900 + 15% VAT
         currency: 'ETB',
         interval: 'month',
@@ -135,12 +135,12 @@ const SUBSCRIPTION_PLANS = [
     },
     {
         id: 'clinic_yearly',
-        name: 'Clinic / Specialty Center Yearly',
+        name: 'Clinic / Specialty Center / Health Center Yearly',
         price: 10350, // 9000 + 15% VAT
         currency: 'ETB',
         interval: 'year',
         description: 'Best value for clinics and specialty centers',
-        user_limit: 5,
+        user_limit: 10,
         icon: FaBriefcase,
         color: 'from-teal-600 to-cyan-600',
         badge: 'Best Value',
@@ -157,52 +157,6 @@ const SUBSCRIPTION_PLANS = [
         account_type: 'company',
         facility_type: 'clinic'
     },
-    // ── Health Center ─────────────────────────────────────────────────────
-    {
-        id: 'health_center_monthly',
-        name: 'Health Center Monthly',
-        price: 1035, // 900 + 15% VAT
-        currency: 'ETB',
-        interval: 'month',
-        description: 'For health centers',
-        user_limit: 5,
-        icon: FaUsers,
-        color: 'from-green-500 to-green-600',
-        badge: 'Monthly',
-        features: [
-            'Medication information',
-            'Medication safety checks',
-            'Medication availability posts',
-            'Other features for practitioners',
-            'Up to 5 users'
-        ],
-        account_type: 'company',
-        facility_type: 'health_center'
-    },
-    {
-        id: 'health_center_yearly',
-        name: 'Health Center Yearly',
-        price: 10350, // 9000 + 15% VAT
-        currency: 'ETB',
-        interval: 'year',
-        description: 'Best value for health centers',
-        user_limit: 5,
-        icon: FaUsers,
-        color: 'from-green-600 to-emerald-600',
-        badge: 'Best Value',
-        originalPrice: 12420,
-        discount: 'Save 2,070 ETB',
-        features: [
-            'All features in the monthly plan',
-            'Priority support',
-            'Early access to new features',
-            'Request content to add',
-            'Up to 10 users'
-        ],
-        popular: true,
-        account_type: 'company',
-        facility_type: 'health_center'
-    },
     // ── Hospital ──────────────────────────────────────────────────────────
     {
         id: 'hospital_monthly',
@@ -211,7 +165,7 @@ const SUBSCRIPTION_PLANS = [
         currency: 'ETB',
         interval: 'month',
         description: 'For hospitals',
-        user_limit: 20,
+        user_limit: 10,
         icon: FaBuilding,
         color: 'from-green-500 to-green-600',
         badge: 'Monthly',
@@ -257,7 +211,7 @@ const SUBSCRIPTION_PLANS = [
         currency: 'ETB',
         interval: 'month',
         description: 'For pharmacy schools and academic institutions',
-        user_limit: 20,
+        user_limit: 10,
         icon: FaRocket,
         color: 'from-orange-500 to-orange-600',
         badge: 'Monthly',
@@ -294,6 +248,52 @@ const SUBSCRIPTION_PLANS = [
         popular: true,
         account_type: 'company',
         facility_type: 'pharmacy_school'
+    },
+    // ── Other Company ─────────────────────────────────────────────────────
+    {
+        id: 'other_company_monthly',
+        name: 'Other Company Monthly',
+        price: 1035, // 900 + 15% VAT
+        currency: 'ETB',
+        interval: 'month',
+        description: 'For other company',
+        user_limit: 5,
+        icon: FaUsers,
+        color: 'from-green-500 to-green-600',
+        badge: 'Monthly',
+        features: [
+            'Medication information',
+            'Medication safety checks',
+            'Medication availability posts',
+            'Other features for practitioners',
+            'Up to 5 users'
+        ],
+        account_type: 'company',
+        facility_type: 'other_company'
+    },
+    {
+        id: 'other_company_yearly',
+        name: 'Other Company Yearly',
+        price: 10350, // 9000 + 15% VAT
+        currency: 'ETB',
+        interval: 'year',
+        description: 'Best value for other company',
+        user_limit: 10,
+        icon: FaUsers,
+        color: 'from-green-600 to-emerald-600',
+        badge: 'Best Value',
+        originalPrice: 12420,
+        discount: 'Save 2,070 ETB',
+        features: [
+            'All features in the monthly plan',
+            'Priority support',
+            'Early access to new features',
+            'Request content to add',
+            'Up to 10 users'
+        ],
+        popular: true,
+        account_type: 'company',
+        facility_type: 'other_company'
     }
 ];
 
@@ -901,7 +901,7 @@ const Signup = () => {
                                 <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-gradient-to-r from-green-600 to-green-600 rounded-2xl md:rounded-3xl mb-4 md:mb-6 shadow-lg">
                                     <FaRocket className="text-white text-2xl md:text-3xl" />
                                 </div>
-                                <h1 className="text-2xl md:text-4xl font-bold text-gray-800 mb-2 md:mb-4">Welcome to Addis Clinical Pharmacy</h1>
+                                <h1 className="text-2xl md:text-4xl font-bold text-gray-800 mb-2 md:mb-4">Welcome to Addis Med Digital Platform</h1>
                                 <p className="text-gray-600 text-sm md:text-lg">Please select your account type to get started</p>
                             </div>
 
@@ -2034,9 +2034,9 @@ const Signup = () => {
                                             >
                                                 <option value="pharmacy">Pharmacy/ Drug Store</option>
                                                 <option value="hospital">Hospital</option>
-                                                <option value="clinic">Clinic/ Speciality Center</option>
+                                                <option value="clinic">Clinic/ Speciality Center/ Health Center</option>
                                                 <option value="pharmaceutical">Pharmacy School</option>
-                                                <option value="health_center">Health Center</option>
+                                                <option value="other_company">Other Company</option>
                                             </select>
                                         </div>
                                     </div>

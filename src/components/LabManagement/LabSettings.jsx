@@ -40,13 +40,20 @@ const LabSettings = ({ onUpdate }) => {
 
     const categories = [
         'General',
+        'Blood Glucose',
         'Complete blood count (CBC)',
         'Liver function tests',
         'Electrolytes',
         'Lipid profile',
         'Renal function tests',
         'Urinalysis',
-        'Coagulation test'
+        'Coagulation test', 
+        'Microbiology',
+        'Serology & Immunology',
+        'Endocrinology',
+        'Tumor Markers',
+        'Molecular & Genetic Testing',
+        'Histopathology & Cytology'
     ];
 
     useEffect(() => {
@@ -192,12 +199,19 @@ const LabSettings = ({ onUpdate }) => {
     const getCategoryStyles = (category) => {
         switch (category) {
             case 'Complete blood count (CBC)': return 'bg-red-50 text-red-600 border-red-100';
+            case 'Blood Glucose': return 'bg-red-50 text-red-600 border-red-100';                
             case 'Liver function tests': return 'bg-blue-50 text-blue-600 border-blue-100';
             case 'Electrolytes': return 'bg-amber-50 text-amber-600 border-amber-100';
             case 'Lipid profile': return 'bg-purple-50 text-purple-600 border-purple-100';
             case 'Renal function tests': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
             case 'Urinalysis': return 'bg-indigo-50 text-indigo-600 border-indigo-100';
             case 'Coagulation test': return 'bg-indigo-50 text-indigo-600 border-indigo-100';
+            case 'Microbiology': return 'bg-indigo-50 text-indigo-600 border-indigo-100';
+            case 'Serology & Immunology': return 'bg-indigo-50 text-indigo-600 border-indigo-100';      
+            case 'Endocrinology': return 'bg-indigo-50 text-indigo-600 border-indigo-100';      
+            case 'Tumor Markers': return 'bg-indigo-50 text-indigo-600 border-indigo-100';  
+            case 'Molecular & Genetic Testing': return 'bg-indigo-50 text-indigo-600 border-indigo-100'; 
+            case 'Histopathology & Cytology': return 'bg-indigo-50 text-indigo-600 border-indigo-100';      
             default: return 'bg-gray-50 text-gray-600 border-gray-100';
         }
     };

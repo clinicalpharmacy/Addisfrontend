@@ -3018,7 +3018,7 @@ const PatientDetails = () => {
                             </div>
                             {results.length > 12 && (
                                 <p className="text-xs text-green-600 mt-4 text-center font-medium">
-                                    + {results.length - 12} more results available in the <strong>Labs</strong> tab
+                                    + {results.length - 12} more results available in the <strong>Labs/ Dx Tests</strong> tab
                                 </p>
                             )}
                         </div>
