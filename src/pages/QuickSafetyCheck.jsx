@@ -230,7 +230,7 @@ const QuickSafetyCheck = () => {
                         <FaArrowLeft /> Back
                     </button>
                     <h1 className="text-xl font-black text-gray-800 flex items-center gap-2">
-                        <FaShieldAlt className="text-blue-600" /> Quick Safety Check
+                        <FaShieldAlt className="text-blue-600" /> Quick Check
                     </h1>
                     <div className="w-20"></div>
                 </div>
