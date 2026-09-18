@@ -47,7 +47,13 @@ const LabSettings = ({ onUpdate }) => {
         'Lipid profile',
         'Renal function tests',
         'Urinalysis',
-        'Coagulation test'
+        'Coagulation test', 
+        'Microbiology',
+        'Serology & Immunology',
+        'Endocrinology,
+        'Tumor Markers',
+        'Molecular & Genetic Testing',
+        'Histopathology & Cytology'
     ];
 
     useEffect(() => {
@@ -200,6 +206,12 @@ const LabSettings = ({ onUpdate }) => {
             case 'Renal function tests': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
             case 'Urinalysis': return 'bg-indigo-50 text-indigo-600 border-indigo-100';
             case 'Coagulation test': return 'bg-indigo-50 text-indigo-600 border-indigo-100';
+            case 'Microbiology': return 'bg-indigo-50 text-indigo-600 border-indigo-100';
+            case 'Serology & Immunology': return 'bg-indigo-50 text-indigo-600 border-indigo-100';      
+            case 'Endocrinology': return 'bg-indigo-50 text-indigo-600 border-indigo-100';      
+            case 'Tumor Markers': return 'bg-indigo-50 text-indigo-600 border-indigo-100';  
+            case 'Molecular & Genetic Testing': return 'bg-indigo-50 text-indigo-600 border-indigo-100'; 
+            case 'Histopathology & Cytology': return 'bg-indigo-50 text-indigo-600 border-indigo-100';      
             default: return 'bg-gray-50 text-gray-600 border-gray-100';
         }
     };
