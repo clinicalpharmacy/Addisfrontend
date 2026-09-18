@@ -24,7 +24,7 @@ const LabSettingsPage = () => {
                                     <FaVial className="text-white text-base" />
                                 </div>
                                 <h1 className="text-2xl font-black text-gray-900 tracking-tight">
-                                    Lab & Organ function
+                                    Lab & Diagnostic Tests
                                 </h1>
                             </div>
                         </div>
