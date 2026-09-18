@@ -240,7 +240,7 @@ const QuickSafetyCheck = () => {
                 {/* Search Hero */}
                 <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-8 md:p-12 text-white shadow-xl text-center mb-8 relative overflow-hidden">
                     <div className="relative z-10">
-                        <h2 className="text-3xl md:text-4xl font-black mb-4 tracking-tight">Check Medication Safety</h2>
+                        <h2 className="text-3xl md:text-4xl font-black mb-4 tracking-tight">Check Medication Information</h2>
                         <p className="text-blue-100 text-lg md:text-xl mb-8 max-w-2xl mx-auto opacity-90 font-medium">
                             Enter generic names of one or more drugs to check safety & interactions.
                         </p>
