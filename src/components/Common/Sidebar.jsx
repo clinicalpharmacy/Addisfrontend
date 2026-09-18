@@ -116,6 +116,35 @@ const Sidebar = ({ onClose }) => {
     const isCompanyUser = !!user?.company_id || user?.account_type === 'company' || ['company_admin', 'company_user'].includes(user?.role);
     const isIndividual = !isAdmin && !isCompanyUser;
 
+    // ── Determine access to Clinical / Pharmacy-specific tools ─────────────
+    // Individual pharmacists (role === 'pharmacist')
+    const isIndividualPharmacist =
+        isIndividual && user?.role === 'pharmacist';
+
+    // Company users belonging to a pharmacy / drug store
+    const isCompanyPharmacy =
+        isCompanyUser &&
+        (user?.facility_type === 'pharmacy' || user?.company_type === 'pharmacy');
+
+    // Individual pharmacy students
+    const isIndividualPharmacyStudent =
+        isIndividual && user?.role === 'pharmacy_student';
+
+    // Company users belonging to a pharmacy school
+    const isCompanyPharmacySchool =
+        isCompanyUser &&
+        (user?.facility_type === 'pharmacy_school' ||
+            user?.company_type === 'pharmacy_school' ||
+            user?.company_type === 'pharmaceutical');
+
+    // Show Minor Illnesses + Compounding to pharmacists & pharmacy companies
+    const showPharmacyTools =
+        isIndividualPharmacist || isCompanyPharmacy;
+
+    // Show Education to pharmacy students & pharmacy schools
+    const showEducation =
+        isIndividualPharmacyStudent || isCompanyPharmacySchool;
+
     // Check near expiry for subscription (within 7 days)
     const diff = user?.subscription_end_date ? new Date(user.subscription_end_date) - new Date() : null;
     const daysLeft = diff !== null ? Math.ceil(diff / (1000 * 60 * 60 * 24)) : null;
@@ -271,8 +300,8 @@ const Sidebar = ({ onClose }) => {
                             </NavLink>
                         </li>
 
-                        {/* Minor Illnesses - Only for pharmacists/pharmacy students */}
-                        {(!isIndividual || ['pharmacist', 'pharmacy_student'].includes(user?.role)) && (
+                        {/* Minor Illnesses - Only for pharmacists & pharmacy companies */}
+                        {showPharmacyTools && (
                             <li className="mb-2">
                                 <NavLink
                                     to={isSubscribed ? "/knowledge/illnesses" : "/subscription/plans"}
@@ -291,8 +320,8 @@ const Sidebar = ({ onClose }) => {
                             </li>
                         )}
 
-                        {/* Compounding - Only for pharmacists/pharmacy students */}
-                        {(!isIndividual || ['pharmacist', 'pharmacy_student'].includes(user?.role)) && (
+                        {/* Compounding - Only for pharmacists & pharmacy companies */}
+                        {showPharmacyTools && (
                             <li className="mb-2">
                                 <NavLink
                                     to="/knowledge/compounding"
@@ -330,8 +359,8 @@ const Sidebar = ({ onClose }) => {
                             </li>
                         )}
 
-                        {/* Education - Only for pharmacists/pharmacy students */}
-                        {(!isIndividual || ['pharmacist', 'pharmacy_student'].includes(user?.role)) && (
+                        {/* Education - Only for pharmacy students & pharmacy schools */}
+                        {showEducation && (
                             <li className="mb-2">
                                 <NavLink
                                     to={isSubscribed ? "/knowledge/education" : "/subscription/plans"}
