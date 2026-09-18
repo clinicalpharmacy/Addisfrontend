@@ -63,6 +63,16 @@ const getLabKey = (test) => {
     return LAB_KEY_ALIASES[slug] || slug;
 };
 
+/**
+ * Flatten medication form rows into an array of lowercase drug-name strings.
+ * This is the shape POST /quick-safety expects (it reads `req.body.medications`
+ * as an array of strings, or `req.body.medication` as a comma-joined string).
+ */
+const flattenMedicationNames = (medications) =>
+    (medications || [])
+        .map((m) => (m?.drug_name || '').trim().toLowerCase())
+        .filter(Boolean);
+
 const ClinicalPharmacyTool = () => {
     const navigate = useNavigate();
     const [selectedCategories, setSelectedCategories] = useState([]);
@@ -387,6 +397,13 @@ const ClinicalPharmacyTool = () => {
         []
     );
 
+    // ✅ Flat list of lowercase drug names. This is what POST /quick-safety
+    // expects (either as `medication` string or `medications: string[]`).
+    const flatMedicationNames = useMemo(
+        () => flattenMedicationNames(formData.medications),
+        [formData.medications]
+    );
+
     // Construct patientData object for CDSSDisplay
     const constructedPatientData = useMemo(
         () => ({
@@ -409,7 +426,14 @@ const ClinicalPharmacyTool = () => {
             labs: {
                 ...formData.labs
             },
+
+            // ✅ For POST /quick-safety: array of lowercase drug-name strings
+            medications: flatMedicationNames,
+
+            // ✅ Rich objects for DRNAssessment / PhAssistPlan / Outcome /
+            // Cost / PDF generation
             medication_history: formData.medications,
+
             allergies: [],
             diagnosis:
                 [
@@ -420,7 +444,7 @@ const ClinicalPharmacyTool = () => {
                     .filter(Boolean)
                     .join(', ') || 'None provided'
         }),
-        [formData, sessionId]
+        [formData, sessionId, flatMedicationNames]
     );
 
     const generateFullPDF = async () => {
@@ -753,6 +777,11 @@ const ClinicalPharmacyTool = () => {
                         <div className={activeTab === 'analysis' ? 'block' : 'hidden'}>
                             <CDSSDisplay
                                 patientData={constructedPatientData}
+                                /* ✅ Also pass the flat list explicitly so
+                                   CDSSDisplay can forward it verbatim to
+                                   POST /quick-safety without needing to know
+                                   about our patientData shape. */
+                                medications={flatMedicationNames}
                                 onBack={() => setShowAnalysis(false)}
                                 onDataChange={(data) => setCdssData(data)}
                             />
