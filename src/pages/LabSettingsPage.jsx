@@ -12,9 +12,11 @@ const LabSettingsPage = () => {
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
                     <div className="flex items-center gap-4">
                         <button
+                            type="button"
                             onClick={() => navigate(-1)}
                             className="p-2 bg-white hover:bg-gray-100 rounded-xl shadow-sm border border-gray-100 transition-all text-gray-600 flex-shrink-0 group"
                             title="Go Back"
+                            aria-label="Go back"
                         >
                             <FaArrowLeft className="text-lg group-hover:-translate-x-1 transition-transform" />
                         </button>
