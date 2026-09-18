@@ -46,13 +46,13 @@ const Home = () => {
             user?.company_type === 'pharmacy_school' ||
             user?.company_type === 'pharmaceutical');
 
-    // Show Minor Illnesses + Compounding to pharmacists & pharmacy companies
+    // Show Minor Illnesses + Compounding to admins, pharmacists & pharmacy companies
     const showPharmacyTools =
-        isIndividualPharmacist || isCompanyPharmacy;
+        isAdmin || isIndividualPharmacist || isCompanyPharmacy;
 
-    // Show Education to pharmacy students & pharmacy schools
+    // Show Education to admins, pharmacy students & pharmacy schools
     const showEducation =
-        isIndividualPharmacyStudent || isCompanyPharmacySchool;
+        isAdmin || isIndividualPharmacyStudent || isCompanyPharmacySchool;
 
     const getGreeting = () => {
         const hour = new Date().getHours();
