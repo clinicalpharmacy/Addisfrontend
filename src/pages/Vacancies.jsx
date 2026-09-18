@@ -43,9 +43,7 @@ const Vacancies = () => {
             {/* Simple Navigation */}
             <div className="bg-white py-4 px-6 border-b flex justify-between items-center shadow-sm">
                 <Link to="/" className="flex items-center gap-2 cursor-pointer">
-                    <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-green-400 to-green-500 rounded-lg shadow-sm">
-                        <FaUserMd className="text-white text-xl" />
-                    </div>
+                    <img src="/logo.png" alt="Addis Med Logo" className="w-10 h-10 rounded-lg object-contain" />
                     <span className="font-bold text-xl text-gray-800 tracking-tight">Addis Med</span>
                 </Link>
                 <Link to="/" className="text-sm font-medium text-gray-600 hover:text-green-600 transition-colors">Back to Home</Link>
