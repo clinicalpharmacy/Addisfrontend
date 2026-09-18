@@ -931,7 +931,7 @@ const ClinicalPharmacyTool = () => {
                                         className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
                                     >
                                         <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                                            <FaVial className="text-yellow-500" /> Labs
+                                            <FaVial className="text-yellow-500" /> Labs/ Dx Tests
                                         </h3>
                                         <div className="text-gray-400">
                                             {expandedSections.labs ? <FaChevronDown /> : <FaChevronRight />}
