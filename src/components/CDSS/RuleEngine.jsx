@@ -1279,14 +1279,8 @@ export const debugRuleEvaluation = (rule, facts) => {
         return false;
     }
 
-    // ✅ FIX: Guard against empty "all" array — otherwise [].every() returns true
-    // and the rule fires for every patient, which is a false-positive source.
+    // Handle different condition structures
     if (condition.all) {
-        if (!Array.isArray(condition.all) || condition.all.length === 0) {
-            console.warn('⚠️ Rule has empty "all" array — treating as inactive to prevent false positives');
-            return false;
-        }
-
         console.log('Condition type: ALL (all must be true)');
         const allResults = condition.all.map((cond, index) => {
             // Check if this condition is a nested "any" or "all"
@@ -1324,14 +1318,6 @@ export const debugRuleEvaluation = (rule, facts) => {
     }
 
     if (condition.any) {
-        // ✅ FIX: Same guard for empty "any" array — [].some() is false, so this
-        // one wouldn't fire anyway, but the guard prevents silent no-ops from
-        // being reported as "evaluated" in logs.
-        if (!Array.isArray(condition.any) || condition.any.length === 0) {
-            console.warn('⚠️ Rule has empty "any" array — treating as inactive');
-            return false;
-        }
-
         console.log('Condition type: ANY (any can be true)');
         const anyResults = condition.any.map((cond, index) => {
             // Check if this condition is a nested "any" or "all"
@@ -1413,31 +1399,8 @@ const getMatchedMedications = (condition, facts) => {
         try { parsedCondition = JSON.parse(condition); } catch (e) { return matched; }
     }
 
-    // ✅ FIX: For the standard 2-group "all" rule shape
-    //   { all: [ {anchor-group}, {interacting-group} ] }
-    // only collect medications from the *interacting* group (index 1).
-    // This prevents the anchor drug (e.g. levothyroxine) from being mis-labeled
-    // as a "triggering" drug in the alert tag, and stops the matcher from
-    // listing every drug in the anchor list.
-    //
-    // For any other shape (single-condition rules, top-level "any", custom
-    // nesting), we keep the original behavior so existing rules that don't
-    // use the standard shape continue to work identically.
-    const isStandardTwoGroupAll =
-        parsedCondition.all &&
-        Array.isArray(parsedCondition.all) &&
-        parsedCondition.all.length === 2 &&
-        parsedCondition.all[1] &&
-        Array.isArray(parsedCondition.all[1].any);
-
-    if (isStandardTwoGroupAll) {
-        // Only walk the second (interacting) group
-        checkConditions(parsedCondition.all[1].any);
-    } else {
-        // Original behavior for all other rule shapes — unchanged
-        if (parsedCondition.all) checkConditions(parsedCondition.all);
-        if (parsedCondition.any) checkConditions(parsedCondition.any);
-    }
+    if (parsedCondition.all) checkConditions(parsedCondition.all);
+    if (parsedCondition.any) checkConditions(parsedCondition.any);
 
     return matched;
 };
@@ -1584,12 +1547,6 @@ export const runClinicalDecisionSupport = async (facts) => {
         for (const rule of rules) {
             const evalResult = evaluateRule(rule, facts, true);
             if (evalResult.triggered) {
-                // ✅ FIX: Diagnostic logging so we can trace exactly which rule
-                // fired and why. This is purely additive — no behavior change.
-                console.log('🚨 FIRED rule_id:', rule.id, '| name:', rule.rule_name);
-                console.log('   rule_condition:', JSON.stringify(rule.rule_condition));
-                console.log('   matchedMedications:', evalResult.matchedMedications);
-
                 const action = typeof rule.rule_action === 'string' ? JSON.parse(rule.rule_action) : (rule.rule_action || {});
 
                 let professional_message = formatAlertMessage(action.message_professional || action.message || rule.rule_name, facts);
@@ -1597,26 +1554,21 @@ export const runClinicalDecisionSupport = async (facts) => {
                 let recommendation = formatAlertMessage(action.recommendation_professional || action.recommendation || rule.rule_description, facts);
                 let client_recommendation = formatAlertMessage(action.recommendation_client || action.recommendation || rule.rule_description, facts);
 
-                // ✅ FIX: Guard against non-array matchedMedications before .length
-                const matchedMeds = Array.isArray(evalResult.matchedMedications)
-                    ? evalResult.matchedMedications
-                    : [];
-
                 // Append matched medication names to message if available
-                if (matchedMeds.length > 0) {
-                    const tag = ` [Triggered by: ${matchedMeds.join(', ')}]`;
+                if (evalResult.matchedMedications.length > 0) {
+                    const tag = ` [Triggered by: ${evalResult.matchedMedications.join(', ')}]`;
                     professional_message += tag;
                     client_message += tag;
                 }
 
                 results.push({
-                    message: professionalMessage,
+                    message: professional_message, // Default
                     professional_message,
                     client_message,
                     recommendation,
                     client_recommendation,
                     severity: action.severity || rule.severity || 'moderate',
-                    matchedMedications: matchedMeds
+                    matchedMedications: evalResult.matchedMedications
                 });
             }
         }
