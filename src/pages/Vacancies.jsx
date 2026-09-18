@@ -51,7 +51,7 @@ const Vacancies = () => {
                 <Link to="/" className="text-sm font-medium text-gray-600 hover:text-green-600 transition-colors">Back to Home</Link>
             </div>
             {/* Header Section */}
-            <div className="bg-gradient-to-r from-green-900 to-green-700 text-white pt-32 pb-20 px-4 text-center">
+            <div className="bg-gradient-to-r from-green-600 to-green-500 text-white pt-32 pb-20 px-4 text-center">
                 <div className="max-w-4xl mx-auto">
                     <h1 className="text-4xl md:text-5xl font-black mb-6 tracking-tight">
                         Healthcare Opportunities
@@ -90,7 +90,7 @@ const Vacancies = () => {
             <div className="flex-grow max-w-6xl mx-auto w-full px-4 py-16">
                 {loading ? (
                     <div className="flex justify-center items-center py-20">
-                        <div className="animate-spin w-12 h-12 border-4 border-green-200 border-t-green-600 rounded-full"></div>
+                        <div className="animate-spin w-12 h-12 border-4 border-green-200 border-t-green-500 rounded-full"></div>
                     </div>
                 ) : (
                     <>
@@ -105,8 +105,8 @@ const Vacancies = () => {
                                 {filteredVacancies.map((vacancy) => (
                                     <div key={vacancy.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col group">
                                         <div className="flex justify-between items-start mb-4">
-                                            <div className="bg-green-50 p-3 rounded-xl group-hover:bg-green-600 transition-colors duration-300">
-                                                <FaBriefcase className="text-xl text-green-600 group-hover:text-white transition-colors duration-300" />
+                                            <div className="bg-green-50 p-3 rounded-xl group-hover:bg-green-500 transition-colors duration-300">
+                                                <FaBriefcase className="text-xl text-green-500 group-hover:text-white transition-colors duration-300" />
                                             </div>
                                             <span className="bg-emerald-50 text-emerald-700 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest border border-emerald-100">
                                                 Active
@@ -143,7 +143,7 @@ const Vacancies = () => {
                                                 href={vacancy.url.startsWith('http') ? vacancy.url : `https://${vacancy.url}`}
                                                 target="_blank" 
                                                 rel="noopener noreferrer"
-                                                className="w-full py-3.5 bg-gray-50 hover:bg-green-50 text-green-600 text-sm font-black rounded-xl transition-colors flex items-center justify-center gap-2 group/btn border border-gray-100 hover:border-green-100"
+                                                className="w-full py-3.5 bg-green-500 hover:bg-green-600 text-white text-sm font-black rounded-xl transition-colors flex items-center justify-center gap-2 group/btn shadow-sm"
                                             >
                                                 Apply Now
                                                 <FaExternalLinkAlt className="text-[10px] group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
@@ -162,7 +162,7 @@ const Vacancies = () => {
                                 {(searchTerm || filterLocation) && (
                                     <button 
                                         onClick={() => { setSearchTerm(''); setFilterLocation(''); }}
-                                        className="mt-6 text-green-600 font-black hover:text-green-700 underline underline-offset-4 decoration-2"
+                                        className="mt-6 text-green-500 font-black hover:text-green-600 underline underline-offset-4 decoration-2"
                                     >
                                         Clear all filters
                                     </button>
