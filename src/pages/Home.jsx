@@ -136,14 +136,14 @@ const Home = () => {
                     </div>
                 </Link>
 
-                {/* 3. Quick Safety Check */}
+                {/* 3. Quick Check */}
                 <Link to="/quick-safety" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition border-2 border-transparent hover:border-blue-100">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 bg-indigo-100 rounded-lg">
                             <FaShieldAlt className="text-indigo-600 text-lg" />
                         </div>
                         <div>
-                            <h2 className="text-sm font-bold text-gray-800">Quick Safety Check</h2>
+                            <h2 className="text-sm font-bold text-gray-800">Quick Check</h2>
                             <p className="text-xs text-gray-500">Pregnancy, elderly, organs</p>
                         </div>
                     </div>
