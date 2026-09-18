@@ -367,6 +367,38 @@ const ClinicalPharmacyTool = () => {
     };
 
     const handleRunAnalysis = () => {
+        // 🔍 DEBUG: log exactly what we're about to send
+        const payload = {
+            medications: flattenMedicationNames(formData.medications),
+            medication_history: formData.medications,
+            age: formData.age,
+            gender: formData.gender,
+            weight: formData.weight,
+            height: formData.height,
+            bsa: formData.bsa,
+            blood_pressure: formData.blood_pressure,
+            heart_rate: formData.heart_rate,
+            respiratory_rate: formData.respiratory_rate,
+            temperature: formData.temperature,
+            oxygen_saturation: formData.oxygen_saturation,
+            diagnosis: formData.diagnosis,
+            kidney_failure: formData.kidney_failure,
+            liver_failure: formData.liver_failure,
+            is_pregnant: formData.is_pregnant,
+            is_lactating: formData.is_lactating,
+            labs: formData.labs
+        };
+
+        console.log('═══════════════════════════════════════════════════');
+        console.log('🟢 [ClinicalPharmacyTool] handleRunAnalysis');
+        console.log('🟢 Flat medications to be sent:', payload.medications);
+        console.log('🟢 Full payload:', payload);
+        console.log('═══════════════════════════════════════════════════');
+
+        if (!payload.medications || payload.medications.length === 0) {
+            console.warn('⚠️ No medication names detected — check that the Drug Name fields are filled.');
+        }
+
         setShowAnalysis(true);
         setActiveTab('analysis');
     };
@@ -383,6 +415,11 @@ const ClinicalPharmacyTool = () => {
         () => flattenMedicationNames(formData.medications),
         [formData.medications]
     );
+
+    // 🔍 DEBUG: log the flat medication list every time it changes
+    useEffect(() => {
+        console.log('🟡 [ClinicalPharmacyTool] flatMedicationNames updated:', flatMedicationNames);
+    }, [flatMedicationNames]);
 
     // Construct patientData object for CDSSDisplay
     const constructedPatientData = useMemo(
