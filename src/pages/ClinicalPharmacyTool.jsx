@@ -24,12 +24,6 @@ const MAIN_CATEGORIES = [
     { id: 'medications', label: 'Medications', icon: FaPills }
 ];
 
-/**
- * Generate a stable key from a lab test name.
- * e.g. "Serum Creatinine" -> "serum_creatinine"
- *      "eGFR"             -> "egfr"
- *      "Total Bilirubin"  -> "total_bilirubin"
- */
 const slugifyLabName = (name) =>
     String(name || '')
         .toLowerCase()
@@ -37,10 +31,6 @@ const slugifyLabName = (name) =>
         .replace(/ /g, '_')
         .replace(/[^a-z0-9_]/g, '');
 
-/**
- * Optional: map specific display names to CDSS-expected keys.
- * If LabSettings adds a `cdss_key` column later, prefer that.
- */
 const LAB_KEY_ALIASES = {
     'creatinine': 'serum_creatinine',
     'serum_creatinine': 'serum_creatinine',
@@ -58,11 +48,20 @@ const LAB_KEY_ALIASES = {
 };
 
 const getLabKey = (test) => {
-    // Prefer explicit cdss_key if the DB provides one
     if (test.cdss_key) return test.cdss_key;
     const slug = slugifyLabName(test.name);
     return LAB_KEY_ALIASES[slug] || slug;
 };
+
+/**
+ * Flatten the medication form rows into an array of lowercase drug-name
+ * strings, ready to be sent to POST /quick-safety (which accepts either
+ * `medication` as a comma-joined string or `medications` as string[]).
+ */
+const flattenMedicationNames = (medications) =>
+    (medications || [])
+        .map((m) => (m?.drug_name || '').trim().toLowerCase())
+        .filter(Boolean);
 
 const ClinicalPharmacyTool = () => {
     const navigate = useNavigate();
@@ -72,12 +71,10 @@ const ClinicalPharmacyTool = () => {
     const [activeTab, setActiveTab] = useState('analysis');
     const [isCategorySelectorOpen, setIsCategorySelectorOpen] = useState(true);
 
-    // ✅ Dynamic lab categories fetched from Supabase
     const [labSubCategories, setLabSubCategories] = useState([]);
     const [labsLoading, setLabsLoading] = useState(false);
     const [labsError, setLabsError] = useState('');
 
-    // State for individual section collapse/expand
     const [expandedSections, setExpandedSections] = useState({
         demography: true,
         anthropometry: true,
@@ -88,7 +85,6 @@ const ClinicalPharmacyTool = () => {
         medications: true
     });
 
-    // ✅ Get user role from localStorage (same logic as sidebar)
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     const isAdmin = user?.role === 'admin' || user?.role?.includes('admin');
     const isPharmacist = user?.role === 'pharmacist';
@@ -103,14 +99,12 @@ const ClinicalPharmacyTool = () => {
 
     const allCategories = MAIN_CATEGORIES;
 
-    // Tab Data States for PDF
     const [cdssData, setCdssData] = useState([]);
     const [drnData, setDrnData] = useState([]);
     const [planData, setPlanData] = useState([]);
     const [outcomeData, setOutcomeData] = useState([]);
     const [costData, setCostData] = useState([]);
 
-    // Form State
     const [formData, setFormData] = useState({
         age: '',
         gender: '',
@@ -132,7 +126,7 @@ const ClinicalPharmacyTool = () => {
     });
 
     // ─────────────────────────────────────────────────────────────────────
-    // Fetch lab tests from Supabase and group them by category
+    // Fetch lab tests
     // ─────────────────────────────────────────────────────────────────────
     useEffect(() => {
         let cancelled = false;
@@ -190,7 +184,6 @@ const ClinicalPharmacyTool = () => {
         };
     }, []);
 
-    // Toggle section expansion
     const toggleSection = (sectionId) => {
         setExpandedSections((prev) => ({
             ...prev,
@@ -198,7 +191,6 @@ const ClinicalPharmacyTool = () => {
         }));
     };
 
-    // Calculate BSA using Du Bois method: BSA = 0.007184 × W^0.425 × H^0.725
     const calculateBSA = (weight, height) => {
         if (!weight || !height || weight <= 0 || height <= 0) return '';
         const w = parseFloat(weight);
@@ -207,7 +199,6 @@ const ClinicalPharmacyTool = () => {
         return bsa.toFixed(2);
     };
 
-    // Calculate eGFR using 2021 CKD-EPI creatinine formula
     const calculateEGFR = (creatinine, age, gender) => {
         if (!creatinine || !age || !gender || creatinine <= 0 || age <= 0) return '';
 
@@ -232,7 +223,6 @@ const ClinicalPharmacyTool = () => {
         return Math.round(egfr).toString();
     };
 
-    // Auto-calculate BSA
     useEffect(() => {
         if (formData.weight && formData.height) {
             const weight = parseFloat(formData.weight);
@@ -248,7 +238,6 @@ const ClinicalPharmacyTool = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [formData.weight, formData.height]);
 
-    // Auto-calculate eGFR when creatinine, age, or gender changes
     useEffect(() => {
         const creatinine = formData.labs?.serum_creatinine;
         const age = formData.age;
@@ -342,7 +331,6 @@ const ClinicalPharmacyTool = () => {
         });
     };
 
-    // Medication handlers
     const addMedication = () => {
         setFormData({
             ...formData,
@@ -388,6 +376,14 @@ const ClinicalPharmacyTool = () => {
         []
     );
 
+    // ✅ Flattened, lowercase list of drug names. This is the shape that
+    // POST /quick-safety expects (either as `medication` string or as
+    // `medications: string[]`).
+    const flatMedicationNames = useMemo(
+        () => flattenMedicationNames(formData.medications),
+        [formData.medications]
+    );
+
     // Construct patientData object for CDSSDisplay
     const constructedPatientData = useMemo(
         () => ({
@@ -410,7 +406,16 @@ const ClinicalPharmacyTool = () => {
             labs: {
                 ...formData.labs
             },
+
+            // ✅ For POST /quick-safety: an array of lowercase drug-name
+            // strings. The backend reads `req.body.medications` (or
+            // `req.body.medication` as a fallback).
+            medications: flatMedicationNames,
+
+            // ✅ Keep the rich objects for DRNAssessment / PhAssistPlan /
+            // PatientOutcome / CostSection / PDF generation.
             medication_history: formData.medications,
+
             allergies: [],
             diagnosis:
                 [
@@ -421,7 +426,7 @@ const ClinicalPharmacyTool = () => {
                     .filter(Boolean)
                     .join(', ') || 'None provided'
         }),
-        [formData, sessionId]
+        [formData, sessionId, flatMedicationNames]
     );
 
     const generateFullPDF = async () => {
@@ -469,7 +474,6 @@ const ClinicalPharmacyTool = () => {
             });
             currentY = doc.lastAutoTable.finalY + 10;
 
-            // CDSS Findings
             if (currentY > 250) {
                 doc.addPage();
                 currentY = 20;
@@ -520,7 +524,6 @@ const ClinicalPharmacyTool = () => {
                 currentY += 15;
             }
 
-            // Current Medications
             if (formData.medications.length > 0) {
                 if (currentY > 250) {
                     doc.addPage();
@@ -544,7 +547,6 @@ const ClinicalPharmacyTool = () => {
                 currentY = doc.lastAutoTable.finalY + 10;
             }
 
-            // DRN Assessment
             if (isPharmacistOrStudent && drnData && drnData.length > 0) {
                 if (currentY > 250) {
                     doc.addPage();
@@ -568,7 +570,6 @@ const ClinicalPharmacyTool = () => {
                 currentY = doc.lastAutoTable.finalY + 10;
             }
 
-            // Pharmacy Plan
             if (isPharmacistOrStudent && planData && planData.length > 0) {
                 if (currentY > 250) {
                     doc.addPage();
@@ -591,7 +592,6 @@ const ClinicalPharmacyTool = () => {
                 currentY = doc.lastAutoTable.finalY + 10;
             }
 
-            // Outcome
             if (isPharmacistOrStudent && outcomeData && outcomeData.length > 0) {
                 if (currentY > 250) {
                     doc.addPage();
@@ -613,7 +613,6 @@ const ClinicalPharmacyTool = () => {
                 currentY = doc.lastAutoTable.finalY + 10;
             }
 
-            // Cost
             if (isPharmacistOrStudent && costData && costData.length > 0) {
                 if (currentY > 250) {
                     doc.addPage();
@@ -754,6 +753,11 @@ const ClinicalPharmacyTool = () => {
                         <div className={activeTab === 'analysis' ? 'block' : 'hidden'}>
                             <CDSSDisplay
                                 patientData={constructedPatientData}
+                                /* ✅ Also pass the flat list explicitly so
+                                   CDSSDisplay can forward it verbatim to
+                                   POST /quick-safety without having to know
+                                   about our patientData shape. */
+                                medications={flatMedicationNames}
                                 onBack={() => setShowAnalysis(false)}
                                 onDataChange={(data) => setCdssData(data)}
                             />
@@ -1027,7 +1031,7 @@ const ClinicalPharmacyTool = () => {
                                 </div>
                             )}
 
-                            {/* Labs - Dynamic from Supabase */}
+                            {/* Labs */}
                             {selectedCategories.includes('labs') && (
                                 <div className="bg-white rounded-xl shadow-sm border-l-4 border-yellow-500 overflow-hidden">
                                     <button
@@ -1043,7 +1047,6 @@ const ClinicalPharmacyTool = () => {
                                     </button>
                                     {expandedSections.labs && (
                                         <div className="p-4 pt-0">
-                                            {/* Loading / Error states */}
                                             {labsLoading && (
                                                 <div className="flex items-center justify-center py-8 text-gray-500">
                                                     <FaSpinner className="animate-spin mr-2 text-yellow-500" />
@@ -1066,7 +1069,6 @@ const ClinicalPharmacyTool = () => {
 
                                             {!labsLoading && !labsError && labSubCategories.length > 0 && (
                                                 <>
-                                                    {/* Sub-category selection */}
                                                     <div className="mb-4">
                                                         <p className="text-sm text-gray-600 mb-2">
                                                             Select which lab test categories you want to fill:
@@ -1098,7 +1100,6 @@ const ClinicalPharmacyTool = () => {
                                                         </div>
                                                     </div>
 
-                                                    {/* Show selected lab categories */}
                                                     <div className="space-y-6">
                                                         {labSubCategories
                                                             .filter((subCat) =>
@@ -1127,7 +1128,6 @@ const ClinicalPharmacyTool = () => {
                                                                                     formData.labs.serum_creatinine
                                                                                 ) > 0;
 
-                                                                            // Reference range hint (gender-aware)
                                                                             const refRange =
                                                                                 formData.gender === 'female'
                                                                                     ? test.range_female
@@ -1647,7 +1647,7 @@ const ClinicalPharmacyTool = () => {
                     </div>
                 )}
 
-                {/* Run Analysis Button - Full Width */}
+                {/* Run Analysis Button */}
                 {selectedCategories.length > 0 && (
                     <div className="flex justify-center pt-6 pb-6 mt-4">
                         <button
