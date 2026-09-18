@@ -402,8 +402,7 @@ const QuickSafetyCheck = () => {
                                 <div className="flex flex-col items-center gap-4">
                                     <div>
                                         <p className="text-green-600 text-lg font-black max-w-2xl mx-auto">
-                                            {result.medication}ን በተመለከተ አዲስ ሜድ (Addis Med) ውስጥ {selectedCategory !== 'all' && `ለ[${CategoryTitle({ type: selectedCategory })}]`} 
-                                            የጥንቃቄ መረጃ አልተገኘም። ሁልጊዜም የጤና ባለሙያ ያማክሩ።
+                                            {result.medication}ን በተመለከተ አዲስ ሜድ (Addis Med) ውስጥ {selectedCategory !== 'all' && `ለ[${CategoryTitle({ type: selectedCategory })}]`}  የጥንቃቄ መረጃ አልተገኘም። ሁልጊዜም የጤና ባለሙያ ያማክሩ።
                                         </p>
                                     </div>
                                 </div>
