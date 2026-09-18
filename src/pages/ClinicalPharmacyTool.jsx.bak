@@ -388,6 +388,19 @@ const ClinicalPharmacyTool = () => {
     };
 
     const handleRunAnalysis = () => {
+        // 🔍 DEBUG: log exactly what we're about to send
+        const flat = flattenMedicationNames(formData.medications);
+
+        console.log('═══════════════════════════════════════════════════');
+        console.log('🟢 [ClinicalPharmacyTool] handleRunAnalysis');
+        console.log('🟢 Raw medications form rows:', formData.medications);
+        console.log('🟢 Flat medications to be sent:', flat);
+        console.log('═══════════════════════════════════════════════════');
+
+        if (flat.length === 0) {
+            console.warn('⚠️ No medication names detected. Fill the "Drug Name" fields.');
+        }
+
         setShowAnalysis(true);
         setActiveTab('analysis');
     };
@@ -403,6 +416,11 @@ const ClinicalPharmacyTool = () => {
         () => flattenMedicationNames(formData.medications),
         [formData.medications]
     );
+
+    // 🔍 DEBUG: log the flat medication list every time it changes
+    useEffect(() => {
+        console.log('🟡 [ClinicalPharmacyTool] flatMedicationNames:', flatMedicationNames);
+    }, [flatMedicationNames]);
 
     // Construct patientData object for CDSSDisplay
     const constructedPatientData = useMemo(
