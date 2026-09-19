@@ -132,7 +132,7 @@ const Vacancies = () => {
                                             )}
                                         </div>
 
-                                        <p className="text-sm text-gray-500 line-clamp-3 mb-6 flex-grow leading-relaxed">
+                                        <p className="text-sm text-gray-500 whitespace-pre-line mb-6 flex-grow leading-relaxed">
                                             {vacancy.description}
                                         </p>
 
