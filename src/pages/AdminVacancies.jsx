@@ -193,9 +193,9 @@ const AdminVacancies = () => {
                                     required
                                     value={formData.description}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white font-medium min-h-[120px]"
+                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white font-medium min-h-[300px]"
                                     placeholder="Describe the role, requirements, and responsibilities..."
-                                    rows="4"
+                                    rows="12"
                                 />
                             </div>
                             <div className="md:col-span-1">
