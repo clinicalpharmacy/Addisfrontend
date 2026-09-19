@@ -99,9 +99,9 @@ const Vacancies = () => {
                         </div>
 
                         {filteredVacancies.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 {filteredVacancies.map((vacancy) => (
-                                    <div key={vacancy.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col group">
+                                    <div key={vacancy.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col group">
                                         <div className="flex justify-between items-start mb-4">
                                             <div className="bg-green-50 p-3 rounded-xl group-hover:bg-green-500 transition-colors duration-300">
                                                 <FaBriefcase className="text-xl text-green-500 group-hover:text-white transition-colors duration-300" />
