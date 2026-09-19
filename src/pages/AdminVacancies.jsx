@@ -15,6 +15,8 @@ const AdminVacancies = () => {
         description: '',
         url: '',
         deadline: '',
+        employment_type: '',
+        salary: '',
         is_active: true
     });
 
@@ -98,6 +100,8 @@ const AdminVacancies = () => {
             description: vacancy.description,
             url: vacancy.url || '',
             deadline: vacancy.deadline ? vacancy.deadline.split('T')[0] : '',
+            employment_type: vacancy.employment_type || '',
+            salary: vacancy.salary || '',
             is_active: vacancy.is_active
         });
         setIsAdding(true);
@@ -113,6 +117,8 @@ const AdminVacancies = () => {
             description: '',
             url: '',
             deadline: '',
+            employment_type: '',
+            salary: '',
             is_active: true
         });
     };
@@ -153,7 +159,7 @@ const AdminVacancies = () => {
                                     type="text" required
                                     value={formData.title}
                                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white font-bold transition-all"
+                                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-blue-500 outline-none bg-white font-bold transition-all"
                                     placeholder="e.g. Senior Pharmacist"
                                 />
                             </div>
@@ -163,7 +169,7 @@ const AdminVacancies = () => {
                                     type="text" required
                                     value={formData.company}
                                     onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white font-bold transition-all"
+                                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-blue-500 outline-none bg-white font-bold transition-all"
                                     placeholder="e.g. Tikur Anbessa Hospital"
                                 />
                             </div>
@@ -173,7 +179,7 @@ const AdminVacancies = () => {
                                     type="text" required
                                     value={formData.location}
                                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white font-bold transition-all"
+                                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-blue-500 outline-none bg-white font-bold transition-all"
                                     placeholder="e.g. Addis Ababa"
                                 />
                             </div>
@@ -183,7 +189,7 @@ const AdminVacancies = () => {
                                     type="url"
                                     value={formData.url}
                                     onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white font-mono text-[11px] font-bold"
+                                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-blue-500 outline-none bg-white font-mono font-bold"
                                     placeholder="https://..."
                                 />
                             </div>
@@ -193,9 +199,29 @@ const AdminVacancies = () => {
                                     required
                                     value={formData.description}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white font-medium min-h-[300px]"
+                                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-blue-500 outline-none bg-white font-medium min-h-[300px]"
                                     placeholder="Describe the role, requirements, and responsibilities..."
                                     rows="12"
+                                />
+                            </div>
+                            <div className="md:col-span-1">
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-1.5 ml-1">Employment Type</label>
+                                <input
+                                    type="text"
+                                    value={formData.employment_type}
+                                    onChange={(e) => setFormData({ ...formData, employment_type: e.target.value })}
+                                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-blue-500 outline-none bg-white font-bold transition-all"
+                                    placeholder="e.g. Full-time, Part-time, Contract"
+                                />
+                            </div>
+                            <div className="md:col-span-1">
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-1.5 ml-1">Salary</label>
+                                <input
+                                    type="text"
+                                    value={formData.salary}
+                                    onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
+                                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-blue-500 outline-none bg-white font-bold transition-all"
+                                    placeholder="e.g. Negotiable, 10k-15k ETB"
                                 />
                             </div>
                             <div className="md:col-span-1">
@@ -204,7 +230,7 @@ const AdminVacancies = () => {
                                     type="date"
                                     value={formData.deadline}
                                     onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
-                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white font-bold"
+                                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-blue-500 outline-none bg-white font-bold"
                                 />
                             </div>
                             
@@ -280,6 +306,12 @@ const AdminVacancies = () => {
                                                 <div className="font-medium text-gray-500 text-[10px] flex items-center gap-1.5 mt-1">
                                                     <FaMapMarkerAlt className="text-gray-400" /> {vacancy.location}
                                                 </div>
+                                                {(vacancy.employment_type || vacancy.salary) && (
+                                                    <div className="font-medium text-gray-500 text-[10px] mt-1 pt-1 border-t border-gray-100 flex gap-2">
+                                                        {vacancy.employment_type && <span className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">{vacancy.employment_type}</span>}
+                                                        {vacancy.salary && <span className="bg-green-50 px-1.5 py-0.5 rounded text-green-700">{vacancy.salary}</span>}
+                                                    </div>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex justify-end gap-1.5">

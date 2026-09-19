@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaBriefcase, FaBuilding, FaMapMarkerAlt, FaCalendarAlt, FaExternalLinkAlt, FaSearch, FaUserMd } from 'react-icons/fa';
+import { FaBriefcase, FaBuilding, FaMapMarkerAlt, FaCalendarAlt, FaExternalLinkAlt, FaSearch, FaUserMd, FaMoneyBillWave, FaClock } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import api from '../utils/api';
 import { format } from 'date-fns';
@@ -111,28 +111,40 @@ const Vacancies = () => {
                                             </span>
                                         </div>
                                         
-                                        <h3 className="text-xl font-black text-gray-900 mb-2 leading-tight">
+                                        <h3 className="text-2xl font-black text-gray-900 mb-2 leading-tight">
                                             {vacancy.title}
                                         </h3>
                                         
                                         <div className="space-y-2.5 mb-5 flex-grow">
-                                            <div className="flex items-center text-sm font-bold text-gray-600">
+                                            <div className="flex items-center text-base font-bold text-gray-600">
                                                 <FaBuilding className="mr-2.5 text-gray-400" />
                                                 {vacancy.company}
                                             </div>
-                                            <div className="flex items-center text-sm font-medium text-gray-500">
+                                            <div className="flex items-center text-base font-medium text-gray-500">
                                                 <FaMapMarkerAlt className="mr-2.5 text-gray-400" />
                                                 {vacancy.location}
                                             </div>
+                                            {vacancy.employment_type && (
+                                                <div className="flex items-center text-base font-medium text-gray-500">
+                                                    <FaClock className="mr-2.5 text-gray-400" />
+                                                    {vacancy.employment_type}
+                                                </div>
+                                            )}
+                                            {vacancy.salary && (
+                                                <div className="flex items-center text-base font-medium text-green-600 bg-green-50 w-fit px-2 py-0.5 rounded">
+                                                    <FaMoneyBillWave className="mr-2.5 text-green-500" />
+                                                    {vacancy.salary}
+                                                </div>
+                                            )}
                                             {vacancy.deadline && (
-                                                <div className="flex items-center text-sm font-medium text-gray-500">
+                                                <div className="flex items-center text-base font-medium text-gray-500">
                                                     <FaCalendarAlt className="mr-2.5 text-gray-400" />
                                                     Deadline: {format(new Date(vacancy.deadline), 'MMM dd, yyyy')}
                                                 </div>
                                             )}
                                         </div>
 
-                                        <p className="text-sm text-gray-500 whitespace-pre-line mb-6 flex-grow leading-relaxed">
+                                        <p className="text-base text-gray-700 whitespace-pre-line mb-6 flex-grow leading-relaxed">
                                             {vacancy.description}
                                         </p>
 
