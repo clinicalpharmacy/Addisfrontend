@@ -83,9 +83,8 @@ const ExamModule = ({
     };
 
     /**
-     * Replaces the old "Submit Exam" action.
      * Called when the user clicks "Show Total Score".
-     * Reveals the final score and full answer review.
+     * Reveals the final score.
      */
     const handleShowScore = () => {
         const answeredCount = Object.keys(selectedAnswers).length;
@@ -175,7 +174,6 @@ const ExamModule = ({
     }
 
     const score = isSubmitted ? calculateScore() : 0;
-    const answeredCount = Object.keys(selectedAnswers).length;
     const percentage = ((score / questions.length) * 100).toFixed(1);
 
     return (
@@ -198,83 +196,20 @@ const ExamModule = ({
             </div>
 
             {isSubmitted ? (
-                <div className="text-center py-8 animate-fadeIn">
-                    <div className="mb-8">
-                        <div className={`inline-flex items-center justify-center w-32 h-32 rounded-full border-8 mb-4 ${
-                            percentage >= 70
-                                ? 'border-green-500 text-green-500'
-                                : 'border-amber-500 text-amber-500'
-                        }`}>
-                            <span className="text-4xl font-black">{percentage}%</span>
-                        </div>
-                        <h4 className="text-2xl font-bold text-gray-800 mb-2">
-                            {percentage >= 70 ? 'Great Job!' : 'Keep Practicing!'}
-                        </h4>
-                        <p className="text-gray-600">
-                            You scored {score} out of {questions.length} questions correctly.
-                        </p>
+                <div className="text-center py-12 animate-fadeIn">
+                    <div className="inline-flex items-center justify-center w-40 h-40 rounded-full border-8 mb-6 ${
+                        percentage >= 70
+                            ? 'border-green-500 text-green-500'
+                            : 'border-amber-500 text-amber-500'
+                    }">
+                        <span className="text-5xl font-black">{percentage}%</span>
                     </div>
-
-                    <div className="space-y-6 text-left">
-                        <h5 className="text-xl font-bold text-gray-800 border-b pb-2">
-                            Review Answers
-                        </h5>
-                        {questions.map((q, index) => {
-                            const selectedOptionId = selectedAnswers[q.id];
-                            const correctOption = q.options?.find(o => o.isCorrect);
-                            const isCorrect = correctOption && selectedOptionId === correctOption.id;
-
-                            return (
-                                <div key={q.id} className={`p-5 rounded-xl border ${
-                                    isCorrect
-                                        ? 'bg-green-50 border-green-200'
-                                        : 'bg-red-50 border-red-200'
-                                }`}>
-                                    <div className="flex gap-3 mb-3">
-                                        <div className="mt-1">
-                                            {isCorrect
-                                                ? <FaCheckCircle className="text-green-500 text-xl" />
-                                                : <FaTimesCircle className="text-red-500 text-xl" />}
-                                        </div>
-                                        <div>
-                                            <p className="font-bold text-gray-800">
-                                                {index + 1}. {q.questionText}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div className="ml-8 space-y-2 mb-4">
-                                        {q.options?.map(opt => (
-                                            <div key={opt.id} className={`p-3 rounded-lg text-sm flex justify-between items-center ${
-                                                opt.isCorrect
-                                                    ? 'bg-green-100 text-green-800 font-bold border border-green-300'
-                                                    : selectedOptionId === opt.id
-                                                        ? 'bg-red-100 text-red-800 font-bold border border-red-300'
-                                                        : 'bg-white border border-gray-200 text-gray-600'
-                                            }`}>
-                                                <span>{opt.text}</span>
-                                                {opt.isCorrect && (
-                                                    <span className="text-xs uppercase tracking-wider text-green-700 bg-green-200 px-2 py-1 rounded">
-                                                        Correct
-                                                    </span>
-                                                )}
-                                                {selectedOptionId === opt.id && !opt.isCorrect && (
-                                                    <span className="text-xs uppercase tracking-wider text-red-700 bg-red-200 px-2 py-1 rounded">
-                                                        Your Answer
-                                                    </span>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    <div className="ml-8 p-3 bg-white/60 rounded-lg border border-gray-200 text-sm">
-                                        <span className="font-bold text-gray-700 mr-2">Explanation:</span>
-                                        <span className="text-gray-600">{q.explanation}</span>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
+                    <h4 className="text-3xl font-bold text-gray-800 mb-3">
+                        {percentage >= 70 ? 'Great Job!' : 'Keep Practicing!'}
+                    </h4>
+                    <p className="text-gray-600 text-lg">
+                        You scored {score} out of {questions.length} questions correctly.
+                    </p>
                 </div>
             ) : (
                 <div className="space-y-6">
