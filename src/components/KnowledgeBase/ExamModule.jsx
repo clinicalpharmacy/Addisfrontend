@@ -2,26 +2,52 @@ import React, { useState, useEffect } from 'react';
 import { FaArrowLeft, FaCheckCircle, FaTimesCircle, FaSpinner } from 'react-icons/fa';
 import api from '../../utils/api';
 
-const ExamModule = ({ examId, examTitle, examSubject, onBack }) => {
-    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-    const [selectedAnswers, setSelectedAnswers] = useState({});
-    const [isSubmitted, setIsSubmitted] = useState(false);
-    
-    // API State
-    const [questions, setQuestions] = useState([]);
-    const [loading, setLoading] = useState(true);
+const ExamModule = ({
+    examId,
+    examTitle,
+    examSubject,
+    session,                 // { questions, answers, currentIndex, completed }
+    onSessionUpdate,         // (updates) => void
+    onComplete,              // () => void
+    onExit,                  // () => void
+    onBack                   // () => void (fallback if onExit not provided)
+}) => {
+    // Fallback: if session.questions were not provided, we fetch
+    const [questions, setQuestions] = useState(session?.questions || []);
+    const [selectedAnswers, setSelectedAnswers] = useState(session?.answers || {});
+    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(session?.currentIndex || 0);
+    const [isSubmitted, setIsSubmitted] = useState(session?.completed || false);
+
+    const [loading, setLoading] = useState(!session?.questions || session.questions.length === 0);
     const [error, setError] = useState(null);
 
+    // Sync state if the parent swaps the session (e.g. restart)
     useEffect(() => {
+        if (session) {
+            setQuestions(session.questions || []);
+            setSelectedAnswers(session.answers || {});
+            setCurrentQuestionIndex(session.currentIndex || 0);
+            setIsSubmitted(session.completed || false);
+            setLoading(false);
+            setError(null);
+        }
+    }, [session?.examId, session?.lastUpdated]);
+
+    // Fallback fetch only if no session was provided
+    useEffect(() => {
+        if (session) return; // parent already supplied questions
+
         if (examId) {
             fetchQuestions();
         }
-    }, [examId]);
+    }, [examId, session]);
 
     const fetchQuestions = async () => {
         try {
             setLoading(true);
-            const response = await api.get(`/exams/${examId}/take`);
+            // Fetch ALL questions then let the parent be responsible
+            // for slicing to 40. Here we just take what comes back.
+            const response = await api.get(`/exams/${examId}/questions`);
             if (response.success) {
                 setQuestions(response.questions || []);
             }
@@ -33,12 +59,29 @@ const ExamModule = ({ examId, examTitle, examSubject, onBack }) => {
         }
     };
 
+    /**
+     * Notify parent of session changes so it can persist.
+     */
+    const notifyUpdate = (updates) => {
+        if (typeof onSessionUpdate === 'function') {
+            onSessionUpdate(updates);
+        }
+    };
+
     const handleOptionSelect = (questionId, optionId) => {
-        if (isSubmitted || selectedAnswers[questionId]) return; // Prevent changing answer once selected
-        setSelectedAnswers({
+        if (isSubmitted || selectedAnswers[questionId]) return; // lock once answered
+
+        const updatedAnswers = {
             ...selectedAnswers,
             [questionId]: optionId
-        });
+        };
+        setSelectedAnswers(updatedAnswers);
+        notifyUpdate({ answers: updatedAnswers });
+    };
+
+    const goToIndex = (newIndex) => {
+        setCurrentQuestionIndex(newIndex);
+        notifyUpdate({ currentIndex: newIndex });
     };
 
     const handleSubmit = () => {
@@ -48,14 +91,28 @@ const ExamModule = ({ examId, examTitle, examSubject, onBack }) => {
             }
         }
         setIsSubmitted(true);
+        notifyUpdate({ completed: true });
+
+        if (typeof onComplete === 'function') {
+            onComplete();
+        }
+    };
+
+    const handleBack = () => {
+        // Prefer onExit (which saves the session) over the raw onBack
+        if (typeof onExit === 'function') {
+            onExit();
+        } else if (typeof onBack === 'function') {
+            onBack();
+        }
     };
 
     const calculateScore = () => {
         let score = 0;
         questions.forEach(q => {
             const selectedOptionId = selectedAnswers[q.id];
-            const correctOption = q.options.find(o => o.isCorrect);
-            if (selectedOptionId === correctOption.id) {
+            const correctOption = q.options?.find(o => o.isCorrect);
+            if (correctOption && selectedOptionId === correctOption.id) {
                 score += 1;
             }
         });
@@ -74,8 +131,8 @@ const ExamModule = ({ examId, examTitle, examSubject, onBack }) => {
     if (error) {
         return (
             <div className="bg-white rounded-xl shadow-lg p-8 text-center animate-fadeIn">
-                <button 
-                    onClick={onBack}
+                <button
+                    onClick={handleBack}
                     className="flex items-center gap-2 text-blue-600 hover:text-blue-800 mb-6 font-medium transition-colors"
                 >
                     <FaArrowLeft /> Back to Exams
@@ -90,15 +147,19 @@ const ExamModule = ({ examId, examTitle, examSubject, onBack }) => {
     if (questions.length === 0) {
         return (
             <div className="bg-white rounded-xl shadow-lg p-8 text-center animate-fadeIn">
-                <button 
-                    onClick={onBack}
+                <button
+                    onClick={handleBack}
                     className="flex items-center gap-2 text-blue-600 hover:text-blue-800 mb-6 font-medium transition-colors"
                 >
                     <FaArrowLeft /> Back to Exams
                 </button>
-                <h3 className="text-2xl font-bold text-gray-800 mb-4">{examTitle || `${examSubject} Exam`}</h3>
+                <h3 className="text-2xl font-bold text-gray-800 mb-4">
+                    {examTitle || `${examSubject} Exam`}
+                </h3>
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-                    <p className="text-gray-600">No questions available for this exam yet. Please check back later.</p>
+                    <p className="text-gray-600">
+                        No questions available for this exam yet. Please check back later.
+                    </p>
                 </div>
             </div>
         );
@@ -110,15 +171,19 @@ const ExamModule = ({ examId, examTitle, examSubject, onBack }) => {
     return (
         <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 animate-fadeIn max-w-3xl mx-auto">
             <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
-                <button 
-                    onClick={onBack}
+                <button
+                    onClick={handleBack}
                     className="flex items-center gap-2 text-gray-500 hover:text-blue-600 font-medium transition-colors"
                 >
                     <FaArrowLeft /> Back
                 </button>
-                <h3 className="text-xl font-black text-gray-800 tracking-tight">{examTitle || examSubject}</h3>
+                <h3 className="text-xl font-black text-gray-800 tracking-tight">
+                    {examTitle || examSubject}
+                </h3>
                 <div className="text-sm font-bold text-gray-500">
-                    {isSubmitted ? 'Completed' : `Question ${currentQuestionIndex + 1} of ${questions.length}`}
+                    {isSubmitted
+                        ? 'Completed'
+                        : `Question ${currentQuestionIndex + 1} of ${questions.length}`}
                 </div>
             </div>
 
@@ -126,55 +191,72 @@ const ExamModule = ({ examId, examTitle, examSubject, onBack }) => {
                 <div className="text-center py-8 animate-fadeIn">
                     <div className="mb-8">
                         <div className={`inline-flex items-center justify-center w-32 h-32 rounded-full border-8 mb-4 ${
-                            percentage >= 70 ? 'border-green-500 text-green-500' : 'border-amber-500 text-amber-500'
+                            percentage >= 70
+                                ? 'border-green-500 text-green-500'
+                                : 'border-amber-500 text-amber-500'
                         }`}>
                             <span className="text-4xl font-black">{percentage}%</span>
                         </div>
                         <h4 className="text-2xl font-bold text-gray-800 mb-2">
                             {percentage >= 70 ? 'Great Job!' : 'Keep Practicing!'}
                         </h4>
-                        <p className="text-gray-600">You scored {score} out of {questions.length} questions correctly.</p>
+                        <p className="text-gray-600">
+                            You scored {score} out of {questions.length} questions correctly.
+                        </p>
                     </div>
 
                     <div className="space-y-6 text-left">
-                        <h5 className="text-xl font-bold text-gray-800 border-b pb-2">Review Answers</h5>
+                        <h5 className="text-xl font-bold text-gray-800 border-b pb-2">
+                            Review Answers
+                        </h5>
                         {questions.map((q, index) => {
                             const selectedOptionId = selectedAnswers[q.id];
-                            const correctOption = q.options.find(o => o.isCorrect);
-                            const isCorrect = selectedOptionId === correctOption.id;
+                            const correctOption = q.options?.find(o => o.isCorrect);
+                            const isCorrect = correctOption && selectedOptionId === correctOption.id;
 
                             return (
                                 <div key={q.id} className={`p-5 rounded-xl border ${
-                                    isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+                                    isCorrect
+                                        ? 'bg-green-50 border-green-200'
+                                        : 'bg-red-50 border-red-200'
                                 }`}>
                                     <div className="flex gap-3 mb-3">
                                         <div className="mt-1">
-                                            {isCorrect ? 
-                                                <FaCheckCircle className="text-green-500 text-xl" /> : 
-                                                <FaTimesCircle className="text-red-500 text-xl" />
-                                            }
+                                            {isCorrect
+                                                ? <FaCheckCircle className="text-green-500 text-xl" />
+                                                : <FaTimesCircle className="text-red-500 text-xl" />}
                                         </div>
                                         <div>
-                                            <p className="font-bold text-gray-800">{index + 1}. {q.questionText}</p>
+                                            <p className="font-bold text-gray-800">
+                                                {index + 1}. {q.questionText}
+                                            </p>
                                         </div>
                                     </div>
-                                    
+
                                     <div className="ml-8 space-y-2 mb-4">
-                                        {q.options.map(opt => (
+                                        {q.options?.map(opt => (
                                             <div key={opt.id} className={`p-3 rounded-lg text-sm flex justify-between items-center ${
-                                                opt.isCorrect 
-                                                    ? 'bg-green-100 text-green-800 font-bold border border-green-300' 
-                                                    : selectedOptionId === opt.id 
-                                                        ? 'bg-red-100 text-red-800 font-bold border border-red-300' 
+                                                opt.isCorrect
+                                                    ? 'bg-green-100 text-green-800 font-bold border border-green-300'
+                                                    : selectedOptionId === opt.id
+                                                        ? 'bg-red-100 text-red-800 font-bold border border-red-300'
                                                         : 'bg-white border border-gray-200 text-gray-600'
                                             }`}>
                                                 <span>{opt.text}</span>
-                                                {opt.isCorrect && <span className="text-xs uppercase tracking-wider text-green-700 bg-green-200 px-2 py-1 rounded">Correct</span>}
-                                                {selectedOptionId === opt.id && !opt.isCorrect && <span className="text-xs uppercase tracking-wider text-red-700 bg-red-200 px-2 py-1 rounded">Your Answer</span>}
+                                                {opt.isCorrect && (
+                                                    <span className="text-xs uppercase tracking-wider text-green-700 bg-green-200 px-2 py-1 rounded">
+                                                        Correct
+                                                    </span>
+                                                )}
+                                                {selectedOptionId === opt.id && !opt.isCorrect && (
+                                                    <span className="text-xs uppercase tracking-wider text-red-700 bg-red-200 px-2 py-1 rounded">
+                                                        Your Answer
+                                                    </span>
+                                                )}
                                             </div>
                                         ))}
                                     </div>
-                                    
+
                                     <div className="ml-8 p-3 bg-white/60 rounded-lg border border-gray-200 text-sm">
                                         <span className="font-bold text-gray-700 mr-2">Explanation:</span>
                                         <span className="text-gray-600">{q.explanation}</span>
@@ -188,8 +270,8 @@ const ExamModule = ({ examId, examTitle, examSubject, onBack }) => {
                 <div className="space-y-6">
                     <div className="mb-6">
                         <div className="w-full bg-gray-100 rounded-full h-2 mb-6">
-                            <div 
-                                className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                            <div
+                                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                                 style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
                             ></div>
                         </div>
@@ -199,14 +281,14 @@ const ExamModule = ({ examId, examTitle, examSubject, onBack }) => {
                     </div>
 
                     <div className="space-y-2">
-                        {questions[currentQuestionIndex].options.map(option => {
+                        {questions[currentQuestionIndex].options?.map(option => {
                             const hasAnswered = !!selectedAnswers[questions[currentQuestionIndex].id];
                             const isSelected = selectedAnswers[questions[currentQuestionIndex].id] === option.id;
-                            
+
                             let buttonStyle = 'border-gray-200 hover:border-blue-300 hover:bg-gray-50';
                             let dotStyle = 'border-gray-300';
                             let textStyle = 'text-gray-700 font-medium';
-                            
+
                             if (hasAnswered) {
                                 if (option.isCorrect) {
                                     buttonStyle = 'border-green-500 bg-green-50 shadow-sm';
@@ -259,23 +341,30 @@ const ExamModule = ({ examId, examTitle, examSubject, onBack }) => {
                         })}
                     </div>
 
-                    {/* Immediate Explanation Feedback */}
                     {selectedAnswers[questions[currentQuestionIndex].id] && (
                         <div className={`mt-6 p-4 rounded-xl border-2 animate-fadeIn ${
-                            questions[currentQuestionIndex].options.find(o => o.isCorrect)?.id === selectedAnswers[questions[currentQuestionIndex].id]
+                            questions[currentQuestionIndex].options?.find(o => o.isCorrect)?.id ===
+                            selectedAnswers[questions[currentQuestionIndex].id]
                                 ? 'bg-green-50 border-green-200'
                                 : 'bg-red-50 border-red-200'
                         }`}>
                             <div className="flex items-center gap-2 mb-2">
-                                {questions[currentQuestionIndex].options.find(o => o.isCorrect)?.id === selectedAnswers[questions[currentQuestionIndex].id] ? (
-                                    <><FaCheckCircle className="text-green-500 text-xl" /> <span className="font-bold text-green-800">Correct!</span></>
+                                {questions[currentQuestionIndex].options?.find(o => o.isCorrect)?.id ===
+                                selectedAnswers[questions[currentQuestionIndex].id] ? (
+                                    <>
+                                        <FaCheckCircle className="text-green-500 text-xl" />
+                                        <span className="font-bold text-green-800">Correct!</span>
+                                    </>
                                 ) : (
-                                    <><FaTimesCircle className="text-red-500 text-xl" /> <span className="font-bold text-red-800">Incorrect</span></>
+                                    <>
+                                        <FaTimesCircle className="text-red-500 text-xl" />
+                                        <span className="font-bold text-red-800">Incorrect</span>
+                                    </>
                                 )}
                             </div>
                             {questions[currentQuestionIndex].explanation && (
                                 <div className="mt-2 text-sm text-gray-700 bg-white/60 p-3 rounded-lg border border-gray-100">
-                                    <span className="font-bold mr-2">Explanation:</span> 
+                                    <span className="font-bold mr-2">Explanation:</span>
                                     {questions[currentQuestionIndex].explanation}
                                 </div>
                             )}
@@ -284,7 +373,7 @@ const ExamModule = ({ examId, examTitle, examSubject, onBack }) => {
 
                     <div className="flex justify-between items-center pt-4 border-t border-gray-100 mt-4">
                         <button
-                            onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
+                            onClick={() => goToIndex(Math.max(0, currentQuestionIndex - 1))}
                             disabled={currentQuestionIndex === 0}
                             className={`px-6 py-1.5 rounded-lg font-bold transition-all ${
                                 currentQuestionIndex === 0
@@ -304,7 +393,7 @@ const ExamModule = ({ examId, examTitle, examSubject, onBack }) => {
                             </button>
                         ) : (
                             <button
-                                onClick={() => setCurrentQuestionIndex(Math.min(questions.length - 1, currentQuestionIndex + 1))}
+                                onClick={() => goToIndex(Math.min(questions.length - 1, currentQuestionIndex + 1))}
                                 className="px-8 py-1.5 rounded-lg font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 transition-all"
                             >
                                 Next
