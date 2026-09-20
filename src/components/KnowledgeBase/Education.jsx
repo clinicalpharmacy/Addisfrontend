@@ -19,6 +19,12 @@ const Education = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // =========================================================
+    // EXAM SESSION / RESUME STATE
+    // =========================================================
+    const [examSession, setExamSession] = useState(null);
+    const [sessionPrompt, setSessionPrompt] = useState(null);
+
     useEffect(() => {
         fetchExams();
     }, []);
@@ -52,18 +58,240 @@ const Education = () => {
                     .includes(searchTerm.toLowerCase()))
     );
 
-    // Open selected exam
+    // =========================================================
+    // EXAM SESSION HELPERS
+    // =========================================================
+
+    /**
+     * Generates a storage key unique to a specific exam.
+     */
+    const getSessionKey = (examId) => `exam_session_${examId}`;
+
+    /**
+     * Shuffles an array (Fisher-Yates) and returns a new array.
+     */
+    const shuffleArray = (arr) => {
+        const copy = [...arr];
+        for (let i = copy.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [copy[i], copy[j]] = [copy[j], copy[i]];
+        }
+        return copy;
+    };
+
+    /**
+     * Reads a saved session for an exam from localStorage.
+     * Returns null if none exists or if it's invalid.
+     */
+    const getSavedSession = (examId) => {
+        try {
+            const raw = localStorage.getItem(getSessionKey(examId));
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            if (!parsed || !parsed.questions || !Array.isArray(parsed.questions)) {
+                return null;
+            }
+            return parsed;
+        } catch (err) {
+            console.error('Failed to read exam session:', err);
+            return null;
+        }
+    };
+
+    /**
+     * Clears a saved session for an exam.
+     */
+    const clearSavedSession = (examId) => {
+        try {
+            localStorage.removeItem(getSessionKey(examId));
+        } catch (err) {
+            console.error('Failed to clear exam session:', err);
+        }
+    };
+
+    /**
+     * Persists the current exam session to localStorage.
+     */
+    const persistSession = (session) => {
+        try {
+            localStorage.setItem(
+                getSessionKey(session.examId),
+                JSON.stringify(session)
+            );
+        } catch (err) {
+            console.error('Failed to persist exam session:', err);
+        }
+    };
+
+    /**
+     * Handles the user clicking on an exam card.
+     *
+     * - If a saved session exists and the user has been away
+     *   for MORE than 10 minutes, prompt to Resume or Restart.
+     * - Otherwise, start a fresh session.
+     */
+    const handleSelectExam = (exam) => {
+        const saved = getSavedSession(exam.id);
+        const TEN_MINUTES = 10 * 60 * 1000;
+
+        if (saved && saved.lastUpdated) {
+            const elapsed = Date.now() - saved.lastUpdated;
+
+            // If user stopped for more than 10 minutes -> prompt
+            if (elapsed > TEN_MINUTES) {
+                setSessionPrompt({ exam, saved });
+                return;
+            }
+        }
+
+        // No saved session (or within 10 min) -> start fresh
+        startNewSession(exam);
+    };
+
+    /**
+     * Starts a brand-new exam session by randomly selecting
+     * up to 40 questions from the exam's available questions.
+     */
+    const startNewSession = async (exam) => {
+        try {
+            // Fetch the full question set for this exam
+            const response = await api.get(`/exams/${exam.id}/questions`);
+
+            let allQuestions = [];
+
+            if (response && response.success && Array.isArray(response.questions)) {
+                allQuestions = response.questions;
+            } else if (Array.isArray(response)) {
+                allQuestions = response;
+            } else if (response && Array.isArray(response.data)) {
+                allQuestions = response.data;
+            }
+
+            if (!allQuestions || allQuestions.length === 0) {
+                // No questions -> just open the module without a session
+                setSelectedExam(exam);
+                return;
+            }
+
+            // Randomly pick up to 40 questions
+            const shuffled = shuffleArray(allQuestions);
+            const selectedQuestions = shuffled.slice(0, 40);
+
+            const session = {
+                examId: exam.id,
+                examTitle: exam.title,
+                examSubject: exam.subject,
+                questions: selectedQuestions,
+                answers: {},
+                currentIndex: 0,
+                lastUpdated: Date.now(),
+                completed: false
+            };
+
+            persistSession(session);
+            setExamSession(session);
+            setSelectedExam(exam);
+        } catch (err) {
+            console.error('Failed to start exam session:', err);
+            // Fallback: open the exam module directly
+            setSelectedExam(exam);
+        }
+    };
+
+    /**
+     * Resumes a previously saved exam session.
+     */
+    const resumeSession = (saved) => {
+        const updated = { ...saved, lastUpdated: Date.now() };
+        persistSession(updated);
+        setExamSession(updated);
+        setSelectedExam({
+            id: saved.examId,
+            title: saved.examTitle,
+            subject: saved.examSubject
+        });
+        setSessionPrompt(null);
+    };
+
+    /**
+     * Discards an old saved session and starts a fresh one.
+     */
+    const restartSession = (exam) => {
+        clearSavedSession(exam.id);
+        setExamSession(null);
+        setSessionPrompt(null);
+        startNewSession(exam);
+    };
+
+    /**
+     * Called by ExamModule whenever the user answers a question
+     * or navigates, so we can keep the session in sync.
+     */
+    const handleSessionUpdate = (updates) => {
+        setExamSession((prev) => {
+            if (!prev) return prev;
+            const next = { ...prev, ...updates, lastUpdated: Date.now() };
+            persistSession(next);
+            return next;
+        });
+    };
+
+    /**
+     * Called by ExamModule when the user finishes the exam.
+     */
+    const handleExamComplete = () => {
+        if (examSession) {
+            clearSavedSession(examSession.examId);
+        }
+        setExamSession(null);
+        setSelectedExam(null);
+    };
+
+    /**
+     * Called by ExamModule when the user exits without finishing.
+     * We keep the session saved so they can resume later.
+     */
+    const handleExamExit = () => {
+        if (examSession) {
+            const updated = { ...examSession, lastUpdated: Date.now() };
+            persistSession(updated);
+        }
+        setExamSession(null);
+        setSelectedExam(null);
+    };
+
+    // =========================================================
+    // RENDER: ExamModule when an exam is selected
+    // =========================================================
     if (selectedExam) {
         return (
             <ExamModule
                 examId={selectedExam.id}
                 examTitle={selectedExam.title}
                 examSubject={selectedExam.subject}
-                onBack={() => setSelectedExam(null)}
+                session={examSession}
+                onSessionUpdate={handleSessionUpdate}
+                onComplete={handleExamComplete}
+                onExit={handleExamExit}
+                onBack={() => {
+                    // If there's an active session, keep it saved
+                    if (examSession) {
+                        const updated = {
+                            ...examSession,
+                            lastUpdated: Date.now()
+                        };
+                        persistSession(updated);
+                    }
+                    setExamSession(null);
+                    setSelectedExam(null);
+                }}
             />
         );
     }
 
+    // =========================================================
+    // RENDER: Main Education UI
+    // =========================================================
     return (
         <div className="bg-white/40 backdrop-blur-xl rounded-2xl shadow-xl border border-white/50 overflow-hidden relative animate-fadeIn">
 
@@ -206,7 +434,7 @@ const Education = () => {
                                         <button
                                             key={exam.id}
                                             onClick={() =>
-                                                setSelectedExam(exam)
+                                                handleSelectExam(exam)
                                             }
                                             className="flex items-center p-4 bg-white rounded-xl border border-gray-100 hover:border-purple-300 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group text-left"
                                         >
@@ -320,6 +548,57 @@ const Education = () => {
                 )}
 
             </div>
+
+            {/* =====================================================
+                RESUME / RESTART PROMPT MODAL
+            ====================================================== */}
+            {sessionPrompt && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-fadeIn">
+
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">
+                            Resume Exam?
+                        </h3>
+
+                        <p className="text-gray-600 mb-6">
+                            You have an unfinished attempt for{' '}
+                            <span className="font-semibold text-purple-700">
+                                {sessionPrompt.exam.title ||
+                                    sessionPrompt.exam.subject}
+                            </span>
+                            . You stopped more than 10 minutes ago. Would
+                            you like to resume where you left off, or start
+                            over?
+                        </p>
+
+                        <div className="flex flex-col sm:flex-row gap-3">
+
+                            <button
+                                onClick={() =>
+                                    resumeSession(sessionPrompt.saved)
+                                }
+                                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 px-4 rounded-xl transition-colors"
+                            >
+                                Resume
+                            </button>
+
+                            <button
+                                onClick={() =>
+                                    restartSession(sessionPrompt.exam)
+                                }
+                                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2.5 px-4 rounded-xl transition-colors"
+                            >
+                                Restart
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            )}
+
         </div>
     );
 };
