@@ -45,8 +45,6 @@ const ExamModule = ({
     const fetchQuestions = async () => {
         try {
             setLoading(true);
-            // Fetch ALL questions then let the parent be responsible
-            // for slicing to 40. Here we just take what comes back.
             const response = await api.get(`/exams/${examId}/questions`);
             if (response.success) {
                 setQuestions(response.questions || []);
@@ -84,12 +82,24 @@ const ExamModule = ({
         notifyUpdate({ currentIndex: newIndex });
     };
 
-    const handleSubmit = () => {
-        if (Object.keys(selectedAnswers).length < questions.length) {
-            if (!window.confirm("You have unanswered questions. Are you sure you want to submit?")) {
+    /**
+     * Replaces the old "Submit Exam" action.
+     * Called when the user clicks "Show Total Score".
+     * Reveals the final score and full answer review.
+     */
+    const handleShowScore = () => {
+        const answeredCount = Object.keys(selectedAnswers).length;
+
+        if (answeredCount < questions.length) {
+            const remaining = questions.length - answeredCount;
+            if (!window.confirm(
+                `You have ${remaining} unanswered question${remaining > 1 ? 's' : ''}. ` +
+                `Unanswered questions will be marked incorrect. Show your total score anyway?`
+            )) {
                 return;
             }
         }
+
         setIsSubmitted(true);
         notifyUpdate({ completed: true });
 
@@ -99,7 +109,6 @@ const ExamModule = ({
     };
 
     const handleBack = () => {
-        // Prefer onExit (which saves the session) over the raw onBack
         if (typeof onExit === 'function') {
             onExit();
         } else if (typeof onBack === 'function') {
@@ -166,6 +175,7 @@ const ExamModule = ({
     }
 
     const score = isSubmitted ? calculateScore() : 0;
+    const answeredCount = Object.keys(selectedAnswers).length;
     const percentage = ((score / questions.length) * 100).toFixed(1);
 
     return (
@@ -386,10 +396,10 @@ const ExamModule = ({
 
                         {currentQuestionIndex === questions.length - 1 ? (
                             <button
-                                onClick={handleSubmit}
-                                className="px-8 py-1.5 rounded-lg font-bold bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg shadow-green-200 transition-all transform hover:-translate-y-0.5"
+                                onClick={handleShowScore}
+                                className="px-8 py-1.5 rounded-lg font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg shadow-purple-200 transition-all transform hover:-translate-y-0.5"
                             >
-                                Submit Exam
+                                Show Total Score
                             </button>
                         ) : (
                             <button
