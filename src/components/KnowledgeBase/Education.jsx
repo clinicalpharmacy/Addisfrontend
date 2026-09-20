@@ -62,14 +62,8 @@ const Education = () => {
     // EXAM SESSION HELPERS
     // =========================================================
 
-    /**
-     * Generates a storage key unique to a specific exam.
-     */
     const getSessionKey = (examId) => `exam_session_${examId}`;
 
-    /**
-     * Shuffles an array (Fisher-Yates) and returns a new array.
-     */
     const shuffleArray = (arr) => {
         const copy = [...arr];
         for (let i = copy.length - 1; i > 0; i--) {
@@ -79,10 +73,6 @@ const Education = () => {
         return copy;
     };
 
-    /**
-     * Reads a saved session for an exam from localStorage.
-     * Returns null if none exists or if it's invalid.
-     */
     const getSavedSession = (examId) => {
         try {
             const raw = localStorage.getItem(getSessionKey(examId));
@@ -98,9 +88,6 @@ const Education = () => {
         }
     };
 
-    /**
-     * Clears a saved session for an exam.
-     */
     const clearSavedSession = (examId) => {
         try {
             localStorage.removeItem(getSessionKey(examId));
@@ -109,9 +96,6 @@ const Education = () => {
         }
     };
 
-    /**
-     * Persists the current exam session to localStorage.
-     */
     const persistSession = (session) => {
         try {
             localStorage.setItem(
@@ -126,13 +110,20 @@ const Education = () => {
     /**
      * Handles the user clicking on an exam card.
      *
-     * - If a saved session exists and the user has been away
-     *   for MORE than 10 minutes, prompt to Resume or Restart.
+     * - If a saved session exists AND is unfinished AND the user has
+     *   been away for MORE than 10 minutes -> prompt to Resume/Restart.
      * - Otherwise, start a fresh session.
      */
     const handleSelectExam = (exam) => {
         const saved = getSavedSession(exam.id);
         const TEN_MINUTES = 10 * 60 * 1000;
+
+        // Completed sessions should never be resumed; always start fresh.
+        if (saved && saved.completed) {
+            clearSavedSession(exam.id);
+            startNewSession(exam);
+            return;
+        }
 
         if (saved && saved.lastUpdated) {
             const elapsed = Date.now() - saved.lastUpdated;
@@ -148,13 +139,8 @@ const Education = () => {
         startNewSession(exam);
     };
 
-    /**
-     * Starts a brand-new exam session by randomly selecting
-     * up to 40 questions from the exam's available questions.
-     */
     const startNewSession = async (exam) => {
         try {
-            // Fetch the full question set for this exam
             const response = await api.get(`/exams/${exam.id}/questions`);
 
             let allQuestions = [];
@@ -168,12 +154,10 @@ const Education = () => {
             }
 
             if (!allQuestions || allQuestions.length === 0) {
-                // No questions -> just open the module without a session
                 setSelectedExam(exam);
                 return;
             }
 
-            // Randomly pick up to 40 questions
             const shuffled = shuffleArray(allQuestions);
             const selectedQuestions = shuffled.slice(0, 40);
 
@@ -193,14 +177,10 @@ const Education = () => {
             setSelectedExam(exam);
         } catch (err) {
             console.error('Failed to start exam session:', err);
-            // Fallback: open the exam module directly
             setSelectedExam(exam);
         }
     };
 
-    /**
-     * Resumes a previously saved exam session.
-     */
     const resumeSession = (saved) => {
         const updated = { ...saved, lastUpdated: Date.now() };
         persistSession(updated);
@@ -213,9 +193,6 @@ const Education = () => {
         setSessionPrompt(null);
     };
 
-    /**
-     * Discards an old saved session and starts a fresh one.
-     */
     const restartSession = (exam) => {
         clearSavedSession(exam.id);
         setExamSession(null);
@@ -223,10 +200,6 @@ const Education = () => {
         startNewSession(exam);
     };
 
-    /**
-     * Called by ExamModule whenever the user answers a question
-     * or navigates, so we can keep the session in sync.
-     */
     const handleSessionUpdate = (updates) => {
         setExamSession((prev) => {
             if (!prev) return prev;
@@ -237,24 +210,37 @@ const Education = () => {
     };
 
     /**
-     * Called by ExamModule when the user finishes the exam.
+     * Called by ExamModule when the user reveals their total score.
+     *
+     * NOTE: we deliberately do NOT unmount the exam view here.
+     * The user needs to stay on the score/review screen. We only
+     * clear the persisted resume session so a fresh attempt is
+     * started next time.
      */
     const handleExamComplete = () => {
         if (examSession) {
             clearSavedSession(examSession.examId);
         }
-        setExamSession(null);
-        setSelectedExam(null);
+        // Keep selectedExam so the ExamModule stays rendered
+        // showing the score + review.
+        setExamSession((prev) =>
+            prev ? { ...prev, completed: true } : prev
+        );
     };
 
     /**
-     * Called by ExamModule when the user exits without finishing.
-     * We keep the session saved so they can resume later.
+     * Called by ExamModule when the user clicks Back.
+     * Keeps the session saved (unless already completed) so it
+     * can be resumed later.
      */
     const handleExamExit = () => {
         if (examSession) {
-            const updated = { ...examSession, lastUpdated: Date.now() };
-            persistSession(updated);
+            if (examSession.completed) {
+                clearSavedSession(examSession.examId);
+            } else {
+                const updated = { ...examSession, lastUpdated: Date.now() };
+                persistSession(updated);
+            }
         }
         setExamSession(null);
         setSelectedExam(null);
@@ -273,18 +259,7 @@ const Education = () => {
                 onSessionUpdate={handleSessionUpdate}
                 onComplete={handleExamComplete}
                 onExit={handleExamExit}
-                onBack={() => {
-                    // If there's an active session, keep it saved
-                    if (examSession) {
-                        const updated = {
-                            ...examSession,
-                            lastUpdated: Date.now()
-                        };
-                        persistSession(updated);
-                    }
-                    setExamSession(null);
-                    setSelectedExam(null);
-                }}
+                onBack={handleExamExit}
             />
         );
     }
@@ -323,7 +298,6 @@ const Education = () => {
                 ====================================================== */}
                 <div className="flex flex-col sm:flex-row bg-gray-100/80 p-1.5 rounded-xl mb-8 max-w-4xl gap-1">
 
-                    {/* Exams Tab */}
                     <button
                         onClick={() => setActiveTab('exam')}
                         className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-bold text-sm transition-all duration-300 ${
@@ -339,11 +313,9 @@ const Education = () => {
                                     : 'opacity-60'
                             }
                         />
-
                         Exams
                     </button>
 
-                    {/* Clinical Pharmacy Skill Tab */}
                     <button
                         onClick={() =>
                             setActiveTab('clinicalpharmacyskill')
@@ -361,11 +333,9 @@ const Education = () => {
                                     : 'opacity-60'
                             }
                         />
-
                         Clinical Pharmacy Skill
                     </button>
 
-                    {/* Guidelines Tab */}
                     <button
                         onClick={() => setActiveTab('guideline')}
                         className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-bold text-sm transition-all duration-300 ${
@@ -381,7 +351,6 @@ const Education = () => {
                                     : 'opacity-60'
                             }
                         />
-
                         Guidelines
                     </button>
                 </div>
@@ -392,7 +361,6 @@ const Education = () => {
                 {activeTab === 'exam' && (
                     <div className="animate-fadeIn">
 
-                        {/* Search Header */}
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
 
                             <h3 className="text-xl font-bold text-gray-800">
@@ -416,7 +384,6 @@ const Education = () => {
                             </div>
                         </div>
 
-                        {/* Loading / Error / Exams */}
                         {loading ? (
                             <div className="flex justify-center items-center py-12">
                                 <FaSpinner className="animate-spin text-purple-600 text-3xl" />
@@ -427,7 +394,6 @@ const Education = () => {
                             </div>
                         ) : (
                             <>
-                                {/* Exam Cards */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
                                     {filteredExams.map((exam) => (
@@ -465,7 +431,6 @@ const Education = () => {
 
                                 </div>
 
-                                {/* No Exams */}
                                 {filteredExams.length === 0 && (
                                     <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-100">
 
@@ -490,19 +455,16 @@ const Education = () => {
 
                         <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-8 text-center">
 
-                            {/* Icon */}
                             <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
 
                                 <FaBookOpen className="text-indigo-600 text-2xl" />
 
                             </div>
 
-                            {/* Title */}
                             <h3 className="text-xl font-bold text-indigo-900 mb-2">
                                 Clinical Pharmacy Skill
                             </h3>
 
-                            {/* Description */}
                             <p className="text-indigo-700 max-w-md mx-auto">
                                 The clinical pharmacy skill section is
                                 currently under development. Please check
@@ -522,19 +484,16 @@ const Education = () => {
 
                         <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-8 text-center">
 
-                            {/* Icon */}
                             <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
 
                                 <FaBookOpen className="text-indigo-600 text-2xl" />
 
                             </div>
 
-                            {/* Title */}
                             <h3 className="text-xl font-bold text-indigo-900 mb-2">
                                 Clinical Guidelines
                             </h3>
 
-                            {/* Description */}
                             <p className="text-indigo-700 max-w-md mx-auto">
                                 The guidelines section is currently under
                                 development. Please check back later for
