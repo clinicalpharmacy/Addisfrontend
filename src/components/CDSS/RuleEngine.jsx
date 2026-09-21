@@ -1363,46 +1363,83 @@ export const debugRuleEvaluation = (rule, facts) => {
 
 // ✅ getMatchedMedications - finds which medications from a rule condition matched
 const getMatchedMedications = (condition, facts) => {
-    const matched = [];
-    if (!condition || !facts) return matched;
-
-    const checkConditions = (conditions) => {
-        if (!Array.isArray(conditions)) return;
-        conditions.forEach(cond => {
-            // If this is a nested any/all, recurse into it
-            if (cond.any) {
-                checkConditions(cond.any);
-            } else if (cond.all) {
-                checkConditions(cond.all);
-            } else if (cond.fact === 'medications' && cond.operator === 'contains' && cond.value) {
-                const searchValue = cond.value.toString().toLowerCase().trim();
-                const patientMeds = facts.medications || [];
-                if (Array.isArray(patientMeds)) {
-                    const found = patientMeds.some(med => {
-                        const medStr = String(med).toLowerCase().trim();
-                        return medStr.includes(searchValue) || searchValue.includes(medStr);
-                    });
-                    if (found) {
-                        // Capitalize first letter for display
-                        const displayName = cond.value.charAt(0).toUpperCase() + cond.value.slice(1);
-                        if (!matched.includes(displayName)) {
-                            matched.push(displayName);
-                        }
-                    }
-                }
-            }
-        });
-    };
-
     let parsedCondition = condition;
     if (typeof condition === 'string') {
-        try { parsedCondition = JSON.parse(condition); } catch (e) { return matched; }
+        try { parsedCondition = JSON.parse(condition); } catch (e) { return []; }
     }
 
-    if (parsedCondition.all) checkConditions(parsedCondition.all);
-    if (parsedCondition.any) checkConditions(parsedCondition.any);
+    // Recursively evaluate condition and return matched patient medications
+    const evaluate = (cond) => {
+        if (!cond) return null;
 
-    return matched;
+        if (cond.all) {
+            let allMatched = [];
+            for (let c of cond.all) {
+                let res = evaluate(c);
+                if (!res) return null; // If any fails, the 'all' block fails
+                allMatched = [...allMatched, ...res];
+            }
+            return allMatched;
+        }
+
+        if (cond.any) {
+            let anyMatched = [];
+            let anyTrue = false;
+            for (let c of cond.any) {
+                let res = evaluate(c);
+                if (res) {
+                    anyTrue = true;
+                    anyMatched = [...anyMatched, ...res]; // Keep all branches that were true
+                }
+            }
+            return anyTrue ? anyMatched : null;
+        }
+
+        if (cond.fact === 'medications' && cond.operator === 'contains' && cond.value) {
+            const searchValue = String(cond.value).toLowerCase().trim();
+            const matches = [];
+
+            // Prefer using medication_data to get the actual drug name even if matched by class
+            if (facts.medication_data && Object.keys(facts.medication_data).length > 0) {
+                Object.values(facts.medication_data).forEach(med => {
+                    const drugName = String(med.drug_name || '').toLowerCase();
+                    const drugClass = String(med.drug_class || '').toLowerCase();
+                    if (drugName.includes(searchValue) || searchValue.includes(drugName) ||
+                        drugClass.includes(searchValue) || searchValue.includes(drugClass)) {
+                        if (med.drug_name) matches.push(med.drug_name);
+                    }
+                });
+            } else if (Array.isArray(facts.medications)) {
+                // Fallback
+                facts.medications.forEach(med => {
+                    const medStr = String(med).toLowerCase();
+                    if (medStr.includes(searchValue) || searchValue.includes(medStr)) {
+                        matches.push(medStr);
+                    }
+                });
+            }
+
+            return matches.length > 0 ? matches : null;
+        }
+
+        // For non-medication facts (age, labs, etc.), just return empty array if true, or null if false
+        const isTrue = evaluateSingleCondition(cond, facts, false);
+        return isTrue ? [] : null;
+    };
+
+    const result = evaluate(parsedCondition);
+    if (!result) return [];
+
+    // Format (capitalize) and deduplicate the extracted patient medication names
+    const uniqueFormatted = [];
+    result.forEach(med => {
+        const displayName = String(med).charAt(0).toUpperCase() + String(med).slice(1).toLowerCase();
+        if (!uniqueFormatted.includes(displayName)) {
+            uniqueFormatted.push(displayName);
+        }
+    });
+
+    return uniqueFormatted;
 };
 
 // ✅ evaluateRule function - returns { triggered, matchedMedications } or boolean for backward compatibility
