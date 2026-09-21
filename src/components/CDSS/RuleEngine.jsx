@@ -1397,23 +1397,27 @@ const getMatchedMedications = (condition, facts) => {
 
         if (cond.fact === 'medications' && cond.operator === 'contains' && cond.value) {
             const searchValue = String(cond.value).toLowerCase().trim();
+            if (!searchValue) return null; // Avoid empty string matching everything
             const matches = [];
 
             // Prefer using medication_data to get the actual drug name even if matched by class
             if (facts.medication_data && Object.keys(facts.medication_data).length > 0) {
                 Object.values(facts.medication_data).forEach(med => {
-                    const drugName = String(med.drug_name || '').toLowerCase();
-                    const drugClass = String(med.drug_class || '').toLowerCase();
-                    if (drugName.includes(searchValue) || searchValue.includes(drugName) ||
-                        drugClass.includes(searchValue) || searchValue.includes(drugClass)) {
+                    const drugName = String(med.drug_name || '').toLowerCase().trim();
+                    const drugClass = String(med.drug_class || '').toLowerCase().trim();
+                    
+                    const nameMatches = drugName && (drugName.includes(searchValue) || searchValue.includes(drugName));
+                    const classMatches = drugClass && (drugClass.includes(searchValue) || searchValue.includes(drugClass));
+                    
+                    if (nameMatches || classMatches) {
                         if (med.drug_name) matches.push(med.drug_name);
                     }
                 });
             } else if (Array.isArray(facts.medications)) {
                 // Fallback
                 facts.medications.forEach(med => {
-                    const medStr = String(med).toLowerCase();
-                    if (medStr.includes(searchValue) || searchValue.includes(medStr)) {
+                    const medStr = String(med).toLowerCase().trim();
+                    if (medStr && (medStr.includes(searchValue) || searchValue.includes(medStr))) {
                         matches.push(medStr);
                     }
                 });
