@@ -21,6 +21,29 @@ const frequencyOptions = [
     'Every 4hrs', 'Every 6hrs', 'Every 8hrs', 'Every 12hrs', 'As needed (PRN)'
 ];
 
+// ✅ Route options (icons removed)
+const routeOptions = [
+    { value: 'po', label: 'Oral (PO)' },
+    { value: 'SL', label: 'Sublingual (SL)' },
+    { value: 'IV', label: 'Intravenous (IV)' },
+    { value: 'IM', label: 'Intramuscular (IM)' },
+    { value: 'SubQ', label: 'Subcutaneous (SubQ)' },
+    { value: 'Topical', label: 'Topical' },
+    { value: 'Inhalation', label: 'Inhalation' },
+    { value: 'Nasal', label: 'Nasal' },
+    { value: 'Ophthalmic', label: 'Ophthalmic' },
+    { value: 'Otic', label: 'Otic' },
+    { value: 'Rectal', label: 'Rectal' },
+    { value: 'Vaginal', label: 'Vaginal' },
+    { value: 'Intraarticular', label: 'Intraarticular' },
+    { value: 'IT', label: 'Intrathecal' },
+    { value: 'Epidural', label: 'Epidural' },
+    { value: 'Transdermal', label: 'Transdermal Patch' },
+    { value: 'IP', label: 'Intraperitoneal' },
+    { value: 'NG', label: 'NG tube' },
+    { value: 'GT', label: 'Gastric tube' }
+];
+
 const MAIN_CATEGORIES = [
     { id: 'demography', label: 'Demography', icon: FaUser },
     { id: 'anthropometry', label: 'Anthropometry', icon: FaWeight },
@@ -1589,8 +1612,7 @@ const ClinicalPharmacyTool = () => {
                                                                     <label className="block text-xs font-medium text-gray-700 mb-1">
                                                                         Route
                                                                     </label>
-                                                                    <input
-                                                                        type="text"
+                                                                    <select
                                                                         value={med.route}
                                                                         onChange={(e) =>
                                                                             updateMedication(
@@ -1599,9 +1621,15 @@ const ClinicalPharmacyTool = () => {
                                                                                 e.target.value
                                                                             )
                                                                         }
-                                                                        className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                                        placeholder="e.g. PO, IV, IM"
-                                                                    />
+                                                                        className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500 bg-white"
+                                                                    >
+                                                                        <option value="">Select...</option>
+                                                                        {routeOptions.map((route) => (
+                                                                            <option key={route.value} value={route.value}>
+                                                                                {route.label}
+                                                                            </option>
+                                                                        ))}
+                                                                    </select>
                                                                 </div>
 
                                                                 <div>
