@@ -1258,6 +1258,24 @@ const evaluateSingleCondition = (condition, facts, debug = false) => {
     }
 };
 
+const evaluateMedicationGroup = (medConditions, facts) => {
+    if (!facts || !facts.medication_data) return [];
+    
+    const matchedMeds = [];
+    Object.values(facts.medication_data).forEach(med => {
+        const isMatch = medConditions.every(cond => {
+            const field = cond.fact.substring(4); // remove 'med.'
+            const tempFacts = { ...med, [field]: med[field] }; // Pass the property directly
+            return evaluateSingleCondition({...cond, fact: field}, tempFacts, false);
+        });
+        if (isMatch && med.drug_name) {
+            matchedMeds.push(med.drug_name);
+        }
+    });
+    
+    return matchedMeds;
+};
+
 // ✅ debugRuleEvaluation function
 export const debugRuleEvaluation = (rule, facts) => {
     console.log('\n🔍 DEBUG RULE EVALUATION:');
@@ -1282,7 +1300,18 @@ export const debugRuleEvaluation = (rule, facts) => {
     // Handle different condition structures
     if (condition.all) {
         console.log('Condition type: ALL (all must be true)');
-        const allResults = condition.all.map((cond, index) => {
+        
+        const medConditions = condition.all.filter(c => c.fact && String(c.fact).startsWith('med.'));
+        const otherConditions = condition.all.filter(c => !(c.fact && String(c.fact).startsWith('med.')));
+        
+        let medResult = true;
+        if (medConditions.length > 0) {
+            const matchedMeds = evaluateMedicationGroup(medConditions, facts);
+            medResult = matchedMeds.length > 0;
+            console.log(`  [MED GROUP] evaluated against medications => ${medResult ? '✅ PASS' : '❌ FAIL'}`);
+        }
+
+        const allResults = otherConditions.map((cond, index) => {
             // Check if this condition is a nested "any" or "all"
             if (cond.any) {
                 console.log(`  [${index + 1}] Nested ANY condition:`);
@@ -1312,7 +1341,7 @@ export const debugRuleEvaluation = (rule, facts) => {
             }
         });
 
-        const finalResult = allResults.every(r => r === true);
+        const finalResult = medResult && allResults.every(r => r === true);
         console.log(`\nALL condition final: ${finalResult ? '✅ TRIGGERED' : '❌ NOT TRIGGERED'}`);
         return finalResult;
     }
@@ -1373,8 +1402,30 @@ const getMatchedMedications = (condition, facts) => {
         if (!cond) return null;
 
         if (cond.all) {
+            const medConditions = cond.all.filter(c => c.fact && String(c.fact).startsWith('med.'));
+            const otherConditions = cond.all.filter(c => !(c.fact && String(c.fact).startsWith('med.')));
+            
             let allMatchSets = [ [] ];
-            for (let c of cond.all) {
+
+            if (medConditions.length > 0) {
+                const matchedMeds = evaluateMedicationGroup(medConditions, facts);
+                if (matchedMeds.length === 0) return null; // Fails the 'all' block
+                
+                const childRes = matchedMeds.map(m => [m]);
+                let newMatchSets = [];
+                for (let existingSet of allMatchSets) {
+                    for (let childSet of childRes) {
+                        let combined = [...existingSet];
+                        for (let item of childSet) {
+                            if (!combined.includes(item)) combined.push(item);
+                        }
+                        newMatchSets.push(combined);
+                    }
+                }
+                allMatchSets = newMatchSets;
+            }
+
+            for (let c of otherConditions) {
                 let childRes = evaluate(c);
                 if (!childRes) return null; // If any fails, the 'all' block fails
                 
