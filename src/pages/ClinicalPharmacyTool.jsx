@@ -18,8 +18,7 @@ const frequencyOptions = [
     'Stat', 'Daily', 'Once daily', 'Twice daily', 'Three times daily', 'Four times daily',
     'Every morning', 'Every evening', 'Every night', 'At bedtime', 
     'Every other day', '3 times/week', '5 times/week', 'Weekly', 'Every 2 weeks', 'Every 3 weeks',
-    'Every 4hrs', 'Every 6hrs', 'Every 8hrs', 'Every 12hrs', 'As needed (PRN)',
-    'Before meals', 'After meals', 'With meals', 'On empty stomach'
+    'Every 4hrs', 'Every 6hrs', 'Every 8hrs', 'Every 12hrs', 'As needed (PRN)'
 ];
 
 const MAIN_CATEGORIES = [
