@@ -1373,26 +1373,39 @@ const getMatchedMedications = (condition, facts) => {
         if (!cond) return null;
 
         if (cond.all) {
-            let allMatched = [];
+            let allMatchSets = [ [] ];
             for (let c of cond.all) {
-                let res = evaluate(c);
-                if (!res) return null; // If any fails, the 'all' block fails
-                allMatched = [...allMatched, ...res];
+                let childRes = evaluate(c);
+                if (!childRes) return null; // If any fails, the 'all' block fails
+                
+                let newMatchSets = [];
+                for (let existingSet of allMatchSets) {
+                    for (let childSet of childRes) {
+                        let combined = [...existingSet];
+                        for (let item of childSet) {
+                            if (!combined.includes(item)) {
+                                combined.push(item);
+                            }
+                        }
+                        newMatchSets.push(combined);
+                    }
+                }
+                allMatchSets = newMatchSets;
             }
-            return allMatched;
+            return allMatchSets.length > 0 ? allMatchSets : null;
         }
 
         if (cond.any) {
-            let anyMatched = [];
+            let anyMatchSets = [];
             let anyTrue = false;
             for (let c of cond.any) {
-                let res = evaluate(c);
-                if (res) {
+                let childRes = evaluate(c);
+                if (childRes) {
                     anyTrue = true;
-                    anyMatched = [...anyMatched, ...res]; // Keep all branches that were true
+                    anyMatchSets.push(...childRes); // Keep all branches that were true
                 }
             }
-            return anyTrue ? anyMatched : null;
+            return anyTrue ? anyMatchSets : null;
         }
 
         if (cond.fact === 'medications' && cond.operator === 'contains' && cond.value) {
@@ -1423,27 +1436,38 @@ const getMatchedMedications = (condition, facts) => {
                 });
             }
 
-            return matches.length > 0 ? matches : null;
+            if (matches.length > 0) {
+                const uniqueMatches = [...new Set(matches)];
+                return uniqueMatches.map(m => [m]); // Return each match as a single-item combination
+            }
+            return null;
         }
 
         // For non-medication facts (age, labs, etc.), just return empty array if true, or null if false
         const isTrue = evaluateSingleCondition(cond, facts, false);
-        return isTrue ? [] : null;
+        return isTrue ? [ [] ] : null;
     };
 
     const result = evaluate(parsedCondition);
     if (!result) return [];
 
-    // Format (capitalize) and deduplicate the extracted patient medication names
-    const uniqueFormatted = [];
-    result.forEach(med => {
-        const displayName = String(med).charAt(0).toUpperCase() + String(med).slice(1).toLowerCase();
-        if (!uniqueFormatted.includes(displayName)) {
-            uniqueFormatted.push(displayName);
+    // Format (capitalize) and deduplicate the extracted patient medication combinations
+    const uniqueFormattedCombinations = [];
+    const seenCombos = new Set();
+    
+    result.forEach(combination => {
+        const formattedCombo = combination.map(med => {
+            return String(med).charAt(0).toUpperCase() + String(med).slice(1).toLowerCase();
+        }).sort(); // Sort to ensure uniqueness ignores order
+        
+        const comboKey = formattedCombo.join('|');
+        if (!seenCombos.has(comboKey)) {
+            seenCombos.add(comboKey);
+            uniqueFormattedCombinations.push(formattedCombo);
         }
     });
 
-    return uniqueFormatted;
+    return uniqueFormattedCombinations;
 };
 
 // ✅ evaluateRule function - returns { triggered, matchedMedications } or boolean for backward compatibility
@@ -1484,11 +1508,17 @@ export const evaluateRule = (rule, facts, returnDetails = false) => {
         }
 
         if (returnDetails) {
-            const matchedMeds = result ? getMatchedMedications(rule.rule_condition, facts) : [];
-            if (matchedMeds.length > 0) {
-                console.log(`💊 Matched medications: ${matchedMeds.join(', ')}`);
+            const matchedMedsCombos = result ? getMatchedMedications(rule.rule_condition, facts) : [];
+            const flatMeds = [...new Set(matchedMedsCombos.flat())];
+            
+            if (flatMeds.length > 0) {
+                console.log(`💊 Matched medications: ${flatMeds.join(', ')}`);
             }
-            return { triggered: result, matchedMedications: matchedMeds };
+            return { 
+                triggered: result, 
+                matchedMedications: flatMeds,
+                matchedMedicationCombinations: matchedMedsCombos 
+            };
         }
 
         return result;
@@ -1590,27 +1620,40 @@ export const runClinicalDecisionSupport = async (facts) => {
             if (evalResult.triggered) {
                 const action = typeof rule.rule_action === 'string' ? JSON.parse(rule.rule_action) : (rule.rule_action || {});
 
-                let professional_message = formatAlertMessage(action.message_professional || action.message || rule.rule_name, facts);
-                let client_message = formatAlertMessage(action.message_client || action.message || rule.rule_name, facts);
-                let recommendation = formatAlertMessage(action.recommendation_professional || action.recommendation || rule.rule_description, facts);
-                let client_recommendation = formatAlertMessage(action.recommendation_client || action.recommendation || rule.rule_description, facts);
+                const combinations = (evalResult.matchedMedicationCombinations && evalResult.matchedMedicationCombinations.length > 0)
+                    ? evalResult.matchedMedicationCombinations
+                    : [[]]; // Fallback to a single empty combination
 
-                // Append matched medication names to message if available
-                if (evalResult.matchedMedications.length > 0) {
-                    const tag = ` [Triggered by: ${evalResult.matchedMedications.join(', ')}]`;
-                    professional_message += tag;
-                    client_message += tag;
+                for (const combination of combinations) {
+                    let professional_message = formatAlertMessage(action.message_professional || action.message || rule.rule_name, facts);
+                    let client_message = formatAlertMessage(action.message_client || action.message || rule.rule_name, facts);
+                    let recommendation = formatAlertMessage(action.recommendation_professional || action.recommendation || rule.rule_description, facts);
+                    let client_recommendation = formatAlertMessage(action.recommendation_client || action.recommendation || rule.rule_description, facts);
+
+                    // Append matched medication names to message if available
+                    if (combination.length > 0) {
+                        const comboTextPlus = combination.join(' + ');
+                        const tag = ` [Triggered by: ${combination.join(', ')}]`;
+                        
+                        if (professional_message.includes('{{medications}}')) {
+                            professional_message = professional_message.replace(/\{\{medications\}\}/g, comboTextPlus);
+                            client_message = client_message.replace(/\{\{medications\}\}/g, comboTextPlus);
+                        } else {
+                            professional_message += tag;
+                            client_message += tag;
+                        }
+                    }
+
+                    results.push({
+                        message: professional_message, // Default
+                        professional_message,
+                        client_message,
+                        recommendation,
+                        client_recommendation,
+                        severity: action.severity || rule.severity || 'moderate',
+                        matchedMedications: combination
+                    });
                 }
-
-                results.push({
-                    message: professional_message, // Default
-                    professional_message,
-                    client_message,
-                    recommendation,
-                    client_recommendation,
-                    severity: action.severity || rule.severity || 'moderate',
-                    matchedMedications: evalResult.matchedMedications
-                });
             }
         }
 
