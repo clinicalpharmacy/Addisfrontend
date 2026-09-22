@@ -264,26 +264,47 @@ export const useCDSSLogic = (patientData) => {
                         const profRec = formatAlertMessage(action.recommendation_professional || action.recommendation || rule.rule_description || '', facts);
                         const clientRec = formatAlertMessage(action.recommendation_client || action.recommendation || rule.rule_description || '', facts);
 
-                        triggeredAlerts.push({
-                            id: `${rule.id}-${Date.now()}-${rulesEvaluated}`,
-                            rule_id: rule.id,
-                            rule_name: rule.rule_name,
-                            rule_type: rule.rule_type,
-                            severity: action.severity || rule.severity || 'moderate',
-                            message: profMsg,
-                            professional_message: profMsg + (evalResult.matchedMedications.length > 0 ? ` [Matched: ${evalResult.matchedMedications.join(', ')}]` : ''),
-                            client_message: clientMsg,
-                            professional_recommendation: profRec,
-                            client_recommendation: clientRec,
-                            details: profRec || rule.rule_description,
-                            evidence: {
-                                facts,
-                                matched_medications: evalResult.matchedMedications
-                            },
-                            timestamp: new Date().toISOString(),
-                            acknowledged: false,
-                            processed: false,
-                            patient_id: patientData.id
+                        const combinations = (evalResult.matchedMedicationCombinations && evalResult.matchedMedicationCombinations.length > 0)
+                            ? evalResult.matchedMedicationCombinations
+                            : [[]]; // Fallback to a single empty combination for non-medication rules
+
+                        combinations.forEach((combo, comboIndex) => {
+                            let comboProfMsg = profMsg;
+                            let comboClientMsg = clientMsg;
+
+                            if (combo.length > 0) {
+                                const comboTextPlus = combo.join(' + ');
+                                const tag = ` [Matched: ${combo.join(', ')}]`;
+                                
+                                if (comboProfMsg.includes('{{medications}}')) {
+                                    comboProfMsg = comboProfMsg.replace(/\{\{medications\}\}/g, comboTextPlus);
+                                    comboClientMsg = comboClientMsg.replace(/\{\{medications\}\}/g, comboTextPlus);
+                                } else {
+                                    comboProfMsg += tag;
+                                }
+                            }
+
+                            triggeredAlerts.push({
+                                id: `${rule.id}-${Date.now()}-${rulesEvaluated}-${comboIndex}`,
+                                rule_id: rule.id,
+                                rule_name: rule.rule_name,
+                                rule_type: rule.rule_type,
+                                severity: action.severity || rule.severity || 'moderate',
+                                message: comboProfMsg,
+                                professional_message: comboProfMsg,
+                                client_message: comboClientMsg,
+                                professional_recommendation: profRec,
+                                client_recommendation: clientRec,
+                                details: profRec || rule.rule_description,
+                                evidence: {
+                                    facts,
+                                    matched_medications: combo.length > 0 ? combo : evalResult.matchedMedications
+                                },
+                                timestamp: new Date().toISOString(),
+                                acknowledged: false,
+                                processed: false,
+                                patient_id: patientData.id
+                            });
                         });
                     }
                 } catch (e) { console.error(`Rule ${rule.id} failed`, e); }
