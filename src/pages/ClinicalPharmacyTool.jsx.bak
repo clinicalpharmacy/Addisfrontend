@@ -13,6 +13,37 @@ import PhAssistPlan from '../components/Patient/PhAssistPlan';
 import PatientOutcome from '../components/Patient/PatientOutcome';
 import CostSection from '../components/Patient/CostSection';
 
+// Frequency options
+const frequencyOptions = [
+    'Stat', 'Daily', 'Once daily', 'Twice daily', 'Three times daily', 'Four times daily',
+    'Every morning', 'Every evening', 'Every night', 'At bedtime',
+    'Every other day', '3 times/week', '5 times/week', 'Weekly', 'Every 2 weeks', 'Every 3 weeks',
+    'Every 4hrs', 'Every 6hrs', 'Every 8hrs', 'Every 12hrs', 'As needed (PRN)'
+];
+
+// Route options
+const routeOptions = [
+    { value: 'po', label: 'Oral (PO)' },
+    { value: 'SL', label: 'Sublingual (SL)' },
+    { value: 'IV', label: 'Intravenous (IV)' },
+    { value: 'IM', label: 'Intramuscular (IM)' },
+    { value: 'SubQ', label: 'Subcutaneous (SubQ)' },
+    { value: 'Topical', label: 'Topical' },
+    { value: 'Inhalation', label: 'Inhalation' },
+    { value: 'Nasal', label: 'Nasal' },
+    { value: 'Ophthalmic', label: 'Ophthalmic' },
+    { value: 'Otic', label: 'Otic' },
+    { value: 'Rectal', label: 'Rectal' },
+    { value: 'Vaginal', label: 'Vaginal' },
+    { value: 'Intraarticular', label: 'Intraarticular' },
+    { value: 'IT', label: 'Intrathecal' },
+    { value: 'Epidural', label: 'Epidural' },
+    { value: 'Transdermal', label: 'Transdermal Patch' },
+    { value: 'IP', label: 'Intraperitoneal' },
+    { value: 'NG', label: 'NG tube' },
+    { value: 'GT', label: 'Gastric tube' }
+];
+
 // Main categories in the correct order
 const MAIN_CATEGORIES = [
     { id: 'demography', label: 'Demography', icon: FaUser },
@@ -24,12 +55,6 @@ const MAIN_CATEGORIES = [
     { id: 'medications', label: 'Medications', icon: FaPills }
 ];
 
-/**
- * Generate a stable key from a lab test name.
- * e.g. "Serum Creatinine" -> "serum_creatinine"
- *      "eGFR"             -> "egfr"
- *      "Total Bilirubin"  -> "total_bilirubin"
- */
 const slugifyLabName = (name) =>
     String(name || '')
         .toLowerCase()
@@ -37,10 +62,6 @@ const slugifyLabName = (name) =>
         .replace(/ /g, '_')
         .replace(/[^a-z0-9_]/g, '');
 
-/**
- * Map specific display names to CDSS-expected keys.
- * If LabSettings adds a `cdss_key` column later, prefer that.
- */
 const LAB_KEY_ALIASES = {
     'creatinine': 'serum_creatinine',
     'serum_creatinine': 'serum_creatinine',
@@ -71,12 +92,10 @@ const ClinicalPharmacyTool = () => {
     const [activeTab, setActiveTab] = useState('analysis');
     const [isCategorySelectorOpen, setIsCategorySelectorOpen] = useState(true);
 
-    // Dynamic lab categories fetched from Supabase
     const [labSubCategories, setLabSubCategories] = useState([]);
     const [labsLoading, setLabsLoading] = useState(false);
     const [labsError, setLabsError] = useState('');
 
-    // State for individual section collapse/expand
     const [expandedSections, setExpandedSections] = useState({
         demography: true,
         anthropometry: true,
@@ -87,7 +106,6 @@ const ClinicalPharmacyTool = () => {
         medications: true
     });
 
-    // Get user role from localStorage (same logic as sidebar)
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     const isAdmin = user?.role === 'admin' || user?.role?.includes('admin');
     const isPharmacist = user?.role === 'pharmacist';
@@ -102,14 +120,12 @@ const ClinicalPharmacyTool = () => {
 
     const allCategories = MAIN_CATEGORIES;
 
-    // Tab Data States for PDF
     const [cdssData, setCdssData] = useState([]);
     const [drnData, setDrnData] = useState([]);
     const [planData, setPlanData] = useState([]);
     const [outcomeData, setOutcomeData] = useState([]);
     const [costData, setCostData] = useState([]);
 
-    // Form State
     const [formData, setFormData] = useState({
         age: '',
         gender: '',
@@ -130,9 +146,7 @@ const ClinicalPharmacyTool = () => {
         labs: {}
     });
 
-    // ─────────────────────────────────────────────────────────────────────
-    // Fetch lab tests from Supabase and group them by category
-    // ─────────────────────────────────────────────────────────────────────
+    // Fetch lab tests from Supabase
     useEffect(() => {
         let cancelled = false;
 
@@ -189,7 +203,6 @@ const ClinicalPharmacyTool = () => {
         };
     }, []);
 
-    // Toggle section expansion
     const toggleSection = (sectionId) => {
         setExpandedSections((prev) => ({
             ...prev,
@@ -197,7 +210,6 @@ const ClinicalPharmacyTool = () => {
         }));
     };
 
-    // Calculate BSA using Du Bois method: BSA = 0.007184 × W^0.425 × H^0.725
     const calculateBSA = (weight, height) => {
         if (!weight || !height || weight <= 0 || height <= 0) return '';
         const w = parseFloat(weight);
@@ -206,7 +218,6 @@ const ClinicalPharmacyTool = () => {
         return bsa.toFixed(2);
     };
 
-    // Calculate eGFR using 2021 CKD-EPI creatinine formula
     const calculateEGFR = (creatinine, age, gender) => {
         if (!creatinine || !age || !gender || creatinine <= 0 || age <= 0) return '';
 
@@ -231,7 +242,6 @@ const ClinicalPharmacyTool = () => {
         return Math.round(egfr).toString();
     };
 
-    // Auto-calculate BSA
     useEffect(() => {
         if (formData.weight && formData.height) {
             const weight = parseFloat(formData.weight);
@@ -247,7 +257,6 @@ const ClinicalPharmacyTool = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [formData.weight, formData.height]);
 
-    // Auto-calculate eGFR when creatinine, age, or gender changes
     useEffect(() => {
         const creatinine = formData.labs?.serum_creatinine;
         const age = formData.age;
@@ -280,73 +289,74 @@ const ClinicalPharmacyTool = () => {
     }, [formData.labs?.serum_creatinine, formData.age, formData.gender]);
 
     const handleCategoryToggle = (categoryId) => {
-        if (selectedCategories.includes(categoryId)) {
-            setSelectedCategories(selectedCategories.filter((id) => id !== categoryId));
-            if (categoryId === 'labs') {
-                setSelectedLabSubCategories([]);
+        setSelectedCategories((prev) => {
+            if (prev.includes(categoryId)) {
+                if (categoryId === 'labs') {
+                    setSelectedLabSubCategories([]);
+                }
+                return prev.filter((id) => id !== categoryId);
             }
-        } else {
-            setSelectedCategories([...selectedCategories, categoryId]);
-            if (categoryId === 'medications' && formData.medications.length === 0) {
-                setFormData((prev) => ({
-                    ...prev,
-                    medications: [
-                        {
-                            drug_name: '',
-                            brand_name: '',
-                            indication: '',
-                            dose: '',
-                            strength: '',
-                            unit: 'mg',
-                            dosage_form: 'Tablet',
-                            route: '',
-                            frequency: '',
-                            duration: '',
-                            start_date: '',
-                            stop_date: '',
-                            status: 'Active'
-                        }
-                    ]
-                }));
+            if (categoryId === 'medications') {
+                setFormData((prevForm) => {
+                    if (prevForm.medications.length > 0) return prevForm;
+                    return {
+                        ...prevForm,
+                        medications: [
+                            {
+                                drug_name: '',
+                                brand_name: '',
+                                indication: '',
+                                dose: '',
+                                strength: '',
+                                unit: 'mg',
+                                dosage_form: 'Tablet',
+                                route: '',
+                                frequency: '',
+                                duration: '',
+                                start_date: '',
+                                stop_date: '',
+                                status: 'Active'
+                            }
+                        ]
+                    };
+                });
             }
-        }
+            return [...prev, categoryId];
+        });
     };
 
     const handleLabSubCategoryToggle = (subCategoryId) => {
-        if (selectedLabSubCategories.includes(subCategoryId)) {
-            setSelectedLabSubCategories(
-                selectedLabSubCategories.filter((id) => id !== subCategoryId)
-            );
-        } else {
-            setSelectedLabSubCategories([...selectedLabSubCategories, subCategoryId]);
-        }
+        setSelectedLabSubCategories((prev) =>
+            prev.includes(subCategoryId)
+                ? prev.filter((id) => id !== subCategoryId)
+                : [...prev, subCategoryId]
+        );
     };
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
-        setFormData({
-            ...formData,
+        setFormData((prev) => ({
+            ...prev,
             [name]: type === 'checkbox' ? checked : value
-        });
+        }));
     };
 
     const handleLabChange = (e) => {
         const { name, value } = e.target;
-        setFormData({
-            ...formData,
+        setFormData((prev) => ({
+            ...prev,
             labs: {
-                ...formData.labs,
+                ...prev.labs,
                 [name]: value
             }
-        });
+        }));
     };
 
-    // Medication handlers
     const addMedication = () => {
-        setFormData({
-            ...formData,
+        setFormData((prev) => ({
+            ...prev,
             medications: [
-                ...formData.medications,
+                ...prev.medications,
                 {
                     drug_name: '',
                     brand_name: '',
@@ -363,18 +373,22 @@ const ClinicalPharmacyTool = () => {
                     status: 'Active'
                 }
             ]
-        });
+        }));
     };
 
     const updateMedication = (index, field, value) => {
-        const newMeds = [...formData.medications];
-        newMeds[index][field] = value;
-        setFormData({ ...formData, medications: newMeds });
+        setFormData((prev) => {
+            const newMeds = [...prev.medications];
+            newMeds[index] = { ...newMeds[index], [field]: value };
+            return { ...prev, medications: newMeds };
+        });
     };
 
     const removeMedication = (index) => {
-        const newMeds = formData.medications.filter((_, i) => i !== index);
-        setFormData({ ...formData, medications: newMeds });
+        setFormData((prev) => ({
+            ...prev,
+            medications: prev.medications.filter((_, i) => i !== index)
+        }));
     };
 
     const handleRunAnalysis = () => {
@@ -387,7 +401,6 @@ const ClinicalPharmacyTool = () => {
         []
     );
 
-    // Construct patientData object for CDSSDisplay
     const constructedPatientData = useMemo(
         () => ({
             id: sessionId,
@@ -468,7 +481,6 @@ const ClinicalPharmacyTool = () => {
             });
             currentY = doc.lastAutoTable.finalY + 10;
 
-            // CDSS Findings
             if (currentY > 250) {
                 doc.addPage();
                 currentY = 20;
@@ -478,10 +490,8 @@ const ClinicalPharmacyTool = () => {
             doc.text('Medication Review Findings', 15, currentY);
 
             if (cdssData && cdssData.length > 0) {
+                const isClient = user?.role === 'healthcare_client';
                 const alertRows = cdssData.map((alert, index) => {
-                    const isClient =
-                        localStorage.getItem('userRole') === 'healthcare_client' ||
-                        localStorage.getItem('pharmacare_userRole') === 'healthcare_client';
                     const finding = isClient
                         ? alert.client_message || alert.message
                         : alert.professional_message || alert.message;
@@ -519,7 +529,6 @@ const ClinicalPharmacyTool = () => {
                 currentY += 15;
             }
 
-            // Current Medications
             if (formData.medications.length > 0) {
                 if (currentY > 250) {
                     doc.addPage();
@@ -543,7 +552,6 @@ const ClinicalPharmacyTool = () => {
                 currentY = doc.lastAutoTable.finalY + 10;
             }
 
-            // DRN Assessment
             if (isPharmacistOrStudent && drnData && drnData.length > 0) {
                 if (currentY > 250) {
                     doc.addPage();
@@ -567,7 +575,6 @@ const ClinicalPharmacyTool = () => {
                 currentY = doc.lastAutoTable.finalY + 10;
             }
 
-            // Pharmacy Plan
             if (isPharmacistOrStudent && planData && planData.length > 0) {
                 if (currentY > 250) {
                     doc.addPage();
@@ -590,7 +597,6 @@ const ClinicalPharmacyTool = () => {
                 currentY = doc.lastAutoTable.finalY + 10;
             }
 
-            // Outcome
             if (isPharmacistOrStudent && outcomeData && outcomeData.length > 0) {
                 if (currentY > 250) {
                     doc.addPage();
@@ -612,7 +618,6 @@ const ClinicalPharmacyTool = () => {
                 currentY = doc.lastAutoTable.finalY + 10;
             }
 
-            // Cost
             if (isPharmacistOrStudent && costData && costData.length > 0) {
                 if (currentY > 250) {
                     doc.addPage();
@@ -657,9 +662,7 @@ const ClinicalPharmacyTool = () => {
         }
     };
 
-    // ─────────────────────────────────────────────────────────────────────
     // ANALYSIS RESULTS VIEW
-    // ─────────────────────────────────────────────────────────────────────
     if (showAnalysis) {
         return (
             <div className="min-h-screen bg-gray-50 p-4 md:p-6 animate-in fade-in duration-500">
@@ -808,9 +811,7 @@ const ClinicalPharmacyTool = () => {
         );
     }
 
-    // ─────────────────────────────────────────────────────────────────────
     // DATA ENTRY VIEW
-    // ─────────────────────────────────────────────────────────────────────
     return (
         <div className="min-h-screen bg-gray-50 p-4 md:p-6">
             <div className="max-w-6xl mx-auto">
@@ -1026,7 +1027,7 @@ const ClinicalPharmacyTool = () => {
                                 </div>
                             )}
 
-                            {/* Labs - Dynamic from Supabase */}
+                            {/* Labs */}
                             {selectedCategories.includes('labs') && (
                                 <div className="bg-white rounded-xl shadow-sm border-l-4 border-yellow-500 overflow-hidden">
                                     <button
@@ -1042,7 +1043,6 @@ const ClinicalPharmacyTool = () => {
                                     </button>
                                     {expandedSections.labs && (
                                         <div className="p-4 pt-0">
-                                            {/* Loading / Error states */}
                                             {labsLoading && (
                                                 <div className="flex items-center justify-center py-8 text-gray-500">
                                                     <FaSpinner className="animate-spin mr-2 text-yellow-500" />
@@ -1065,7 +1065,6 @@ const ClinicalPharmacyTool = () => {
 
                                             {!labsLoading && !labsError && labSubCategories.length > 0 && (
                                                 <>
-                                                    {/* Sub-category selection */}
                                                     <div className="mb-4">
                                                         <p className="text-sm text-gray-600 mb-2">
                                                             Select which lab test categories you want to fill:
@@ -1097,7 +1096,6 @@ const ClinicalPharmacyTool = () => {
                                                         </div>
                                                     </div>
 
-                                                    {/* Show selected lab categories */}
                                                     <div className="space-y-6">
                                                         {labSubCategories
                                                             .filter((subCat) =>
@@ -1126,7 +1124,6 @@ const ClinicalPharmacyTool = () => {
                                                                                     formData.labs.serum_creatinine
                                                                                 ) > 0;
 
-                                                                            // Reference range hint (gender-aware)
                                                                             const refRange =
                                                                                 formData.gender === 'female'
                                                                                     ? test.range_female
@@ -1581,8 +1578,7 @@ const ClinicalPharmacyTool = () => {
                                                                     <label className="block text-xs font-medium text-gray-700 mb-1">
                                                                         Route
                                                                     </label>
-                                                                    <input
-                                                                        type="text"
+                                                                    <select
                                                                         value={med.route}
                                                                         onChange={(e) =>
                                                                             updateMedication(
@@ -1591,17 +1587,22 @@ const ClinicalPharmacyTool = () => {
                                                                                 e.target.value
                                                                             )
                                                                         }
-                                                                        className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                                        placeholder="e.g. PO, IV, IM"
-                                                                    />
+                                                                        className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500 bg-white"
+                                                                    >
+                                                                        <option value="">Select...</option>
+                                                                        {routeOptions.map((route) => (
+                                                                            <option key={route.value} value={route.value}>
+                                                                                {route.label}
+                                                                            </option>
+                                                                        ))}
+                                                                    </select>
                                                                 </div>
 
                                                                 <div>
                                                                     <label className="block text-xs font-medium text-gray-700 mb-1">
                                                                         Frequency
                                                                     </label>
-                                                                    <input
-                                                                        type="text"
+                                                                    <select
                                                                         value={med.frequency}
                                                                         onChange={(e) =>
                                                                             updateMedication(
@@ -1610,9 +1611,13 @@ const ClinicalPharmacyTool = () => {
                                                                                 e.target.value
                                                                             )
                                                                         }
-                                                                        className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                                        placeholder="e.g. BID, TID, OD"
-                                                                    />
+                                                                        className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500 bg-white"
+                                                                    >
+                                                                        <option value="">Select...</option>
+                                                                        {frequencyOptions.map((freq) => (
+                                                                            <option key={freq} value={freq}>{freq}</option>
+                                                                        ))}
+                                                                    </select>
                                                                 </div>
 
                                                                 <div>
