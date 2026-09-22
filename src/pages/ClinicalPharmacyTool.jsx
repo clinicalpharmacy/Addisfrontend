@@ -14,6 +14,14 @@ import PatientOutcome from '../components/Patient/PatientOutcome';
 import CostSection from '../components/Patient/CostSection';
 
 // Main categories in the correct order
+const frequencyOptions = [
+    'Stat', 'Once daily', 'Twice daily', 'Three times daily', 'Four times daily',
+    'Every morning', 'Every evening', 'Every night', 'At bedtime', 
+    'Every other day', '3 times/week', '5 times/week', 'Weekly', 'Every 2 weeks', 'Every 3 weeks',
+    'Every 4hrs', 'Every 6hrs', 'Every 8hrs', 'Every 12hrs', 'As needed (PRN)',
+    'Before meals', 'After meals', 'With meals', 'On empty stomach'
+];
+
 const MAIN_CATEGORIES = [
     { id: 'demography', label: 'Demography', icon: FaUser },
     { id: 'anthropometry', label: 'Anthropometry', icon: FaWeight },
@@ -1601,8 +1609,7 @@ const ClinicalPharmacyTool = () => {
                                                                     <label className="block text-xs font-medium text-gray-700 mb-1">
                                                                         Frequency
                                                                     </label>
-                                                                    <input
-                                                                        type="text"
+                                                                    <select
                                                                         value={med.frequency}
                                                                         onChange={(e) =>
                                                                             updateMedication(
@@ -1612,8 +1619,12 @@ const ClinicalPharmacyTool = () => {
                                                                             )
                                                                         }
                                                                         className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                                        placeholder="e.g. BID, TID, OD"
-                                                                    />
+                                                                    >
+                                                                        <option value="">Select...</option>
+                                                                        {frequencyOptions.map(freq => (
+                                                                            <option key={freq} value={freq}>{freq}</option>
+                                                                        ))}
+                                                                    </select>
                                                                 </div>
 
                                                                 <div>
