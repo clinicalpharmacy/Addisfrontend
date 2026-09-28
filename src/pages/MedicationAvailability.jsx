@@ -22,7 +22,11 @@ const MedicationAvailability = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [editPostId, setEditPostId] = useState(null);
     const isAdmin = currentUser?.role === 'admin';
-    
+
+    // New state for post type (availability or price)
+    const [postType, setPostType] = useState('availability');
+    const [filterType, setFilterType] = useState('all'); // 'all', 'availability', or 'price'
+
     // Add refs to prevent unnecessary re-renders and track mounted state
     const isMounted = useRef(true);
     const pollingInterval = useRef(null);
@@ -34,6 +38,8 @@ const MedicationAvailability = () => {
         medication_needed: '',
         search_date: '',
         notes: '',
+        price: '',
+        post_type: 'availability',
     });
 
     // Keep postsRef in sync with posts state
@@ -45,7 +51,7 @@ const MedicationAvailability = () => {
         isMounted.current = true; // FIX: Reset to true for React 18 Strict Mode remounts
         fetchCurrentUser();
         fetchPosts();
-        
+
         // Cleanup on unmount
         return () => {
             isMounted.current = false;
@@ -64,19 +70,19 @@ const MedicationAvailability = () => {
         if (autoDeleteInterval.current) {
             clearInterval(autoDeleteInterval.current);
         }
-        
+
         const checkAndDeleteExpiredPosts = async () => {
             // Use postsRef to avoid dependency on posts state
             const currentPosts = postsRef.current;
             if (!currentPosts.length) return;
-            
+
             const today = new Date().toISOString().split('T')[0];
-            const expiredPosts = currentPosts.filter(post => 
+            const expiredPosts = currentPosts.filter(post =>
                 post.search_date && post.search_date < today
             );
-            
+
             if (expiredPosts.length === 0) return;
-            
+
             // Delete expired posts
             for (const post of expiredPosts) {
                 try {
@@ -86,7 +92,7 @@ const MedicationAvailability = () => {
                     console.error(`Failed to auto-delete post ${post.id}:`, error);
                 }
             }
-            
+
             // Refresh posts only if we deleted something and component is still mounted
             if (expiredPosts.length > 0 && isMounted.current) {
                 await fetchPosts();
@@ -119,7 +125,7 @@ const MedicationAvailability = () => {
 
         const fetchChatData = async () => {
             if (!selectedPost || !isMounted.current) return;
-            
+
             try {
                 if (isPoster) {
                     if (selectedChatUser) {
@@ -287,15 +293,26 @@ const MedicationAvailability = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         if (!formData.medication_needed.trim()) {
             alert('Medication name is required');
             return;
         }
 
+        // Validate price for price posts
+        if (formData.post_type === 'price' && !formData.price.trim()) {
+            alert('Price is required for price postings');
+            return;
+        }
+
         try {
+            const submitData = {
+                ...formData,
+                post_type: formData.post_type,
+            };
+
             if (isEditing) {
-                const response = await api.put(`/medication-availability/${editPostId}`, formData);
+                const response = await api.put(`/medication-availability/${editPostId}`, submitData);
                 if (response && response.success && isMounted.current) {
                     setIsEditing(false);
                     setEditPostId(null);
@@ -303,18 +320,22 @@ const MedicationAvailability = () => {
                         medication_needed: '',
                         search_date: '',
                         notes: '',
+                        price: '',
+                        post_type: 'availability',
                     });
                     setShowAddForm(false);
                     await fetchPosts();
                 }
             } else {
-                const response = await api.post('/medication-availability', formData);
+                const response = await api.post('/medication-availability', submitData);
                 if (response && response.success && isMounted.current) {
                     setShowAddForm(false);
                     setFormData({
                         medication_needed: '',
                         search_date: '',
                         notes: '',
+                        price: '',
+                        post_type: 'availability',
                     });
                     await fetchPosts();
                 }
@@ -330,6 +351,8 @@ const MedicationAvailability = () => {
             medication_needed: post.medication_needed || '',
             search_date: post.search_date || '',
             notes: post.notes || '',
+            price: post.price || '',
+            post_type: post.post_type || 'availability',
         });
         setEditPostId(post.id);
         setIsEditing(true);
@@ -339,17 +362,17 @@ const MedicationAvailability = () => {
 
     const handleDelete = async (id) => {
         if (!window.confirm('Are you sure you want to delete this post?')) return;
-        
+
         const post = posts.find(p => p.id === id);
         if (!post) return;
-        
+
         const isAuthorized = currentUser?.id === post.user_id || currentUser?.role === 'admin';
-        
+
         if (!isAuthorized) {
             alert('You are not authorized to delete this post');
             return;
         }
-        
+
         try {
             const data = await api.delete(`/medication-availability/${id}`);
             if (data && data.success && isMounted.current) {
@@ -368,9 +391,13 @@ const MedicationAvailability = () => {
     // Filter posts
     const filteredPosts = Array.isArray(posts) ? posts.filter(post => {
         if (!post || !post.medication_needed) return false;
+
+        // Filter by post type
+        if (filterType !== 'all' && post.post_type !== filterType) return false;
+
         const term = searchTerm.toLowerCase().trim();
         if (!term) return true;
-        
+
         const medName = (post.medication_needed || '').toLowerCase();
         const institution = (post.user?.institution || '').toLowerCase();
         const location = (post.user?.location || '').toLowerCase();
@@ -383,7 +410,7 @@ const MedicationAvailability = () => {
         try {
             const date = new Date(dateString);
             if (isNaN(date.getTime())) return '';
-            
+
             return date.toLocaleDateString([], {
                 year: 'numeric',
                 month: 'short',
@@ -401,7 +428,7 @@ const MedicationAvailability = () => {
     };
 
     // Memoize filtered posts to prevent unnecessary re-renders
-    const memoizedFilteredPosts = React.useMemo(() => filteredPosts, [posts, searchTerm]);
+    const memoizedFilteredPosts = React.useMemo(() => filteredPosts, [posts, searchTerm, filterType]);
 
     return (
         <div className="p-6 max-w-7xl mx-auto flex flex-col h-[calc(100vh-100px)]">
@@ -426,7 +453,7 @@ const MedicationAvailability = () => {
                         setShowAddForm(!showAddForm);
                         if (isEditing) {
                             setIsEditing(false);
-                            setFormData({ medication_needed: '', search_date: '', notes: '' });
+                            setFormData({ medication_needed: '', search_date: '', notes: '', price: '', post_type: 'availability' });
                         }
                     }}
                     className={`${showAddForm ? 'bg-gray-500' : 'bg-blue-600'} text-white px-6 py-3 rounded-xl flex items-center gap-2 hover:opacity-90 transition shadow-lg font-bold`}
@@ -450,10 +477,52 @@ const MedicationAvailability = () => {
                         />
                     </div>
 
+                    {/* Filter Tabs */}
+                    <div className="flex gap-2 mb-4">
+                        <button
+                            onClick={() => setFilterType('all')}
+                            className={`px-4 py-2 rounded-xl text-sm font-bold transition ${filterType === 'all' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:border-blue-300'}`}
+                        >
+                            All
+                        </button>
+                        <button
+                            onClick={() => setFilterType('availability')}
+                            className={`px-4 py-2 rounded-xl text-sm font-bold transition ${filterType === 'availability' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:border-blue-300'}`}
+                        >
+                            Availability
+                        </button>
+                        <button
+                            onClick={() => setFilterType('price')}
+                            className={`px-4 py-2 rounded-xl text-sm font-bold transition ${filterType === 'price' ? 'bg-green-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:border-green-300'}`}
+                        >
+                            Price
+                        </button>
+                    </div>
+
                     {/* Add/Edit Form */}
                     {showAddForm && (
                         <div className="bg-white p-6 rounded-2xl shadow-lg border-2 border-blue-100 mb-6">
                             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                {/* Post Type Selector */}
+                                <div className="md:col-span-3">
+                                    <div className="flex gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData({ ...formData, post_type: 'availability' })}
+                                            className={`flex-1 py-3 rounded-xl font-bold transition ${formData.post_type === 'availability' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                                        >
+                                            Availability
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData({ ...formData, post_type: 'price' })}
+                                            className={`flex-1 py-3 rounded-xl font-bold transition ${formData.post_type === 'price' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                                        >
+                                            Price
+                                        </button>
+                                    </div>
+                                </div>
+
                                 <div className="md:col-span-3">
                                     <input
                                         type="text"
@@ -464,6 +533,24 @@ const MedicationAvailability = () => {
                                         placeholder="የመድሃኒቱን ስም ይጻፉ"
                                     />
                                 </div>
+
+                                {/* Price Input (only shown for price posts) */}
+                                {formData.post_type === 'price' && (
+                                    <div className="md:col-span-3">
+                                        <div className="flex items-center gap-2 w-full">
+                                            <label className="text-lg text-gray-500 whitespace-nowrap">
+                                                ዋጋ
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={formData.price}
+                                                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                                                className="flex-1 border border-gray-200 rounded-xl p-3 focus:border-green-500"
+                                                placeholder="የመድሃኒቱን ዋጋ ይጻፉ (ብር)"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
                                 
                                 {/* Row with label, calendar button, selected date, and post button */}
                                 <div className="md:col-span-3">
@@ -530,7 +617,7 @@ const MedicationAvailability = () => {
                                         />
                                         <button
                                             type="submit"
-                                            className="bg-green-600 text-white font-bold py-3 px-5 rounded-2xl hover:bg-green-700 whitespace-nowrap flex-shrink-0"
+                                            className={`text-white font-bold py-3 px-5 rounded-2xl whitespace-nowrap flex-shrink-0 ${formData.post_type === 'price' ? 'bg-green-600 hover:bg-green-700' : 'bg-green-600 hover:bg-green-700'}`}
                                         >
                                             {isEditing ? "Update" : "Post"}
                                         </button>
@@ -546,6 +633,7 @@ const MedicationAvailability = () => {
                     ) : (
                         memoizedFilteredPosts.map(post => {
                             const searchDatePassed = isDatePassed(post.search_date);
+                            const isPricePost = post.post_type === 'price';
                             
                             return (
                                 <div
@@ -571,9 +659,21 @@ const MedicationAvailability = () => {
                                                     እስከ: {formatDate(post.search_date)}
                                                 </span>
                                             )}
+                                            {isPricePost && post.price && (
+                                                <div className="mt-1">
+                                                    <span className="text-sm font-bold text-green-600">
+                                                        ዋጋ: {post.price} ብር
+                                                    </span>
+                                                </div>
+                                            )}
                                         </div>
                                     
                                         <div className="flex flex-col items-end gap-1">
+                                            {/* Post Type Badge - Right Upper Corner */}
+                                            <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full ${isPricePost ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                                                {isPricePost ? 'Price' : 'Availability'}
+                                            </span>
+                                            
                                             <span className="text-[11px] text-gray-400 font-medium">
                                                 Posted: {formatDate(post.created_at)}
                                             </span>
