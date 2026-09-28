@@ -642,7 +642,7 @@ const MedicationAvailability = () => {
                                             <div className="flex flex-col items-end gap-1">
                                                 {/* Post Type Badge - Right Upper Corner */}
                                                 <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full ${isPricePost ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
-                                                    {isPricePost ? 'Price' : 'Availability'}
+                                                    {isPricePost ? 'ለዋጋ ቅናሽ' : 'የጠፋ መድሃኒት'}
                                                 </span>
 
                                                 <span className="text-[11px] text-gray-400 font-medium">
