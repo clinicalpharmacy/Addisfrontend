@@ -506,14 +506,14 @@ const MedicationAvailability = () => {
                                         onClick={() => setFormData({ ...formData, post_type: 'availability' })}
                                         className={`flex-1 py-2 rounded-lg text-sm font-bold transition ${formData.post_type === 'availability' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                                     >
-                                        Availability
+                                        የጠፋ መድሃኒት ማፈላለጊያ 
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setFormData({ ...formData, post_type: 'price' })}
                                         className={`flex-1 py-2 rounded-lg text-sm font-bold transition ${formData.post_type === 'price' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                                     >
-                                        Price
+                                        ዋጋ ቅናሽ ማፈላለጊያ
                                     </button>
                                 </div>
 
