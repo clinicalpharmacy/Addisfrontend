@@ -23,9 +23,8 @@ const MedicationAvailability = () => {
     const [editPostId, setEditPostId] = useState(null);
     const isAdmin = currentUser?.role === 'admin';
 
-    // New state for post type (availability or price)
-    const [postType, setPostType] = useState('availability');
-    const [filterType, setFilterType] = useState('all'); // 'all', 'availability', or 'price'
+    // Filter type: 'all', 'availability', or 'price'
+    const [filterType, setFilterType] = useState('all');
 
     // Add refs to prevent unnecessary re-renders and track mounted state
     const isMounted = useRef(true);
@@ -63,7 +62,7 @@ const MedicationAvailability = () => {
         };
     }, []);
 
-    // Auto-delete posts when search_date has passed - FIXED
+    // Auto-delete posts when search_date has passed
     useEffect(() => {
         // Clear any existing interval
         if (autoDeleteInterval.current) {
@@ -114,7 +113,7 @@ const MedicationAvailability = () => {
         };
     }, []); // Empty dependency array - only runs once on mount
 
-    // Polling for live chat - FIXED
+    // Polling for live chat
     useEffect(() => {
         // Clear any existing polling interval
         if (pollingInterval.current) {
@@ -298,11 +297,20 @@ const MedicationAvailability = () => {
             return;
         }
 
+        // Ensure post_type is always one of the two valid values
+        const safePostType = formData.post_type === 'price' ? 'price' : 'availability';
+
         try {
             const submitData = {
-                ...formData,
-                post_type: formData.post_type,
+                medication_needed: formData.medication_needed.trim(),
+                search_date: formData.search_date || null,
+                notes: formData.notes || '',
+                post_type: safePostType,
+                // Some backends read "type" instead of "post_type" — send both to be safe.
+                type: safePostType,
             };
+
+            console.log('Submitting post:', submitData); // Debug: check DevTools Network tab
 
             if (isEditing) {
                 const response = await api.put(`/medication-availability/${editPostId}`, submitData);
@@ -338,11 +346,14 @@ const MedicationAvailability = () => {
     };
 
     const handleEdit = (post) => {
+        const rawType = post.post_type ?? post.postType ?? post.type;
+        const normalizedType = rawType === 'price' ? 'price' : 'availability';
+
         setFormData({
             medication_needed: post.medication_needed || '',
             search_date: post.search_date || '',
             notes: post.notes || '',
-            post_type: post.post_type || 'availability',
+            post_type: normalizedType,
         });
         setEditPostId(post.id);
         setIsEditing(true);
@@ -378,16 +389,18 @@ const MedicationAvailability = () => {
         }
     };
 
+    // Helper: normalize post type from any possible backend field name
+    const getNormalizedPostType = (post) => {
+        const rawType = post?.post_type ?? post?.postType ?? post?.type;
+        return rawType === 'price' ? 'price' : 'availability';
+    };
+
     // Filter posts
     const filteredPosts = Array.isArray(posts) ? posts.filter(post => {
         if (!post || !post.medication_needed) return false;
 
-        // Normalize post type — backend may return post_type, postType, or type
-        // Default to 'availability' when missing/unknown so filtering works
-        const rawType = post.post_type ?? post.postType ?? post.type;
-        const normalizedType = rawType === 'price' ? 'price' : 'availability';
-
-        // Filter by post type
+        // Filter by post type (normalized)
+        const normalizedType = getNormalizedPostType(post);
         if (filterType !== 'all' && normalizedType !== filterType) return false;
 
         const term = searchTerm.toLowerCase().trim();
@@ -423,7 +436,10 @@ const MedicationAvailability = () => {
     };
 
     // Memoize filtered posts to prevent unnecessary re-renders
-    const memoizedFilteredPosts = React.useMemo(() => filteredPosts, [posts, searchTerm, filterType]);
+    const memoizedFilteredPosts = React.useMemo(
+        () => filteredPosts,
+        [posts, searchTerm, filterType]
+    );
 
     return (
         <div className="p-6 max-w-7xl mx-auto flex flex-col h-[calc(100vh-100px)]">
@@ -611,7 +627,8 @@ const MedicationAvailability = () => {
                         ) : (
                             memoizedFilteredPosts.map(post => {
                                 const searchDatePassed = isDatePassed(post.search_date);
-                                const isPricePost = post.post_type === 'price';
+                                const normalizedType = getNormalizedPostType(post);
+                                const isPricePost = normalizedType === 'price';
 
                                 return (
                                     <div
