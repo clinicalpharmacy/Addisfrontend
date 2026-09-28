@@ -452,119 +452,100 @@ const MedicationAvailability = () => {
                 </button>
             </div>
 
-            {/* Add/Edit Form - moved OUTSIDE the scrollable area so it is always fully visible */}
-            {showAddForm && (
-                <div className="bg-white p-6 rounded-2xl shadow-lg border-2 border-blue-100 mb-6 flex-shrink-0">
-                    <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {/* Post Type Selector */}
-                        <div className="md:col-span-3">
-                            <div className="flex gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setFormData({ ...formData, post_type: 'availability' })}
-                                    className={`flex-1 py-3 rounded-xl font-bold transition ${formData.post_type === 'availability' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-                                >
-                                    የጠፋ ማፈላለጊያ
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setFormData({ ...formData, post_type: 'price' })}
-                                    className={`flex-1 py-3 rounded-xl font-bold transition ${formData.post_type === 'price' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-                                >
-                                    ዋጋ ቅናሽ
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="md:col-span-3">
-                            <input
-                                type="text"
-                                required
-                                value={formData.medication_needed}
-                                onChange={(e) => setFormData({ ...formData, medication_needed: e.target.value })}
-                                className="w-full border border-gray-200 rounded-2xl p-3 focus:border-blue-500"
-                                placeholder="የመድሃኒቱን ስም ይጻፉ"
-                            />
-                        </div>
-                        
-                        {/* Row with label, calendar button, selected date, and post button */}
-                        <div className="md:col-span-3">
-                            <div className="flex items-center gap-2 w-full">
-                                <label className="text-lg text-gray-500 whitespace-nowrap">
-                                    እስከ መች ይፈለግ 
-                                </label>
-                        
-                                {/* Calendar Button */}
-                                <div 
-                                    className="relative w-12 h-12 flex-shrink-0 cursor-pointer flex items-center justify-center bg-blue-50 rounded-xl hover:bg-blue-100 transition"
-                                    onClick={() => {
-                                        try {
-                                            dateInputRef.current?.showPicker();
-                                        } catch (e) {
-                                            dateInputRef.current?.focus();
-                                        }
-                                    }}
-                                >
-                                    <FaCalendarAlt className="text-2xl text-blue-600 pointer-events-none" />
-                        
-                                    <input
-                                        ref={dateInputRef}
-                                        type="date"
-                                        value={formData.search_date}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                search_date: e.target.value,
-                                            })
-                                        }
-                                        min={new Date().toISOString().split("T")[0]}
-                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                        onClick={(e) => {
-                                            // Also try showPicker directly on the input if they click it
-                                            try {
-                                                e.target.showPicker();
-                                            } catch (err) {}
-                                        }}
-                                    />
-                                </div>
-                        
-                                {/* Selected Date */}
-                                <span className="text-gray-700 text-base min-w-[85px]">
-                                    {formData.search_date
-                                        ? new Date(formData.search_date).toLocaleDateString("en-CA", {
-                                              month: "short",
-                                              day: "numeric",
-                                          })
-                                        : "ቀን ይምረጡ"}
-                                </span>
-                            </div>
-                        </div>
-                        
-                        {/* Textarea and Post Button - Side by Side */}
-                        <div className="md:col-span-3">
-                            <div className="flex items-center gap-3 w-full">
-                                <textarea
-                                    value={formData.notes}
-                                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                                    className="flex-1 border border-gray-200 rounded-xl p-3"
-                                    placeholder="ተጨማሪ መረጃ"
-                                    rows="1"
-                                />
-                                <button
-                                    type="submit"
-                                    className={`text-white font-bold py-3 px-5 rounded-2xl whitespace-nowrap flex-shrink-0 ${formData.post_type === 'price' ? 'bg-green-600 hover:bg-green-700' : 'bg-green-600 hover:bg-green-700'}`}
-                                >
-                                    {isEditing ? "Update" : "Post"}
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            )}
-
             <div className="flex flex-col md:flex-row flex-1 gap-6 overflow-hidden">
                 {/* Left Side: Posts List */}
                 <div className={`flex-1 overflow-y-auto pr-2 space-y-4 ${selectedPost ? 'hidden md:block' : ''}`}>
+                    {/* Add/Edit Form - moved here, inside left column, above search */}
+                    {showAddForm && (
+                        <div className="bg-white p-6 rounded-2xl shadow-lg border-2 border-blue-100 mb-6">
+                            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                {/* Post Type Selector */}
+                                <div className="md:col-span-3">
+                                    <div className="flex gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData({ ...formData, post_type: 'availability' })}
+                                            className={`flex-1 py-3 rounded-xl font-bold transition ${formData.post_type === 'availability' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                                        >
+                                            የጠፋ ማፈላለጊያ
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData({ ...formData, post_type: 'price' })}
+                                            className={`flex-1 py-3 rounded-xl font-bold transition ${formData.post_type === 'price' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                                        >
+                                            ዋጋ ቅናሽ
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="md:col-span-3">
+                                    <input
+                                        type="text"
+                                        required
+                                        value={formData.medication_needed}
+                                        onChange={(e) => setFormData({ ...formData, medication_needed: e.target.value })}
+                                        className="w-full border border-gray-200 rounded-2xl p-3 focus:border-blue-500"
+                                        placeholder="የመድሃኒቱን ስም ይጻፉ"
+                                    />
+                                </div>
+                                
+                                {/* Row with label, calendar button, selected date, and post button */}
+                                <div className="md:col-span-3">
+                                    <div className="flex items-center gap-2 w-full">
+                                        <label className="text-lg text-gray-500 whitespace-nowrap">
+                                            እስከ መች ይፈለግ 
+                                        </label>
+                                
+                                        {/* Calendar Button */}
+                                        <div 
+                                            className="relative w-12 h-12 flex-shrink-0 cursor-pointer flex items-center justify-center bg-blue-50 rounded-xl hover:bg-blue-100 transition"
+                                            onClick={() => {
+                                                try {
+                                                    dateInputRef.current?.showPicker();
+                                                } catch (e) {
+                                                    dateInputRef.current?.focus();
+                                                }
+                                            }}
+                                        >
+                                            <FaCalendarAlt className="text-2xl text-blue-600 pointer-events-none" />
+                                
+                                            <input
+                                                ref={dateInputRef}
+                                                type="date"
+                                                value={formData.search_date}
+                                                onChange={(e) =>
+                                                    setFormData({
+                                                        ...formData,
+                                                        search_date: e.target.value,
+                                                    })
+                                                }
+                                                min={new Date().toISOString().split("T")[0]}
+                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                onClick={(e) => {
+                                                    // Also try showPicker directly on the input if they click it
+                                                    try {
+                                                        e.target.showPicker();
+                                                    } catch (err) {}
+                                                }}
+                                            />
+                                        </div>
+                                
+                                        {/* Selected Date */}
+                                        <span className="text-gray-700 text-base min-w-[85px]">
+                                            {formData.search_date
+                                                ? new Date(formData.search_date).toLocaleDateString("en-CA", {
+                                                      month: "short",
+                                                      day: "numeric",
+                                                  })
+                                                : "ቀን ይምረጡ"}
+                                        </span>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    )}
+
                     {/* Search */}
                     <div className="relative mb-4 sticky top-0 z-10 bg-gray-50 pt-2 pb-2">
                         <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -670,9 +651,35 @@ const MedicationAvailability = () => {
                     )}
                 </div>
 
-                {/* Right Side: Chat Sidebar */}
+                {/* Right Side: Chat Sidebar with Add/Edit Form bottom section */}
                 <div className={`w-full md:w-96 flex flex-col bg-gray-50 rounded-3xl overflow-hidden border border-gray-200 ${!selectedPost ? 'hidden md:flex' : 'flex'}`}>
-                    {selectedPost ? (
+                    {/* Add/Edit Form bottom section - shown when showAddForm is true and no post selected */}
+                    {showAddForm && !selectedPost ? (
+                        <div className="flex-1 flex flex-col p-4">
+                            <div className="flex-1 flex flex-col items-center justify-center text-center text-gray-400">
+                                <FaCommentMedical className="text-5xl mb-4 text-gray-200" />
+                                <p className="font-medium text-sm">Fill in the medication details on the left to share it.</p>
+                            </div>
+                            
+                            {/* Textarea and Post/Update button - side by side, visible downwards */}
+                            <div className="flex items-center gap-3 w-full mt-4 pt-4 border-t border-gray-200">
+                                <textarea
+                                    value={formData.notes}
+                                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                                    className="flex-1 border border-gray-200 rounded-xl p-3 bg-white"
+                                    placeholder="ተጨማሪ መረጃ"
+                                    rows="2"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleSubmit}
+                                    className={`text-white font-bold py-3 px-5 rounded-2xl whitespace-nowrap flex-shrink-0 ${formData.post_type === 'price' ? 'bg-green-600 hover:bg-green-700' : 'bg-green-600 hover:bg-green-700'}`}
+                                >
+                                    {isEditing ? "Update" : "Post"}
+                                </button>
+                            </div>
+                        </div>
+                    ) : selectedPost ? (
                         <>
                             <div className="p-4 bg-white border-b flex justify-between items-center">
                                 <button
