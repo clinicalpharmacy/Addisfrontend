@@ -382,8 +382,13 @@ const MedicationAvailability = () => {
     const filteredPosts = Array.isArray(posts) ? posts.filter(post => {
         if (!post || !post.medication_needed) return false;
 
+        // Normalize post type — backend may return post_type, postType, or type
+        // Default to 'availability' when missing/unknown so filtering works
+        const rawType = post.post_type ?? post.postType ?? post.type;
+        const normalizedType = rawType === 'price' ? 'price' : 'availability';
+
         // Filter by post type
-        if (filterType !== 'all' && post.post_type !== filterType) return false;
+        if (filterType !== 'all' && normalizedType !== filterType) return false;
 
         const term = searchTerm.toLowerCase().trim();
         if (!term) return true;
