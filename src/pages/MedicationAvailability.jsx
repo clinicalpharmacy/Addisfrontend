@@ -38,7 +38,6 @@ const MedicationAvailability = () => {
         medication_needed: '',
         search_date: '',
         notes: '',
-        price: '',
         post_type: 'availability',
     });
 
@@ -299,12 +298,6 @@ const MedicationAvailability = () => {
             return;
         }
 
-        // Validate price for price posts
-        if (formData.post_type === 'price' && !formData.price.trim()) {
-            alert('Price is required for price postings');
-            return;
-        }
-
         try {
             const submitData = {
                 ...formData,
@@ -320,7 +313,6 @@ const MedicationAvailability = () => {
                         medication_needed: '',
                         search_date: '',
                         notes: '',
-                        price: '',
                         post_type: 'availability',
                     });
                     setShowAddForm(false);
@@ -334,7 +326,6 @@ const MedicationAvailability = () => {
                         medication_needed: '',
                         search_date: '',
                         notes: '',
-                        price: '',
                         post_type: 'availability',
                     });
                     await fetchPosts();
@@ -351,7 +342,6 @@ const MedicationAvailability = () => {
             medication_needed: post.medication_needed || '',
             search_date: post.search_date || '',
             notes: post.notes || '',
-            price: post.price || '',
             post_type: post.post_type || 'availability',
         });
         setEditPostId(post.id);
@@ -453,7 +443,7 @@ const MedicationAvailability = () => {
                         setShowAddForm(!showAddForm);
                         if (isEditing) {
                             setIsEditing(false);
-                            setFormData({ medication_needed: '', search_date: '', notes: '', price: '', post_type: 'availability' });
+                            setFormData({ medication_needed: '', search_date: '', notes: '', post_type: 'availability' });
                         }
                     }}
                     className={`${showAddForm ? 'bg-gray-500' : 'bg-blue-600'} text-white px-6 py-3 rounded-xl flex items-center gap-2 hover:opacity-90 transition shadow-lg font-bold`}
@@ -533,24 +523,6 @@ const MedicationAvailability = () => {
                                         placeholder="የመድሃኒቱን ስም ይጻፉ"
                                     />
                                 </div>
-
-                                {/* Price Input (only shown for price posts) */}
-                                {formData.post_type === 'price' && (
-                                    <div className="md:col-span-3">
-                                        <div className="flex items-center gap-2 w-full">
-                                            <label className="text-lg text-gray-500 whitespace-nowrap">
-                                                ዋጋ
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={formData.price}
-                                                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                                                className="flex-1 border border-gray-200 rounded-xl p-3 focus:border-green-500"
-                                                placeholder="የመድሃኒቱን ዋጋ ይጻፉ (ብር)"
-                                            />
-                                        </div>
-                                    </div>
-                                )}
                                 
                                 {/* Row with label, calendar button, selected date, and post button */}
                                 <div className="md:col-span-3">
@@ -658,13 +630,6 @@ const MedicationAvailability = () => {
                                                 <span className="text-[11px] text-lg font-medium">
                                                     እስከ: {formatDate(post.search_date)}
                                                 </span>
-                                            )}
-                                            {isPricePost && post.price && (
-                                                <div className="mt-1">
-                                                    <span className="text-sm font-bold text-green-600">
-                                                        ዋጋ: {post.price} ብር
-                                                    </span>
-                                                </div>
                                             )}
                                         </div>
                                     
