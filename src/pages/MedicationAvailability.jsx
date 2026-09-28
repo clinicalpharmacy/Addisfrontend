@@ -793,7 +793,7 @@ const MedicationAvailability = () => {
                                     <form onSubmit={handlePostComment} className="p-4 bg-white border-t flex gap-2">
                                         <input
                                             type="text"
-                                            placeholder="Type a secrete message..."
+                                            placeholder="Type a private message..."
                                             className="flex-1 border border-gray-200 rounded-xl px-4 py-2 outline-none focus:ring-1 focus:ring-blue-500"
                                             value={newComment}
                                             onChange={(e) => setNewComment(e.target.value)}
@@ -808,7 +808,7 @@ const MedicationAvailability = () => {
                     ) : (
                         <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-gray-400">
                             <FaCommentMedical className="text-5xl mb-4 text-gray-200" />
-                            <p className="font-medium">Select a medication posting to view details and start a private (secrete) conversation.</p>
+                            <p className="font-medium">Select a medication posting to view details and start a private conversation.</p>
                         </div>
                     )}
                 </div>
