@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import supabase from '../../utils/supabase';
 import {
     FaPills,
@@ -31,7 +31,11 @@ import {
     FaBold,
     FaItalic,
     FaHashtag,
-    FaBook
+    FaBook,
+    FaVolumeUp,
+    FaPause,
+    FaPlay,
+    FaStop
 } from 'react-icons/fa';
 import { useOutletContext } from 'react-router-dom';
 import useScreenshotProtection from '../../hooks/useScreenshotProtection';
@@ -63,6 +67,12 @@ const MedicationInfo = () => {
     const [activeFormatField, setActiveFormatField] = useState(null);
     const [showFormattingHelp, setShowFormattingHelp] = useState(false);
 
+    // Audio state
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [isPaused, setIsPaused] = useState(false);
+    const [speakingSection, setSpeakingSection] = useState(null);
+    const synthRef = useRef(window.speechSynthesis);
+    const utteranceRef = useRef(null);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -87,6 +97,126 @@ const MedicationInfo = () => {
             }
         }
     }, []);
+
+    // Cleanup speech synthesis on unmount
+    useEffect(() => {
+        return () => {
+            if (synthRef.current) {
+                synthRef.current.cancel();
+            }
+        };
+    }, []);
+
+    // Text-to-speech function for Amharic
+    const speakAmharicText = (text, sectionId = null) => {
+        if (!synthRef.current) return;
+
+        // Cancel any ongoing speech
+        synthRef.current.cancel();
+
+        if (!text || !text.trim()) {
+            return;
+        }
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'am-ET'; // Amharic language code
+        utterance.rate = 0.9; // Slightly slower for clarity
+        utterance.pitch = 1;
+        utterance.volume = 1;
+
+        // Try to find an Amharic voice
+        const voices = synthRef.current.getVoices();
+        const amharicVoice = voices.find(voice => 
+            voice.lang.startsWith('am') || 
+            voice.lang.includes('AM') ||
+            voice.name.toLowerCase().includes('amharic') ||
+            voice.name.toLowerCase().includes('ethiopia')
+        );
+        
+        if (amharicVoice) {
+            utterance.voice = amharicVoice;
+        }
+
+        utterance.onstart = () => {
+            setIsPlaying(true);
+            setIsPaused(false);
+            setSpeakingSection(sectionId);
+        };
+
+        utterance.onend = () => {
+            setIsPlaying(false);
+            setIsPaused(false);
+            setSpeakingSection(null);
+        };
+
+        utterance.onerror = (event) => {
+            console.error('Speech synthesis error:', event);
+            setIsPlaying(false);
+            setIsPaused(false);
+            setSpeakingSection(null);
+        };
+
+        utteranceRef.current = utterance;
+        synthRef.current.speak(utterance);
+    };
+
+    // Stop speaking
+    const stopSpeaking = () => {
+        if (synthRef.current) {
+            synthRef.current.cancel();
+            setIsPlaying(false);
+            setIsPaused(false);
+            setSpeakingSection(null);
+        }
+    };
+
+    // Pause speaking
+    const pauseSpeaking = () => {
+        if (synthRef.current && isPlaying && !isPaused) {
+            synthRef.current.pause();
+            setIsPaused(true);
+        }
+    };
+
+    // Resume speaking
+    const resumeSpeaking = () => {
+        if (synthRef.current && isPaused) {
+            synthRef.current.resume();
+            setIsPaused(false);
+        }
+    };
+
+    // Play all medication content
+    const playAllContent = (medication) => {
+        const sections = [];
+        
+        if (medication.amharic_name) {
+            sections.push(medication.amharic_name);
+        }
+        
+        if (medication.usage) {
+            sections.push('የመድሃኒቱ ጥቅም: ' + medication.usage.replace(/[•◦○]/g, '').replace(/\n/g, '. '));
+        }
+        
+        if (medication.administration_and_cautions) {
+            sections.push('አወሳሰድ እና ጥንቃቄዎች: ' + medication.administration_and_cautions.replace(/[•◦○]/g, '').replace(/\n/g, '. '));
+        }
+        
+        if (medication.side_effects) {
+            sections.push('የጎንዮሽ ጉዳቶች: ' + medication.side_effects.replace(/[•◦○]/g, '').replace(/\n/g, '. '));
+        }
+        
+        if (medication.storage) {
+            sections.push('አቀማመጥ: ' + medication.storage.replace(/[•◦○]/g, '').replace(/\n/g, '. '));
+        }
+        
+        if (medication.reference) {
+            sections.push('Reference: ' + medication.reference.replace(/[•◦○]/g, '').replace(/\n/g, '. '));
+        }
+
+        const fullText = medication.name + '. ' + sections.join('. ');
+        speakAmharicText(fullText, 'all');
+    };
 
     // FETCH MEDICATIONS FROM DATABASE
     const fetchMedications = async () => {
@@ -1268,7 +1398,7 @@ const MedicationInfo = () => {
                      )
                 )}
 
-                {/* Medication Details Modal - With Improved Scrolling */}
+                {/* Medication Details Modal - With Improved Scrolling and Audio */}
                 {selectedMedication && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-end p-4 z-50">
                         <div className="bg-white rounded-xl shadow-2xl w-[75%] max-w-[75%] min-w-[300px] max-h-[90vh] overflow-hidden flex flex-col mr-8">
@@ -1283,14 +1413,73 @@ const MedicationInfo = () => {
                                             </p>
                                         )}
                                     </div>
-                                    <button
-                                        onClick={() => setSelectedMedication(null)}
-                                        className="text-white hover:text-gray-200 text-xl flex-shrink-0"
-                                        aria-label="Close"
-                                    >
-                                        <FaTimes />
-                                    </button>
+                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                        {/* Audio Controls */}
+                                        <div className="flex items-center gap-1 mr-2">
+                                            {isPlaying && !isPaused ? (
+                                                <>
+                                                    <button
+                                                        onClick={pauseSpeaking}
+                                                        className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-full transition-colors"
+                                                        title="Pause"
+                                                    >
+                                                        <FaPause className="text-sm" />
+                                                    </button>
+                                                    <button
+                                                        onClick={stopSpeaking}
+                                                        className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-full transition-colors"
+                                                        title="Stop"
+                                                    >
+                                                        <FaStop className="text-sm" />
+                                                    </button>
+                                                </>
+                                            ) : isPaused ? (
+                                                <>
+                                                    <button
+                                                        onClick={resumeSpeaking}
+                                                        className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-full transition-colors"
+                                                        title="Resume"
+                                                    >
+                                                        <FaPlay className="text-sm" />
+                                                    </button>
+                                                    <button
+                                                        onClick={stopSpeaking}
+                                                        className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-full transition-colors"
+                                                        title="Stop"
+                                                    >
+                                                        <FaStop className="text-sm" />
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <button
+                                                    onClick={() => playAllContent(selectedMedication)}
+                                                    className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-full transition-colors"
+                                                    title="Play all content in Amharic"
+                                                >
+                                                    <FaVolumeUp className="text-sm" />
+                                                </button>
+                                            )}
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                stopSpeaking();
+                                                setSelectedMedication(null);
+                                            }}
+                                            className="text-white hover:text-gray-200 text-xl flex-shrink-0"
+                                            aria-label="Close"
+                                        >
+                                            <FaTimes />
+                                        </button>
+                                    </div>
                                 </div>
+                                {isPlaying && (
+                                    <div className="mt-2 text-xs text-indigo-200 flex items-center gap-2">
+                                        <FaVolumeUp className="animate-pulse" />
+                                        <span>
+                                            {isPaused ? 'Paused' : 'Playing in Amharic...'}
+                                        </span>
+                                    </div>
+                                )}
                             </div>
                             
                             {/* Scrollable Content Area - With improved scrolling */}
@@ -1448,6 +1637,7 @@ const MedicationInfo = () => {
                                     <>
                                         <button
                                             onClick={() => {
+                                                stopSpeaking();
                                                 handleEditMedication(selectedMedication);
                                                 setSelectedMedication(null);
                                             }}
@@ -1464,7 +1654,10 @@ const MedicationInfo = () => {
                                     </>
                                 )}
                                 <button
-                                    onClick={() => setSelectedMedication(null)}
+                                    onClick={() => {
+                                        stopSpeaking();
+                                        setSelectedMedication(null);
+                                    }}
                                     className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg text-sm"
                                 >
                                     Close
