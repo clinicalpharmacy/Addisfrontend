@@ -432,7 +432,7 @@ const MedicationAvailability = () => {
                 <div>
                     <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
                         <FaPills className="text-blue-600" />
-                           መድሃኒት እና ዋጋ ማፈላለጊያ
+                           መድሃኒት እና ዋጋ ቅናሽ ማፈላለጊያ
                     </h1>
 
                     <div className="mt-2 flex flex-wrap gap-3 text-xs font-semibold text-gray-500">
