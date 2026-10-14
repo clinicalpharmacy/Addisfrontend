@@ -1,450 +1,30 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     FaGraduationCap,
     FaBookOpen,
     FaClipboardList,
     FaSearch,
-    FaSpinner,
-    FaUser,
-    FaSave,
-    FaTimes,
-    FaPlus
+    FaSpinner
 } from 'react-icons/fa';
 import api from '../../utils/api';
 import ExamModule from './ExamModule';
 
+// ✅ Import the FULL-FEATURED PatientDetails (with all tabs:
+// overview, demographics, vitals, labs, medications, analysis, drn, plan, outcome, cost)
+import PatientDetails from '../Patient/PatientDetails';
+
 /**
- * PatientDetails
+ * Education
  *
- * Minimal but complete patient details manager that:
- * - fetches patients from API (with localStorage fallback),
- * - lists patients,
- * - allows creating/editing a patient,
- * - validates required fields,
- * - gracefully handles API errors,
- * - falls back to localStorage when the API is unavailable
- *   (so saving never hard-fails when the endpoint is missing).
+ * Tabs:
+ *  - Exams        → list of published exams + exam runner (ExamModule)
+ *  - Clinical Pharmacy Skill → full PatientDetails manager
+ *  - Guidelines   → placeholder
+ *
+ * The full PatientDetails component renders its own tabbed UI
+ * (overview, demographics & Dx, vitals, labs, medications,
+ * clinical case review, DRN assessment, Ph-Asst & plan, outcome, cost).
  */
-const PatientDetails = () => {
-    const STORAGE_KEY = 'clinicalpharmacy_patients_v1';
-
-    const [patients, setPatients] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-
-    // useMemo so `empty` is a stable reference (avoids resetting form on every render)
-    const empty = useMemo(
-        () => ({
-            id: null,
-            name: '',
-            age: '',
-            sex: '',
-            weightKg: '',
-            allergies: '',
-            medications: '',
-            notes: ''
-        }),
-        []
-    );
-
-    const [form, setForm] = useState(empty);
-    const [isEditing, setIsEditing] = useState(false);
-    const [saving, setSaving] = useState(false);
-    const [successMsg, setSuccessMsg] = useState(null);
-
-    useEffect(() => {
-        loadPatients();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    const persistLocal = (items) => {
-        try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-        } catch (err) {
-            // ignore storage quota / private mode errors
-            console.warn('Could not persist patients locally:', err);
-        }
-    };
-
-    const readLocal = () => {
-        try {
-            const raw = localStorage.getItem(STORAGE_KEY);
-            if (!raw) return [];
-            const parsed = JSON.parse(raw);
-            return Array.isArray(parsed) ? parsed : [];
-        } catch (err) {
-            console.warn('Could not read local patients:', err);
-            return [];
-        }
-    };
-
-    const loadPatients = async () => {
-        setLoading(true);
-        setError(null);
-
-        try {
-            const res = await api.get('/patients');
-            // Accept multiple shapes: { success, patients }, array, { data }
-            let list = [];
-            if (res && res.success && Array.isArray(res.patients)) {
-                list = res.patients;
-            } else if (Array.isArray(res)) {
-                list = res;
-            } else if (res && Array.isArray(res.data)) {
-                list = res.data;
-            }
-
-            if (list.length === 0) {
-                // fallback to localStorage if available
-                list = readLocal();
-            } else {
-                // persist what we fetched
-                persistLocal(list);
-            }
-
-            setPatients(list);
-        } catch (err) {
-            console.error('Failed to fetch patients:', err);
-            setError(
-                'Could not load patients from server; using local data if available.'
-            );
-            setPatients(readLocal());
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleChange = (k, v) => {
-        setForm((p) => ({ ...p, [k]: v }));
-    };
-
-    const validate = () => {
-        if (!form.name || form.name.trim().length < 2) {
-            setError('Please enter a valid patient name.');
-            return false;
-        }
-        if (!form.age || Number.isNaN(Number(form.age)) || Number(form.age) < 0) {
-            setError('Please provide a valid age.');
-            return false;
-        }
-        // other validations could be added as required
-        setError(null);
-        return true;
-    };
-
-    /**
-     * Attempts to persist a patient to the API.
-     * Returns the saved patient on success, or throws on failure.
-     */
-    const saveToApi = async (payload) => {
-        if (payload.id) {
-            const res = await api.put(`/patients/${payload.id}`, payload);
-            if (res && (res.success || res.updated)) {
-                return res.patient || res.data || payload;
-            }
-            if (res && res.id) {
-                return { ...payload, id: res.id };
-            }
-            // API responded without a strict shape → assume success
-            return payload;
-        }
-
-        const res = await api.post('/patients', payload);
-        if (res && (res.success || res.created)) {
-            return res.patient || res.data || { ...payload, id: res.id || Date.now() };
-        }
-        if (res && res.id) {
-            return { ...payload, id: res.id };
-        }
-        // API responded without a strict shape → assume success with local id
-        return { ...payload, id: Date.now() };
-    };
-
-    const handleSave = async (e) => {
-        if (e) e.preventDefault();
-        if (!validate()) return;
-
-        setSaving(true);
-        setError(null);
-        setSuccessMsg(null);
-
-        // Always give the payload a local id (for new patients) so that
-        // both API and local fallback can key it consistently.
-        const payload = {
-            ...form,
-            id: form.id || `local_${Date.now()}`
-        };
-
-        let saved;
-        let usedFallback = false;
-
-        try {
-            saved = await saveToApi(payload);
-        } catch (err) {
-            // The API is unavailable / endpoint missing — fall back to
-            // localStorage so the save still succeeds for the user.
-            console.warn('API save failed, falling back to local storage:', err);
-            usedFallback = true;
-            saved = payload;
-        }
-
-        try {
-            // Update list locally (and persist) regardless of API outcome.
-            setPatients((prev) => {
-                const filtered = prev.filter((p) => p.id !== saved.id);
-                const next = [saved, ...filtered];
-                persistLocal(next);
-                return next;
-            });
-
-            setSuccessMsg(
-                usedFallback
-                    ? 'Saved locally (server unavailable). It will sync when you reconnect.'
-                    : 'Patient saved.'
-            );
-
-            // reset form
-            setForm(empty);
-            setIsEditing(false);
-
-            setTimeout(() => setSuccessMsg(null), 3500);
-        } catch (err) {
-            console.error('Failed to update patient list:', err);
-            setError('Patient was saved, but the list could not be refreshed.');
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    const handleEdit = (patient) => {
-        setForm({
-            id: patient.id || null,
-            name: patient.name || '',
-            age: patient.age != null ? String(patient.age) : '',
-            sex: patient.sex || '',
-            weightKg: patient.weightKg != null ? String(patient.weightKg) : '',
-            allergies: patient.allergies || '',
-            medications: patient.medications || '',
-            notes: patient.notes || ''
-        });
-        setIsEditing(true);
-        setSuccessMsg(null);
-    };
-
-    const handleDeleteLocal = async (id) => {
-        if (!window.confirm('Remove this patient?')) return;
-
-        // Try the API first (best-effort), then remove locally.
-        if (id && !String(id).startsWith('local_')) {
-            try {
-                await api.delete(`/patients/${id}`);
-            } catch (err) {
-                console.warn('API delete failed, removing locally only:', err);
-            }
-        }
-
-        const next = patients.filter((p) => p.id !== id);
-        setPatients(next);
-        persistLocal(next);
-
-        if (form.id === id) {
-            setForm(empty);
-            setIsEditing(false);
-        }
-    };
-
-    const handleNew = () => {
-        setForm(empty);
-        setIsEditing(true);
-        setError(null);
-        setSuccessMsg(null);
-    };
-
-    return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-1 bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-indigo-50 rounded-md flex items-center justify-center">
-                            <FaUser className="text-indigo-600" />
-                        </div>
-                        <div>
-                            <h4 className="font-bold text-gray-800">Patients</h4>
-                            <p className="text-xs text-gray-500">Manage patient details</p>
-                        </div>
-                    </div>
-                    <button
-                        onClick={handleNew}
-                        className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-md text-sm"
-                    >
-                        <FaPlus /> New
-                    </button>
-                </div>
-
-                {loading ? (
-                    <div className="py-8 text-center">
-                        <FaSpinner className="animate-spin text-indigo-600 text-2xl mx-auto" />
-                    </div>
-                ) : (
-                    <>
-                        {error && (
-                            <div className="bg-red-50 text-red-600 p-2 rounded mb-3 text-sm">
-                                {error}
-                            </div>
-                        )}
-
-                        <div className="max-h-[420px] overflow-auto space-y-2 pr-2">
-                            {patients.length === 0 ? (
-                                <div className="text-sm text-gray-500 p-4">No patients yet.</div>
-                            ) : (
-                                patients.map((p) => (
-                                    <div
-                                        key={p.id}
-                                        className="p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors flex items-start justify-between gap-3"
-                                    >
-                                        <div
-                                            onClick={() => handleEdit(p)}
-                                            className="flex-1 cursor-pointer"
-                                        >
-                                            <div className="font-semibold text-gray-800 line-clamp-1">
-                                                {p.name}
-                                            </div>
-                                            <div className="text-xs text-gray-500 mt-1">
-                                                {p.age ? `${p.age} yrs` : '—'} • {p.sex || '—'}
-                                            </div>
-                                        </div>
-
-                                        <div className="flex flex-col items-end gap-2">
-                                            <button
-                                                onClick={() => handleEdit(p)}
-                                                className="text-xs bg-white border border-gray-200 px-2 py-1 rounded text-gray-700 hover:bg-gray-50"
-                                            >
-                                                Edit
-                                            </button>
-                                            <button
-                                                onClick={() => handleDeleteLocal(p.id)}
-                                                className="text-xs text-red-600 px-2 py-1 rounded hover:bg-red-50"
-                                            >
-                                                Remove
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </>
-                )}
-            </div>
-
-            <div className="md:col-span-2 bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-gray-800">Patient Details</h3>
-                    <div className="text-sm text-gray-500">Create or edit patient records</div>
-                </div>
-
-                <form onSubmit={handleSave} className="space-y-4">
-                    {successMsg && (
-                        <div className="text-sm bg-green-50 border border-green-100 text-green-700 p-2 rounded">
-                            {successMsg}
-                        </div>
-                    )}
-                    {error && (
-                        <div className="text-sm bg-red-50 border border-red-100 text-red-700 p-2 rounded">
-                            {error}
-                        </div>
-                    )}
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <input
-                            value={form.name}
-                            onChange={(e) => handleChange('name', e.target.value)}
-                            placeholder="Full name *"
-                            className="col-span-1 md:col-span-3 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-50 focus:border-indigo-300 outline-none"
-                        />
-                        <input
-                            value={form.age}
-                            onChange={(e) => handleChange('age', e.target.value)}
-                            placeholder="Age (years) *"
-                            className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-50 focus:border-indigo-300 outline-none"
-                        />
-                        <select
-                            value={form.sex}
-                            onChange={(e) => handleChange('sex', e.target.value)}
-                            className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-50 focus:border-indigo-300 outline-none"
-                        >
-                            <option value="">Sex</option>
-                            <option value="Female">Female</option>
-                            <option value="Male">Male</option>
-                            <option value="Other">Other</option>
-                        </select>
-                        <input
-                            value={form.weightKg}
-                            onChange={(e) => handleChange('weightKg', e.target.value)}
-                            placeholder="Weight (kg)"
-                            className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-50 focus:border-indigo-300 outline-none"
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <textarea
-                            value={form.allergies}
-                            onChange={(e) => handleChange('allergies', e.target.value)}
-                            placeholder="Allergies (comma separated)"
-                            className="px-3 py-2 border rounded-lg min-h-[70px] focus:ring-2 focus:ring-indigo-50 focus:border-indigo-300 outline-none"
-                        />
-                        <textarea
-                            value={form.medications}
-                            onChange={(e) => handleChange('medications', e.target.value)}
-                            placeholder="Current medications"
-                            className="px-3 py-2 border rounded-lg min-h-[70px] focus:ring-2 focus:ring-indigo-50 focus:border-indigo-300 outline-none"
-                        />
-                    </div>
-
-                    <div>
-                        <textarea
-                            value={form.notes}
-                            onChange={(e) => handleChange('notes', e.target.value)}
-                            placeholder="Notes / Clinical impression"
-                            className="w-full px-3 py-2 border rounded-lg min-h-[100px] focus:ring-2 focus:ring-indigo-50 focus:border-indigo-300 outline-none"
-                        />
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                        <button
-                            type="submit"
-                            disabled={saving}
-                            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white px-4 py-2 rounded-md font-bold"
-                        >
-                            <FaSave />{' '}
-                            {saving
-                                ? 'Saving...'
-                                : form.id
-                                ? 'Update Patient'
-                                : 'Save Patient'}
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setForm(empty);
-                                setIsEditing(false);
-                                setError(null);
-                            }}
-                            className="flex items-center gap-2 bg-white border border-gray-200 px-4 py-2 rounded-md text-gray-700 hover:bg-gray-50"
-                        >
-                            <FaTimes /> Cancel
-                        </button>
-
-                        <div className="text-sm text-gray-500 ml-auto">
-                            {form.id ? 'Editing saved patient' : 'New patient'}
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
-};
-
 const Education = () => {
     const [activeTab, setActiveTab] = useState('exam');
     const [selectedExam, setSelectedExam] = useState(null);
@@ -468,6 +48,7 @@ const Education = () => {
     const fetchExams = async () => {
         try {
             setLoading(true);
+            setError(null);
 
             const response = await api.get('/exams/published');
 
@@ -849,6 +430,10 @@ const Education = () => {
 
                 {/* =====================================================
                     CLINICAL PHARMACY SKILL TAB CONTENT
+                    → Full PatientDetails with all tabs:
+                      overview, demographics, vitals, labs, medications,
+                      clinical case review, DRN assessment, Ph-Asst & plan,
+                      outcome, cost
                 ====================================================== */}
                 {activeTab === 'clinicalpharmacyskill' && (
                     <div className="animate-fadeIn">
