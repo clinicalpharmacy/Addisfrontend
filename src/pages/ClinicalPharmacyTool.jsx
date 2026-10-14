@@ -87,13 +87,8 @@ const LAB_KEY_ALIASES = {
 };
 
 const getLabKey = (test) => {
-    // Prefer explicit cdss_key if the DB provides one,
-    // but normalize it (trim + lowercase) so stray casing/spaces
-    // don't break downstream lookups like `formData.labs.serum_creatinine`.
-    if (test.cdss_key) {
-        const normalized = String(test.cdss_key).trim().toLowerCase();
-        return LAB_KEY_ALIASES[normalized] || normalized;
-    }
+    // Prefer explicit cdss_key if the DB provides one
+    if (test.cdss_key) return test.cdss_key;
     const slug = slugifyLabName(test.name);
     return LAB_KEY_ALIASES[slug] || slug;
 };
