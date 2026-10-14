@@ -145,13 +145,11 @@ const LabInputField = React.memo(({
 
 LabInputField.displayName = 'LabInputField';
 
-const handleBack = useCallback(() => {
-    if (typeof onBackToList === 'function') {
-        onBackToList();
-    } else {
-        navigate('/patients');
-    }
-}, [navigate, onBackToList]);
+const PatientDetails = ({ patientCode: propPatientCode, onBackToList }) => {
+    const { patientCode: paramPatientCode } = useParams();
+    const patientCode = propPatientCode || paramPatientCode;
+    const navigate = useNavigate();
+    const location = useLocation();
 
     // --- 1. PRIMARY STATE INITIALIZATION ---
     const [patient, setPatient] = useState(null);
@@ -1006,8 +1004,12 @@ const handleBack = useCallback(() => {
     };
 
     const handleBack = useCallback(() => {
-        navigate('/patients');
-    }, [navigate]);
+        if (typeof onBackToList === 'function') {
+            onBackToList();
+        } else {
+            navigate('/patients');
+        }
+    }, [navigate, onBackToList]);
 
     // Network and backend status monitoring
     useEffect(() => {
