@@ -4,26 +4,31 @@ import {
     FaBookOpen,
     FaClipboardList,
     FaSearch,
-    FaSpinner
+    FaSpinner,
+    FaUserInjured,
+    FaArrowLeft
 } from 'react-icons/fa';
 import api from '../../utils/api';
 import ExamModule from './ExamModule';
 
-// ✅ Import the FULL-FEATURED PatientDetails (with all tabs:
-// overview, demographics, vitals, labs, medications, analysis, drn, plan, outcome, cost)
+// ✅ Full-featured components
 import PatientDetails from '../Patient/PatientDetails';
+import PatientList from '../Patient/PatientList';
 
 /**
  * Education
  *
  * Tabs:
- *  - Exams        → list of published exams + exam runner (ExamModule)
- *  - Clinical Pharmacy Skill → full PatientDetails manager
- *  - Guidelines   → placeholder
+ *  - Exams                    → list of published exams + exam runner (ExamModule)
+ *  - Clinical Pharmacy Skill  → PatientsList (sidebar) + full PatientDetails
+ *  - Guidelines               → placeholder
  *
- * The full PatientDetails component renders its own tabbed UI
- * (overview, demographics & Dx, vitals, labs, medications,
- * clinical case review, DRN assessment, Ph-Asst & plan, outcome, cost).
+ * The "Clinical Pharmacy Skill" tab mimics the /patients layout:
+ *   ┌─────────────────┬───────────────────────────────┐
+ *   │  PatientsList   │       PatientDetails          │
+ *   │  (selectable)   │  (all tabs: overview, labs,   │
+ *   │                 │   meds, DRN, plan, outcome…)  │
+ *   └─────────────────┴───────────────────────────────┘
  */
 const Education = () => {
     const [activeTab, setActiveTab] = useState('exam');
@@ -34,6 +39,12 @@ const Education = () => {
     const [exams, setExams] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    // =========================================================
+    // CLINICAL PHARMACY SKILL — patient selection
+    // =========================================================
+    const [selectedPatientCode, setSelectedPatientCode] = useState(null);
+    const [showMobilePatientList, setShowMobilePatientList] = useState(true);
 
     // =========================================================
     // EXAM SESSION / RESUME STATE
@@ -135,7 +146,6 @@ const Education = () => {
         const saved = getSavedSession(exam.id);
         const TEN_MINUTES = 10 * 60 * 1000;
 
-        // Completed sessions should never be resumed; always start fresh.
         if (saved && saved.completed) {
             clearSavedSession(exam.id);
             startNewSession(exam);
@@ -144,15 +154,12 @@ const Education = () => {
 
         if (saved && saved.lastUpdated) {
             const elapsed = Date.now() - saved.lastUpdated;
-
-            // If user stopped for more than 10 minutes -> prompt
             if (elapsed > TEN_MINUTES) {
                 setSessionPrompt({ exam, saved });
                 return;
             }
         }
 
-        // No saved session (or within 10 min) -> start fresh
         startNewSession(exam);
     };
 
@@ -226,28 +233,13 @@ const Education = () => {
         });
     };
 
-    /**
-     * Called by ExamModule when the user reveals their total score.
-     *
-     * NOTE: we deliberately do NOT unmount the exam view here.
-     * The user needs to stay on the score/review screen. We only
-     * clear the persisted resume session so a fresh attempt is
-     * started next time.
-     */
     const handleExamComplete = () => {
         if (examSession) {
             clearSavedSession(examSession.examId);
         }
-        // Keep selectedExam so the ExamModule stays rendered
-        // showing the score + review.
         setExamSession((prev) => (prev ? { ...prev, completed: true } : prev));
     };
 
-    /**
-     * Called by ExamModule when the user clicks Back.
-     * Keeps the session saved (unless already completed) so it
-     * can be resumed later.
-     */
     const handleExamExit = () => {
         if (examSession) {
             if (examSession.completed) {
@@ -430,14 +422,81 @@ const Education = () => {
 
                 {/* =====================================================
                     CLINICAL PHARMACY SKILL TAB CONTENT
-                    → Full PatientDetails with all tabs:
-                      overview, demographics, vitals, labs, medications,
-                      clinical case review, DRN assessment, Ph-Asst & plan,
-                      outcome, cost
+                    → PatientsList (sidebar) + full PatientDetails
                 ====================================================== */}
                 {activeTab === 'clinicalpharmacyskill' && (
                     <div className="animate-fadeIn">
-                        <PatientDetails />
+                        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+                            {/* ---------- Patient List (Sidebar) ---------- */}
+                            <aside
+                                className={`lg:w-80 xl:w-96 flex-shrink-0 ${
+                                    selectedPatientCode && !showMobilePatientList
+                                        ? 'hidden lg:block'
+                                        : 'block'
+                                }`}
+                            >
+                                <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+                                    <PatientList
+                                        onSelectPatient={(code) => {
+                                            setSelectedPatientCode(code);
+                                            setShowMobilePatientList(false);
+                                        }}
+                                        selectedPatientCode={selectedPatientCode}
+                                    />
+                                </div>
+                            </aside>
+
+                            {/* ---------- Main Patient Details ---------- */}
+                            <main
+                                className={`flex-1 min-w-0 ${
+                                    !selectedPatientCode
+                                        ? 'hidden lg:block'
+                                        : 'block'
+                                }`}
+                            >
+                                {!selectedPatientCode ? (
+                                    <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-12 text-center">
+                                        <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                                            <FaUserInjured className="text-indigo-400 text-4xl" />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-gray-700 mb-2">
+                                            Select a Clinical Case
+                                        </h3>
+                                        <p className="text-gray-500 max-w-md mx-auto">
+                                            Choose a patient from the list on the left
+                                            to open their full record — medications,
+                                            DRN assessment, plan, outcome, and cost.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        {/* Mobile "back to list" bar */}
+                                        <div className="lg:hidden mb-3">
+                                            <button
+                                                onClick={() => {
+                                                    setShowMobilePatientList(true);
+                                                }}
+                                                className="flex items-center gap-2 text-sm font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-2 rounded-lg"
+                                            >
+                                                <FaArrowLeft /> Back to Patient List
+                                            </button>
+                                        </div>
+
+                                        {/* Full PatientDetails wired to selected patient */}
+                                        <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+                                            <PatientDetails
+                                                key={selectedPatientCode} // remount when switching patient
+                                                patientCode={selectedPatientCode}
+                                                onBackToList={() => {
+                                                    setSelectedPatientCode(null);
+                                                    setShowMobilePatientList(true);
+                                                }}
+                                            />
+                                        </div>
+                                    </>
+                                )}
+                            </main>
+                        </div>
                     </div>
                 )}
 
