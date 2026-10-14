@@ -12,7 +12,6 @@ import {
     FaArrowLeft,
     FaEdit,
     FaTrash,
-
     FaHeartbeat,
     FaVenusMars,
     FaPhone,
@@ -22,7 +21,6 @@ import {
     FaCalendarAlt,
     FaExclamationTriangle,
     FaTimes,
-    FaAllergies,
     FaVial,
     FaBaby,
     FaChild,
@@ -31,13 +29,13 @@ import {
     FaRulerVertical,
     FaCapsules,
     FaPrescriptionBottleAlt,
-
     FaSync,
     FaBrain,
     FaRobot,
     FaHistory,
     FaUserShield,
-    FaWifi
+    FaWifi,
+    FaShieldAlt // ✅ Replaces FaAllergies (which is not exported by react-icons/fa)
 } from 'react-icons/fa';
 
 // Import components
@@ -206,8 +204,7 @@ const PatientDetails = ({ patientCode: propPatientCode, onBackToList }) => {
         is_lactating: false, lactation_notes: '',
         weight_percentile: '', height_percentile: '', head_circumference_percentile: '', bsa_percentile: '',
         blood_pressure: '', heart_rate: '', temperature: '', respiratory_rate: '', oxygen_saturation: '',
-        weight: '', height: '', last_measured: '',
-        developmental_milestones: '', feeding_method: '', birth_weight: '', birth_length: '',
+        weight: '', height: '', last_measured: '', developmental_milestones: '', feeding_method: '', birth_weight: '', birth_length: '',
         vaccination_status: '', special_instructions: '',
         // Labs (Now dynamic via customLabs/GlobalDefinitions)
         lab_test_date: null
@@ -228,7 +225,7 @@ const PatientDetails = ({ patientCode: propPatientCode, onBackToList }) => {
     useEffect(() => {
         const userData = localStorage.getItem('user');
         if (userData) {
-            try { 
+            try {
                 const parsedUser = JSON.parse(userData);
                 setUser(parsedUser);
                 // Also initialize the salt for support requests
@@ -561,12 +558,12 @@ const PatientDetails = ({ patientCode: propPatientCode, onBackToList }) => {
             // Handle both old format (string) and new format (object with date)
             let labValue = value;
             let labDate = null;
-            
+
             if (typeof value === 'object' && value !== null) {
                 labValue = value.value;
                 labDate = value.date;
             }
-            
+
             loadedCustomLabs.push({
                 id: Date.now() + Math.random(),
                 name: key,
@@ -663,7 +660,7 @@ const PatientDetails = ({ patientCode: propPatientCode, onBackToList }) => {
 
         setPatient(decryptedData);
         setCurrentPatientCode(decryptedData.id);
-    }, [isValidDate, calculateAgeInDays, calculateAge, determinePatientType, setCustomLabs, globalLabDefinitions, fetchClinicalHistory]);
+    }, [isValidDate, calculateAgeInDays, calculateAge, determinePatientType, setCustomLabs, globalLabDefinitions, fetchClinicalHistory, user]);
 
     // FIXED: fetchPatientData with better error handling
     const fetchPatientData = useCallback(async () => {
@@ -986,9 +983,9 @@ const PatientDetails = ({ patientCode: propPatientCode, onBackToList }) => {
         }
     }, [patientCode, isNewPatient]);
 
-    const handleDeactivateSupport = async () => {
+    const handleDeactivateSupport = useCallback(async () => {
         if (!window.confirm('Are you sure you want to terminate the active support session? The specialist will lose all access to this record immediately.')) return;
-        
+
         try {
             setLoading(true);
             const res = await api.post('/access/revoke-support', { patient_id: patientCode });
@@ -1001,7 +998,7 @@ const PatientDetails = ({ patientCode: propPatientCode, onBackToList }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [patientCode]);
 
     const handleBack = useCallback(() => {
         if (typeof onBackToList === 'function') {
@@ -1433,12 +1430,12 @@ const PatientDetails = ({ patientCode: propPatientCode, onBackToList }) => {
                                 if (!labsByDate[date]) labsByDate[date] = {};
                                 labsByDate[date][key] = labData.value;
                             });
-                            
+
                             // Save each date group separately to history
                             for (const [testDate, labsForDate] of Object.entries(labsByDate)) {
                                 // Check if entry for this date already exists
                                 const existingEntry = labsHistory.find(h => h.test_date === testDate);
-                                
+
                                 if (existingEntry) {
                                     // Merge with existing entry
                                     const existingLabs = typeof existingEntry.labs === 'string' ? JSON.parse(existingEntry.labs) : existingEntry.labs;
@@ -1533,7 +1530,7 @@ const PatientDetails = ({ patientCode: propPatientCode, onBackToList }) => {
         } catch (error) {
             alert('Error deleting patient: ' + (error.message || 'Failed'));
         }
-    }, [getCurrentPatientCode, navigate]);
+    }, [navigate, patient]);
 
     // Retry fetching data
     const handleRetry = useCallback(() => {
@@ -1930,7 +1927,6 @@ const PatientDetails = ({ patientCode: propPatientCode, onBackToList }) => {
                         )}
                     </div>
                 </div>
-
 
 
 
@@ -2409,7 +2405,7 @@ const PatientDetails = ({ patientCode: propPatientCode, onBackToList }) => {
                     {/* Allergies */}
                     <div className="space-y-2 md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
-                            <FaAllergies /> Allergies
+                            <FaShieldAlt /> Allergies
                         </label>
                         {isEditing ? (
                             <div className="space-y-3">
@@ -2782,7 +2778,7 @@ const PatientDetails = ({ patientCode: propPatientCode, onBackToList }) => {
                 )}
             </div>
         );
-    }, [formData, patient, isEditing, ageMode, newAllergy, handleSaveDemographics, formatAgeDisplay, handleInputChange, handleAddAllergy, handleRemoveAllergy]);
+    }, [formData, patient, isEditing, ageMode, newAllergy, handleSaveDemographics, formatAgeDisplay, handleInputChange, handleAddAllergy, handleRemoveAllergy, user, getCurrentPatientCode]);
 
     const renderOverviewSection = useCallback(() => {
         const ageDisplay = formatAgeDisplay(formData.age_in_days, formData.date_of_birth);
@@ -2919,7 +2915,7 @@ const PatientDetails = ({ patientCode: propPatientCode, onBackToList }) => {
                                     {formData.allergies ? formData.allergies.length : 0}
                                 </p>
                             </div>
-                            <FaAllergies className="text-red-400 text-xl" />
+                            <FaShieldAlt className="text-red-400 text-xl" />
                         </div>
                     </div>
 
@@ -2973,7 +2969,7 @@ const PatientDetails = ({ patientCode: propPatientCode, onBackToList }) => {
                 {Array.isArray(formData.allergies) && formData.allergies.length > 0 && (
                     <div className="bg-white rounded-lg border border-red-200 p-6">
                         <h3 className="text-lg font-semibold text-red-800 mb-4 flex items-center gap-2">
-                            <FaAllergies /> Allergies
+                            <FaShieldAlt /> Allergies
                         </h3>
                         <div className="flex flex-wrap gap-2">
                             {formData.allergies.map((allergy, index) => (
@@ -2989,13 +2985,13 @@ const PatientDetails = ({ patientCode: propPatientCode, onBackToList }) => {
                 {/* --- CONSOLIDATED RECENT LABS WITH DATES --- */}
                 {(() => {
                     const results = [];
-                    
+
                     // Collect from customLabs with their dates
                     customLabs.forEach(lab => {
                         if (lab.value && lab.value.toString().trim() !== '') {
-                            results.push({ 
-                                name: lab.name, 
-                                value: lab.value, 
+                            results.push({
+                                name: lab.name,
+                                value: lab.value,
                                 unit: lab.unit || '',
                                 date: lab.date
                             });
@@ -3118,38 +3114,7 @@ const PatientDetails = ({ patientCode: propPatientCode, onBackToList }) => {
                 </div>
             </div>
         );
-    }, [formData, patient, getCurrentPatientCode, formatAgeDisplay, customLabs]);
-
-    const renderTabContent = useCallback(() => {
-        switch (activeTab) {
-            case 'overview':
-                return renderOverviewSection();
-            case 'demographics':
-                return renderDemographicsSection();
-            case 'vitals':
-                return renderVitalsSection();
-            case 'labs':
-                return renderLabsSection();
-            case 'medications':
-                return <MedicationHistory patientCode={getCurrentPatientCode()} encryptionKey={activeKey} />;
-            case 'analysis':
-                return <CDSSDisplay
-                    patientData={formData}
-                    encryptionKey={activeKey}
-                    onBack={() => { }} // Empty function since we're already in patient details
-                />;
-            case 'drn':
-                return <DRNAssessment patientCode={getCurrentPatientCode()} />;
-            case 'plan':
-                return <PhAssistPlan patientCode={getCurrentPatientCode()} />;
-            case 'outcome':
-                return <PatientOutcome patientCode={getCurrentPatientCode()} />;
-            case 'cost':
-                return <CostSection patientCode={getCurrentPatientCode()} />;
-            default:
-                return renderOverviewSection();
-        }
-    }, [activeTab, renderOverviewSection, renderDemographicsSection, renderVitalsSection, renderLabsSection, getCurrentPatientCode, formData]);
+    }, [formData, patient, getCurrentPatientCode, formatAgeDisplay, customLabs, user]);
 
     return (
         <div className="page-container w-full max-w-full overflow-x-hidden px-3 sm:px-4 md:px-6 lg:px-8">
@@ -3200,7 +3165,7 @@ const PatientDetails = ({ patientCode: propPatientCode, onBackToList }) => {
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex items-center gap-3 min-w-0 flex-1">
                             <button
-                                onClick={() => navigate('/patients')}
+                                onClick={handleBack}
                                 className="text-gray-600 hover:text-gray-800 p-2 hover:bg-gray-100 rounded-lg flex-shrink-0"
                                 title="Back to MRs"
                             >
@@ -3240,27 +3205,26 @@ const PatientDetails = ({ patientCode: propPatientCode, onBackToList }) => {
                                     <FaSave /> <span className="hidden sm:inline">{isNewPatient ? 'Create' : 'Save'}</span>
                                 </button>
                             )}
-                             {/* 🛡️ Support Activation Button */}
+                            {/* 🛡️ Support Activation Button */}
                             {!isNewPatient && (
-                                (supportActivated 
-                                    ? (user?.userId === patient?.user_id || user?.id === patient?.user_id) 
+                                (supportActivated
+                                    ? (user?.userId === patient?.user_id || user?.id === patient?.user_id)
                                     : (user?.role !== 'admin' && (user?.userId === patient?.user_id || user?.id === patient?.user_id || ['superadmin', 'specialist', 'support'].includes(String(user?.role)))))
                             ) && (
-                                <button
-                                    onClick={() => supportActivated ? handleDeactivateSupport() : setIsSupportModalOpen(true)}
-                                    className={`px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-all duration-300 shadow-md active:scale-95 border ${
-                                        supportActivated 
-                                        ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' 
-                                        : 'bg-indigo-600 hover:bg-indigo-700 text-white border-transparent'
-                                    }`}
-                                >
-                                    {supportActivated ? (
-                                        <><FaTimes /> <span className="hidden sm:inline font-bold">Revoke Support Access</span></>
-                                    ) : (
-                                        <><FaUserShield /> <span className="hidden sm:inline">Activate Support</span></>
-                                    )}
-                                </button>
-                            )}
+                                    <button
+                                        onClick={() => supportActivated ? handleDeactivateSupport() : setIsSupportModalOpen(true)}
+                                        className={`px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-all duration-300 shadow-md active:scale-95 border ${supportActivated
+                                            ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'
+                                            : 'bg-indigo-600 hover:bg-indigo-700 text-white border-transparent'
+                                            }`}
+                                    >
+                                        {supportActivated ? (
+                                            <><FaTimes /> <span className="hidden sm:inline font-bold">Revoke Support Access</span></>
+                                        ) : (
+                                            <><FaUserShield /> <span className="hidden sm:inline">Activate Support</span></>
+                                        )}
+                                    </button>
+                                )}
 
                             {!isNewPatient && (user?.id === patient?.user_id || user?.userId === patient?.user_id) && (
                                 <button
@@ -3311,9 +3275,10 @@ const PatientDetails = ({ patientCode: propPatientCode, onBackToList }) => {
                             {activeTab === 'demographics' && renderDemographicsSection()}
                             {activeTab === 'vitals' && renderVitalsSection()}
                             {activeTab === 'labs' && renderLabsSection()}
-                            {activeTab === 'medications' && <MedicationHistory patientCode={getCurrentPatientCode()} />}
+                            {activeTab === 'medications' && <MedicationHistory patientCode={getCurrentPatientCode()} encryptionKey={activeKey} />}
                             {activeTab === 'analysis' && <CDSSDisplay
                                 patientData={{ ...formData, patient_code: getCurrentPatientCode(), id: patient?.id }}
+                                encryptionKey={activeKey}
                                 onBack={() => { }}
                             />}
                             {activeTab === 'drn' && <DRNAssessment
