@@ -1486,7 +1486,23 @@ const PatientDetails = ({ patientCode: propPatientCode, onBackToList }) => {
                 alert('Error saving patient: ' + errorMsg);
             }
         }
-    }, [isNewPatient, formData, navigate, patientCode, isValidDate, calculateAgeInDays, calculateAge, determinePatientType, customLabs, fetchClinicalHistory, checkPatientLimit, loadPatientData, user, labsHistory]);
+    }, [
+        isNewPatient,
+        formData,
+        navigate,
+        patientCode,
+        isValidDate,
+        calculateAgeInDays,
+        calculateAge,
+        determinePatientType,
+        customLabs,
+        fetchClinicalHistory,
+        checkPatientLimit,
+        loadPatientData,
+        user,
+        patient,
+        labsHistory
+    ]);
 
     // Helper functions
     const handleSaveAll = useCallback(() => handleSave('all'), [handleSave]);
@@ -2520,14 +2536,14 @@ const PatientDetails = ({ patientCode: propPatientCode, onBackToList }) => {
                                             <button
                                                 type="button"
                                                 onClick={() => handleInputChange('is_pregnant', false)}
-                                                className={`flex-1 py-2 px-4 rounded-md text-sm font-bold transition-all ${!formData.is_pregnant ? 'bg-gray-100 text-gray-700 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                                                className={`flex-1 py-2 px-4 rounded-md text-sm font-bold transition-all ${!formData.is_pregnant ? 'bg-gray-100 text-gray-700 shadow-sm' : 'text-gray-400'}`}
                                             >
                                                 No
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={() => handleInputChange('is_pregnant', true)}
-                                                className={`flex-1 py-2 px-4 rounded-md text-sm font-bold transition-all ${formData.is_pregnant ? 'bg-pink-500 text-white shadow-md' : 'text-gray-400 hover:text-pink-400'}`}
+                                                className={`flex-1 py-2 px-4 rounded-md text-sm font-bold transition-all ${formData.is_pregnant ? 'bg-pink-500 text-white shadow-md' : 'text-gray-400 hover:text-gray-600'}`}
                                             >
                                                 Yes
                                             </button>
@@ -2583,7 +2599,7 @@ const PatientDetails = ({ patientCode: propPatientCode, onBackToList }) => {
                                         <select
                                             value={formData.is_lactating ? 'true' : 'false'}
                                             onChange={(e) => handleInputChange('is_lactating', e.target.value === 'true')}
-                                            className="w-full px-3 py-2 border border-blue-200 rounded-md outline-none focus:ring-2 focus:ring-blue-500 transition bg-white font-bold text-blue-700 cursor-pointer"
+                                            className="w-full px-3 py-2 border border-blue-200 rounded-md outline-none focus:ring-2 focus:ring-blue-500 transition bg-white font-bold text-blue-700"
                                         >
                                             <option value="false">No</option>
                                             <option value="true">Yes</option>
@@ -3228,8 +3244,7 @@ const PatientDetails = ({ patientCode: propPatientCode, onBackToList }) => {
                             {!isNewPatient && (
                                 (supportActivated 
                                     ? (user?.userId === patient?.user_id || user?.id === patient?.user_id) 
-                                    : (user?.role !== 'admin' && (user?.userId === patient?.user_id || user?.id === patient?.user_id || ['superadmin', 'specialist', 'support'].includes(String(user?.role || '').toLowerCase())))
-                                )
+                                    : (user?.role !== 'admin' && (user?.userId === patient?.user_id || user?.id === patient?.user_id || ['superadmin', 'specialist', 'support'].includes(String(user?.role)))))
                             ) && (
                                 <button
                                     onClick={() => supportActivated ? handleDeactivateSupport() : setIsSupportModalOpen(true)}
