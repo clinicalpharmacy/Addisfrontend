@@ -118,7 +118,10 @@ const PatientList = ({ onSelectPatient, selectedPatientCode }) => {
                 }
 
                 setPatients(decryptedPatients);
-                setFilteredPatients(filterPatients(decryptedPatients));
+                // Fix: Apply filtering and sorting to the decrypted list
+                const filtered = filterPatients(decryptedPatients);
+                const sorted = applySort(filtered, sortConfig.key, sortConfig.direction);
+                setFilteredPatients(sorted);
             } else {
                 setPatients([]);
                 setFilteredPatients([]);
@@ -130,7 +133,7 @@ const PatientList = ({ onSelectPatient, selectedPatientCode }) => {
         } finally {
             setLoading(false);
         }
-    }, [filterPatients, navigate]);
+    }, [filterPatients, applySort, navigate, sortConfig.key, sortConfig.direction]);
 
     const handleManualRefresh = () => {
         fetchPatients();
@@ -147,7 +150,10 @@ const PatientList = ({ onSelectPatient, selectedPatientCode }) => {
     const handleSearch = (e) => {
         const term = e.target.value;
         setSearchTerm(term);
-        setFilteredPatients(filterPatients(patients, term, statusFilter));
+        // Fix: Apply sort after filtering
+        const filtered = filterPatients(patients, term, statusFilter);
+        const sorted = applySort(filtered, sortConfig.key, sortConfig.direction);
+        setFilteredPatients(sorted);
         setCurrentPage(1);
     };
 
@@ -157,8 +163,12 @@ const PatientList = ({ onSelectPatient, selectedPatientCode }) => {
             direction = 'desc';
         }
 
-        setSortConfig({ key, direction });
-        setFilteredPatients(prev => applySort(prev, key, direction));
+        const newSortConfig = { key, direction };
+        setSortConfig(newSortConfig);
+        // Fix: Use the new sort configuration immediately
+        const filtered = filterPatients(patients, searchTerm, statusFilter);
+        const sorted = applySort(filtered, key, direction);
+        setFilteredPatients(sorted);
         setCurrentPage(1);
     };
 
@@ -234,6 +244,16 @@ const PatientList = ({ onSelectPatient, selectedPatientCode }) => {
 
     const isIndividual = userAccountType === 'individual' && !userCompanyId;
 
+    // Fix: Move the status filter change handler to a dedicated function
+    const handleStatusFilterChange = (e) => {
+        const nextValue = e.target.value;
+        setStatusFilter(nextValue);
+        const filtered = filterPatients(patients, searchTerm, nextValue);
+        const sorted = applySort(filtered, sortConfig.key, sortConfig.direction);
+        setFilteredPatients(sorted);
+        setCurrentPage(1);
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64">
@@ -290,12 +310,7 @@ const PatientList = ({ onSelectPatient, selectedPatientCode }) => {
                         <FaFilter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <select
                             value={statusFilter}
-                            onChange={(e) => {
-                                const nextValue = e.target.value;
-                                setStatusFilter(nextValue);
-                                setFilteredPatients(filterPatients(patients, searchTerm, nextValue));
-                                setCurrentPage(1);
-                            }}
+                            onChange={handleStatusFilterChange}
                             className="w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500/20 text-sm font-medium appearance-none"
                         >
                             <option value="all">Record Status: All Items</option>
