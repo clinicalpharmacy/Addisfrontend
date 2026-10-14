@@ -23,7 +23,7 @@ import {
 import api from '../utils/api';
 import { getEncryptionKey, decryptPatientList, loadPrivateKey } from '../utils/encryptionUtils';
 
-const PatientList = () => {
+const PatientList = ({ onSelectPatient, selectedPatientCode }) => {
     const navigate = useNavigate();
     const [patients, setPatients] = useState([]);
     const [filteredPatients, setFilteredPatients] = useState([]);
@@ -223,6 +223,16 @@ const PatientList = () => {
         navigate(`/patients/${patientId}`);
     };
 
+    const handleRowClick = (patient) => {
+        if (typeof onSelectPatient === 'function') {
+            // Embedded mode (inside Education tab) — notify parent instead of navigating
+            onSelectPatient(patient.id);
+        } else {
+            // Default route-based mode — jump to /patients/:id
+            handleViewClick(patient.id);
+        }
+    };
+
     // Pagination logic
     const totalPages = Math.ceil(filteredPatients.length / itemsPerPage);
     const indexOfLastItem = currentPage * itemsPerPage;
@@ -324,7 +334,13 @@ const PatientList = () => {
                         <tbody className="divide-y divide-gray-100">
                             {currentPatients.length > 0 ? (
                                 currentPatients.map((patient, index) => (
-                                    <tr key={patient.id} className="hover:bg-blue-50/20 transition-colors group">
+                                    <tr
+                                        key={patient.id}
+                                        onClick={() => handleRowClick(patient)}
+                                        className={`hover:bg-blue-50/20 transition-colors group cursor-pointer ${
+                                            selectedPatientCode === patient.id ? 'bg-blue-50/40' : ''
+                                        }`}
+                                    >
                                         <td className="px-6 py-5">
                                             <span className="font-mono text-sm font-black text-gray-400">
                                                 {indexOfFirstItem + index + 1}
@@ -358,7 +374,13 @@ const PatientList = () => {
                                         </td>
                                         <td className="px-6 py-5 text-right">
                                             <div className="flex justify-end gap-2">
-                                                <button onClick={() => handleViewClick(patient.id)} className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-all" title="View Case"><FaEye /></button>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); handleRowClick(patient); }}
+                                                    className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-all"
+                                                    title="View Case"
+                                                >
+                                                    <FaEye />
+                                                </button>
                                                 <button onClick={() => handleEditClick(patient)} className="p-2 text-amber-600 hover:bg-amber-100 rounded-lg transition-all" title="Edit Case"><FaEdit /></button>
                                                 <button onClick={() => handleDelete(patient.id)} disabled={userRole === 'healthcare_client'} className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-all disabled:opacity-20" title="Remove Case"><FaTrash /></button>
                                             </div>
