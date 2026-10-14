@@ -1,546 +1,391 @@
 import React, { useState, useEffect } from 'react';
-import {
-    FaGraduationCap,
-    FaBookOpen,
-    FaClipboardList,
-    FaSearch,
-    FaSpinner
-} from 'react-icons/fa';
+import { FaArrowLeft, FaCheckCircle, FaTimesCircle, FaSpinner } from 'react-icons/fa';
 import api from '../../utils/api';
-import ExamModule from './ExamModule';
-import PatientDetails from '../Patient/PatientDetails';
 
-const Education = () => {
-    const [activeTab, setActiveTab] = useState('exam');
-    const [selectedExam, setSelectedExam] = useState(null);
-    const [searchTerm, setSearchTerm] = useState('');
+const ExamModule = ({
+    examId,
+    examTitle,
+    examSubject,
+    session,
+    onSessionUpdate,
+    onComplete,
+    onExit,
+    onBack
+}) => {
+    const [questions, setQuestions] = useState(session?.questions || []);
+    const [selectedAnswers, setSelectedAnswers] = useState(session?.answers || {});
+    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(session?.currentIndex || 0);
+    const [isSubmitted, setIsSubmitted] = useState(session?.completed || false);
 
-    // API State
-    const [exams, setExams] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(!session?.questions || session.questions.length === 0);
     const [error, setError] = useState(null);
 
-    // =========================================================
-    // EXAM SESSION / RESUME STATE
-    // =========================================================
-    const [examSession, setExamSession] = useState(null);
-    const [sessionPrompt, setSessionPrompt] = useState(null);
-
+    // Sync state when the parent provides a new session
     useEffect(() => {
-        fetchExams();
-    }, []);
+        if (session) {
+            setQuestions(session.questions || []);
+            setSelectedAnswers(session.answers || {});
+            setCurrentQuestionIndex(session.currentIndex || 0);
+            setIsSubmitted(session.completed || false);
+            setLoading(false);
+            setError(null);
+        }
+    }, [session?.examId, session?.lastUpdated]);
 
-    const fetchExams = async () => {
+    // Fallback fetch only when no session is provided
+    useEffect(() => {
+        if (session) return;
+        if (examId) {
+            fetchQuestions();
+        }
+    }, [examId, session]);
+
+    const fetchQuestions = async () => {
         try {
             setLoading(true);
+            const response = await api.get(`/exams/${examId}/questions`);
 
-            const response = await api.get('/exams/published');
-
-            if (response.success) {
-                setExams(response.exams || []);
+            if (response && response.success && Array.isArray(response.questions)) {
+                setQuestions(response.questions);
+            } else if (Array.isArray(response)) {
+                setQuestions(response);
+            } else if (response && Array.isArray(response.data)) {
+                setQuestions(response.data);
+            } else {
+                setQuestions([]);
             }
         } catch (err) {
-            console.error('Failed to fetch exams:', err);
-            setError('Failed to load exams. Please try again later.');
+            console.error('Failed to fetch exam questions:', err);
+            setError('Failed to load exam questions. Please try again later.');
         } finally {
             setLoading(false);
         }
     };
 
-    const filteredExams = exams.filter(
-        (exam) =>
-            (exam.title &&
-                exam.title
-                    .toLowerCase()
-                    .includes(searchTerm.toLowerCase())) ||
-            (exam.subject &&
-                exam.subject
-                    .toLowerCase()
-                    .includes(searchTerm.toLowerCase()))
-    );
-
-    // =========================================================
-    // EXAM SESSION HELPERS
-    // =========================================================
-
-    const getSessionKey = (examId) => `exam_session_${examId}`;
-
-    const shuffleArray = (arr) => {
-        const copy = [...arr];
-        for (let i = copy.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [copy[i], copy[j]] = [copy[j], copy[i]];
-        }
-        return copy;
-    };
-
-    const getSavedSession = (examId) => {
-        try {
-            const raw = localStorage.getItem(getSessionKey(examId));
-            if (!raw) return null;
-            const parsed = JSON.parse(raw);
-            if (!parsed || !parsed.questions || !Array.isArray(parsed.questions)) {
-                return null;
-            }
-            return parsed;
-        } catch (err) {
-            console.error('Failed to read exam session:', err);
-            return null;
+    const notifyUpdate = (updates) => {
+        if (typeof onSessionUpdate === 'function') {
+            onSessionUpdate(updates);
         }
     };
 
-    const clearSavedSession = (examId) => {
-        try {
-            localStorage.removeItem(getSessionKey(examId));
-        } catch (err) {
-            console.error('Failed to clear exam session:', err);
-        }
+    const handleOptionSelect = (questionId, optionId) => {
+        if (isSubmitted) return;
+
+        const updatedAnswers = {
+            ...selectedAnswers,
+            [questionId]: optionId
+        };
+
+        setSelectedAnswers(updatedAnswers);
+        notifyUpdate({ answers: updatedAnswers });
     };
 
-    const persistSession = (session) => {
-        try {
-            localStorage.setItem(
-                getSessionKey(session.examId),
-                JSON.stringify(session)
+    const goToIndex = (newIndex) => {
+        const safeIndex = Math.max(0, Math.min(newIndex, questions.length - 1));
+        setCurrentQuestionIndex(safeIndex);
+        notifyUpdate({ currentIndex: safeIndex });
+    };
+
+    const handleShowScore = () => {
+        const answeredCount = Object.keys(selectedAnswers).length;
+
+        if (answeredCount < questions.length) {
+            const remaining = questions.length - answeredCount;
+            const confirmed = window.confirm(
+                `You have ${remaining} unanswered question${remaining > 1 ? 's' : ''}. ` +
+                `Unanswered questions will be marked incorrect. Show your total score anyway?`
             );
-        } catch (err) {
-            console.error('Failed to persist exam session:', err);
+
+            if (!confirmed) return;
+        }
+
+        setIsSubmitted(true);
+        notifyUpdate({ completed: true, answers: selectedAnswers });
+
+        if (typeof onComplete === 'function') {
+            onComplete();
         }
     };
 
-    /**
-     * Handles the user clicking on an exam card.
-     *
-     * - If a saved session exists AND is unfinished AND the user has
-     *   been away for MORE than 10 minutes -> prompt to Resume/Restart.
-     * - Otherwise, start a fresh session.
-     */
-    const handleSelectExam = (exam) => {
-        const saved = getSavedSession(exam.id);
-        const TEN_MINUTES = 10 * 60 * 1000;
-
-        // Completed sessions should never be resumed; always start fresh.
-        if (saved && saved.completed) {
-            clearSavedSession(exam.id);
-            startNewSession(exam);
-            return;
-        }
-
-        if (saved && saved.lastUpdated) {
-            const elapsed = Date.now() - saved.lastUpdated;
-
-            // If user stopped for more than 10 minutes -> prompt
-            if (elapsed > TEN_MINUTES) {
-                setSessionPrompt({ exam, saved });
-                return;
-            }
-        }
-
-        // No saved session (or within 10 min) -> start fresh
-        startNewSession(exam);
-    };
-
-    const startNewSession = async (exam) => {
-        try {
-            const response = await api.get(`/exams/${exam.id}/questions`);
-
-            let allQuestions = [];
-
-            if (response && response.success && Array.isArray(response.questions)) {
-                allQuestions = response.questions;
-            } else if (Array.isArray(response)) {
-                allQuestions = response;
-            } else if (response && Array.isArray(response.data)) {
-                allQuestions = response.data;
-            }
-
-            if (!allQuestions || allQuestions.length === 0) {
-                setSelectedExam(exam);
-                return;
-            }
-
-            const shuffled = shuffleArray(allQuestions);
-            const selectedQuestions = shuffled.slice(0, 40);
-
-            const session = {
-                examId: exam.id,
-                examTitle: exam.title,
-                examSubject: exam.subject,
-                questions: selectedQuestions,
-                answers: {},
-                currentIndex: 0,
-                lastUpdated: Date.now(),
-                completed: false
-            };
-
-            persistSession(session);
-            setExamSession(session);
-            setSelectedExam(exam);
-        } catch (err) {
-            console.error('Failed to start exam session:', err);
-            setSelectedExam(exam);
+    const handleBack = () => {
+        if (typeof onExit === 'function') {
+            onExit();
+        } else if (typeof onBack === 'function') {
+            onBack();
         }
     };
 
-    const resumeSession = (saved) => {
-        const updated = { ...saved, lastUpdated: Date.now() };
-        persistSession(updated);
-        setExamSession(updated);
-        setSelectedExam({
-            id: saved.examId,
-            title: saved.examTitle,
-            subject: saved.examSubject
+    const calculateScore = () => {
+        let score = 0;
+
+        questions.forEach((question) => {
+            const selectedOptionId = selectedAnswers[question.id];
+            const correctOption = question.options?.find((option) => option.isCorrect);
+
+            if (correctOption && selectedOptionId === correctOption.id) {
+                score += 1;
+            }
         });
-        setSessionPrompt(null);
+
+        return score;
     };
 
-    const restartSession = (exam) => {
-        clearSavedSession(exam.id);
-        setExamSession(null);
-        setSessionPrompt(null);
-        startNewSession(exam);
-    };
-
-    const handleSessionUpdate = (updates) => {
-        setExamSession((prev) => {
-            if (!prev) return prev;
-            const next = { ...prev, ...updates, lastUpdated: Date.now() };
-            persistSession(next);
-            return next;
-        });
-    };
-
-    /**
-     * Called by ExamModule when the user reveals their total score.
-     *
-     * NOTE: we deliberately do NOT unmount the exam view here.
-     * The user needs to stay on the score/review screen. We only
-     * clear the persisted resume session so a fresh attempt is
-     * started next time.
-     */
-    const handleExamComplete = () => {
-        if (examSession) {
-            clearSavedSession(examSession.examId);
-        }
-        // Keep selectedExam so the ExamModule stays rendered
-        // showing the score + review.
-        setExamSession((prev) =>
-            prev ? { ...prev, completed: true } : prev
-        );
-    };
-
-    /**
-     * Called by ExamModule when the user clicks Back.
-     * Keeps the session saved (unless already completed) so it
-     * can be resumed later.
-     */
-    const handleExamExit = () => {
-        if (examSession) {
-            if (examSession.completed) {
-                clearSavedSession(examSession.examId);
-            } else {
-                const updated = { ...examSession, lastUpdated: Date.now() };
-                persistSession(updated);
-            }
-        }
-        setExamSession(null);
-        setSelectedExam(null);
-    };
-
-    // =========================================================
-    // RENDER: ExamModule when an exam is selected
-    // =========================================================
-    if (selectedExam) {
+    if (loading) {
         return (
-            <ExamModule
-                examId={selectedExam.id}
-                examTitle={selectedExam.title}
-                examSubject={selectedExam.subject}
-                session={examSession}
-                onSessionUpdate={handleSessionUpdate}
-                onComplete={handleExamComplete}
-                onExit={handleExamExit}
-                onBack={handleExamExit}
-            />
+            <div className="bg-white rounded-xl shadow-lg p-12 text-center animate-fadeIn flex flex-col items-center justify-center min-h-[400px]">
+                <FaSpinner className="animate-spin text-blue-600 text-4xl mb-4" />
+                <h3 className="text-xl font-bold text-gray-800">Loading Exam...</h3>
+            </div>
         );
     }
 
-    // =========================================================
-    // RENDER: Main Education UI
-    // =========================================================
+    if (error) {
+        return (
+            <div className="bg-white rounded-xl shadow-lg p-8 text-center animate-fadeIn">
+                <button
+                    onClick={handleBack}
+                    className="flex items-center gap-2 text-blue-600 hover:text-blue-800 mb-6 font-medium transition-colors"
+                >
+                    <FaArrowLeft /> Back to Exams
+                </button>
+                <div className="bg-red-50 border border-red-200 text-red-600 rounded-lg p-6 font-medium">
+                    {error}
+                </div>
+            </div>
+        );
+    }
+
+    if (questions.length === 0) {
+        return (
+            <div className="bg-white rounded-xl shadow-lg p-8 text-center animate-fadeIn">
+                <button
+                    onClick={handleBack}
+                    className="flex items-center gap-2 text-blue-600 hover:text-blue-800 mb-6 font-medium transition-colors"
+                >
+                    <FaArrowLeft /> Back to Exams
+                </button>
+                <h3 className="text-2xl font-bold text-gray-800 mb-4">
+                    {examTitle || `${examSubject} Exam`}
+                </h3>
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
+                    <p className="text-gray-600">
+                        No questions available for this exam yet. Please check back later.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    const currentQuestion = questions[currentQuestionIndex];
+    if (!currentQuestion) {
+        return (
+            <div className="bg-white rounded-xl shadow-lg p-8 text-center animate-fadeIn">
+                <button
+                    onClick={handleBack}
+                    className="flex items-center gap-2 text-blue-600 hover:text-blue-800 mb-6 font-medium transition-colors"
+                >
+                    <FaArrowLeft /> Back to Exams
+                </button>
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
+                    <p className="text-gray-600">This question is unavailable.</p>
+                </div>
+            </div>
+        );
+    }
+
+    const score = isSubmitted ? calculateScore() : 0;
+    const percentage = questions.length ? ((score / questions.length) * 100).toFixed(1) : '0.0';
+
     return (
-        <div className="bg-white/40 backdrop-blur-xl rounded-2xl shadow-xl border border-white/50 overflow-hidden relative animate-fadeIn">
+        <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 animate-fadeIn max-w-3xl mx-auto">
+            <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
+                <button
+                    onClick={handleBack}
+                    className="flex items-center gap-2 text-gray-500 hover:text-blue-600 font-medium transition-colors"
+                >
+                    <FaArrowLeft /> Back
+                </button>
 
-            {/* Decorative background */}
-            <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-br from-purple-600/10 to-indigo-600/10 pointer-events-none" />
+                <h3 className="text-xl font-black text-gray-800 tracking-tight">
+                    {examTitle || examSubject || 'Exam'}
+                </h3>
 
-            <div className="p-6 md:p-8 relative z-10">
-
-                {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-                    <div>
-                        <h2 className="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
-                            <div className="bg-purple-100 p-2.5 rounded-xl">
-                                <FaGraduationCap className="text-purple-600 text-2xl" />
-                            </div>
-
-                            Education Center
-                        </h2>
-
-                        <p className="text-gray-500 mt-2 font-medium ml-1">
-                            Test your knowledge, develop clinical pharmacy skills,
-                            and review clinical guidelines
-                        </p>
-                    </div>
+                <div className="text-sm font-bold text-gray-500">
+                    {isSubmitted
+                        ? 'Completed'
+                        : `Question ${currentQuestionIndex + 1} of ${questions.length}`}
                 </div>
-
-                {/* =====================================================
-                    TABS
-                ====================================================== */}
-                <div className="flex flex-col sm:flex-row bg-gray-100/80 p-1.5 rounded-xl mb-8 max-w-4xl gap-1">
-
-                    <button
-                        onClick={() => setActiveTab('exam')}
-                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-bold text-sm transition-all duration-300 ${
-                            activeTab === 'exam'
-                                ? 'bg-white text-purple-700 shadow-sm'
-                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'
-                        }`}
-                    >
-                        <FaClipboardList
-                            className={
-                                activeTab === 'exam'
-                                    ? 'text-purple-500'
-                                    : 'opacity-60'
-                            }
-                        />
-                        Exams
-                    </button>
-
-                    <button
-                        onClick={() =>
-                            setActiveTab('clinicalpharmacyskill')
-                        }
-                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-bold text-sm transition-all duration-300 ${
-                            activeTab === 'clinicalpharmacyskill'
-                                ? 'bg-white text-indigo-700 shadow-sm'
-                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'
-                        }`}
-                    >
-                        <FaBookOpen
-                            className={
-                                activeTab === 'clinicalpharmacyskill'
-                                    ? 'text-indigo-500'
-                                    : 'opacity-60'
-                            }
-                        />
-                        Clinical Pharmacy Skill
-                    </button>
-
-                    <button
-                        onClick={() => setActiveTab('guideline')}
-                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-bold text-sm transition-all duration-300 ${
-                            activeTab === 'guideline'
-                                ? 'bg-white text-indigo-700 shadow-sm'
-                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'
-                        }`}
-                    >
-                        <FaBookOpen
-                            className={
-                                activeTab === 'guideline'
-                                    ? 'text-indigo-500'
-                                    : 'opacity-60'
-                            }
-                        />
-                        Guidelines
-                    </button>
-                </div>
-
-                {/* =====================================================
-                    EXAMS TAB CONTENT
-                ====================================================== */}
-                {activeTab === 'exam' && (
-                    <div className="animate-fadeIn">
-
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-
-                            <h3 className="text-xl font-bold text-gray-800">
-                                Select Subject
-                            </h3>
-
-                            <div className="relative w-full sm:w-64">
-
-                                <input
-                                    type="text"
-                                    placeholder="Search subjects..."
-                                    value={searchTerm}
-                                    onChange={(e) =>
-                                        setSearchTerm(e.target.value)
-                                    }
-                                    className="w-full pl-10 pr-4 py-2 border-2 border-gray-100 rounded-xl focus:border-purple-300 focus:ring-4 focus:ring-purple-50 bg-gray-50/50 transition-all outline-none"
-                                />
-
-                                <FaSearch className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400" />
-
-                            </div>
-                        </div>
-
-                        {loading ? (
-                            <div className="flex justify-center items-center py-12">
-                                <FaSpinner className="animate-spin text-purple-600 text-3xl" />
-                            </div>
-                        ) : error ? (
-                            <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-200 text-center">
-                                {error}
-                            </div>
-                        ) : (
-                            <>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-
-                                    {filteredExams.map((exam) => (
-                                        <button
-                                            key={exam.id}
-                                            onClick={() =>
-                                                handleSelectExam(exam)
-                                            }
-                                            className="flex items-center p-4 bg-white rounded-xl border border-gray-100 hover:border-purple-300 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group text-left"
-                                        >
-
-                                            <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center mr-4 group-hover:bg-purple-600 transition-colors duration-300 flex-shrink-0">
-
-                                                <FaClipboardList className="text-purple-600 group-hover:text-white text-lg transition-colors" />
-
-                                            </div>
-
-                                            <div>
-
-                                                <h4 className="font-bold text-gray-800 group-hover:text-purple-700 transition-colors line-clamp-1">
-                                                    {exam.title ||
-                                                        `${exam.subject} Exam`}
-                                                </h4>
-
-                                                <p className="text-xs text-gray-500 mt-1">
-                                                    {exam.subject} •{' '}
-                                                    {exam.question_count || 0}{' '}
-                                                    Questions
-                                                </p>
-
-                                            </div>
-
-                                        </button>
-                                    ))}
-
-                                </div>
-
-                                {filteredExams.length === 0 && (
-                                    <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-100">
-
-                                        <p className="text-gray-500 font-medium">
-                                            {exams.length === 0
-                                                ? 'No exams available at the moment.'
-                                                : `No exams found matching "${searchTerm}"`}
-                                        </p>
-
-                                    </div>
-                                )}
-                            </>
-                        )}
-                    </div>
-                )}
-
-                {/* =====================================================
-                    CLINICAL PHARMACY SKILL TAB CONTENT
-                ====================================================== */}
-                {activeTab === 'clinicalpharmacyskill' && (
-                    <div className="animate-fadeIn">
-                        <PatientDetails patientCode="new" />
-                    </div>
-                )}
-
-                {/* =====================================================
-                    GUIDELINES TAB CONTENT
-                ====================================================== */}
-                {activeTab === 'guideline' && (
-                    <div className="animate-fadeIn">
-
-                        <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-8 text-center">
-
-                            <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-
-                                <FaBookOpen className="text-indigo-600 text-2xl" />
-
-                            </div>
-
-                            <h3 className="text-xl font-bold text-indigo-900 mb-2">
-                                Clinical Guidelines
-                            </h3>
-
-                            <p className="text-indigo-700 max-w-md mx-auto">
-                                The guidelines section is currently under
-                                development. Please check back later for
-                                comprehensive medical guidelines across all
-                                specialties.
-                            </p>
-
-                        </div>
-
-                    </div>
-                )}
-
             </div>
 
-            {/* =====================================================
-                RESUME / RESTART PROMPT MODAL
-            ====================================================== */}
-            {sessionPrompt && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-fadeIn">
-
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">
-                            Resume Exam?
-                        </h3>
-
-                        <p className="text-gray-600 mb-6">
-                            You have an unfinished attempt for{' '}
-                            <span className="font-semibold text-purple-700">
-                                {sessionPrompt.exam.title ||
-                                    sessionPrompt.exam.subject}
-                            </span>
-                            . You stopped more than 10 minutes ago. Would
-                            you like to resume where you left off, or start
-                            over?
-                        </p>
-
-                        <div className="flex flex-col sm:flex-row gap-3">
-
-                            <button
-                                onClick={() =>
-                                    resumeSession(sessionPrompt.saved)
-                                }
-                                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 px-4 rounded-xl transition-colors"
-                            >
-                                Resume
-                            </button>
-
-                            <button
-                                onClick={() =>
-                                    restartSession(sessionPrompt.exam)
-                                }
-                                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2.5 px-4 rounded-xl transition-colors"
-                            >
-                                Restart
-                            </button>
-
-                        </div>
-
+            {isSubmitted ? (
+                <div className="text-center py-12 animate-fadeIn">
+                    <div
+                        className={`inline-flex items-center justify-center w-40 h-40 rounded-full border-8 mb-6 ${
+                            Number(percentage) >= 70
+                                ? 'border-green-500 text-green-500'
+                                : 'border-amber-500 text-amber-500'
+                        }`}
+                    >
+                        <span className="text-5xl font-black">{percentage}%</span>
                     </div>
 
+                    <h4 className="text-3xl font-bold text-gray-800 mb-3">
+                        {Number(percentage) >= 70 ? 'Great Job!' : 'Keep Practicing!'}
+                    </h4>
+
+                    <p className="text-gray-600 text-lg">
+                        You scored {score} out of {questions.length} questions correctly.
+                    </p>
+                </div>
+            ) : (
+                <div className="space-y-6">
+                    <div className="mb-6">
+                        <div className="w-full bg-gray-100 rounded-full h-2 mb-6">
+                            <div
+                                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                                style={{
+                                    width: `${((currentQuestionIndex + 1) / questions.length) * 100}%`
+                                }}
+                            ></div>
+                        </div>
+
+                        <h4 className="text-xl font-bold text-gray-800 leading-relaxed">
+                            {currentQuestionIndex + 1}. {currentQuestion.questionText || currentQuestion.text || 'Question'}
+                        </h4>
+                    </div>
+
+                    <div className="space-y-2">
+                        {(currentQuestion.options || []).map((option) => {
+                            const hasAnswered = !!selectedAnswers[currentQuestion.id];
+                            const isSelected = selectedAnswers[currentQuestion.id] === option.id;
+
+                            let buttonStyle = 'border-gray-200 hover:border-blue-300 hover:bg-gray-50';
+                            let dotStyle = 'border-gray-300';
+                            let textStyle = 'text-gray-700 font-medium';
+
+                            if (hasAnswered) {
+                                if (option.isCorrect) {
+                                    buttonStyle = 'border-green-500 bg-green-50 shadow-sm';
+                                    dotStyle = 'border-green-500 bg-green-500';
+                                    textStyle = 'font-bold text-green-900';
+                                } else if (isSelected) {
+                                    buttonStyle = 'border-red-500 bg-red-50 shadow-sm';
+                                    dotStyle = 'border-red-500 bg-red-500';
+                                    textStyle = 'font-bold text-red-900';
+                                } else {
+                                    buttonStyle = 'border-gray-200 opacity-60';
+                                    dotStyle = 'border-gray-200';
+                                    textStyle = 'text-gray-500';
+                                }
+                            }
+
+                            return (
+                                <button
+                                    key={option.id}
+                                    onClick={() => handleOptionSelect(currentQuestion.id, option.id)}
+                                    disabled={hasAnswered}
+                                    className={`w-full text-left p-3 rounded-xl border-2 transition-all duration-200 ${buttonStyle}`}
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div
+                                                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${dotStyle}`}
+                                            >
+                                                {hasAnswered && (option.isCorrect || isSelected) && (
+                                                    <div className="text-white text-xs">
+                                                        {option.isCorrect ? '✓' : '✗'}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <span className={`text-base ${textStyle}`}>
+                                                {option.text || option.label || 'Option'}
+                                            </span>
+                                        </div>
+
+                                        {hasAnswered && option.isCorrect && (
+                                            <span className="text-xs uppercase tracking-wider text-green-700 bg-green-200 px-2 py-1 rounded font-bold">
+                                                Correct Answer
+                                            </span>
+                                        )}
+
+                                        {hasAnswered && isSelected && !option.isCorrect && (
+                                            <span className="text-xs uppercase tracking-wider text-red-700 bg-red-200 px-2 py-1 rounded font-bold">
+                                                Your Answer
+                                            </span>
+                                        )}
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {selectedAnswers[currentQuestion.id] && (
+                        <div
+                            className={`mt-6 p-4 rounded-xl border-2 animate-fadeIn ${
+                                currentQuestion.options?.find((option) => option.isCorrect)?.id ===
+                                selectedAnswers[currentQuestion.id]
+                                    ? 'bg-green-50 border-green-200'
+                                    : 'bg-red-50 border-red-200'
+                            }`}
+                        >
+                            <div className="flex items-center gap-2 mb-2">
+                                {currentQuestion.options?.find((option) => option.isCorrect)?.id ===
+                                selectedAnswers[currentQuestion.id] ? (
+                                    <>
+                                        <FaCheckCircle className="text-green-500 text-xl" />
+                                        <span className="font-bold text-green-800">Correct!</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <FaTimesCircle className="text-red-500 text-xl" />
+                                        <span className="font-bold text-red-800">Incorrect</span>
+                                    </>
+                                )}
+                            </div>
+
+                            {currentQuestion.explanation && (
+                                <div className="mt-2 text-sm text-gray-700 bg-white/60 p-3 rounded-lg border border-gray-100">
+                                    <span className="font-bold mr-2">Explanation:</span>
+                                    {currentQuestion.explanation}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    <div className="flex justify-between items-center pt-4 border-t border-gray-100 mt-4">
+                        <button
+                            onClick={() => goToIndex(currentQuestionIndex - 1)}
+                            disabled={currentQuestionIndex === 0}
+                            className={`px-6 py-1.5 rounded-lg font-bold transition-all ${
+                                currentQuestionIndex === 0
+                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                    : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 shadow-sm'
+                            }`}
+                        >
+                            Previous
+                        </button>
+
+                        {currentQuestionIndex === questions.length - 1 ? (
+                            <button
+                                onClick={handleShowScore}
+                                className="px-8 py-1.5 rounded-lg font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg shadow-purple-200 transition-all"
+                            >
+                                Show Total Score
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => goToIndex(currentQuestionIndex + 1)}
+                                className="px-8 py-1.5 rounded-lg font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 transition-all"
+                            >
+                                Next
+                            </button>
+                        )}
+                    </div>
                 </div>
             )}
-
         </div>
     );
 };
 
-export default Education;
+export default ExamModule;
