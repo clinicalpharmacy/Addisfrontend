@@ -428,5 +428,4 @@ const PatientList = () => {
         </div>
     );
 };
-
 export default PatientList;
