@@ -1,23 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     FaSearch,
     FaPlus,
     FaFilter,
     FaUserInjured,
-    FaCalendarAlt,
     FaEdit,
     FaEye,
-    FaTrash,
     FaSort,
     FaSortUp,
     FaSortDown,
-    FaChevronRight,
-    FaIdCard,
-    FaClock,
-    FaUserMinus,
-    FaUserCheck,
-    FaSync
+    FaSync,
 } from 'react-icons/fa';
 
 import api from '../utils/api';
@@ -36,31 +29,64 @@ const PatientList = ({ onSelectPatient, selectedPatientCode }) => {
     const [userCompanyId, setUserCompanyId] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
-    const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-    const handleManualRefresh = () => {
-        setRefreshTrigger(prev => prev + 1);
-        fetchPatients();
+    const getSafeTokenPayload = () => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) return {};
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            return payload || {};
+        } catch (error) {
+            console.error('Failed to parse token', error);
+            return {};
+        }
     };
 
-    useEffect(() => {
-        // Get user role from token
-        const token = localStorage.getItem('token');
-        if (token) {
-            try {
-                const payload = JSON.parse(atob(token.split('.')[1]));
-                setUserRole(payload.role || 'user');
-                setUserAccountType(payload.account_type || '');
-                setUserCompanyId(payload.company_id || null);
-            } catch (e) {
-                console.error('Failed to parse token', e);
-            }
+    const filterPatients = useCallback((items, term = searchTerm, selectedStatus = statusFilter) => {
+        const normalizedTerm = (term || '').toLowerCase().trim();
+
+        let nextItems = [...(items || [])];
+
+        if (normalizedTerm) {
+            nextItems = nextItems.filter((patient) => {
+                const name = patient?.full_name ?? '';
+                const diagnosis = patient?.diagnosis ?? '';
+                const idValue = patient?.id ?? '';
+                return (
+                    String(name).toLowerCase().includes(normalizedTerm) ||
+                    String(diagnosis).toLowerCase().includes(normalizedTerm) ||
+                    String(idValue).toLowerCase().includes(normalizedTerm)
+                );
+            });
         }
 
-        fetchPatients();
+        if (selectedStatus !== 'all') {
+            const isActive = selectedStatus === 'active';
+            nextItems = nextItems.filter((patient) => {
+                const value = patient?.is_active;
+                if (value === undefined || value === null) return true;
+                return value === isActive;
+            });
+        }
+
+        return nextItems;
+    }, [searchTerm, statusFilter]);
+
+    const applySort = useCallback((items, key, direction) => {
+        return [...items].sort((a, b) => {
+            const first = a?.[key];
+            const second = b?.[key];
+
+            if (first === undefined || first === null) return 1;
+            if (second === undefined || second === null) return -1;
+
+            if (first < second) return direction === 'asc' ? -1 : 1;
+            if (first > second) return direction === 'asc' ? 1 : -1;
+            return 0;
+        });
     }, []);
 
-    const fetchPatients = async () => {
+    const fetchPatients = useCallback(async () => {
         try {
             setLoading(true);
             const token = localStorage.getItem('token');
@@ -70,38 +96,29 @@ const PatientList = ({ onSelectPatient, selectedPatientCode }) => {
                 return;
             }
 
-            // Extract role directly from token to avoid state race conditions
-            let currentRole = '';
-            try {
-                const payload = JSON.parse(atob(token.split('.')[1]));
-                currentRole = payload.role || '';
-            } catch (e) { }
+            const payload = getSafeTokenPayload();
+            const currentRole = payload.role || '';
 
             const result = await api.get('/patients');
 
             if (result.success && result.patients) {
-                // 🔐 HYBRID DECRYPTION: Support both Master Key (Owners) and Private Key (Support Staff)
                 let decryptedPatients = result.patients;
                 try {
                     const masterKey = await getEncryptionKey();
                     let privateKey = null;
 
                     const authorizedSupportRoles = ['healthcare_client', 'admin', 'pharmacist', 'company_admin', 'company_user'];
-                    if (authorizedSupportRoles.includes(currentRole)) {
-                        // Only attempt to load private key if we have a master key to unwrap it
-                        if (masterKey) {
-                            privateKey = await loadPrivateKey(masterKey);
-                        }
+                    if (authorizedSupportRoles.includes(currentRole) && masterKey) {
+                        privateKey = await loadPrivateKey(masterKey);
                     }
 
                     decryptedPatients = await decryptPatientList(result.patients, masterKey, privateKey);
                 } catch (encErr) {
                     console.error('❌ [Decryption Error] List decryption failed:', encErr);
-                    // Continue with original (encrypted) list if decryption crashes
                 }
 
                 setPatients(decryptedPatients);
-                setFilteredPatients(decryptedPatients);
+                setFilteredPatients(filterPatients(decryptedPatients));
             } else {
                 setPatients([]);
                 setFilteredPatients([]);
@@ -113,19 +130,24 @@ const PatientList = ({ onSelectPatient, selectedPatientCode }) => {
         } finally {
             setLoading(false);
         }
+    }, [filterPatients, navigate]);
+
+    const handleManualRefresh = () => {
+        fetchPatients();
     };
 
+    useEffect(() => {
+        const payload = getSafeTokenPayload();
+        setUserRole(payload.role || 'user');
+        setUserAccountType(payload.account_type || '');
+        setUserCompanyId(payload.company_id || null);
+        fetchPatients();
+    }, [fetchPatients]);
+
     const handleSearch = (e) => {
-        const term = e.target.value.toLowerCase();
+        const term = e.target.value;
         setSearchTerm(term);
-
-        const filtered = (patients || []).filter(patient =>
-            (patient.full_name && patient.full_name.toLowerCase().includes(term)) ||
-            (patient.diagnosis && patient.diagnosis.toLowerCase().includes(term)) ||
-            (patient.id && String(patient.id).toLowerCase().includes(term))
-        );
-
-        setFilteredPatients(filtered);
+        setFilteredPatients(filterPatients(patients, term, statusFilter));
         setCurrentPage(1);
     };
 
@@ -136,15 +158,8 @@ const PatientList = ({ onSelectPatient, selectedPatientCode }) => {
         }
 
         setSortConfig({ key, direction });
-
-        const sorted = [...filteredPatients].sort((a, b) => {
-            if (a[key] < b[key]) return direction === 'asc' ? -1 : 1;
-            if (a[key] > b[key]) return direction === 'asc' ? 1 : -1;
-            return 0;
-        });
-
-        setFilteredPatients(sorted);
-        setCurrentPage(1); // Reset to first page on sort
+        setFilteredPatients(prev => applySort(prev, key, direction));
+        setCurrentPage(1);
     };
 
     const handleDelete = async (id) => {
@@ -180,7 +195,6 @@ const PatientList = ({ onSelectPatient, selectedPatientCode }) => {
     };
 
     const handleNewPatient = () => {
-        // Individual accounts without a company can only create one patient
         const isIndividual = userAccountType === 'individual' && !userCompanyId;
         if (isIndividual && userRole !== 'admin' && patients.length >= 5) {
             alert('Individual subscription plan is limited to 5 MR records. Please upgrade to a Company plan to manage more MRs.');
@@ -191,70 +205,45 @@ const PatientList = ({ onSelectPatient, selectedPatientCode }) => {
         navigate('/patients/new');
     };
 
-    const getCurrentUserId = () => {
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) return null;
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            return payload.userId;
-        } catch (e) {
-            console.error('Failed to get user ID:', e);
-            return null;
-        }
-    };
-
     const handleEditClick = (patient) => {
-        // Store patient data in localStorage instead of sessionStorage
         localStorage.setItem('editPatientData', JSON.stringify(patient));
         localStorage.setItem('editPatientId', patient.id);
         localStorage.setItem('editMode', 'true');
-
-        // Navigate to patient details with edit mode using UUID
         navigate(`/patients/${patient.id}?edit=true`);
     };
 
     const handleViewClick = (patientId) => {
-        // Clear any edit data
         localStorage.removeItem('editPatientData');
         localStorage.removeItem('editPatientId');
         localStorage.removeItem('editMode');
-
-        // Navigate without edit mode using UUID
         navigate(`/patients/${patientId}`);
     };
 
     const handleRowClick = (patient) => {
         if (typeof onSelectPatient === 'function') {
-            // Embedded mode (inside Education tab) — notify parent instead of navigating
             onSelectPatient(patient.id);
         } else {
-            // Default route-based mode — jump to /patients/:id
             handleViewClick(patient.id);
         }
     };
 
-    // Pagination logic
     const totalPages = Math.ceil(filteredPatients.length / itemsPerPage);
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentPatients = filteredPatients.slice(indexOfFirstItem, indexOfLastItem);
 
-    // Check if user is individual account type
     const isIndividual = userAccountType === 'individual' && !userCompanyId;
-    // Determine if the user is an individual (who shouldn't see patient codes)
-    const isRestrictedIndividual = userAccountType === 'individual' && !userCompanyId && userRole !== 'admin';
 
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
             </div>
         );
     }
 
     return (
         <div className="page-container w-full max-w-full overflow-x-hidden px-3 sm:px-4 md:px-6 lg:px-8 space-y-4">
-            {/* Standard Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                 <div className="flex items-center gap-4">
                     <div className="p-3 bg-blue-50 rounded-xl">
@@ -276,8 +265,8 @@ const PatientList = ({ onSelectPatient, selectedPatientCode }) => {
                     <button
                         onClick={handleNewPatient}
                         className={`px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-md ${isIndividual && userRole !== 'admin' && patients.length >= 5
-                                ? 'bg-gray-400 cursor-not-allowed text-white'
-                                : 'bg-blue-600 hover:bg-blue-700 text-white transform hover:-translate-y-0.5 active:translate-y-0'
+                            ? 'bg-gray-400 cursor-not-allowed text-white'
+                            : 'bg-blue-600 hover:bg-blue-700 text-white transform hover:-translate-y-0.5 active:translate-y-0'
                             }`}
                     >
                         <FaPlus /> New MR Case
@@ -285,7 +274,6 @@ const PatientList = ({ onSelectPatient, selectedPatientCode }) => {
                 </div>
             </div>
 
-            {/* Search & Filtering for All Users */}
             <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="relative">
@@ -303,8 +291,10 @@ const PatientList = ({ onSelectPatient, selectedPatientCode }) => {
                         <select
                             value={statusFilter}
                             onChange={(e) => {
-                                setStatusFilter(e.target.value);
-                                handleSearch({ target: { value: searchTerm } });
+                                const nextValue = e.target.value;
+                                setStatusFilter(nextValue);
+                                setFilteredPatients(filterPatients(patients, searchTerm, nextValue));
+                                setCurrentPage(1);
                             }}
                             className="w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500/20 text-sm font-medium appearance-none"
                         >
@@ -316,7 +306,6 @@ const PatientList = ({ onSelectPatient, selectedPatientCode }) => {
                 </div>
             </div>
 
-            {/* Standard Data Table */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full border-collapse">
@@ -349,16 +338,14 @@ const PatientList = ({ onSelectPatient, selectedPatientCode }) => {
                                         <td className="px-6 py-5">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm shadow-sm group-hover:scale-110 transition-transform">
-                                                    {userRole === 'healthcare_client'
-                                                        ? 'P'
-                                                        : (patient.full_name && typeof patient.full_name === 'string' && !patient.full_name.includes(':') && !patient.full_name.startsWith('{') ? patient.full_name.charAt(0) : '?')}
+                                                    {userRole === 'healthcare_client' ? 'P' : (patient.full_name && typeof patient.full_name === 'string' && !patient.full_name.includes(':') && !patient.full_name.startsWith('{') ? patient.full_name.charAt(0).toUpperCase() : 'A')}
                                                 </div>
                                                 <div>
                                                     <div className="font-bold text-gray-800 text-sm leading-none mb-1">
-                                                        {userRole === 'healthcare_client' 
-                                                            ? 'Patient Profile' 
-                                                            : (patient.full_name && typeof patient.full_name === 'string' && !patient.full_name.includes(':') && !patient.full_name.startsWith('{') 
-                                                                ? patient.full_name 
+                                                        {userRole === 'healthcare_client'
+                                                            ? 'Patient Profile'
+                                                            : (patient.full_name && typeof patient.full_name === 'string' && !patient.full_name.includes(':') && !patient.full_name.startsWith('{')
+                                                                ? patient.full_name
                                                                 : 'Anonymous User')}
                                                     </div>
                                                 </div>
@@ -366,7 +353,7 @@ const PatientList = ({ onSelectPatient, selectedPatientCode }) => {
                                         </td>
                                         <td className="px-6 py-5">
                                             <div className="text-sm font-medium text-gray-700 italic max-w-xs truncate">
-                                                "{userRole === 'healthcare_client' ? 'Clinical Data' : (patient.diagnosis && typeof patient.diagnosis === 'string' && !patient.diagnosis.includes(':') && !patient.diagnosis.startsWith('{') ? patient.diagnosis : 'Diagnosis Pending')}"
+                                                {userRole === 'healthcare_client' ? 'Clinical Data' : (patient.diagnosis && typeof patient.diagnosis === 'string' && !patient.diagnosis.includes(':') && !patient.diagnosis.startsWith('{') ? patient.diagnosis : 'Clinical assessment pending')}
                                             </div>
                                         </td>
                                         <td className="px-6 py-5 text-xs text-gray-500 font-bold">
@@ -382,7 +369,7 @@ const PatientList = ({ onSelectPatient, selectedPatientCode }) => {
                                                     <FaEye />
                                                 </button>
                                                 <button onClick={() => handleEditClick(patient)} className="p-2 text-amber-600 hover:bg-amber-100 rounded-lg transition-all" title="Edit Case"><FaEdit /></button>
-                                                <button onClick={() => handleDelete(patient.id)} disabled={userRole === 'healthcare_client'} className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-all disabled:opacity-20" title="Remove Case"><FaTrash /></button>
+                                                <button onClick={() => handleDelete(patient.id)} disabled={userRole === 'healthcare_client'} className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-all disabled:opacity-50" title="Delete Case"><FaSync /> </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -406,20 +393,20 @@ const PatientList = ({ onSelectPatient, selectedPatientCode }) => {
                                             <div className="bg-gray-50 p-5 rounded-2xl border border-gray-200 text-[11px] font-mono text-left w-full shadow-sm">
                                                 <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-3">
                                                     <span className="font-bold text-gray-800 uppercase tracking-widest">🔍 Clinical Engine Synchronization Audit</span>
-                                                    <div className={`h-2 w-2 rounded-full ${loading ? 'bg-amber-500' : 'bg-green-500'}`}></div>
+                                                    <div className={`h-2 w-2 rounded-full ${loading ? 'bg-amber-500' : 'bg-green-500'}`} />
                                                 </div>
                                                 <div className="space-y-1.5 text-gray-600">
                                                     <p>USER_IDENTITY: <span className="text-blue-600 font-bold">{localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).email : 'Guest'}</span></p>
                                                     <p>ACCESS_ROLE: <span className="text-blue-600 font-bold">{userRole || 'pharmacist'}</span></p>
-                                                    <p>KEY_STATUS: <span className="text-green-600 font-bold">{sessionStorage.getItem('enc_key_raw') ? "√ OK (AES-256 ACTIVE)" : "× MISSING (RE-AUTH REQ)"}</span></p>
-                                                    <p>ACTIVE_ID_MAP: <span className="text-amber-600 font-bold">{localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).id : 'N/A'} {userCompanyId ? `| ORG(${userCompanyId})` : ""}</span></p>
+                                                    <p>KEY_STATUS: <span className="text-green-600 font-bold">{sessionStorage.getItem('enc_key_raw') ? '√ OK (AES-256 ACTIVE)' : '× MISSING (RE-AUTH REQUIRED)'}</span></p>
+                                                    <p>ACTIVE_ID_MAP: <span className="text-amber-600 font-bold">{localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).id : 'N/A'} {localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).company_id || 'No Company' : ''}</span></p>
                                                     <p>DATABASE_HITS: <span className="text-red-600 font-bold">{patients.length} records found in query</span></p>
                                                 </div>
                                             </div>
 
                                             <div className="flex items-center gap-4 pt-2">
-                                                <button onClick={handleNewPatient} className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-xl font-black shadow-lg shadow-blue-200 transition-all transform hover:-translate-y-1">Start New Case</button>
-                                                <button onClick={handleManualRefresh} className="bg-white hover:bg-gray-50 text-gray-700 px-8 py-3.5 rounded-xl font-bold border border-gray-200 transition-all">Retry Link</button>
+                                                <button onClick={handleNewPatient} className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-xl font-black shadow-lg shadow-blue-200 transition-all">Create Case</button>
+                                                <button onClick={handleManualRefresh} className="bg-white hover:bg-gray-50 text-gray-700 px-8 py-3.5 rounded-xl font-bold border border-gray-200 transition-all">Refresh</button>
                                             </div>
                                         </div>
                                     </td>
@@ -430,20 +417,21 @@ const PatientList = ({ onSelectPatient, selectedPatientCode }) => {
                 </div>
             </div>
 
-            {/* Clean Pagination */}
             {filteredPatients.length > itemsPerPage && (
                 <div className="flex flex-col md:flex-row justify-between items-center bg-white p-5 rounded-xl border border-gray-200 gap-4 shadow-sm">
                     <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
                         Case Inventory: Record {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredPatients.length)} of {filteredPatients.length}
                     </div>
                     <div className="flex items-center gap-2">
-                        <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 text-gray-500 hover:bg-blue-50 hover:text-blue-600 disabled:opacity-30 border border-transparent hover:border-blue-100 transition-all font-bold tracking-tighter">PREV</button>
+                        <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 text-gray-600 disabled:opacity-40">←</button>
                         <div className="flex items-center gap-1.5">
                             {[...Array(totalPages)].map((_, i) => (
-                                <button key={i + 1} onClick={() => setCurrentPage(i + 1)} className={`w-8 h-8 rounded-lg text-[10px] font-black tracking-widest transition-all ${currentPage === i + 1 ? 'bg-blue-600 text-white shadow-md' : 'text-gray-400 hover:bg-gray-50'}`}>{i + 1}</button>
+                                <button key={i + 1} onClick={() => setCurrentPage(i + 1)} className={`w-8 h-8 rounded-lg text-[10px] font-black tracking-widest transition-all ${currentPage === i + 1 ? 'bg-blue-600 text-white' : 'bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-600'}`}>
+                                    {i + 1}
+                                </button>
                             ))}
                         </div>
-                        <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 text-gray-500 hover:bg-blue-50 hover:text-blue-600 disabled:opacity-30 border border-transparent hover:border-blue-100 transition-all font-bold tracking-tighter">NEXT</button>
+                        <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 text-gray-600 disabled:opacity-40">→</button>
                     </div>
                 </div>
             )}
