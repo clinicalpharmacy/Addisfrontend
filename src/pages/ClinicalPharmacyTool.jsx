@@ -220,6 +220,29 @@ const ClinicalPharmacyTool = () => {
     }, []);
 
     // Toggle section expansion
+        }, []);
+
+    // Auto-select the Renal Function Tests category (or whichever
+    // category holds creatinine / eGFR) so the user doesn't have to
+    // hunt for it after the lab list is re-organized in the DB.
+    useEffect(() => {
+        if (labSubCategories.length === 0) return;
+
+        const renalCat = labSubCategories.find((cat) =>
+            cat.tests.some(
+                (t) =>
+                    t.key === 'serum_creatinine' || t.key === 'egfr'
+            )
+        );
+
+        if (!renalCat) return;
+
+        setSelectedLabSubCategories((prev) =>
+            prev.includes(renalCat.id) ? prev : [...prev, renalCat.id]
+        );
+    }, [labSubCategories]);
+
+    // Toggle section expansion
     const toggleSection = (sectionId) => {
         setExpandedSections((prev) => ({
             ...prev,
