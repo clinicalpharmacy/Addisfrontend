@@ -4,32 +4,11 @@ import {
     FaBookOpen,
     FaClipboardList,
     FaSearch,
-    FaSpinner,
-    FaUserInjured,
-    FaArrowLeft
+    FaSpinner
 } from 'react-icons/fa';
 import api from '../../utils/api';
 import ExamModule from './ExamModule';
 
-// ✅ Full-featured components
-import PatientDetails from '../Patient/PatientDetails';
-import PatientList from '../Patient/PatientList';
-
-/**
- * Education
- *
- * Tabs:
- *  - Exams                    → list of published exams + exam runner (ExamModule)
- *  - Clinical Pharmacy Skill  → PatientsList (sidebar) + full PatientDetails
- *  - Guidelines               → placeholder
- *
- * The "Clinical Pharmacy Skill" tab mimics the /patients layout:
- *   ┌─────────────────┬───────────────────────────────┐
- *   │  PatientsList   │       PatientDetails          │
- *   │  (selectable)   │  (all tabs: overview, labs,   │
- *   │                 │   meds, DRN, plan, outcome…)  │
- *   └─────────────────┴───────────────────────────────┘
- */
 const Education = () => {
     const [activeTab, setActiveTab] = useState('exam');
     const [selectedExam, setSelectedExam] = useState(null);
@@ -39,12 +18,6 @@ const Education = () => {
     const [exams, setExams] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-
-    // =========================================================
-    // CLINICAL PHARMACY SKILL — patient selection
-    // =========================================================
-    const [selectedPatientCode, setSelectedPatientCode] = useState(null);
-    const [showMobilePatientList, setShowMobilePatientList] = useState(true);
 
     // =========================================================
     // EXAM SESSION / RESUME STATE
@@ -59,16 +32,11 @@ const Education = () => {
     const fetchExams = async () => {
         try {
             setLoading(true);
-            setError(null);
 
             const response = await api.get('/exams/published');
 
-            if (response && response.success) {
+            if (response.success) {
                 setExams(response.exams || []);
-            } else if (Array.isArray(response)) {
-                setExams(response);
-            } else if (response && Array.isArray(response.data)) {
-                setExams(response.data);
             }
         } catch (err) {
             console.error('Failed to fetch exams:', err);
@@ -80,8 +48,14 @@ const Education = () => {
 
     const filteredExams = exams.filter(
         (exam) =>
-            (exam.title && exam.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (exam.subject && exam.subject.toLowerCase().includes(searchTerm.toLowerCase()))
+            (exam.title &&
+                exam.title
+                    .toLowerCase()
+                    .includes(searchTerm.toLowerCase())) ||
+            (exam.subject &&
+                exam.subject
+                    .toLowerCase()
+                    .includes(searchTerm.toLowerCase()))
     );
 
     // =========================================================
@@ -144,6 +118,7 @@ const Education = () => {
         const saved = getSavedSession(exam.id);
         const TEN_MINUTES = 10 * 60 * 1000;
 
+        // Completed sessions should never be resumed; always start fresh.
         if (saved && saved.completed) {
             clearSavedSession(exam.id);
             startNewSession(exam);
@@ -152,12 +127,15 @@ const Education = () => {
 
         if (saved && saved.lastUpdated) {
             const elapsed = Date.now() - saved.lastUpdated;
+
+            // If user stopped for more than 10 minutes -> prompt
             if (elapsed > TEN_MINUTES) {
                 setSessionPrompt({ exam, saved });
                 return;
             }
         }
 
+        // No saved session (or within 10 min) -> start fresh
         startNewSession(exam);
     };
 
@@ -231,13 +209,30 @@ const Education = () => {
         });
     };
 
+    /**
+     * Called by ExamModule when the user reveals their total score.
+     *
+     * NOTE: we deliberately do NOT unmount the exam view here.
+     * The user needs to stay on the score/review screen. We only
+     * clear the persisted resume session so a fresh attempt is
+     * started next time.
+     */
     const handleExamComplete = () => {
         if (examSession) {
             clearSavedSession(examSession.examId);
         }
-        setExamSession((prev) => (prev ? { ...prev, completed: true } : prev));
+        // Keep selectedExam so the ExamModule stays rendered
+        // showing the score + review.
+        setExamSession((prev) =>
+            prev ? { ...prev, completed: true } : prev
+        );
     };
 
+    /**
+     * Called by ExamModule when the user clicks Back.
+     * Keeps the session saved (unless already completed) so it
+     * can be resumed later.
+     */
     const handleExamExit = () => {
         if (examSession) {
             if (examSession.completed) {
@@ -274,10 +269,12 @@ const Education = () => {
     // =========================================================
     return (
         <div className="bg-white/40 backdrop-blur-xl rounded-2xl shadow-xl border border-white/50 overflow-hidden relative animate-fadeIn">
+
             {/* Decorative background */}
             <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-br from-purple-600/10 to-indigo-600/10 pointer-events-none" />
 
             <div className="p-6 md:p-8 relative z-10">
+
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
                     <div>
@@ -285,6 +282,7 @@ const Education = () => {
                             <div className="bg-purple-100 p-2.5 rounded-xl">
                                 <FaGraduationCap className="text-purple-600 text-2xl" />
                             </div>
+
                             Education Center
                         </h2>
 
@@ -299,6 +297,7 @@ const Education = () => {
                     TABS
                 ====================================================== */}
                 <div className="flex flex-col sm:flex-row bg-gray-100/80 p-1.5 rounded-xl mb-8 max-w-4xl gap-1">
+
                     <button
                         onClick={() => setActiveTab('exam')}
                         className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-bold text-sm transition-all duration-300 ${
@@ -308,13 +307,19 @@ const Education = () => {
                         }`}
                     >
                         <FaClipboardList
-                            className={activeTab === 'exam' ? 'text-purple-500' : 'opacity-60'}
+                            className={
+                                activeTab === 'exam'
+                                    ? 'text-purple-500'
+                                    : 'opacity-60'
+                            }
                         />
                         Exams
                     </button>
 
                     <button
-                        onClick={() => setActiveTab('clinicalpharmacyskill')}
+                        onClick={() =>
+                            setActiveTab('clinicalpharmacyskill')
+                        }
                         className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-bold text-sm transition-all duration-300 ${
                             activeTab === 'clinicalpharmacyskill'
                                 ? 'bg-white text-indigo-700 shadow-sm'
@@ -341,7 +346,9 @@ const Education = () => {
                     >
                         <FaBookOpen
                             className={
-                                activeTab === 'guideline' ? 'text-indigo-500' : 'opacity-60'
+                                activeTab === 'guideline'
+                                    ? 'text-indigo-500'
+                                    : 'opacity-60'
                             }
                         />
                         Guidelines
@@ -353,19 +360,27 @@ const Education = () => {
                 ====================================================== */}
                 {activeTab === 'exam' && (
                     <div className="animate-fadeIn">
+
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                            <h3 className="text-xl font-bold text-gray-800">Select Subject</h3>
+
+                            <h3 className="text-xl font-bold text-gray-800">
+                                Select Subject
+                            </h3>
 
                             <div className="relative w-full sm:w-64">
+
                                 <input
                                     type="text"
                                     placeholder="Search subjects..."
                                     value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    onChange={(e) =>
+                                        setSearchTerm(e.target.value)
+                                    }
                                     className="w-full pl-10 pr-4 py-2 border-2 border-gray-100 rounded-xl focus:border-purple-300 focus:ring-4 focus:ring-purple-50 bg-gray-50/50 transition-all outline-none"
                                 />
 
                                 <FaSearch className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400" />
+
                             </div>
                         </div>
 
@@ -380,37 +395,51 @@ const Education = () => {
                         ) : (
                             <>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
                                     {filteredExams.map((exam) => (
                                         <button
                                             key={exam.id}
-                                            onClick={() => handleSelectExam(exam)}
-                                            className="flex items-center p-4 bg-white rounded-xl border border-gray-100 hover:border-purple-300 hover:shadow-lg hover:-translate-y-1 transition-all"
+                                            onClick={() =>
+                                                handleSelectExam(exam)
+                                            }
+                                            className="flex items-center p-4 bg-white rounded-xl border border-gray-100 hover:border-purple-300 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group text-left"
                                         >
+
                                             <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center mr-4 group-hover:bg-purple-600 transition-colors duration-300 flex-shrink-0">
+
                                                 <FaClipboardList className="text-purple-600 group-hover:text-white text-lg transition-colors" />
+
                                             </div>
 
                                             <div>
+
                                                 <h4 className="font-bold text-gray-800 group-hover:text-purple-700 transition-colors line-clamp-1">
-                                                    {exam.title || `${exam.subject} Exam`}
+                                                    {exam.title ||
+                                                        `${exam.subject} Exam`}
                                                 </h4>
 
                                                 <p className="text-xs text-gray-500 mt-1">
-                                                    {exam.subject} • {exam.question_count || 0}{' '}
+                                                    {exam.subject} •{' '}
+                                                    {exam.question_count || 0}{' '}
                                                     Questions
                                                 </p>
+
                                             </div>
+
                                         </button>
                                     ))}
+
                                 </div>
 
                                 {filteredExams.length === 0 && (
                                     <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-100">
+
                                         <p className="text-gray-500 font-medium">
                                             {exams.length === 0
                                                 ? 'No exams available at the moment.'
                                                 : `No exams found matching "${searchTerm}"`}
                                         </p>
+
                                     </div>
                                 )}
                             </>
@@ -420,81 +449,30 @@ const Education = () => {
 
                 {/* =====================================================
                     CLINICAL PHARMACY SKILL TAB CONTENT
-                    → PatientsList (sidebar) + full PatientDetails
                 ====================================================== */}
                 {activeTab === 'clinicalpharmacyskill' && (
                     <div className="animate-fadeIn">
-                        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
-                            {/* ---------- Patient List (Sidebar) ---------- */}
-                            <aside
-                                className={`lg:w-80 xl:w-96 flex-shrink-0 ${
-                                    selectedPatientCode && !showMobilePatientList
-                                        ? 'hidden lg:block'
-                                        : 'block'
-                                }`}
-                            >
-                                <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
-                                    <PatientList
-                                        onSelectPatient={(code) => {
-                                            setSelectedPatientCode(code);
-                                            setShowMobilePatientList(false);
-                                        }}
-                                        selectedPatientCode={selectedPatientCode}
-                                    />
-                                </div>
-                            </aside>
 
-                            {/* ---------- Main Patient Details ---------- */}
-                            <main
-                                className={`flex-1 min-w-0 ${
-                                    !selectedPatientCode
-                                        ? 'hidden lg:block'
-                                        : 'block'
-                                }`}
-                            >
-                                {!selectedPatientCode ? (
-                                    <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-12 text-center">
-                                        <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                                            <FaUserInjured className="text-indigo-400 text-4xl" />
-                                        </div>
-                                        <h3 className="text-xl font-bold text-gray-700 mb-2">
-                                            Select a Clinical Case
-                                        </h3>
-                                        <p className="text-gray-500 max-w-md mx-auto">
-                                            Choose a patient from the list on the left
-                                            to open their full record — medications,
-                                            DRN assessment, plan, outcome, and cost.
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <>
-                                        {/* Mobile "back to list" bar */}
-                                        <div className="lg:hidden mb-3">
-                                            <button
-                                                onClick={() => {
-                                                    setShowMobilePatientList(true);
-                                                }}
-                                                className="flex items-center gap-2 text-sm font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-2 rounded-lg"
-                                            >
-                                                <FaArrowLeft /> Back to Patient List
-                                            </button>
-                                        </div>
+                        <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-8 text-center">
 
-                                        {/* Full PatientDetails wired to selected patient */}
-                                        <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
-                                            <PatientDetails
-                                                key={selectedPatientCode} // remount when switching patient
-                                                patientCode={selectedPatientCode}
-                                                onBackToList={() => {
-                                                    setSelectedPatientCode(null);
-                                                    setShowMobilePatientList(true);
-                                                }}
-                                            />
-                                        </div>
-                                    </>
-                                )}
-                            </main>
+                            <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+
+                                <FaBookOpen className="text-indigo-600 text-2xl" />
+
+                            </div>
+
+                            <h3 className="text-xl font-bold text-indigo-900 mb-2">
+                                Clinical Pharmacy Skill
+                            </h3>
+
+                            <p className="text-indigo-700 max-w-md mx-auto">
+                                The clinical pharmacy skill section is
+                                currently under development. Please check
+                                back later.
+                            </p>
+
                         </div>
+
                     </div>
                 )}
 
@@ -503,9 +481,13 @@ const Education = () => {
                 ====================================================== */}
                 {activeTab === 'guideline' && (
                     <div className="animate-fadeIn">
+
                         <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-8 text-center">
+
                             <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+
                                 <FaBookOpen className="text-indigo-600 text-2xl" />
+
                             </div>
 
                             <h3 className="text-xl font-bold text-indigo-900 mb-2">
@@ -513,13 +495,17 @@ const Education = () => {
                             </h3>
 
                             <p className="text-indigo-700 max-w-md mx-auto">
-                                The guidelines section is currently under development.
-                                Please check back later for comprehensive medical
-                                guidelines across all specialties.
+                                The guidelines section is currently under
+                                development. Please check back later for
+                                comprehensive medical guidelines across all
+                                specialties.
                             </p>
+
                         </div>
+
                     </div>
                 )}
+
             </div>
 
             {/* =====================================================
@@ -527,36 +513,51 @@ const Education = () => {
             ====================================================== */}
             {sessionPrompt && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+
                     <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-fadeIn">
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">Resume Exam?</h3>
+
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">
+                            Resume Exam?
+                        </h3>
 
                         <p className="text-gray-600 mb-6">
                             You have an unfinished attempt for{' '}
                             <span className="font-semibold text-purple-700">
-                                {sessionPrompt.exam.title || sessionPrompt.exam.subject}
+                                {sessionPrompt.exam.title ||
+                                    sessionPrompt.exam.subject}
                             </span>
-                            . You stopped more than 10 minutes ago. Would you like to
-                            resume where you left off, or start over?
+                            . You stopped more than 10 minutes ago. Would
+                            you like to resume where you left off, or start
+                            over?
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-3">
+
                             <button
-                                onClick={() => resumeSession(sessionPrompt.saved)}
+                                onClick={() =>
+                                    resumeSession(sessionPrompt.saved)
+                                }
                                 className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 px-4 rounded-xl transition-colors"
                             >
                                 Resume
                             </button>
 
                             <button
-                                onClick={() => restartSession(sessionPrompt.exam)}
+                                onClick={() =>
+                                    restartSession(sessionPrompt.exam)
+                                }
                                 className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2.5 px-4 rounded-xl transition-colors"
                             >
                                 Restart
                             </button>
+
                         </div>
+
                     </div>
+
                 </div>
             )}
+
         </div>
     );
 };
