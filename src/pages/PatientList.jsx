@@ -338,7 +338,11 @@ const PatientList = ({ onSelectPatient, selectedPatientCode }) => {
                                         <td className="px-6 py-5">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm shadow-sm group-hover:scale-110 transition-transform">
-                                                    {userRole === 'healthcare_client' ? 'P' : (patient.full_name && typeof patient.full_name === 'string' && !patient.full_name.includes(':') && !patient.full_name.startsWith('{') ? patient.full_name.charAt(0).toUpperCase() : 'A')}
+                                                    {userRole === 'healthcare_client'
+                                                        ? 'P'
+                                                        : (patient.full_name && typeof patient.full_name === 'string' && !patient.full_name.includes(':') && !patient.full_name.startsWith('{')
+                                                            ? patient.full_name.charAt(0).toUpperCase()
+                                                            : 'A')}
                                                 </div>
                                                 <div>
                                                     <div className="font-bold text-gray-800 text-sm leading-none mb-1">
@@ -353,7 +357,7 @@ const PatientList = ({ onSelectPatient, selectedPatientCode }) => {
                                         </td>
                                         <td className="px-6 py-5">
                                             <div className="text-sm font-medium text-gray-700 italic max-w-xs truncate">
-                                                {userRole === 'healthcare_client' ? 'Clinical Data' : (patient.diagnosis && typeof patient.diagnosis === 'string' && !patient.diagnosis.includes(':') && !patient.diagnosis.startsWith('{') ? patient.diagnosis : 'Clinical assessment pending')}
+                                                {userRole === 'healthcare_client' ? 'Clinical Data' : (patient.diagnosis && typeof patient.diagnosis === 'string' && !patient.diagnosis.includes(':') && !patient.diagnosis.startsWith('{') ? patient.diagnosis : '—')}
                                             </div>
                                         </td>
                                         <td className="px-6 py-5 text-xs text-gray-500 font-bold">
@@ -368,8 +372,12 @@ const PatientList = ({ onSelectPatient, selectedPatientCode }) => {
                                                 >
                                                     <FaEye />
                                                 </button>
-                                                <button onClick={() => handleEditClick(patient)} className="p-2 text-amber-600 hover:bg-amber-100 rounded-lg transition-all" title="Edit Case"><FaEdit /></button>
-                                                <button onClick={() => handleDelete(patient.id)} disabled={userRole === 'healthcare_client'} className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-all disabled:opacity-50" title="Delete Case"><FaSync /> </button>
+                                                <button onClick={(e) => { e.stopPropagation(); handleEditClick(patient); }} className="p-2 text-amber-600 hover:bg-amber-100 rounded-lg transition-all" title="Edit Case">
+                                                    <FaEdit />
+                                                </button>
+                                                <button onClick={(e) => { e.stopPropagation(); handleDelete(patient.id); }} disabled={userRole === 'healthcare_client'} className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-all" title="Delete Case">
+                                                    Delete
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -399,14 +407,14 @@ const PatientList = ({ onSelectPatient, selectedPatientCode }) => {
                                                     <p>USER_IDENTITY: <span className="text-blue-600 font-bold">{localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).email : 'Guest'}</span></p>
                                                     <p>ACCESS_ROLE: <span className="text-blue-600 font-bold">{userRole || 'pharmacist'}</span></p>
                                                     <p>KEY_STATUS: <span className="text-green-600 font-bold">{sessionStorage.getItem('enc_key_raw') ? '√ OK (AES-256 ACTIVE)' : '× MISSING (RE-AUTH REQUIRED)'}</span></p>
-                                                    <p>ACTIVE_ID_MAP: <span className="text-amber-600 font-bold">{localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).id : 'N/A'} {localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).company_id || 'No Company' : ''}</span></p>
+                                                    <p>ACTIVE_ID_MAP: <span className="text-amber-600 font-bold">{localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).id : 'N/A'}</span></p>
                                                     <p>DATABASE_HITS: <span className="text-red-600 font-bold">{patients.length} records found in query</span></p>
                                                 </div>
                                             </div>
 
                                             <div className="flex items-center gap-4 pt-2">
-                                                <button onClick={handleNewPatient} className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-xl font-black shadow-lg shadow-blue-200 transition-all">Create Case</button>
-                                                <button onClick={handleManualRefresh} className="bg-white hover:bg-gray-50 text-gray-700 px-8 py-3.5 rounded-xl font-bold border border-gray-200 transition-all">Refresh</button>
+                                                <button onClick={handleNewPatient} className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-xl font-black shadow-lg shadow-blue-200 transition-all">New MR Case</button>
+                                                <button onClick={handleManualRefresh} className="bg-white hover:bg-gray-50 text-gray-700 px-8 py-3.5 rounded-xl font-bold border border-gray-200 transition-all">Sync Now</button>
                                             </div>
                                         </div>
                                     </td>
@@ -423,15 +431,15 @@ const PatientList = ({ onSelectPatient, selectedPatientCode }) => {
                         Case Inventory: Record {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredPatients.length)} of {filteredPatients.length}
                     </div>
                     <div className="flex items-center gap-2">
-                        <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 text-gray-600 disabled:opacity-40">←</button>
+                        <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 transition-all">Prev</button>
                         <div className="flex items-center gap-1.5">
                             {[...Array(totalPages)].map((_, i) => (
-                                <button key={i + 1} onClick={() => setCurrentPage(i + 1)} className={`w-8 h-8 rounded-lg text-[10px] font-black tracking-widest transition-all ${currentPage === i + 1 ? 'bg-blue-600 text-white' : 'bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-600'}`}>
+                                <button key={i + 1} onClick={() => setCurrentPage(i + 1)} className={`w-8 h-8 rounded-lg text-[10px] font-black tracking-widest transition-all ${currentPage === i + 1 ? 'bg-blue-600 text-white' : 'bg-gray-50'}`}>
                                     {i + 1}
                                 </button>
                             ))}
                         </div>
-                        <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 text-gray-600 disabled:opacity-40">→</button>
+                        <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 transition-all">Next</button>
                     </div>
                 </div>
             )}
