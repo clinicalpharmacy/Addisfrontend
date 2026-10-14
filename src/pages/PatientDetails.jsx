@@ -145,11 +145,13 @@ const LabInputField = React.memo(({
 
 LabInputField.displayName = 'LabInputField';
 
-const PatientDetails = ({ patientCode: propPatientCode }) => {
-    const { patientCode: paramPatientCode } = useParams();
-    const patientCode = propPatientCode || paramPatientCode;
-    const navigate = useNavigate();
-    const location = useLocation();
+const handleBack = useCallback(() => {
+    if (typeof onBackToList === 'function') {
+        onBackToList();
+    } else {
+        navigate('/patients');
+    }
+}, [navigate, onBackToList]);
 
     // --- 1. PRIMARY STATE INITIALIZATION ---
     const [patient, setPatient] = useState(null);
