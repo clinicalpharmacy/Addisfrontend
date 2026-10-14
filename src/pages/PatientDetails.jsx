@@ -145,9 +145,8 @@ const LabInputField = React.memo(({
 
 LabInputField.displayName = 'LabInputField';
 
-const PatientDetails = ({ patientCode: propPatientCode }) => {
-    const { patientCode: paramPatientCode } = useParams();
-    const patientCode = propPatientCode || paramPatientCode;
+const PatientDetails = () => {
+    const { patientCode } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
 
