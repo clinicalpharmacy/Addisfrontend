@@ -197,11 +197,7 @@ const ExamModule = ({
 
             {isSubmitted ? (
                 <div className="text-center py-12 animate-fadeIn">
-                    <div className="inline-flex items-center justify-center w-40 h-40 rounded-full border-8 mb-6 ${
-                        percentage >= 70
-                            ? 'border-green-500 text-green-500'
-                            : 'border-amber-500 text-amber-500'
-                    }">
+                    <div className={`inline-flex items-center justify-center w-40 h-40 rounded-full border-8 mb-6 ${percentage >= 70 ? 'border-green-500 text-green-500' : 'border-amber-500 text-amber-500'}`}>
                         <span className="text-5xl font-black">{percentage}%</span>
                     </div>
                     <h4 className="text-3xl font-bold text-gray-800 mb-3">
@@ -332,7 +328,7 @@ const ExamModule = ({
                         {currentQuestionIndex === questions.length - 1 ? (
                             <button
                                 onClick={handleShowScore}
-                                className="px-8 py-1.5 rounded-lg font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg shadow-purple-200 transition-all transform hover:-translate-y-0.5"
+                                className="px-8 py-1.5 rounded-lg font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg shadow-purple-200 transition-all"
                             >
                                 Show Total Score
                             </button>
