@@ -278,7 +278,7 @@ const Home = () => {
 
                 {/* 9. Education */}
                 {showEducation && (
-                    <Link to="/knowledge/Education" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
+                    <Link to="/knowledge/education" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
                         <div className="flex items-center gap-3 mb-2">
                             <div className="p-2 bg-purple-100 rounded-lg">
                                 <FaUserMd className="text-purple-600 text-lg" />

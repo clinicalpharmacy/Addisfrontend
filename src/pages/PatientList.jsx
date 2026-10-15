@@ -23,7 +23,11 @@ import {
 import api from '../utils/api';
 import { getEncryptionKey, decryptPatientList, loadPrivateKey } from '../utils/encryptionUtils';
 
-const PatientList = () => {
+const PatientList = ({
+    onSelectPatient,
+    onNewPatient,
+    embedded = false
+} = {}) => {
     const navigate = useNavigate();
     const [patients, setPatients] = useState([]);
     const [filteredPatients, setFilteredPatients] = useState([]);
@@ -188,7 +192,11 @@ const PatientList = () => {
             return;
         }
 
-        navigate('/patients/new');
+        if (onNewPatient) {
+            onNewPatient();
+        } else {
+            navigate('/patients/new');
+        }
     };
 
     const getCurrentUserId = () => {
@@ -209,8 +217,12 @@ const PatientList = () => {
         localStorage.setItem('editPatientId', patient.id);
         localStorage.setItem('editMode', 'true');
 
-        // Navigate to patient details with edit mode using UUID
-        navigate(`/patients/${patient.id}?edit=true`);
+        if (onSelectPatient) {
+            onSelectPatient(patient.id, true);
+        } else {
+            // Navigate to patient details with edit mode using UUID
+            navigate(`/patients/${patient.id}?edit=true`);
+        }
     };
 
     const handleViewClick = (patientId) => {
@@ -219,8 +231,12 @@ const PatientList = () => {
         localStorage.removeItem('editPatientId');
         localStorage.removeItem('editMode');
 
-        // Navigate without edit mode using UUID
-        navigate(`/patients/${patientId}`);
+        if (onSelectPatient) {
+            onSelectPatient(patientId, false);
+        } else {
+            // Navigate without edit mode using UUID
+            navigate(`/patients/${patientId}`);
+        }
     };
 
     // Pagination logic
@@ -243,7 +259,7 @@ const PatientList = () => {
     }
 
     return (
-        <div className="page-container w-full max-w-full overflow-x-hidden px-3 sm:px-4 md:px-6 lg:px-8 space-y-4">
+        <div className={`page-container w-full max-w-full overflow-x-hidden space-y-4 ${embedded ? 'px-0' : 'px-3 sm:px-4 md:px-6 lg:px-8'}`}>
             {/* Standard Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                 <div className="flex items-center gap-4">
@@ -251,8 +267,12 @@ const PatientList = () => {
                         <FaUserInjured className="text-2xl text-blue-600" />
                     </div>
                     <div>
-                        <h1 className="text-xl md:text-2xl font-bold text-gray-800 tracking-tight">Clinical Pharmacy Tool Dashboard</h1>
-                        <p className="text-sm text-gray-500 font-medium">Manage medication safety and effectiveness</p>
+                        <h1 className="text-xl md:text-2xl font-bold text-gray-800 tracking-tight">
+                            {embedded ? 'Medication Review Cases (with Patient Code)' : 'Clinical Pharmacy Tool Dashboard'}
+                        </h1>
+                        <p className="text-sm text-gray-500 font-medium">
+                            {embedded ? 'Select a patient case by Patient Code to review medication safety and effectiveness' : 'Manage medication safety and effectiveness'}
+                        </p>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -344,6 +364,11 @@ const PatientList = () => {
                                                             : (patient.full_name && typeof patient.full_name === 'string' && !patient.full_name.includes(':') && !patient.full_name.startsWith('{') 
                                                                 ? patient.full_name 
                                                                 : 'Anonymous User')}
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium mt-1">
+                                                        <span className="font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200 font-bold">
+                                                            Code: {patient.patient_code || patient.id}
+                                                        </span>
                                                     </div>
                                                 </div>
                                             </div>

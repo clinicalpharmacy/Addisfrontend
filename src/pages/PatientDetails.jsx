@@ -145,10 +145,13 @@ const LabInputField = React.memo(({
 
 LabInputField.displayName = 'LabInputField';
 
-const PatientDetails = () => {
-    const { patientCode } = useParams();
+const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPatientCreated } = {}) => {
+    const params = useParams();
     const navigate = useNavigate();
     const location = useLocation();
+
+    // Support both prop-based patientCode (when embedded in Education) and route-based useParams()
+    const patientCode = propPatientCode !== undefined ? propPatientCode : params.patientCode;
 
     // --- 1. PRIMARY STATE INITIALIZATION ---
     const [patient, setPatient] = useState(null);
@@ -699,7 +702,9 @@ const PatientDetails = () => {
                 setError('No patient selected. Please select a patient from the list.');
                 setLoading(false);
                 // Redirect to create new patient instead of showing error
-                navigate('/patients/new');
+                if (propPatientCode === undefined) {
+                    navigate('/patients/new');
+                }
                 return;
             }
 
@@ -1003,8 +1008,12 @@ const PatientDetails = () => {
     };
 
     const handleBack = useCallback(() => {
-        navigate('/patients');
-    }, [navigate]);
+        if (propOnBack) {
+            propOnBack();
+        } else {
+            navigate('/patients');
+        }
+    }, [navigate, propOnBack]);
 
     // Network and backend status monitoring
     useEffect(() => {
@@ -1403,7 +1412,13 @@ const PatientDetails = () => {
                 alert(isNewPatient ? 'Case created successfully!' : 'Case updated successfully!');
 
                 if (patientCode === 'new' && isNewPatient) {
-                    navigate(`/patients/${savedPatient.id}`);
+                    if (onPatientCreated) {
+                        onPatientCreated(savedPatient.id || savedPatient.patient_code);
+                    } else if (propOnBack) {
+                        propOnBack();
+                    } else {
+                        navigate(`/patients/${savedPatient.id}`);
+                    }
                 }
 
                 // --- PUSH TO HISTORY TABLES ---
@@ -1505,7 +1520,11 @@ const PatientDetails = () => {
 
             if (result.success) {
                 alert('Patient deleted successfully!');
-                navigate('/patients');
+                if (propOnBack) {
+                    propOnBack();
+                } else {
+                    navigate('/patients');
+                }
             } else {
                 throw new Error(result.error || 'Failed to delete patient');
             }
@@ -3179,7 +3198,7 @@ const PatientDetails = () => {
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex items-center gap-3 min-w-0 flex-1">
                             <button
-                                onClick={() => navigate('/patients')}
+                                onClick={handleBack}
                                 className="text-gray-600 hover:text-gray-800 p-2 hover:bg-gray-100 rounded-lg flex-shrink-0"
                                 title="Back to MRs"
                             >
