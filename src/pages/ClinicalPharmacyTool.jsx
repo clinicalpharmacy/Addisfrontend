@@ -15,19 +15,18 @@ import CostSection from '../components/Patient/CostSection';
 
 // Main categories in the correct order
 const frequencyOptions = [
-    'Stat', 'Daily', 'Once daily', 'Twice daily', 'Three times daily', 'Four times daily',
-    'Every morning', 'Every evening', 'Every night', 'At bedtime', 
+    'Stat', 'Daily', 'Once daily', 'Twice daily', 'Three times daily', 'Four times daily', 
     'Every other day', '3 times/week', '5 times/week', 'Weekly', 'Every 2 weeks', 'Every 3 weeks',
     'Every 4hrs', 'Every 6hrs', 'Every 8hrs', 'Every 12hrs', 'As needed (PRN)'
 ];
 
 // ✅ Route options (icons removed)
 const routeOptions = [
-    { value: 'po', label: 'Oral (PO)' },
-    { value: 'SL', label: 'Sublingual (SL)' },
-    { value: 'IV', label: 'Intravenous (IV)' },
-    { value: 'IM', label: 'Intramuscular (IM)' },
-    { value: 'SubQ', label: 'Subcutaneous (SubQ)' },
+    { value: 'po', label: 'Oral' },
+    { value: 'SL', label: 'Sublingual' },
+    { value: 'IV', label: 'Intravenous' },
+    { value: 'IM', label: 'Intramuscular' },
+    { value: 'SubQ', label: 'Subcutaneous' },
     { value: 'Topical', label: 'Topical' },
     { value: 'Inhalation', label: 'Inhalation' },
     { value: 'Nasal', label: 'Nasal' },

@@ -22,7 +22,11 @@ const MedicationAvailability = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [editPostId, setEditPostId] = useState(null);
     const isAdmin = currentUser?.role === 'admin';
-    
+
+    // New state for post type (availability or price)
+    const [postType, setPostType] = useState('availability');
+    const [filterType, setFilterType] = useState('all'); // 'all', 'availability', or 'price'
+
     // Add refs to prevent unnecessary re-renders and track mounted state
     const isMounted = useRef(true);
     const pollingInterval = useRef(null);
@@ -34,6 +38,7 @@ const MedicationAvailability = () => {
         medication_needed: '',
         search_date: '',
         notes: '',
+        post_type: 'availability',
     });
 
     // Keep postsRef in sync with posts state
@@ -45,7 +50,7 @@ const MedicationAvailability = () => {
         isMounted.current = true; // FIX: Reset to true for React 18 Strict Mode remounts
         fetchCurrentUser();
         fetchPosts();
-        
+
         // Cleanup on unmount
         return () => {
             isMounted.current = false;
@@ -64,19 +69,19 @@ const MedicationAvailability = () => {
         if (autoDeleteInterval.current) {
             clearInterval(autoDeleteInterval.current);
         }
-        
+
         const checkAndDeleteExpiredPosts = async () => {
             // Use postsRef to avoid dependency on posts state
             const currentPosts = postsRef.current;
             if (!currentPosts.length) return;
-            
+
             const today = new Date().toISOString().split('T')[0];
-            const expiredPosts = currentPosts.filter(post => 
+            const expiredPosts = currentPosts.filter(post =>
                 post.search_date && post.search_date < today
             );
-            
+
             if (expiredPosts.length === 0) return;
-            
+
             // Delete expired posts
             for (const post of expiredPosts) {
                 try {
@@ -86,7 +91,7 @@ const MedicationAvailability = () => {
                     console.error(`Failed to auto-delete post ${post.id}:`, error);
                 }
             }
-            
+
             // Refresh posts only if we deleted something and component is still mounted
             if (expiredPosts.length > 0 && isMounted.current) {
                 await fetchPosts();
@@ -119,7 +124,7 @@ const MedicationAvailability = () => {
 
         const fetchChatData = async () => {
             if (!selectedPost || !isMounted.current) return;
-            
+
             try {
                 if (isPoster) {
                     if (selectedChatUser) {
@@ -287,15 +292,20 @@ const MedicationAvailability = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         if (!formData.medication_needed.trim()) {
             alert('Medication name is required');
             return;
         }
 
         try {
+            const submitData = {
+                ...formData,
+                post_type: formData.post_type,
+            };
+
             if (isEditing) {
-                const response = await api.put(`/medication-availability/${editPostId}`, formData);
+                const response = await api.put(`/medication-availability/${editPostId}`, submitData);
                 if (response && response.success && isMounted.current) {
                     setIsEditing(false);
                     setEditPostId(null);
@@ -303,18 +313,20 @@ const MedicationAvailability = () => {
                         medication_needed: '',
                         search_date: '',
                         notes: '',
+                        post_type: 'availability',
                     });
                     setShowAddForm(false);
                     await fetchPosts();
                 }
             } else {
-                const response = await api.post('/medication-availability', formData);
+                const response = await api.post('/medication-availability', submitData);
                 if (response && response.success && isMounted.current) {
                     setShowAddForm(false);
                     setFormData({
                         medication_needed: '',
                         search_date: '',
                         notes: '',
+                        post_type: 'availability',
                     });
                     await fetchPosts();
                 }
@@ -330,6 +342,7 @@ const MedicationAvailability = () => {
             medication_needed: post.medication_needed || '',
             search_date: post.search_date || '',
             notes: post.notes || '',
+            post_type: post.post_type || 'availability',
         });
         setEditPostId(post.id);
         setIsEditing(true);
@@ -339,17 +352,17 @@ const MedicationAvailability = () => {
 
     const handleDelete = async (id) => {
         if (!window.confirm('Are you sure you want to delete this post?')) return;
-        
+
         const post = posts.find(p => p.id === id);
         if (!post) return;
-        
+
         const isAuthorized = currentUser?.id === post.user_id || currentUser?.role === 'admin';
-        
+
         if (!isAuthorized) {
             alert('You are not authorized to delete this post');
             return;
         }
-        
+
         try {
             const data = await api.delete(`/medication-availability/${id}`);
             if (data && data.success && isMounted.current) {
@@ -368,9 +381,18 @@ const MedicationAvailability = () => {
     // Filter posts
     const filteredPosts = Array.isArray(posts) ? posts.filter(post => {
         if (!post || !post.medication_needed) return false;
+
+        // Normalize post type — backend may return post_type, postType, or type
+        // Default to 'availability' when missing/unknown so filtering works
+        const rawType = post.post_type ?? post.postType ?? post.type;
+        const normalizedType = rawType === 'price' ? 'price' : 'availability';
+
+        // Filter by post type
+        if (filterType !== 'all' && normalizedType !== filterType) return false;
+
         const term = searchTerm.toLowerCase().trim();
         if (!term) return true;
-        
+
         const medName = (post.medication_needed || '').toLowerCase();
         const institution = (post.user?.institution || '').toLowerCase();
         const location = (post.user?.location || '').toLowerCase();
@@ -383,7 +405,7 @@ const MedicationAvailability = () => {
         try {
             const date = new Date(dateString);
             if (isNaN(date.getTime())) return '';
-            
+
             return date.toLocaleDateString([], {
                 year: 'numeric',
                 month: 'short',
@@ -401,7 +423,7 @@ const MedicationAvailability = () => {
     };
 
     // Memoize filtered posts to prevent unnecessary re-renders
-    const memoizedFilteredPosts = React.useMemo(() => filteredPosts, [posts, searchTerm]);
+    const memoizedFilteredPosts = React.useMemo(() => filteredPosts, [posts, searchTerm, filterType]);
 
     return (
         <div className="p-6 max-w-7xl mx-auto flex flex-col h-[calc(100vh-100px)]">
@@ -410,7 +432,7 @@ const MedicationAvailability = () => {
                 <div>
                     <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
                         <FaPills className="text-blue-600" />
-                           መድሃኒት ማፈላለጊያ
+                           መድሃኒት እና ዋጋ ቅናሽ ማፈላለጊያ
                     </h1>
 
                     <div className="mt-2 flex flex-wrap gap-3 text-xs font-semibold text-gray-500">
@@ -419,192 +441,242 @@ const MedicationAvailability = () => {
                         <span className="bg-gray-100 px-3 py-1 rounded-full">• Deletes if expired</span>
                     </div>
                     
-                    <p className="text-gray-600 mt-1">መድሃኒት እያፈላለጉ ነው? የሚፈለገው መድሃኒት ለፋርማሲ ባለሙያዎች እንዲደርስ በዚህ ያጋሩን</p>
+                    <p className="text-gray-600 mt-1">መድሃኒት እያፈላለጉ ነው? ዋጋ ቅናሽ እያፈላለጉ ነው? የሚፈለገው መድሃኒት ለፋርማሲ ባለሙያዎች እንዲደርስ በዚህ ያጋሩን</p>
                 </div>
                 <button
                     onClick={() => {
                         setShowAddForm(!showAddForm);
                         if (isEditing) {
                             setIsEditing(false);
-                            setFormData({ medication_needed: '', search_date: '', notes: '' });
+                            setFormData({ medication_needed: '', search_date: '', notes: '', post_type: 'availability' });
                         }
                     }}
                     className={`${showAddForm ? 'bg-gray-500' : 'bg-blue-600'} text-white px-6 py-3 rounded-xl flex items-center gap-2 hover:opacity-90 transition shadow-lg font-bold`}
                 >
-                    {showAddForm ? 'Cancel' : <><FaPlus />ተፈላጊውን መድሃኒት ያጋሩ</>}
+                    {showAddForm ? 'Cancel' : <><FaPlus />መድሃኒቱን በዚህ ያጋሩ</>}
                 </button>
             </div>
 
             <div className="flex flex-col md:flex-row flex-1 gap-6 overflow-hidden">
-                {/* Left Side: Posts List */}
-                <div className={`flex-1 overflow-y-auto pr-2 space-y-4 ${selectedPost ? 'hidden md:block' : ''}`}>
-                    {/* Search */}
-                    <div className="relative mb-4 sticky top-0 z-10 bg-gray-50 pt-2 pb-2">
-                        <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Search medication"
-                            className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl shadow-sm focus:ring-2 focus:ring-blue-500 outline-none transition"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+                {/* ==================== Left Side: Posts List ==================== */}
+                {/* Restructured: flex-col so form stays fixed and only posts scroll */}
+                <div className={`flex-1 flex flex-col overflow-hidden ${selectedPost ? 'hidden md:block' : ''}`}>
+
+                    {/* -------- Fixed Header: Search + Filter Tabs -------- */}
+                    <div className="flex-shrink-0 pr-2">
+                        {/* Search */}
+                        <div className="relative mb-4 bg-gray-50 pt-2 pb-2">
+                            <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Search medication"
+                                className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl shadow-sm focus:ring-2 focus:ring-blue-500 outline-none transition"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+
+                        {/* Filter Tabs */}
+                        <div className="flex gap-2 mb-4">
+                            <button
+                                onClick={() => setFilterType('all')}
+                                className={`px-4 py-2 rounded-xl text-sm font-bold transition ${filterType === 'all' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:border-blue-300'}`}
+                            >
+                                All
+                            </button>
+                            <button
+                                onClick={() => setFilterType('availability')}
+                                className={`px-4 py-2 rounded-xl text-sm font-bold transition ${filterType === 'availability' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:border-blue-300'}`}
+                            >
+                                Availability
+                            </button>
+                            <button
+                                onClick={() => setFilterType('price')}
+                                className={`px-4 py-2 rounded-xl text-sm font-bold transition ${filterType === 'price' ? 'bg-green-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:border-green-300'}`}
+                            >
+                                Price
+                            </button>
+                        </div>
                     </div>
 
-                    {/* Add/Edit Form */}
+                    {/* -------- Fixed: Add/Edit Form (COMPACT, no scroll) -------- */}
                     {showAddForm && (
-                        <div className="bg-white p-6 rounded-2xl shadow-lg border-2 border-blue-100 mb-6">
-                            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="md:col-span-3">
-                                    <input
-                                        type="text"
-                                        required
-                                        value={formData.medication_needed}
-                                        onChange={(e) => setFormData({ ...formData, medication_needed: e.target.value })}
-                                        className="w-full border border-gray-200 rounded-2xl p-3 focus:border-blue-500"
-                                        placeholder="የመድሃኒቱን ስም ይጻፉ"
-                                    />
+                        <div className="flex-shrink-0 bg-white p-4 rounded-2xl shadow-lg border-2 border-blue-100 mb-4">
+                            <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+
+                                {/* Post Type Selector */}
+                                <div className="flex gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, post_type: 'availability' })}
+                                        className={`flex-1 py-2 rounded-lg text-sm font-bold transition ${formData.post_type === 'availability' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                                    >
+                                        የጠፋ መድሃኒት ማፈላለጊያ 
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, post_type: 'price' })}
+                                        className={`flex-1 py-2 rounded-lg text-sm font-bold transition ${formData.post_type === 'price' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                                    >
+                                        ዋጋ ቅናሽ ማፈላለጊያ
+                                    </button>
                                 </div>
-                                
-                                {/* Row with label, calendar button, selected date, and post button */}
-                                <div className="md:col-span-3">
-                                    <div className="flex items-center gap-2 w-full">
-                                        <label className="text-lg text-gray-500 whitespace-nowrap">
-                                            እስከ መች ይፈለግ 
-                                        </label>
-                                
-                                        {/* Calendar Button */}
-                                        <div 
-                                            className="relative w-12 h-12 flex-shrink-0 cursor-pointer flex items-center justify-center bg-blue-50 rounded-xl hover:bg-blue-100 transition"
-                                            onClick={() => {
+
+                                {/* Medication name */}
+                                <input
+                                    type="text"
+                                    required
+                                    value={formData.medication_needed}
+                                    onChange={(e) => setFormData({ ...formData, medication_needed: e.target.value })}
+                                    className="w-full border border-gray-200 rounded-xl p-2.5 text-sm focus:border-blue-500 outline-none"
+                                    placeholder="የመድሃኒቱን ስም ይጻፉ"
+                                />
+
+                                {/* Date row */}
+                                <div className="flex items-center gap-2">
+                                    <label className="text-sm text-gray-500 whitespace-nowrap">
+                                        እስከ መች ይፈለግ
+                                    </label>
+
+                                    {/* Calendar Button */}
+                                    <div
+                                        className="relative w-10 h-10 flex-shrink-0 cursor-pointer flex items-center justify-center bg-blue-50 rounded-lg hover:bg-blue-100 transition"
+                                        onClick={() => {
+                                            try {
+                                                dateInputRef.current?.showPicker();
+                                            } catch (e) {
+                                                dateInputRef.current?.focus();
+                                            }
+                                        }}
+                                    >
+                                        <FaCalendarAlt className="text-lg text-blue-600 pointer-events-none" />
+
+                                        <input
+                                            ref={dateInputRef}
+                                            type="date"
+                                            value={formData.search_date}
+                                            onChange={(e) =>
+                                                setFormData({
+                                                    ...formData,
+                                                    search_date: e.target.value,
+                                                })
+                                            }
+                                            min={new Date().toISOString().split("T")[0]}
+                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                            onClick={(e) => {
                                                 try {
-                                                    dateInputRef.current?.showPicker();
-                                                } catch (e) {
-                                                    dateInputRef.current?.focus();
-                                                }
+                                                    e.target.showPicker();
+                                                } catch (err) {}
                                             }}
-                                        >
-                                            <FaCalendarAlt className="text-2xl text-blue-600 pointer-events-none" />
-                                
-                                            <input
-                                                ref={dateInputRef}
-                                                type="date"
-                                                value={formData.search_date}
-                                                onChange={(e) =>
-                                                    setFormData({
-                                                        ...formData,
-                                                        search_date: e.target.value,
-                                                    })
-                                                }
-                                                min={new Date().toISOString().split("T")[0]}
-                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                                onClick={(e) => {
-                                                    // Also try showPicker directly on the input if they click it
-                                                    try {
-                                                        e.target.showPicker();
-                                                    } catch (err) {}
-                                                }}
-                                            />
-                                        </div>
-                                
-                                        {/* Selected Date */}
-                                        <span className="text-gray-700 text-base min-w-[85px]">
-                                            {formData.search_date
-                                                ? new Date(formData.search_date).toLocaleDateString("en-CA", {
-                                                      month: "short",
-                                                      day: "numeric",
-                                                  })
-                                                : "ቀን ይምረጡ"}
-                                        </span>
-                                    </div>
-                                </div>
-                                
-                                {/* Textarea and Post Button - Side by Side */}
-                                <div className="md:col-span-3">
-                                    <div className="flex items-center gap-3 w-full">
-                                        <textarea
-                                            value={formData.notes}
-                                            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                                            className="flex-1 border border-gray-200 rounded-xl p-3"
-                                            placeholder="ተጨማሪ መረጃ"
-                                            rows="1"
                                         />
-                                        <button
-                                            type="submit"
-                                            className="bg-green-600 text-white font-bold py-3 px-5 rounded-2xl hover:bg-green-700 whitespace-nowrap flex-shrink-0"
-                                        >
-                                            {isEditing ? "Update" : "Post"}
-                                        </button>
                                     </div>
+
+                                    {/* Selected Date */}
+                                    <span className="text-gray-700 text-sm">
+                                        {formData.search_date
+                                            ? new Date(formData.search_date).toLocaleDateString("en-CA", {
+                                                  month: "short",
+                                                  day: "numeric",
+                                              })
+                                            : "ቀን ይምረጡ"}
+                                    </span>
+                                </div>
+
+                                {/* Textarea + Post button */}
+                                <div className="flex items-center gap-2">
+                                    <textarea
+                                        value={formData.notes}
+                                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                                        className="flex-1 border border-gray-200 rounded-xl p-2.5 text-sm outline-none focus:border-blue-500 resize-none"
+                                        placeholder="ተጨማሪ መረጃ"
+                                        rows="1"
+                                    />
+                                    <button
+                                        type="submit"
+                                        className="text-white font-bold py-2.5 px-4 rounded-xl whitespace-nowrap flex-shrink-0 bg-green-600 hover:bg-green-700 transition"
+                                    >
+                                        {isEditing ? "Update" : "Post"}
+                                    </button>
                                 </div>
                             </form>
                         </div>
                     )}
-                    {loading ? (
-                        <div className="py-10 text-center">Loading posts...</div>
-                    ) : memoizedFilteredPosts.length === 0 ? (
-                        <div className="py-20 text-center text-gray-400">No postings found.</div>
-                    ) : (
-                        memoizedFilteredPosts.map(post => {
-                            const searchDatePassed = isDatePassed(post.search_date);
-                            
-                            return (
-                                <div
-                                    key={post.id}
-                                    onClick={() => openChat(post)}
-                                    className={`p-5 rounded-2xl border-2 transition-all cursor-pointer bg-white 
-                                        ${selectedPost?.id === post.id ? 'border-blue-500 shadow-md scale-[1.01]' : 'border-gray-100 hover:border-blue-200'}
-                                        ${searchDatePassed ? 'opacity-50 border-red-200' : ''}
-                                    `}
-                                >
-                                    <div className="flex justify-between items-start mb-2">
-                                        <div>
-                                            <h3 className="text-lg font-bold text-gray-800">
-                                                {post.medication_needed}
-                                                {searchDatePassed && (
-                                                    <span className="ml-2 text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full">
-                                                        Expired
+
+                    {/* -------- Scrollable: Posts List ONLY -------- */}
+                    <div className="flex-1 overflow-y-auto pr-2 space-y-4">
+                        {loading ? (
+                            <div className="py-10 text-center">Loading posts...</div>
+                        ) : memoizedFilteredPosts.length === 0 ? (
+                            <div className="py-20 text-center text-gray-400">No postings found.</div>
+                        ) : (
+                            memoizedFilteredPosts.map(post => {
+                                const searchDatePassed = isDatePassed(post.search_date);
+                                const isPricePost = post.post_type === 'price';
+
+                                return (
+                                    <div
+                                        key={post.id}
+                                        onClick={() => openChat(post)}
+                                        className={`p-5 rounded-2xl border-2 transition-all cursor-pointer bg-white 
+                                            ${selectedPost?.id === post.id ? 'border-blue-500 shadow-md scale-[1.01]' : 'border-gray-100 hover:border-blue-200'}
+                                            ${searchDatePassed ? 'opacity-50 border-red-200' : ''}
+                                        `}
+                                    >
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div>
+                                                <h3 className="text-lg font-bold text-gray-800">
+                                                    {post.medication_needed}
+                                                    {searchDatePassed && (
+                                                        <span className="ml-2 text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full">
+                                                            Expired
+                                                        </span>
+                                                    )}
+                                                </h3>
+                                                {post.search_date && (
+                                                    <span className="text-[11px] text-lg font-medium">
+                                                        እስከ: {formatDate(post.search_date)}
                                                     </span>
                                                 )}
-                                            </h3>
-                                            {post.search_date && (
-                                                <span className="text-[11px] text-lg font-medium">
-                                                    እስከ: {formatDate(post.search_date)}
+                                            </div>
+
+                                            <div className="flex flex-col items-end gap-1">
+                                                {/* Post Type Badge - Right Upper Corner */}
+                                                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full ${isPricePost ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                                                    {isPricePost ? 'ለዋጋ ቅናሽ' : 'የጠፋ መድሃኒት'}
                                                 </span>
-                                            )}
-                                        </div>
-                                    
-                                        <div className="flex flex-col items-end gap-1">
-                                            <span className="text-[11px] text-gray-400 font-medium">
-                                                Posted: {formatDate(post.created_at)}
-                                            </span>
-                                    
-                                            {currentUser && (currentUser.id === post.user_id || currentUser.role === 'admin') && (
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); handleEdit(post); }}
-                                                        className="text-blue-500 hover:text-blue-700 p-1"
-                                                        title="Edit"
-                                                    >
-                                                        <FaEdit className="text-sm" />
-                                                    </button>
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); handleDelete(post.id); }}
-                                                        className="text-red-400 hover:text-red-600 p-1"
-                                                        title="Delete"
-                                                    >
-                                                        <FaTrash />
-                                                    </button>
-                                                </div>
-                                            )}
+
+                                                <span className="text-[11px] text-gray-400 font-medium">
+                                                    Posted: {formatDate(post.created_at)}
+                                                </span>
+
+                                                {currentUser && (currentUser.id === post.user_id || currentUser.role === 'admin') && (
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleEdit(post); }}
+                                                            className="text-blue-500 hover:text-blue-700 p-1"
+                                                            title="Edit"
+                                                        >
+                                                            <FaEdit className="text-sm" />
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleDelete(post.id); }}
+                                                            className="text-red-400 hover:text-red-600 p-1"
+                                                            title="Delete"
+                                                        >
+                                                            <FaTrash />
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            );
-                        })
-                    )}
+                                );
+                            })
+                        )}
+                    </div>
                 </div>
 
-                {/* Right Side: Chat Sidebar */}
+                {/* ==================== Right Side: Chat Sidebar ==================== */}
                 <div className={`w-full md:w-96 flex flex-col bg-gray-50 rounded-3xl overflow-hidden border border-gray-200 ${!selectedPost ? 'hidden md:flex' : 'flex'}`}>
                     {selectedPost ? (
                         <>
@@ -721,7 +793,7 @@ const MedicationAvailability = () => {
                                     <form onSubmit={handlePostComment} className="p-4 bg-white border-t flex gap-2">
                                         <input
                                             type="text"
-                                            placeholder="Type a secrete message..."
+                                            placeholder="Type a private message..."
                                             className="flex-1 border border-gray-200 rounded-xl px-4 py-2 outline-none focus:ring-1 focus:ring-blue-500"
                                             value={newComment}
                                             onChange={(e) => setNewComment(e.target.value)}
@@ -736,7 +808,7 @@ const MedicationAvailability = () => {
                     ) : (
                         <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-gray-400">
                             <FaCommentMedical className="text-5xl mb-4 text-gray-200" />
-                            <p className="font-medium">Select a medication posting to view details and start a private (secrete) conversation.</p>
+                            <p className="font-medium">Select a medication posting to view details and start a private conversation.</p>
                         </div>
                     )}
                 </div>

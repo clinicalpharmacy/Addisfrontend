@@ -6,13 +6,12 @@ const ExamModule = ({
     examId,
     examTitle,
     examSubject,
-    session,                 // { questions, answers, currentIndex, completed }
-    onSessionUpdate,         // (updates) => void
-    onComplete,              // () => void
-    onExit,                  // () => void
-    onBack                   // () => void (fallback if onExit not provided)
+    session,
+    onSessionUpdate,
+    onComplete,
+    onExit,
+    onBack
 }) => {
-    // Fallback: if session.questions were not provided, we fetch
     const [questions, setQuestions] = useState(session?.questions || []);
     const [selectedAnswers, setSelectedAnswers] = useState(session?.answers || {});
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(session?.currentIndex || 0);
@@ -21,7 +20,6 @@ const ExamModule = ({
     const [loading, setLoading] = useState(!session?.questions || session.questions.length === 0);
     const [error, setError] = useState(null);
 
-    // Sync state if the parent swaps the session (e.g. restart)
     useEffect(() => {
         if (session) {
             setQuestions(session.questions || []);
@@ -33,10 +31,8 @@ const ExamModule = ({
         }
     }, [session?.examId, session?.lastUpdated]);
 
-    // Fallback fetch only if no session was provided
     useEffect(() => {
-        if (session) return; // parent already supplied questions
-
+        if (session) return;
         if (examId) {
             fetchQuestions();
         }
@@ -46,8 +42,14 @@ const ExamModule = ({
         try {
             setLoading(true);
             const response = await api.get(`/exams/${examId}/questions`);
-            if (response.success) {
-                setQuestions(response.questions || []);
+            if (response && response.success && Array.isArray(response.questions)) {
+                setQuestions(response.questions);
+            } else if (Array.isArray(response)) {
+                setQuestions(response);
+            } else if (response && Array.isArray(response.data)) {
+                setQuestions(response.data);
+            } else {
+                setQuestions([]);
             }
         } catch (err) {
             console.error('Failed to fetch exam questions:', err);
@@ -57,9 +59,6 @@ const ExamModule = ({
         }
     };
 
-    /**
-     * Notify parent of session changes so it can persist.
-     */
     const notifyUpdate = (updates) => {
         if (typeof onSessionUpdate === 'function') {
             onSessionUpdate(updates);
@@ -67,12 +66,13 @@ const ExamModule = ({
     };
 
     const handleOptionSelect = (questionId, optionId) => {
-        if (isSubmitted || selectedAnswers[questionId]) return; // lock once answered
+        if (isSubmitted || selectedAnswers[questionId]) return;
 
         const updatedAnswers = {
             ...selectedAnswers,
             [questionId]: optionId
         };
+
         setSelectedAnswers(updatedAnswers);
         notifyUpdate({ answers: updatedAnswers });
     };
@@ -82,21 +82,15 @@ const ExamModule = ({
         notifyUpdate({ currentIndex: newIndex });
     };
 
-    /**
-     * Called when the user clicks "Show Total Score".
-     * Reveals the final score.
-     */
     const handleShowScore = () => {
         const answeredCount = Object.keys(selectedAnswers).length;
 
         if (answeredCount < questions.length) {
             const remaining = questions.length - answeredCount;
-            if (!window.confirm(
-                `You have ${remaining} unanswered question${remaining > 1 ? 's' : ''}. ` +
-                `Unanswered questions will be marked incorrect. Show your total score anyway?`
-            )) {
-                return;
-            }
+            const confirmed = window.confirm(
+                `You have ${remaining} unanswered question${remaining > 1 ? 's' : ''}. Unanswered questions will be marked incorrect. Show your total score anyway?`
+            );
+            if (!confirmed) return;
         }
 
         setIsSubmitted(true);
@@ -117,9 +111,9 @@ const ExamModule = ({
 
     const calculateScore = () => {
         let score = 0;
-        questions.forEach(q => {
+        questions.forEach((q) => {
             const selectedOptionId = selectedAnswers[q.id];
-            const correctOption = q.options?.find(o => o.isCorrect);
+            const correctOption = q.options?.find((o) => o.isCorrect);
             if (correctOption && selectedOptionId === correctOption.id) {
                 score += 1;
             }
@@ -197,11 +191,13 @@ const ExamModule = ({
 
             {isSubmitted ? (
                 <div className="text-center py-12 animate-fadeIn">
-                    <div className="inline-flex items-center justify-center w-40 h-40 rounded-full border-8 mb-6 ${
-                        percentage >= 70
-                            ? 'border-green-500 text-green-500'
-                            : 'border-amber-500 text-amber-500'
-                    }">
+                    <div
+                        className={`inline-flex items-center justify-center w-40 h-40 rounded-full border-8 mb-6 ${
+                            percentage >= 70
+                                ? 'border-green-500 text-green-500'
+                                : 'border-amber-500 text-amber-500'
+                        }`}
+                    >
                         <span className="text-5xl font-black">{percentage}%</span>
                     </div>
                     <h4 className="text-3xl font-bold text-gray-800 mb-3">
@@ -226,7 +222,7 @@ const ExamModule = ({
                     </div>
 
                     <div className="space-y-2">
-                        {questions[currentQuestionIndex].options?.map(option => {
+                        {questions[currentQuestionIndex].options?.map((option) => {
                             const hasAnswered = !!selectedAnswers[questions[currentQuestionIndex].id];
                             const isSelected = selectedAnswers[questions[currentQuestionIndex].id] === option.id;
 
@@ -287,14 +283,16 @@ const ExamModule = ({
                     </div>
 
                     {selectedAnswers[questions[currentQuestionIndex].id] && (
-                        <div className={`mt-6 p-4 rounded-xl border-2 animate-fadeIn ${
-                            questions[currentQuestionIndex].options?.find(o => o.isCorrect)?.id ===
-                            selectedAnswers[questions[currentQuestionIndex].id]
-                                ? 'bg-green-50 border-green-200'
-                                : 'bg-red-50 border-red-200'
-                        }`}>
+                        <div
+                            className={`mt-6 p-4 rounded-xl border-2 animate-fadeIn ${
+                                questions[currentQuestionIndex].options?.find((o) => o.isCorrect)?.id ===
+                                selectedAnswers[questions[currentQuestionIndex].id]
+                                    ? 'bg-green-50 border-green-200'
+                                    : 'bg-red-50 border-red-200'
+                            }`}
+                        >
                             <div className="flex items-center gap-2 mb-2">
-                                {questions[currentQuestionIndex].options?.find(o => o.isCorrect)?.id ===
+                                {questions[currentQuestionIndex].options?.find((o) => o.isCorrect)?.id ===
                                 selectedAnswers[questions[currentQuestionIndex].id] ? (
                                     <>
                                         <FaCheckCircle className="text-green-500 text-xl" />
@@ -332,7 +330,7 @@ const ExamModule = ({
                         {currentQuestionIndex === questions.length - 1 ? (
                             <button
                                 onClick={handleShowScore}
-                                className="px-8 py-1.5 rounded-lg font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg shadow-purple-200 transition-all transform hover:-translate-y-0.5"
+                                className="px-8 py-1.5 rounded-lg font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg shadow-purple-200 transition-all"
                             >
                                 Show Total Score
                             </button>
