@@ -143,8 +143,14 @@ const Sidebar = ({ onClose }) => {
         isAdmin || isIndividualPharmacist || isCompanyPharmacy;
 
     // Show Education to admins, pharmacy students & pharmacy schools
+    // Show Education to admins, individual pharmacists, pharmacy students,
+    // and organizations of type pharmacy / pharmacy_school
     const showEducation =
-        isAdmin || isIndividualPharmacyStudent || isCompanyPharmacySchool;
+        isAdmin ||
+        isIndividualPharmacist ||
+        isIndividualPharmacyStudent ||
+        isCompanyPharmacy ||
+        isCompanyPharmacySchool;
 
     // Check near expiry for subscription (within 7 days)
     const diff = user?.subscription_end_date ? new Date(user.subscription_end_date) - new Date() : null;
