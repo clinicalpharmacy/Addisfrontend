@@ -50,15 +50,9 @@ const Home = () => {
     const showPharmacyTools =
         isAdmin || isIndividualPharmacist || isCompanyPharmacy;
 
-    // Show Education to admins, pharmacy students & pharmacy schools
-    // Show Education to admins, individual pharmacists, pharmacy students,
-    // and organizations of type pharmacy / pharmacy_school
+    // Show Education to admins, individual pharmacists, pharmacy students, Pharmacy & pharmacy schools
     const showEducation =
-        isAdmin ||
-        isIndividualPharmacist ||
-        isIndividualPharmacyStudent ||
-        isCompanyPharmacy ||
-        isCompanyPharmacySchool;
+        isAdmin || isIndividualPharmacist || isIndividualPharmacyStudent || isCompanyPharmacy || isCompanyPharmacySchool;
 
     const getGreeting = () => {
         const hour = new Date().getHours();
