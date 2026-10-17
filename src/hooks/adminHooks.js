@@ -163,9 +163,32 @@ export const useAdminUsers = (currentUser) => {
         }
     };
 
+    const updateUserSubscription = async (userId, payload) => {
+        try {
+            setProcessingId(userId);
+            const response = await api.put(`/admin/users/${userId}/subscription`, payload);
+            if (response.success) {
+                setUsers(prev => prev.map(u =>
+                    u.id === userId ? {
+                        ...u,
+                        ...payload,
+                        ...(response.user || {})
+                    } : u
+                ));
+                return { success: true, message: response.message, user: response.user };
+            }
+            return { success: false, error: response.error };
+        } catch (err) {
+            setError(`Subscription update failed: ${err.message}`);
+            return { success: false, error: err.message };
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
     return {
         users, pendingUsers, loading, error, processingId,
-        loadUsers, approveUser, rejectUser, toggleBlockUser
+        loadUsers, approveUser, rejectUser, toggleBlockUser, updateUserSubscription
     };
 };
 
@@ -191,7 +214,29 @@ export const useAdminCompanies = () => {
         }
     }, []);
 
-    return { companies, loading, error, loadCompanies };
+    const updateCompanySubscription = async (companyId, payload) => {
+        try {
+            const response = await api.put(`/admin/companies/${companyId}/subscription`, payload);
+            if (response.success) {
+                setCompanies(prev => prev.map(c =>
+                    c.id === companyId ? {
+                        ...c,
+                        subscription_status: payload.subscription_status,
+                        subscription_plan: payload.subscription_plan,
+                        subscription_end_date: payload.subscription_end_date,
+                        ...(response.company || {})
+                    } : c
+                ));
+                return { success: true, message: response.message, company: response.company };
+            }
+            return { success: false, error: response.error };
+        } catch (err) {
+            setError(`Company subscription update failed: ${err.message}`);
+            return { success: false, error: err.message };
+        }
+    };
+
+    return { companies, loading, error, loadCompanies, updateCompanySubscription };
 };
 
 // Hook for Subscriptions

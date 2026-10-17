@@ -48,11 +48,11 @@ const Home = () => {
 
     // Show Minor Illnesses + Compounding to admins, pharmacists & pharmacy companies
     const showPharmacyTools =
-        isAdmin || isIndividualPharmacist || isCompanyPharmacy;
+        isAdmin || role === 'pharmacist' || isCompanyPharmacy;
 
     // Show Education to admins, individual pharmacists, pharmacy students, Pharmacy & pharmacy schools
     const showEducation =
-        isAdmin || isIndividualPharmacist || isIndividualPharmacyStudent || isCompanyPharmacy || isCompanyPharmacySchool;
+        isAdmin || role === 'pharmacist' || role === 'pharmacy_student' || isCompanyPharmacy || isCompanyPharmacySchool;
 
     const getGreeting = () => {
         const hour = new Date().getHours();

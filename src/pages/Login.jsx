@@ -249,7 +249,7 @@ const Login = () => {
 
             if (role === 'admin') {
                 navigate('/admin/dashboard');
-            } else if (accountType === 'company_user' || data.user_type === 'company_user') {
+            } else if (role === 'company_admin' || accountType === 'company') {
                 navigate('/company/dashboard');
             } else {
                 navigate('/dashboard');
