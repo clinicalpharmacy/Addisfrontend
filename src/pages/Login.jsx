@@ -244,12 +244,13 @@ const Login = () => {
             // Redirect based on role
             const role = data.user?.role;
             const accountType = data.user?.account_type;
+            const companyId = data.user?.company_id;
 
-            console.log('🔄 Redirecting user:', { role, accountType });
+            console.log('🔄 Redirecting user:', { role, accountType, companyId });
 
-            if (role === 'admin') {
+            if (role === 'admin' || role === 'superadmin') {
                 navigate('/admin/dashboard');
-            } else if (role === 'company_admin' || accountType === 'company') {
+            } else if ((role === 'company_admin' || accountType === 'company') && companyId) {
                 navigate('/company/dashboard');
             } else {
                 navigate('/dashboard');

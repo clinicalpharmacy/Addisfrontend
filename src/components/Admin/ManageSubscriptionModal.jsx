@@ -62,6 +62,18 @@ export const ManageSubscriptionModal = ({
         }
     };
 
+    const handlePlanChange = (newPlan) => {
+        setPlan(newPlan);
+        if (!isCompany) {
+            if (newPlan.startsWith('individual')) {
+                setAccountType('individual');
+                setCompanyId('');
+            } else if (newPlan !== 'custom') {
+                setAccountType('company');
+            }
+        }
+    };
+
     const handleFormSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -83,8 +95,27 @@ export const ManageSubscriptionModal = ({
             apply_to_company: applyToCompany
         };
 
-        if (accountType === 'company') {
-            payload.role = 'company_admin';
+        if (!isCompany) {
+            if (accountType === 'company') {
+                if (!companyId) {
+                    setError('Please select a Company / Facility to attach this Company Admin to, or switch Account Type to Individual.');
+                    setSaving(false);
+                    return;
+                }
+                payload.role = 'company_admin';
+            } else if (accountType === 'company_user') {
+                if (!companyId) {
+                    setError('Please select a Company / Facility for this Company Staff member.');
+                    setSaving(false);
+                    return;
+                }
+                payload.role = 'user';
+            } else {
+                // Individual
+                payload.account_type = 'individual';
+                payload.company_id = null;
+                payload.role = 'user';
+            }
         }
 
         try {
@@ -243,7 +274,7 @@ export const ManageSubscriptionModal = ({
                         </label>
                         <select
                             value={plan}
-                            onChange={(e) => setPlan(e.target.value)}
+                            onChange={(e) => handlePlanChange(e.target.value)}
                             className="w-full px-3.5 py-3 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-900 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
                         >
                             {PLAN_OPTIONS.map((group) => (
@@ -328,7 +359,10 @@ export const ManageSubscriptionModal = ({
                                     <button
                                         type="button"
                                         key={type.id}
-                                        onClick={() => setAccountType(type.id)}
+                                        onClick={() => {
+                                            setAccountType(type.id);
+                                            if (type.id === 'individual') setCompanyId('');
+                                        }}
                                         className={`py-2 px-2 rounded-xl text-xs font-black transition-all border text-center ${
                                             accountType === type.id
                                                 ? 'bg-purple-50 text-purple-700 border-purple-400 ring-2 ring-purple-500/20 shadow-sm'

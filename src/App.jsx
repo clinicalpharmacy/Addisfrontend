@@ -194,9 +194,12 @@ const RootRedirector = () => {
             // FIXED: Check user role and redirect accordingly
             switch (user.role) {
                 case 'admin':
+                case 'superadmin':
                     return <Navigate to="/admin/dashboard" replace />;
                 case 'company_admin':
-                    return <Navigate to="/company/dashboard" replace />;
+                    return user.company_id 
+                        ? <Navigate to="/company/dashboard" replace /> 
+                        : <Navigate to="/dashboard" replace />;
                 case 'pharmacist':
                     return <Navigate to="/dashboard" replace />;
                 case 'healthcare_client':
@@ -386,7 +389,7 @@ const ProtectedRoute = ({ children, adminOnly = false, companyAdminOnly = false,
         if (user?.role !== 'admin') {
             // Redirect non-admin users based on their role
             if (user?.role === 'company_admin') {
-                return <Navigate to="/company/dashboard" replace />;
+                return user.company_id ? <Navigate to="/company/dashboard" replace /> : <Navigate to="/dashboard" replace />;
             } else {
                 return <Navigate to="/dashboard" replace />;
             }
@@ -394,10 +397,10 @@ const ProtectedRoute = ({ children, adminOnly = false, companyAdminOnly = false,
     }
 
     if (companyAdminOnly) {
-        // Only company admin users can access
-        if (user?.role !== 'company_admin') {
+        // Only company admin users with valid company_id can access
+        if (user?.role !== 'company_admin' || !user?.company_id) {
             // Redirect non-company-admin users based on their role
-            if (user?.role === 'admin') {
+            if (user?.role === 'admin' || user?.role === 'superadmin') {
                 return <Navigate to="/admin/dashboard" replace />;
             } else {
                 return <Navigate to="/dashboard" replace />;

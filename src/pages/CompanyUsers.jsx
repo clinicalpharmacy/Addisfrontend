@@ -74,13 +74,9 @@ const CompanyUsers = () => {
 
         try {
             const user = JSON.parse(userStr);
-            if (user.role !== 'company_admin') {
-                navigate('/');
-                return;
-            }
-            if (!user.company_id) {
-                alert('No company associated with this account.');
-                navigate('/');
+            if (user.role !== 'company_admin' || !user.company_id) {
+                console.warn('User has no company association. Redirecting to dashboard.');
+                navigate('/dashboard', { replace: true });
                 return;
             }
             setCurrentUser(user);
