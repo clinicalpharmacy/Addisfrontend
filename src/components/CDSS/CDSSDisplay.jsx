@@ -103,11 +103,11 @@ const CDSSDisplay = ({ patientData, onBack, onDataChange }) => {
                 medications: formattedMeds,
                 labs: patient?.labs || {},
                 vitals: {
-                    bp: patient?.blood_pressure,
-                    hr: patient?.heart_rate,
-                    temp: patient?.temperature,
-                    rr: patient?.respiratory_rate,
-                    spo2: patient?.oxygen_saturation
+                    bp: patient?.vitals?.blood_pressure || patient?.blood_pressure,
+                    hr: patient?.vitals?.heart_rate || patient?.heart_rate,
+                    temp: patient?.vitals?.temperature || patient?.temperature,
+                    rr: patient?.vitals?.respiratory_rate || patient?.respiratory_rate,
+                    spo2: patient?.vitals?.oxygen_saturation || patient?.oxygen_saturation
                 },
                 age_category: patientFacts?.patient_type || 'adult'
             };
