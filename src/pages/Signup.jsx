@@ -73,7 +73,7 @@ const SUBSCRIPTION_PLANS = [
         currency: 'ETB',
         interval: 'month',
         description: 'For pharmacies and drug stores',
-        user_limit: 5,
+        user_limit: 3,
         icon: FaStore,
         color: 'from-green-500 to-green-600',
         badge: 'Monthly',
@@ -82,7 +82,7 @@ const SUBSCRIPTION_PLANS = [
             'Medication safety checks',
             'Medication availability posts',
             'Other features for practitioners',
-            'Up to 5 users'
+            'Up to 3 users'
         ],
         account_type: 'company',
         facility_type: 'pharmacy'
@@ -94,7 +94,7 @@ const SUBSCRIPTION_PLANS = [
         currency: 'ETB',
         interval: 'year',
         description: 'Best value for pharmacies and drug stores',
-        user_limit: 10,
+        user_limit: 5,
         icon: FaStore,
         color: 'from-green-600 to-green-600',
         badge: 'Best Value',
@@ -105,7 +105,7 @@ const SUBSCRIPTION_PLANS = [
             'Priority support',
             'Early access to new features',
             'Request content to add',
-            'Up to 10 users'
+            'Up to 5 users'
         ],
         popular: true,
         account_type: 'company',
@@ -119,7 +119,7 @@ const SUBSCRIPTION_PLANS = [
         currency: 'ETB',
         interval: 'month',
         description: 'For clinics and specialty centers',
-        user_limit: 5,
+        user_limit: 3,
         icon: FaBriefcase,
         color: 'from-teal-500 to-teal-600',
         badge: 'Monthly',
@@ -128,7 +128,7 @@ const SUBSCRIPTION_PLANS = [
             'Medication safety checks',
             'Medication availability posts',
             'Other features for practitioners',
-            'Up to 5 users'
+            'Up to 3 users'
         ],
         account_type: 'company',
         facility_type: 'clinic'
@@ -140,18 +140,18 @@ const SUBSCRIPTION_PLANS = [
         currency: 'ETB',
         interval: 'year',
         description: 'Best value for clinics and specialty centers',
-        user_limit: 10,
+        user_limit: 5,
         icon: FaBriefcase,
         color: 'from-teal-600 to-cyan-600',
         badge: 'Best Value',
         originalPrice: 12420,
-        discount: 'Save 2,070 ETB',
+        discount: 'Save 2,070 ETB', 
         features: [
             'All features in the monthly plan',
             'Priority support',
             'Early access to new features',
             'Request content to add',
-            'Up to 10 users'
+            'Up to 5 users'
         ],
         popular: true,
         account_type: 'company',
@@ -186,7 +186,7 @@ const SUBSCRIPTION_PLANS = [
         currency: 'ETB',
         interval: 'year',
         description: 'Best value for hospitals',
-        user_limit: 20,
+        user_limit: 10,
         icon: FaBuilding,
         color: 'from-green-600 to-violet-600',
         badge: 'Best Value',
@@ -197,7 +197,7 @@ const SUBSCRIPTION_PLANS = [
             'Priority support',
             'Early access to new features',
             'Request content to add',
-            'Up to 20 users'
+            'Up to 10 users'
         ],
         popular: true,
         account_type: 'company',
@@ -232,7 +232,7 @@ const SUBSCRIPTION_PLANS = [
         currency: 'ETB',
         interval: 'year',
         description: 'Best value for pharmacy schools',
-        user_limit: 20,
+        user_limit: 10,
         icon: FaRocket,
         color: 'from-orange-600 to-red-600',
         badge: 'Best Value',
@@ -243,7 +243,7 @@ const SUBSCRIPTION_PLANS = [
             'Priority support',
             'Early access to new features',
             'Request content to add',
-            'Up to 20 users'
+            'Up to 10 users'
         ],
         popular: true,
         account_type: 'company',
@@ -257,7 +257,7 @@ const SUBSCRIPTION_PLANS = [
         currency: 'ETB',
         interval: 'month',
         description: 'For other company',
-        user_limit: 5,
+        user_limit: 3,
         icon: FaUsers,
         color: 'from-green-500 to-green-600',
         badge: 'Monthly',
@@ -266,7 +266,7 @@ const SUBSCRIPTION_PLANS = [
             'Medication safety checks',
             'Medication availability posts',
             'Other features for practitioners',
-            'Up to 5 users'
+            'Up to 3 users'
         ],
         account_type: 'company',
         facility_type: 'other_company'
@@ -278,7 +278,7 @@ const SUBSCRIPTION_PLANS = [
         currency: 'ETB',
         interval: 'year',
         description: 'Best value for other company',
-        user_limit: 10,
+        user_limit: 5,
         icon: FaUsers,
         color: 'from-green-600 to-emerald-600',
         badge: 'Best Value',
@@ -289,7 +289,7 @@ const SUBSCRIPTION_PLANS = [
             'Priority support',
             'Early access to new features',
             'Request content to add',
-            'Up to 10 users'
+            'Up to 5 users'
         ],
         popular: true,
         account_type: 'company',
