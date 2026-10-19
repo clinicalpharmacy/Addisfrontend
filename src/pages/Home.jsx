@@ -22,8 +22,18 @@ const Home = () => {
     const isCompanyUser = !!user?.company_id || user?.account_type === 'company' || ['company_admin', 'company_user'].includes(user?.role);
     const isIndividual = !isAdmin && !isCompanyUser;
 
-    // Define isSubscribed - you need to determine this based on your logic
-    const isSubscribed = user?.subscription_status === 'active' || false; // Adjust this logic as needed
+    // Determine active subscription taking into account expiration date
+    const isSubscribed = (() => {
+        if (!user) return false;
+        if (isAdmin) return true;
+        const status = user.subscription_status || localStorage.getItem('subscription_status');
+        const endDate = user.subscription_end_date || localStorage.getItem('subscription_end_date');
+        if (status !== 'active') return false;
+        if (endDate && !isNaN(new Date(endDate).getTime()) && new Date(endDate) < new Date()) {
+            return false;
+        }
+        return true;
+    })();
 
     // ── Determine access to Clinical / Pharmacy-specific tools ─────────────
     // Individual pharmacists (role === 'pharmacist')

@@ -723,7 +723,7 @@ const Dashboard = () => {
                                                 : '❌ Inactive')
                                         }
                                     </div>
-                                    {user?.account_type !== 'company_user' && !hasValidSubscription(user) && (
+                                    {!hasValidSubscription(user) && (
                                         <button
                                             onClick={handleGetSubscription}
                                             className="text-blue-600 hover:text-blue-800 text-sm font-semibold underline transition"
@@ -830,7 +830,7 @@ const Dashboard = () => {
                                 <span className="text-gray-600">Status</span>
                                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${hasValidSubscription(user)
                                     ? 'bg-green-100 text-green-800'
-                                    : 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-red-100 text-red-800'
                                     }`}>
                                     {hasValidSubscription(user)
                                         ? 'Active'
@@ -840,27 +840,34 @@ const Dashboard = () => {
                                     }
                                 </span>
                             </div>
+                            {user.subscription_end_date && (
+                                <div className="flex items-center justify-between">
+                                    <span className="text-gray-600">Remaining Days</span>
+                                    <span className={`text-sm font-bold ${hasValidSubscription(user) ? 'text-green-700' : 'text-red-600'}`}>
+                                        {(() => {
+                                            const diff = new Date(user.subscription_end_date) - new Date();
+                                            const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+                                            return days > 0 ? `${days} days remaining` : 'Expired';
+                                        })()}
+                                    </span>
+                                </div>
+                            )}
                             <div className="pt-4">
-                                {user?.account_type === 'company_user' ? (
-                                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-                                        <p className="text-sm text-blue-700 font-medium text-center">
-                                            Subscription managed by {user?.company_name || 'your company'}
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <>
-                                        <button
-                                            onClick={handleGetSubscription}
-                                            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium py-3 px-4 rounded-lg transition shadow-md"
-                                        >
-                                            {hasValidSubscription(user) ? 'Manage Subscription' : 'Upgrade Now'}
-                                        </button>
-                                        {!hasValidSubscription(user) && (
-                                            <p className="text-sm text-gray-600 mt-2 text-center">
-                                                Unlock all features with a subscription
-                                            </p>
-                                        )}
-                                    </>
+                                <button
+                                    onClick={handleGetSubscription}
+                                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium py-3 px-4 rounded-lg transition shadow-md"
+                                >
+                                    {hasValidSubscription(user) ? 'Manage Subscription' : (user?.subscription_end_date ? 'Renew Subscription' : 'Upgrade Now')}
+                                </button>
+                                {!hasValidSubscription(user) && (
+                                    <p className="text-sm text-gray-600 mt-2 text-center">
+                                        {user?.subscription_end_date ? 'Subscription has ended. Renew now without re-signing up.' : 'Unlock all features with a subscription'}
+                                    </p>
+                                )}
+                                {user?.account_type === 'company_user' && user?.company_name && (
+                                    <p className="text-xs text-blue-600 mt-2 text-center font-medium">
+                                        Organization: {user.company_name}
+                                    </p>
                                 )}
                             </div>
                         </div>

@@ -97,6 +97,18 @@ const Sidebar = ({ onClose }) => {
 
     const isSubscribed = hasValidSubscription();
 
+    const calculateDaysRemaining = () => {
+        const subscriptionEndDate = user?.subscription_end_date || localStorage.getItem('subscription_end_date');
+        if (!subscriptionEndDate) return null;
+        const expiry = new Date(subscriptionEndDate);
+        if (isNaN(expiry.getTime())) return null;
+        const diffTime = expiry - new Date();
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    };
+
+    const daysRemaining = calculateDaysRemaining();
+    const isNearExpiry = daysRemaining !== null && daysRemaining > 0 && daysRemaining <= 7;
+
     const handleLogout = () => {
         if (window.confirm('Are you sure you want to logout?')) {
             localStorage.clear();
@@ -151,11 +163,6 @@ const Sidebar = ({ onClose }) => {
         isIndividualPharmacyStudent ||
         isCompanyPharmacy ||
         isCompanyPharmacySchool;
-
-    // Check near expiry for subscription (within 7 days)
-    const diff = user?.subscription_end_date ? new Date(user.subscription_end_date) - new Date() : null;
-    const daysLeft = diff !== null ? Math.ceil(diff / (1000 * 60 * 60 * 24)) : null;
-    const isNearExpiry = daysLeft !== null && daysLeft <= 7;
 
     // Check if Drug Information route is active - EXACT match only
     const isDrugInfoActive = location.pathname === '/knowledge';
@@ -386,38 +393,47 @@ const Sidebar = ({ onClose }) => {
                             </li>
                         )}
 
-                        {isIndividual && (!isSubscribed || isNearExpiry) && (
-                            <li className="mt-2 border-t pt-2">
+                        {!isAdmin && (
+                            <li className="mt-3 mb-2">
                                 <NavLink
                                     to="/subscription/plans"
                                     onClick={onClose}
                                     className={({ isActive }) =>
-                                        `flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isActive
-                                            ? 'bg-green-100 text-green-700 border-l-4 border-green-700 shadow-sm'
-                                            : 'text-gray-600 hover:bg-green-50 hover:text-green-700 hover:shadow-sm'
+                                        `w-full flex items-center justify-between p-3 rounded-2xl transition-all duration-300 shadow-sm border ${
+                                            isActive
+                                                ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-green-600/30 font-bold border-green-600'
+                                                : isSubscribed
+                                                ? 'bg-gradient-to-r from-green-50 to-emerald-50/60 hover:from-green-100 hover:to-emerald-100 text-green-800 border-green-200/80 font-bold'
+                                                : 'bg-gradient-to-r from-rose-50 to-amber-50 hover:from-rose-100 hover:to-amber-100 text-rose-800 border-rose-200 font-bold'
                                         }`
                                     }
                                 >
-                                    <FaCreditCard className="text-xl text-green-600" />
-                                    <span className="font-medium text-base">My Subscription</span>
-                                </NavLink>
-                            </li>
-                        )}
-
-                        {isCompanyAdmin && (
-                            <li>
-                                <NavLink
-                                    to="/subscription/plans"
-                                    onClick={onClose}
-                                    className={({ isActive }) =>
-                                        `flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isActive
-                                            ? 'bg-green-100 text-green-700 border-l-4 border-green-700 shadow-sm'
-                                            : 'text-gray-600 hover:bg-green-50 hover:text-green-700 hover:shadow-sm'
-                                        }`
-                                    }
-                                >
-                                    <FaCreditCard className="text-xl text-green-600" />
-                                    <span className="font-medium text-base">Manage Subscription</span>
+                                    <div className="flex items-center gap-2.5">
+                                        <div className={`p-2 rounded-xl text-sm ${
+                                            isSubscribed ? 'bg-white text-green-600 shadow-sm' : 'bg-white text-rose-600 shadow-sm'
+                                        }`}>
+                                            <FaCreditCard />
+                                        </div>
+                                        <div className="flex flex-col text-left">
+                                            <span className="text-sm font-black leading-tight">Manage Subscription</span>
+                                            <span className="text-[11px] font-semibold opacity-85">
+                                                {isSubscribed && daysRemaining !== null
+                                                    ? (daysRemaining > 0 ? `${daysRemaining} days left` : 'Expires today')
+                                                    : 'Inactive • Click to Renew'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="shrink-0">
+                                        {isSubscribed ? (
+                                            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-green-200/70 text-green-800 border border-green-300">
+                                                Active
+                                            </span>
+                                        ) : (
+                                            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-rose-500 text-white shadow-sm uppercase tracking-wider animate-pulse">
+                                                Renew
+                                            </span>
+                                        )}
+                                    </div>
                                 </NavLink>
                             </li>
                         )}
@@ -648,6 +664,24 @@ const Sidebar = ({ onClose }) => {
                         )}
                     </div>
                 </div>
+
+                {!isAdmin && (
+                    <button
+                        onClick={() => {
+                            onClose?.();
+                            navigate('/subscription/plans');
+                        }}
+                        className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-black bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-sm transition transform hover:-translate-y-0.5"
+                    >
+                        <FaCreditCard className="text-xs" />
+                        <span>Manage Subscription</span>
+                        {daysRemaining !== null && (
+                            <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded-full font-extrabold">
+                                {daysRemaining > 0 ? `${daysRemaining}d left` : 'Renew'}
+                            </span>
+                        )}
+                    </button>
+                )}
             </div>
 
             {/* 🛡️ Modern Security Status Badge (Sidebar Footer Addition) */}

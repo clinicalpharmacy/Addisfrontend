@@ -34,11 +34,35 @@ export const CompanyDashboardOverview = ({
                             <div><p className="text-sm text-gray-600">Type</p><p className="font-medium text-gray-800 capitalize">{companyInfo.company_type}</p></div>
                             <div>
                                 <p className="text-sm text-gray-600">Subscription Status</p>
-                                <div className="flex items-center gap-4 mt-1">
-                                    <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${currentUser?.subscription_status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                        {currentUser?.subscription_status === 'active' ? <><FaCheckCircle /> Active</> : <><FaExclamationTriangle /> Inactive</>}
-                                    </span>
-                                    <button onClick={() => navigate('/subscription/plans')} className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"><FaCreditCard className="text-xs" /> Manage Subscription</button>
+                                <div className="flex flex-wrap items-center gap-3 mt-1">
+                                    {(() => {
+                                        const endDate = currentUser?.subscription_end_date;
+                                        const diffDays = endDate ? Math.ceil((new Date(endDate) - new Date()) / (1000 * 60 * 60 * 24)) : null;
+                                        const isExp = diffDays !== null && diffDays <= 0;
+                                        const isAct = currentUser?.subscription_status === 'active' && !isExp;
+
+                                        return (
+                                            <>
+                                                <span className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${
+                                                    isAct ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-red-100 text-red-800 border border-red-200'
+                                                }`}>
+                                                    {isAct ? <><FaCheckCircle /> Active</> : <><FaExclamationTriangle /> {isExp ? 'Expired' : 'Inactive'}</>}
+                                                </span>
+                                                {diffDays !== null && (
+                                                    <span className={`text-xs font-bold ${isAct ? 'text-gray-700' : 'text-red-600'}`}>
+                                                        {diffDays > 0 ? `${diffDays} days remaining` : 'Expired'}
+                                                    </span>
+                                                )}
+                                                <button
+                                                    onClick={() => navigate('/subscription/plans')}
+                                                    className="text-xs md:text-sm font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 underline transition"
+                                                >
+                                                    <FaCreditCard className="text-xs" />
+                                                    {isAct ? 'Manage / Extend' : 'Renew Subscription'}
+                                                </button>
+                                            </>
+                                        );
+                                    })()}
                                 </div>
                             </div>
                         </div>
