@@ -11,10 +11,8 @@ import {
 } from 'react-icons/fa';
 
 const Home = () => {
-    const [showSecuritySetup, setShowSecuritySetup] = useState(false);
     const user = JSON.parse(localStorage.getItem('user'));
     const role = user?.role;
-    const isSecurityActive = !!user?.public_key;
 
     // Check user roles
     const isAdmin = user?.role === 'admin';

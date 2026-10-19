@@ -4,7 +4,7 @@ import {
   FaCheck, FaTimes, FaUserTie, FaBuilding, FaUserShield,
   FaHeadset, FaCalendarAlt, FaMoneyBillWave, FaCreditCard,
   FaUsers, FaArrowRight, FaExclamationCircle, FaSpinner,
-  FaLock, FaUserCheck, FaCheckCircle, FaTimesCircle, FaClock, FaSync
+  FaLock, FaUserCheck, FaCheckCircle, FaTimesCircle, FaClock, FaSync, FaHome
 } from 'react-icons/fa';
 import api from '../utils/api';
 
@@ -663,13 +663,23 @@ const SubscriptionPlans = () => {
                     </div>
                   )}
 
-                  <button
-                    onClick={scrollToPlans}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold text-sm shadow-md transition transform hover:-translate-y-0.5"
-                  >
-                    <FaCreditCard className="text-sm" />
-                    {isSubActive ? 'View Plan Details' : 'Renew Subscription Now'}
-                  </button>
+                  {isSubActive ? (
+                    <button
+                      onClick={() => navigate('/')}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold text-sm shadow-md transition transform hover:-translate-y-0.5"
+                    >
+                      <FaHome className="text-sm" />
+                      <span>Back to Dashboard</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={scrollToPlans}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold text-sm shadow-md transition transform hover:-translate-y-0.5"
+                    >
+                      <FaCreditCard className="text-sm" />
+                      <span>Renew Subscription Now</span>
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -753,14 +763,72 @@ const SubscriptionPlans = () => {
                         : 'Reactivate your subscription instantly with Chapa — no signup required.'}
                     </p>
                   </div>
-                  <button
-                    onClick={scrollToPlans}
-                    className="mt-3 text-xs font-extrabold text-green-700 hover:text-green-900 underline flex items-center gap-1 self-start"
-                  >
-                    {isSubActive ? 'View Available Plans' : 'Select Plan to Renew'} <FaArrowRight className="text-[10px]" />
-                  </button>
+                  {isSubActive ? (
+                    <div className="mt-3 text-xs font-bold text-emerald-700 flex items-center gap-1.5">
+                      <FaCheckCircle className="text-emerald-500 text-xs" />
+                      <span>Active Access Enabled</span>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={scrollToPlans}
+                      className="mt-3 text-xs font-extrabold text-green-700 hover:text-green-900 underline flex items-center gap-1 self-start"
+                    >
+                      Select Plan to Renew <FaArrowRight className="text-[10px]" />
+                    </button>
+                  )}
                 </div>
               </div>
+
+              {/* Inclusions & Policy for Active users */}
+              {isSubActive && (
+                <div className="mt-6 pt-6 border-t border-gray-100">
+                  <div className="p-5 bg-gradient-to-br from-emerald-50/60 to-teal-50/40 rounded-2xl border border-emerald-100">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 pb-4 border-b border-emerald-100">
+                      <div>
+                        <span className="text-xs font-bold uppercase tracking-wider text-emerald-800">Current Active Tier</span>
+                        <h4 className="text-xl font-black text-gray-900">
+                          {user?.subscription_plan ? user.subscription_plan.replace(/_/g, ' ').toUpperCase() : 'Active Professional Access'}
+                        </h4>
+                      </div>
+                      <div className="text-left md:text-right">
+                        <span className="text-xs font-bold uppercase tracking-wider text-emerald-800">Subscription Status</span>
+                        <p className="text-lg font-black text-emerald-700">
+                          {daysRemaining !== null ? `${daysRemaining} Days Left` : 'Active'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <p className="text-xs font-bold uppercase tracking-wider text-gray-600 mb-3">
+                      Features Active & Unlocked
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                      {[
+                        'Full Clinical Pharmacology & Medication Database',
+                        'Clinical Decision Support & Drug Interaction Checker',
+                        'Home Remedies, Warnings & Clinical Guidance',
+                        'Medication Availability & Inventory Verification',
+                        'Live Clinical Updates & National Formularies',
+                        'Dedicated Professional Support'
+                      ].map((feat, idx) => (
+                        <div key={idx} className="flex items-center gap-2 text-xs md:text-sm text-gray-700">
+                          <FaCheckCircle className="text-emerald-500 text-xs shrink-0" />
+                          <span>{feat}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-5 p-3.5 bg-white/95 rounded-xl border border-emerald-200 text-xs text-emerald-900 flex items-start gap-2.5">
+                      <FaClock className="text-emerald-600 text-sm mt-0.5 shrink-0" />
+                      <div>
+                        <span className="font-bold">Renewal Policy: </span>
+                        <span>
+                          Your subscription is currently active with full access. Per system rules, plan renewal options and payment will be displayed once your current subscription expires{user?.subscription_end_date ? ` on ${new Date(user.subscription_end_date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}` : ''}.
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Notice for Inactive or Expired users */}
               {!isSubActive && (
@@ -781,8 +849,10 @@ const SubscriptionPlans = () => {
           </div>
         )}
 
-        {/* ── HEADER ── */}
-        <div id="plan-selection-section" className="text-center mb-8 md:mb-12">
+        {/* ── PLAN SELECTION & CHECKOUT (Only visible after expiration or when inactive) ── */}
+        {!isSubActive && (
+          <>
+            <div id="plan-selection-section" className="text-center mb-8 md:mb-12">
           {!isExistingUser && (
             <div className="inline-flex items-center gap-2 md:gap-3 bg-white rounded-full px-4 md:px-6 py-2 md:py-3 shadow-sm mb-4">
               <FaUserCheck className="text-green-500 text-sm md:text-base" />
@@ -1103,6 +1173,8 @@ const SubscriptionPlans = () => {
             </div>
           </div>
         </div>
+        </>
+      )}
 
       </div>
     </div>
