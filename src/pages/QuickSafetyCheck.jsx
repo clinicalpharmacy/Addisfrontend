@@ -53,11 +53,31 @@ const QuickSafetyCheck = () => {
         return safetyProfile;
     };
 
+    const splitInputMedications = (input) => {
+        if (!input || !input.trim()) return [];
+        const str = input.trim();
+        if (/[,;+\n]/.test(str)) {
+            return str.split(/[,;+\n]+/).map(m => m.trim()).filter(Boolean);
+        }
+        const multiWordMeds = [
+            'ringer lactate', 'mefenamic acid', 'valproic acid', 'amphotericin b',
+            'calcium carbonate', 'calcium chloride', 'ferrous sulfate', 'magnesium hydroxide',
+            'aluminum hydroxide', 'dextrose 5%', 'normal saline', 'vitamin b1'
+        ];
+        if (multiWordMeds.includes(str.toLowerCase())) {
+            return [str];
+        }
+        if (str.includes(' ')) {
+            return str.split(/\s+/).map(m => m.trim()).filter(Boolean);
+        }
+        return [str];
+    };
+
     const handleAddMedication = (e) => {
         if (e.key === 'Enter' || e.type === 'click') {
             e.preventDefault();
             if (drugName.trim()) {
-                const newMeds = drugName.split(',').map(m => m.trim()).filter(Boolean);
+                const newMeds = splitInputMedications(drugName);
                 setMedList(prev => [...new Set([...prev, ...newMeds])]);
                 setDrugName('');
             }
@@ -72,7 +92,7 @@ const QuickSafetyCheck = () => {
         e.preventDefault();
         let currentMeds = [...medList];
         if (drugName.trim()) {
-            const newMeds = drugName.split(',').map(m => m.trim()).filter(Boolean);
+            const newMeds = splitInputMedications(drugName);
             currentMeds = [...new Set([...currentMeds, ...newMeds])];
             setMedList(currentMeds);
             setDrugName('');
