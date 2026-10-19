@@ -508,43 +508,26 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
 
             clinicalRules.forEach(rule => {
                 try {
-                    const isTriggered = evaluateRule(rule, facts);
+                    const evalResult = evaluateRule(rule, facts, true);
+                    const isTriggered = evalResult?.triggered;
 
                     if (isTriggered) {
                         triggeredRules.push(rule);
 
-                        let message = rule.rule_name;
-                        let recommendation = '';
-                        let severity = rule.severity || 'moderate';
-
+                        let action = {};
                         if (rule.rule_action) {
                             try {
-                                const action = typeof rule.rule_action === 'string'
+                                action = typeof rule.rule_action === 'string'
                                     ? JSON.parse(rule.rule_action)
                                     : rule.rule_action;
-
-                                message = action.message_professional || action.message || rule.rule_name;
-                                recommendation = action.recommendation_professional || action.recommendation || getDefaultRecommendation(rule.rule_type);
-
-                                const clientMessage = action.message_client || action.message || message;
-                                const clientRecommendation = action.recommendation_client || action.recommendation || recommendation;
-
-                                severity = action.severity || rule.severity || 'moderate';
-                                
-                                message = formatAlertMessage(message, facts);
-                                recommendation = formatAlertMessage(recommendation, facts);
-
-                                rule.client_message = formatAlertMessage(clientMessage, facts);
-                                rule.client_recommendation = formatAlertMessage(clientRecommendation, facts);
                             } catch (e) {
-                                recommendation = formatAlertMessage(getDefaultRecommendation(rule.rule_type), facts);
+                                action = {};
                             }
-                        } else {
-                            recommendation = formatAlertMessage(getDefaultRecommendation(rule.rule_type), facts);
                         }
-                        
-                        message = formatAlertMessage(message, facts);
-                        recommendation = formatAlertMessage(recommendation, facts);
+
+                        let rawMessage = action.message_professional || action.message || rule.rule_name;
+                        let rawRecommendation = action.recommendation_professional || action.recommendation || getDefaultRecommendation(rule.rule_type);
+                        let severity = action.severity || rule.severity || 'moderate';
 
                         let drnCategory = 'Safety';
                         let causeName = rule.rule_name;
@@ -563,25 +546,55 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
                             }
                         }
 
-                        findings.push({
-                            rule_id: rule.id,
-                            rule_type: rule.rule_type,
-                            rule_name: rule.rule_name,
-                            category: drnCategory,
-                            cause: causeName,
-                            dtpType: dtpType,
-                            message: message,
-                            recommendation: recommendation,
-                            severity: severity,
-                            medications: facts.medications?.filter(med =>
-                                message.toLowerCase().includes(med.toLowerCase()) ||
-                                recommendation.toLowerCase().includes(med.toLowerCase())
-                            ) || [],
-                            timestamp: new Date().toISOString(),
-                            evidence: rule.rule_description || '',
-                            original_rule_name: rule.rule_name,
-                            original_rule_type: rule.rule_type,
-                            drn: drnCategory
+                        const combinations = (evalResult.matchedMedicationCombinations && evalResult.matchedMedicationCombinations.length > 0)
+                            ? evalResult.matchedMedicationCombinations
+                            : [[]];
+
+                        combinations.forEach((combo) => {
+                            const comboFacts = combo.length > 0 ? {
+                                ...facts,
+                                medications: combo,
+                                medication_names: combo
+                            } : facts;
+
+                            let message = formatAlertMessage(rawMessage, comboFacts);
+                            let recommendation = formatAlertMessage(rawRecommendation, comboFacts);
+
+                            if (combo.length > 0) {
+                                const comboTitle = combo.name || combo.join(' + ');
+                                const effectPart = combo.effect ? ` (${combo.effect})` : '';
+
+                                if (message.includes('{{medications}}')) {
+                                    message = message.replace(/\{\{medications\}\}/g, comboTitle);
+                                } else {
+                                    message += ` [${comboTitle}${effectPart}]`;
+                                }
+
+                                if (combo.effect && !recommendation.includes(combo.effect)) {
+                                    recommendation = recommendation ? `${combo.effect}. ${recommendation}` : combo.effect;
+                                }
+                            }
+
+                            findings.push({
+                                rule_id: rule.id,
+                                rule_type: rule.rule_type,
+                                rule_name: combo.name ? `${rule.rule_name}: ${combo.name}` : rule.rule_name,
+                                category: drnCategory,
+                                cause: causeName,
+                                dtpType: dtpType,
+                                message: message,
+                                recommendation: recommendation,
+                                severity: severity,
+                                medications: combo.length > 0 ? combo : (facts.medications?.filter(med =>
+                                    message.toLowerCase().includes(med.toLowerCase()) ||
+                                    recommendation.toLowerCase().includes(med.toLowerCase())
+                                ) || []),
+                                timestamp: new Date().toISOString(),
+                                evidence: rule.rule_description || '',
+                                original_rule_name: rule.rule_name,
+                                original_rule_type: rule.rule_type,
+                                drn: drnCategory
+                            });
                         });
                     }
                 } catch (ruleError) {

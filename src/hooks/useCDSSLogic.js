@@ -259,43 +259,52 @@ export const useCDSSLogic = (patientData) => {
                             action = typeof rule.rule_action === 'string' ? JSON.parse(rule.rule_action) : (rule.rule_action || {});
                         } catch (e) { action = {}; }
 
-                        const profMsg = formatAlertMessage(action.message_professional || action.message || rule.rule_name, facts);
-                        const clientMsg = formatAlertMessage(action.message_client || action.message || rule.rule_name, facts);
-                        const profRec = formatAlertMessage(action.recommendation_professional || action.recommendation || rule.rule_description || '', facts);
-                        const clientRec = formatAlertMessage(action.recommendation_client || action.recommendation || rule.rule_description || '', facts);
-
                         const combinations = (evalResult.matchedMedicationCombinations && evalResult.matchedMedicationCombinations.length > 0)
                             ? evalResult.matchedMedicationCombinations
                             : [[]]; // Fallback to a single empty combination for non-medication rules
 
                         combinations.forEach((combo, comboIndex) => {
-                            let comboProfMsg = profMsg;
-                            let comboClientMsg = clientMsg;
+                            const comboFacts = combo.length > 0 ? {
+                                ...facts,
+                                medications: combo,
+                                medication_names: combo
+                            } : facts;
+
+                            let comboProfMsg = formatAlertMessage(action.message_professional || action.message || rule.rule_name, comboFacts);
+                            let comboClientMsg = formatAlertMessage(action.message_client || action.message || rule.rule_name, comboFacts);
+                            let comboProfRec = formatAlertMessage(action.recommendation_professional || action.recommendation || rule.rule_description || '', comboFacts);
+                            let comboClientRec = formatAlertMessage(action.recommendation_client || action.recommendation || rule.rule_description || '', comboFacts);
 
                             if (combo.length > 0) {
-                                const comboTextPlus = combo.join(' + ');
-                                const tag = ` [Matched: ${combo.join(', ')}]`;
-                                
+                                const comboTitle = combo.name || combo.join(' + ');
+                                const effectPart = combo.effect ? ` (${combo.effect})` : '';
+
                                 if (comboProfMsg.includes('{{medications}}')) {
-                                    comboProfMsg = comboProfMsg.replace(/\{\{medications\}\}/g, comboTextPlus);
-                                    comboClientMsg = comboClientMsg.replace(/\{\{medications\}\}/g, comboTextPlus);
+                                    comboProfMsg = comboProfMsg.replace(/\{\{medications\}\}/g, comboTitle);
+                                    comboClientMsg = comboClientMsg.replace(/\{\{medications\}\}/g, comboTitle);
                                 } else {
+                                    const tag = ` [${comboTitle}${effectPart}]`;
                                     comboProfMsg += tag;
+                                    comboClientMsg += tag;
+                                }
+
+                                if (combo.effect && !comboProfRec.includes(combo.effect)) {
+                                    comboProfRec = comboProfRec ? `${combo.effect}. ${comboProfRec}` : combo.effect;
                                 }
                             }
 
                             triggeredAlerts.push({
                                 id: `${rule.id}-${Date.now()}-${rulesEvaluated}-${comboIndex}`,
                                 rule_id: rule.id,
-                                rule_name: rule.rule_name,
+                                rule_name: combo.name ? `${rule.rule_name}: ${combo.name}` : rule.rule_name,
                                 rule_type: rule.rule_type,
                                 severity: action.severity || rule.severity || 'moderate',
                                 message: comboProfMsg,
                                 professional_message: comboProfMsg,
                                 client_message: comboClientMsg,
-                                professional_recommendation: profRec,
-                                client_recommendation: clientRec,
-                                details: profRec || rule.rule_description,
+                                professional_recommendation: comboProfRec,
+                                client_recommendation: comboClientRec,
+                                details: comboProfRec || rule.rule_description,
                                 evidence: {
                                     facts,
                                     matched_medications: combo.length > 0 ? combo : evalResult.matchedMedications

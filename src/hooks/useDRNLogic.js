@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import supabase from '../utils/supabase';
-import { mapPatientToFacts, evaluateRule } from '../components/CDSS/RuleEngine';
+import { mapPatientToFacts, evaluateRule, formatAlertMessage } from '../components/CDSS/RuleEngine';
 import { drnCategories, menuItemsData } from '../constants/drnConstants';
 
 export const useDRNLogic = (patientCode) => {
@@ -133,24 +133,22 @@ export const useDRNLogic = (patientCode) => {
             const findings = [];
 
             clinicalRules.forEach(rule => {
-                if (evaluateRule(rule, facts)) {
-                    // Mapping logic similar to before
+                const evalResult = evaluateRule(rule, facts, true);
+                if (evalResult?.triggered) {
                     let drnCategory = 'Safety';
                     let causeName = rule.rule_name;
                     let dtpType = '';
-                    let message = rule.rule_name;
-                    let recommendation = '';
-                    let severity = rule.severity || 'moderate';
+                    let action = {};
 
-                    // Simple logic to parse rule_action if JSON
                     if (rule.rule_action) {
                         try {
-                            const action = typeof rule.rule_action === 'string' ? JSON.parse(rule.rule_action) : rule.rule_action;
-                            message = action.message || message;
-                            recommendation = action.recommendation || '';
-                            severity = action.severity || severity;
-                        } catch (e) { }
+                            action = typeof rule.rule_action === 'string' ? JSON.parse(rule.rule_action) : rule.rule_action;
+                        } catch (e) { action = {}; }
                     }
+
+                    let rawMessage = action.message_professional || action.message || rule.rule_name;
+                    let rawRecommendation = action.recommendation_professional || action.recommendation || '';
+                    let severity = action.severity || rule.severity || 'moderate';
 
                     // Find category
                     for (const [cat, data] of Object.entries(drnCategories)) {
@@ -162,18 +160,48 @@ export const useDRNLogic = (patientCode) => {
                         }
                     }
 
-                    findings.push({
-                        rule_id: rule.id,
-                        rule_type: rule.rule_type,
-                        rule_name: rule.rule_name,
-                        category: drnCategory,
-                        cause: causeName,
-                        dtpType,
-                        message,
-                        recommendation,
-                        severity,
-                        original_rule_name: rule.rule_name,
-                        medications: facts.medications?.filter(m => message.toLowerCase().includes(m.toLowerCase())) || []
+                    const combinations = (evalResult.matchedMedicationCombinations && evalResult.matchedMedicationCombinations.length > 0)
+                        ? evalResult.matchedMedicationCombinations
+                        : [[]];
+
+                    combinations.forEach(combo => {
+                        const comboFacts = combo.length > 0 ? {
+                            ...facts,
+                            medications: combo,
+                            medication_names: combo
+                        } : facts;
+
+                        let message = formatAlertMessage(rawMessage, comboFacts);
+                        let recommendation = formatAlertMessage(rawRecommendation, comboFacts);
+
+                        if (combo.length > 0) {
+                            const comboTitle = combo.name || combo.join(' + ');
+                            const effectPart = combo.effect ? ` (${combo.effect})` : '';
+
+                            if (message.includes('{{medications}}')) {
+                                message = message.replace(/\{\{medications\}\}/g, comboTitle);
+                            } else {
+                                message += ` [${comboTitle}${effectPart}]`;
+                            }
+
+                            if (combo.effect && !recommendation.includes(combo.effect)) {
+                                recommendation = recommendation ? `${combo.effect}. ${recommendation}` : combo.effect;
+                            }
+                        }
+
+                        findings.push({
+                            rule_id: rule.id,
+                            rule_type: rule.rule_type,
+                            rule_name: combo.name ? `${rule.rule_name}: ${combo.name}` : rule.rule_name,
+                            category: drnCategory,
+                            cause: causeName,
+                            dtpType,
+                            message,
+                            recommendation,
+                            severity,
+                            original_rule_name: rule.rule_name,
+                            medications: combo.length > 0 ? combo : (facts.medications?.filter(m => message.toLowerCase().includes(m.toLowerCase())) || [])
+                        });
                     });
                 }
             });

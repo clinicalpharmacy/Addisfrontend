@@ -1443,7 +1443,16 @@ const getMatchedMedications = (condition, facts) => {
                 }
                 allMatchSets = newMatchSets;
             }
-            return allMatchSets.length > 0 ? allMatchSets : null;
+            if (allMatchSets.length > 0) {
+                if (cond.effect || cond.name) {
+                    allMatchSets.forEach(set => {
+                        if (cond.effect) set.effect = cond.effect;
+                        if (cond.name) set.name = cond.name;
+                    });
+                }
+                return allMatchSets;
+            }
+            return null;
         }
 
         if (cond.any) {
@@ -1511,6 +1520,9 @@ const getMatchedMedications = (condition, facts) => {
             return String(med).charAt(0).toUpperCase() + String(med).slice(1).toLowerCase();
         }).sort(); // Sort to ensure uniqueness ignores order
         
+        if (combination.effect) formattedCombo.effect = combination.effect;
+        if (combination.name) formattedCombo.name = combination.name;
+
         const comboKey = formattedCombo.join('|');
         if (!seenCombos.has(comboKey)) {
             seenCombos.add(comboKey);
@@ -1676,22 +1688,33 @@ export const runClinicalDecisionSupport = async (facts) => {
                     : [[]]; // Fallback to a single empty combination
 
                 for (const combination of combinations) {
-                    let professional_message = formatAlertMessage(action.message_professional || action.message || rule.rule_name, facts);
-                    let client_message = formatAlertMessage(action.message_client || action.message || rule.rule_name, facts);
-                    let recommendation = formatAlertMessage(action.recommendation_professional || action.recommendation || rule.rule_description, facts);
-                    let client_recommendation = formatAlertMessage(action.recommendation_client || action.recommendation || rule.rule_description, facts);
+                    const comboFacts = combination.length > 0 ? {
+                        ...facts,
+                        medications: combination,
+                        medication_names: combination
+                    } : facts;
+
+                    let professional_message = formatAlertMessage(action.message_professional || action.message || rule.rule_name, comboFacts);
+                    let client_message = formatAlertMessage(action.message_client || action.message || rule.rule_name, comboFacts);
+                    let recommendation = formatAlertMessage(action.recommendation_professional || action.recommendation || rule.rule_description, comboFacts);
+                    let client_recommendation = formatAlertMessage(action.recommendation_client || action.recommendation || rule.rule_description, comboFacts);
 
                     // Append matched medication names to message if available
                     if (combination.length > 0) {
-                        const comboTextPlus = combination.join(' + ');
-                        const tag = ` [Triggered by: ${combination.join(', ')}]`;
-                        
+                        const comboTitle = combination.name || combination.join(' + ');
+                        const effectPart = combination.effect ? ` (${combination.effect})` : '';
+
                         if (professional_message.includes('{{medications}}')) {
-                            professional_message = professional_message.replace(/\{\{medications\}\}/g, comboTextPlus);
-                            client_message = client_message.replace(/\{\{medications\}\}/g, comboTextPlus);
+                            professional_message = professional_message.replace(/\{\{medications\}\}/g, comboTitle);
+                            client_message = client_message.replace(/\{\{medications\}\}/g, comboTitle);
                         } else {
+                            const tag = ` [${comboTitle}${effectPart}]`;
                             professional_message += tag;
                             client_message += tag;
+                        }
+
+                        if (combination.effect && !recommendation.includes(combination.effect)) {
+                            recommendation = recommendation ? `${combination.effect}. ${recommendation}` : combination.effect;
                         }
                     }
 
