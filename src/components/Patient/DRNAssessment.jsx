@@ -644,14 +644,20 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
     };
 
     const runAIAnalysis = async (skipAck = false) => {
-        if (!patientCode) return;
+        console.log("🤖 [AI STEP 1] runAIAnalysis called. patientCode:", patientCode, "skipAck:", skipAck);
+        if (!patientCode) {
+            console.log("🤖 [AI STEP 1b] NO patientCode - returning early!");
+            return;
+        }
 
         if (!hasAiAcknowledged && !skipAck) {
+            console.log("🤖 [AI STEP 2] Showing acknowledgment modal");
             setPendingAnalysis('ai');
             setShowAiAck(true);
             return;
         }
 
+        console.log("🤖 [AI STEP 3] Starting AI analysis...");
         try {
             setAiLoading(true);
             setAiError(null);
@@ -660,6 +666,7 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
             let currentMedications = medications;
 
             if (!currentPatient) {
+                console.log("🤖 [AI STEP 4] No patient data cached, loading...");
                 const refreshed = await loadPatientData();
                 if (refreshed) {
                     currentPatient = refreshed.patient;
@@ -667,9 +674,16 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
                 }
             }
 
-            if (!currentPatient) throw new Error('Patient data not found');
+            if (!currentPatient) {
+                console.log("🤖 [AI STEP 4b] FAILED - no patient data!");
+                throw new Error('Patient data not found');
+            }
+
+            console.log("🤖 [AI STEP 5] Patient found:", currentPatient?.age, currentPatient?.gender);
+            console.log("🤖 [AI STEP 5b] Medications:", currentMedications?.map(m => m.drug_name));
 
             const facts = mapPatientToFacts(currentPatient, currentMedications);
+            console.log("🤖 [AI STEP 6] Facts mapped, patient_type:", facts.patient_type);
 
             const analysisData = {
                 age: currentPatient?.age,
@@ -691,21 +705,24 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
                 age_category: facts.patient_type
             };
 
-            console.log("🚀 Sending data from DRN to Gemini AI:", analysisData);
+            console.log("🤖 [AI STEP 7] Calling backend API: /ai/cdss-analysis", analysisData);
             const result = await api.post('/ai/cdss-analysis', analysisData);
-            console.log("🚀 Gemini AI Response (DRN):", result);
+            console.log("🤖 [AI STEP 8] ✅ API Response received:", result);
 
             if (result.success && result.analysis) {
+                console.log("🤖 [AI STEP 9] ✅ Setting AI analysis state!", result.analysis);
                 setAiAnalysis(result.analysis);
             } else {
+                console.log("🤖 [AI STEP 9b] ❌ API returned failure:", result);
                 setAiError(result.error || "Failed to get AI analysis");
             }
         } catch (err) {
-            console.error("🚀 AI Analysis API Error:", err);
+            console.error("🤖 [AI ERROR] ❌ Exception caught:", err);
             const errorMsg = err?.error || err?.message || err?.toString() || "Something went wrong with the AI assistant.";
             setAiError(`AI Error: ${errorMsg}`);
         } finally {
             setAiLoading(false);
+            console.log("🤖 [AI DONE] Analysis complete");
         }
     };
 
