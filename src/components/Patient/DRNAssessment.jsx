@@ -1153,6 +1153,7 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
                                         <div className="mb-6 p-6 bg-purple-50 rounded-xl border-2 border-dashed border-purple-200 text-center animate-pulse">
                                             <FaBrain className="text-3xl text-purple-300 mx-auto mb-2 animate-bounce" />
                                             <h4 className="text-sm font-bold text-purple-600">AI Analysis in progress...</h4>
+                                            <p className="text-xs text-purple-400 mt-1">Gemini AI is analyzing — please wait 10-30 seconds</p>
                                         </div>
                                     )}
 
