@@ -668,7 +668,7 @@ const SubscriptionPlans = () => {
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold text-sm shadow-md transition transform hover:-translate-y-0.5"
                   >
                     <FaCreditCard className="text-sm" />
-                    {isSubActive ? 'Renew / Extend Early' : 'Renew Subscription Now'}
+                    {isSubActive ? 'View Plan Details' : 'Renew Subscription Now'}
                   </button>
                 </div>
               </div>
@@ -741,13 +741,15 @@ const SubscriptionPlans = () => {
                   </p>
                 </div>
 
-                {/* 4. Renewal Action */}
+                {/* 4. Plan Action */}
                 <div className="p-4 rounded-2xl bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-200 flex flex-col justify-between">
                   <div>
-                    <p className="text-xs font-bold text-green-900 uppercase tracking-wider mb-1">Direct Renewal</p>
+                    <p className="text-xs font-bold text-green-900 uppercase tracking-wider mb-1">
+                      {isSubActive ? 'Subscription Status' : 'Direct Renewal'}
+                    </p>
                     <p className="text-xs text-gray-700 leading-snug">
                       {isSubActive
-                        ? 'Extend your current plan early without losing any remaining days.'
+                        ? 'Your subscription is active with full access. Renewal options will become available when your subscription expires.'
                         : 'Reactivate your subscription instantly with Chapa — no signup required.'}
                     </p>
                   </div>
@@ -755,7 +757,7 @@ const SubscriptionPlans = () => {
                     onClick={scrollToPlans}
                     className="mt-3 text-xs font-extrabold text-green-700 hover:text-green-900 underline flex items-center gap-1 self-start"
                   >
-                    Select Plan to Renew <FaArrowRight className="text-[10px]" />
+                    {isSubActive ? 'View Available Plans' : 'Select Plan to Renew'} <FaArrowRight className="text-[10px]" />
                   </button>
                 </div>
               </div>
@@ -792,11 +794,15 @@ const SubscriptionPlans = () => {
           )}
 
           <h1 className="text-2xl md:text-4xl font-black text-gray-900 mb-2 md:mb-3">
-            {isExistingUser ? 'Renew or Upgrade Your Subscription' : 'Choose Your Subscription Plan'}
+            {isSubActive
+              ? 'Manage Subscription Plans'
+              : (isExistingUser ? 'Renew Your Subscription' : 'Choose Your Subscription Plan')}
           </h1>
           <p className="text-sm md:text-base text-gray-600 max-w-2xl mx-auto">
-            {isExistingUser
-              ? 'Select your facility type and plan to renew. Your subscription will be extended immediately upon payment.'
+            {isSubActive
+              ? 'View plan details and options for your facility. Your subscription is currently active.'
+              : isExistingUser
+              ? 'Your subscription has ended. Select your plan below to renew and instantly restore full access.'
               : 'Select your facility type and billing interval to activate full access.'}
           </p>
 
@@ -929,7 +935,7 @@ const SubscriptionPlans = () => {
         <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden mb-8">
           <div className="p-6 md:p-8">
             <h2 className="text-2xl font-black text-gray-900 mb-6">
-              {isExistingUser ? 'Renewal Order Summary' : 'Order Summary'}
+              {isSubActive ? 'Subscription Plan Summary' : (isExistingUser ? 'Renewal Order Summary' : 'Order Summary')}
             </h2>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -959,10 +965,14 @@ const SubscriptionPlans = () => {
                     <div className="flex items-start gap-3">
                       <FaExclamationCircle className="text-blue-500 text-base mt-0.5 shrink-0" />
                       <div>
-                        <p className="font-bold text-blue-900 text-xs">Renewal Information</p>
+                        <p className="font-bold text-blue-900 text-xs">
+                          {isSubActive ? 'Active Plan Information' : (isExistingUser ? 'Renewal Information' : 'Activation Information')}
+                        </p>
                         <p className="text-xs text-blue-800 mt-1 leading-relaxed">
-                          {isExistingUser
-                            ? 'Your account is already active. Upon completing payment on Chapa, your subscription validity is immediately extended without needing to sign up again.'
+                          {isSubActive
+                            ? 'You currently have an active subscription. Selecting and paying for a new plan will switch or update your subscription tier.'
+                            : isExistingUser
+                            ? 'Your subscription has ended. Upon completing payment on Chapa, your subscription will be renewed immediately without needing to sign up again.'
                             : 'After payment, your subscription will be activated so you can start using all clinical pharmacy features immediately.'}
                         </p>
                       </div>
@@ -1011,7 +1021,9 @@ const SubscriptionPlans = () => {
                         {isExistingUser && (
                           <li className="flex items-center gap-2">
                             <FaSync className="text-blue-600" />
-                            <span>Mode: <strong className="text-blue-700">Subscription Renewal / Extension</strong></span>
+                            <span>
+                              Mode: <strong className="text-blue-700">{isSubActive ? 'Plan Change / Upgrade' : 'Subscription Renewal'}</strong>
+                            </span>
                           </li>
                         )}
                         {accountType === 'company' && (
@@ -1074,7 +1086,11 @@ const SubscriptionPlans = () => {
                   <span className="flex items-center justify-center gap-2">
                     <FaCreditCard />
                     <span>
-                      {isExistingUser ? 'Renew Subscription with Chapa' : 'Pay with Chapa and Activate Account'}
+                      {isSubActive
+                        ? 'Switch / Change Plan with Chapa'
+                        : isExistingUser
+                        ? 'Renew Subscription with Chapa'
+                        : 'Pay with Chapa and Activate Account'}
                     </span>
                     <FaArrowRight className="text-sm ml-1" />
                   </span>

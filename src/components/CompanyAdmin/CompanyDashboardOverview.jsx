@@ -58,7 +58,7 @@ export const CompanyDashboardOverview = ({
                                                     className="text-xs md:text-sm font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 underline transition"
                                                 >
                                                     <FaCreditCard className="text-xs" />
-                                                    {isAct ? 'Manage / Extend' : 'Renew Subscription'}
+                                                    {isAct ? 'Manage Subscription' : 'Renew Subscription'}
                                                 </button>
                                             </>
                                         );

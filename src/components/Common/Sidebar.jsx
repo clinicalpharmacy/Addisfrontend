@@ -415,11 +415,13 @@ const Sidebar = ({ onClose }) => {
                                             <FaCreditCard />
                                         </div>
                                         <div className="flex flex-col text-left">
-                                            <span className="text-sm font-black leading-tight">Manage Subscription</span>
+                                            <span className="text-sm font-black leading-tight">
+                                                {isSubscribed ? 'Manage Subscription' : 'Renew Subscription'}
+                                            </span>
                                             <span className="text-[11px] font-semibold opacity-85">
                                                 {isSubscribed && daysRemaining !== null
                                                     ? (daysRemaining > 0 ? `${daysRemaining} days left` : 'Expires today')
-                                                    : 'Inactive • Click to Renew'}
+                                                    : 'Expired • Click to Renew'}
                                             </span>
                                         </div>
                                     </div>
@@ -671,13 +673,17 @@ const Sidebar = ({ onClose }) => {
                             onClose?.();
                             navigate('/subscription/plans');
                         }}
-                        className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-black bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-sm transition transform hover:-translate-y-0.5"
+                        className={`w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-black shadow-sm transition transform hover:-translate-y-0.5 ${
+                            isSubscribed
+                                ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white'
+                                : 'bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-700 hover:to-amber-700 text-white animate-pulse'
+                        }`}
                     >
                         <FaCreditCard className="text-xs" />
-                        <span>Manage Subscription</span>
+                        <span>{isSubscribed ? 'Manage Subscription' : 'Renew Subscription'}</span>
                         {daysRemaining !== null && (
                             <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded-full font-extrabold">
-                                {daysRemaining > 0 ? `${daysRemaining}d left` : 'Renew'}
+                                {isSubscribed ? (daysRemaining > 0 ? `${daysRemaining}d left` : 'Active') : 'Expired'}
                             </span>
                         )}
                     </button>
