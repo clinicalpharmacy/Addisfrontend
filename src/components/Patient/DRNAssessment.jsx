@@ -644,6 +644,7 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
     };
 
     const runAIAnalysis = async (skipAck = false) => {
+        alert("✅ AI FUNCTION CALLED! This is the Gemini AI, not the rules engine.");
         console.log("🤖 [AI STEP 1] runAIAnalysis called. patientCode:", patientCode, "skipAck:", skipAck);
         if (!patientCode) {
             console.log("🤖 [AI STEP 1b] NO patientCode - returning early!");
