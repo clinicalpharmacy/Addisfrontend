@@ -571,6 +571,17 @@ const SubscriptionPlans = () => {
     }
   };
 
+  const handleBackToDashboard = () => {
+    const activeUser = user || (localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null);
+    if (activeUser?.role === 'admin' || activeUser?.role === 'superadmin') {
+      navigate('/admin/dashboard');
+    } else if (activeUser?.role === 'company_admin' || (activeUser?.account_type === 'company' && activeUser?.company_id)) {
+      navigate('/company/dashboard');
+    } else {
+      navigate('/home');
+    }
+  };
+
   // If user is not logged in and didn't just register, prompt login/signup
   if (!isRegistered && !localStorage.getItem('token') && !localStorage.getItem('user')) {
     return (
@@ -665,7 +676,7 @@ const SubscriptionPlans = () => {
 
                   {isSubActive ? (
                     <button
-                      onClick={() => navigate('/')}
+                      onClick={handleBackToDashboard}
                       className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold text-sm shadow-md transition transform hover:-translate-y-0.5"
                     >
                       <FaHome className="text-sm" />
@@ -825,6 +836,16 @@ const SubscriptionPlans = () => {
                           Your subscription is currently active with full access. Per system rules, plan renewal options and payment will be displayed once your current subscription expires{user?.subscription_end_date ? ` on ${new Date(user.subscription_end_date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}` : ''}.
                         </span>
                       </div>
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      <button
+                        onClick={handleBackToDashboard}
+                        className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold text-xs shadow-md transition transform hover:-translate-y-0.5 flex items-center gap-2"
+                      >
+                        <FaHome className="text-sm" />
+                        <span>Return to Dashboard</span>
+                      </button>
                     </div>
                   </div>
                 </div>

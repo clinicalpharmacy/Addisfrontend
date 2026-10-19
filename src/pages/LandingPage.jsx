@@ -10,6 +10,23 @@ const LandingPage = () => {
     const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+    const token = localStorage.getItem('token');
+    const user = (() => {
+        try {
+            return JSON.parse(localStorage.getItem('user'));
+        } catch (e) {
+            return null;
+        }
+    })();
+    const isLoggedIn = !!token && !!user;
+
+    const getDashboardPath = () => {
+        if (!user) return '/login';
+        if (user.role === 'admin' || user.role === 'superadmin') return '/admin/dashboard';
+        if (user.role === 'company_admin' || (user.account_type === 'company' && user.company_id)) return '/company/dashboard';
+        return '/home';
+    };
+
     return (
         <div className="min-h-screen bg-white font-sans text-slate-900">
             {/* Navbar */}
@@ -38,18 +55,30 @@ const LandingPage = () => {
 
                         {/* Desktop Action Buttons */}
                         <div className="hidden md:flex items-center gap-4">
-                            <Link
-                                to="/login"
-                                className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
-                            >
-                                Sign In
-                            </Link>
-                            <Link
-                                to="/signup"
-                                className="px-5 py-2.5 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-lg shadow-sm transition-all"
-                            >
-                                Get Started
-                            </Link>
+                            {isLoggedIn ? (
+                                <button
+                                    onClick={() => navigate(getDashboardPath())}
+                                    className="px-5 py-2.5 text-sm font-semibold text-white bg-green-600 hover:bg-green-700 rounded-lg shadow-sm transition-all flex items-center gap-2"
+                                >
+                                    <span>Go to Dashboard</span>
+                                    <FaArrowRight className="text-xs" />
+                                </button>
+                            ) : (
+                                <>
+                                    <Link
+                                        to="/login"
+                                        className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                                    >
+                                        Sign In
+                                    </Link>
+                                    <Link
+                                        to="/signup"
+                                        className="px-5 py-2.5 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-lg shadow-sm transition-all"
+                                    >
+                                        Get Started
+                                    </Link>
+                                </>
+                            )}
                         </div>
 
                         {/* Mobile Menu Button */}
@@ -73,8 +102,22 @@ const LandingPage = () => {
                             <a href="#contact" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">Contact</a>
                             <Link to="/vacancies" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">Vacancies</Link>
                             <div className="border-t border-slate-100 my-2 pt-2"></div>
-                            <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">Sign In</Link>
-                            <Link to="/signup" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-blue-700 bg-blue-50 rounded-lg mt-2 text-center border border-blue-100">Get Started</Link>
+                            {isLoggedIn ? (
+                                <button
+                                    onClick={() => {
+                                        setIsMobileMenuOpen(false);
+                                        navigate(getDashboardPath());
+                                    }}
+                                    className="w-full px-4 py-3 text-base font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg text-center"
+                                >
+                                    Go to Dashboard
+                                </button>
+                            ) : (
+                                <>
+                                    <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">Sign In</Link>
+                                    <Link to="/signup" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-blue-700 bg-blue-50 rounded-lg mt-2 text-center border border-blue-100">Get Started</Link>
+                                </>
+                            )}
                         </div>
                     </div>
                 )}
