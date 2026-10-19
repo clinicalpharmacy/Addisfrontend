@@ -702,7 +702,8 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
             }
         } catch (err) {
             console.error("🚀 AI Analysis API Error:", err);
-            setAiError("Something went wrong with the AI assistant.");
+            const errorMsg = err?.error || err?.message || err?.toString() || "Something went wrong with the AI assistant.";
+            setAiError(`AI Error: ${errorMsg}`);
         } finally {
             setAiLoading(false);
         }
