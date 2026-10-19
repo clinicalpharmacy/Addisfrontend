@@ -58,10 +58,75 @@ const CDSSDisplay = ({ patientData, onBack, onDataChange }) => {
         low: 'bg-blue-500'
     };
 
-    const handleRunAI = () => {
-        // runFullAnalysis: re-fetches rules + medications, then triggers analysis
-        // via analyzePatientRef.current — which always has fresh state.
-        runFullAnalysis();
+    const [aiAnalysis, setAiAnalysis] = useState(null);
+    const [aiLoading, setAiLoading] = useState(false);
+    const [aiError, setAiError] = useState(null);
+
+    const handleRunAI = async () => {
+        if (!patientData && !decryptedPatient) return;
+
+        try {
+            setAiLoading(true);
+            setAiError(null);
+
+            const patient = decryptedPatient || patientData;
+
+            // Make sure medications are extracted properly
+            const medsList = (medications && medications.length > 0)
+                ? medications
+                : (patient?.medications || patient?.medication_history || []);
+
+            const formattedMeds = Array.isArray(medsList)
+                ? medsList.map(m => {
+                    if (typeof m === 'string') return { name: m, dose: '' };
+                    return {
+                        name: m.drug_name || m.name || m.drug || '',
+                        dose: `${m.dose || ''} ${m.frequency || ''}`.trim()
+                    };
+                }).filter(m => m.name)
+                : [];
+
+            const conditionsList = [];
+            if (patient?.diagnosis) {
+                if (Array.isArray(patient.diagnosis)) conditionsList.push(...patient.diagnosis);
+                else conditionsList.push(patient.diagnosis);
+            }
+            if (patient?.conditions && Array.isArray(patient.conditions)) {
+                conditionsList.push(...patient.conditions);
+            }
+
+            const analysisData = {
+                age: patient?.age,
+                sex: patient?.gender,
+                pregnancy: patient?.is_pregnant,
+                conditions: conditionsList,
+                medications: formattedMeds,
+                labs: patient?.labs || {},
+                vitals: {
+                    bp: patient?.blood_pressure,
+                    hr: patient?.heart_rate,
+                    temp: patient?.temperature,
+                    rr: patient?.respiratory_rate,
+                    spo2: patient?.oxygen_saturation
+                },
+                age_category: patientFacts?.patient_type || 'adult'
+            };
+
+            console.log("🤖 [CDSSDisplay] Calling Gemini AI:", analysisData);
+            const result = await api.post('/ai/cdss-analysis', analysisData);
+            console.log("🤖 [CDSSDisplay] Gemini AI Response:", result);
+
+            if (result.success && result.analysis) {
+                setAiAnalysis(result.analysis);
+            } else {
+                setAiError(result.error || "Failed to get AI analysis");
+            }
+        } catch (err) {
+            console.error("🤖 [CDSSDisplay] AI Error:", err);
+            setAiError(err?.error || err?.message || "Something went wrong with the AI assistant.");
+        } finally {
+            setAiLoading(false);
+        }
     };
 
     const formatEncValue = (val, fallback = 'Not specified') => {
@@ -305,16 +370,16 @@ const CDSSDisplay = ({ patientData, onBack, onDataChange }) => {
 
                         <button
                             onClick={handleRunAI}
-                            disabled={loading || !patientData}
+                            disabled={aiLoading || !patientData}
                             className="flex-1 md:flex-none bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm shadow-sm transition-all font-medium"
                             title="Run AI Clinical Assistant"
                         >
-                            {loading ? (
+                            {aiLoading ? (
                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
                             ) : (
                                 <FaRobot />
                             )}
-                            <span>Run AI Clinical Assistant</span>
+                            <span>{aiLoading ? 'AI Analyzing...' : 'Run AI Clinical Assistant'}</span>
                         </button>
 
                         {hasAlerts && (
@@ -363,6 +428,181 @@ const CDSSDisplay = ({ patientData, onBack, onDataChange }) => {
                     >
                         Try again
                     </button>
+                </div>
+            )}
+
+            {/* ── AI Clinical Assistant Loading Banner ── */}
+            {aiLoading && (
+                <div className="p-6 bg-gradient-to-r from-purple-50 via-indigo-50 to-blue-50 rounded-2xl border-2 border-dashed border-purple-300 text-center shadow-sm animate-pulse">
+                    <FaBrain className="text-4xl text-purple-600 mx-auto mb-3 animate-bounce" />
+                    <h4 className="text-base font-bold text-purple-900">Gemini AI Clinical Assistant Analyzing...</h4>
+                    <p className="text-xs text-purple-600 mt-1 max-w-md mx-auto">
+                        Evaluating drug-drug interactions, contraindications, special population safety, and clinical guidelines. Please wait...
+                    </p>
+                </div>
+            )}
+
+            {/* ── AI Clinical Assistant Error ── */}
+            {aiError && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-start justify-between gap-3 text-red-800">
+                    <div className="flex items-start gap-2.5">
+                        <FaExclamationTriangle className="text-red-600 mt-0.5 shrink-0" />
+                        <div>
+                            <span className="font-bold text-sm block">AI Clinical Assistant Error</span>
+                            <span className="text-xs text-red-600">{aiError}</span>
+                        </div>
+                    </div>
+                    <button
+                        onClick={handleRunAI}
+                        className="px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 text-xs font-semibold rounded-lg transition"
+                    >
+                        Retry AI
+                    </button>
+                </div>
+            )}
+
+            {/* ── AI Clinical Assistant Results ── */}
+            {aiAnalysis && (
+                <div className="bg-gradient-to-br from-purple-50/70 via-indigo-50/40 to-white rounded-2xl border border-purple-200 shadow-md overflow-hidden">
+                    {/* Header */}
+                    <div className="bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-800 p-4 text-white flex flex-wrap justify-between items-center gap-3">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
+                                <FaRobot className="text-xl text-purple-100" />
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <h3 className="font-bold text-base tracking-wide">Gemini AI Clinical Assistant</h3>
+                                    <span className="bg-purple-500/50 text-[10px] font-bold px-2 py-0.5 rounded-full border border-purple-300/30">
+                                        Generative Reasoning
+                                    </span>
+                                </div>
+                                <p className="text-xs text-purple-200">
+                                    Independent AI evidence evaluation — Clinical Pharmacist verification required
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={handleRunAI}
+                                disabled={aiLoading}
+                                className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition border border-white/20"
+                                title="Re-run AI Analysis"
+                            >
+                                <FaRedo className={`text-xs ${aiLoading ? 'animate-spin' : ''}`} /> Re-run AI
+                            </button>
+                            <button
+                                onClick={() => setAiAnalysis(null)}
+                                className="px-2.5 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs transition border border-white/20"
+                                title="Dismiss AI Results"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="p-5 space-y-4">
+                        {/* Summary */}
+                        {aiAnalysis.summary && (
+                            <div className="bg-white p-4 rounded-xl border border-purple-100 shadow-sm">
+                                <h4 className="text-xs font-black uppercase tracking-wider text-purple-800 flex items-center gap-1.5 mb-2">
+                                    <FaLightbulb className="text-purple-600" /> Clinical Overview & Summary
+                                </h4>
+                                <p className="text-sm text-gray-800 leading-relaxed font-medium">
+                                    {aiAnalysis.summary}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Grid: DTPs & Monitoring */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* DTPs */}
+                            {aiAnalysis.dtp?.length > 0 && (
+                                <div className="bg-white p-4 rounded-xl border border-red-100 shadow-sm space-y-3">
+                                    <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
+                                        <FaExclamationTriangle className="text-red-500" />
+                                        <h4 className="text-xs font-black uppercase tracking-wider text-red-800">
+                                            Identified Drug Therapy Problems ({aiAnalysis.dtp.length})
+                                        </h4>
+                                    </div>
+                                    <div className="space-y-2.5">
+                                        {aiAnalysis.dtp.map((dtp, idx) => (
+                                            <div key={idx} className="p-3 bg-red-50/60 rounded-lg border border-red-100 space-y-1.5">
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <span className="text-xs font-bold text-red-900 bg-red-200/70 px-2 py-0.5 rounded">
+                                                        {dtp.category || 'Drug Problem'}
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs font-bold text-gray-800">{dtp.problem}</p>
+                                                {dtp.recommendation && (
+                                                    <div className="text-xs text-green-900 bg-green-50/80 p-2 rounded border border-green-200 flex items-start gap-1.5 mt-1">
+                                                        <FaCheckCircle className="text-green-600 mt-0.5 shrink-0" />
+                                                        <span><strong>Recommendation:</strong> {dtp.recommendation}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Dose Adjustments & Monitoring */}
+                            <div className="space-y-4">
+                                {aiAnalysis.dose_adjustments?.length > 0 && (
+                                    <div className="bg-white p-4 rounded-xl border border-amber-100 shadow-sm space-y-2">
+                                        <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
+                                            <FaCapsules className="text-amber-600" />
+                                            <h4 className="text-xs font-black uppercase tracking-wider text-amber-800">
+                                                Dose Adjustments Suggested ({aiAnalysis.dose_adjustments.length})
+                                            </h4>
+                                        </div>
+                                        <div className="space-y-2">
+                                            {aiAnalysis.dose_adjustments.map((da, idx) => (
+                                                <div key={idx} className="p-2.5 bg-amber-50/60 rounded-lg border border-amber-100 text-xs">
+                                                    <div className="font-bold text-amber-900">{da.medication}</div>
+                                                    <div className="text-gray-700 mt-0.5"><strong>Reason:</strong> {da.reason}</div>
+                                                    <div className="text-amber-800 mt-0.5"><strong>Suggested:</strong> {da.suggested_dose}</div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {aiAnalysis.monitoring?.length > 0 && (
+                                    <div className="bg-white p-4 rounded-xl border border-blue-100 shadow-sm space-y-2">
+                                        <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
+                                            <FaHeartbeat className="text-blue-500" />
+                                            <h4 className="text-xs font-black uppercase tracking-wider text-blue-800">
+                                                Recommended Clinical Monitoring
+                                            </h4>
+                                        </div>
+                                        <ul className="space-y-1.5 text-xs text-blue-950">
+                                            {aiAnalysis.monitoring.map((m, idx) => (
+                                                <li key={idx} className="flex items-start gap-2 bg-blue-50/50 p-2 rounded border border-blue-100">
+                                                    <span className="text-blue-500 font-bold">•</span>
+                                                    <span>{m}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Citations */}
+                        {aiAnalysis.citations?.length > 0 && (
+                            <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 text-[11px] text-gray-600 space-y-1">
+                                <span className="font-bold uppercase tracking-wider text-gray-500 block">References / Citations:</span>
+                                <div className="flex flex-wrap gap-2">
+                                    {aiAnalysis.citations.map((c, idx) => (
+                                        <span key={idx} className="bg-white px-2 py-0.5 rounded border border-gray-200">
+                                            {c}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
 
