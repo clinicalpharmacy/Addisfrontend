@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-    FaSync, FaSearch, FaFilter, FaUserCircle, FaSpinner, FaUsers, FaCreditCard
+    FaSync, FaSearch, FaFilter, FaUserCircle, FaSpinner, FaUsers
 } from 'react-icons/fa';
 
 export const AdminUsers = ({
@@ -10,8 +10,7 @@ export const AdminUsers = ({
     formatDate,
     getStatusBadge,
     getRoleBadge,
-    onToggleBlock,
-    onManageSubscription
+    onToggleBlock
 }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterRole, setFilterRole] = useState('all');
@@ -156,68 +155,37 @@ export const AdminUsers = ({
                                         </span>
                                     </div>
                                     <div className="flex justify-between items-center p-2.5 rounded-xl bg-gray-50/50 group-hover:bg-white transition-colors border border-transparent group-hover:border-gray-100">
-                                        <span className="text-[9px] text-gray-400 font-black uppercase tracking-widest shrink-0">Subscription</span>
-                                        <div className="text-right">
-                                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-tight inline-block ${
-                                                user.subscription_status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
-                                            }`}>
-                                                {user.subscription_status === 'active' ? 'Active' : (user.subscription_status || 'Inactive')}
-                                            </span>
-                                            {user.subscription_plan && (
-                                                <p className="text-[9px] text-gray-400 font-bold truncate max-w-[110px] mt-0.5">
-                                                    {user.subscription_plan.replace(/_/g, ' ')}
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <div className="flex justify-between items-center p-2.5 rounded-xl bg-gray-50/50 group-hover:bg-white transition-colors border border-transparent group-hover:border-gray-100">
                                         <span className="text-[9px] text-gray-400 font-black uppercase tracking-widest shrink-0">Joined On</span>
                                         <span className="text-gray-500 font-bold text-[11px]">{formatDate(user.created_at)}</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="bg-gray-50/30 px-5 py-3 border-t border-gray-100 flex flex-col gap-2">
-                                <div className="flex justify-between items-center">
+                            <div className="bg-gray-50/30 px-5 py-3 border-t border-gray-100 flex justify-between items-center">
+                                <div className="flex flex-col">
                                     <span className="text-[9px] text-gray-400 font-black tracking-widest uppercase">ID: ...{user.id.slice(-6)}</span>
-                                    <span className="text-[9px] text-indigo-600 font-black uppercase tracking-wider">
-                                        {user.account_type || 'individual'}
-                                    </span>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-2 mt-1">
-                                    <button
-                                        type="button"
-                                        onClick={() => onManageSubscription && onManageSubscription(user)}
-                                        className="w-full py-2 px-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-sm flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white active:scale-95 shadow-indigo-100"
-                                        title="Change plan, status, or company affiliation"
-                                    >
-                                        <FaCreditCard className="text-[10px]" />
-                                        <span>Subscription</span>
-                                    </button>
-
-                                    {user.role !== 'admin' ? (
+                                    {user.role !== 'admin' && (
                                         <button
-                                            type="button"
                                             onClick={() => {
                                                 if (window.confirm(`${user.is_blocked ? 'Unblock' : 'Block'} access for ${user.email}?`)) {
                                                     onToggleBlock(user.id);
                                                 }
                                             }}
-                                            className={`w-full py-2 px-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-sm flex items-center justify-center gap-1.5 ${
-                                                user.is_blocked
-                                                    ? 'bg-orange-50 text-orange-600 hover:bg-orange-100 border border-orange-200'
-                                                    : 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200'
-                                            }`}
+                                            className={`w-full mt-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all shadow-sm flex items-center justify-center gap-2 ${user.is_blocked
+                                                ? 'bg-orange-50 text-orange-600 hover:bg-orange-100 border border-orange-200'
+                                                : 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200'
+                                                }`}
                                         >
-                                            {user.is_blocked ? 'Unblock' : 'Block'}
+                                            {user.is_blocked ? 'Grant Access (Unblock)' : 'Revoke Access (Block)'}
                                         </button>
-                                    ) : (
-                                        <div className="py-2 px-2 text-center text-[10px] font-black text-gray-400 uppercase tracking-wider bg-gray-100 rounded-xl">
-                                            Admin
-                                        </div>
                                     )}
                                 </div>
+                                <button
+                                    className="text-indigo-600 hover:text-indigo-800 text-[10px] font-black uppercase tracking-[0.1em] transition-all hover:gap-1 flex items-center gap-0.5"
+                                    onClick={() => {/* View Details */ }}
+                                >
+                                    Governance Center
+                                </button>
                             </div>
                         </div>
                     ))}

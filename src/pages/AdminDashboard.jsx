@@ -8,6 +8,7 @@ import {
     FaBullhorn
 } from 'react-icons/fa';
 
+
 // Hooks
 import {
     useAdminDashboardData, useAdminUsers, useAdminCompanies,
@@ -31,7 +32,7 @@ import { SupportVault } from '../components/Admin/SupportVault';
 import { AdminExams } from '../components/Admin/AdminExams';
 import { AdminReferrals } from '../components/Admin/AdminReferrals';
 import { AdminBroadcasts } from '../components/Admin/AdminBroadcasts';
-import { ManageSubscriptionModal } from '../components/Admin/ManageSubscriptionModal';
+
 import api from '../utils/api';
 
 const AdminDashboard = () => {
@@ -42,9 +43,7 @@ const AdminDashboard = () => {
     const [generalError, setGeneralError] = useState('');
     const [refreshing, setRefreshing] = useState(false);
 
-    // Subscription Modal State
-    const [subscriptionModalTarget, setSubscriptionModalTarget] = useState(null);
-    const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+
 
     // Initialize Hooks
     const dashboardData = useAdminDashboardData(currentUser);
@@ -111,33 +110,7 @@ const AdminDashboard = () => {
         }
     };
 
-    const handleOpenSubscriptionModal = (target) => {
-        setSubscriptionModalTarget(target);
-        setShowSubscriptionModal(true);
-    };
 
-    const handleSaveSubscription = async (targetId, payload, isCompany) => {
-        let res;
-        if (isCompany) {
-            res = await companiesManager.updateCompanySubscription(targetId, payload);
-        } else {
-            res = await usersManager.updateUserSubscription(targetId, payload);
-        }
-
-        if (res && res.success) {
-            setSuccessMessage(res.message || 'Subscription updated successfully');
-            setTimeout(() => setSuccessMessage(''), 4000);
-            await Promise.all([
-                dashboardData.loadDashboardData(),
-                subscriptionsManager.loadSubscriptions(),
-                usersManager.loadUsers(),
-                companiesManager.loadCompanies()
-            ]);
-            return true;
-        } else {
-            throw new Error(res?.error || 'Failed to update subscription');
-        }
-    };
 
     const navigationTabs = [
         { id: 'overview', label: 'Overview', icon: FaChartLine, iconColor: 'text-blue-500' },
@@ -303,7 +276,7 @@ const AdminDashboard = () => {
                         formatDate={formatDate}
                         getStatusBadge={getStatusBadge}
                         getRoleBadge={getRoleBadge}
-                        onManageSubscription={handleOpenSubscriptionModal}
+
                     />
                 )}
 
@@ -325,7 +298,7 @@ const AdminDashboard = () => {
                         companies={companiesManager.companies}
                         loading={subscriptionsManager.loading || usersManager.loading || companiesManager.loading}
                         onRefresh={handleRefresh}
-                        onEditSubscription={handleOpenSubscriptionModal}
+
                     />
                 )}
 
@@ -354,17 +327,7 @@ const AdminDashboard = () => {
                 )}
             </main>
 
-            {/* SuperAdmin Subscription & Plan Governance Modal */}
-            <ManageSubscriptionModal
-                show={showSubscriptionModal}
-                target={subscriptionModalTarget}
-                companies={companiesManager.companies}
-                onClose={() => {
-                    setShowSubscriptionModal(false);
-                    setSubscriptionModalTarget(null);
-                }}
-                onSave={handleSaveSubscription}
-            />
+
         </div>
     );
 };
