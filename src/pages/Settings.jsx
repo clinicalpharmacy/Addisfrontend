@@ -1,11 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { FaCog, FaUser, FaInfoCircle, FaCheckCircle } from 'react-icons/fa';
+import { FaCog, FaUser, FaLock, FaUserShield, FaSave, FaSpinner, FaCheckCircle, FaExclamationTriangle, FaBell, FaInfoCircle, FaUnlock, FaLifeRing } from 'react-icons/fa';
 import api from '../utils/api';
+import SupportActivationPortal from '../components/Security/SupportActivationPortal';
+import SupportAccess from '../components/Security/SupportAccess';
+import SecurityActivator from '../components/Security/SecurityActivator';
 
 const Settings = () => {
     const location = useLocation();
     const [activeTab, setActiveTab] = useState('profile');
+    const [passwords, setPasswords] = useState({
+        current: '',
+        new: '',
+        confirm: ''
+    });
+    const [loading, setLoading] = useState(false);
+    const [status, setStatus] = useState({ type: '', message: '' });
     const [user, setUser] = useState(null);
     const isAdmin =
         user?.role?.toLowerCase() === 'admin' ||
@@ -31,12 +41,44 @@ const Settings = () => {
             })
             .catch(err => console.error("Failed to load commissions:", err));
 
-        if (location.hash === '#promotions') {
-            setActiveTab('promotions');
+        if (location.hash === '#security') {
+            setActiveTab('security');
+        } else if (location.hash === '#access') {
+            setActiveTab('access');
+        } else if (location.hash === '#support') {
+            setActiveTab('support');
         } else {
             setActiveTab('profile');
         }
     }, [location]);
+
+    const handlePasswordChange = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setStatus({ type: '', message: '' });
+
+        if (passwords.new !== passwords.confirm) {
+            setStatus({ type: 'error', message: 'New passwords do not match' });
+            setLoading(false);
+            return;
+        }
+
+        try {
+            const result = await api.post('/auth/change-password', {
+                current_password: passwords.current,
+                new_password: passwords.new
+            });
+
+            if (result.success) {
+                setStatus({ type: 'success', message: 'Password changed successfully!' });
+                setPasswords({ current: '', new: '', confirm: '' });
+            }
+        } catch (error) {
+            setStatus({ type: 'error', message: error.error || error.message || 'Failed to change password' });
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleCopy = () => {
         const text = commissionData.promotion_code;
@@ -74,7 +116,7 @@ const Settings = () => {
                     <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
                         Account Settings
                     </h1>
-                    <p className="text-gray-500 font-medium">Personalize your experience and view your account profile</p>
+                    <p className="text-gray-500 font-medium">Personalize your experience and secure your account</p>
                 </div>
             </div>
 
@@ -86,6 +128,12 @@ const Settings = () => {
                         className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all duration-200 ${activeTab === 'profile' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-600 hover:bg-gray-100'}`}
                     >
                         <FaUser /> <span className="font-semibold">Profile Info</span>
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('security')}
+                        className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all duration-200 ${activeTab === 'security' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-600 hover:bg-gray-100'}`}
+                    >
+                        <FaUserShield /> <span className="font-semibold">Security</span>
                     </button>
                     {!isAdmin && (
                         <button
@@ -120,6 +168,10 @@ const Settings = () => {
                                         <p className="text-xs font-bold text-gray-400 uppercase mb-1">Status</p>
                                         <p className="font-semibold text-gray-800 capitalize">{user?.subscription_status || 'Active'}</p>
                                     </div>
+                                </div>
+                                <div className="mt-8 p-6 bg-blue-50 rounded-3xl flex items-start gap-4">
+                                    <FaInfoCircle className="text-blue-600 mt-1" />
+                                    <p className="text-sm text-blue-800">Your profile is currently protected by Zero-Knowledge encryption.</p>
                                 </div>
                             </div>
                         ) : activeTab === 'promotions' && !isAdmin ? (
@@ -170,6 +222,64 @@ const Settings = () => {
                                         </p>
                                     </div>
                                 </div>
+                            </div>
+                        ) : activeTab === 'security' ? (
+                            <div className="p-8">
+                                <h2 className="text-xl font-bold text-gray-900 mb-6">Security & Password</h2>
+
+                                {user && !user.public_key && (
+                                    <div className="mb-8 p-4 bg-orange-50 border-2 border-dashed border-orange-200 rounded-3xl animate-in zoom-in-95 duration-500">
+                                        <SecurityActivator onActivated={(updatedUser) => setUser(updatedUser)} />
+                                    </div>
+                                )}
+
+                                {status.message && (
+                                    <div className={`mb-6 p-4 rounded-xl flex items-center gap-2 ${status.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                                        {status.type === 'success' ? <FaCheckCircle /> : <FaExclamationTriangle />}
+                                        <p className="text-sm font-semibold">{status.message}</p>
+                                    </div>
+                                )}
+                                <form onSubmit={handlePasswordChange} className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">Current Password</label>
+                                        <input
+                                            type="password"
+                                            value={passwords.current}
+                                            onChange={(e) => setPasswords({ ...passwords, current: e.target.value })}
+                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">New Password (min. 6 characters)</label>
+                                        <input
+                                            type="password"
+                                            value={passwords.new}
+                                            onChange={(e) => setPasswords({ ...passwords, new: e.target.value })}
+                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
+                                            required
+                                            minLength="6"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">Confirm New Password (min. 6 characters)</label>
+                                        <input
+                                            type="password"
+                                            value={passwords.confirm}
+                                            onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}
+                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
+                                            required
+                                            minLength="6"
+                                        />
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg hover:bg-blue-700 transition disabled:bg-gray-400"
+                                    >
+                                        {loading ? <FaSpinner className="animate-spin mx-auto" /> : 'Update Password'}
+                                    </button>
+                                </form>
                             </div>
                         ) : null}
                     </div>
