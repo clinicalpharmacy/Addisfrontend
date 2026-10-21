@@ -104,12 +104,40 @@ const CompanyUsers = () => {
                 </div>
             )}
 
+            {/* User limit banner */}
+            {logic.userLimitInfo && (
+                <div
+                    className={`mb-6 p-4 rounded flex items-center gap-3 border-l-4 ${
+                        logic.userLimitInfo.allowed
+                            ? 'bg-blue-50 border-blue-500 text-blue-700'
+                            : 'bg-amber-50 border-amber-500 text-amber-700'
+                    }`}
+                >
+                    <FaBuilding />
+                    <div className="text-sm">
+                        <p className="font-medium">
+                            User limit:{' '}
+                            {logic.userLimitInfo.current} / {logic.userLimitInfo.limit}
+                            {logic.userLimitInfo.limit > 0 && (
+                                <span className="ml-2 text-xs opacity-75">
+                                    ({logic.userLimitInfo.remaining} remaining)
+                                </span>
+                            )}
+                        </p>
+                        {!logic.userLimitInfo.allowed && (
+                            <p className="mt-1">{logic.userLimitInfo.message}</p>
+                        )}
+                    </div>
+                </div>
+            )}
+
             {/* Company User Management */}
             <CompanyUserManagement
                 users={logic.companyUsers}
                 stats={logic.stats}
                 companyName={logic.companyInfo?.company_name}
-                onAddUser={() => logic.setShowAddUserModal(true)}
+                canAddUser={logic.userLimitInfo?.allowed}
+                onAddUser={logic.openAddUserModal}
                 onEditUser={logic.setEditingUser}
                 onDeleteUser={logic.handleDeleteUser}
                 onApproveUser={logic.handleApproveUser}
