@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { FaBuilding, FaUser, FaCheckCircle, FaTimesCircle, FaClock, FaSearch, FaRedo, FaCreditCard } from 'react-icons/fa';
 
-export const AdminSubscriptions = ({ subscriptions, loading, onRefresh, users, companies }) => {
+export const AdminSubscriptions = ({ subscriptions, loading, onRefresh, users, companies, onEditSubscription }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all'); // all, active, expired
 
@@ -273,7 +273,14 @@ export const AdminSubscriptions = ({ subscriptions, loading, onRefresh, users, c
                                             </span>
                                         </div>
 
-
+                                        <button
+                                            type="button"
+                                            onClick={() => onEditSubscription && onEditSubscription(item)}
+                                            className="w-full mt-3 py-2 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-sm flex items-center justify-center gap-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white border border-indigo-200 active:scale-95"
+                                        >
+                                            <FaCreditCard className="text-[10px]" />
+                                            <span>Edit Plan / Status</span>
+                                        </button>
                                     </div>
                                 </div>
 
