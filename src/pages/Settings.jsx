@@ -4,7 +4,6 @@ import { FaCog, FaUser, FaLock, FaUserShield, FaSave, FaSpinner, FaCheckCircle, 
 import api from '../utils/api';
 import SupportActivationPortal from '../components/Security/SupportActivationPortal';
 import SupportAccess from '../components/Security/SupportAccess';
-import SecurityActivator from '../components/Security/SecurityActivator';
 
 const Settings = () => {
     const location = useLocation();
@@ -225,13 +224,7 @@ const Settings = () => {
                             </div>
                         ) : activeTab === 'security' ? (
                             <div className="p-8">
-                                <h2 className="text-xl font-bold text-gray-900 mb-6">Security & Password</h2>
-
-                                {user && !user.public_key && (
-                                    <div className="mb-8 p-4 bg-orange-50 border-2 border-dashed border-orange-200 rounded-3xl animate-in zoom-in-95 duration-500">
-                                        <SecurityActivator onActivated={(updatedUser) => setUser(updatedUser)} />
-                                    </div>
-                                )}
+                                <h2 className="text-xl font-bold text-gray-900 mb-6">Password</h2>
 
                                 {status.message && (
                                     <div className={`mb-6 p-4 rounded-xl flex items-center gap-2 ${status.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
