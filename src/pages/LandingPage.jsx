@@ -49,11 +49,35 @@ const LandingPage = () => {
         }
         const hM = h / 100;
         const bmi = w / (hM * hM);
+
         let category = 'Obesity';
-        if (bmi < 18.5) category = 'Underweight';
-        else if (bmi < 25) category = 'Normal range';
-        else if (bmi < 30) category = 'Overweight';
-        setBmiInput((s) => ({ ...s, result: { value: bmi.toFixed(1), unit: 'kg/m²', category } }));
+        let message = null;
+
+        if (bmi < 18.5) {
+            category = 'Underweight';
+            const targetWeight = 18.5 * hM * hM; // weight needed to reach BMI 18.5
+            const gain = targetWeight - w;
+            if (gain > 0) {
+                message = `Gain at least ${gain.toFixed(1)} kg to reach a BMI of 18.5.`;
+            }
+        } else if (bmi < 25) {
+            category = 'Normal range';
+        } else if (bmi < 30) {
+            category = 'Overweight';
+        }
+
+        if (bmi >= 25) {
+            const targetWeight = 25 * hM * hM; // weight for BMI 25
+            const loss = w - targetWeight;
+            if (loss > 0) {
+                message = `Lose at least ${loss.toFixed(1)} kg to reach a BMI below 25.`;
+            }
+        }
+
+        setBmiInput((s) => ({
+            ...s,
+            result: { value: bmi.toFixed(1), unit: 'kg/m²', category, message }
+        }));
     };
 
     const calculateBSA = (e) => {
@@ -113,10 +137,10 @@ const LandingPage = () => {
 
                         {/* Desktop Navigation Links */}
                         <div className="hidden md:flex items-center gap-8">
-                            <a href="#features" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">Features</a>
-                            <a href="#calculators" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">Calculators</a>
                             <a href="#about" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">About Us</a>
                             <a href="#contact" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">Contact</a>
+                            <a href="#features" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">Features</a>
+                            <a href="#calculators" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">Calculators</a>
                             <Link to="/vacancies" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors flex items-center gap-1">Vacancies <FaArrowRight className="text-[10px]" /></Link>
                         </div>
 
@@ -164,10 +188,10 @@ const LandingPage = () => {
                 {isMobileMenuOpen && (
                     <div className="md:hidden bg-white border-b border-slate-200 shadow-lg absolute w-full">
                         <div className="px-4 pt-2 pb-6 space-y-2">
-                            <a href="#features" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">Features</a>
-                            <a href="#calculators" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">Calculators</a>
                             <a href="#about" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">About Us</a>
                             <a href="#contact" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">Contact</a>
+                            <a href="#features" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">Features</a>
+                            <a href="#calculators" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">Calculators</a>
                             <Link to="/vacancies" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">Vacancies</Link>
                             <div className="border-t border-slate-100 my-2 pt-2"></div>
                             {isLoggedIn ? (
@@ -321,7 +345,7 @@ const LandingPage = () => {
                                     Calculate BMI
                                 </button>
 
-                                <div className="mt-5 min-h-[72px] flex items-center justify-center">
+                                <div className="mt-5 min-h-[110px] flex items-center justify-center">
                                     {bmiInput.result && bmiInput.result.error && (
                                         <p className="text-sm text-red-500 text-center">{bmiInput.result.error}</p>
                                     )}
@@ -332,6 +356,11 @@ const LandingPage = () => {
                                                 <span className="text-base font-semibold text-slate-500 ml-1">{bmiInput.result.unit}</span>
                                             </p>
                                             <p className="text-sm font-semibold text-green-600 mt-1">{bmiInput.result.category}</p>
+                                            {bmiInput.result.message && (
+                                                <p className="text-xs font-medium text-slate-600 mt-2 leading-relaxed">
+                                                    {bmiInput.result.message}
+                                                </p>
+                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -377,7 +406,7 @@ const LandingPage = () => {
                                     Calculate BSA
                                 </button>
 
-                                <div className="mt-5 min-h-[72px] flex items-center justify-center">
+                                <div className="mt-5 min-h-[110px] flex items-center justify-center">
                                     {bsaInput.result && bsaInput.result.error && (
                                         <p className="text-sm text-red-500 text-center">{bsaInput.result.error}</p>
                                     )}
@@ -443,7 +472,7 @@ const LandingPage = () => {
                                     Calculate eGFR
                                 </button>
 
-                                <div className="mt-5 min-h-[72px] flex items-center justify-center">
+                                <div className="mt-5 min-h-[110px] flex items-center justify-center">
                                     {egfrInput.result && egfrInput.result.error && (
                                         <p className="text-sm text-red-500 text-center">{egfrInput.result.error}</p>
                                     )}
