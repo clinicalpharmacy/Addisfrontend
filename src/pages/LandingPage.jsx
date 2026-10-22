@@ -488,7 +488,7 @@ const LandingPage = () => {
                                     <FaWeightHanging className="text-green-500 text-2xl" />
                                 </div>
                                 <h3 className="text-xl font-extrabold text-slate-900 mb-1 tracking-tight">BMI Calculator</h3>
-                                <p className="text-sm text-slate-500 mb-5">Body Mass Index</p>
+                                <p className="text-sm text-slate-500 mb-5">የሰውነት ክብደት መረጃ ጠቋሚ</p>
 
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Weight (kg)</label>
                                 <input
