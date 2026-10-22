@@ -1,54 +1,123 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
-    FaCreditCard, FaTimes, FaCheck, FaBuilding, FaUser, FaClock,
-    FaCalendarAlt, FaShieldAlt, FaSpinner, FaExchangeAlt, FaCrown
+    FaTimes, FaCheck, FaBuilding, FaUser, FaClock,
+    FaShieldAlt, FaSpinner, FaExchangeAlt, FaCrown
 } from 'react-icons/fa';
+
+const DEFAULT_PLAN = 'individual_yearly';
+
+const PLAN_OPTIONS = [
+    {
+        group: 'Individual Plans',
+        options: [
+            { id: 'individual_monthly', label: 'Individual Monthly (345 ETB/mo)' },
+            { id: 'individual_yearly', label: 'Individual Yearly (3,450 ETB/yr)' },
+            { id: 'individual_trial', label: 'Individual Free Trial' }
+        ]
+    },
+    {
+        group: 'Pharmacy & Drug Store',
+        options: [
+            { id: 'pharmacy_monthly', label: 'Pharmacy Monthly (1,035 ETB/mo)' },
+            { id: 'pharmacy_yearly', label: 'Pharmacy Yearly (10,350 ETB/yr)' }
+        ]
+    },
+    {
+        group: 'Clinic & Specialty Center',
+        options: [
+            { id: 'clinic_monthly', label: 'Clinic Monthly (1,035 ETB/mo)' },
+            { id: 'clinic_yearly', label: 'Clinic Yearly (10,350 ETB/yr)' }
+        ]
+    },
+    {
+        group: 'Health Center',
+        options: [
+            { id: 'health_center_monthly', label: 'Health Center Monthly (1,035 ETB/mo)' },
+            { id: 'health_center_yearly', label: 'Health Center Yearly (10,350 ETB/yr)' }
+        ]
+    },
+    {
+        group: 'Hospital & Academic',
+        options: [
+            { id: 'hospital_monthly', label: 'Hospital Monthly (3,450 ETB/mo)' },
+            { id: 'hospital_yearly', label: 'Hospital Yearly (28,750 ETB/yr)' },
+            { id: 'pharmacy_school_monthly', label: 'Pharmacy School Monthly (3,450 ETB/mo)' },
+            { id: 'pharmacy_school_yearly', label: 'Pharmacy School Yearly (28,750 ETB/yr)' }
+        ]
+    },
+    {
+        group: 'Enterprise / Tiered',
+        options: [
+            { id: 'company_starter', label: 'Company Starter' },
+            { id: 'company_pro', label: 'Company Pro' },
+            { id: 'company_enterprise', label: 'Company Enterprise' }
+        ]
+    }
+];
+
+// Single source of truth for resolving initial values from a target
+const resolveTargetDefaults = (target) => {
+    const isCompany = !!(target?.type === 'Company' || target?.company_name || target?.is_company);
+    const status = target?.subscription_status || target?.status || 'active';
+    const plan = target?.subscription_plan || target?.plan_id || target?.plan || DEFAULT_PLAN;
+    const accountType = target?.account_type || (isCompany ? 'company' : 'individual');
+    const companyId = target?.company_id || '';
+    const rawDate = target?.subscription_end_date || target?.expiry || target?.end_date;
+    let endDate = '';
+    if (rawDate) {
+        try {
+            endDate = new Date(rawDate).toISOString().split('T')[0];
+        } catch {
+            endDate = '';
+        }
+    }
+    return { isCompany, status, plan, accountType, companyId, endDate };
+};
+
+// Single source of truth for plan → account-type derivation
+const deriveAccountTypeFromPlan = (planId, currentAccountType, isCompany) => {
+    if (isCompany) return { accountType: currentAccountType, clearCompany: false };
+    if (planId.startsWith('individual')) {
+        return { accountType: 'individual', clearCompany: true };
+    }
+    if (planId !== 'custom') {
+        return { accountType: 'company', clearCompany: false };
+    }
+    return { accountType: currentAccountType, clearCompany: false };
+};
 
 export const ManageSubscriptionModal = ({
     show,
-    target, // user or company or subscription object
+    target,
     companies = [],
     onClose,
     onSave
 }) => {
     if (!show || !target) return null;
 
-    const isCompany = target.type === 'Company' || target.company_name || target.is_company;
-    const initialStatus = target.subscription_status || target.status || 'active';
-    const initialPlan = target.subscription_plan || target.plan_id || target.plan || 'individual_yearly';
-    
-    // Parse initial date
-    const getInitialDate = () => {
-        const raw = target.subscription_end_date || target.expiry || target.end_date;
-        if (!raw) return '';
-        try {
-            return new Date(raw).toISOString().split('T')[0];
-        } catch (e) {
-            return '';
-        }
-    };
+    const defaults = useMemo(() => resolveTargetDefaults(target), [target]);
 
-    const [status, setStatus] = useState(initialStatus);
-    const [plan, setPlan] = useState(initialPlan);
+    const [status, setStatus] = useState(defaults.status);
+    const [plan, setPlan] = useState(defaults.plan);
     const [customPlan, setCustomPlan] = useState('');
-    const [endDate, setEndDate] = useState(getInitialDate());
-    const [accountType, setAccountType] = useState(target.account_type || (isCompany ? 'company' : 'individual'));
-    const [companyId, setCompanyId] = useState(target.company_id || '');
+    const [endDate, setEndDate] = useState(defaults.endDate);
+    const [accountType, setAccountType] = useState(defaults.accountType);
+    const [companyId, setCompanyId] = useState(defaults.companyId);
     const [applyToCompany, setApplyToCompany] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
+    // Re-sync local state only when the target actually changes (not on every render/mount)
     useEffect(() => {
-        setStatus(target.subscription_status || target.status || 'active');
-        const currentPlan = target.subscription_plan || target.plan_id || target.plan || 'individual_yearly';
-        setPlan(currentPlan);
-        setEndDate(getInitialDate());
-        setAccountType(target.account_type || (isCompany ? 'company' : 'individual'));
-        setCompanyId(target.company_id || '');
+        setStatus(defaults.status);
+        setPlan(defaults.plan);
+        setEndDate(defaults.endDate);
+        setAccountType(defaults.accountType);
+        setCompanyId(defaults.companyId);
+        setCustomPlan('');
         setError('');
-    }, [target]);
+    }, [defaults]);
 
-    // Quick Date Extension Helper
     const extendDuration = (months) => {
         const base = new Date();
         if (months >= 120) {
@@ -57,21 +126,18 @@ export const ManageSubscriptionModal = ({
             base.setMonth(base.getMonth() + months);
         }
         setEndDate(base.toISOString().split('T')[0]);
-        if (status !== 'active') {
-            setStatus('active');
-        }
+        if (status !== 'active') setStatus('active');
     };
 
     const handlePlanChange = (newPlan) => {
         setPlan(newPlan);
-        if (!isCompany) {
-            if (newPlan.startsWith('individual')) {
-                setAccountType('individual');
-                setCompanyId('');
-            } else if (newPlan !== 'custom') {
-                setAccountType('company');
-            }
-        }
+        const { accountType: nextType, clearCompany } = deriveAccountTypeFromPlan(
+            newPlan,
+            accountType,
+            defaults.isCompany
+        );
+        setAccountType(nextType);
+        if (clearCompany) setCompanyId('');
     };
 
     const handleFormSubmit = async (e) => {
@@ -95,7 +161,7 @@ export const ManageSubscriptionModal = ({
             apply_to_company: applyToCompany
         };
 
-        if (!isCompany) {
+        if (!defaults.isCompany) {
             if (accountType === 'company') {
                 if (!companyId) {
                     setError('Please select a Company / Facility to attach this Company Admin to, or switch Account Type to Individual.');
@@ -111,7 +177,6 @@ export const ManageSubscriptionModal = ({
                 }
                 payload.role = 'user';
             } else {
-                // Individual
                 payload.account_type = 'individual';
                 payload.company_id = null;
                 payload.role = 'user';
@@ -119,10 +184,8 @@ export const ManageSubscriptionModal = ({
         }
 
         try {
-            const success = await onSave(target.id || target.entityId, payload, isCompany);
-            if (success) {
-                onClose();
-            }
+            const success = await onSave(target.id || target.entityId, payload, defaults.isCompany);
+            if (success) onClose();
         } catch (err) {
             setError(err.message || 'Failed to update subscription');
         } finally {
@@ -130,62 +193,12 @@ export const ManageSubscriptionModal = ({
         }
     };
 
-    const PLAN_OPTIONS = [
-        {
-            group: 'Individual Plans',
-            options: [
-                { id: 'individual_monthly', label: 'Individual Monthly (345 ETB/mo)' },
-                { id: 'individual_yearly', label: 'Individual Yearly (3,450 ETB/yr)' },
-                { id: 'individual_trial', label: 'Individual Free Trial' }
-            ]
-        },
-        {
-            group: 'Pharmacy & Drug Store',
-            options: [
-                { id: 'pharmacy_monthly', label: 'Pharmacy Monthly (1,035 ETB/mo)' },
-                { id: 'pharmacy_yearly', label: 'Pharmacy Yearly (10,350 ETB/yr)' }
-            ]
-        },
-        {
-            group: 'Clinic & Specialty Center',
-            options: [
-                { id: 'clinic_monthly', label: 'Clinic Monthly (1,035 ETB/mo)' },
-                { id: 'clinic_yearly', label: 'Clinic Yearly (10,350 ETB/yr)' }
-            ]
-        },
-        {
-            group: 'Health Center',
-            options: [
-                { id: 'health_center_monthly', label: 'Health Center Monthly (1,035 ETB/mo)' },
-                { id: 'health_center_yearly', label: 'Health Center Yearly (10,350 ETB/yr)' }
-            ]
-        },
-        {
-            group: 'Hospital & Academic',
-            options: [
-                { id: 'hospital_monthly', label: 'Hospital Monthly (3,450 ETB/mo)' },
-                { id: 'hospital_yearly', label: 'Hospital Yearly (28,750 ETB/yr)' },
-                { id: 'pharmacy_school_monthly', label: 'Pharmacy School Monthly (3,450 ETB/mo)' },
-                { id: 'pharmacy_school_yearly', label: 'Pharmacy School Yearly (28,750 ETB/yr)' }
-            ]
-        },
-        {
-            group: 'Enterprise / Tiered',
-            options: [
-                { id: 'company_starter', label: 'Company Starter' },
-                { id: 'company_pro', label: 'Company Pro' },
-                { id: 'company_enterprise', label: 'Company Enterprise' }
-            ]
-        }
-    ];
-
     const targetName = target.full_name || target.name || target.company_name || 'Account';
     const targetEmail = target.email || target.admin_email || 'No email specified';
 
     return (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-fadeIn">
             <div className="bg-white rounded-[28px] shadow-2xl max-w-xl w-full overflow-hidden border border-gray-100 flex flex-col max-h-[92vh]">
-                
                 {/* Header */}
                 <div className="bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 p-5 sm:p-6 text-white relative">
                     <button
@@ -222,7 +235,7 @@ export const ManageSubscriptionModal = ({
                     <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-between">
                         <div className="flex items-center gap-3 min-w-0">
                             <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-black text-sm shrink-0">
-                                {isCompany ? <FaBuilding /> : <FaUser />}
+                                {defaults.isCompany ? <FaBuilding /> : <FaUser />}
                             </div>
                             <div className="min-w-0">
                                 <h4 className="font-black text-gray-900 text-sm truncate">{targetName}</h4>
@@ -309,7 +322,6 @@ export const ManageSubscriptionModal = ({
                             <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Quick Extensions</span>
                         </div>
 
-                        {/* Fast Extension Pills */}
                         <div className="flex flex-wrap gap-1.5 mb-2.5">
                             {[
                                 { label: '+1 Mo', months: 1 },
@@ -341,7 +353,7 @@ export const ManageSubscriptionModal = ({
                     </div>
 
                     {/* Account Type & Company Migration (Only if targeting a user) */}
-                    {!isCompany && (
+                    {!defaults.isCompany && (
                         <div className="pt-3 border-t border-gray-100 space-y-3">
                             <div className="flex items-center gap-2">
                                 <FaExchangeAlt className="text-indigo-600 text-xs" />
