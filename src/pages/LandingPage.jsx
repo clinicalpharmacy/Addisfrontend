@@ -866,10 +866,6 @@ const LandingPage = () => {
                 <div id="clients" className="bg-white py-20 border-t border-slate-200">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="text-center mb-12">
-                            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-green-50 text-green-700 rounded-full text-sm font-semibold mb-4 border border-green-100">
-                                <FaNotesMedical />
-                                Medication Safety & Adherence
-                            </div>
                             <h2 className="text-3xl font-bold text-slate-900 tracking-tight">For Clients</h2>
                             <p className="mt-4 text-slate-600 max-w-2xl mx-auto">
                                 መድኃኒትዎን በአግባቡ እና በአስተማማኝ ሁኔታ ለመጠቀም የሚረዱ አስፈላጊ ምክሮች።
