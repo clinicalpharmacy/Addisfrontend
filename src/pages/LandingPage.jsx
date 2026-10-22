@@ -23,6 +23,18 @@ const DOSE_UNITS = {
     units: { base: 'units', factor: 1 }
 };
 
+// ---- Client counselling messages (Amharic) ----
+const CLIENT_TIPS = [
+    'መድኃኒትዎን የጤና ባለሙያ ባዘዘው መጠንና ጊዜ ይውሰዱ።',
+    'ምንም እንኳን የተሻለወት ቢመስልወትም መድኃኒትዎን አያቋርጡ፣ በታዘዘው መሰረት ይውሰዱ።',
+    'መድኃኒትዎ እንዴት መወሰድ እንዳለበት ለማወቅ የፋርማሲ ባለሙያን ያማክሩ።',
+    'መድኃኒትዎን ለሌላ ሰው አያጋሩ።',
+    'መድኃኒቱን መቼ መውሰድ እንዳለብዎ እና ምን ያህል ጊዜ እንደሚወስድ ይረዱ።',
+    'መድኃኒቱን ከወሰዱ በኋላ ያልተለመደ ምልክት ካጋጠምዎ ለሐኪምዎ ወይም ለፋርማሲስትዎ ያሳውቁ።',
+    'መድኃኒትን ልጆች የማይደርሱበት ቦታ ያስቀምጡ።',
+    'የሚወስዱትን ሁሉንም መድኃኒቶች ዝርዝር (ያለሐኪም ትዕዛዝ የሚሰጡትንም) ለሐኪምዎ ያሳውቁ።'
+];
+
 const LandingPage = () => {
     const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -32,8 +44,6 @@ const LandingPage = () => {
     const [bsaInput, setBsaInput] = useState({ weight: '', height: '', result: null });
     const [egfrInput, setEgfrInput] = useState({ age: '', sex: 'male', scr: '', result: null });
     const [vialInput, setVialInput] = useState({
-        // Strength: "strengthValue" of "strengthUnit" per "strengthPerMl" mL
-        //   (or per whole vial when strengthBasis === 'perVial')
         strengthValue: '',
         strengthUnit: 'mg',
         strengthBasis: 'perMl',
@@ -474,148 +484,175 @@ const LandingPage = () => {
                             <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Calculators to support everyday practice</h2>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            {/* BMI */}
-                            <form onSubmit={calculateBMI} className="p-8 bg-white rounded-3xl border border-slate-200 hover:border-green-300 hover:shadow-xl transition-all duration-300 flex flex-col">
-                                <h3 className="text-xl font-extrabold text-slate-900 mb-1 tracking-tight">BMI Calculator</h3>
-                                <p className="text-sm text-slate-500 mb-5">የሰውነት ክብደት መረጃ ጠቋሚ</p>
+                        <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+                            {/* ---- Calculator cards ---- */}
+                            <div className="xl:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-8">
+                                {/* BMI */}
+                                <form onSubmit={calculateBMI} className="p-8 bg-white rounded-3xl border border-slate-200 hover:border-green-300 hover:shadow-xl transition-all duration-300 flex flex-col">
+                                    <h3 className="text-xl font-extrabold text-slate-900 mb-1 tracking-tight">BMI Calculator</h3>
+                                    <p className="text-sm text-slate-500 mb-5">የሰውነት ክብደት መረጃ ጠቋሚ</p>
 
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Weight (kg)</label>
-                                <input
-                                    type="number" step="0.1" min="0"
-                                    value={bmiInput.weight}
-                                    onChange={(e) => setBmiInput({ ...bmiInput, weight: e.target.value })}
-                                    className="w-full mb-4 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                                    placeholder="e.g. 70"
-                                />
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Weight (kg)</label>
+                                    <input
+                                        type="number" step="0.1" min="0"
+                                        value={bmiInput.weight}
+                                        onChange={(e) => setBmiInput({ ...bmiInput, weight: e.target.value })}
+                                        className="w-full mb-4 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                        placeholder="e.g. 70"
+                                    />
 
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Height (cm)</label>
-                                <input
-                                    type="number" step="0.1" min="0"
-                                    value={bmiInput.height}
-                                    onChange={(e) => setBmiInput({ ...bmiInput, height: e.target.value })}
-                                    className="w-full mb-5 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                                    placeholder="e.g. 170"
-                                />
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Height (cm)</label>
+                                    <input
+                                        type="number" step="0.1" min="0"
+                                        value={bmiInput.height}
+                                        onChange={(e) => setBmiInput({ ...bmiInput, height: e.target.value })}
+                                        className="w-full mb-5 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                        placeholder="e.g. 170"
+                                    />
 
-                                <button type="submit" className="w-full py-3 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all">
-                                    Calculate BMI
-                                </button>
+                                    <button type="submit" className="w-full py-3 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all">
+                                        Calculate BMI
+                                    </button>
 
-                                <div className="mt-5 min-h-[110px] flex items-center justify-center">
-                                    {bmiInput.result && bmiInput.result.error && (
-                                        <p className="text-sm text-red-500 text-center">{bmiInput.result.error}</p>
-                                    )}
-                                    {bmiInput.result && bmiInput.result.value && (
-                                        <div className="text-center">
-                                            <p className="text-3xl font-black text-slate-900">
-                                                {bmiInput.result.value}
-                                                <span className="text-base font-semibold text-slate-500 ml-1">{bmiInput.result.unit}</span>
-                                            </p>
-                                            <p className="text-sm font-semibold text-green-600 mt-1">{bmiInput.result.category}</p>
-                                            {bmiInput.result.message && (
-                                                <p className="text-xs font-medium text-slate-600 mt-2 leading-relaxed">{bmiInput.result.message}</p>
-                                            )}
+                                    <div className="mt-5 min-h-[110px] flex items-center justify-center">
+                                        {bmiInput.result && bmiInput.result.error && (
+                                            <p className="text-sm text-red-500 text-center">{bmiInput.result.error}</p>
+                                        )}
+                                        {bmiInput.result && bmiInput.result.value && (
+                                            <div className="text-center">
+                                                <p className="text-3xl font-black text-slate-900">
+                                                    {bmiInput.result.value}
+                                                    <span className="text-base font-semibold text-slate-500 ml-1">{bmiInput.result.unit}</span>
+                                                </p>
+                                                <p className="text-sm font-semibold text-green-600 mt-1">{bmiInput.result.category}</p>
+                                                {bmiInput.result.message && (
+                                                    <p className="text-xs font-medium text-slate-600 mt-2 leading-relaxed">{bmiInput.result.message}</p>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                </form>
+
+                                {/* BSA */}
+                                <form onSubmit={calculateBSA} className="p-8 bg-white rounded-3xl border border-slate-200 hover:border-green-300 hover:shadow-xl transition-all duration-300 flex flex-col">
+                                    <h3 className="text-xl font-extrabold text-slate-900 mb-1 tracking-tight">BSA Calculator</h3>
+                                    <p className="text-sm text-slate-500 mb-5">Body Surface Area — Du Bois</p>
+
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Weight (kg)</label>
+                                    <input
+                                        type="number" step="0.1" min="0"
+                                        value={bsaInput.weight}
+                                        onChange={(e) => setBsaInput({ ...bsaInput, weight: e.target.value })}
+                                        className="w-full mb-4 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                        placeholder="e.g. 70"
+                                    />
+
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Height (cm)</label>
+                                    <input
+                                        type="number" step="0.1" min="0"
+                                        value={bsaInput.height}
+                                        onChange={(e) => setBsaInput({ ...bsaInput, height: e.target.value })}
+                                        className="w-full mb-5 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                        placeholder="e.g. 170"
+                                    />
+
+                                    <button type="submit" className="w-full py-3 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all">
+                                        Calculate BSA
+                                    </button>
+
+                                    <div className="mt-5 min-h-[110px] flex items-center justify-center">
+                                        {bsaInput.result && bsaInput.result.error && (
+                                            <p className="text-sm text-red-500 text-center">{bsaInput.result.error}</p>
+                                        )}
+                                        {bsaInput.result && bsaInput.result.value && (
+                                            <div className="text-center">
+                                                <p className="text-3xl font-black text-slate-900">
+                                                    {bsaInput.result.value}
+                                                    <span className="text-base font-semibold text-slate-500 ml-1">{bsaInput.result.unit}</span>
+                                                </p>
+                                                <p className="text-sm font-semibold text-green-600 mt-1">{bsaInput.result.category}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </form>
+
+                                {/* eGFR */}
+                                <form onSubmit={calculateEGFR} className="p-8 bg-white rounded-3xl border border-slate-200 hover:border-green-300 hover:shadow-xl transition-all duration-300 flex flex-col">
+                                    <h3 className="text-xl font-extrabold text-slate-900 mb-1 tracking-tight">eGFR Calculator</h3>
+                                    <p className="text-sm text-slate-500 mb-5">CKD-EPI 2021 (race-free)</p>
+
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Age (years)</label>
+                                    <input
+                                        type="number" step="1" min="1"
+                                        value={egfrInput.age}
+                                        onChange={(e) => setEgfrInput({ ...egfrInput, age: e.target.value })}
+                                        className="w-full mb-4 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                        placeholder="e.g. 45"
+                                    />
+
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Sex</label>
+                                    <select
+                                        value={egfrInput.sex}
+                                        onChange={(e) => setEgfrInput({ ...egfrInput, sex: e.target.value })}
+                                        className="w-full mb-4 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white"
+                                    >
+                                        <option value="male">Male</option>
+                                        <option value="female">Female</option>
+                                    </select>
+
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Serum creatinine (mg/dL)</label>
+                                    <input
+                                        type="number" step="0.01" min="0"
+                                        value={egfrInput.scr}
+                                        onChange={(e) => setEgfrInput({ ...egfrInput, scr: e.target.value })}
+                                        className="w-full mb-5 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                        placeholder="e.g. 0.9"
+                                    />
+
+                                    <button type="submit" className="w-full py-3 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all">
+                                        Calculate eGFR
+                                    </button>
+
+                                    <div className="mt-5 min-h-[110px] flex items-center justify-center">
+                                        {egfrInput.result && egfrInput.result.error && (
+                                            <p className="text-sm text-red-500 text-center">{egfrInput.result.error}</p>
+                                        )}
+                                        {egfrInput.result && egfrInput.result.value && (
+                                            <div className="text-center">
+                                                <p className="text-3xl font-black text-slate-900">
+                                                    {egfrInput.result.value}
+                                                    <span className="text-sm font-semibold text-slate-500 ml-1">{egfrInput.result.unit}</span>
+                                                </p>
+                                                <p className="text-sm font-semibold text-green-600 mt-1">{egfrInput.result.category}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </form>
+                            </div>
+
+                            {/* ---- For Clients sidebar ---- */}
+                            <aside className="xl:col-span-1">
+                                <div className="h-full p-8 bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col">
+                                    <div className="flex items-start gap-3 mb-5">
+                                        <div className="w-12 h-12 bg-green-50 border border-green-100 rounded-2xl flex items-center justify-center shrink-0">
+                                            <FaNotesMedical className="text-green-500 text-xl" />
                                         </div>
-                                    )}
-                                </div>
-                            </form>
-
-                            {/* BSA */}
-                            <form onSubmit={calculateBSA} className="p-8 bg-white rounded-3xl border border-slate-200 hover:border-green-300 hover:shadow-xl transition-all duration-300 flex flex-col">
-                                <h3 className="text-xl font-extrabold text-slate-900 mb-1 tracking-tight">BSA Calculator</h3>
-                                <p className="text-sm text-slate-500 mb-5">Body Surface Area — Du Bois</p>
-
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Weight (kg)</label>
-                                <input
-                                    type="number" step="0.1" min="0"
-                                    value={bsaInput.weight}
-                                    onChange={(e) => setBsaInput({ ...bsaInput, weight: e.target.value })}
-                                    className="w-full mb-4 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                                    placeholder="e.g. 70"
-                                />
-
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Height (cm)</label>
-                                <input
-                                    type="number" step="0.1" min="0"
-                                    value={bsaInput.height}
-                                    onChange={(e) => setBsaInput({ ...bsaInput, height: e.target.value })}
-                                    className="w-full mb-5 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                                    placeholder="e.g. 170"
-                                />
-
-                                <button type="submit" className="w-full py-3 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all">
-                                    Calculate BSA
-                                </button>
-
-                                <div className="mt-5 min-h-[110px] flex items-center justify-center">
-                                    {bsaInput.result && bsaInput.result.error && (
-                                        <p className="text-sm text-red-500 text-center">{bsaInput.result.error}</p>
-                                    )}
-                                    {bsaInput.result && bsaInput.result.value && (
-                                        <div className="text-center">
-                                            <p className="text-3xl font-black text-slate-900">
-                                                {bsaInput.result.value}
-                                                <span className="text-base font-semibold text-slate-500 ml-1">{bsaInput.result.unit}</span>
-                                            </p>
-                                            <p className="text-sm font-semibold text-green-600 mt-1">{bsaInput.result.category}</p>
+                                        <div>
+                                            <h3 className="text-xl font-extrabold text-slate-900 tracking-tight leading-tight">For Clients</h3>
+                                            <p className="text-xs text-slate-500 mt-1">መድኃኒትን በአግባቡ ለመጠቀም የሚረዱ ምክሮች</p>
                                         </div>
-                                    )}
+                                    </div>
+
+                                    <ul className="space-y-3">
+                                        {CLIENT_TIPS.map((tip, idx) => (
+                                            <li key={idx} className="flex items-start gap-2.5">
+                                                <FaCheckCircle className="text-green-500 mt-1 shrink-0 text-[13px]" />
+                                                <span className="text-sm text-slate-700 leading-relaxed">{tip}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
                                 </div>
-                            </form>
-
-                            {/* eGFR */}
-                            <form onSubmit={calculateEGFR} className="p-8 bg-white rounded-3xl border border-slate-200 hover:border-green-300 hover:shadow-xl transition-all duration-300 flex flex-col">
-                                <h3 className="text-xl font-extrabold text-slate-900 mb-1 tracking-tight">eGFR Calculator</h3>
-                                <p className="text-sm text-slate-500 mb-5">CKD-EPI 2021 (race-free)</p>
-
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Age (years)</label>
-                                <input
-                                    type="number" step="1" min="1"
-                                    value={egfrInput.age}
-                                    onChange={(e) => setEgfrInput({ ...egfrInput, age: e.target.value })}
-                                    className="w-full mb-4 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                                    placeholder="e.g. 45"
-                                />
-
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Sex</label>
-                                <select
-                                    value={egfrInput.sex}
-                                    onChange={(e) => setEgfrInput({ ...egfrInput, sex: e.target.value })}
-                                    className="w-full mb-4 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white"
-                                >
-                                    <option value="male">Male</option>
-                                    <option value="female">Female</option>
-                                </select>
-
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Serum creatinine (mg/dL)</label>
-                                <input
-                                    type="number" step="0.01" min="0"
-                                    value={egfrInput.scr}
-                                    onChange={(e) => setEgfrInput({ ...egfrInput, scr: e.target.value })}
-                                    className="w-full mb-5 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                                    placeholder="e.g. 0.9"
-                                />
-
-                                <button type="submit" className="w-full py-3 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all">
-                                    Calculate eGFR
-                                </button>
-
-                                <div className="mt-5 min-h-[110px] flex items-center justify-center">
-                                    {egfrInput.result && egfrInput.result.error && (
-                                        <p className="text-sm text-red-500 text-center">{egfrInput.result.error}</p>
-                                    )}
-                                    {egfrInput.result && egfrInput.result.value && (
-                                        <div className="text-center">
-                                            <p className="text-3xl font-black text-slate-900">
-                                                {egfrInput.result.value}
-                                                <span className="text-sm font-semibold text-slate-500 ml-1">{egfrInput.result.unit}</span>
-                                            </p>
-                                            <p className="text-sm font-semibold text-green-600 mt-1">{egfrInput.result.category}</p>
-                                        </div>
-                                    )}
-                                </div>
-                            </form>
+                            </aside>
                         </div>
 
                         {/* ===== Vial / Bottle Calculator ===== */}
