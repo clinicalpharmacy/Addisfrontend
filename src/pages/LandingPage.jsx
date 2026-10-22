@@ -3,12 +3,18 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
     FaUserMd, FaHeartbeat, FaShieldAlt, FaPills, FaClipboardList,
     FaArrowRight, FaCheckCircle, FaBookMedical, FaBookOpen,
-    FaBars, FaBook, FaCapsules, FaNotesMedical, FaTimes
+    FaBars, FaBook, FaCapsules, FaNotesMedical, FaTimes,
+    FaCalculator, FaWeightHanging, FaRulerVertical
 } from 'react-icons/fa';
 
 const LandingPage = () => {
     const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    // ---- Calculator state ----
+    const [bmiInput, setBmiInput] = useState({ weight: '', height: '', result: null });
+    const [bsaInput, setBsaInput] = useState({ weight: '', height: '', result: null });
+    const [egfrInput, setEgfrInput] = useState({ age: '', sex: 'male', scr: '', result: null });
 
     const token = localStorage.getItem('token');
     const user = (() => {
@@ -27,6 +33,66 @@ const LandingPage = () => {
         return '/home';
     };
 
+    // ---- Calculator handlers ----
+    const num = (v) => {
+        const n = parseFloat(v);
+        return Number.isFinite(n) && n > 0 ? n : null;
+    };
+
+    const calculateBMI = (e) => {
+        e.preventDefault();
+        const w = num(bmiInput.weight);
+        const h = num(bmiInput.height);
+        if (!w || !h) {
+            setBmiInput((s) => ({ ...s, result: { error: 'Enter valid weight and height.' } }));
+            return;
+        }
+        const hM = h / 100;
+        const bmi = w / (hM * hM);
+        let category = 'Obesity';
+        if (bmi < 18.5) category = 'Underweight';
+        else if (bmi < 25) category = 'Normal range';
+        else if (bmi < 30) category = 'Overweight';
+        setBmiInput((s) => ({ ...s, result: { value: bmi.toFixed(1), unit: 'kg/m²', category } }));
+    };
+
+    const calculateBSA = (e) => {
+        e.preventDefault();
+        const w = num(bsaInput.weight);
+        const h = num(bsaInput.height);
+        if (!w || !h) {
+            setBsaInput((s) => ({ ...s, result: { error: 'Enter valid weight and height.' } }));
+            return;
+        }
+        // Du Bois: 0.007184 × height(cm)^0.725 × weight(kg)^0.425
+        const bsa = 0.007184 * Math.pow(h, 0.725) * Math.pow(w, 0.425);
+        setBsaInput((s) => ({ ...s, result: { value: bsa.toFixed(2), unit: 'm²', category: 'Du Bois formula' } }));
+    };
+
+    const calculateEGFR = (e) => {
+        e.preventDefault();
+        const age = num(egfrInput.age);
+        const scr = num(egfrInput.scr);
+        if (!age || !scr) {
+            setEgfrInput((s) => ({ ...s, result: { error: 'Enter valid age and serum creatinine.' } }));
+            return;
+        }
+        const female = egfrInput.sex === 'female';
+        const k = female ? 0.7 : 0.9;
+        const alpha = female ? -0.241 : -0.302;
+        const r = scr / k;
+        let egfr =
+            142 *
+            Math.pow(Math.min(r, 1), alpha) *
+            Math.pow(Math.max(r, 1), -1.2) *
+            Math.pow(0.9938, age);
+        if (female) egfr *= 1.012;
+        setEgfrInput((s) => ({
+            ...s,
+            result: { value: egfr.toFixed(0), unit: 'mL/min/1.73 m²', category: 'CKD-EPI 2021 (race-free)' }
+        }));
+    };
+
     return (
         <div className="min-h-screen bg-white font-sans text-slate-900">
             {/* Navbar */}
@@ -34,11 +100,11 @@ const LandingPage = () => {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-20">
                         {/* Logo */}
-                        <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.scrollTo(0,0)}>
+                        <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.scrollTo(0, 0)}>
                             <div className="flex items-center justify-center w-8 h-8 rounded-lg shadow-sm overflow-hidden">
-                                <img 
-                                    src="/logo.png" 
-                                    alt="Addis Med Logo" 
+                                <img
+                                    src="/logo.png"
+                                    alt="Addis Med Logo"
                                     className="w-full h-full object-contain"
                                 />
                             </div>
@@ -48,6 +114,7 @@ const LandingPage = () => {
                         {/* Desktop Navigation Links */}
                         <div className="hidden md:flex items-center gap-8">
                             <a href="#features" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">Features</a>
+                            <a href="#calculators" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">Calculators</a>
                             <a href="#about" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">About Us</a>
                             <a href="#contact" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">Contact</a>
                             <Link to="/vacancies" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors flex items-center gap-1">Vacancies <FaArrowRight className="text-[10px]" /></Link>
@@ -98,6 +165,7 @@ const LandingPage = () => {
                     <div className="md:hidden bg-white border-b border-slate-200 shadow-lg absolute w-full">
                         <div className="px-4 pt-2 pb-6 space-y-2">
                             <a href="#features" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">Features</a>
+                            <a href="#calculators" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">Calculators</a>
                             <a href="#about" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">About Us</a>
                             <a href="#contact" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">Contact</a>
                             <Link to="/vacancies" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">Vacancies</Link>
@@ -135,7 +203,7 @@ const LandingPage = () => {
                             Your Partner in <span className="text-green-500">Digital Health</span>
                         </h1>
                         <p className="mt-6 text-base md:text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed mb-10 font-medium">
-                            Addis Med is a digital health platform providing information and educational content in healthcare, with a primary focus on medicines and their safe and effective use. It is designed to support healthcare professionals, students, organizations, and the public with accessible, evidence-based health and medication information. 
+                            Addis Med is a digital health platform providing information and educational content in healthcare, with a primary focus on medicines and their safe and effective use. It is designed to support healthcare professionals, students, organizations, and the public with accessible, evidence-based health and medication information.
                         </p>
                         <div className="flex flex-col sm:flex-row justify-center gap-4">
                             <button
@@ -162,7 +230,7 @@ const LandingPage = () => {
                             <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Digital Health Tools</h2>
                             <p className="mt-4 text-slate-600 max-w-2xl mx-auto">Designed to enhance patient safety and optimize medicines use.</p>
                         </div>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                             {[
                                 {
@@ -195,6 +263,206 @@ const LandingPage = () => {
                                 </div>
                             ))}
                         </div>
+                    </div>
+                </div>
+
+                {/* Clinical Calculators */}
+                <div id="calculators" className="bg-slate-50 py-20 border-t border-slate-200">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="text-center mb-14">
+                            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white text-green-700 rounded-full text-sm font-semibold mb-4 border border-green-200 shadow-sm">
+                                <FaCalculator />
+                                Free Clinical Calculators
+                            </div>
+                            <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Quick Bedside & Pharmacy Tools</h2>
+                            <p className="mt-4 text-slate-600 max-w-2xl mx-auto">
+                                Free, no-login calculators to support everyday clinical decisions.
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            {/* BMI */}
+                            <form
+                                onSubmit={calculateBMI}
+                                className="p-8 bg-white rounded-3xl border border-slate-200 hover:border-green-300 hover:shadow-xl transition-all duration-300 flex flex-col"
+                            >
+                                <div className="w-14 h-14 bg-green-50 border border-green-100 rounded-2xl flex items-center justify-center mb-5">
+                                    <FaWeightHanging className="text-green-500 text-2xl" />
+                                </div>
+                                <h3 className="text-xl font-extrabold text-slate-900 mb-1 tracking-tight">BMI Calculator</h3>
+                                <p className="text-sm text-slate-500 mb-5">Body Mass Index</p>
+
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Weight (kg)</label>
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    min="0"
+                                    value={bmiInput.weight}
+                                    onChange={(e) => setBmiInput({ ...bmiInput, weight: e.target.value })}
+                                    className="w-full mb-4 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                    placeholder="e.g. 70"
+                                />
+
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Height (cm)</label>
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    min="0"
+                                    value={bmiInput.height}
+                                    onChange={(e) => setBmiInput({ ...bmiInput, height: e.target.value })}
+                                    className="w-full mb-5 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                    placeholder="e.g. 170"
+                                />
+
+                                <button
+                                    type="submit"
+                                    className="w-full py-3 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all"
+                                >
+                                    Calculate BMI
+                                </button>
+
+                                <div className="mt-5 min-h-[72px] flex items-center justify-center">
+                                    {bmiInput.result && bmiInput.result.error && (
+                                        <p className="text-sm text-red-500 text-center">{bmiInput.result.error}</p>
+                                    )}
+                                    {bmiInput.result && bmiInput.result.value && (
+                                        <div className="text-center">
+                                            <p className="text-3xl font-black text-slate-900">
+                                                {bmiInput.result.value}
+                                                <span className="text-base font-semibold text-slate-500 ml-1">{bmiInput.result.unit}</span>
+                                            </p>
+                                            <p className="text-sm font-semibold text-green-600 mt-1">{bmiInput.result.category}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </form>
+
+                            {/* BSA Du Bois */}
+                            <form
+                                onSubmit={calculateBSA}
+                                className="p-8 bg-white rounded-3xl border border-slate-200 hover:border-green-300 hover:shadow-xl transition-all duration-300 flex flex-col"
+                            >
+                                <div className="w-14 h-14 bg-green-50 border border-green-100 rounded-2xl flex items-center justify-center mb-5">
+                                    <FaRulerVertical className="text-green-500 text-2xl" />
+                                </div>
+                                <h3 className="text-xl font-extrabold text-slate-900 mb-1 tracking-tight">BSA Calculator</h3>
+                                <p className="text-sm text-slate-500 mb-5">Body Surface Area — Du Bois</p>
+
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Weight (kg)</label>
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    min="0"
+                                    value={bsaInput.weight}
+                                    onChange={(e) => setBsaInput({ ...bsaInput, weight: e.target.value })}
+                                    className="w-full mb-4 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                    placeholder="e.g. 70"
+                                />
+
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Height (cm)</label>
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    min="0"
+                                    value={bsaInput.height}
+                                    onChange={(e) => setBsaInput({ ...bsaInput, height: e.target.value })}
+                                    className="w-full mb-5 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                    placeholder="e.g. 170"
+                                />
+
+                                <button
+                                    type="submit"
+                                    className="w-full py-3 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all"
+                                >
+                                    Calculate BSA
+                                </button>
+
+                                <div className="mt-5 min-h-[72px] flex items-center justify-center">
+                                    {bsaInput.result && bsaInput.result.error && (
+                                        <p className="text-sm text-red-500 text-center">{bsaInput.result.error}</p>
+                                    )}
+                                    {bsaInput.result && bsaInput.result.value && (
+                                        <div className="text-center">
+                                            <p className="text-3xl font-black text-slate-900">
+                                                {bsaInput.result.value}
+                                                <span className="text-base font-semibold text-slate-500 ml-1">{bsaInput.result.unit}</span>
+                                            </p>
+                                            <p className="text-sm font-semibold text-green-600 mt-1">{bsaInput.result.category}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </form>
+
+                            {/* eGFR CKD-EPI 2021 */}
+                            <form
+                                onSubmit={calculateEGFR}
+                                className="p-8 bg-white rounded-3xl border border-slate-200 hover:border-green-300 hover:shadow-xl transition-all duration-300 flex flex-col"
+                            >
+                                <div className="w-14 h-14 bg-green-50 border border-green-100 rounded-2xl flex items-center justify-center mb-5">
+                                    <FaHeartbeat className="text-green-500 text-2xl" />
+                                </div>
+                                <h3 className="text-xl font-extrabold text-slate-900 mb-1 tracking-tight">eGFR Calculator</h3>
+                                <p className="text-sm text-slate-500 mb-5">CKD-EPI 2021 (race-free)</p>
+
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Age (years)</label>
+                                <input
+                                    type="number"
+                                    step="1"
+                                    min="1"
+                                    value={egfrInput.age}
+                                    onChange={(e) => setEgfrInput({ ...egfrInput, age: e.target.value })}
+                                    className="w-full mb-4 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                    placeholder="e.g. 45"
+                                />
+
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Sex</label>
+                                <select
+                                    value={egfrInput.sex}
+                                    onChange={(e) => setEgfrInput({ ...egfrInput, sex: e.target.value })}
+                                    className="w-full mb-4 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white"
+                                >
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                </select>
+
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Serum creatinine (mg/dL)</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    value={egfrInput.scr}
+                                    onChange={(e) => setEgfrInput({ ...egfrInput, scr: e.target.value })}
+                                    className="w-full mb-5 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                    placeholder="e.g. 0.9"
+                                />
+
+                                <button
+                                    type="submit"
+                                    className="w-full py-3 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all"
+                                >
+                                    Calculate eGFR
+                                </button>
+
+                                <div className="mt-5 min-h-[72px] flex items-center justify-center">
+                                    {egfrInput.result && egfrInput.result.error && (
+                                        <p className="text-sm text-red-500 text-center">{egfrInput.result.error}</p>
+                                    )}
+                                    {egfrInput.result && egfrInput.result.value && (
+                                        <div className="text-center">
+                                            <p className="text-3xl font-black text-slate-900">
+                                                {egfrInput.result.value}
+                                                <span className="text-sm font-semibold text-slate-500 ml-1">{egfrInput.result.unit}</span>
+                                            </p>
+                                            <p className="text-sm font-semibold text-green-600 mt-1">{egfrInput.result.category}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </form>
+                        </div>
+
+                        <p className="mt-10 text-center text-xs text-slate-500 max-w-2xl mx-auto leading-relaxed">
+                            <strong>Disclaimer:</strong> These calculators are for educational and informational purposes only and are not a substitute for clinical judgement. eGFR is normalized to 1.73 m² and may not match drug-label dosing methods (e.g., Cockcroft-Gault). Always follow the specific product label or institutional protocol.
+                        </p>
                     </div>
                 </div>
 
@@ -244,9 +512,9 @@ const LandingPage = () => {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                     <div className="flex items-center justify-center gap-2 mb-6">
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm overflow-hidden">
-                            <img 
-                                src="/logo.png" 
-                                alt="Addis Med Logo" 
+                            <img
+                                src="/logo.png"
+                                alt="Addis Med Logo"
                                 className="w-full h-full object-contain"
                             />
                         </div>
