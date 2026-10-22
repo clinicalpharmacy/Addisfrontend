@@ -920,7 +920,7 @@ const Signup = () => {
                                     </div>
                                     <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2 md:mb-3">Individual</h2>
                                     <p className="text-gray-600 text-sm md:text-base leading-relaxed">
-                                        For healthcare professionals, pharmacists, students, and healthcare clients looking for personal clinical decision support tools.
+                                        For healthcare professionals, pharmacists, students, and healthcare clients looking for medication information support tools.
                                     </p>
                                     <div className="mt-6 md:mt-8 flex items-center text-green-600 text-sm md:text-base font-bold group-hover:translate-x-2 transition-transform">
                                         View Individual Plans <FaArrowRight className="ml-2" />
@@ -941,7 +941,7 @@ const Signup = () => {
                                     </div>
                                     <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2 md:mb-3">Organization</h2>
                                     <p className="text-gray-600 text-sm md:text-base leading-relaxed">
-                                        For pharmacies, hospitals, and clinics managing teams with clinical decision support and performance analytics.
+                                        For pharmacies, pharmacy schools, hospitals, and clinics interested to enhance the quality of service using medication information tools.
                                     </p>
                                     <div className="mt-6 md:mt-8 flex items-center text-green-600 text-sm md:text-base font-bold group-hover:translate-x-2 transition-transform">
                                         View Company Plans <FaArrowRight className="ml-2" />
