@@ -10,6 +10,9 @@ import api from '../../utils/api';
 import ExamModule from './ExamModule';
 import ClinicalPharmacySkill from './ClinicalPharmacySkill';
 
+const SESSION_SIZE = 40;
+const TEN_MINUTES = 10 * 60 * 1000;
+
 const Education = () => {
     const [activeTab, setActiveTab] = useState('exam');
     const [selectedExam, setSelectedExam] = useState(null);
@@ -25,6 +28,8 @@ const Education = () => {
     // =========================================================
     const [examSession, setExamSession] = useState(null);
     const [sessionPrompt, setSessionPrompt] = useState(null);
+    // Set when the student has completed every question of an exam.
+    const [allQuestionsDone, setAllQuestionsDone] = useState(null);
 
     useEffect(() => {
         fetchExams();
@@ -33,9 +38,7 @@ const Education = () => {
     const fetchExams = async () => {
         try {
             setLoading(true);
-
             const response = await api.get('/exams/published');
-
             if (response.success) {
                 setExams(response.exams || []);
             }
@@ -50,20 +53,16 @@ const Education = () => {
     const filteredExams = exams.filter(
         (exam) =>
             (exam.title &&
-                exam.title
-                    .toLowerCase()
-                    .includes(searchTerm.toLowerCase())) ||
+                exam.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
             (exam.subject &&
-                exam.subject
-                    .toLowerCase()
-                    .includes(searchTerm.toLowerCase()))
+                exam.subject.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
     // =========================================================
-    // EXAM SESSION HELPERS
+    // STORAGE KEYS
     // =========================================================
-
     const getSessionKey = (examId) => `exam_session_${examId}`;
+    const getSeenKey = (examId) => `exam_seen_${examId}`;
 
     const shuffleArray = (arr) => {
         const copy = [...arr];
@@ -74,6 +73,9 @@ const Education = () => {
         return copy;
     };
 
+    // =========================================================
+    // IN-PROGRESS SESSION PERSISTENCE
+    // =========================================================
     const getSavedSession = (examId) => {
         try {
             const raw = localStorage.getItem(getSessionKey(examId));
@@ -108,16 +110,49 @@ const Education = () => {
         }
     };
 
-    /**
-     * Handles the user clicking on an exam card.
-     *
-     * - If a saved session exists AND is unfinished AND the user has
-     *   been away for MORE than 10 minutes -> prompt to Resume/Restart.
-     * - Otherwise, start a fresh session.
-     */
+    // =========================================================
+    // COMPLETED-QUESTION TRACKER (per exam)
+    //
+    // Every time a student finishes a session (Show Total Score),
+    // the IDs of every question in that session are appended to
+    // this set. Future sessions never include those IDs again,
+    // so the student works through the whole subject sequentially.
+    // =========================================================
+    const getSeenIds = (examId) => {
+        try {
+            const raw = localStorage.getItem(getSeenKey(examId));
+            if (!raw) return new Set();
+            const parsed = JSON.parse(raw);
+            return new Set(Array.isArray(parsed) ? parsed : []);
+        } catch (err) {
+            console.error('Failed to read completed questions:', err);
+            return new Set();
+        }
+    };
+
+    const addSeenIds = (examId, ids) => {
+        try {
+            const seen = getSeenIds(examId);
+            ids.forEach((id) => seen.add(id));
+            localStorage.setItem(getSeenKey(examId), JSON.stringify([...seen]));
+        } catch (err) {
+            console.error('Failed to save completed questions:', err);
+        }
+    };
+
+    const clearSeenIds = (examId) => {
+        try {
+            localStorage.removeItem(getSeenKey(examId));
+        } catch (err) {
+            console.error('Failed to clear completed questions:', err);
+        }
+    };
+
+    // =========================================================
+    // EXAM SELECTION
+    // =========================================================
     const handleSelectExam = (exam) => {
         const saved = getSavedSession(exam.id);
-        const TEN_MINUTES = 10 * 60 * 1000;
 
         // Completed sessions should never be resumed; always start fresh.
         if (saved && saved.completed) {
@@ -126,26 +161,32 @@ const Education = () => {
             return;
         }
 
+        // In-progress session
         if (saved && saved.lastUpdated) {
             const elapsed = Date.now() - saved.lastUpdated;
-
-            // If user stopped for more than 10 minutes -> prompt
             if (elapsed > TEN_MINUTES) {
+                // Away too long — let the student choose.
                 setSessionPrompt({ exam, saved });
-                return;
+            } else {
+                // Recently active — silently resume so progress isn't lost.
+                resumeSession(saved);
             }
+            return;
         }
 
-        // No saved session (or within 10 min) -> start fresh
         startNewSession(exam);
     };
 
+    /**
+     * Fetches all questions for the exam, drops the ones the student
+     * has already completed, then takes a shuffled slice of up to 40.
+     * If nothing is left, the student is shown an "all done" modal.
+     */
     const startNewSession = async (exam) => {
         try {
             const response = await api.get(`/exams/${exam.id}/questions`);
 
             let allQuestions = [];
-
             if (response && response.success && Array.isArray(response.questions)) {
                 allQuestions = response.questions;
             } else if (Array.isArray(response)) {
@@ -159,8 +200,17 @@ const Education = () => {
                 return;
             }
 
-            const shuffled = shuffleArray(allQuestions);
-            const selectedQuestions = shuffled.slice(0, 40);
+            // Skip questions the student has already completed.
+            const seen = getSeenIds(exam.id);
+            const unseen = allQuestions.filter((q) => !seen.has(q.id));
+
+            if (unseen.length === 0) {
+                setAllQuestionsDone(exam);
+                return;
+            }
+
+            // Fresh random slice of the remaining questions.
+            const selectedQuestions = shuffleArray(unseen).slice(0, SESSION_SIZE);
 
             const session = {
                 examId: exam.id,
@@ -195,6 +245,7 @@ const Education = () => {
     };
 
     const restartSession = (exam) => {
+        // Aborted questions were never completed, so they stay in the pool.
         clearSavedSession(exam.id);
         setExamSession(null);
         setSessionPrompt(null);
@@ -212,28 +263,20 @@ const Education = () => {
 
     /**
      * Called by ExamModule when the user reveals their total score.
-     *
-     * NOTE: we deliberately do NOT unmount the exam view here.
-     * The user needs to stay on the score/review screen. We only
-     * clear the persisted resume session so a fresh attempt is
-     * started next time.
+     * Records every question in this session as completed, so the
+     * next attempt starts from the remaining pool.
      */
     const handleExamComplete = () => {
         if (examSession) {
             clearSavedSession(examSession.examId);
+            const ids = (examSession.questions || []).map((q) => q.id);
+            addSeenIds(examSession.examId, ids);
         }
-        // Keep selectedExam so the ExamModule stays rendered
-        // showing the score + review.
         setExamSession((prev) =>
             prev ? { ...prev, completed: true } : prev
         );
     };
 
-    /**
-     * Called by ExamModule when the user clicks Back.
-     * Keeps the session saved (unless already completed) so it
-     * can be resumed later.
-     */
     const handleExamExit = () => {
         if (examSession) {
             if (examSession.completed) {
@@ -245,6 +288,17 @@ const Education = () => {
         }
         setExamSession(null);
         setSelectedExam(null);
+    };
+
+    /**
+     * Wipes completion history for a subject and starts over.
+     */
+    const handleResetProgress = (exam) => {
+        clearSeenIds(exam.id);
+        clearSavedSession(exam.id);
+        setExamSession(null);
+        setAllQuestionsDone(null);
+        startNewSession(exam);
     };
 
     // =========================================================
@@ -270,12 +324,9 @@ const Education = () => {
     // =========================================================
     return (
         <div className="bg-white/40 backdrop-blur-xl rounded-2xl shadow-xl border border-white/50 overflow-hidden relative animate-fadeIn">
-
-            {/* Decorative background */}
             <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-br from-purple-600/10 to-indigo-600/10 pointer-events-none" />
 
             <div className="p-6 md:p-8 relative z-10">
-
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
                     <div>
@@ -283,10 +334,8 @@ const Education = () => {
                             <div className="bg-purple-100 p-2.5 rounded-xl">
                                 <FaGraduationCap className="text-purple-600 text-2xl" />
                             </div>
-
                             Education Center
                         </h2>
-
                         <p className="text-gray-500 mt-2 font-medium ml-1">
                             Test your knowledge, develop clinical pharmacy skills,
                             and review clinical guidelines
@@ -294,11 +343,8 @@ const Education = () => {
                     </div>
                 </div>
 
-                {/* =====================================================
-                    TABS
-                ====================================================== */}
+                {/* Tabs */}
                 <div className="flex flex-col sm:flex-row bg-gray-100/80 p-1.5 rounded-xl mb-8 max-w-4xl gap-1">
-
                     <button
                         onClick={() => setActiveTab('exam')}
                         className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-bold text-sm transition-all duration-300 ${
@@ -308,19 +354,12 @@ const Education = () => {
                         }`}
                     >
                         <FaClipboardList
-                            className={
-                                activeTab === 'exam'
-                                    ? 'text-purple-500'
-                                    : 'opacity-60'
-                            }
+                            className={activeTab === 'exam' ? 'text-purple-500' : 'opacity-60'}
                         />
                         Exams
                     </button>
-
                     <button
-                        onClick={() =>
-                            setActiveTab('clinicalpharmacyskill')
-                        }
+                        onClick={() => setActiveTab('clinicalpharmacyskill')}
                         className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-bold text-sm transition-all duration-300 ${
                             activeTab === 'clinicalpharmacyskill'
                                 ? 'bg-white text-indigo-700 shadow-sm'
@@ -328,15 +367,10 @@ const Education = () => {
                         }`}
                     >
                         <FaBookOpen
-                            className={
-                                activeTab === 'clinicalpharmacyskill'
-                                    ? 'text-indigo-500'
-                                    : 'opacity-60'
-                            }
+                            className={activeTab === 'clinicalpharmacyskill' ? 'text-indigo-500' : 'opacity-60'}
                         />
                         Clinical Pharmacy Skill
                     </button>
-
                     <button
                         onClick={() => setActiveTab('guideline')}
                         className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-bold text-sm transition-all duration-300 ${
@@ -346,42 +380,26 @@ const Education = () => {
                         }`}
                     >
                         <FaBookOpen
-                            className={
-                                activeTab === 'guideline'
-                                    ? 'text-indigo-500'
-                                    : 'opacity-60'
-                            }
+                            className={activeTab === 'guideline' ? 'text-indigo-500' : 'opacity-60'}
                         />
                         Guidelines
                     </button>
                 </div>
 
-                {/* =====================================================
-                    EXAMS TAB CONTENT
-                ====================================================== */}
+                {/* Exams tab */}
                 {activeTab === 'exam' && (
                     <div className="animate-fadeIn">
-
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-
-                            <h3 className="text-xl font-bold text-gray-800">
-                                Select Subject
-                            </h3>
-
+                            <h3 className="text-xl font-bold text-gray-800">Select Subject</h3>
                             <div className="relative w-full sm:w-64">
-
                                 <input
                                     type="text"
                                     placeholder="Search subjects..."
                                     value={searchTerm}
-                                    onChange={(e) =>
-                                        setSearchTerm(e.target.value)
-                                    }
+                                    onChange={(e) => setSearchTerm(e.target.value)}
                                     className="w-full pl-10 pr-4 py-2 border-2 border-gray-100 rounded-xl focus:border-purple-300 focus:ring-4 focus:ring-purple-50 bg-gray-50/50 transition-all outline-none"
                                 />
-
                                 <FaSearch className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400" />
-
                             </div>
                         </div>
 
@@ -396,51 +414,43 @@ const Education = () => {
                         ) : (
                             <>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-
-                                    {filteredExams.map((exam) => (
-                                        <button
-                                            key={exam.id}
-                                            onClick={() =>
-                                                handleSelectExam(exam)
-                                            }
-                                            className="flex items-center p-4 bg-white rounded-xl border border-gray-100 hover:border-purple-300 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group text-left"
-                                        >
-
-                                            <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center mr-4 group-hover:bg-purple-600 transition-colors duration-300 flex-shrink-0">
-
-                                                <FaClipboardList className="text-purple-600 group-hover:text-white text-lg transition-colors" />
-
-                                            </div>
-
-                                            <div>
-
-                                                <h4 className="font-bold text-gray-800 group-hover:text-purple-700 transition-colors line-clamp-1">
-                                                    {exam.title ||
-                                                        `${exam.subject} Exam`}
-                                                </h4>
-
-                                                <p className="text-xs text-gray-500 mt-1">
-                                                    {exam.subject} •{' '}
-                                                    {exam.question_count || 0}{' '}
-                                                    Questions
-                                                </p>
-
-                                            </div>
-
-                                        </button>
-                                    ))}
-
+                                    {filteredExams.map((exam) => {
+                                        const completed = getSeenIds(exam.id).size;
+                                        return (
+                                            <button
+                                                key={exam.id}
+                                                onClick={() => handleSelectExam(exam)}
+                                                className="flex items-center p-4 bg-white rounded-xl border border-gray-100 hover:border-purple-300 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group text-left"
+                                            >
+                                                <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center mr-4 group-hover:bg-purple-600 transition-colors duration-300 flex-shrink-0">
+                                                    <FaClipboardList className="text-purple-600 group-hover:text-white text-lg transition-colors" />
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-bold text-gray-800 group-hover:text-purple-700 transition-colors line-clamp-1">
+                                                        {exam.title || `${exam.subject} Exam`}
+                                                    </h4>
+                                                    <p className="text-xs text-gray-500 mt-1">
+                                                        {exam.subject}
+                                                        {exam.question_count ? ` • ${exam.question_count} Questions` : ''}
+                                                        {completed > 0 && (
+                                                            <span className="text-green-600 font-semibold">
+                                                                {' '}• {completed} completed
+                                                            </span>
+                                                        )}
+                                                    </p>
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
                                 </div>
 
                                 {filteredExams.length === 0 && (
                                     <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-100">
-
                                         <p className="text-gray-500 font-medium">
                                             {exams.length === 0
                                                 ? 'No exams available at the moment.'
                                                 : `No exams found matching "${searchTerm}"`}
                                         </p>
-
                                     </div>
                                 )}
                             </>
@@ -448,97 +458,97 @@ const Education = () => {
                     </div>
                 )}
 
-                {/* =====================================================
-                    CLINICAL PHARMACY SKILL TAB CONTENT
-                ====================================================== */}
+                {/* Clinical Pharmacy Skill tab */}
                 {activeTab === 'clinicalpharmacyskill' && (
                     <div className="animate-fadeIn">
                         <ClinicalPharmacySkill />
                     </div>
                 )}
 
-                {/* =====================================================
-                    GUIDELINES TAB CONTENT
-                ====================================================== */}
+                {/* Guidelines tab */}
                 {activeTab === 'guideline' && (
                     <div className="animate-fadeIn">
-
                         <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-8 text-center">
-
                             <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-
                                 <FaBookOpen className="text-indigo-600 text-2xl" />
-
                             </div>
-
                             <h3 className="text-xl font-bold text-indigo-900 mb-2">
                                 Clinical Guidelines
                             </h3>
-
                             <p className="text-indigo-700 max-w-md mx-auto">
-                                The guidelines section is currently under
-                                development. Please check back later for
-                                comprehensive medical guidelines across all
-                                specialties.
+                                The guidelines section is currently under development. Please check back later for comprehensive medical guidelines across all specialties.
                             </p>
-
                         </div>
-
                     </div>
                 )}
-
             </div>
 
-            {/* =====================================================
-                RESUME / RESTART PROMPT MODAL
-            ====================================================== */}
+            {/* Resume / Restart prompt */}
             {sessionPrompt && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-
                     <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-fadeIn">
-
                         <h3 className="text-xl font-bold text-gray-900 mb-2">
                             Resume Exam?
                         </h3>
-
                         <p className="text-gray-600 mb-6">
                             You have an unfinished attempt for{' '}
                             <span className="font-semibold text-purple-700">
-                                {sessionPrompt.exam.title ||
-                                    sessionPrompt.exam.subject}
+                                {sessionPrompt.exam.title || sessionPrompt.exam.subject}
                             </span>
-                            . You stopped more than 10 minutes ago. Would
-                            you like to resume where you left off, or start
-                            over?
+                            . You stopped more than 10 minutes ago. Would you like to resume where you left off, or start over?
                         </p>
-
                         <div className="flex flex-col sm:flex-row gap-3">
-
                             <button
-                                onClick={() =>
-                                    resumeSession(sessionPrompt.saved)
-                                }
+                                onClick={() => resumeSession(sessionPrompt.saved)}
                                 className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 px-4 rounded-xl transition-colors"
                             >
                                 Resume
                             </button>
-
                             <button
-                                onClick={() =>
-                                    restartSession(sessionPrompt.exam)
-                                }
+                                onClick={() => restartSession(sessionPrompt.exam)}
                                 className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2.5 px-4 rounded-xl transition-colors"
                             >
                                 Restart
                             </button>
-
                         </div>
-
                     </div>
-
                 </div>
             )}
 
+            {/* All questions completed prompt */}
+            {allQuestionsDone && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-fadeIn">
+                        <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <FaGraduationCap className="text-green-600 text-2xl" />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2 text-center">
+                            All questions completed!
+                        </h3>
+                        <p className="text-gray-600 mb-6 text-center">
+                            You've completed every available question for{' '}
+                            <span className="font-semibold text-purple-700">
+                                {allQuestionsDone.title || allQuestionsDone.subject}
+                            </span>
+                            . Reset your progress to start the subject again from the beginning.
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            <button
+                                onClick={() => handleResetProgress(allQuestionsDone)}
+                                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 px-4 rounded-xl transition-colors"
+                            >
+                                Reset & Start Over
+                            </button>
+                            <button
+                                onClick={() => setAllQuestionsDone(null)}
+                                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2.5 px-4 rounded-xl transition-colors"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
