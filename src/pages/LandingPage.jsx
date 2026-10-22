@@ -760,7 +760,6 @@ const LandingPage = () => {
                                             className="px-2 py-2.5 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white"
                                         >
                                             <option value="perDay">times per day</option>
-                                            <option value="everyHours">every X hours</option>
                                         </select>
                                     </div>
                                 </div>
