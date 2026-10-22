@@ -7,6 +7,27 @@ import {
     FaCalculator, FaWeightHanging, FaRulerVertical
 } from 'react-icons/fa';
 
+// ---- Unit tables for the Vial / Bottle calculator ----
+// Strength units: `kind` is 'conc' (per mL) or 'fixed' (per vial).
+// `factor` converts the entered value into the base unit (mg or units).
+const STRENGTH_UNITS = {
+    'mg/mL':      { kind: 'conc',  base: 'mg',    factor: 1 },
+    'mcg/mL':     { kind: 'conc',  base: 'mg',    factor: 0.001 },
+    'g/mL':       { kind: 'conc',  base: 'mg',    factor: 1000 },
+    'units/mL':   { kind: 'conc',  base: 'units', factor: 1 },
+    'mg/vial':    { kind: 'fixed', base: 'mg',    factor: 1 },
+    'mcg/vial':   { kind: 'fixed', base: 'mg',    factor: 0.001 },
+    'g/vial':     { kind: 'fixed', base: 'mg',    factor: 1000 },
+    'units/vial': { kind: 'fixed', base: 'units', factor: 1 }
+};
+
+const DOSE_UNITS = {
+    'mg':    { base: 'mg',    factor: 1 },
+    'mcg':   { base: 'mg',    factor: 0.001 },
+    'g':     { base: 'mg',    factor: 1000 },
+    'units': { base: 'units', factor: 1 }
+};
+
 const LandingPage = () => {
     const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -15,6 +36,19 @@ const LandingPage = () => {
     const [bmiInput, setBmiInput] = useState({ weight: '', height: '', result: null });
     const [bsaInput, setBsaInput] = useState({ weight: '', height: '', result: null });
     const [egfrInput, setEgfrInput] = useState({ age: '', sex: 'male', scr: '', result: null });
+    const [vialInput, setVialInput] = useState({
+        strengthValue: '',
+        strengthUnit: 'mg/mL',
+        vialVolume: '',
+        doseValue: '',
+        doseUnit: 'mg',
+        freqValue: '',
+        freqType: 'perDay',
+        durationDays: '',
+        vialType: 'multi',
+        wastage: '0',
+        result: null
+    });
 
     const token = localStorage.getItem('token');
     const user = (() => {
@@ -38,6 +72,11 @@ const LandingPage = () => {
         const n = parseFloat(v);
         return Number.isFinite(n) && n > 0 ? n : null;
     };
+
+    const fmt = (n, dec = 2) =>
+        Number.isFinite(n)
+            ? n.toLocaleString(undefined, { maximumFractionDigits: dec, minimumFractionDigits: 0 })
+            : '—';
 
     const calculateBMI = (e) => {
         e.preventDefault();
@@ -116,6 +155,175 @@ const LandingPage = () => {
             result: { value: egfr.toFixed(0), unit: 'mL/min/1.73 m²', category: 'CKD-EPI 2021 (race-free)' }
         }));
     };
+
+    // ---- Vial / Bottle calculator ----
+    const calculateVials = (e) => {
+        e.preventDefault();
+
+        const sVal = parseFloat(vialInput.strengthValue);
+        if (!(sVal > 0)) {
+            return setVialInput((s) => ({ ...s, result: { error: 'Enter a valid strength greater than 0.' } }));
+        }
+
+        const sInfo = STRENGTH_UNITS[vialInput.strengthUnit];
+
+        let vVol = null;
+        if (sInfo.kind === 'conc') {
+            vVol = parseFloat(vialInput.vialVolume);
+            if (!(vVol > 0)) {
+                return setVialInput((s) => ({ ...s, result: { error: 'Enter a valid vial / bottle volume (mL).' } }));
+            }
+        }
+
+        const dVal = parseFloat(vialInput.doseValue);
+        if (!(dVal > 0)) {
+            return setVialInput((s) => ({ ...s, result: { error: 'Enter a valid dose per administration greater than 0.' } }));
+        }
+        const dInfo = DOSE_UNITS[vialInput.doseUnit];
+
+        if (dInfo.base !== sInfo.base) {
+            return setVialInput((s) => ({
+                ...s,
+                result: {
+                    error:
+                        `Unit mismatch: dose unit (${vialInput.doseUnit}) is not compatible with ` +
+                        `strength unit (${vialInput.strengthUnit}). Both must be mass units (mg / mcg / g) ` +
+                        `or both must be "units".`
+                }
+            }));
+        }
+
+        const fVal = parseFloat(vialInput.freqValue);
+        if (!(fVal > 0)) {
+            return setVialInput((s) => ({ ...s, result: { error: 'Enter a valid frequency greater than 0.' } }));
+        }
+
+        const dur = parseFloat(vialInput.durationDays);
+        if (!(dur > 0)) {
+            return setVialInput((s) => ({ ...s, result: { error: 'Enter a valid treatment duration greater than 0.' } }));
+        }
+
+        let w = parseFloat(vialInput.wastage);
+        if (isNaN(w) || w < 0) w = 0;
+
+        const ceil = (n) => Math.ceil(n - 1e-9);
+
+        const dosesPerDay = vialInput.freqType === 'perDay' ? fVal : 24 / fVal;
+        const totalDoses = ceil(dosesPerDay * dur);
+        const doseBase = dVal * dInfo.factor;          // base unit per administration
+        const strengthBase = sVal * sInfo.factor;      // base unit per mL or per vial
+        const wm = 1 + w / 100;                        // wastage multiplier
+        const vt = vialInput.vialType;
+
+        let vialsNeeded;
+        let totalAmountNeeded;
+        let totalVolumeNeeded = null;
+        let volumePerDose = null;
+        let amountPerVial = null;
+        let vialsPerDose = null;
+        let dosesPerVial = null;
+
+        if (sInfo.kind === 'conc') {
+            volumePerDose = doseBase / strengthBase;   // mL per dose
+            amountPerVial = strengthBase * vVol;       // base unit per vial
+            totalVolumeNeeded = volumePerDose * totalDoses;
+            totalAmountNeeded = doseBase * totalDoses;
+
+            if (vt === 'multi') {
+                vialsNeeded = ceil((totalVolumeNeeded * wm) / vVol);
+                dosesPerVial = Math.floor(vVol / (volumePerDose * wm));
+                if (dosesPerVial < 1) dosesPerVial = null;
+            } else {
+                vialsPerDose = ceil((volumePerDose * wm) / vVol);
+                vialsNeeded = vialsPerDose * totalDoses;
+            }
+        } else {
+            amountPerVial = strengthBase;
+            totalAmountNeeded = doseBase * totalDoses;
+
+            if (vt === 'multi') {
+                vialsNeeded = ceil((totalAmountNeeded * wm) / amountPerVial);
+                dosesPerVial = Math.floor(amountPerVial / (doseBase * wm));
+                if (dosesPerVial < 1) dosesPerVial = null;
+            } else {
+                vialsPerDose = ceil((doseBase * wm) / amountPerVial);
+                vialsNeeded = vialsPerDose * totalDoses;
+            }
+        }
+
+        vialsNeeded = ceil(vialsNeeded);
+
+        setVialInput((s) => ({
+            ...s,
+            result: {
+                error: null,
+                vialsNeeded,
+                totalDoses,
+                dosesPerDay,
+                doseEntered: dVal,
+                doseUnitLabel: vialInput.doseUnit,
+                doseBaseUnit: dInfo.base,
+                totalAmountNeeded,
+                isConc: sInfo.kind === 'conc',
+                vVol,
+                volumePerDose,
+                totalVolumeNeeded,
+                amountPerVial,
+                vialsPerDose,
+                dosesPerVial,
+                w,
+                vt
+            }
+        }));
+    };
+
+    // Derived values for rendering
+    const vialStrengthInfo = STRENGTH_UNITS[vialInput.strengthUnit];
+    const vialResult = vialInput.result;
+    const vialBreakdown = [];
+
+    if (vialResult && !vialResult.error) {
+        vialBreakdown.push([
+            'Doses per day',
+            `${fmt(vialResult.dosesPerDay, 2)} ${vialResult.dosesPerDay === 1 ? 'dose' : 'doses'}`
+        ]);
+        vialBreakdown.push(['Total administrations', fmt(vialResult.totalDoses, 0)]);
+        vialBreakdown.push([
+            'Dose per administration',
+            `${fmt(vialResult.doseEntered, 4)} ${vialResult.doseUnitLabel}`
+        ]);
+        vialBreakdown.push([
+            'Total medication required',
+            `${fmt(vialResult.totalAmountNeeded, 2)} ${vialResult.doseBaseUnit}`
+        ]);
+
+        if (vialResult.isConc) {
+            vialBreakdown.push(['Volume per dose', `${fmt(vialResult.volumePerDose, 3)} mL`]);
+            vialBreakdown.push(['Total volume required', `${fmt(vialResult.totalVolumeNeeded, 2)} mL`]);
+            vialBreakdown.push(['Volume per vial / bottle', `${fmt(vialResult.vVol, 2)} mL`]);
+            if (vialResult.vialsPerDose != null) {
+                vialBreakdown.push(['Vials per dose (single-use)', fmt(vialResult.vialsPerDose, 0)]);
+            }
+        } else {
+            vialBreakdown.push([
+                'Medication per vial / bottle',
+                `${fmt(vialResult.amountPerVial, 2)} ${vialResult.doseBaseUnit}`
+            ]);
+            if (vialResult.vialsPerDose != null) {
+                vialBreakdown.push(['Vials per dose', fmt(vialResult.vialsPerDose, 0)]);
+            }
+        }
+
+        if (vialResult.dosesPerVial != null && vialResult.vt === 'multi') {
+            vialBreakdown.push(['Doses obtainable per vial', fmt(vialResult.dosesPerVial, 0)]);
+        }
+
+        if (vialResult.w > 0) {
+            vialBreakdown.push(['Wastage / overfill allowance', `${fmt(vialResult.w, 1)}%`]);
+        }
+
+        vialBreakdown.push(['Vial type', vialResult.vt === 'multi' ? 'Multi-use' : 'Single-use']);
+    }
 
     return (
         <div className="min-h-screen bg-white font-sans text-slate-900">
@@ -488,6 +696,244 @@ const LandingPage = () => {
                                 </div>
                             </form>
                         </div>
+
+                        {/* Vial / Bottle Calculator */}
+                        <form
+                            onSubmit={calculateVials}
+                            className="mt-8 p-8 bg-white rounded-3xl border border-slate-200 hover:border-green-300 hover:shadow-xl transition-all duration-300"
+                        >
+                            <div className="flex items-start gap-4 mb-6">
+                                <div className="w-14 h-14 bg-green-50 border border-green-100 rounded-2xl flex items-center justify-center shrink-0">
+                                    <FaCapsules className="text-green-500 text-2xl" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-extrabold text-slate-900 tracking-tight">Vial / Bottle Calculator</h3>
+                                    <p className="text-sm text-slate-500">
+                                        Determine how many vials or bottles are needed based on strength, dose, frequency, and treatment duration.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {/* Strength */}
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Strength</label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="number"
+                                            step="any"
+                                            min="0"
+                                            value={vialInput.strengthValue}
+                                            onChange={(e) => setVialInput({ ...vialInput, strengthValue: e.target.value })}
+                                            className="flex-1 min-w-0 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                            placeholder="e.g. 500"
+                                        />
+                                        <select
+                                            value={vialInput.strengthUnit}
+                                            onChange={(e) => setVialInput({ ...vialInput, strengthUnit: e.target.value })}
+                                            className="px-2 py-2.5 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white"
+                                        >
+                                            <option value="mg/mL">mg/mL</option>
+                                            <option value="mcg/mL">mcg/mL</option>
+                                            <option value="g/mL">g/mL</option>
+                                            <option value="units/mL">units/mL</option>
+                                            <option value="mg/vial">mg/vial</option>
+                                            <option value="mcg/vial">mcg/vial</option>
+                                            <option value="g/vial">g/vial</option>
+                                            <option value="units/vial">units/vial</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {/* Vial volume (only for concentration strengths) */}
+                                {vialStrengthInfo.kind === 'conc' && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">
+                                            Volume per vial / bottle <span className="text-slate-400 font-normal">(mL)</span>
+                                        </label>
+                                        <input
+                                            type="number"
+                                            step="any"
+                                            min="0"
+                                            value={vialInput.vialVolume}
+                                            onChange={(e) => setVialInput({ ...vialInput, vialVolume: e.target.value })}
+                                            className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                            placeholder="e.g. 10"
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Dose per administration */}
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Dose per administration</label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="number"
+                                            step="any"
+                                            min="0"
+                                            value={vialInput.doseValue}
+                                            onChange={(e) => setVialInput({ ...vialInput, doseValue: e.target.value })}
+                                            className="flex-1 min-w-0 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                            placeholder="e.g. 250"
+                                        />
+                                        <select
+                                            value={vialInput.doseUnit}
+                                            onChange={(e) => setVialInput({ ...vialInput, doseUnit: e.target.value })}
+                                            className="px-2 py-2.5 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white"
+                                        >
+                                            <option value="mg">mg</option>
+                                            <option value="mcg">mcg</option>
+                                            <option value="g">g</option>
+                                            <option value="units">units</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {/* Frequency */}
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Frequency</label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="number"
+                                            step="any"
+                                            min="0"
+                                            value={vialInput.freqValue}
+                                            onChange={(e) => setVialInput({ ...vialInput, freqValue: e.target.value })}
+                                            className="flex-1 min-w-0 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                            placeholder="e.g. 3"
+                                        />
+                                        <select
+                                            value={vialInput.freqType}
+                                            onChange={(e) => setVialInput({ ...vialInput, freqType: e.target.value })}
+                                            className="px-2 py-2.5 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white"
+                                        >
+                                            <option value="perDay">times per day</option>
+                                            <option value="everyHours">every X hours</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {/* Duration */}
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                                        Treatment duration <span className="text-slate-400 font-normal">(days)</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="any"
+                                        min="0"
+                                        value={vialInput.durationDays}
+                                        onChange={(e) => setVialInput({ ...vialInput, durationDays: e.target.value })}
+                                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                        placeholder="e.g. 7"
+                                    />
+                                </div>
+
+                                {/* Wastage */}
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                                        Wastage / overfill <span className="text-slate-400 font-normal">(%)</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="any"
+                                        min="0"
+                                        max="100"
+                                        value={vialInput.wastage}
+                                        onChange={(e) => setVialInput({ ...vialInput, wastage: e.target.value })}
+                                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                        placeholder="e.g. 10"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Vial type */}
+                            <div className="mt-4">
+                                <label className="block text-sm font-medium text-slate-700 mb-2">Vial / bottle type</label>
+                                <div className="flex flex-wrap gap-3">
+                                    <label
+                                        className={`flex items-start gap-2 px-4 py-3 border rounded-xl cursor-pointer transition-all flex-1 min-w-[180px] ${
+                                            vialInput.vialType === 'multi'
+                                                ? 'border-green-500 bg-green-50'
+                                                : 'border-slate-200 bg-white hover:border-green-200'
+                                        }`}
+                                    >
+                                        <input
+                                            type="radio"
+                                            name="vialType"
+                                            value="multi"
+                                            checked={vialInput.vialType === 'multi'}
+                                            onChange={() => setVialInput({ ...vialInput, vialType: 'multi' })}
+                                            className="mt-1 accent-green-500"
+                                        />
+                                        <span className="text-sm">
+                                            <span className="font-semibold text-slate-800 block">Multi-use</span>
+                                            <span className="text-xs text-slate-500">Remainder can be used for later doses</span>
+                                        </span>
+                                    </label>
+                                    <label
+                                        className={`flex items-start gap-2 px-4 py-3 border rounded-xl cursor-pointer transition-all flex-1 min-w-[180px] ${
+                                            vialInput.vialType === 'single'
+                                                ? 'border-green-500 bg-green-50'
+                                                : 'border-slate-200 bg-white hover:border-green-200'
+                                        }`}
+                                    >
+                                        <input
+                                            type="radio"
+                                            name="vialType"
+                                            value="single"
+                                            checked={vialInput.vialType === 'single'}
+                                            onChange={() => setVialInput({ ...vialInput, vialType: 'single' })}
+                                            className="mt-1 accent-green-500"
+                                        />
+                                        <span className="text-sm">
+                                            <span className="font-semibold text-slate-800 block">Single-use</span>
+                                            <span className="text-xs text-slate-500">Discard remainder after each dose</span>
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <button
+                                type="submit"
+                                className="mt-5 w-full py-3 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all"
+                            >
+                                Calculate Vials / Bottles
+                            </button>
+
+                            {vialResult && vialResult.error && (
+                                <p className="mt-4 text-sm text-red-500 font-medium">{vialResult.error}</p>
+                            )}
+
+                            {vialResult && !vialResult.error && (
+                                <div className="mt-6 border-t border-slate-100 pt-5">
+                                    <div className="text-center mb-4">
+                                        <p className="text-4xl font-black text-green-600">{fmt(vialResult.vialsNeeded, 0)}</p>
+                                        <p className="text-sm text-slate-500 mt-1">
+                                            {vialResult.vialsNeeded === 1 ? 'vial / bottle needed' : 'vials / bottles needed'}
+                                        </p>
+                                    </div>
+                                    <div className="space-y-2 max-w-2xl mx-auto">
+                                        {vialBreakdown.map(([key, val]) => (
+                                            <div
+                                                key={key}
+                                                className="flex justify-between gap-4 text-sm py-1 border-b border-dashed border-slate-100 last:border-0"
+                                            >
+                                                <span className="text-slate-500">{key}</span>
+                                                <span className="font-semibold text-slate-800 text-right">{val}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            <p className="mt-5 text-xs text-slate-500 leading-relaxed">
+                                <strong>Note:</strong> This calculator is for planning purposes only. Multi-use vial
+                                calculations assume the vial remains stable for the entire treatment period — check the
+                                beyond-use date (BUD) after opening. Frequencies that don't divide evenly into 24 hours
+                                are rounded up to whole administrations.
+                            </p>
+                        </form>
 
                         <p className="mt-10 text-center text-xs text-slate-500 max-w-2xl mx-auto leading-relaxed">
                             <strong>Disclaimer:</strong> These calculators are for educational and informational purposes only and are not a substitute for clinical judgement. eGFR is normalized to 1.73 m² and may not match drug-label dosing methods (e.g., Cockcroft-Gault). Always follow the specific product label or institutional protocol.
