@@ -1,87 +1,83 @@
 import React, { useState, useMemo } from 'react';
-import { FaBuilding, FaUser, FaCheckCircle, FaTimesCircle, FaClock, FaSearch, FaRedo } from 'react-icons/fa';
+import { FaBuilding, FaUser, FaCheckCircle, FaClock, FaSearch, FaRedo } from 'react-icons/fa';
 
 export const AdminSubscriptions = ({ subscriptions, loading, onRefresh, users, companies }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all'); // all, active, expired
 
-    // Receive users and companies as well to perform a "deep check" for active subs without history records
+    // Map user_id -> user and company_id -> company for fast lookup
+    const usersMap = useMemo(() => {
+        const m = new Map();
+        (users || []).forEach(u => m.set(String(u.id), u));
+        return m;
+    }, [users]);
+
+    const companiesMap = useMemo(() => {
+        const m = new Map();
+        (companies || []).forEach(c => m.set(String(c.id), c));
+        return m;
+    }, [companies]);
+
     const subscriptionData = useMemo(() => {
+        if (!subscriptions || !Array.isArray(subscriptions)) return [];
+
+        const seen = new Set(); // dedupe by entity (user or company)
         const data = [];
-        const processedEntityIds = new Set();
 
-        // 1. Process formal subscription history records
-        if (subscriptions && Array.isArray(subscriptions)) {
-            subscriptions.forEach(sub => {
-                let name = 'N/A';
-                let email = 'N/A';
-                let type = 'Individual';
+        subscriptions.forEach(sub => {
+            // Only consider PAID records.
+            // A record qualifies as paid if it has a payment method other than
+            // an admin override, OR it explicitly records a positive amount.
+            const amount = Number(sub.amount) || 0;
+            const method = (sub.payment_method || '').toLowerCase();
+            const isPaid = amount > 0 && method !== 'admin_override';
+            if (!isPaid) return;
 
-                if (sub.users) {
-                    name = sub.users.full_name || 'Individual User';
-                    email = sub.users.email;
-                    type = 'Individual';
-                }
+            // Resolve entity
+            const isCompany = !!sub.company_id;
+            const entityId = isCompany ? String(sub.company_id) : String(sub.user_id || '');
+            if (!entityId) return;
 
-                if (sub.companies) {
-                    name = sub.companies.company_name || name;
-                    email = sub.companies.email || email;
-                    type = 'Company';
-                } else if (sub.company_id && !sub.users) {
+            // Dedupe: only one row per entity
+            if (seen.has(entityId)) return;
+            seen.add(entityId);
+
+            let name = 'N/A';
+            let email = 'N/A';
+            let type = isCompany ? 'Company' : 'Individual';
+
+            if (isCompany) {
+                const comp = sub.companies || companiesMap.get(entityId);
+                if (comp) {
+                    name = comp.company_name || name;
+                    email = comp.email || email;
+                } else {
                     name = `Company ID: ${sub.company_id}`;
-                    type = 'Company';
                 }
+            } else {
+                const usr = sub.users || usersMap.get(entityId);
+                if (usr) {
+                    name = usr.full_name || 'Individual User';
+                    email = usr.email || email;
+                }
+            }
 
-                data.push({
-                    id: sub.id,
-                    entityId: sub.user_id || sub.company_id,
-                    name,
-                    email,
-                    type,
-                    plan: sub.plan_name || sub.plan_id || 'Pro',
-                    status: sub.status || 'inactive',
-                    expiry: sub.expiry_date || sub.end_date,
-                    created_at: sub.created_at
-                });
-                processedEntityIds.add(sub.user_id || sub.company_id);
+            data.push({
+                id: sub.id,
+                entityId,
+                name,
+                email,
+                type,
+                plan: sub.plan_name || sub.plan_id || 'Pro',
+                status: sub.status || 'inactive',
+                expiry: sub.expiry_date || sub.end_date,
+                created_at: sub.created_at,
+                amount
             });
-        }
-
-        // 2. Perform "Deep Check": Find active users/companies who might not have a record in the subscriptions table
-        if (users && Array.isArray(users)) {
-            users.filter(u => u.subscription_status === 'active' && !processedEntityIds.has(u.id)).forEach(user => {
-                data.push({
-                    id: `user-active-${user.id}`,
-                    entityId: user.id,
-                    name: user.full_name,
-                    email: user.email,
-                    type: 'Individual',
-                    plan: user.subscription_plan || 'Active',
-                    status: 'active',
-                    expiry: user.subscription_end_date,
-                    created_at: user.created_at
-                });
-            });
-        }
-
-        if (companies && Array.isArray(companies)) {
-            companies.filter(c => c.subscription_status === 'active' && !processedEntityIds.has(c.id)).forEach(company => {
-                data.push({
-                    id: `comp-active-${company.id}`,
-                    entityId: company.id,
-                    name: company.company_name,
-                    email: company.email,
-                    type: 'Company',
-                    plan: company.subscription_plan || 'Active',
-                    status: 'active',
-                    expiry: company.subscription_end_date,
-                    created_at: company.created_at
-                });
-            });
-        }
+        });
 
         return data;
-    }, [subscriptions, users, companies]);
+    }, [subscriptions, usersMap, companiesMap]);
 
     // Filter Logic
     const filteredData = subscriptionData.filter(item => {
@@ -95,15 +91,6 @@ export const AdminSubscriptions = ({ subscriptions, loading, onRefresh, users, c
 
         return matchesSearch && matchesStatus;
     });
-
-    const getStatusColor = (status) => {
-        switch (status?.toLowerCase()) {
-            case 'active': return 'bg-green-100 text-green-800';
-            case 'trial': return 'bg-blue-100 text-blue-800';
-            case 'expired': return 'bg-red-100 text-red-800';
-            default: return 'bg-gray-100 text-gray-800';
-        }
-    };
 
     const calculateDaysRemaining = (expiryDate) => {
         if (!expiryDate) return null;
@@ -134,7 +121,7 @@ export const AdminSubscriptions = ({ subscriptions, loading, onRefresh, users, c
                         </div>
                         <div>
                             <h2 className="text-xl font-black text-gray-900 leading-tight">Revenue Governance</h2>
-                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Active account oversight.</p>
+                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Paid account oversight.</p>
                         </div>
                     </div>
                 </div>
@@ -180,7 +167,7 @@ export const AdminSubscriptions = ({ subscriptions, loading, onRefresh, users, c
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                 <div className="bg-white p-5 rounded-[24px] shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-md transition-all hover:-translate-y-1">
                     <div className="min-w-0">
-                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 truncate">Active Nodes</p>
+                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 truncate">Active Paid</p>
                         <p className="text-2xl sm:text-4xl font-black text-gray-900 leading-none">
                             {subscriptionData.filter(i => i.status === 'active').length}
                         </p>
@@ -202,7 +189,7 @@ export const AdminSubscriptions = ({ subscriptions, loading, onRefresh, users, c
                 </div>
                 <div className="bg-white p-5 rounded-[24px] shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-md transition-all hover:-translate-y-1 col-span-2 sm:col-span-1">
                     <div className="min-w-0">
-                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 truncate">Total History</p>
+                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 truncate">Total Paid</p>
                         <p className="text-2xl sm:text-4xl font-black text-gray-900 leading-none">{subscriptionData.length}</p>
                     </div>
                     <div className="p-3.5 bg-blue-50 text-blue-600 rounded-2xl group-hover:scale-110 transition-transform shadow-inner">
@@ -295,7 +282,7 @@ export const AdminSubscriptions = ({ subscriptions, loading, onRefresh, users, c
                     </div>
                     <h3 className="text-2xl font-black text-gray-900 mb-2">Ledger Vacuum</h3>
                     <p className="text-gray-500 max-w-xs mx-auto text-sm font-medium leading-relaxed">
-                        No subscription nodes detected within the selected parameters. All systems monitoring.
+                        No paid subscription records detected within the selected parameters.
                     </p>
                 </div>
             )}
