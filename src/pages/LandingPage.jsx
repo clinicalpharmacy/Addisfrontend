@@ -8,24 +8,19 @@ import {
 } from 'react-icons/fa';
 
 // ---- Unit tables for the Vial / Bottle calculator ----
-// Strength units: `kind` is 'conc' (per mL) or 'fixed' (per vial).
-// `factor` converts the entered value into the base unit (mg or units).
-const STRENGTH_UNITS = {
-    'mg/mL':      { kind: 'conc',  base: 'mg',    factor: 1 },
-    'mcg/mL':     { kind: 'conc',  base: 'mg',    factor: 0.001 },
-    'g/mL':       { kind: 'conc',  base: 'mg',    factor: 1000 },
-    'units/mL':   { kind: 'conc',  base: 'units', factor: 1 },
-    'mg/vial':    { kind: 'fixed', base: 'mg',    factor: 1 },
-    'mcg/vial':   { kind: 'fixed', base: 'mg',    factor: 0.001 },
-    'g/vial':     { kind: 'fixed', base: 'mg',    factor: 1000 },
-    'units/vial': { kind: 'fixed', base: 'units', factor: 1 }
+// `factor` converts the entered amount into the base unit (mg or units).
+const AMOUNT_UNITS = {
+    mg:    { base: 'mg',    factor: 1 },
+    mcg:   { base: 'mg',    factor: 0.001 },
+    g:     { base: 'mg',    factor: 1000 },
+    units: { base: 'units', factor: 1 }
 };
 
 const DOSE_UNITS = {
-    'mg':    { base: 'mg',    factor: 1 },
-    'mcg':   { base: 'mg',    factor: 0.001 },
-    'g':     { base: 'mg',    factor: 1000 },
-    'units': { base: 'units', factor: 1 }
+    mg:    { base: 'mg',    factor: 1 },
+    mcg:   { base: 'mg',    factor: 0.001 },
+    g:     { base: 'mg',    factor: 1000 },
+    units: { base: 'units', factor: 1 }
 };
 
 const LandingPage = () => {
@@ -37,8 +32,12 @@ const LandingPage = () => {
     const [bsaInput, setBsaInput] = useState({ weight: '', height: '', result: null });
     const [egfrInput, setEgfrInput] = useState({ age: '', sex: 'male', scr: '', result: null });
     const [vialInput, setVialInput] = useState({
+        // Strength: "strengthValue" of "strengthUnit" per "strengthPerMl" mL
+        //   (or per whole vial when strengthBasis === 'perVial')
         strengthValue: '',
-        strengthUnit: 'mg/mL',
+        strengthUnit: 'mg',
+        strengthBasis: 'perMl',
+        strengthPerMl: '1',
         vialVolume: '',
         doseValue: '',
         doseUnit: 'mg',
@@ -67,7 +66,7 @@ const LandingPage = () => {
         return '/home';
     };
 
-    // ---- Calculator handlers ----
+    // ---- Calculator helpers ----
     const num = (v) => {
         const n = parseFloat(v);
         return Number.isFinite(n) && n > 0 ? n : null;
@@ -94,7 +93,7 @@ const LandingPage = () => {
 
         if (bmi < 18.5) {
             category = 'Underweight';
-            const targetWeight = 18.5 * hM * hM; // weight needed to reach BMI 18.5
+            const targetWeight = 18.5 * hM * hM;
             const gain = targetWeight - w;
             if (gain > 0) {
                 message = `Gain at least ${gain.toFixed(1)} kg to reach a BMI of 18.5.`;
@@ -106,7 +105,7 @@ const LandingPage = () => {
         }
 
         if (bmi >= 25) {
-            const targetWeight = 25 * hM * hM; // weight for BMI 25
+            const targetWeight = 25 * hM * hM;
             const loss = w - targetWeight;
             if (loss > 0) {
                 message = `Lose at least ${loss.toFixed(1)} kg to reach a BMI below 25.`;
@@ -160,59 +159,61 @@ const LandingPage = () => {
     const calculateVials = (e) => {
         e.preventDefault();
 
+        const ceil = (n) => Math.ceil(n - 1e-9);
+        const fail = (error) => setVialInput((s) => ({ ...s, result: { error } }));
+
+        // --- Strength ---
         const sVal = parseFloat(vialInput.strengthValue);
-        if (!(sVal > 0)) {
-            return setVialInput((s) => ({ ...s, result: { error: 'Enter a valid strength greater than 0.' } }));
+        if (!(sVal > 0)) return fail('Enter a valid strength greater than 0.');
+
+        const uInfo = AMOUNT_UNITS[vialInput.strengthUnit];
+        const isPerMl = vialInput.strengthBasis === 'perMl';
+
+        // "per X mL" denominator (e.g. 500 mg per 5 mL)
+        let perVol = null;
+        if (isPerMl) {
+            perVol = parseFloat(vialInput.strengthPerMl);
+            if (!(perVol > 0)) return fail('Enter a valid "per volume" (mL) for the strength — e.g. 5 for 500 mg per 5 mL.');
         }
 
-        const sInfo = STRENGTH_UNITS[vialInput.strengthUnit];
-
+        // --- Vial volume (only when strength is expressed per volume) ---
         let vVol = null;
-        if (sInfo.kind === 'conc') {
+        if (isPerMl) {
             vVol = parseFloat(vialInput.vialVolume);
-            if (!(vVol > 0)) {
-                return setVialInput((s) => ({ ...s, result: { error: 'Enter a valid vial / bottle volume (mL).' } }));
-            }
+            if (!(vVol > 0)) return fail('Enter a valid bottle / vial volume (mL).');
         }
 
+        // --- Dose ---
         const dVal = parseFloat(vialInput.doseValue);
-        if (!(dVal > 0)) {
-            return setVialInput((s) => ({ ...s, result: { error: 'Enter a valid dose per administration greater than 0.' } }));
-        }
+        if (!(dVal > 0)) return fail('Enter a valid dose per administration greater than 0.');
         const dInfo = DOSE_UNITS[vialInput.doseUnit];
 
-        if (dInfo.base !== sInfo.base) {
-            return setVialInput((s) => ({
-                ...s,
-                result: {
-                    error:
-                        `Unit mismatch: dose unit (${vialInput.doseUnit}) is not compatible with ` +
-                        `strength unit (${vialInput.strengthUnit}). Both must be mass units (mg / mcg / g) ` +
-                        `or both must be "units".`
-                }
-            }));
+        // --- Unit compatibility ---
+        if (dInfo.base !== uInfo.base) {
+            return fail(
+                `Unit mismatch: dose unit (${vialInput.doseUnit}) is not compatible with ` +
+                `strength unit (${vialInput.strengthUnit}). Both must be mass units (mg / mcg / g) ` +
+                `or both must be "units".`
+            );
         }
 
+        // --- Frequency ---
         const fVal = parseFloat(vialInput.freqValue);
-        if (!(fVal > 0)) {
-            return setVialInput((s) => ({ ...s, result: { error: 'Enter a valid frequency greater than 0.' } }));
-        }
+        if (!(fVal > 0)) return fail('Enter a valid frequency greater than 0.');
 
+        // --- Duration ---
         const dur = parseFloat(vialInput.durationDays);
-        if (!(dur > 0)) {
-            return setVialInput((s) => ({ ...s, result: { error: 'Enter a valid treatment duration greater than 0.' } }));
-        }
+        if (!(dur > 0)) return fail('Enter a valid treatment duration greater than 0.');
 
+        // --- Wastage ---
         let w = parseFloat(vialInput.wastage);
         if (isNaN(w) || w < 0) w = 0;
 
-        const ceil = (n) => Math.ceil(n - 1e-9);
-
+        // ---------- Core maths ----------
         const dosesPerDay = vialInput.freqType === 'perDay' ? fVal : 24 / fVal;
         const totalDoses = ceil(dosesPerDay * dur);
-        const doseBase = dVal * dInfo.factor;          // base unit per administration
-        const strengthBase = sVal * sInfo.factor;      // base unit per mL or per vial
-        const wm = 1 + w / 100;                        // wastage multiplier
+        const doseBase = dVal * dInfo.factor;            // base unit per administration
+        const wm = 1 + w / 100;                          // wastage multiplier
         const vt = vialInput.vialType;
 
         let vialsNeeded;
@@ -222,10 +223,13 @@ const LandingPage = () => {
         let amountPerVial = null;
         let vialsPerDose = null;
         let dosesPerVial = null;
+        let concentration = null;                        // base unit per mL
 
-        if (sInfo.kind === 'conc') {
-            volumePerDose = doseBase / strengthBase;   // mL per dose
-            amountPerVial = strengthBase * vVol;       // base unit per vial
+        if (isPerMl) {
+            // e.g. 500 mg per 5 mL  ->  100 mg/mL
+            concentration = (sVal * uInfo.factor) / perVol;
+            volumePerDose = doseBase / concentration;    // mL per dose
+            amountPerVial = concentration * vVol;        // base unit per bottle
             totalVolumeNeeded = volumePerDose * totalDoses;
             totalAmountNeeded = doseBase * totalDoses;
 
@@ -238,7 +242,8 @@ const LandingPage = () => {
                 vialsNeeded = vialsPerDose * totalDoses;
             }
         } else {
-            amountPerVial = strengthBase;
+            // Fixed amount per whole vial, e.g. 1 g per vial
+            amountPerVial = sVal * uInfo.factor;
             totalAmountNeeded = doseBase * totalDoses;
 
             if (vt === 'multi') {
@@ -264,7 +269,10 @@ const LandingPage = () => {
                 doseUnitLabel: vialInput.doseUnit,
                 doseBaseUnit: dInfo.base,
                 totalAmountNeeded,
-                isConc: sInfo.kind === 'conc',
+                isConc: isPerMl,
+                strengthEntered: `${fmt(sVal, 4)} ${vialInput.strengthUnit}` +
+                    (isPerMl ? ` per ${fmt(perVol, 2)} mL` : ' per vial'),
+                concentration,
                 vVol,
                 volumePerDose,
                 totalVolumeNeeded,
@@ -277,12 +285,21 @@ const LandingPage = () => {
         }));
     };
 
-    // Derived values for rendering
-    const vialStrengthInfo = STRENGTH_UNITS[vialInput.strengthUnit];
+    // ---- Derived values for rendering ----
+    const vialIsPerMl = vialInput.strengthBasis === 'perMl';
     const vialResult = vialInput.result;
     const vialBreakdown = [];
 
     if (vialResult && !vialResult.error) {
+        vialBreakdown.push(['Strength used', vialResult.strengthEntered]);
+
+        if (vialResult.isConc) {
+            vialBreakdown.push([
+                'Concentration',
+                `${fmt(vialResult.concentration, 4)} ${vialResult.doseBaseUnit}/mL`
+            ]);
+        }
+
         vialBreakdown.push([
             'Doses per day',
             `${fmt(vialResult.dosesPerDay, 2)} ${vialResult.dosesPerDay === 1 ? 'dose' : 'doses'}`
@@ -331,19 +348,13 @@ const LandingPage = () => {
             <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-20">
-                        {/* Logo */}
                         <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.scrollTo(0, 0)}>
                             <div className="flex items-center justify-center w-8 h-8 rounded-lg shadow-sm overflow-hidden">
-                                <img
-                                    src="/logo.png"
-                                    alt="Addis Med Logo"
-                                    className="w-full h-full object-contain"
-                                />
+                                <img src="/logo.png" alt="Addis Med Logo" className="w-full h-full object-contain" />
                             </div>
                             <span className="text-2xl font-bold tracking-tight text-slate-900">Addis Med</span>
                         </div>
 
-                        {/* Desktop Navigation Links */}
                         <div className="hidden md:flex items-center gap-8">
                             <a href="#about" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">About Us</a>
                             <a href="#contact" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">Contact</a>
@@ -352,7 +363,6 @@ const LandingPage = () => {
                             <Link to="/vacancies" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors flex items-center gap-1">Vacancies <FaArrowRight className="text-[10px]" /></Link>
                         </div>
 
-                        {/* Desktop Action Buttons */}
                         <div className="hidden md:flex items-center gap-4">
                             {isLoggedIn ? (
                                 <button
@@ -364,23 +374,12 @@ const LandingPage = () => {
                                 </button>
                             ) : (
                                 <>
-                                    <Link
-                                        to="/login"
-                                        className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
-                                    >
-                                        Sign In
-                                    </Link>
-                                    <Link
-                                        to="/signup"
-                                        className="px-5 py-2.5 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-lg shadow-sm transition-all"
-                                    >
-                                        Get Started
-                                    </Link>
+                                    <Link to="/login" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">Sign In</Link>
+                                    <Link to="/signup" className="px-5 py-2.5 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-lg shadow-sm transition-all">Get Started</Link>
                                 </>
                             )}
                         </div>
 
-                        {/* Mobile Menu Button */}
                         <div className="md:hidden flex items-center">
                             <button
                                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -392,7 +391,6 @@ const LandingPage = () => {
                     </div>
                 </div>
 
-                {/* Mobile Menu Dropdown */}
                 {isMobileMenuOpen && (
                     <div className="md:hidden bg-white border-b border-slate-200 shadow-lg absolute w-full">
                         <div className="px-4 pt-2 pb-6 space-y-2">
@@ -404,10 +402,7 @@ const LandingPage = () => {
                             <div className="border-t border-slate-100 my-2 pt-2"></div>
                             {isLoggedIn ? (
                                 <button
-                                    onClick={() => {
-                                        setIsMobileMenuOpen(false);
-                                        navigate(getDashboardPath());
-                                    }}
+                                    onClick={() => { setIsMobileMenuOpen(false); navigate(getDashboardPath()); }}
                                     className="w-full px-4 py-3 text-base font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg text-center"
                                 >
                                     Go to Dashboard
@@ -423,8 +418,8 @@ const LandingPage = () => {
                 )}
             </nav>
 
-            {/* Hero Section */}
             <main>
+                {/* Hero */}
                 <div className="relative pt-16 pb-24 lg:pt-24 lg:pb-32 overflow-hidden bg-white">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
                         <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-slate-100 text-slate-700 rounded-full text-sm font-semibold mb-8 border border-slate-200 shadow-sm">
@@ -455,7 +450,7 @@ const LandingPage = () => {
                     </div>
                 </div>
 
-                {/* Features Grid */}
+                {/* Features */}
                 <div id="features" className="bg-white py-20 border-t border-slate-200 pt-28 -mt-8">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="text-center mb-16">
@@ -465,26 +460,10 @@ const LandingPage = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                             {[
-                                {
-                                    icon: <FaPills className="text-green-500 text-3xl" />,
-                                    title: 'Medication Database',
-                                    desc: 'Access medication information in local language.'
-                                },
-                                {
-                                    icon: <FaShieldAlt className="text-green-500 text-3xl" />,
-                                    title: 'Quick Screening',
-                                    desc: 'Automated quick checks for pregnancy, elderly patients, and interactions.'
-                                },
-                                {
-                                    icon: <FaClipboardList className="text-green-500 text-3xl" />,
-                                    title: 'Medication Review',
-                                    desc: 'Advanced tool providing information and consultation support in medication reviews.'
-                                },
-                                {
-                                    icon: <FaBookOpen className="text-green-500 text-3xl" />,
-                                    title: 'Education',
-                                    desc: 'Automated features that provide educational contents for pharmacy students & professionals'
-                                }
+                                { icon: <FaPills className="text-green-500 text-3xl" />, title: 'Medication Database', desc: 'Access medication information in local language.' },
+                                { icon: <FaShieldAlt className="text-green-500 text-3xl" />, title: 'Quick Screening', desc: 'Automated quick checks for pregnancy, elderly patients, and interactions.' },
+                                { icon: <FaClipboardList className="text-green-500 text-3xl" />, title: 'Medication Review', desc: 'Advanced tool providing information and consultation support in medication reviews.' },
+                                { icon: <FaBookOpen className="text-green-500 text-3xl" />, title: 'Education', desc: 'Automated features that provide educational contents for pharmacy students & professionals' }
                             ].map((feature, idx) => (
                                 <div key={idx} className="p-8 bg-slate-50 rounded-3xl border border-slate-200 hover:border-green-300 hover:shadow-xl transition-all duration-300 group">
                                     <div className="w-16 h-16 bg-green-50 border border-slate-200 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
@@ -514,10 +493,7 @@ const LandingPage = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                             {/* BMI */}
-                            <form
-                                onSubmit={calculateBMI}
-                                className="p-8 bg-white rounded-3xl border border-slate-200 hover:border-green-300 hover:shadow-xl transition-all duration-300 flex flex-col"
-                            >
+                            <form onSubmit={calculateBMI} className="p-8 bg-white rounded-3xl border border-slate-200 hover:border-green-300 hover:shadow-xl transition-all duration-300 flex flex-col">
                                 <div className="w-14 h-14 bg-green-50 border border-green-100 rounded-2xl flex items-center justify-center mb-5">
                                     <FaWeightHanging className="text-green-500 text-2xl" />
                                 </div>
@@ -526,9 +502,7 @@ const LandingPage = () => {
 
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Weight (kg)</label>
                                 <input
-                                    type="number"
-                                    step="0.1"
-                                    min="0"
+                                    type="number" step="0.1" min="0"
                                     value={bmiInput.weight}
                                     onChange={(e) => setBmiInput({ ...bmiInput, weight: e.target.value })}
                                     className="w-full mb-4 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
@@ -537,19 +511,14 @@ const LandingPage = () => {
 
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Height (cm)</label>
                                 <input
-                                    type="number"
-                                    step="0.1"
-                                    min="0"
+                                    type="number" step="0.1" min="0"
                                     value={bmiInput.height}
                                     onChange={(e) => setBmiInput({ ...bmiInput, height: e.target.value })}
                                     className="w-full mb-5 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
                                     placeholder="e.g. 170"
                                 />
 
-                                <button
-                                    type="submit"
-                                    className="w-full py-3 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all"
-                                >
+                                <button type="submit" className="w-full py-3 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all">
                                     Calculate BMI
                                 </button>
 
@@ -565,20 +534,15 @@ const LandingPage = () => {
                                             </p>
                                             <p className="text-sm font-semibold text-green-600 mt-1">{bmiInput.result.category}</p>
                                             {bmiInput.result.message && (
-                                                <p className="text-xs font-medium text-slate-600 mt-2 leading-relaxed">
-                                                    {bmiInput.result.message}
-                                                </p>
+                                                <p className="text-xs font-medium text-slate-600 mt-2 leading-relaxed">{bmiInput.result.message}</p>
                                             )}
                                         </div>
                                     )}
                                 </div>
                             </form>
 
-                            {/* BSA Du Bois */}
-                            <form
-                                onSubmit={calculateBSA}
-                                className="p-8 bg-white rounded-3xl border border-slate-200 hover:border-green-300 hover:shadow-xl transition-all duration-300 flex flex-col"
-                            >
+                            {/* BSA */}
+                            <form onSubmit={calculateBSA} className="p-8 bg-white rounded-3xl border border-slate-200 hover:border-green-300 hover:shadow-xl transition-all duration-300 flex flex-col">
                                 <div className="w-14 h-14 bg-green-50 border border-green-100 rounded-2xl flex items-center justify-center mb-5">
                                     <FaRulerVertical className="text-green-500 text-2xl" />
                                 </div>
@@ -587,9 +551,7 @@ const LandingPage = () => {
 
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Weight (kg)</label>
                                 <input
-                                    type="number"
-                                    step="0.1"
-                                    min="0"
+                                    type="number" step="0.1" min="0"
                                     value={bsaInput.weight}
                                     onChange={(e) => setBsaInput({ ...bsaInput, weight: e.target.value })}
                                     className="w-full mb-4 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
@@ -598,19 +560,14 @@ const LandingPage = () => {
 
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Height (cm)</label>
                                 <input
-                                    type="number"
-                                    step="0.1"
-                                    min="0"
+                                    type="number" step="0.1" min="0"
                                     value={bsaInput.height}
                                     onChange={(e) => setBsaInput({ ...bsaInput, height: e.target.value })}
                                     className="w-full mb-5 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
                                     placeholder="e.g. 170"
                                 />
 
-                                <button
-                                    type="submit"
-                                    className="w-full py-3 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all"
-                                >
+                                <button type="submit" className="w-full py-3 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all">
                                     Calculate BSA
                                 </button>
 
@@ -630,11 +587,8 @@ const LandingPage = () => {
                                 </div>
                             </form>
 
-                            {/* eGFR CKD-EPI 2021 */}
-                            <form
-                                onSubmit={calculateEGFR}
-                                className="p-8 bg-white rounded-3xl border border-slate-200 hover:border-green-300 hover:shadow-xl transition-all duration-300 flex flex-col"
-                            >
+                            {/* eGFR */}
+                            <form onSubmit={calculateEGFR} className="p-8 bg-white rounded-3xl border border-slate-200 hover:border-green-300 hover:shadow-xl transition-all duration-300 flex flex-col">
                                 <div className="w-14 h-14 bg-green-50 border border-green-100 rounded-2xl flex items-center justify-center mb-5">
                                     <FaHeartbeat className="text-green-500 text-2xl" />
                                 </div>
@@ -643,9 +597,7 @@ const LandingPage = () => {
 
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Age (years)</label>
                                 <input
-                                    type="number"
-                                    step="1"
-                                    min="1"
+                                    type="number" step="1" min="1"
                                     value={egfrInput.age}
                                     onChange={(e) => setEgfrInput({ ...egfrInput, age: e.target.value })}
                                     className="w-full mb-4 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
@@ -664,19 +616,14 @@ const LandingPage = () => {
 
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Serum creatinine (mg/dL)</label>
                                 <input
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
+                                    type="number" step="0.01" min="0"
                                     value={egfrInput.scr}
                                     onChange={(e) => setEgfrInput({ ...egfrInput, scr: e.target.value })}
                                     className="w-full mb-5 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
                                     placeholder="e.g. 0.9"
                                 />
 
-                                <button
-                                    type="submit"
-                                    className="w-full py-3 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all"
-                                >
+                                <button type="submit" className="w-full py-3 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all">
                                     Calculate eGFR
                                 </button>
 
@@ -697,7 +644,7 @@ const LandingPage = () => {
                             </form>
                         </div>
 
-                        {/* Vial / Bottle Calculator */}
+                        {/* ===== Vial / Bottle Calculator ===== */}
                         <form
                             onSubmit={calculateVials}
                             className="mt-8 p-8 bg-white rounded-3xl border border-slate-200 hover:border-green-300 hover:shadow-xl transition-all duration-300"
@@ -715,14 +662,12 @@ const LandingPage = () => {
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {/* Strength */}
+                                {/* Strength — supports "X mg per Y mL" and "X mg per vial" */}
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Strength</label>
                                     <div className="flex gap-2">
                                         <input
-                                            type="number"
-                                            step="any"
-                                            min="0"
+                                            type="number" step="any" min="0"
                                             value={vialInput.strengthValue}
                                             onChange={(e) => setVialInput({ ...vialInput, strengthValue: e.target.value })}
                                             className="flex-1 min-w-0 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
@@ -733,44 +678,63 @@ const LandingPage = () => {
                                             onChange={(e) => setVialInput({ ...vialInput, strengthUnit: e.target.value })}
                                             className="px-2 py-2.5 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white"
                                         >
-                                            <option value="mg/mL">mg/mL</option>
-                                            <option value="mcg/mL">mcg/mL</option>
-                                            <option value="g/mL">g/mL</option>
-                                            <option value="units/mL">units/mL</option>
-                                            <option value="mg/vial">mg/vial</option>
-                                            <option value="mcg/vial">mcg/vial</option>
-                                            <option value="g/vial">g/vial</option>
-                                            <option value="units/vial">units/vial</option>
+                                            <option value="mg">mg</option>
+                                            <option value="mcg">mcg</option>
+                                            <option value="g">g</option>
+                                            <option value="units">units</option>
                                         </select>
                                     </div>
+                                    <div className="flex items-center gap-2 mt-2 text-sm">
+                                        <select
+                                            value={vialInput.strengthBasis}
+                                            onChange={(e) => setVialInput({ ...vialInput, strengthBasis: e.target.value })}
+                                            className="px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white text-slate-700"
+                                        >
+                                            <option value="perMl">per volume</option>
+                                            <option value="perVial">per vial</option>
+                                        </select>
+                                        {vialIsPerMl && (
+                                            <>
+                                                <input
+                                                    type="number" step="any" min="0"
+                                                    value={vialInput.strengthPerMl}
+                                                    onChange={(e) => setVialInput({ ...vialInput, strengthPerMl: e.target.value })}
+                                                    className="w-16 px-2 py-1.5 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                                    placeholder="1"
+                                                />
+                                                <span className="text-slate-500 text-xs">mL</span>
+                                            </>
+                                        )}
+                                    </div>
+                                    <p className="mt-1 text-[11px] text-slate-400">
+                                        {vialIsPerMl
+                                            ? 'e.g. 500 mg per 5 mL → enter 500 mg, per volume 5 mL'
+                                            : 'e.g. 1 g per vial → enter 1 g, per vial'}
+                                    </p>
                                 </div>
 
-                                {/* Vial volume (only for concentration strengths) */}
-                                {vialStrengthInfo.kind === 'conc' && (
+                                {/* Bottle volume — only for per-volume strengths */}
+                                {vialIsPerMl && (
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 mb-1">
-                                            Volume per vial / bottle <span className="text-slate-400 font-normal">(mL)</span>
+                                            Bottle / vial volume <span className="text-slate-400 font-normal">(mL)</span>
                                         </label>
                                         <input
-                                            type="number"
-                                            step="any"
-                                            min="0"
+                                            type="number" step="any" min="0"
                                             value={vialInput.vialVolume}
                                             onChange={(e) => setVialInput({ ...vialInput, vialVolume: e.target.value })}
                                             className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                                            placeholder="e.g. 10"
+                                            placeholder="e.g. 100"
                                         />
                                     </div>
                                 )}
 
-                                {/* Dose per administration */}
+                                {/* Dose */}
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Dose per administration</label>
                                     <div className="flex gap-2">
                                         <input
-                                            type="number"
-                                            step="any"
-                                            min="0"
+                                            type="number" step="any" min="0"
                                             value={vialInput.doseValue}
                                             onChange={(e) => setVialInput({ ...vialInput, doseValue: e.target.value })}
                                             className="flex-1 min-w-0 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
@@ -794,9 +758,7 @@ const LandingPage = () => {
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Frequency</label>
                                     <div className="flex gap-2">
                                         <input
-                                            type="number"
-                                            step="any"
-                                            min="0"
+                                            type="number" step="any" min="0"
                                             value={vialInput.freqValue}
                                             onChange={(e) => setVialInput({ ...vialInput, freqValue: e.target.value })}
                                             className="flex-1 min-w-0 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
@@ -819,9 +781,7 @@ const LandingPage = () => {
                                         Treatment duration <span className="text-slate-400 font-normal">(days)</span>
                                     </label>
                                     <input
-                                        type="number"
-                                        step="any"
-                                        min="0"
+                                        type="number" step="any" min="0"
                                         value={vialInput.durationDays}
                                         onChange={(e) => setVialInput({ ...vialInput, durationDays: e.target.value })}
                                         className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
@@ -835,10 +795,7 @@ const LandingPage = () => {
                                         Wastage / overfill <span className="text-slate-400 font-normal">(%)</span>
                                     </label>
                                     <input
-                                        type="number"
-                                        step="any"
-                                        min="0"
-                                        max="100"
+                                        type="number" step="any" min="0" max="100"
                                         value={vialInput.wastage}
                                         onChange={(e) => setVialInput({ ...vialInput, wastage: e.target.value })}
                                         className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
@@ -859,9 +816,7 @@ const LandingPage = () => {
                                         }`}
                                     >
                                         <input
-                                            type="radio"
-                                            name="vialType"
-                                            value="multi"
+                                            type="radio" name="vialType" value="multi"
                                             checked={vialInput.vialType === 'multi'}
                                             onChange={() => setVialInput({ ...vialInput, vialType: 'multi' })}
                                             className="mt-1 accent-green-500"
@@ -879,9 +834,7 @@ const LandingPage = () => {
                                         }`}
                                     >
                                         <input
-                                            type="radio"
-                                            name="vialType"
-                                            value="single"
+                                            type="radio" name="vialType" value="single"
                                             checked={vialInput.vialType === 'single'}
                                             onChange={() => setVialInput({ ...vialInput, vialType: 'single' })}
                                             className="mt-1 accent-green-500"
@@ -894,10 +847,7 @@ const LandingPage = () => {
                                 </div>
                             </div>
 
-                            <button
-                                type="submit"
-                                className="mt-5 w-full py-3 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all"
-                            >
+                            <button type="submit" className="mt-5 w-full py-3 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all">
                                 Calculate Vials / Bottles
                             </button>
 
@@ -941,7 +891,7 @@ const LandingPage = () => {
                     </div>
                 </div>
 
-                {/* Trust / AAU Section */}
+                {/* Trust / AAU */}
                 <div id="about" className="bg-[#1A2535] py-24 text-white">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="grid lg:grid-cols-2 gap-16 items-center">
@@ -951,10 +901,7 @@ const LandingPage = () => {
                                     Addis Med integrates health and medicines information with digital technology. Our platform ensures that healthcare providers have access to reliable, localized data.
                                 </p>
                                 <ul className="space-y-4">
-                                    {[
-                                        'Real-time medication availability tracking',
-                                        'Regularly updated medication related information'
-                                    ].map((item, i) => (
+                                    {['Real-time medication availability tracking', 'Regularly updated medication related information'].map((item, i) => (
                                         <li key={i} className="flex items-center gap-3">
                                             <FaCheckCircle className="text-green-100 drop-shadow-sm" />
                                             <span className="text-white font-semibold">{item}</span>
@@ -966,11 +913,7 @@ const LandingPage = () => {
                                 <div className="absolute inset-0 bg-white rounded-3xl transform rotate-3 opacity-10"></div>
                                 <div className="relative bg-white border border-green-100 rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col items-center text-center">
                                     <div className="bg-white p-2.5 rounded-full mb-4 border border-green-50 shadow-sm">
-                                        <img
-                                            src="/Addis Ababa University Logo.svg"
-                                            alt="AAU Logo"
-                                            className="w-28 h-28 object-contain"
-                                        />
+                                        <img src="/Addis Ababa University Logo.svg" alt="AAU Logo" className="w-28 h-28 object-contain" />
                                     </div>
                                     <span className="text-green-600 font-bold tracking-widest uppercase text-sm mb-2">Proudly Backed By</span>
                                     <h3 className="text-2xl font-bold text-slate-900 mb-1">Addis Ababa University</h3>
@@ -982,16 +925,11 @@ const LandingPage = () => {
                 </div>
             </main>
 
-            {/* Footer */}
             <footer id="contact" className="bg-slate-50 border-t border-slate-200 pt-16 pb-8">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                     <div className="flex items-center justify-center gap-2 mb-6">
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm overflow-hidden">
-                            <img
-                                src="/logo.png"
-                                alt="Addis Med Logo"
-                                className="w-full h-full object-contain"
-                            />
+                            <img src="/logo.png" alt="Addis Med Logo" className="w-full h-full object-contain" />
                         </div>
                         <span className="text-xl font-bold text-slate-900">Addis Med</span>
                     </div>
