@@ -860,7 +860,7 @@ const LandingPage = () => {
                                     Addis Med integrates health and medicines information with digital technology. Our platform ensures that healthcare providers have access to reliable, localized data.
                                 </p>
                                 <ul className="space-y-4">
-                                    {['Real-time medication availability tracking', 'Regularly updated medication related information'].map((item, i) => (
+                                    {['Support the optimization of medicines use', 'Provide medication related information'].map((item, i) => (
                                         <li key={i} className="flex items-center gap-3">
                                             <FaCheckCircle className="text-green-100 drop-shadow-sm" />
                                             <span className="text-white font-semibold">{item}</span>
