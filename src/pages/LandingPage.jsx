@@ -45,7 +45,6 @@ const LandingPage = () => {
         freqType: 'perDay',
         durationDays: '',
         vialType: 'multi',
-        wastage: '0',
         result: null
     });
 
@@ -205,15 +204,11 @@ const LandingPage = () => {
         const dur = parseFloat(vialInput.durationDays);
         if (!(dur > 0)) return fail('Enter a valid treatment duration greater than 0.');
 
-        // --- Wastage ---
-        let w = parseFloat(vialInput.wastage);
-        if (isNaN(w) || w < 0) w = 0;
-
         // ---------- Core maths ----------
         const dosesPerDay = vialInput.freqType === 'perDay' ? fVal : 24 / fVal;
         const totalDoses = ceil(dosesPerDay * dur);
         const doseBase = dVal * dInfo.factor;            // base unit per administration
-        const wm = 1 + w / 100;                          // wastage multiplier
+        const wm = 1;                                   // no wastage
         const vt = vialInput.vialType;
 
         let vialsNeeded;
@@ -279,7 +274,6 @@ const LandingPage = () => {
                 amountPerVial,
                 vialsPerDose,
                 dosesPerVial,
-                w,
                 vt
             }
         }));
@@ -333,10 +327,6 @@ const LandingPage = () => {
 
         if (vialResult.dosesPerVial != null && vialResult.vt === 'multi') {
             vialBreakdown.push(['Doses obtainable per vial', fmt(vialResult.dosesPerVial, 0)]);
-        }
-
-        if (vialResult.w > 0) {
-            vialBreakdown.push(['Wastage / overfill allowance', `${fmt(vialResult.w, 1)}%`]);
         }
 
         vialBreakdown.push(['Vial type', vialResult.vt === 'multi' ? 'Multi-use' : 'Single-use']);
@@ -661,7 +651,7 @@ const LandingPage = () => {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                                 {/* Strength — supports "X mg per Y mL" and "X mg per vial" */}
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Strength</label>
@@ -786,20 +776,6 @@ const LandingPage = () => {
                                         onChange={(e) => setVialInput({ ...vialInput, durationDays: e.target.value })}
                                         className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
                                         placeholder="e.g. 7"
-                                    />
-                                </div>
-
-                                {/* Wastage */}
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">
-                                        Wastage / overfill <span className="text-slate-400 font-normal">(%)</span>
-                                    </label>
-                                    <input
-                                        type="number" step="any" min="0" max="100"
-                                        value={vialInput.wastage}
-                                        onChange={(e) => setVialInput({ ...vialInput, wastage: e.target.value })}
-                                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                                        placeholder="e.g. 10"
                                     />
                                 </div>
                             </div>
