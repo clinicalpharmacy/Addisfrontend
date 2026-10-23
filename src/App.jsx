@@ -32,6 +32,8 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import VerifyEmail from './pages/VerifyEmail';
 import ClinicalPharmacyTool from './pages/ClinicalPharmacyTool';
+import News from './pages/News';
+import AdminNews from './pages/AdminNews';
 
 // Subscription Pages
 import SubscriptionPlans from "./pages/SubscriptionPlans";
@@ -912,6 +914,10 @@ function App() {
                     element={<Vacancies />}
                 />
                 <Route
+                    path="/news"
+                    element={<News />}
+                />
+                <Route
                     path="/login"
                     element={
                         <PublicRoute>
@@ -1065,6 +1071,15 @@ function App() {
                     element={
                         <ProtectedRoute adminOnly={true}>
                             <AdminVacancies />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/admin/news"
+                    element={
+                        <ProtectedRoute adminOnly={true}>
+                            <AdminNews />
                         </ProtectedRoute>
                     }
                 />
