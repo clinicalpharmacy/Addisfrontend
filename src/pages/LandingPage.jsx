@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
     FaUserMd, FaHeartbeat, FaShieldAlt, FaPills, FaClipboardList,
     FaArrowRight, FaCheckCircle, FaBookMedical, FaBookOpen,
     FaBars, FaBook, FaCapsules, FaNotesMedical, FaTimes,
-    FaCalculator, FaWeightHanging, FaRulerVertical
+    FaCalculator, FaWeightHanging, FaRulerVertical,
+    FaNewspaper, FaCalendarAlt, FaTag
 } from 'react-icons/fa';
+import api from '../utils/api';
+import { format } from 'date-fns';
 
 // ---- Unit tables for the Vial / Bottle calculator ----
-// `factor` converts the entered amount into the base unit (mg or units).
 const AMOUNT_UNITS = {
     mg:    { base: 'mg',    factor: 1 },
     mcg:   { base: 'mg',    factor: 0.001 },
@@ -38,6 +40,10 @@ const CLIENT_TIPS = [
 const LandingPage = () => {
     const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    // ---- Latest news state ----
+    const [latestNews, setLatestNews] = useState([]);
+    const [newsLoading, setNewsLoading] = useState(true);
 
     // ---- Calculator state ----
     const [bmiInput, setBmiInput] = useState({ weight: '', height: '', result: null });
@@ -75,6 +81,27 @@ const LandingPage = () => {
         return '/home';
     };
 
+    // ---- Fetch latest news (non-blocking; guests can still see the page) ----
+    useEffect(() => {
+        let cancelled = false;
+        const loadNews = async () => {
+            try {
+                setNewsLoading(true);
+                const data = await api.get('/news?limit=3');
+                if (!cancelled && data?.success) {
+                    setLatestNews((data.news || []).slice(0, 3));
+                }
+            } catch (err) {
+                // Silent: guests without a token will 401 here until /news is made public
+                console.warn('⚠️ Could not load landing news:', err?.message || err);
+            } finally {
+                if (!cancelled) setNewsLoading(false);
+            }
+        };
+        loadNews();
+        return () => { cancelled = true; };
+    }, []);
+
     // ---- Calculator helpers ----
     const num = (v) => {
         const n = parseFloat(v);
@@ -104,9 +131,7 @@ const LandingPage = () => {
             category = 'Underweight';
             const targetWeight = 18.5 * hM * hM;
             const gain = targetWeight - w;
-            if (gain > 0) {
-                message = `Gain at least ${gain.toFixed(1)} kg to reach a BMI of 18.5.`;
-            }
+            if (gain > 0) message = `Gain at least ${gain.toFixed(1)} kg to reach a BMI of 18.5.`;
         } else if (bmi < 25) {
             category = 'Normal range';
         } else if (bmi < 30) {
@@ -116,15 +141,10 @@ const LandingPage = () => {
         if (bmi >= 25) {
             const targetWeight = 25 * hM * hM;
             const loss = w - targetWeight;
-            if (loss > 0) {
-                message = `Lose at least ${loss.toFixed(1)} kg to reach a BMI below 25.`;
-            }
+            if (loss > 0) message = `Lose at least ${loss.toFixed(1)} kg to reach a BMI below 25.`;
         }
 
-        setBmiInput((s) => ({
-            ...s,
-            result: { value: bmi.toFixed(1), unit: 'kg/m²', category, message }
-        }));
+        setBmiInput((s) => ({ ...s, result: { value: bmi.toFixed(1), unit: 'kg/m²', category, message } }));
     };
 
     const calculateBSA = (e) => {
@@ -135,7 +155,6 @@ const LandingPage = () => {
             setBsaInput((s) => ({ ...s, result: { error: 'Enter valid weight and height.' } }));
             return;
         }
-        // Du Bois: 0.007184 × height(cm)^0.725 × weight(kg)^0.425
         const bsa = 0.007184 * Math.pow(h, 0.725) * Math.pow(w, 0.425);
         setBsaInput((s) => ({ ...s, result: { value: bsa.toFixed(2), unit: 'm²', category: 'Du Bois formula' } }));
     };
@@ -164,40 +183,34 @@ const LandingPage = () => {
         }));
     };
 
-    // ---- Vial / Bottle calculator ----
     const calculateVials = (e) => {
         e.preventDefault();
 
         const ceil = (n) => Math.ceil(n - 1e-9);
         const fail = (error) => setVialInput((s) => ({ ...s, result: { error } }));
 
-        // --- Strength ---
         const sVal = parseFloat(vialInput.strengthValue);
         if (!(sVal > 0)) return fail('Enter a valid strength greater than 0.');
 
         const uInfo = AMOUNT_UNITS[vialInput.strengthUnit];
         const isPerMl = vialInput.strengthBasis === 'perMl';
 
-        // "per X mL" denominator (e.g. 500 mg per 5 mL)
         let perVol = null;
         if (isPerMl) {
             perVol = parseFloat(vialInput.strengthPerMl);
             if (!(perVol > 0)) return fail('Enter a valid "per volume" (mL) for the strength — e.g. 5 for 500 mg per 5 mL.');
         }
 
-        // --- Vial volume (only when strength is expressed per volume) ---
         let vVol = null;
         if (isPerMl) {
             vVol = parseFloat(vialInput.vialVolume);
             if (!(vVol > 0)) return fail('Enter a valid bottle / vial volume (mL).');
         }
 
-        // --- Dose ---
         const dVal = parseFloat(vialInput.doseValue);
         if (!(dVal > 0)) return fail('Enter a valid dose per administration greater than 0.');
         const dInfo = DOSE_UNITS[vialInput.doseUnit];
 
-        // --- Unit compatibility ---
         if (dInfo.base !== uInfo.base) {
             return fail(
                 `Unit mismatch: dose unit (${vialInput.doseUnit}) is not compatible with ` +
@@ -206,19 +219,16 @@ const LandingPage = () => {
             );
         }
 
-        // --- Frequency ---
         const fVal = parseFloat(vialInput.freqValue);
         if (!(fVal > 0)) return fail('Enter a valid frequency greater than 0.');
 
-        // --- Duration ---
         const dur = parseFloat(vialInput.durationDays);
         if (!(dur > 0)) return fail('Enter a valid treatment duration greater than 0.');
 
-        // ---------- Core maths ----------
         const dosesPerDay = vialInput.freqType === 'perDay' ? fVal : 24 / fVal;
         const totalDoses = ceil(dosesPerDay * dur);
-        const doseBase = dVal * dInfo.factor;            // base unit per administration
-        const wm = 1;                                   // no wastage
+        const doseBase = dVal * dInfo.factor;
+        const wm = 1;
         const vt = vialInput.vialType;
 
         let vialsNeeded;
@@ -228,13 +238,12 @@ const LandingPage = () => {
         let amountPerVial = null;
         let vialsPerDose = null;
         let dosesPerVial = null;
-        let concentration = null;                        // base unit per mL
+        let concentration = null;
 
         if (isPerMl) {
-            // e.g. 500 mg per 5 mL  ->  100 mg/mL
             concentration = (sVal * uInfo.factor) / perVol;
-            volumePerDose = doseBase / concentration;    // mL per dose
-            amountPerVial = concentration * vVol;        // base unit per bottle
+            volumePerDose = doseBase / concentration;
+            amountPerVial = concentration * vVol;
             totalVolumeNeeded = volumePerDose * totalDoses;
             totalAmountNeeded = doseBase * totalDoses;
 
@@ -247,7 +256,6 @@ const LandingPage = () => {
                 vialsNeeded = vialsPerDose * totalDoses;
             }
         } else {
-            // Fixed amount per whole vial, e.g. 1 g per vial
             amountPerVial = sVal * uInfo.factor;
             totalAmountNeeded = doseBase * totalDoses;
 
@@ -289,7 +297,6 @@ const LandingPage = () => {
         }));
     };
 
-    // ---- Derived values for rendering ----
     const vialIsPerMl = vialInput.strengthBasis === 'perMl';
     const vialResult = vialInput.result;
     const vialBreakdown = [];
@@ -298,10 +305,7 @@ const LandingPage = () => {
         vialBreakdown.push(['Strength used', vialResult.strengthEntered]);
 
         if (vialResult.isConc) {
-            vialBreakdown.push([
-                'Concentration',
-                `${fmt(vialResult.concentration, 4)} ${vialResult.doseBaseUnit}/mL`
-            ]);
+            vialBreakdown.push(['Concentration', `${fmt(vialResult.concentration, 4)} ${vialResult.doseBaseUnit}/mL`]);
         }
 
         vialBreakdown.push([
@@ -309,10 +313,7 @@ const LandingPage = () => {
             `${fmt(vialResult.dosesPerDay, 2)} ${vialResult.dosesPerDay === 1 ? 'dose' : 'doses'}`
         ]);
         vialBreakdown.push(['Total administrations', fmt(vialResult.totalDoses, 0)]);
-        vialBreakdown.push([
-            'Dose per administration',
-            `${fmt(vialResult.doseEntered, 4)} ${vialResult.doseUnitLabel}`
-        ]);
+        vialBreakdown.push(['Dose per administration', `${fmt(vialResult.doseEntered, 4)} ${vialResult.doseUnitLabel}`]);
         vialBreakdown.push([
             'Total medication required',
             `${fmt(vialResult.totalAmountNeeded, 2)} ${vialResult.doseBaseUnit}`
@@ -342,6 +343,12 @@ const LandingPage = () => {
         vialBreakdown.push(['Vial type', vialResult.vt === 'multi' ? 'Multi-use' : 'Single-use']);
     }
 
+    // Helper for trimming article previews
+    const truncate = (text, max = 160) => {
+        if (!text) return '';
+        return text.length > max ? text.slice(0, max).trim() + '…' : text;
+    };
+
     return (
         <div className="min-h-screen bg-white font-sans text-slate-900">
             {/* Navbar */}
@@ -359,6 +366,8 @@ const LandingPage = () => {
                             <a href="#about" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">About Us</a>
                             <a href="#contact" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">Contact</a>
                             <a href="#features" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">Features</a>
+                            {/* 👇 NEW: News link, between Features and Calculators */}
+                            <a href="#news" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">News</a>
                             <a href="#calculators" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">Calculators</a>
                             <a href="#clients" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">For Clients</a>
                             <Link to="/vacancies" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors flex items-center gap-1">Vacancies <FaArrowRight className="text-[10px]" /></Link>
@@ -398,6 +407,8 @@ const LandingPage = () => {
                             <a href="#about" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">About Us</a>
                             <a href="#contact" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">Contact</a>
                             <a href="#features" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">Features</a>
+                            {/* 👇 NEW: News link in mobile menu */}
+                            <a href="#news" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">News</a>
                             <a href="#calculators" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">Calculators</a>
                             <a href="#clients" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">For Clients</a>
                             <Link to="/vacancies" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">Vacancies</Link>
@@ -476,6 +487,109 @@ const LandingPage = () => {
                                 </div>
                             ))}
                         </div>
+                    </div>
+                </div>
+
+                {/* ===== NEWS SECTION — between Features and Calculators ===== */}
+                <div id="news" className="bg-slate-50 py-20 border-t border-slate-200">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-12">
+                            <div>
+                                <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-bold mb-3 border border-green-100">
+                                    <FaNewspaper className="text-green-500" />
+                                    Latest Updates
+                                </div>
+                                <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Health News &amp; Insights</h2>
+                                <p className="mt-3 text-slate-600 max-w-2xl">
+                                    Stay informed with the latest developments, research findings, and policy updates from the healthcare world.
+                                </p>
+                            </div>
+                            <Link
+                                to="/news"
+                                className="inline-flex items-center justify-center gap-2 px-5 py-3 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-xl shadow-sm transition-all whitespace-nowrap"
+                            >
+                                View All News
+                                <FaArrowRight className="text-xs" />
+                            </Link>
+                        </div>
+
+                        {newsLoading ? (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                {[1, 2, 3].map((n) => (
+                                    <div key={n} className="bg-white rounded-3xl border border-slate-200 overflow-hidden animate-pulse">
+                                        <div className="h-44 bg-slate-100" />
+                                        <div className="p-6 space-y-3">
+                                            <div className="h-3 bg-slate-100 rounded w-1/3" />
+                                            <div className="h-5 bg-slate-100 rounded w-5/6" />
+                                            <div className="h-3 bg-slate-100 rounded w-full" />
+                                            <div className="h-3 bg-slate-100 rounded w-4/6" />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : latestNews.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                {latestNews.map((item) => (
+                                    <Link
+                                        key={item.id}
+                                        to={`/news/${item.id}`}
+                                        className="group bg-white rounded-3xl border border-slate-200 overflow-hidden hover:border-green-300 hover:shadow-xl transition-all duration-300 flex flex-col"
+                                    >
+                                        {item.image_url ? (
+                                            <div className="h-44 overflow-hidden bg-slate-100">
+                                                <img
+                                                    src={item.image_url}
+                                                    alt={item.title}
+                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                    onError={(e) => { e.target.style.display = 'none'; }}
+                                                />
+                                            </div>
+                                        ) : (
+                                            <div className="h-44 bg-gradient-to-br from-green-50 to-emerald-50 border-b border-slate-100 flex items-center justify-center">
+                                                <FaNewspaper className="text-4xl text-green-400" />
+                                            </div>
+                                        )}
+
+                                        <div className="p-6 flex flex-col flex-grow">
+                                            {item.category && (
+                                                <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest border border-green-100 w-fit mb-3">
+                                                    <FaTag className="text-[8px]" /> {item.category}
+                                                </span>
+                                            )}
+                                            <h3 className="text-lg font-extrabold text-slate-900 mb-2 leading-snug group-hover:text-green-600 transition-colors">
+                                                {item.title}
+                                            </h3>
+                                            <p className="text-sm text-slate-600 leading-relaxed flex-grow">
+                                                {truncate(item.content, 140)}
+                                            </p>
+                                            <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100">
+                                                <span className="text-xs text-slate-400 font-medium flex items-center gap-1.5">
+                                                    <FaCalendarAlt />
+                                                    {item.created_at ? format(new Date(item.created_at), 'MMM dd, yyyy') : ''}
+                                                </span>
+                                                <span className="text-green-600 font-bold text-sm flex items-center gap-1 group-hover:gap-2 transition-all">
+                                                    Read <FaArrowRight className="text-[10px]" />
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="bg-white rounded-3xl border border-slate-200 py-16 px-6 text-center">
+                                <FaNewspaper className="text-4xl text-slate-200 mx-auto mb-4" />
+                                <h3 className="text-lg font-bold text-slate-900 mb-1">No articles yet</h3>
+                                <p className="text-sm text-slate-500 mb-5">
+                                    Health news and updates will appear here soon. In the meantime, browse the full archive.
+                                </p>
+                                <Link
+                                    to="/news"
+                                    className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all"
+                                >
+                                    Open News Archive <FaArrowRight className="text-xs" />
+                                </Link>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -648,7 +762,6 @@ const LandingPage = () => {
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                                {/* Strength — supports "X mg per Y mL" and "X mg per vial" */}
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Strength</label>
                                     <div className="flex gap-2">
@@ -699,7 +812,6 @@ const LandingPage = () => {
                                     </p>
                                 </div>
 
-                                {/* Bottle volume — only for per-volume strengths */}
                                 {vialIsPerMl && (
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -715,7 +827,6 @@ const LandingPage = () => {
                                     </div>
                                 )}
 
-                                {/* Dose */}
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Dose per administration</label>
                                     <div className="flex gap-2">
@@ -739,7 +850,6 @@ const LandingPage = () => {
                                     </div>
                                 </div>
 
-                                {/* Frequency */}
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Frequency</label>
                                     <div className="flex gap-2">
@@ -760,7 +870,6 @@ const LandingPage = () => {
                                     </div>
                                 </div>
 
-                                {/* Duration */}
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">
                                         Treatment duration <span className="text-slate-400 font-normal">(days)</span>
@@ -775,7 +884,6 @@ const LandingPage = () => {
                                 </div>
                             </div>
 
-                            {/* Vial type */}
                             <div className="mt-4">
                                 <label className="block text-sm font-medium text-slate-700 mb-2">Vial / bottle type</label>
                                 <div className="flex flex-wrap gap-3">
@@ -862,7 +970,7 @@ const LandingPage = () => {
                     </div>
                 </div>
 
-                {/* ===== For Clients (after Calculators, before Vacancies / About) ===== */}
+                {/* ===== For Clients ===== */}
                 <div id="clients" className="bg-white py-20 border-t border-slate-200">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="text-center mb-12">
