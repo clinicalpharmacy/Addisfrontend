@@ -976,7 +976,7 @@ const LandingPage = () => {
                         <div className="text-center mb-12">
                             <h2 className="text-3xl font-bold text-slate-900 tracking-tight">For Clients</h2>
                             <p className="mt-4 text-slate-600 max-w-2xl mx-auto">
-                                መድኃኒትዎን በአግባቡ እና በአስተማማኝ ሁኔታ ለመጠቀም የሚረዱ አስፈላጊ ምክሮች።
+                                መድኃኒትዎን በአግባቡ ለመጠቀም የሚረዱ አስፈላጊ ምክሮች።
                             </p>
                         </div>
 
