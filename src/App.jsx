@@ -32,12 +32,9 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import VerifyEmail from './pages/VerifyEmail';
 import ClinicalPharmacyTool from './pages/ClinicalPharmacyTool';
-<<<<<<< HEAD
 import MedicationReminders from './pages/MedicationReminders';
-=======
 import News from './pages/News';
 import AdminNews from './pages/AdminNews';
->>>>>>> a7e40f45b670ef5525b1988ed19d855239ace93e
 
 // Subscription Pages
 import SubscriptionPlans from "./pages/SubscriptionPlans";
