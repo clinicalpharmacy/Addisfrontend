@@ -96,9 +96,9 @@ const NewsDetail = () => {
                                     {format(new Date(article.created_at), 'MMMM dd, yyyy')}
                                 </span>
                             )}
-                            {article.views > 0 && (
+                            {typeof article.views === 'number' && (
                                 <span className="flex items-center gap-1.5">
-                                    <FaEye className="text-gray-400" /> {article.views} views
+                                    <FaEye className="text-gray-400" /> {article.views} {article.views === 1 ? 'view' : 'views'}
                                 </span>
                             )}
                         </div>
