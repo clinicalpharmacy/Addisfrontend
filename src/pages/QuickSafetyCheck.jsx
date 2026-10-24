@@ -3,11 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { 
     FaSearch, FaArrowLeft, FaShieldAlt, FaBaby, FaBabyCarriage, 
     FaUserEdit, FaProcedures, FaHeartbeat, FaPills, FaExclamationTriangle,
-    FaCheckCircle, FaExclamationCircle, FaSpinner, FaInfoCircle, FaSyringe,
-    FaBookMedical, FaExternalLinkAlt, FaChevronDown, FaChevronUp
+    FaCheckCircle, FaExclamationCircle, FaSpinner, FaInfoCircle, FaSyringe
 } from 'react-icons/fa';
 import api from '../utils/api';
-import FormattedDosageView from '../components/CDSS/FormattedDosageView';
 
 const CategoryTitle = ({ type }) => {
     switch (type) {
@@ -39,9 +37,6 @@ const QuickSafetyCheck = () => {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
     const [error, setError] = useState('');
-    const [dailyMedData, setDailyMedData] = useState([]);
-    const [expandedDailyMeds, setExpandedDailyMeds] = useState({});
-    const toggleDailyMed = (drug) => setExpandedDailyMeds(p => ({ ...p, [drug]: !p[drug] }));
 
     // Get user role from localStorage or context
     const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -108,16 +103,6 @@ const QuickSafetyCheck = () => {
         setLoading(true);
         setError('');
         setResult(null);
-        setDailyMedData([]);
-
-        // Fetch DailyMed FDA Dosage Guidelines for normal user
-        api.post('/dailymed/lookup-patient-meds', { medications: currentMeds })
-            .then(dmRes => {
-                if (dmRes.success && dmRes.results) {
-                    setDailyMedData(dmRes.results);
-                }
-            })
-            .catch(dmErr => console.warn('DailyMed quick check error:', dmErr));
 
         try {
             const response = await api.post('/quick-safety', { 
@@ -440,85 +425,6 @@ const QuickSafetyCheck = () => {
                                             {result.medication}ን በተመለከተ አዲስ ሜድ (Addis Med) ውስጥ {selectedCategory !== 'all' && `ለ[${CategoryTitle({ type: selectedCategory })}]`}  የጥንቃቄ መረጃ አልተገኘም። ሁልጊዜም የጤና ባለሙያ ያማክሩ።
                                         </p>
                                     </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* DailyMed FDA Dosage & Administration Guidance for Normal Users */}
-                        {dailyMedData.length > 0 && (
-                            <div className="bg-white rounded-2xl p-6 shadow-sm border border-blue-100 mt-6">
-                                <div className="flex items-center gap-3 mb-5 pb-4 border-b border-blue-200">
-                                    <div className="bg-blue-600 p-2.5 rounded-xl text-white shadow-xs">
-                                        <FaBookMedical className="text-lg" />
-                                    </div>
-                                    <div>
-                                        <h4 className="text-lg md:text-xl font-black text-slate-950 flex items-center gap-2.5">
-                                            Official DailyMed FDA Monograph (Uses, Dosage, Warnings & Ingredients)
-                                            <span className="text-xs md:text-sm bg-blue-600 text-white px-2.5 py-0.5 rounded-full font-black">
-                                                {dailyMedData.filter(d => d.found).length} FDA Labels Found
-                                            </span>
-                                        </h4>
-                                        <p className="text-xs md:text-sm text-slate-600 font-medium">FDA-approved contraindications, boxed warnings, adverse risks, drug interactions & special populations</p>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-4">
-                                    {dailyMedData.map((item, idx) => {
-                                        const isExp = !!expandedDailyMeds[item.query_drug];
-                                        return (
-                                            <div key={idx} className="border-2 border-gray-300 rounded-2xl overflow-hidden bg-white shadow-xs">
-                                                <div className="p-5 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                                    <div className="space-y-2">
-                                                        <div className="flex flex-wrap items-center gap-3">
-                                                            <span className="font-black text-slate-950 text-xl md:text-2xl">{item.query_drug}</span>
-                                                            {item.found && (
-                                                                <span className="text-xs md:text-sm bg-green-100 text-green-900 font-black px-3 py-1 rounded-full border border-green-300">
-                                                                    FDA Approved SPL
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                        {item.found && (
-                                                            <p className="text-sm md:text-base text-slate-700 font-medium mt-0.5 leading-normal">{item.label?.label_title}</p>
-                                                        )}
-                                                    </div>
-
-                                                    {item.found && (
-                                                        <div className="flex items-center gap-3 shrink-0">
-                                                            {item.label?.source_url && (
-                                                                <a
-                                                                    href={item.label.source_url}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    className="text-base text-blue-700 hover:text-blue-900 bg-white border-2 border-gray-300 px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-blue-50 transition-colors shadow-xs"
-                                                                >
-                                                                    <span>DailyMed SPL</span>
-                                                                    <FaExternalLinkAlt className="text-xs" />
-                                                                </a>
-                                                            )}
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => toggleDailyMed(item.query_drug)}
-                                                                className="text-base bg-amber-50 border-2 border-amber-300 hover:border-amber-500 hover:bg-amber-100 px-5 py-2.5 rounded-xl font-black flex items-center gap-2.5 text-slate-900 transition-colors shadow-xs"
-                                                            >
-                                                                <span>{isExp ? 'Hide Harm & Warning Analysis' : 'Check FDA Patient Warnings & Harm Risks'}</span>
-                                                                {isExp ? <FaChevronUp className="text-sm" /> : <FaChevronDown className="text-sm" />}
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {item.found && isExp && (
-                                                    <div className="p-6 border-t-2 border-gray-300 bg-slate-50/70">
-                                                        <div className="text-base md:text-lg font-black text-slate-950 mb-4 flex items-center gap-2.5">
-                                                            <FaShieldAlt className="text-red-600 text-lg" />
-                                                            <span>FDA Patient Safety & Harm Analysis (Contraindications, Warnings & Adverse Risks):</span>
-                                                        </div>
-                                                        <FormattedDosageView text={item.label?.dosage_text} />
-                                                    </div>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
                                 </div>
                             </div>
                         )}

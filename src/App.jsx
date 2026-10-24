@@ -101,17 +101,15 @@ const MainLayout = ({ children, showSidebar = true, showNavbar = true }) => {
                 {showSidebar && (
                     <>
                         {/* Mobile: slide-in overlay */}
-                        <div className={`fixed inset-y-0 left-0 z-50 w-72 bg-white transform transition-transform duration-300 ease-in-out ${
-                            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-                        } md:hidden border-r border-gray-200`}>
+                        <div className={`fixed inset-y-0 left-0 z-50 w-72 bg-white transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+                            } md:hidden border-r border-gray-200`}>
                             <Sidebar onClose={() => setSidebarOpen(false)} />
                         </div>
 
                         {/* Desktop: collapsible sidebar */}
-                        <div className={`hidden md:flex flex-col relative flex-shrink-0 transition-all duration-300 ease-in-out border-r border-gray-200 bg-white ${
-                            desktopCollapsed ? 'w-0 overflow-hidden' : 'w-72'
-                        }`}>
-                            <Sidebar onClose={() => {}} />
+                        <div className={`hidden md:flex flex-col relative flex-shrink-0 transition-all duration-300 ease-in-out border-r border-gray-200 bg-white ${desktopCollapsed ? 'w-0 overflow-hidden' : 'w-72'
+                            }`}>
+                            <Sidebar onClose={() => { }} />
                         </div>
 
                         {/* Desktop collapse toggle button */}
@@ -200,8 +198,8 @@ const RootRedirector = () => {
                 case 'superadmin':
                     return <Navigate to="/admin/dashboard" replace />;
                 case 'company_admin':
-                    return user.company_id 
-                        ? <Navigate to="/company/dashboard" replace /> 
+                    return user.company_id
+                        ? <Navigate to="/company/dashboard" replace />
                         : <Navigate to="/dashboard" replace />;
                 case 'pharmacist':
                     return <Navigate to="/dashboard" replace />;
