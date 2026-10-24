@@ -411,7 +411,7 @@ const LandingPage = () => {
                             {/* 👇 NEW: News link in mobile menu */}
                             <a href="#news" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">News</a>
                             <a href="#calculators" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">Calculators</a>
-                            <a href="#clients" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-sm font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">ለጤና አገልግሎት ተጠቃሚዎች</a>
+                            <a href="#clients" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-sm font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">For Clients</a>
                             <Link to="/vacancies" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">Vacancies</Link>
                             <div className="border-t border-slate-100 my-2 pt-2"></div>
                             {isLoggedIn ? (
@@ -974,7 +974,7 @@ const LandingPage = () => {
                 <div id="clients" className="bg-white py-20 border-t border-slate-200">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="text-center mb-12">
-                            <h2 className="text-3xl font-bold text-slate-900 tracking-tight">For Clients</h2>
+                            <h2 className="text-3xl font-bold text-slate-900 tracking-tight">ለጤና አገልግሎት ተጠቃሚዎች</h2>
                             <p className="mt-4 text-slate-600 max-w-2xl mx-auto">
                                 መድኃኒትዎን በአግባቡ ለመጠቀም የሚረዱ አስፈላጊ ምክሮች።
                             </p>
