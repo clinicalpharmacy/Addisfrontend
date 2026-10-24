@@ -5,7 +5,7 @@ import {
     FaSync, FaSpinner, FaCheckCircle, FaExclamationTriangle,
     FaUserCheck, FaUsers, FaHospital, FaPills, FaComments, FaCreditCard,
     FaChartLine, FaBuilding, FaUserShield, FaFileAlt, FaGraduationCap,
-    FaBullhorn
+    FaBullhorn, FaNewspaper
 } from 'react-icons/fa';
 
 
@@ -32,6 +32,9 @@ import { SupportVault } from '../components/Admin/SupportVault';
 import { AdminExams } from '../components/Admin/AdminExams';
 import { AdminReferrals } from '../components/Admin/AdminReferrals';
 import { AdminBroadcasts } from '../components/Admin/AdminBroadcasts';
+
+// Pages (embedded as tab)
+import AdminNews from './AdminNews';
 
 import api from '../utils/api';
 
@@ -123,6 +126,7 @@ const AdminDashboard = () => {
         { id: 'feedback', label: 'Feedback', icon: FaComments, iconColor: 'text-pink-500' },
         { id: 'chats', label: 'Chats', icon: FaComments, iconColor: 'text-teal-500' },
         { id: 'exams', label: 'Exams', icon: FaGraduationCap, iconColor: 'text-purple-500' },
+        { id: 'news', label: 'News', icon: FaNewspaper, iconColor: 'text-rose-500' },
         { id: 'broadcasts', label: 'Broadcasts', icon: FaBullhorn, iconColor: 'text-orange-500' }
     ];
 
@@ -320,6 +324,10 @@ const AdminDashboard = () => {
 
                 {selectedTab === 'referrals' && (
                     <AdminReferrals />
+                )}
+
+                {selectedTab === 'news' && (
+                    <AdminNews />
                 )}
 
                 {selectedTab === 'broadcasts' && (
