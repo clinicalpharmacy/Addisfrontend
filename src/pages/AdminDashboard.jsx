@@ -126,8 +126,8 @@ const AdminDashboard = () => {
         { id: 'feedback', label: 'Feedback', icon: FaComments, iconColor: 'text-pink-500' },
         { id: 'chats', label: 'Chats', icon: FaComments, iconColor: 'text-teal-500' },
         { id: 'exams', label: 'Exams', icon: FaGraduationCap, iconColor: 'text-purple-500' },
-        { id: 'news', label: 'News', icon: FaNewspaper, iconColor: 'text-rose-500' },
-        { id: 'broadcasts', label: 'Broadcasts', icon: FaBullhorn, iconColor: 'text-orange-500' }
+        { id: 'news', label: 'News & Alerts', icon: FaNewspaper, iconColor: 'text-rose-500' },
+        { id: 'broadcasts', label: 'Notifications', icon: FaBullhorn, iconColor: 'text-orange-500' }
     ];
 
     // Logout
