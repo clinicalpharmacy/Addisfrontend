@@ -367,7 +367,7 @@ const LandingPage = () => {
                             <a href="#contact" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">Contact</a>
                             <a href="#features" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">Features</a>
                             {/* 👇 NEW: News link, between Features and Calculators */}
-                            <a href="#news" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">News</a>
+                            <a href="#news" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">News & Alerts</a>
                             <a href="#calculators" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">Calculators</a>
                             <a href="#clients" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">For Clients</a>
                             <Link to="/vacancies" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors flex items-center gap-1">Vacancies <FaArrowRight className="text-[10px]" /></Link>
