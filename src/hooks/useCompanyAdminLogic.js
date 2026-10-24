@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import api from '../utils/api';
+import { checkUserLimit } from '../utils/userLimits';
 
 /**
  * Hook for managing Company Admin Logic
@@ -32,7 +33,7 @@ export const useCompanyAdminLogic = (currentUser) => {
             // Parallel loading for better perf
             const [companyRes, usersRes] = await Promise.allSettled([
                 api.get('/company/info'),
-                api.get('/company/users') // Assumes backend handles filtering by current user's company
+                api.get('/company/users')
             ]);
 
             // Handle Company Info
@@ -48,12 +49,10 @@ export const useCompanyAdminLogic = (currentUser) => {
                 else if (Array.isArray(data)) users = data;
             }
 
-            // Double check filtering
             const filteredUsers = users.filter(u => u.company_id === companyId);
             setCompanyUsers(filteredUsers);
             updateStats(filteredUsers);
 
-            // Mock Activities (Future backend integration point)
             setRecentActivities([
                 { id: 1, action: 'dashboard', details: 'Dashboard Accessed', created_at: new Date().toISOString() },
             ]);
@@ -75,10 +74,32 @@ export const useCompanyAdminLogic = (currentUser) => {
         });
     };
 
+    // --- User limit state (derived) ---
+    // Best-effort field names; adjust if your backend uses different keys.
+    const userLimitInfo = useMemo(() => {
+        const companyType =
+            companyInfo?.company_type || companyInfo?.type || '';
+        const plan =
+            companyInfo?.subscription_plan || companyInfo?.plan || 'monthly';
+
+        return checkUserLimit({
+            companyType,
+            plan,
+            currentUserCount: companyUsers.length,
+        });
+    }, [companyInfo, companyUsers]);
+
     // --- CRUD Operations ---
     const handleAddUser = async (e) => {
         e.preventDefault();
         if (isAddingUser) return;
+
+        // Frontend guard: block if limit reached
+        if (!userLimitInfo.allowed) {
+            setSuccess('');
+            setError(userLimitInfo.message || 'User limit reached.');
+            return;
+        }
 
         try {
             setIsAddingUser(true);
@@ -87,7 +108,7 @@ export const useCompanyAdminLogic = (currentUser) => {
             if (!currentUser?.company_id) throw new Error('No company ID found');
 
             const payload = { ...newUserData, company_id: currentUser.company_id };
-            if (!payload.phone) payload.phone = '+251000000000'; // Default if empty
+            if (!payload.phone) payload.phone = '+251000000000';
 
             const res = await api.post('/company/users', payload);
 
@@ -95,7 +116,6 @@ export const useCompanyAdminLogic = (currentUser) => {
                 setSuccess(`User ${newUserData.email} added!`);
                 setShowAddUserModal(false);
                 setNewUserData({ email: '', password: '', full_name: '', phone: '', role: 'pharmacist' });
-                // Refresh list
                 loadDashboardData(currentUser.company_id);
             } else {
                 setError(res.error || 'Failed to add user');
@@ -167,12 +187,24 @@ export const useCompanyAdminLogic = (currentUser) => {
         } catch (err) { setError(err.message); }
     };
 
+    // Guarded opener for the Add User modal
+    const openAddUserModal = () => {
+        if (!userLimitInfo.allowed) {
+            setSuccess('');
+            setError(userLimitInfo.message || 'User limit reached.');
+            return;
+        }
+        setShowAddUserModal(true);
+    };
+
     return {
         companyInfo, companyUsers, loading, stats, recentActivities, error, success,
         showAddUserModal, setShowAddUserModal,
         editingUser, setEditingUser,
         isAddingUser, newUserData, setNewUserData,
         loadDashboardData, handleAddUser, handleUpdateUser, handleDeleteUser, handleApproveUser, handleToggleBlock,
-        setError, setSuccess
+        setError, setSuccess,
+        // New:
+        userLimitInfo, openAddUserModal
     };
 };

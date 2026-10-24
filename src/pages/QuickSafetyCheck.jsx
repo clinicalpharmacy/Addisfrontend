@@ -337,7 +337,7 @@ const QuickSafetyCheck = () => {
                                 disabled={loading || (medList.length === 0 && !drugName.trim())}
                                 className="bg-blue-900 hover:bg-gray-900 disabled:bg-blue-400 text-white px-8 py-4 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 shadow-sm whitespace-nowrap"
                             >
-                                {loading ? <FaSpinner className="animate-spin" /> : 'Check Safety'}
+                                {loading ? <FaSpinner className="animate-spin" /> : 'Check'}
                             </button>
                         </form>
                     </div>
