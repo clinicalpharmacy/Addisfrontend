@@ -35,7 +35,8 @@ import {
     FaGraduationCap,
     FaShieldAlt,
     FaBriefcase,
-    FaBell
+    FaBell,
+    FaNewspaper
 } from 'react-icons/fa';
 
 // Force rebuild - ensuring all icons are properly bundled
@@ -319,6 +320,25 @@ const Sidebar = ({ onClose }) => {
                             </li>
                         )}
 
+                        {/* Health News */}
+                        <li className="mb-2">
+                            <NavLink
+                                to="/news"
+                                onClick={onClose}
+                                className={({ isActive }) =>
+                                    `flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isActive
+                                        ? 'bg-indigo-50 text-indigo-600 border-l-4 border-indigo-600 shadow-sm font-bold'
+                                        : 'text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 hover:shadow-sm'
+                                    }`
+                                }
+                            >
+                                <div className="flex items-center gap-2.5 w-full">
+                                    <FaNewspaper className="text-xl" />
+                                    <span className="font-medium text-base">Health News</span>
+                                </div>
+                            </NavLink>
+                        </li>
+
                         {/* Home Remedies */}
                         <li className="mb-2">
                             <NavLink
@@ -582,6 +602,23 @@ const Sidebar = ({ onClose }) => {
                                 >
                                     <FaBriefcase className="text-xl" />
                                     <span className="font-medium text-base">Manage Vacancies</span>
+                                </NavLink>
+                            </li>
+
+                            {/* Admin News Management Link */}
+                            <li className="mb-2">
+                                <NavLink
+                                    to="/admin/news"
+                                    onClick={onClose}
+                                    className={({ isActive }) =>
+                                        `flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isActive
+                                            ? 'bg-red-50 text-red-600 border-l-4 border-red-600 shadow-sm'
+                                            : 'text-gray-600 hover:bg-gray-50 hover:text-red-500 hover:shadow-sm'
+                                        }`
+                                    }
+                                >
+                                    <FaNewspaper className="text-xl" />
+                                    <span className="font-medium text-base">Manage News</span>
                                 </NavLink>
                             </li>
                         </ul>

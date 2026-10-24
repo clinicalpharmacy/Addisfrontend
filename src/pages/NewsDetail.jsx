@@ -85,22 +85,18 @@ const NewsDetail = () => {
 
                         {/* Meta */}
                         <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 font-medium mb-8 pb-6 border-b border-gray-100">
-                            {article.author_name && (
-                                <span className="flex items-center gap-1.5">
-                                    <FaUser className="text-gray-400" /> {article.author_name}
-                                </span>
-                            )}
+                            <span className="flex items-center gap-1.5">
+                                <FaUser className="text-gray-400" /> {article.author_name || 'Addis Med'}
+                            </span>
                             {article.created_at && (
                                 <span className="flex items-center gap-1.5">
                                     <FaCalendarAlt className="text-gray-400" />
                                     {format(new Date(article.created_at), 'MMMM dd, yyyy')}
                                 </span>
                             )}
-                            {typeof article.views === 'number' && (
-                                <span className="flex items-center gap-1.5">
-                                    <FaEye className="text-gray-400" /> {article.views} {article.views === 1 ? 'view' : 'views'}
-                                </span>
-                            )}
+                            <span className="flex items-center gap-1.5">
+                                <FaEye className="text-gray-400" /> {article.views ?? 0} {article.views === 1 ? 'view' : 'views'}
+                            </span>
                         </div>
 
                         {/* Content */}
@@ -114,9 +110,20 @@ const NewsDetail = () => {
                                 <div className="flex items-center gap-2 text-indigo-700 font-black text-xs uppercase tracking-widest mb-2">
                                     <FaBookmark /> Reference
                                 </div>
-                                <p className="text-sm text-gray-700 font-medium leading-relaxed break-words whitespace-pre-line">
-                                    {article.reference}
-                                </p>
+                                <div className="text-sm text-gray-700 font-medium leading-relaxed break-words whitespace-pre-line">
+                                    {article.reference.startsWith('http://') || article.reference.startsWith('https://') ? (
+                                        <a
+                                            href={article.reference}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-indigo-600 hover:text-indigo-800 underline underline-offset-2 break-all"
+                                        >
+                                            {article.reference}
+                                        </a>
+                                    ) : (
+                                        article.reference
+                                    )}
+                                </div>
                             </div>
                         )}
                     </div>

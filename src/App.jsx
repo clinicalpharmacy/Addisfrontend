@@ -34,7 +34,7 @@ import VerifyEmail from './pages/VerifyEmail';
 import ClinicalPharmacyTool from './pages/ClinicalPharmacyTool';
 import MedicationReminders from './pages/MedicationReminders';
 import News from './pages/News';
-import NewsDetail from './pages/NewsDetail';  
+import NewsDetail from './pages/NewsDetail';
 import AdminNews from './pages/AdminNews';
 
 // Subscription Pages
@@ -917,9 +917,8 @@ function App() {
                     path="/news"
                     element={<News />}
                 />
-                                />
                 <Route
-                    path="/news:id"
+                    path="/news/:id"
                     element={<NewsDetail />}
                 />
                 <Route

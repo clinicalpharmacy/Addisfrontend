@@ -1,6 +1,6 @@
-// admin/AdminNews.jsx
 import React, { useState, useEffect } from 'react';
-import { FaPlus, FaEdit, FaTrash, FaSave, FaNewspaper, FaTag, FaBookmark, FaEye, FaImage, FaLink } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
+import { FaPlus, FaEdit, FaTrash, FaSave, FaNewspaper, FaTag, FaBookmark, FaEye, FaImage, FaLink, FaExternalLinkAlt } from 'react-icons/fa';
 import api from '../utils/api';
 import { format } from 'date-fns';
 
@@ -328,6 +328,15 @@ const AdminNews = () => {
                                             </td>
                                             <td className="px-6 py-4 align-top text-right">
                                                 <div className="flex justify-end gap-1.5">
+                                                    <Link
+                                                        to={`/news/${article.id}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-gray-600 bg-gray-100 hover:bg-gray-200 p-2 rounded-lg transition-colors text-xs flex items-center justify-center"
+                                                        title="View / Read Article"
+                                                    >
+                                                        <FaExternalLinkAlt />
+                                                    </Link>
                                                     <button
                                                         onClick={() => startEdit(article)}
                                                         className="text-indigo-600 bg-indigo-50 hover:bg-indigo-100 p-2 rounded-lg transition-colors text-xs"
@@ -366,6 +375,15 @@ const AdminNews = () => {
                                         {article.published ? 'Published' : 'Draft'}
                                     </button>
                                     <div className="flex gap-1">
+                                        <Link
+                                            to={`/news/${article.id}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="bg-white p-2 rounded-lg text-gray-600 border border-gray-100 shadow-sm active:scale-90 transition-transform flex items-center justify-center"
+                                            title="View / Read Article"
+                                        >
+                                            <FaExternalLinkAlt size={12} />
+                                        </Link>
                                         <button
                                             onClick={() => startEdit(article)}
                                             className="bg-white p-2 rounded-lg text-indigo-600 border border-gray-100 shadow-sm active:scale-90 transition-transform"
