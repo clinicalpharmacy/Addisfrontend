@@ -499,7 +499,7 @@ const LandingPage = () => {
                                     <FaNewspaper className="text-green-500" />
                                     Latest Updates
                                 </div>
-                                <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Health News &amp; Insights</h2>
+                                <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Health News & Drug Alerts</h2>
                                 <p className="mt-3 text-slate-600 max-w-2xl">
                                     Stay informed with the latest developments, research findings, and policy updates from the healthcare world.
                                 </p>
