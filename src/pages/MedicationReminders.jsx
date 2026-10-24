@@ -144,9 +144,15 @@ export default function MedicationReminders() {
             }
         } catch (err) {
             console.error('Push toggle error:', err);
+            const errorText =
+                err.response?.data?.error ||
+                err.response?.data?.message ||
+                err.error ||
+                err.message ||
+                'Failed to update notification settings.';
             setNotificationMessage({
                 type: 'error',
-                text: err.message || 'Failed to update notification settings.'
+                text: errorText
             });
             setPermissionStatus(getNotificationPermission());
         } finally {

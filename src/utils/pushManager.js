@@ -91,16 +91,23 @@ export async function subscribeToPush(apiClient) {
     // 2. Fetch VAPID Public Key
     let publicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
     if (!publicKey) {
-        const res = await apiClient.get('/reminders/vapid-public-key');
-        publicKey = res.publicKey;
+        try {
+            const res = await apiClient.get('/reminders/vapid-public-key');
+            publicKey = res.publicKey;
+        } catch (e) {
+            throw new Error(e.response?.data?.error || e.error || e.message || 'Failed to retrieve notification public key from server.');
+        }
     }
 
     if (!publicKey) {
-        throw new Error('VAPID public key not found.');
+        throw new Error('VAPID public key not found. Please contact support.');
     }
 
     // 3. Register SW and subscribe
-    await registerServiceWorker();
+    const reg = await registerServiceWorker();
+    if (!reg) {
+        throw new Error('Service Worker registration failed. Please ensure you are connected via HTTPS or localhost.');
+    }
     const registration = await navigator.serviceWorker.ready;
 
     let subscription = await registration.pushManager.getSubscription();
