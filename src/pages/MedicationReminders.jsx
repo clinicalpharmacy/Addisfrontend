@@ -169,7 +169,7 @@ export default function MedicationReminders() {
             if (res.success) {
                 setNotificationMessage({
                     type: 'success',
-                    text: '🚀 Test alert sent! Check your notification tray / phone screen.'
+                    text: '✅ Device verified! A confirmation alert was sent to your notification tray.'
                 });
             }
         } catch (err) {
@@ -390,11 +390,11 @@ export default function MedicationReminders() {
                             <button
                                 onClick={handleSendTestPush}
                                 disabled={testingPush}
-                                className="px-4 py-2.5 text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all flex items-center gap-1.5"
-                                title="Send a test notification to verify"
+                                className="px-3.5 py-2.5 text-xs font-semibold text-gray-700 bg-gray-50 hover:bg-gray-100 hover:text-gray-900 border border-gray-200 rounded-xl transition-all flex items-center gap-1.5 shadow-sm active:scale-95 disabled:opacity-50"
+                                title="Send a verification ping to confirm this device receives alerts"
                             >
-                                <FaPaperPlane className={`text-[10px] ${testingPush ? 'animate-spin' : ''}`} />
-                                {testingPush ? 'Sending...' : 'Test Alert'}
+                                <FaCheckCircle className={`text-emerald-500 text-xs ${testingPush ? 'animate-spin' : ''}`} />
+                                <span>{testingPush ? 'Verifying...' : 'Verify Device'}</span>
                             </button>
                         )}
 
