@@ -44,6 +44,7 @@ const LandingPage = () => {
     // ---- Latest news state ----
     const [latestNews, setLatestNews] = useState([]);
     const [newsLoading, setNewsLoading] = useState(true);
+    const [imgErrors, setImgErrors] = useState({});
 
     // ---- Calculator state ----
     const [bmiInput, setBmiInput] = useState({ weight: '', height: '', result: null });
@@ -535,13 +536,15 @@ const LandingPage = () => {
                                         to={`/news/${item.id}`}
                                         className="group bg-white rounded-3xl border border-slate-200 overflow-hidden hover:border-green-300 hover:shadow-xl transition-all duration-300 flex flex-col"
                                     >
-                                        {item.image_url ? (
+                                        {item.image_url && !imgErrors[item.id] ? (
                                             <div className="h-44 overflow-hidden bg-slate-100">
                                                 <img
                                                     src={item.image_url}
                                                     alt={item.title}
                                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                                    onError={(e) => { e.target.style.display = 'none'; }}
+                                                    onError={() =>
+                                                        setImgErrors((prev) => ({ ...prev, [item.id]: true }))
+                                                    }
                                                 />
                                             </div>
                                         ) : (
