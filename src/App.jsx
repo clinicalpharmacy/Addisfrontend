@@ -32,6 +32,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import VerifyEmail from './pages/VerifyEmail';
 import ClinicalPharmacyTool from './pages/ClinicalPharmacyTool';
+import MedicationReminders from './pages/MedicationReminders';
 
 // Subscription Pages
 import SubscriptionPlans from "./pages/SubscriptionPlans";
@@ -1246,6 +1247,20 @@ function App() {
                             <MedicationAvailability />
                         </ProtectedRoute>
                     }
+                />
+
+                {/* Medication Reminders Route (Accessible to all users & healthcare clients) */}
+                <Route
+                    path="/reminders"
+                    element={
+                        <ProtectedRoute requireSubscription={false}>
+                            <MedicationReminders />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/medication-reminders"
+                    element={<Navigate to="/reminders" replace />}
                 />
 
                 <Route

@@ -11,9 +11,10 @@ import {
     FaCalendarDay, FaUserTag, FaVial, FaBaby, FaChevronDown, FaChevronUp,
     FaExclamationCircle, FaHeartbeat, FaBrain, FaRobot, FaLightbulb, FaUserShield,
     FaBookMedical, FaListUl, FaToggleOn, FaToggleOff, FaShieldAlt, FaSearch,
-    FaStar, FaMagic, FaClipboardCheck
+    FaStar, FaMagic, FaClipboardCheck, FaExternalLinkAlt
 } from 'react-icons/fa';
 import api from '../../utils/api';
+import FormattedDosageView from './FormattedDosageView';
 
 const CDSSDisplay = ({ patientData, onBack, onDataChange }) => {
 
@@ -23,8 +24,17 @@ const CDSSDisplay = ({ patientData, onBack, onDataChange }) => {
         severityFilter, setSeverityFilter,
         fetchClinicalRules, testSampleRules, analyzePatient, runFullAnalysis,
         acknowledgeAlert, acknowledgeAll, toggleExpandAlert, expandedAlert,
-        patientFacts, lastAnalysisTime, decryptedPatient, decryptionFailed
+        patientFacts, lastAnalysisTime, decryptedPatient, decryptionFailed,
+        dailyMedLabels = [], dailyMedLoading = false
     } = useCDSSLogic(patientData);
+
+    const [expandedDailyMeds, setExpandedDailyMeds] = useState({});
+    const toggleDailyMedExpand = (drug) => {
+        setExpandedDailyMeds(prev => ({
+            ...prev,
+            [drug]: !prev[drug]
+        }));
+    };
 
     // Pass alerts up to parent for PDF generation
     React.useEffect(() => {
@@ -101,6 +111,12 @@ const CDSSDisplay = ({ patientData, onBack, onDataChange }) => {
                 pregnancy: patient?.is_pregnant,
                 conditions: conditionsList,
                 medications: formattedMeds,
+                dailymed_guidelines: (dailyMedLabels || []).filter(l => l.found).map(l => ({
+                    drug: l.query_drug,
+                    title: l.label?.label_title,
+                    status: l.label?.review_status,
+                    dosage_text: l.label?.dosage_text?.slice(0, 1000)
+                })),
                 labs: patient?.labs || {},
                 vitals: {
                     bp: patient?.vitals?.blood_pressure || patient?.blood_pressure,
@@ -707,22 +723,22 @@ const CDSSDisplay = ({ patientData, onBack, onDataChange }) => {
                                     >
                                         <div className="flex-1 min-w-0">
                                             {/* Primary Finding */}
-                                            <div className="flex flex-col gap-2 p-3 bg-gray-50/80 rounded-xl border border-gray-200 mb-3 shadow-sm">
-                                                <div className="flex items-start gap-2 text-sm text-gray-700">
-                                                    <span className="font-black text-blue-600 uppercase text-xs shrink-0 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">Finding:</span>
-                                                    <p className="italic font-medium leading-relaxed">
+                                            <div className="flex flex-col gap-2.5 p-4 bg-gray-50/90 rounded-xl border border-gray-200 mb-3 shadow-sm">
+                                                <div className="flex items-start gap-2.5">
+                                                    <span className="font-black text-blue-700 uppercase text-xs md:text-sm shrink-0 bg-blue-100/80 px-2.5 py-1 rounded-md border border-blue-200">Finding:</span>
+                                                    <p className="font-semibold text-base md:text-lg text-slate-900 leading-relaxed">
                                                         {isHealthcareClient ? (alert.client_message || alert.message) : (alert.professional_message || alert.message)}
                                                     </p>
                                                 </div>
                                             
                                                 {/* Drug triggers */}
                                                 {alert.evidence?.matched_medications?.length > 0 && (
-                                                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-300/50 mt-0">
-                                                        <span className="font-black text-purple-600 uppercase text-xs shrink-0">Drug(s) Trigger:</span>
-                                                        <div className="flex flex-wrap gap-1.5">
+                                                    <div className="flex flex-wrap items-center gap-2 pt-2.5 border-t border-gray-300/60 mt-1">
+                                                        <span className="font-black text-purple-700 uppercase text-xs md:text-sm shrink-0">Drug(s) Trigger:</span>
+                                                        <div className="flex flex-wrap gap-2">
                                                             {alert.evidence.matched_medications.map((med, i) => (
-                                                                <span key={i} className="px-2.5 py-0.5 bg-purple-100 text-purple-800 rounded-lg text-xs font-black border border-purple-200 shadow-sm flex items-center gap-1.5">
-                                                                    <FaCapsules className="text-xs" /> {med}
+                                                                <span key={i} className="px-3 py-1 bg-purple-100 text-purple-900 rounded-lg text-sm font-black border border-purple-300 shadow-xs flex items-center gap-1.5">
+                                                                    <FaCapsules className="text-sm" /> {med}
                                                                 </span>
                                                             ))}
                                                         </div>
@@ -730,12 +746,12 @@ const CDSSDisplay = ({ patientData, onBack, onDataChange }) => {
                                                 )}
                                             
                                                 {/* Recommendation */}
-                                                <div className="bg-green-50 border-l-8 border-green-500 p-3 rounded-r-xl shadow-sm">
-                                                    <div className="flex items-center gap-1.5 mb-1.5">
-                                                        <FaCheckCircle className="text-green-600 text-xs" />
-                                                        <span className="text-xs font-black uppercase tracking-widest text-green-800">Evidence Recommendation</span>
+                                                <div className="bg-emerald-50 border-l-8 border-emerald-500 p-4 rounded-r-xl shadow-xs mt-1">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <FaCheckCircle className="text-emerald-600 text-sm md:text-base" />
+                                                        <span className="text-xs md:text-sm font-black uppercase tracking-wider text-emerald-800">Evidence Recommendation</span>
                                                     </div>
-                                                    <div className="text-sm font-black text-gray-900 leading-relaxed whitespace-pre-wrap">
+                                                    <div className="text-base md:text-lg font-black text-slate-950 leading-relaxed whitespace-pre-wrap">
                                                         {(isHealthcareClient
                                                             ? (alert.client_recommendation || alert.recommendation || alert.details)
                                                             : (alert.professional_recommendation || alert.recommendation || alert.details)) || 'Review clinical guidelines'}
@@ -750,6 +766,145 @@ const CDSSDisplay = ({ patientData, onBack, onDataChange }) => {
                     )}
                 </div>
             </div>
+
+            {/* ── DailyMed FDA Dosage & Administration Repository Section ── */}
+            {patientData && (
+                <div className="bg-white rounded-xl border border-blue-100 shadow-sm overflow-hidden">
+                    <div className="px-6 py-4 border-b border-blue-200 bg-gradient-to-r from-blue-100/90 via-indigo-50 to-blue-50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                            <div className="bg-blue-600 p-2.5 rounded-xl text-white shadow-xs">
+                                <FaBookMedical className="text-lg" />
+                            </div>
+                            <div>
+                                <h3 className="text-base md:text-xl font-black text-slate-950 flex items-center gap-2.5">
+                                    Official FDA DailyMed Monograph (Uses, Dosage, Warnings & Ingredients)
+                                    {dailyMedLabels.length > 0 && (
+                                        <span className="bg-blue-600 text-white text-xs font-black px-2.5 py-0.5 rounded-full shadow-xs">
+                                            {dailyMedLabels.filter(l => l.found).length} Available
+                                        </span>
+                                    )}
+                                </h3>
+                                <p className="text-xs md:text-sm text-slate-600 font-medium mt-0.5">
+                                    Official FDA-approved prescribing information, indications, dosage, warnings & excipients
+                                </p>
+                            </div>
+                        </div>
+
+                        {dailyMedLoading && (
+                            <div className="flex items-center gap-2 text-sm text-blue-700 font-bold bg-white px-3 py-1.5 rounded-xl border border-blue-200 shadow-xs self-start sm:self-auto">
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" />
+                                <span>Fetching FDA Labels...</span>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="p-6">
+                        {dailyMedLoading && dailyMedLabels.length === 0 ? (
+                            <div className="py-8 text-center text-base text-gray-600 flex flex-col items-center justify-center gap-2">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                                <span className="font-medium">Querying DailyMed FDA repository for patient's prescribed medications...</span>
+                            </div>
+                        ) : dailyMedLabels.length === 0 ? (
+                            <p className="text-base text-gray-500 italic py-3">
+                                No active medications found to query in DailyMed.
+                            </p>
+                        ) : (
+                            <div className="space-y-4">
+                                {dailyMedLabels.map((item, idx) => {
+                                    const isExpanded = !!expandedDailyMeds[item.query_drug];
+                                    const isApproved = item.label?.review_status === 'approved';
+
+                                    return (
+                                        <div
+                                            key={idx}
+                                            className={`rounded-2xl border-2 transition-all shadow-xs ${
+                                                item.found 
+                                                    ? 'bg-white border-gray-300 hover:border-blue-400' 
+                                                    : 'bg-amber-50/60 border-amber-300'
+                                            }`}
+                                        >
+                                            <div className="p-5 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                                <div className="space-y-2">
+                                                    <div className="flex flex-wrap items-center gap-3">
+                                                        <span className="font-black text-slate-950 text-xl md:text-2xl">
+                                                            {item.query_drug}
+                                                        </span>
+                                                        {item.original_input && item.original_input !== item.query_drug && (
+                                                            <span className="text-sm text-slate-500 font-semibold">
+                                                                (prescribed: {item.original_input})
+                                                            </span>
+                                                        )}
+                                                        {item.found && (
+                                                            <span className={`text-xs md:text-sm font-black px-3 py-1 rounded-full border ${
+                                                                isApproved 
+                                                                    ? 'bg-green-100 text-green-900 border-green-300' 
+                                                                    : 'bg-amber-100 text-amber-900 border-amber-300'
+                                                            }`}>
+                                                                {isApproved ? 'Reviewed & Approved' : 'FDA Label (Official SPL)'}
+                                                            </span>
+                                                        )}
+                                                        {item.source === 'dailymed_ondemand' && (
+                                                            <span className="text-xs md:text-sm bg-blue-50 text-blue-800 px-2.5 py-1 rounded-md border border-blue-200 font-bold">
+                                                                Live FDA Retrieved
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    {item.found ? (
+                                                        <div className="text-sm md:text-base text-slate-700 leading-normal" title={item.label?.label_title}>
+                                                            <strong className="text-slate-950 font-bold">Official SPL:</strong> {item.label?.label_title}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-base text-amber-900 font-semibold">
+                                                            {item.message || 'No official DailyMed FDA label found for this medication.'}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {item.found && (
+                                                    <div className="flex items-center gap-3 shrink-0">
+                                                        {item.label?.source_url && (
+                                                            <a
+                                                                href={item.label.source_url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="text-base text-blue-700 hover:text-blue-900 bg-white border-2 border-gray-300 px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-blue-50 transition-colors shadow-xs"
+                                                                title="View on DailyMed"
+                                                            >
+                                                                <span>FDA DailyMed</span>
+                                                                <FaExternalLinkAlt className="text-xs" />
+                                                            </a>
+                                                        )}
+
+                                                        <button
+                                                            onClick={() => toggleDailyMedExpand(item.query_drug)}
+                                                            className="text-base text-slate-900 bg-amber-50 hover:bg-amber-100 border-2 border-amber-300 px-5 py-2.5 rounded-xl font-black transition-colors flex items-center gap-2.5 shadow-xs"
+                                                        >
+                                                            <span>{isExpanded ? 'Hide Harm & Warning Analysis' : 'Check FDA Patient Warnings & Harm Risks'}</span>
+                                                            {isExpanded ? <FaChevronUp className="text-sm" /> : <FaChevronDown className="text-sm" />}
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Collapsible Patient Harm & Safety Section */}
+                                            {item.found && isExpanded && (
+                                                <div className="px-6 pb-6 pt-5 border-t-2 border-gray-300 bg-slate-50/70 rounded-b-2xl">
+                                                    <div className="text-base md:text-lg font-black text-slate-950 mb-4 flex items-center gap-2.5">
+                                                        <FaShieldAlt className="text-red-600 text-lg" />
+                                                        <span>FDA Patient Safety & Harm Analysis (Contraindications, Warnings & Adverse Risks):</span>
+                                                    </div>
+                                                    <FormattedDosageView text={item.label?.dosage_text} />
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {onBack && (
                 <div className="flex justify-center pb-4">

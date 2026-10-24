@@ -29,6 +29,9 @@ export const useCDSSLogic = (patientData) => {
     const [forceReanalysisKey, setForceReanalysisKey] = useState(0);
     // Gate: prevents auto-analysis from firing before medications are fetched
     const [medicationsFetched, setMedicationsFetched] = useState(false);
+    // DailyMed FDA Drug Labels & Dosage State
+    const [dailyMedLabels, setDailyMedLabels] = useState([]);
+    const [dailyMedLoading, setDailyMedLoading] = useState(false);
 
     // Use refs to prevent infinite loops
     const previousPatientIdRef = useRef(null);
@@ -83,12 +86,15 @@ export const useCDSSLogic = (patientData) => {
         let fallbackMedications = [];
         if (patientData?.medication_history && Array.isArray(patientData.medication_history)) {
             fallbackMedications = patientData.medication_history;
+        } else if (patientData?.medications && Array.isArray(patientData.medications)) {
+            fallbackMedications = patientData.medications;
         }
 
-        if (!patientData?.id) {
-            console.log('⚠️ No patient id provided for medication fetch, using fallback if available');
+        const isDirectReview = !patientData?.id || String(patientData?.id).startsWith('TEMP-') || fallbackMedications.length > 0;
+        if (isDirectReview && fallbackMedications.length > 0) {
+            console.log(`✅ Using ${fallbackMedications.length} direct patient medications`);
             setMedications(fallbackMedications);
-            setMedicationsFetched(true); // gate: mark done even with no id
+            setMedicationsFetched(true);
             return;
         }
 
@@ -196,7 +202,15 @@ export const useCDSSLogic = (patientData) => {
 
         let debug = '🚀 === CDSS ANALYSIS STARTED ===\n';
         const rulesToUse = overrideRules || clinicalRules || [];
-        const medsToUse = overrideMedications || medications || [];
+        const medsToUse = (overrideMedications && overrideMedications.length > 0)
+            ? overrideMedications
+            : (medications && medications.length > 0)
+                ? medications
+                : (patientData?.medication_history && patientData.medication_history.length > 0)
+                    ? patientData.medication_history
+                    : (patientData?.medications && patientData.medications.length > 0)
+                        ? patientData.medications
+                        : [];
 
         debug += `Patient: ${patientData.id}\n`;
         debug += `Rules: ${rulesToUse.length}\n`;
@@ -208,6 +222,13 @@ export const useCDSSLogic = (patientData) => {
             // 🔐 ZERO-KNOWLEDGE: Decrypt data before analysis
             let currentPatient = { ...patientData };
             let currentMedications = [...medsToUse];
+            if (currentMedications.length === 0) {
+                if (patientData?.medication_history?.length > 0) {
+                    currentMedications = [...patientData.medication_history];
+                } else if (patientData?.medications?.length > 0) {
+                    currentMedications = [...patientData.medications];
+                }
+            }
             
             const encKey = await getEncryptionKey();
             if (encKey) {
@@ -239,6 +260,30 @@ export const useCDSSLogic = (patientData) => {
 
             const facts = mapPatientToFacts(currentPatient, currentMedications);
             setPatientFacts(facts);
+
+            // ── Fetch DailyMed FDA Dosage & Label Guidance for patient's medications ──
+            const drugListForDailyMed = currentMedications.map(m => {
+                if (typeof m === 'string') return m;
+                return m.drug_name || m.name || m.drug || '';
+            }).filter(Boolean);
+
+            if (drugListForDailyMed.length > 0) {
+                setDailyMedLoading(true);
+                api.post('/dailymed/lookup-patient-meds', { medications: drugListForDailyMed })
+                    .then(res => {
+                        if (res.success && res.results) {
+                            setDailyMedLabels(res.results);
+                        }
+                    })
+                    .catch(dmErr => {
+                        console.warn('⚠️ [CDSS] DailyMed lookup notice:', dmErr.message);
+                    })
+                    .finally(() => {
+                        setDailyMedLoading(false);
+                    });
+            } else {
+                setDailyMedLabels([]);
+            }
 
             const triggeredAlerts = [];
             let rulesEvaluated = 0;
@@ -450,17 +495,20 @@ export const useCDSSLogic = (patientData) => {
         setHasAnalyzed(true);
 
         try {
-            const isTempPatient = String(patientData.id).startsWith('TEMP-');
+            const hasDirectMeds = (patientData?.medication_history && patientData.medication_history.length > 0) || (patientData?.medications && patientData.medications.length > 0);
+            const isTempPatient = String(patientData.id).startsWith('TEMP-') || hasDirectMeds;
             
             const [rulesRes, medsRes] = await Promise.all([
                 api.get('/clinical-rules').catch(e => ({ success: false, error: e })),
                 isTempPatient 
-                    ? Promise.resolve({ success: true, medications: patientData.medication_history || [] }) 
+                    ? Promise.resolve({ success: true, medications: patientData.medication_history || patientData.medications || [] }) 
                     : api.get(`/medication-history/patient/${patientData.id}`).catch(e => ({ success: false, error: e }))
             ]);
 
             const freshRules = rulesRes.success ? (rulesRes.rules || []) : sampleTestRules;
-            const freshMeds = medsRes.success ? (medsRes.medications || []) : (patientData?.medication_history || []);
+            const freshMeds = (medsRes.success && medsRes.medications && medsRes.medications.length > 0)
+                ? medsRes.medications
+                : (patientData?.medication_history || patientData?.medications || []);
 
             // Set state
             if (rulesRes.success && freshRules.length > 0) {
@@ -683,6 +731,8 @@ export const useCDSSLogic = (patientData) => {
         expandedAlert,
         lastAnalysisTime,
         patientFacts,
-        rulesLoading: loading
+        rulesLoading: loading,
+        dailyMedLabels,
+        dailyMedLoading
     };
 };

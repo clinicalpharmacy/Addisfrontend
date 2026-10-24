@@ -12,13 +12,10 @@ import DRNAssessment from '../components/Patient/DRNAssessment';
 import PhAssistPlan from '../components/Patient/PhAssistPlan';
 import PatientOutcome from '../components/Patient/PatientOutcome';
 import CostSection from '../components/Patient/CostSection';
+import { FREQUENCY_CODES, normalizeFrequency } from '../constants/frequencyCodes';
 
-// Main categories in the correct order
-const frequencyOptions = [
-    'Stat', 'Daily', 'Once daily', 'Twice daily', 'Three times daily', 'Four times daily', 
-    'Every other day', '3 times/week', '5 times/week', 'Weekly', 'Every 2 weeks', 'Every 3 weeks',
-    'Every 4hrs', 'Every 6hrs', 'Every 8hrs', 'Every 12hrs', 'As needed (PRN)'
-];
+// Standard frequency codes matching Eskender's specifications (1: Once daily/QD, 2: Twice daily/BID, 3: TID, 4: QID)
+const frequencyOptions = FREQUENCY_CODES;
 
 // ✅ Route options (icons removed)
 const routeOptions = [
@@ -1409,34 +1406,44 @@ const ClinicalPharmacyTool = () => {
                                                         Liver Failure / Hepatic Impairment
                                                     </span>
                                                 </label>
-                                                {formData.gender === 'female' && (
-                                                    <>
-                                                        <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-                                                            <input
-                                                                type="checkbox"
-                                                                name="is_pregnant"
-                                                                checked={formData.is_pregnant}
-                                                                onChange={handleInputChange}
-                                                                className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
-                                                            />
-                                                            <span className="font-medium text-gray-700">
-                                                                Pregnant
-                                                            </span>
-                                                        </label>
-                                                        <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-                                                            <input
-                                                                type="checkbox"
-                                                                name="is_lactating"
-                                                                checked={formData.is_lactating}
-                                                                onChange={handleInputChange}
-                                                                className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
-                                                            />
-                                                            <span className="font-medium text-gray-700">
-                                                                Lactating / Breastfeeding
-                                                            </span>
-                                                        </label>
-                                                    </>
-                                                )}
+                                                <label className="flex items-center gap-3 p-3 border border-pink-200 bg-pink-50/40 rounded-lg cursor-pointer hover:bg-pink-50">
+                                                    <input
+                                                        type="checkbox"
+                                                        name="is_pregnant"
+                                                        checked={formData.is_pregnant}
+                                                        onChange={(e) => {
+                                                            const isChecked = e.target.checked;
+                                                            setFormData(prev => ({
+                                                                ...prev,
+                                                                is_pregnant: isChecked,
+                                                                gender: isChecked ? 'female' : prev.gender
+                                                            }));
+                                                        }}
+                                                        className="w-5 h-5 text-pink-600 rounded focus:ring-pink-500"
+                                                    />
+                                                    <span className="font-bold text-pink-900 flex items-center gap-2">
+                                                        🤰 Pregnant
+                                                    </span>
+                                                </label>
+                                                <label className="flex items-center gap-3 p-3 border border-purple-200 bg-purple-50/40 rounded-lg cursor-pointer hover:bg-purple-50">
+                                                    <input
+                                                        type="checkbox"
+                                                        name="is_lactating"
+                                                        checked={formData.is_lactating}
+                                                        onChange={(e) => {
+                                                            const isChecked = e.target.checked;
+                                                            setFormData(prev => ({
+                                                                ...prev,
+                                                                is_lactating: isChecked,
+                                                                gender: isChecked ? 'female' : prev.gender
+                                                            }));
+                                                        }}
+                                                        className="w-5 h-5 text-purple-600 rounded focus:ring-purple-500"
+                                                    />
+                                                    <span className="font-bold text-purple-900 flex items-center gap-2">
+                                                        🍼 Lactating / Breastfeeding
+                                                    </span>
+                                                </label>
                                             </div>
                                         </div>
                                     )}
@@ -1644,11 +1651,13 @@ const ClinicalPharmacyTool = () => {
                                                                                 e.target.value
                                                                             )
                                                                         }
-                                                                        className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                                        className="w-full p-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500 bg-white"
                                                                     >
-                                                                        <option value="">Select...</option>
+                                                                        <option value="">Select Frequency Code (1-4)...</option>
                                                                         {frequencyOptions.map(freq => (
-                                                                            <option key={freq} value={freq}>{freq}</option>
+                                                                            <option key={freq.code || freq.value || freq} value={freq.label || freq.value || freq}>
+                                                                                {freq.label || freq.value || freq}
+                                                                            </option>
                                                                         ))}
                                                                     </select>
                                                                 </div>

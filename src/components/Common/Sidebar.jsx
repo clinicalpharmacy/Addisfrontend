@@ -34,7 +34,8 @@ import {
     FaMortarPestle,
     FaGraduationCap,
     FaShieldAlt,
-    FaBriefcase
+    FaBriefcase,
+    FaBell
 } from 'react-icons/fa';
 
 // Force rebuild - ensuring all icons are properly bundled
@@ -214,6 +215,25 @@ const Sidebar = ({ onClose }) => {
                                     <FaHome className="text-xl group-hover:scale-110 transition-transform" />
                                     <span className="text-base">Dashboard</span>
                                     {!isSubscribed && <FaLock className="ml-auto text-xs opacity-50" />}
+                                </div>
+                            </NavLink>
+                        </li>
+
+                        {/* Medication Reminders (Accessible to all clients & users) */}
+                        <li className="mb-2">
+                            <NavLink
+                                to="/reminders"
+                                onClick={onClose}
+                                className={({ isActive }) =>
+                                    `flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isActive
+                                        ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600 shadow-sm font-bold'
+                                        : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:shadow-sm font-medium'
+                                    }`
+                                }
+                            >
+                                <div className="flex items-center gap-2.5 w-full">
+                                    <FaBell className="text-xl" />
+                                    <span className="text-base">የመድሃኒት ማስታወሻ</span>
                                 </div>
                             </NavLink>
                         </li>
@@ -629,6 +649,24 @@ const Sidebar = ({ onClose }) => {
                         </ul>
                     </div>
                 )}
+
+                {/* Account & Security Quick Access */}
+                <div className="pt-2 mt-4 border-t border-gray-100">
+                    <NavLink
+                        to="/settings#security"
+                        onClick={onClose}
+                        className={({ isActive }) =>
+                            `flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${
+                                isActive 
+                                    ? 'bg-blue-50 text-blue-700 font-bold border-l-4 border-blue-600'
+                                    : 'text-gray-600 hover:bg-blue-50 hover:text-blue-700'
+                            }`
+                        }
+                    >
+                        <FaShieldAlt className="text-base text-blue-600" />
+                        <span className="font-semibold text-sm">Security & Password</span>
+                    </NavLink>
+                </div>
             </nav>
 
             {/* User Info & Logout */}

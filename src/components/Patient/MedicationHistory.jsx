@@ -8,6 +8,7 @@ import {
     FaFilePrescription, FaStethoscope, FaCheckCircle
 } from 'react-icons/fa';
 import { getEncryptionKey, encryptValue, decryptValue } from '../../utils/encryptionUtils';
+import { FREQUENCY_CODES, normalizeFrequency } from '../../constants/frequencyCodes';
 
 const MedicationHistory = ({ patientCode }) => {
     const [medications, setMedications] = useState([]);
@@ -107,13 +108,8 @@ const MedicationHistory = ({ patientCode }) => {
         'Powder', 'Solution', 'Gel', 'Lotion', 'Spray', 'Liniment'
     ];
 
-    const frequencyOptions = [
-        'Stat', 'Once daily', 'Twice daily', 'Three times daily', 'Four times daily',
-        'Every morning', 'Every evening', 'Every night', 'At bedtime', 
-        'Every other day', '3 times/week', '5 times/week', 'Weekly', 'Every 2 weeks', 'Every 3 weeks',
-        'Every 4hrs', 'Every 6hrs', 'Every 8hrs', 'Every 12hrs', 'As needed (PRN)',
-        'Before meals', 'After meals', 'With meals', 'On empty stomach'
-    ];
+    // Frequency codes conforming to clinical standard (1: Once daily/QD, 2: Twice daily/BID, 3: TID, 4: QID)
+    const frequencyOptions = FREQUENCY_CODES;
 
     const drugClasses = [
         'Analgesics', 'Antimicrobial', 'Antidiabetic', 'Cardiovascular',
@@ -357,16 +353,8 @@ const MedicationHistory = ({ patientCode }) => {
         const doseValue = parseFloat(formData.dose);
         if (isNaN(doseValue)) return '';
 
-        let multiplier = 1;
-        const freq = formData.frequency.toLowerCase();
-
-        if (freq.includes('twice') || freq.includes('bid')) multiplier = 2;
-        else if (freq.includes('three') || freq.includes('tid') || freq.includes('8 hourly')) multiplier = 3;
-        else if (freq.includes('four') || freq.includes('qid') || freq.includes('6 hourly')) multiplier = 4;
-        else if (freq.includes('every 4 hours')) multiplier = 6;
-        else if (freq.includes('every 6 hours')) multiplier = 4;
-        else if (freq.includes('every 8 hours')) multiplier = 3;
-        else if (freq.includes('every 12 hours')) multiplier = 2;
+        const normalized = normalizeFrequency(formData.frequency);
+        const multiplier = normalized.dosesPerDay || 1;
 
         const dailyDose = doseValue * multiplier;
         return `${dailyDose} ${formData.unit}`;
@@ -930,12 +918,14 @@ const MedicationHistory = ({ patientCode }) => {
                           name="frequency"
                           value={formData.frequency}
                           onChange={handleInputChange}
-                          className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                          className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 bg-white"
                           required
                         >
-                          <option value="">Select frequency</option>
+                          <option value="">Select Frequency Code (1-4)...</option>
                           {frequencyOptions.map(freq => (
-                            <option key={freq} value={freq}>{freq}</option>
+                            <option key={freq.code || freq.value || freq} value={freq.label || freq.value || freq}>
+                              {freq.label || freq.value || freq}
+                            </option>
                           ))}
                         </select>
                       </div>

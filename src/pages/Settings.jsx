@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { FaCog, FaUser, FaInfoCircle, FaCheckCircle } from 'react-icons/fa';
+import { 
+    FaCog, FaUser, FaInfoCircle, FaCheckCircle, 
+    FaLock, FaShieldAlt, FaEye, FaEyeSlash, FaSpinner, FaKey 
+} from 'react-icons/fa';
 import api from '../utils/api';
 
 const Settings = () => {
@@ -12,6 +15,17 @@ const Settings = () => {
         user?.role?.toLowerCase() === 'administrator';
     const [commissionData, setCommissionData] = useState({ total_earned: 0, referrals_count: 0, promotion_code: 'N/A' });
     const [copied, setCopied] = useState(false);
+
+    // Password change state
+    const [passwordData, setPasswordData] = useState({
+        current_password: '',
+        new_password: '',
+        confirm_password: ''
+    });
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [passwordStatus, setPasswordStatus] = useState({ loading: false, error: '', success: '' });
 
     useEffect(() => {
         const userData = localStorage.getItem('user');
@@ -33,10 +47,59 @@ const Settings = () => {
 
         if (location.hash === '#promotions') {
             setActiveTab('promotions');
+        } else if (location.hash === '#security') {
+            setActiveTab('security');
         } else {
             setActiveTab('profile');
         }
     }, [location]);
+
+    const handlePasswordChangeSubmit = async (e) => {
+        e.preventDefault();
+        setPasswordStatus({ loading: true, error: '', success: '' });
+
+        if (!passwordData.current_password) {
+            setPasswordStatus({ loading: false, error: 'Please enter your current password.', success: '' });
+            return;
+        }
+        if (!passwordData.new_password || passwordData.new_password.length < 6) {
+            setPasswordStatus({ loading: false, error: 'New password must be at least 6 characters.', success: '' });
+            return;
+        }
+        if (passwordData.new_password !== passwordData.confirm_password) {
+            setPasswordStatus({ loading: false, error: 'New password and confirmation do not match.', success: '' });
+            return;
+        }
+
+        try {
+            const res = await api.post('/auth/change-password', {
+                current_password: passwordData.current_password,
+                new_password: passwordData.new_password
+            });
+
+            if (res.success) {
+                setPasswordStatus({
+                    loading: false,
+                    error: '',
+                    success: 'Your password has been updated successfully!'
+                });
+                setPasswordData({
+                    current_password: '',
+                    new_password: '',
+                    confirm_password: ''
+                });
+            } else {
+                setPasswordStatus({
+                    loading: false,
+                    error: res.error || 'Failed to update password.',
+                    success: ''
+                });
+            }
+        } catch (err) {
+            const msg = err.response?.data?.error || err.error || err.message || 'An error occurred while updating password.';
+            setPasswordStatus({ loading: false, error: msg, success: '' });
+        }
+    };
 
     const handleCopy = () => {
         const text = commissionData.promotion_code;
@@ -87,6 +150,12 @@ const Settings = () => {
                     >
                         <FaUser /> <span className="font-semibold">Profile Info</span>
                     </button>
+                    <button
+                        onClick={() => setActiveTab('security')}
+                        className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all duration-200 ${activeTab === 'security' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-600 hover:bg-gray-100'}`}
+                    >
+                        <FaShieldAlt /> <span className="font-semibold">Security & Password</span>
+                    </button>
                     {!isAdmin && (
                         <button
                             onClick={() => setActiveTab('promotions')}
@@ -121,6 +190,129 @@ const Settings = () => {
                                         <p className="font-semibold text-gray-800 capitalize">{user?.subscription_status || 'Active'}</p>
                                     </div>
                                 </div>
+                            </div>
+                        ) : activeTab === 'security' ? (
+                            <div className="p-8">
+                                <div className="flex items-center gap-4 mb-6">
+                                    <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center border-2 border-blue-100 shadow-inner">
+                                        <FaLock className="text-blue-600 text-2xl" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-xl font-bold text-gray-900">Security & Credentials</h2>
+                                        <p className="text-sm text-gray-500">Update your account password to keep your clinical account secure</p>
+                                    </div>
+                                </div>
+
+                                {passwordStatus.error && (
+                                    <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl text-sm flex items-center gap-2">
+                                        <FaShieldAlt className="shrink-0 text-base" />
+                                        <span>{passwordStatus.error}</span>
+                                    </div>
+                                )}
+
+                                {passwordStatus.success && (
+                                    <div className="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 rounded-2xl text-sm flex items-center gap-2 font-medium">
+                                        <FaCheckCircle className="shrink-0 text-base text-green-600" />
+                                        <span>{passwordStatus.success}</span>
+                                    </div>
+                                )}
+
+                                <form onSubmit={handlePasswordChangeSubmit} className="space-y-5 max-w-lg">
+                                    {/* Current Password */}
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                                            Current Password *
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                type={showCurrentPassword ? 'text' : 'password'}
+                                                value={passwordData.current_password}
+                                                onChange={(e) => setPasswordData({ ...passwordData, current_password: e.target.value })}
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-11 text-sm bg-white"
+                                                placeholder="Enter your current password"
+                                                required
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                                                tabIndex={-1}
+                                            >
+                                                {showCurrentPassword ? <FaEyeSlash /> : <FaEye />}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* New Password */}
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                                            New Password (Min 6 characters) *
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                type={showNewPassword ? 'text' : 'password'}
+                                                value={passwordData.new_password}
+                                                onChange={(e) => setPasswordData({ ...passwordData, new_password: e.target.value })}
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-11 text-sm bg-white"
+                                                placeholder="Enter your new password"
+                                                minLength={6}
+                                                required
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowNewPassword(!showNewPassword)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                                                tabIndex={-1}
+                                            >
+                                                {showNewPassword ? <FaEyeSlash /> : <FaEye />}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Confirm New Password */}
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                                            Confirm New Password *
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                type={showConfirmPassword ? 'text' : 'password'}
+                                                value={passwordData.confirm_password}
+                                                onChange={(e) => setPasswordData({ ...passwordData, confirm_password: e.target.value })}
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-11 text-sm bg-white"
+                                                placeholder="Re-enter your new password"
+                                                minLength={6}
+                                                required
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                                                tabIndex={-1}
+                                            >
+                                                {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        disabled={passwordStatus.loading}
+                                        className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 disabled:opacity-50"
+                                    >
+                                        {passwordStatus.loading ? (
+                                            <>
+                                                <FaSpinner className="animate-spin text-base" />
+                                                <span>Updating Password...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <FaKey className="text-sm" />
+                                                <span>Update Password</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </form>
                             </div>
                         ) : activeTab === 'promotions' && !isAdmin ? (
                             <div className="p-8">

@@ -19,7 +19,8 @@ import {
     FaClock,
     FaExclamationCircle,
     FaExclamationTriangle,
-    FaInfoCircle
+    FaInfoCircle,
+    FaShieldAlt
 } from 'react-icons/fa';
 import api from '../../utils/api';
 
@@ -306,6 +307,19 @@ const Navbar = ({ onMenuClick }) => {
                                                 </div>
                                             )}
                                         </div>
+
+                                        {/* Dropdown Footer */}
+                                        <div className="p-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between text-xs">
+                                            <Link
+                                                to="/reminders"
+                                                onClick={() => setShowNotifications(false)}
+                                                className="text-blue-600 hover:text-blue-700 font-bold flex items-center gap-1.5"
+                                            >
+                                                <FaPills className="text-xs" />
+                                                <span>Medication Reminders</span>
+                                            </Link>
+                                            <span className="text-[10px] bg-blue-100 text-blue-800 font-semibold px-2 py-0.5 rounded-full">Web Push</span>
+                                        </div>
                                     </div>
                                 </>
                             )}
@@ -364,11 +378,27 @@ const Navbar = ({ onMenuClick }) => {
                                         </div>
 
                                         <Link
+                                            to="/reminders"
+                                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                            onClick={() => setShowUserMenu(false)}
+                                        >
+                                            <FaPills className="text-blue-600 text-xs" /> Medication Reminders
+                                        </Link>
+
+                                        <Link
                                             to="/settings"
                                             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                                             onClick={() => setShowUserMenu(false)}
                                         >
                                             Settings
+                                        </Link>
+
+                                        <Link
+                                            to="/settings#security"
+                                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                            onClick={() => setShowUserMenu(false)}
+                                        >
+                                            <FaShieldAlt className="text-blue-600 text-xs" /> Security & Password
                                         </Link>
 
                                         {user?.role === 'admin' && (
