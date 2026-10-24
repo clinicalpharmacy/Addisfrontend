@@ -411,7 +411,7 @@ const LandingPage = () => {
                             {/* 👇 NEW: News link in mobile menu */}
                             <a href="#news" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">News</a>
                             <a href="#calculators" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">Calculators</a>
-                            <a href="#clients" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">For Clients</a>
+                            <a href="#clients" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-sm font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">ለጤና አገልግሎት ተጠቃሚዎች</a>
                             <Link to="/vacancies" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">Vacancies</Link>
                             <div className="border-t border-slate-100 my-2 pt-2"></div>
                             {isLoggedIn ? (
