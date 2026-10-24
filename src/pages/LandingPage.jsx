@@ -444,7 +444,7 @@ const LandingPage = () => {
                             Your Partner in <span className="text-green-500">Digital Health</span>
                         </h1>
                         <p className="mt-6 text-base md:text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed mb-10 font-medium">
-                            Addis Med provides information & educational content in healthcare via a digital health platform, with a focus on safe & effective use of medicines. We support health professionals, students, organizations, and the public with accessible, evidence-based health & medication information. We are also engaged in research consultation.
+                            Addis Med provides information & educational content in healthcare via a digital platform, with a focus on optimization of medicines use. We support health professionals, students, organizations, and the public with accessible, evidence-based health & medication information. We are also engaged in research consultation.
                         </p>
                         <div className="flex flex-col sm:flex-row justify-center gap-4">
                             <button
