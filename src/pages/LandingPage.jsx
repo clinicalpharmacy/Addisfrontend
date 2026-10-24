@@ -536,20 +536,17 @@ const LandingPage = () => {
                                         to={`/news/${item.id}`}
                                         className="group bg-white rounded-3xl border border-slate-200 overflow-hidden hover:border-green-300 hover:shadow-xl transition-all duration-300 flex flex-col"
                                     >
-                                        {item.image_url && !imgErrors[item.id] ? (
+                                        {item.image_url && !imgErrors[item.id] && (
                                             <div className="h-44 overflow-hidden bg-slate-100">
                                                 <img
                                                     src={item.image_url}
                                                     alt={item.title}
+                                                    loading="lazy"
                                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                                     onError={() =>
                                                         setImgErrors((prev) => ({ ...prev, [item.id]: true }))
                                                     }
                                                 />
-                                            </div>
-                                        ) : (
-                                            <div className="h-44 bg-gradient-to-br from-green-50 to-emerald-50 border-b border-slate-100 flex items-center justify-center">
-                                                <FaNewspaper className="text-4xl text-green-400" />
                                             </div>
                                         )}
 
