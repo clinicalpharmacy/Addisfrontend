@@ -189,7 +189,6 @@ const PatientOutcome = ({ patientCode, standalone = false, onDataChange }) => {
             <div className="mb-8">
                 <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
                     <h3 className="text-xl font-semibold mb-4 text-gray-800 flex items-center gap-2">
-                        <FaFileMedical />
                         {editIndex !== null ? 'Edit Outcome Status' : 'Outcome Status'}
                     </h3>
 
