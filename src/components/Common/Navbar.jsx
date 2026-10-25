@@ -310,6 +310,7 @@ const Navbar = ({ onMenuClick }) => {
 
                                         {/* Dropdown Footer */}
                                         <div className="p-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between text-xs">
+                                        {(isAdmin || user?.role === 'healthcare_client') && (
                                             <Link
                                                 to="/reminders"
                                                 onClick={() => setShowNotifications(false)}
