@@ -221,6 +221,7 @@ const Sidebar = ({ onClose }) => {
                         </li>
 
                         {/* Medication Reminders (Accessible to all clients & users) */}
+                        {(isAdmin || user?.role === 'healthcare_client') && (
                         <li className="mb-2">
                             <NavLink
                                 to="/reminders"
