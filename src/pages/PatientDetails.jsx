@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
-    FaUser,
-    FaStethoscope,
     FaSave,
     FaPills,
     FaChartLine,
+    FaBaby, 
+    FaBabyCarriage, 
+    FaChild,
+    FaUser,
     FaFileMedical,
     FaMoneyBillWave,
     FaCheckCircle,
@@ -13,20 +15,15 @@ import {
     FaEdit,
     FaTrash,
 
-    FaHeartbeat,
     FaVenusMars,
     FaPhone,
     FaHome,
     FaBirthdayCake,
     FaPlus,
     FaCalendarAlt,
-    FaExclamationTriangle,
     FaTimes,
-    FaAllergies,
     FaVial,
-    FaBaby,
-    FaChild,
-    FaBabyCarriage,
+    FaExclamationTriangle,
     FaWeight,
     FaRulerVertical,
     FaCapsules,
@@ -318,16 +315,16 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
         const isPharmacy = user?.role === 'pharmacy' || user?.role === 'pharmacist' || user?.account_type === 'pharmacy';
 
         const allTabs = [
-            { id: 'overview', label: 'Overview', icon: FaUser },
-            { id: 'demographics', label: 'Demographics & Dx', icon: FaUser },
-            { id: 'vitals', label: 'Vitals & Anthropometry', icon: FaHeartbeat },
+            { id: 'overview', label: 'Overview' },
+            { id: 'demographics', label: 'Demographics & Dx' },
+            { id: 'vitals', label: 'Vitals & Anthropometry' },
             { id: 'labs', label: 'Labs', icon: FaVial },
             { id: 'medications', label: 'Medications', icon: FaPills },
-            ...(isHealthcareClient || isIndividual || isPharmacy ? [{ id: 'analysis', label: 'Clinical Case Review', icon: FaUserShield }] : []),
-            { id: 'drn', label: 'DRN Assessment', icon: FaRobot },
-            { id: 'plan', label: 'Ph-Asst & Plan', icon: FaFileMedical },
-            { id: 'outcome', label: 'Outcome', icon: FaChartLine },
-            ...((isCompanyUser || isHealthcareClient || isIndividual || isPharmacy) ? [{ id: 'cost', label: 'Cost', icon: FaMoneyBillWave }] : [])
+            ...(isHealthcareClient || isIndividual || isPharmacy ? [{ id: 'analysis', label: 'Clinical Analysis' }] : []),
+            { id: 'drn', label: 'DRN Assessment' },
+            { id: 'plan', label: 'Ph-Asst & Plan' },
+            { id: 'outcome', label: 'Outcome' },
+            ...((isCompanyUser || isHealthcareClient || isIndividual || isPharmacy) ? [{ id: 'cost', label: 'Cost' }] : [])
         ];
 
         const hasActiveSubscription = user?.subscription_status === 'active';
@@ -1548,9 +1545,6 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
             <div className="space-y-6">
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
-                        <div className={`p-3 rounded-full ${isPediatric ? 'bg-pink-100' : 'bg-red-100'}`}>
-                            <FaHeartbeat className={`${isPediatric ? 'text-pink-600' : 'text-red-600'} text-xl`} />
-                        </div>
                         <div>
                             <h2 className="text-xl font-bold text-gray-800">
                                 Vital Signs {isPediatric && <span className="text-pink-600">(Pediatric)</span>}
@@ -2183,9 +2177,6 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
             <div className="space-y-6">
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
-                        <div className="bg-indigo-100 p-3 rounded-full">
-                            <FaUser className="text-indigo-600 text-xl" />
-                        </div>
                         <div>
                             <h2 className="text-xl font-bold text-gray-800">Demographics & Dx</h2>
                             <p className="text-gray-600">Basic information</p>
@@ -2209,7 +2200,6 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                                     formData.patient_type === 'infant' ? <FaBabyCarriage className="text-blue-600 text-2xl" /> :
                                         <FaChild className="text-blue-600 text-2xl" />
                             ) : (
-                                <FaUser className="text-blue-600 text-2xl" />
                             )}
                             <div>
                                 <h3 className="font-bold text-blue-800">Age Information</h3>
@@ -2407,7 +2397,7 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                     {/* Allergies */}
                     <div className="space-y-2 md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
-                            <FaAllergies /> Allergies
+                            Allergies
                         </label>
                         {isEditing ? (
                             <div className="space-y-3">
@@ -2816,7 +2806,7 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                                     <div className="flex flex-wrap items-center gap-4 mt-2">
                                         {(user?.account_type !== 'individual' || user?.role === 'admin') && (
                                             <div className="flex items-center gap-2">
-                                                <span className="text-gray-600">Patient Code:</span>
+                                                <span className="text-gray-600">Hypothetical Case No.:</span>
                                                 <span className="font-semibold text-indigo-600">{patientCodeToDisplay || 'N/A'}</span>
                                             </div>
                                         )}
@@ -2834,15 +2824,7 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                                         )}
                                         {isPediatric && (
                                             <div className="bg-pink-100 text-pink-800 px-3 py-1 rounded-full flex items-center gap-1">
-                                                {formData.patient_type === 'neonate' ? <FaBaby /> :
-                                                    formData.patient_type === 'infant' ? <FaBabyCarriage /> :
-                                                        <FaChild />}
                                                 {formData.patient_type.toUpperCase()}
-                                            </div>
-                                        )}
-                                        {formData.is_pregnant && (
-                                            <div className="bg-pink-100 text-pink-800 px-3 py-1 rounded-full flex items-center gap-1">
-                                                <FaBaby /> Pregnancy: {formData.pregnancy_weeks} weeks
                                             </div>
                                         )}
                                     </div>
@@ -2893,7 +2875,6 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                                     })()}
                                 </p>
                             </div>
-                            <FaHeartbeat className="text-blue-400 text-xl" />
                         </div>
                     </div>
 
@@ -2905,7 +2886,6 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                                     {customLabs.filter(l => l.value && l.value.toString().trim() !== '').length}
                                 </p>
                             </div>
-                            <FaVial className="text-green-400 text-xl" />
                         </div>
                     </div>
 
@@ -2917,7 +2897,6 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                                     {formData.allergies ? formData.allergies.length : 0}
                                 </p>
                             </div>
-                            <FaAllergies className="text-red-400 text-xl" />
                         </div>
                     </div>
 
@@ -2929,7 +2908,6 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                                     {formData.is_active ? 'Active' : 'Inactive'}
                                 </p>
                             </div>
-                            <FaUser className="text-indigo-400 text-xl" />
                         </div>
                     </div>
                 </div>
@@ -2939,9 +2917,6 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                     <div className="bg-gradient-to-r from-pink-50 to-rose-50 rounded-xl p-6 border border-pink-200">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="bg-pink-100 p-3 rounded-full">
-                                    <FaBaby className="text-pink-600 text-xl" />
-                                </div>
                                 <div>
                                     <h3 className="text-lg font-bold text-pink-800">Pregnancy Information</h3>
                                     <div className="flex flex-wrap gap-4 mt-2">
@@ -2971,12 +2946,11 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                 {Array.isArray(formData.allergies) && formData.allergies.length > 0 && (
                     <div className="bg-white rounded-lg border border-red-200 p-6">
                         <h3 className="text-lg font-semibold text-red-800 mb-4 flex items-center gap-2">
-                            <FaAllergies /> Allergies
+                            Allergies
                         </h3>
                         <div className="flex flex-wrap gap-2">
                             {formData.allergies.map((allergy, index) => (
                                 <div key={index} className="bg-red-100 text-red-800 px-4 py-2 rounded-lg flex items-center gap-2">
-                                    <FaExclamationTriangle />
                                     <span className="font-medium">{allergy}</span>
                                 </div>
                             ))}
@@ -3052,7 +3026,7 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                     return (
                         <div className="bg-white rounded-lg border border-gray-200 p-6">
                             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                                <FaHeartbeat className="text-red-500" /> Recent Vitals
+                                Recent Vitals
                             </h3>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 {formData.blood_pressure && (
@@ -3104,7 +3078,7 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                 {/* Diagnosis */}
                 <div className="bg-white rounded-lg border border-gray-200 p-6">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                        <FaStethoscope className="text-indigo-500" /> Diagnosis
+                        Diagnosis
                     </h3>
                     <div className="p-4 bg-gray-50 rounded-lg">
                         {formData.diagnosis ? (
