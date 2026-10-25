@@ -1267,11 +1267,14 @@ function App() {
                     }
                 />
 
-                {/* Medication Reminders Route (Accessible to all users & healthcare clients) */}
+                {/* Medication Reminders Route — Admin & Healthcare Clients only */}
                 <Route
                     path="/reminders"
                     element={
-                        <ProtectedRoute requireSubscription={false}>
+                        <ProtectedRoute
+                            allowedRoles={['healthcare_client']}
+                            requireSubscription={false}
+                        >
                             <MedicationReminders />
                         </ProtectedRoute>
                     }
