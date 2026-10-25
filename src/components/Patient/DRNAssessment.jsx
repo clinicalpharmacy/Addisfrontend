@@ -1258,23 +1258,32 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
             </div>
             )}
 
-            {Object.entries(drnCategories).map(([category]) => (
-                <button
-                    key={category}
-                    onClick={() => {
-                        setSelectedCategory(category);
-                        setSelectedCauses([]);
-                        setWriteUps({});
-                        setEditId(null);
-                    }}
-                    className={`p-4 rounded-lg text-left transition-all duration-200 border ${selectedCategory === category
-                        ? 'border-blue-500 bg-blue-50 text-blue-800 shadow-sm'
-                        : 'border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700 hover:shadow'
-                        }`}
-                >
-                    <div className="font-medium">{category}</div>
-                </button>
-            ))}
+            {/* 9 Category Selection */}
+            <div className="mb-8" id="assessment-form">
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">
+                    Select Drug-related need assessment category
+                </h3>
+            
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {Object.entries(drnCategories).map(([category]) => (
+                        <button
+                            key={category}
+                            onClick={() => {
+                                setSelectedCategory(category);
+                                setSelectedCauses([]);
+                                setWriteUps({});
+                                setEditId(null);
+                            }}
+                            className={`p-4 rounded-lg text-left transition-all duration-200 border ${selectedCategory === category
+                                ? 'border-blue-500 bg-blue-50 text-blue-800 shadow-sm'
+                                : 'border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700 hover:shadow'
+                                }`}
+                        >
+                            <div className="font-medium">{category}</div>
+                        </button>
+                    ))}
+                </div>
+            </div>
 
             {/* Cause Selection and Form */}
             {selectedCategory && (
