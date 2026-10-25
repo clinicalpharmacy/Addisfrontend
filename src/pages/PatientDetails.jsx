@@ -316,7 +316,7 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                 ? [{ id: 'analysis', label: 'Clinical Analysis' }] 
                 : []),
             { id: 'drn', label: 'DRN Assessment' },
-            { id: 'plan', label: 'Ph-Ass't & Plan' },
+            { id: 'plan', label: 'Ph-Asst & Plan' },
             { id: 'outcome', label: 'Outcome' },
             ...((isCompanyUser || isHealthcareClient || isIndividual || isPharmacy) 
                 ? [{ id: 'cost', label: 'Cost' }] 
