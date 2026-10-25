@@ -180,8 +180,8 @@ const PatientOutcome = ({ patientCode, standalone = false, onDataChange }) => {
             <div className="flex items-center gap-3 mb-6">
                 <FaChartLine className="text-teal-600 text-xl" />
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-800">Patient Outcome</h2>
-                    <p className="text-gray-600">Patient: {patientCode}</p>
+                    <h2 className="text-2xl font-bold text-gray-800">Outcome Status</h2>
+                    <p className="text-gray-600">Case No. {patientCode}</p>
                 </div>
             </div>
 
@@ -190,7 +190,7 @@ const PatientOutcome = ({ patientCode, standalone = false, onDataChange }) => {
                 <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
                     <h3 className="text-xl font-semibold mb-4 text-gray-800 flex items-center gap-2">
                         <FaFileMedical />
-                        {editIndex !== null ? 'Edit Patient Outcome' : 'Record Patient Outcome'}
+                        {editIndex !== null ? 'Edit Outcome Status' : 'Outcome Status'}
                     </h3>
 
                     <div className="grid grid-cols-1 gap-4 mb-4">
@@ -232,7 +232,7 @@ const PatientOutcome = ({ patientCode, standalone = false, onDataChange }) => {
                             disabled={loading}
                             className="bg-teal-500 hover:bg-teal-600 text-white px-6 py-3 rounded-lg flex items-center gap-2 disabled:opacity-50"
                         >
-                            <FaSave /> {loading ? 'Saving...' : (editIndex !== null ? 'Update Outcome' : 'Save Outcome')}
+                            <FaSave /> {loading ? 'Saving...' : (editIndex !== null ? 'Update Outcome Status' : 'Save Outcome Status')}
                         </button>
 
                         {editIndex !== null && (
@@ -268,8 +268,8 @@ const PatientOutcome = ({ patientCode, standalone = false, onDataChange }) => {
                 ) : outcomes.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
                         <FaChartLine className="text-4xl mx-auto mb-3 text-gray-300" />
-                        <p>No outcomes recorded yet.</p>
-                        <p className="text-sm mt-1">Record the first outcome using the form above.</p>
+                        <p>No outcome status recorded yet.</p>
+                        <p className="text-sm mt-1">Record the first outcome status using the form above.</p>
                     </div>
                 ) : (
                     <div className="space-y-4">
@@ -282,7 +282,7 @@ const PatientOutcome = ({ patientCode, standalone = false, onDataChange }) => {
                                         </div>
                                         <div>
                                             <h4 className="font-semibold text-gray-800">
-                                                Outcome Entry #{outcomes.length - index}
+                                                Outcome Status Entry #{outcomes.length - index}
                                             </h4>
                                             <div className="flex flex-wrap gap-2 mt-1">
                                                 <p className="text-sm text-gray-600 flex items-center gap-1">
