@@ -318,16 +318,16 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
         const isPharmacy = user?.role === 'pharmacy' || user?.role === 'pharmacist' || user?.account_type === 'pharmacy';
 
         const allTabs = [
-            { id: 'overview', label: 'Overview', icon: FaUser },
-            { id: 'demographics', label: 'Demographics & Dx', icon: FaUser },
-            { id: 'vitals', label: 'Vitals & Anthropometry', icon: FaHeartbeat },
+            { id: 'overview', label: 'Overview' },
+            { id: 'demographics', label: 'Demographics & Dx' },
+            { id: 'vitals', label: 'Vitals & Anthropometry' },
             { id: 'labs', label: 'Labs', icon: FaVial },
-            { id: 'medications', label: 'Medications', icon: FaPills },
-            ...(isHealthcareClient || isIndividual || isPharmacy ? [{ id: 'analysis', label: 'Clinical Case Review', icon: FaUserShield }] : []),
-            { id: 'drn', label: 'DRN Assessment', icon: FaRobot },
-            { id: 'plan', label: 'Ph-Asst & Plan', icon: FaFileMedical },
-            { id: 'outcome', label: 'Outcome', icon: FaChartLine },
-            ...((isCompanyUser || isHealthcareClient || isIndividual || isPharmacy) ? [{ id: 'cost', label: 'Cost', icon: FaMoneyBillWave }] : [])
+            { id: 'medications', label: 'Medications' },
+            ...(isHealthcareClient || isIndividual || isPharmacy ? [{ id: 'analysis', label: 'Clinical Case Review' }] : []),
+            { id: 'drn', label: 'DRN Assessment' },
+            { id: 'plan', label: 'Ph-Asst & Plan' },
+            { id: 'outcome', label: 'Outcome' },
+            ...((isCompanyUser || isHealthcareClient || isIndividual || isPharmacy) ? [{ id: 'cost', label: 'Cost' }] : [])
         ];
 
         const hasActiveSubscription = user?.subscription_status === 'active';
@@ -2840,11 +2840,6 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                                                 {formData.patient_type.toUpperCase()}
                                             </div>
                                         )}
-                                        {formData.is_pregnant && (
-                                            <div className="bg-pink-100 text-pink-800 px-3 py-1 rounded-full flex items-center gap-1">
-                                                <FaBaby /> Pregnancy: {formData.pregnancy_weeks} weeks
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
 
@@ -2939,9 +2934,6 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                     <div className="bg-gradient-to-r from-pink-50 to-rose-50 rounded-xl p-6 border border-pink-200">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="bg-pink-100 p-3 rounded-full">
-                                    <FaBaby className="text-pink-600 text-xl" />
-                                </div>
                                 <div>
                                     <h3 className="text-lg font-bold text-pink-800">Pregnancy Information</h3>
                                     <div className="flex flex-wrap gap-4 mt-2">
