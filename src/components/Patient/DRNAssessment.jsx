@@ -4,7 +4,6 @@ import supabase from '../../utils/supabase';
 import { mapPatientToFacts, evaluateRule, formatAlertMessage } from '../CDSS/RuleEngine';
 import { getEncryptionKey, decryptPatient } from '../../utils/encryptionUtils';
 import {
-import {
     FaStethoscope, FaEdit, FaDatabase, FaChevronUp, FaChevronDown,
     FaPills, FaExclamationTriangle, FaCheckCircle, FaSpinner,
     FaHeartbeat, FaClipboardCheck, FaUserCheck,
