@@ -44,55 +44,46 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
     // ✅ 9 DRN Categories
     const drnCategories = {
         Indication: {
-            icon: FaClipboardCheck,
             color: 'blue',
             ruleTypes: ['duplicate_therapy', 'no_medical_indication', 'nondrug_therapy_appropriate', 'addiction_or_recreational_medicine_use', 'treating_avoidable_ade', 'prophylaxis_needed', 'untreated_condition', 'synergistic_therapy_needed'],
             description: 'Appropriateness of indication'
         },
         Dosage: {
-            icon: FaPills,
             color: 'teal',
             ruleTypes: ['low_dose', 'less_frequent', 'short_duration', 'improper_storage', 'high_dose', 'high_frequent', 'longer_duration', 'dose_titration_slow_or_fast'],
             description: 'Incorrect dose'
         },
         "Rule out Ineffective Drug Therapy": {
-            icon: FaStethoscope,
             color: 'yellow',
             ruleTypes: ['more_effective_drug_available', 'condition_refractory_to_drug', 'dosage_form_inappropriate'],
             description: 'Ineffective drug therapy'
         },
         "Contraindication or Caution or ADE or SE or Allergy": {
-            icon: FaExclamationTriangle,
             color: 'red',
             ruleTypes: ['undesirable_effect_ade_or_se', 'unsafe_drug_contraindication_or_caution', 'allergic_reaction'],
             description: 'Medication safety'
         },
         "Drug Interaction": {
-            icon: FaDatabase,
             color: 'orange',
             ruleTypes: ['di_increase_dose', 'di_decrease_dose', 'di_linked_to_ade'],
             description: 'Drug interactions'
         },
         Administration: {
-            icon: FaStethoscope,
             color: 'purple',
             ruleTypes: ['incorrect_administration_decrease_dose_or_efficacy', 'incorrect_administration_linked_to_ade', 'patient_does_not_understand_instructions', 'cannot_swallow_or_administer_drug'],
             description: 'Administration related problems'
         },
         Monitoring: {
-            icon: FaHeartbeat,
             color: 'pink',
             ruleTypes: ['need_monitoring_to_rule_out_effectiveness', 'need_monitoring_to_rule_out_safety'],
             description: 'Need for monitoring'
         },
         Adherence: {
-            icon: FaUserCheck,
             color: 'indigo',
             ruleTypes: ['patient_prefers_not_to_take_drug', 'patient_forgets_to_take_drug', 'drug_not_available', 'more_cost_effective_drug_available', 'cannot_afford_drug'],
             description: 'Adherence to medication'
         },
         "Product Quality": {
-            icon: FaCapsules,
             color: 'green',
             ruleTypes: ['product_quality_defect'],
             description: 'Product quality defect'
@@ -1011,13 +1002,10 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
     return (
         <div className="bg-white rounded-xl shadow-lg p-6">
             <div className="flex items-center gap-3 mb-6">
-                <div className="bg-gradient-to-br from-purple-600 to-blue-600 p-3 rounded-full">
-                    <FaStethoscope className="text-white text-xl" />
-                </div>
                 <div>
                     <h2 className="text-2xl font-bold text-gray-800">Drug-related need assessment activity</h2>
                     <div className="text-sm text-gray-500 mt-1">
-                        Patient: {patientCode} | User ID: {userId?.substring(0, 8)}...
+                        Case No. {patientCode} | User ID: {userId?.substring(0, 8)}...
                     </div>
                 </div>
             </div>
@@ -1154,7 +1142,6 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
             
                             {aiLoading && (
                                 <div className="mb-6 p-6 bg-purple-50 rounded-xl border-2 border-dashed border-purple-200 text-center animate-pulse">
-                                    <FaBrain className="text-3xl text-purple-300 mx-auto mb-2 animate-bounce" />
                                     <h4 className="text-sm font-bold text-purple-600">AI Analysis in progress...</h4>
                                     <p className="text-xs text-purple-400 mt-1">Gemini AI is analyzing — please wait 10-30 seconds</p>
                                 </div>
