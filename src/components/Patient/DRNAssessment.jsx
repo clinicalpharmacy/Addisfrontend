@@ -1526,7 +1526,7 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
             {showReportablePopup && (
                 <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-50">
                     <div className="bg-white p-10 rounded-xl shadow-lg">
-                        <p className="mb-8 text-gray-700 text-base">Is this ADE reportable?</p>
+                        <p className="mb-8 text-gray-700 text-base">Is this ADE Or Product Quality Defect reportable?</p>
                         <div className="flex gap-6">
                             <button
                                 onClick={() => handleReportableResponse(true)}
