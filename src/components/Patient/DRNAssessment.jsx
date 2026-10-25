@@ -1261,27 +1261,68 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
             {/* 9 Category Selection */}
             <div className="mb-8" id="assessment-form">
                 <h3 className="text-lg font-semibold mb-4 text-gray-800">
-                    Select Assessment Task
+                    Select Drug-related need assessment category
                 </h3>
             
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {Object.entries(drnCategories).map(([category]) => (
-                        <button
-                            key={category}
-                            onClick={() => {
+                    {Object.entries(drnCategories).map(([category]) => {
+                        const isChecked = selectedCategory === category;
+            
+                        const handleToggle = () => {
+                            if (isChecked) {
+                                // Uncheck — collapse the cause form
+                                setSelectedCategory(null);
+                                setSelectedCauses([]);
+                                setWriteUps({});
+                                setEditId(null);
+                            } else {
+                                // Check — open the cause form for this category
                                 setSelectedCategory(category);
                                 setSelectedCauses([]);
                                 setWriteUps({});
                                 setEditId(null);
-                            }}
-                            className={`p-4 rounded-lg text-left transition-all duration-200 border ${selectedCategory === category
-                                ? 'border-blue-500 bg-blue-50 text-blue-800 shadow-sm'
-                                : 'border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700 hover:shadow'
-                                }`}
-                        >
-                            <div className="font-medium">{category}</div>
-                        </button>
-                    ))}
+                            }
+                        };
+            
+                        return (
+                            <button
+                                key={category}
+                                type="button"
+                                onClick={handleToggle}
+                                aria-pressed={isChecked}
+                                className={`p-4 rounded-lg text-left transition-all duration-200 border flex items-center gap-3 ${isChecked
+                                    ? 'border-blue-500 bg-blue-50 text-blue-800 shadow-sm'
+                                    : 'border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700 hover:shadow'
+                                    }`}
+                            >
+                                {/* Checkbox indicator */}
+                                <span
+                                    className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${isChecked
+                                        ? 'bg-blue-500 border-blue-500'
+                                        : 'bg-white border-gray-300'
+                                        }`}
+                                >
+                                    {isChecked && (
+                                        <svg
+                                            className="w-3 h-3 text-white"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                            strokeWidth={3}
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                d="M5 13l4 4L19 7"
+                                            />
+                                        </svg>
+                                    )}
+                                </span>
+            
+                                <span className="font-medium">{category}</span>
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
 
