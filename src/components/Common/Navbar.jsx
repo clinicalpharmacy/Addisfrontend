@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
     FaUserMd,
     FaHome,
-    FaPills,
     FaBookMedical,
     FaCogs,
     FaBell,
@@ -189,8 +188,6 @@ const Navbar = ({ onMenuClick }) => {
 
                     {/* Right side - User Menu and Notifications */}
                     <div className="flex items-center gap-4">
-                        {/* Quick Add Button - Removed */}
-
                         {/* Notifications Bell */}
                         <div className="relative" ref={notifRef}>
                             <button
@@ -217,8 +214,10 @@ const Navbar = ({ onMenuClick }) => {
                                         onClick={() => setShowNotifications(false)}
                                     />
 
-                                    <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 z-20 overflow-hidden"
-                                         style={{ maxHeight: '80vh' }}>
+                                    <div
+                                        className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 z-20 overflow-hidden"
+                                        style={{ maxHeight: '80vh' }}
+                                    >
                                         {/* Header */}
                                         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3 flex items-center justify-between">
                                             <div className="flex items-center gap-2">
@@ -307,20 +306,6 @@ const Navbar = ({ onMenuClick }) => {
                                                 </div>
                                             )}
                                         </div>
-
-                                        {/* Dropdown Footer */}
-                                        <div className="p-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between text-xs">
-                                        {(isAdmin || user?.role === 'healthcare_client') && (
-                                            <Link
-                                                to="/reminders"
-                                                onClick={() => setShowNotifications(false)}
-                                                className="text-blue-600 hover:text-blue-700 font-bold flex items-center gap-1.5"
-                                            >
-                                                <FaPills className="text-xs" />
-                                                <span>Medication Reminders</span>
-                                            </Link>
-                                            <span className="text-[10px] bg-blue-100 text-blue-800 font-semibold px-2 py-0.5 rounded-full">Web Push</span>
-                                        </div>
                                     </div>
                                 </>
                             )}
@@ -379,14 +364,6 @@ const Navbar = ({ onMenuClick }) => {
                                         </div>
 
                                         <Link
-                                            to="/reminders"
-                                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                                            onClick={() => setShowUserMenu(false)}
-                                        >
-                                            <FaPills className="text-blue-600 text-xs" /> Medication Reminders
-                                        </Link>
-
-                                        <Link
                                             to="/settings"
                                             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                                             onClick={() => setShowUserMenu(false)}
@@ -424,8 +401,6 @@ const Navbar = ({ onMenuClick }) => {
                         </div>
                     </div>
                 </div>
-
-                {/* Mobile Search Bar - Removed */}
             </div>
         </nav>
     );
