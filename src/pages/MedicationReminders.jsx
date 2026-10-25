@@ -11,24 +11,6 @@ import {
     unsubscribeFromPush, getExistingSubscription
 } from '../utils/pushManager';
 
-const QUICK_MEDS = [
-    { name: 'Metformin', dose: '500 mg' },
-    { name: 'Amlodipine', dose: '5 mg' },
-    { name: 'Omeprazole', dose: '20 mg' },
-    { name: 'Atorvastatin', dose: '20 mg' },
-    { name: 'Losartan', dose: '50 mg' },
-    { name: 'Amoxicillin', dose: '500 mg' },
-    { name: 'Paracetamol', dose: '1 g' },
-    { name: 'Insulin', dose: '10 units' }
-];
-
-const INSTRUCTION_PRESETS = [
-    'Take after meal with water',
-    'Take before meal on empty stomach',
-    'Take with food',
-    'Take at bedtime',
-    'Take with a full glass of water'
-];
 
 /* ------------------------------------------------------------------
  * DEVICE-ONLY storage — nothing here is ever sent to the server.
@@ -644,20 +626,6 @@ export default function MedicationReminders() {
 
                         <form onSubmit={handleSaveSchedule} className="space-y-4">
                             {!editingSchedule && (
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Quick Select (ፈጣን ምርጫ)</label>
-                                    <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto">
-                                        {QUICK_MEDS.map(m => (
-                                            <button key={m.name} type="button"
-                                                onClick={() => setFormData(prev => ({ ...prev, medication_name: m.name, dosage: m.dose }))}
-                                                className="px-2.5 py-1 text-xs bg-gray-100 hover:bg-blue-50 hover:text-blue-600 font-medium rounded-lg">
-                                                {m.name} ({m.dose})
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
                             <div>
                                 <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
                                     Medication Name (የመድሃኒት ስም) *
