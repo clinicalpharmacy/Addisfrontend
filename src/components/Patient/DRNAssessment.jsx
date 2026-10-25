@@ -1477,7 +1477,7 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
                         <table className="w-full divide-y divide-gray-200">
                             <thead className="bg-gray-100">
                                 <tr>
-                                    <th className="p-3 text-left font-medium text-gray-700">DRN Assessment Activity Category</th>
+                                    <th className="p-3 text-left font-medium text-gray-700">Assessment Task</th>
                                     <th className="p-3 text-left font-medium text-gray-700">Cause</th>
                                     <th className="p-3 text-left font-medium text-gray-700">DTP Type</th>
                                     <th className="p-3 text-left font-medium text-gray-700">Specific Case</th>
