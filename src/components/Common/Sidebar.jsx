@@ -220,25 +220,26 @@ const Sidebar = ({ onClose }) => {
                             </NavLink>
                         </li>
 
-                        {/* Medication Reminders (Accessible to all clients & users) */}
+                        {/* Medication Reminders - Healthcare Clients & Admin only */}
                         {(isAdmin || user?.role === 'healthcare_client') && (
-                        <li className="mb-2">
-                            <NavLink
-                                to="/reminders"
-                                onClick={onClose}
-                                className={({ isActive }) =>
-                                    `flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isActive
-                                        ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600 shadow-sm font-bold'
-                                        : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:shadow-sm font-medium'
-                                    }`
-                                }
-                            >
-                                <div className="flex items-center gap-2.5 w-full">
-                                    <FaBell className="text-xl" />
-                                    <span className="text-base">የመድሃኒት ሰዓት ማስታወሻ</span>
-                                </div>
-                            </NavLink>
-                        </li>
+                            <li className="mb-2">
+                                <NavLink
+                                    to="/reminders"
+                                    onClick={onClose}
+                                    className={({ isActive }) =>
+                                        `flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isActive
+                                            ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600 shadow-sm font-bold'
+                                            : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:shadow-sm font-medium'
+                                        }`
+                                    }
+                                >
+                                    <div className="flex items-center gap-2.5 w-full">
+                                        <FaBell className="text-xl" />
+                                        <span className="text-base">የመድሃኒት ሰዓት ማስታወሻ</span>
+                                    </div>
+                                </NavLink>
+                            </li>
+                        )}
 
 
                         {/* Medication Availability Link */}
