@@ -321,13 +321,17 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
             { id: 'overview', label: 'Overview' },
             { id: 'demographics', label: 'Demographics & Dx' },
             { id: 'vitals', label: 'Vitals & Anthropometry' },
-            { id: 'labs', label: 'Labs', icon: FaVial },
+            { id: 'labs', label: 'Labs' },
             { id: 'medications', label: 'Medications' },
-            ...(isHealthcareClient || isIndividual || isPharmacy ? [{ id: 'analysis', label: 'Clinical Case Review' }] : []),
+            ...(isHealthcareClient || isIndividual || isPharmacy 
+                ? [{ id: 'analysis', label: 'Clinical Analysis' }] 
+                : []),
             { id: 'drn', label: 'DRN Assessment' },
             { id: 'plan', label: 'Ph-Asst & Plan' },
             { id: 'outcome', label: 'Outcome' },
-            ...((isCompanyUser || isHealthcareClient || isIndividual || isPharmacy) ? [{ id: 'cost', label: 'Cost' }] : [])
+            ...((isCompanyUser || isHealthcareClient || isIndividual || isPharmacy) 
+                ? [{ id: 'cost', label: 'Cost' }] 
+                : [])
         ];
 
         const hasActiveSubscription = user?.subscription_status === 'active';
@@ -3268,22 +3272,19 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                 <div className="bg-white rounded-xl shadow-lg p-2 md:p-4 mb-4 md:mb-6">
                     {/* Mobile: wrap grid so all tabs visible; Desktop: horizontal scroll */}
                     <nav className="flex flex-wrap gap-1 md:flex-nowrap md:overflow-x-auto md:scrollbar-thin md:scrollbar-thumb-gray-200 md:pb-1">
-                        {tabs.map((tab) => {
-                            const Icon = tab.icon;
-                            return (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`py-2 px-2.5 md:px-4 rounded-lg font-medium text-xs flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 transition-all ${activeTab === tab.id
+                        {tabs.map((tab) => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`py-2 px-2.5 md:px-4 rounded-lg font-medium text-xs whitespace-nowrap flex-shrink-0 transition-all ${
+                                    activeTab === tab.id
                                         ? 'bg-blue-500 text-white shadow-sm'
                                         : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
-                                        }`}
-                                >
-                                    <Icon className="text-sm flex-shrink-0" />
-                                    <span>{tab.label}</span>
-                                </button>
-                            );
-                        })}
+                                }`}
+                            >
+                                {tab.label}
+                            </button>
+                        ))}
                     </nav>
                 </div>
 
