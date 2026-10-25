@@ -8,7 +8,6 @@ import { FaUserShield, FaNotesMedical, FaCheckCircle } from 'react-icons/fa';
  *
  * Implements the Medication Review module inside the Education section of Clinical Pharmacy Skills.
  * Allows pharmacy students and pharmacists to review, create, and manage Medication Review (MR) cases
- * organized by Patient Code.
  */
 const ClinicalPharmacySkill = () => {
     const [selectedPatientCode, setSelectedPatientCode] = useState(null);
@@ -35,7 +34,7 @@ const ClinicalPharmacySkill = () => {
             {!selectedPatientCode && (
                 <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 p-5 rounded-2xl border border-indigo-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <p className="text-sm text-gray-600 mt-1 max-w-2xl font-medium">
-                        Review hypothetical cases to exercise clinical pharmacy skill. Learn collecting comprehensive medication history, perform drug related need assessment, identify drug therapy problems, and develop care plans.
+                        Review hypothetical cases to acquire clinical pharmacy skill. Exercise collecting comprehensive medication history, perform drug related need assessment, identify drug therapy problems, and develop care plans.
                     </p>
                 </div>
             )}
