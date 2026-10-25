@@ -31,27 +31,12 @@ const ClinicalPharmacySkill = () => {
 
     return (
         <div className="space-y-6">
-            {/* Context Badge & Info Header */}
+            {/* Info Header */}
             {!selectedPatientCode && (
                 <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 p-5 rounded-2xl border border-indigo-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div className="flex items-start gap-3.5">
-                        <div className="w-12 h-12 bg-indigo-600 text-white rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
-                            <FaUserShield className="text-2xl" />
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <h3 className="text-lg font-black text-gray-900 tracking-tight">
-                                    Medication Review (MR) with Patient Code
-                                </h3>
-                                <span className="bg-indigo-600 text-white text-[11px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                                    Clinical Skill
-                                </span>
-                            </div>
-                            <p className="text-sm text-gray-600 mt-1 max-w-2xl font-medium">
-                                Review individual patient cases identified by unique Patient Codes. Analyze drug therapy regimens, CDSS alerts, drug-related needs (DRN), pharmaceutical care plans, and clinical outcomes.
-                            </p>
-                        </div>
-                    </div>
+                    <p className="text-sm text-gray-600 mt-1 max-w-2xl font-medium">
+                        Review hypothetical cases to exercise clinical pharmacy skill. Learn collecting comprehensive medication history, perform drug related need assessment, identify drug therapy problems, and develop care plans.
+                    </p>
                 </div>
             )}
 
