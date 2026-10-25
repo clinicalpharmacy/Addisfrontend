@@ -2892,7 +2892,6 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                                     })()}
                                 </p>
                             </div>
-                            <FaHeartbeat className="text-blue-400 text-xl" />
                         </div>
                     </div>
 
@@ -2904,7 +2903,6 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                                     {customLabs.filter(l => l.value && l.value.toString().trim() !== '').length}
                                 </p>
                             </div>
-                            <FaVial className="text-green-400 text-xl" />
                         </div>
                     </div>
 
@@ -2916,7 +2914,6 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                                     {formData.allergies ? formData.allergies.length : 0}
                                 </p>
                             </div>
-                            <FaAllergies className="text-red-400 text-xl" />
                         </div>
                     </div>
 
@@ -2928,7 +2925,6 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                                     {formData.is_active ? 'Active' : 'Inactive'}
                                 </p>
                             </div>
-                            <FaUser className="text-indigo-400 text-xl" />
                         </div>
                     </div>
                 </div>
@@ -2967,7 +2963,7 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                 {Array.isArray(formData.allergies) && formData.allergies.length > 0 && (
                     <div className="bg-white rounded-lg border border-red-200 p-6">
                         <h3 className="text-lg font-semibold text-red-800 mb-4 flex items-center gap-2">
-                            <FaAllergies /> Allergies
+                            Allergies
                         </h3>
                         <div className="flex flex-wrap gap-2">
                             {formData.allergies.map((allergy, index) => (
