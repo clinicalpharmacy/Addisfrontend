@@ -1026,6 +1026,9 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
             {!standalone && (
             <div className="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
                 <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-xl font-semibold text-blue-800 flex items-center gap-2">
+                        <FaRobot className="text-purple-600" /> Clinical Analysis & AI Assistant Insights
+                    </h3>
                     <button
                         onClick={() => setShowAnalysis(!showAnalysis)}
                         className="text-blue-600 hover:text-blue-800"
