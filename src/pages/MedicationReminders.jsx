@@ -637,7 +637,7 @@ export default function MedicationReminders() {
                         <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-start gap-2">
                             <FaShieldAlt className="text-emerald-600 mt-0.5 shrink-0" />
                             <p className="text-[11px] text-emerald-800 font-medium leading-relaxed">
-                                <strong>Privacy notice:</strong> Name, dosage, and instructions are saved <em>only in this browser</em> and mapped to a label (A, B, C…). Only the label + schedule times are sent to the server.
+                                <strong>Privacy notice:</strong> Medication name, dosage, and instructions are saved <em>only in this browser</em> and mapped to a label (A, B, C…). Only the label (A, B, C…) + schedule times are saved in our database.
                                 {editingSchedule?.label && isLabel(editingSchedule.label) && <> Current label: <span className="font-mono font-bold">{editingSchedule.label}</span></>}
                             </p>
                         </div>
