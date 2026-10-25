@@ -728,7 +728,7 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                         setIsEditing(true);
                     }
                 } else {
-                    setError('Patient not found. Please check the patient code.');
+                    setError('Hypothetical Case not found. Please check the Case No.');
                     setIsNewPatient(true);
                     setIsEditing(true);
                 }
@@ -2816,7 +2816,7 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                                     <div className="flex flex-wrap items-center gap-4 mt-2">
                                         {(user?.account_type !== 'individual' || user?.role === 'admin') && (
                                             <div className="flex items-center gap-2">
-                                                <span className="text-gray-600">Patient Code:</span>
+                                                <span className="text-gray-600">Hypothetical Case No.</span>
                                                 <span className="font-semibold text-indigo-600">{patientCodeToDisplay || 'N/A'}</span>
                                             </div>
                                         )}
