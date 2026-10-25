@@ -263,16 +263,10 @@ const PatientList = ({
             {/* Standard Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                 <div className="flex items-center gap-4">
-                    <div className="p-3 bg-blue-50 rounded-xl">
-                        <FaUserInjured className="text-2xl text-blue-600" />
-                    </div>
                     <div>
                         <h1 className="text-xl md:text-2xl font-bold text-gray-800 tracking-tight">
-                            {embedded ? 'Medication Review Cases (with Patient Code)' : 'Clinical Pharmacy Tool Dashboard'}
+                            {embedded ? 'Medication Review' : 'Clinical Pharmacy Tool Dashboard'}
                         </h1>
-                        <p className="text-sm text-gray-500 font-medium">
-                            {embedded ? 'Select a patient case by Patient Code to review medication safety and effectiveness' : 'Manage medication safety and effectiveness'}
-                        </p>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -334,7 +328,7 @@ const PatientList = ({
                             <tr className="bg-blue-50 text-blue-900 text-xs font-bold border-b border-gray-200">
                                 <th className="px-6 py-4 text-left w-16">#</th>
                                 <th className="px-6 py-4 text-left">Review Details</th>
-                                <th className="px-6 py-4 text-left">Medical Condition</th>
+                                <th className="px-6 py-4 text-left">Hypothetica Case Dx</th>
                                 <th className="px-6 py-4 text-left cursor-pointer hover:bg-blue-100" onClick={() => handleSort('created_at')}>
                                     <div className="flex items-center gap-2">Logged On {getSortIcon('created_at')}</div>
                                 </th>
