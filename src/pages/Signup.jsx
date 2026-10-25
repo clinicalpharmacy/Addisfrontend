@@ -18,12 +18,14 @@ import api from '../utils/api';
 import UserAgreement from '../components/UserAgreement';
 
 // Facility-type based subscription plans (all prices include 15% VAT)
+// NOTE: For individual plans, these prices represent the PROFESSIONAL tier.
+// Students and healthcare clients receive a discounted rate handled by getDynamicPricing().
 const SUBSCRIPTION_PLANS = [
     // ── Individual ────────────────────────────────────────────────────────
     {
         id: 'individual_monthly',
         name: 'Individual Monthly',
-        price: 345, // 300 + 15% VAT
+        price: 345, // 300 + 15% VAT (professional rate)
         currency: 'ETB',
         interval: 'month',
         description: 'For individual healthcare professionals, students  & clients',
@@ -43,7 +45,7 @@ const SUBSCRIPTION_PLANS = [
     {
         id: 'individual_yearly',
         name: 'Individual Yearly',
-        price: 3450, // 3000 + 15% VAT
+        price: 3450, // 3000 + 15% VAT (professional rate)
         currency: 'ETB',
         interval: 'year',
         description: 'Best value for individuals',
@@ -111,7 +113,7 @@ const SUBSCRIPTION_PLANS = [
         account_type: 'company',
         facility_type: 'pharmacy'
     },
-    // ── Clinic / Specialty Center / Health Center ─────────────────────────────────────────
+    // ── Clinic / Specialty Center / Health Center ─────────────────────────
     {
         id: 'clinic_monthly',
         name: 'Clinic / Specialty Center / Health Center Monthly',
@@ -145,7 +147,7 @@ const SUBSCRIPTION_PLANS = [
         color: 'from-teal-600 to-cyan-600',
         badge: 'Best Value',
         originalPrice: 12420,
-        discount: 'Save 2,070 ETB', 
+        discount: 'Save 2,070 ETB',
         features: [
             'All features in the monthly plan',
             'Priority support',
@@ -297,19 +299,47 @@ const SUBSCRIPTION_PLANS = [
     }
 ];
 
-// Helper: Dynamic pricing based on country
-const getDynamicPricing = (plan, country) => {
+/**
+ * Dynamic pricing based on country + individual pricing category.
+ *
+ * pricingCategory:
+ *   - 'professional'      → default prices from SUBSCRIPTION_PLANS
+ *   - 'student_or_client' → discounted rate for students & healthcare clients
+ *                           (only applies to individual plans):
+ *                              Monthly: 115 ETB (100 + 15% VAT)
+ *                              Yearly:  1,150 ETB (1,000 + 15% VAT)
+ *                           Outside Ethiopia multiplies by 3.
+ */
+const getDynamicPricing = (plan, country, pricingCategory = 'professional') => {
+    if (!plan) {
+        return { currency: 'ETB', amount: 0, originalAmount: null, showVat: true, baseAmount: 0, vatAmount: 0 };
+    }
+
+    let effectivePrice = plan.price;
+    let effectiveOriginalPrice = plan.originalPrice;
+
+    // Apply student / healthcare-client discounted pricing for individual plans
+    if (plan.account_type === 'individual' && pricingCategory === 'student_or_client') {
+        if (plan.interval === 'month') {
+            effectivePrice = 115;          // 100 base + 15% VAT
+            effectiveOriginalPrice = null; // no monthly discount badge
+        } else if (plan.interval === 'year') {
+            effectivePrice = 1150;         // 1000 base + 15% VAT
+            effectiveOriginalPrice = 1380; // 12 × 115  →  Save 230 ETB
+        }
+    }
+
     const isEthiopia = !country || (country.toLowerCase().includes('ethiopia') && !country.toLowerCase().includes('outside'));
-    
-    // Calculate base and VAT from the total Ethiopian price (which includes 15% VAT)
-    const baseETB = Math.round(plan.price / 1.15);
-    const vatETB = plan.price - baseETB;
+
+    // Calculate base and VAT from the total price (which includes 15% VAT)
+    const baseETB = Math.round(effectivePrice / 1.15);
+    const vatETB = effectivePrice - baseETB;
 
     if (isEthiopia) {
         return {
             currency: 'ETB',
-            amount: plan.price,
-            originalAmount: plan.originalPrice,
+            amount: effectivePrice,
+            originalAmount: effectiveOriginalPrice,
             showVat: true,
             baseAmount: baseETB,
             vatAmount: vatETB
@@ -317,21 +347,23 @@ const getDynamicPricing = (plan, country) => {
     } else {
         // Outside Ethiopia: Multiply by 3, keep in ETB, and show VAT breakdown
         const multiplier = 3;
-        
-        const totalETB = plan.price * multiplier;
+        const totalETB = effectivePrice * multiplier;
         const totalBaseETB = baseETB * multiplier;
         const totalVatETB = vatETB * multiplier;
 
         return {
             currency: 'ETB',
             amount: totalETB,
-            originalAmount: plan.originalPrice ? plan.originalPrice * multiplier : null,
+            originalAmount: effectiveOriginalPrice ? effectiveOriginalPrice * multiplier : null,
             showVat: true,
             baseAmount: totalBaseETB,
             vatAmount: totalVatETB
         };
     }
 };
+
+// Roles that qualify for the student rate
+const STUDENT_ROLES = ['pharmacy_student', 'other_health_science_student'];
 
 const Signup = () => {
     const navigate = useNavigate();
@@ -465,6 +497,36 @@ const Signup = () => {
         return `${prefix}-${timestamp}-${random}`;
     };
 
+    /**
+     * Determine the pricing category from current state (before registration).
+     * After registration (Step 4 / 5) read `pricing_category` from localStorage instead.
+     */
+    const getCurrentPricingCategory = () => {
+        if (individualType === 'client') return 'student_or_client';
+        if (individualType === 'professional' && STUDENT_ROLES.includes(formData.role)) {
+            return 'student_or_client';
+        }
+        return 'professional';
+    };
+
+    /**
+     * Determine the pricing category from the registered_user record in localStorage.
+     * Safer than relying on component state after a refresh.
+     */
+    const getStoredPricingCategory = () => {
+        try {
+            const stored = JSON.parse(localStorage.getItem('registered_user') || '{}');
+            if (stored.pricing_category) return stored.pricing_category;
+            if (stored.individual_type === 'client') return 'student_or_client';
+            if (stored.individual_type === 'professional' && STUDENT_ROLES.includes(stored.role)) {
+                return 'student_or_client';
+            }
+        } catch {
+            // ignore
+        }
+        return 'professional';
+    };
+
     const checkPasswordStrength = (password) => {
         if (!password) return '';
         if (password.length < 6) return 'weak';
@@ -534,6 +596,8 @@ const Signup = () => {
                     selected_plan_details: selectedPlanDetails,
                     is_healthcare_client: true,
                     individual_type: 'client',
+                    role: null,
+                    pricing_category: 'student_or_client',
                     registered_at: new Date().toISOString(),
                     password: formData.password,
                     referral_code: formData.referral_code?.trim() || '',
@@ -549,10 +613,12 @@ const Signup = () => {
                     userId: clientId,
                     phone: formData.phone || 'N/A',
                     account_type: 'individual',
+                    individual_type: 'client',
+                    role: null,
+                    pricing_category: 'student_or_client',
                     selected_plan: selectedPlan,
                     selected_plan_details: selectedPlanDetails,
                     is_healthcare_client: true,
-                    individual_type: 'client',
                     client_password: formData.password,
                     referral_code: formData.referral_code?.trim() || '',
                     country: formData.country
@@ -670,13 +736,21 @@ const Signup = () => {
             let userEmail = formData.account_type === 'individual' ? formData.email.trim() : formData.admin_email.trim();
             let userName = formData.account_type === 'individual' ? formData.full_name.trim() : formData.admin_full_name.trim();
 
+            // Determine pricing category for individual accounts
+            const isIndividualAccount = formData.account_type === 'individual';
+            const pricingCategory = isIndividualAccount
+                ? (STUDENT_ROLES.includes(formData.role) ? 'student_or_client' : 'professional')
+                : 'professional';
+
             // Store user data
             const userData = {
                 email: userEmail,
                 name: userName,
-                phone: formData.account_type === 'individual' ? formData.phone.trim() : formData.admin_phone.trim(),
+                phone: isIndividualAccount ? formData.phone.trim() : formData.admin_phone.trim(),
                 account_type: formData.account_type,
-                individual_type: 'professional',
+                individual_type: isIndividualAccount ? 'professional' : null,
+                role: isIndividualAccount ? formData.role : null,
+                pricing_category: pricingCategory,
                 status: 'pending_payment',
                 userId: userId,
                 id: userId,
@@ -703,9 +777,11 @@ const Signup = () => {
                 email: userEmail,
                 name: userName,
                 userId: userId,
-                phone: formData.account_type === 'individual' ? formData.phone.trim() : formData.admin_phone.trim(),
+                phone: isIndividualAccount ? formData.phone.trim() : formData.admin_phone.trim(),
                 account_type: formData.account_type,
-                individual_type: 'professional',
+                individual_type: isIndividualAccount ? 'professional' : null,
+                role: isIndividualAccount ? formData.role : null,
+                pricing_category: pricingCategory,
                 selected_plan: selectedPlan,
                 selected_plan_details: selectedPlanDetails,
                 country: formData.country
@@ -727,7 +803,7 @@ const Signup = () => {
         }
     };
 
-    // 🔥 FIXED: handleChapaPayment with fallback for selectedPlanDetails
+    // 🔥 handleChapaPayment with category-aware pricing
     const handleChapaPayment = async () => {
         setPaymentLoading(true);
 
@@ -743,7 +819,7 @@ const Signup = () => {
             // Get country from userData (or fallback from formData)
             const country = userData.country || formData.country || 'Ethiopia';
 
-            // 🔥 FIX: Ensure we have plan details
+            // 🔥 Ensure we have plan details
             let planDetails = selectedPlanDetails;
             if (!planDetails) {
                 // Try to get from SUBSCRIPTION_PLANS
@@ -755,8 +831,16 @@ const Signup = () => {
                 }
             }
 
-            // Compute dynamic price based on country
-            const dynamicPricing = getDynamicPricing(planDetails, country);
+            // 🔥 Determine pricing category (from stored user data, never from stale state)
+            const storedCategory =
+                userData.pricing_category ||
+                (userData.individual_type === 'client' ||
+                 (userData.individual_type === 'professional' && STUDENT_ROLES.includes(userData.role))
+                    ? 'student_or_client'
+                    : 'professional');
+
+            // Compute dynamic price based on country and category
+            const dynamicPricing = getDynamicPricing(planDetails, country, storedCategory);
 
             // For healthcare client, use generated data
             if (userData.is_healthcare_client) {
@@ -812,21 +896,19 @@ const Signup = () => {
                     return;
                 }
 
-                    const dynamicPricing = getDynamicPricing(planDetails, country);
-
-                    const paymentRequest = {
-                        planId: selectedPlan,
-                        userEmail: userData.email,
-                        userName: userData.name || userData.full_name || 'User',
-                        userPhone: userData.phone,
-                        userId: userData.userId || userData.id,
-                        account_type: userData.account_type || 'individual',
-                        frontendUrl: window.location.origin,
-                        amount: dynamicPricing.amount,
-                        currency: dynamicPricing.currency,
-                        country: country,
-                        registration_payload: userData.registration_payload
-                    };
+                const paymentRequest = {
+                    planId: selectedPlan,
+                    userEmail: userData.email,
+                    userName: userData.name || userData.full_name || 'User',
+                    userPhone: userData.phone,
+                    userId: userData.userId || userData.id,
+                    account_type: userData.account_type || 'individual',
+                    frontendUrl: window.location.origin,
+                    amount: dynamicPricing.amount,
+                    currency: dynamicPricing.currency,
+                    country: country,
+                    registration_payload: userData.registration_payload
+                };
 
                 const data = await api.post('/chapa/create-payment', paymentRequest);
 
@@ -965,8 +1047,8 @@ const Signup = () => {
 
         const filteredPlans = SUBSCRIPTION_PLANS.filter(plan => plan.account_type === accountTypeSelection);
         const isIndividual = accountTypeSelection === 'individual';
-        
-        // 🔥 FIX: Get country and calculate adjusted prices
+
+        // 🔥 Get country and calculate adjusted prices
         const country = formData.country || 'Ethiopia';
         const isEthiopia = country.toLowerCase().includes('ethiopia');
 
@@ -982,7 +1064,7 @@ const Signup = () => {
                                 <FaArrowLeft className="mr-2" /> Back to Account Selection
                             </button>
                         )}
-                        {/* 🔥 FIX: Show detected country and pricing info */}
+                        {/* 🔥 Show detected country and pricing info */}
                         <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3">
                             <FaGlobe className="text-green-500 text-lg" />
                             <div>
@@ -1020,7 +1102,7 @@ const Signup = () => {
                         <div className="flex flex-wrap justify-center gap-8">
                             {filteredPlans.map((plan) => {
                                 const PlanIcon = plan.icon;
-                                
+
                                 return (
                                     <div
                                         key={plan.id}
@@ -1046,7 +1128,8 @@ const Signup = () => {
 
                                         <div className="mb-6">
                                             {(() => {
-                                                const pricing = getDynamicPricing(plan, formData.country);
+                                                // Main card shows the PROFESSIONAL rate (default category)
+                                                const pricing = getDynamicPricing(plan, formData.country, 'professional');
                                                 return (
                                                     <>
                                                         {pricing.showVat ? (
@@ -1062,7 +1145,7 @@ const Signup = () => {
                                                             {pricing.amount.toLocaleString()} <span className="text-base font-normal text-gray-500">{pricing.currency}</span>
                                                         </div>
                                                         <p className="text-gray-500 text-sm">per {plan.interval}</p>
-                                                        
+
                                                         {pricing.originalAmount && (
                                                             <div className="mt-2 inline-flex items-center gap-2">
                                                                 <span className="line-through text-gray-400 text-sm">{pricing.originalAmount.toLocaleString()}</span>
@@ -1073,6 +1156,27 @@ const Signup = () => {
                                                 );
                                             })()}
                                         </div>
+
+                                        {/* 🔥 NEW: Student / Healthcare-client rate note for individual plans */}
+                                        {plan.account_type === 'individual' && (() => {
+                                            const studentPricing = getDynamicPricing(plan, formData.country, 'student_or_client');
+                                            return (
+                                                <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-xl">
+                                                    <p className="text-xs font-semibold text-green-800 mb-1">
+                                                        🎓 Students &amp; Healthcare Clients
+                                                    </p>
+                                                    <p className="text-sm text-green-700">
+                                                        {studentPricing.originalAmount && (
+                                                            <span className="line-through text-gray-400 mr-1">
+                                                                {studentPricing.originalAmount.toLocaleString()}
+                                                            </span>
+                                                        )}
+                                                        <span className="font-bold">{studentPricing.amount.toLocaleString()} {studentPricing.currency}</span>
+                                                        {' / '}{plan.interval}
+                                                    </p>
+                                                </div>
+                                            );
+                                        })()}
 
                                         <div className="space-y-3 mb-8">
                                             {plan.features.slice(0, 5).map((feature, index) => (
@@ -1207,6 +1311,7 @@ const Signup = () => {
                                             <h3 className="font-bold text-gray-800">{selectedPlanDetails.name}</h3>
                                             <p className="text-sm text-gray-600">
                                                 {selectedPlanDetails.price} {selectedPlanDetails.currency} per {selectedPlanDetails.interval}
+                                                <span className="ml-2 text-xs text-gray-500">(Professional rate)</span>
                                             </p>
                                         </div>
                                     </div>
@@ -1339,36 +1444,40 @@ const Signup = () => {
                             </p>
                         </div>
 
-                        {selectedPlanDetails && (
-                            <div className="mb-6 p-4 bg-gradient-to-r from-green-50 to-green-100 border-2 border-green-200 rounded-xl">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2 bg-white rounded-lg">
-                                            {selectedPlanDetails.icon &&
-                                                React.createElement(selectedPlanDetails.icon, {
-                                                    className: `text-xl ${selectedPlanDetails.color.includes('blue') ? 'text-green-600' :
-                                                        selectedPlanDetails.color.includes('green') ? 'text-green-600' :
-                                                            selectedPlanDetails.color.includes('purple') ? 'text-green-600' :
-                                                                'text-orange-600'}`
-                                                })
-                                            }
+                        {selectedPlanDetails && (() => {
+                            const clientPricing = getDynamicPricing(selectedPlanDetails, formData.country, 'student_or_client');
+                            return (
+                                <div className="mb-6 p-4 bg-gradient-to-r from-green-50 to-green-100 border-2 border-green-200 rounded-xl">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-white rounded-lg">
+                                                {selectedPlanDetails.icon &&
+                                                    React.createElement(selectedPlanDetails.icon, {
+                                                        className: `text-xl ${selectedPlanDetails.color.includes('blue') ? 'text-green-600' :
+                                                            selectedPlanDetails.color.includes('green') ? 'text-green-600' :
+                                                                selectedPlanDetails.color.includes('purple') ? 'text-green-600' :
+                                                                    'text-orange-600'}`
+                                                    })
+                                                }
+                                            </div>
+                                            <div>
+                                                <h3 className="font-bold text-gray-800">{selectedPlanDetails.name}</h3>
+                                                <p className="text-sm text-gray-600">
+                                                    {clientPricing.amount.toLocaleString()} {clientPricing.currency} per {selectedPlanDetails.interval}
+                                                    <span className="ml-2 text-xs text-green-600 font-medium">(Healthcare Client rate)</span>
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h3 className="font-bold text-gray-800">{selectedPlanDetails.name}</h3>
-                                            <p className="text-sm text-gray-600">
-                                                {selectedPlanDetails.price} {selectedPlanDetails.currency} per {selectedPlanDetails.interval}
-                                            </p>
-                                        </div>
+                                        <button
+                                            onClick={() => setStep(1)}
+                                            className="text-sm text-green-600 hover:text-green-800 font-medium"
+                                        >
+                                            Change Plan
+                                        </button>
                                     </div>
-                                    <button
-                                        onClick={() => setStep(1)}
-                                        className="text-sm text-green-600 hover:text-green-800 font-medium"
-                                    >
-                                        Change Plan
-                                    </button>
                                 </div>
-                            </div>
-                        )}
+                            );
+                        })()}
 
                         <div className="bg-white rounded-3xl shadow-2xl p-8">
                             <div className="text-center mb-8">
@@ -1422,7 +1531,7 @@ const Signup = () => {
                                 </p>
                             </div>
 
-                            {/* FIX: Added country display for healthcare clients */}
+                            {/* Country display for healthcare clients */}
                             <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
                                 <div className="flex items-center gap-3">
                                     <FaGlobe className="text-gray-500 text-xl" />
@@ -1594,36 +1703,43 @@ const Signup = () => {
                             </p>
                         </div>
 
-                        {selectedPlanDetails && (
-                            <div className="mb-6 p-4 bg-gradient-to-r from-green-50 to-green-100 border-2 border-green-200 rounded-xl">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2 bg-white rounded-lg">
-                                            {selectedPlanDetails.icon &&
-                                                React.createElement(selectedPlanDetails.icon, {
-                                                    className: `text-xl ${selectedPlanDetails.color.includes('blue') ? 'text-green-600' :
-                                                        selectedPlanDetails.color.includes('green') ? 'text-green-600' :
-                                                            selectedPlanDetails.color.includes('purple') ? 'text-green-600' :
-                                                                'text-orange-600'}`
-                                                })
-                                            }
+                        {selectedPlanDetails && (() => {
+                            const cat = STUDENT_ROLES.includes(formData.role) ? 'student_or_client' : 'professional';
+                            const p = getDynamicPricing(selectedPlanDetails, formData.country, cat);
+                            return (
+                                <div className="mb-6 p-4 bg-gradient-to-r from-green-50 to-green-100 border-2 border-green-200 rounded-xl">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-white rounded-lg">
+                                                {selectedPlanDetails.icon &&
+                                                    React.createElement(selectedPlanDetails.icon, {
+                                                        className: `text-xl ${selectedPlanDetails.color.includes('blue') ? 'text-green-600' :
+                                                            selectedPlanDetails.color.includes('green') ? 'text-green-600' :
+                                                                selectedPlanDetails.color.includes('purple') ? 'text-green-600' :
+                                                                    'text-orange-600'}`
+                                                    })
+                                                }
+                                            </div>
+                                            <div>
+                                                <h3 className="font-bold text-gray-800">{selectedPlanDetails.name}</h3>
+                                                <p className="text-sm text-gray-600">
+                                                    {p.amount.toLocaleString()} {p.currency} per {selectedPlanDetails.interval}
+                                                    <span className={`ml-2 text-xs font-medium ${cat === 'student_or_client' ? 'text-green-700' : 'text-gray-500'}`}>
+                                                        ({cat === 'student_or_client' ? 'Student rate' : 'Professional rate'})
+                                                    </span>
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h3 className="font-bold text-gray-800">{selectedPlanDetails.name}</h3>
-                                            <p className="text-sm text-gray-600">
-                                                {selectedPlanDetails.price} {selectedPlanDetails.currency} per {selectedPlanDetails.interval}
-                                            </p>
-                                        </div>
+                                        <button
+                                            onClick={() => setStep(1)}
+                                            className="text-sm text-green-600 hover:text-green-800 font-medium"
+                                        >
+                                            Change Plan
+                                        </button>
                                     </div>
-                                    <button
-                                        onClick={() => setStep(1)}
-                                        className="text-sm text-green-600 hover:text-green-800 font-medium"
-                                    >
-                                        Change Plan
-                                    </button>
                                 </div>
-                            </div>
-                        )}
+                            );
+                        })()}
 
                         <div className="bg-white rounded-3xl shadow-2xl p-8">
                             <div className="text-center mb-8">
@@ -1682,6 +1798,11 @@ const Signup = () => {
                                             <option value="pharmacy_student">Pharmacy Student</option>
                                             <option value="other_health_science_student">Other Health Science Student</option>
                                         </select>
+                                        {STUDENT_ROLES.includes(formData.role) && (
+                                            <p className="mt-2 text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                                                🎓 Student rate applied: 115 ETB/month (Ethiopia) or 345 ETB/month (outside Ethiopia).
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1837,7 +1958,8 @@ const Signup = () => {
                             </form>
 
                             <div className="flex flex-col md:flex-row gap-4 pt-6 border-t mt-6">
-                                <button                                    type="button"
+                                <button
+                                    type="button"
                                     onClick={() => setIndividualType(null)}
                                     className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 px-4 rounded-xl transition"
                                 >
@@ -2313,9 +2435,17 @@ const Signup = () => {
 
     // Step 4: Payment
     if (step === 4) {
-        const country = formData.country || 'Ethiopia';
-        const pricing = getDynamicPricing(selectedPlanDetails, country);
+        // Prefer country from the stored user record (survives refresh)
+        let storedUser = {};
+        try {
+            storedUser = JSON.parse(localStorage.getItem('registered_user') || '{}');
+        } catch { /* ignore */ }
+
+        const country = storedUser.country || formData.country || 'Ethiopia';
+        const pricingCategory = storedUser.pricing_category || getStoredPricingCategory();
+        const pricing = getDynamicPricing(selectedPlanDetails, country, pricingCategory);
         const isEthiopia = country.toLowerCase().includes('ethiopia');
+        const isStudentOrClientRate = pricingCategory === 'student_or_client';
 
         return (
             <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-50 flex items-center justify-center p-4">
@@ -2389,6 +2519,11 @@ const Signup = () => {
                                         <div>
                                             <h3 className="text-xl font-bold text-gray-800">{selectedPlanDetails.name}</h3>
                                             <p className="text-gray-600">{selectedPlanDetails.description}</p>
+                                            <p className={`mt-1 text-xs font-semibold ${isStudentOrClientRate ? 'text-green-700' : 'text-gray-500'}`}>
+                                                {isStudentOrClientRate
+                                                    ? (storedUser.individual_type === 'client' ? 'Healthcare Client rate applied' : 'Student rate applied')
+                                                    : 'Professional rate applied'}
+                                            </p>
                                         </div>
                                     </div>
                                     <div className="text-right">
@@ -2474,6 +2609,9 @@ const Signup = () => {
     if (step === 5) {
         const userData = JSON.parse(localStorage.getItem('registered_user') || '{}');
         const paymentData = JSON.parse(localStorage.getItem('user_payment') || '{}');
+        const successPricing = selectedPlanDetails
+            ? getDynamicPricing(selectedPlanDetails, userData.country || 'Ethiopia', userData.pricing_category || 'professional')
+            : null;
 
         return (
             <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-50 flex items-center justify-center p-4">
@@ -2541,7 +2679,9 @@ const Signup = () => {
                                 </div>
                                 <div className="p-4 bg-white rounded-xl border border-green-100">
                                     <p className="text-gray-500 text-sm mb-1">Amount Paid</p>
-                                    <p className="font-bold text-gray-800">{selectedPlanDetails ? getDynamicPricing(selectedPlanDetails, userData.country || 'Ethiopia').amount.toLocaleString() : ''} {selectedPlanDetails ? getDynamicPricing(selectedPlanDetails, userData.country || 'Ethiopia').currency : ''}</p>
+                                    <p className="font-bold text-gray-800">
+                                        {successPricing ? `${successPricing.amount.toLocaleString()} ${successPricing.currency}` : 'N/A'}
+                                    </p>
                                 </div>
                                 <div className="p-4 bg-white rounded-xl border border-green-100">
                                     <p className="text-gray-500 text-sm mb-1">Transaction Ref</p>
