@@ -34,7 +34,7 @@ const ClinicalPharmacySkill = () => {
             {!selectedPatientCode && (
                 <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 p-5 rounded-2xl border border-indigo-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <p className="text-sm text-gray-600 mt-1 max-w-2xl font-medium">
-                        Review hypothetical cases to acquire clinical pharmacy skill. Exercise collecting comprehensive medication history, perform drug related need assessment, identify drug therapy problems, and develop care plans.
+                        Review hypothetical cases to acquire clinical pharmacy skill. Exercise collecting comprehensive medication history, perform drug related need assessment, identify drug therapy problems, and develop care plans. Start with New MR case and follow the steps exercise.
                     </p>
                 </div>
             )}
