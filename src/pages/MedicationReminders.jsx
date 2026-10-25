@@ -27,7 +27,6 @@ const setMedMap = (map) => {
     try { localStorage.setItem(MED_MAP_KEY, JSON.stringify(map)); } catch { /* quota */ }
 };
 
-// One-time migration from v1 (name-only) to v2 (name + dosage + instructions)
 const migrateLegacyMapOnce = () => {
     try {
         const raw = localStorage.getItem(LEGACY_MED_MAP_KEY);
@@ -91,11 +90,6 @@ const computeNextLabel = (existingLabels) => {
     return indexToLabel(maxIdx + 1);
 };
 
-/**
- * Resolve display data for a schedule row.
- *  - Label row (A/B/C): read from localStorage. Missing meta => fallback text.
- *  - Legacy row (real name still in DB): display raw DB values.
- */
 const resolveDoseData = (schedule) => {
     if (!schedule) return { name: 'Medication', dosage: '', instructions: '', isLocalOnly: false, missingLocal: false };
     if (isLabel(schedule.label)) {
@@ -108,7 +102,6 @@ const resolveDoseData = (schedule) => {
             missingLocal: !meta?.name
         };
     }
-    // Legacy row — display values as-is from DB
     return {
         name: schedule.label || 'Medication',
         dosage: schedule.dosage || '',
@@ -268,7 +261,6 @@ export default function MedicationReminders() {
         setIsModalOpen(true);
     };
 
-    /* Save: name/dosage/instructions -> localStorage; only label + times/days/dates -> backend */
     const handleSaveSchedule = async (e) => {
         e.preventDefault();
         if (!formData.medication_name.trim()) {
@@ -283,21 +275,18 @@ export default function MedicationReminders() {
         try {
             setSubmitting(true);
 
-            // Determine label: reuse existing (edit) or compute next (create / migrate legacy)
             let finalLabel = formData.label;
             if (!finalLabel) {
                 const existingLabels = schedules.map(s => s.label);
                 finalLabel = computeNextLabel(existingLabels);
             }
 
-            // Save name + dosage + instructions in localStorage ONLY
             setMedMeta(finalLabel, {
                 name: formData.medication_name,
                 dosage: formData.dosage,
                 instructions: formData.instructions
             });
 
-            // Send ONLY label + schedule metadata to backend
             const payload = {
                 label: finalLabel,
                 reminder_times: formData.reminder_times,
@@ -630,7 +619,7 @@ export default function MedicationReminders() {
                                     Medication Name (የመድሃኒት ስም) *
                                     <span className="text-emerald-600 font-normal normal-case ml-1">— device only</span>
                                 </label>
-                                <input type="text" required placeholder="e.g. Metformin, Amlodipine"
+                                <input type="text" required
                                     value={formData.medication_name}
                                     onChange={e => setFormData(prev => ({ ...prev, medication_name: e.target.value }))}
                                     className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-hidden" />
@@ -641,7 +630,7 @@ export default function MedicationReminders() {
                                     Dosage (መጠን) *
                                     <span className="text-emerald-600 font-normal normal-case ml-1">— device only</span>
                                 </label>
-                                <input type="text" required placeholder="e.g. 500 mg, 1 tablet"
+                                <input type="text" required
                                     value={formData.dosage}
                                     onChange={e => setFormData(prev => ({ ...prev, dosage: e.target.value }))}
                                     className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-hidden" />
@@ -701,19 +690,10 @@ export default function MedicationReminders() {
                                     Special Instructions (አወሳሰድ መመሪያ)
                                     <span className="text-emerald-600 font-normal normal-case ml-1">— device only</span>
                                 </label>
-                                <input type="text" placeholder="e.g. Take after meal with water"
+                                <input type="text"
                                     value={formData.instructions}
                                     onChange={e => setFormData(prev => ({ ...prev, instructions: e.target.value }))}
-                                    className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-hidden mb-2" />
-                                <div className="flex flex-wrap gap-1">
-                                    {INSTRUCTION_PRESETS.map((p, idx) => (
-                                        <button key={idx} type="button"
-                                            onClick={() => setFormData(prev => ({ ...prev, instructions: p }))}
-                                            className="text-[11px] px-2 py-0.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded">
-                                            {p}
-                                        </button>
-                                    ))}
-                                </div>
+                                    className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-hidden" />
                             </div>
 
                             <div className="pt-4 border-t border-gray-100 flex items-center justify-end gap-3">
