@@ -4,11 +4,12 @@ import supabase from '../../utils/supabase';
 import { mapPatientToFacts, evaluateRule, formatAlertMessage } from '../CDSS/RuleEngine';
 import { getEncryptionKey, decryptPatient } from '../../utils/encryptionUtils';
 import {
+import {
     FaStethoscope, FaEdit, FaDatabase, FaChevronUp, FaChevronDown,
     FaPills, FaExclamationTriangle, FaCheckCircle, FaSpinner,
     FaHeartbeat, FaClipboardCheck, FaUserCheck,
     FaCapsules, FaSync, FaBrain, FaRobot, FaLightbulb, FaBookMedical,
-    FaRegLightbulb, FaUserShield, FaClipboardList
+    FaRegLightbulb, FaUserShield, FaClipboardList, FaFilter, FaRocket
 } from 'react-icons/fa';
 
 const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHistory: medicationProps, standalone = false, onDataChange }) => {
@@ -1258,40 +1259,23 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
             </div>
             )}
 
-            {/* 9 Category Selection */}
-            <div className="mb-8" id="assessment-form">
-                <h3 className="text-lg font-semibold mb-4 text-gray-800">Select Drug-related need assessment category</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {Object.entries(drnCategories).map(([category, catData]) => {
-                        const Icon = catData.icon;
-
-                        return (
-                            <button
-                                key={category}
-                                onClick={() => {
-                                    setSelectedCategory(category);
-                                    setSelectedCauses([]);
-                                    setWriteUps({});
-                                    setEditId(null);
-                                }}
-                                className={`p-4 rounded-lg text-left transition-all duration-200 border ${selectedCategory === category
-                                    ? 'border-blue-500 bg-blue-50 text-blue-800 shadow-sm'
-                                    : 'border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700 hover:shadow'
-                                    }`}
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className={`p-2 rounded-full ${getCategoryColor(category)}`}>
-                                        <Icon className="text-current" />
-                                    </div>
-                                    <div>
-                                        <div className="font-medium">{category}</div>
-                                    </div>
-                                </div>
-                            </button>
-                        );
-                    })}
-                </div>
-            </div>
+            {Object.entries(drnCategories).map(([category]) => (
+                <button
+                    key={category}
+                    onClick={() => {
+                        setSelectedCategory(category);
+                        setSelectedCauses([]);
+                        setWriteUps({});
+                        setEditId(null);
+                    }}
+                    className={`p-4 rounded-lg text-left transition-all duration-200 border ${selectedCategory === category
+                        ? 'border-blue-500 bg-blue-50 text-blue-800 shadow-sm'
+                        : 'border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700 hover:shadow'
+                        }`}
+                >
+                    <div className="font-medium">{category}</div>
+                </button>
+            ))}
 
             {/* Cause Selection and Form */}
             {selectedCategory && (
