@@ -234,7 +234,7 @@ const Sidebar = ({ onClose }) => {
                             >
                                 <div className="flex items-center gap-2.5 w-full">
                                     <FaBell className="text-xl" />
-                                    <span className="text-base">የመድሃኒት ማስታወሻ</span>
+                                    <span className="text-base">የመድሃኒት ሰዓት ማስታወሻ</span>
                                 </div>
                             </NavLink>
                         </li>
