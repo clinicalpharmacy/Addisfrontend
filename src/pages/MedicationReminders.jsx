@@ -625,7 +625,6 @@ export default function MedicationReminders() {
                         </div>
 
                         <form onSubmit={handleSaveSchedule} className="space-y-4">
-                            {!editingSchedule && (
                             <div>
                                 <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
                                     Medication Name (የመድሃኒት ስም) *
