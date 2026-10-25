@@ -11,7 +11,8 @@ const UserAgreement = ({ accountType, onAgree, onBack }) => {
         "Any alerts, contraindication notices, or medication-related information must be independently verified against official prescribing information and evaluated by a licensed healthcare professional before any clinical action is taken.",
         "The platform is not an autonomous clinical decision-making system and is not intended to direct or control patient treatment.",
         "Patients must consult a qualified healthcare professional before starting, stopping, or modifying any medication.",
-        "You agee that you will not use other persons names, phone, numbers, emails, or any other personal identifiers.",
+        "You agee that you will not use OTHER persons names, phone, numbers, emails, or any other personal identifiers.",
+        "This platform is end-to-end encrypted and Addis-Med does not have access to the data searched or entered while using this platform.",
         "This platform must not be used in emergency medical situations.",
     ];
 
@@ -22,6 +23,7 @@ const UserAgreement = ({ accountType, onAgree, onBack }) => {
         "Any alerts, contraindication notices, or medication-related information must be independently verified against official prescribing information and evaluated by a licensed healthcare professional before any clinical action is taken.",
         "The platform is not an autonomous clinical decision-making system and is not intended to direct or control patient treatment.",
         "You agee that you will not use other persons names, phone, numbers, emails, or any other personal identifiers.",
+        "This platform is end-to-end encrypted and Addis-Med does not have access to the data searched or entered while using this platform.",
         "This platform must not be used in emergency medical situations.",
     ];
 
