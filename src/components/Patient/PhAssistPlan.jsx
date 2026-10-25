@@ -11,6 +11,51 @@ import {
     FaPlus
 } from 'react-icons/fa';
 
+// ─────────────────────────────────────────────────────────────
+// Robust error message extractor — never returns "undefined"
+// ─────────────────────────────────────────────────────────────
+const getErrorMessage = (error, fallback = 'Unknown error') => {
+    if (!error) return fallback;
+    if (typeof error === 'string') return error;
+
+    // Axios-style response
+    const serverMsg =
+        error?.response?.data?.error ||
+        error?.response?.data?.message;
+    if (serverMsg) return serverMsg;
+
+    // Custom api wrapper may throw { success, error }
+    if (error?.error) {
+        return typeof error.error === 'string'
+            ? error.error
+            : JSON.stringify(error.error);
+    }
+    if (error?.message) return error.message;
+
+    // HTTP status fallbacks
+    const status = error?.response?.status || error?.status;
+    if (status === 404) {
+        return 'Endpoint not found (404). The backend route may be missing or the URL path is incorrect.';
+    }
+    if (status) {
+        return `Server returned ${status} ${error?.response?.statusText || ''}`.trim();
+    }
+
+    // Last resort
+    try {
+        const json = JSON.stringify(error);
+        if (json && json !== '{}') return json;
+    } catch { /* ignore */ }
+
+    return fallback;
+};
+
+// ─────────────────────────────────────────────────────────────
+// Base path — pharmacy-plans routes live on the patients router
+// (backend: app.use('/api/patients', patientsRouter))
+// ─────────────────────────────────────────────────────────────
+const PLANS_BASE = '/patients/pharmacy-plans';
+
 const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
     const [pharmacyAssessment, setPharmacyAssessment] = useState('');
     const [plan, setPlan] = useState('');
@@ -27,7 +72,7 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
         }
     }, [patientCode]);
 
-    // Report data changes to parent
+    // Report data changes to parent (standalone mode)
     useEffect(() => {
         if (standalone && onDataChange) {
             onDataChange(savedPlans);
@@ -37,13 +82,22 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
     const fetchSavedPlans = async () => {
         try {
             setLoading(true);
-            const result = await api.get(`/pharmacy-plans/patient/${patientCode}`);
+            const result = await api.get(`${PLANS_BASE}/patient/${patientCode}`);
 
-            if (result.success && result.plans) {
+            if (result && result.success && Array.isArray(result.plans)) {
                 setSavedPlans(result.plans);
+            } else if (result && result.success === false) {
+                console.warn('Backend returned success=false while fetching plans:', result);
             }
         } catch (error) {
             console.error('Error fetching pharmacy plans:', error);
+            const status = error?.response?.status || error?.status;
+            if (status === 404) {
+                console.warn(
+                    `⚠️ GET ${PLANS_BASE}/patient/${patientCode} → 404. ` +
+                    `Verify the backend mounts the pharmacy-plans routes.`
+                );
+            }
         } finally {
             setLoading(false);
         }
@@ -70,11 +124,21 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
             };
 
             if (standalone) {
-                // Local-only mode
+                // ── Local-only mode ──
                 if (editIndex !== null) {
-                    setSavedPlans(prev => prev.map(p => p.id === editIndex ? { ...p, ...planData, updated_at: new Date().toISOString() } : p));
+                    setSavedPlans(prev =>
+                        prev.map(p =>
+                            p.id === editIndex
+                                ? { ...p, ...planData, updated_at: new Date().toISOString() }
+                                : p
+                        )
+                    );
                 } else {
-                    const newPlan = { ...planData, id: Date.now(), created_at: new Date().toISOString() };
+                    const newPlan = {
+                        ...planData,
+                        id: Date.now(),
+                        created_at: new Date().toISOString()
+                    };
                     setSavedPlans(prev => [...prev, newPlan]);
                 }
                 alert(`Plan ${editIndex !== null ? 'updated' : 'saved'} locally!`);
@@ -85,14 +149,15 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
                 setEditIndex(null);
                 setShowForm(false);
             } else {
+                // ── Server mode ──
                 let result;
                 if (editIndex !== null) {
-                    result = await api.put(`/pharmacy-plans/${editIndex}`, planData);
+                    result = await api.put(`${PLANS_BASE}/${editIndex}`, planData);
                 } else {
-                    result = await api.post('/pharmacy-plans', planData);
+                    result = await api.post(PLANS_BASE, planData);
                 }
 
-                if (result.success) {
+                if (result && result.success) {
                     alert(`Plan ${editIndex !== null ? 'updated' : 'saved'} successfully!`);
                     setPharmacyAssessment('');
                     setPlan('');
@@ -102,12 +167,21 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
                     setShowForm(false);
                     fetchSavedPlans();
                 } else {
-                    throw new Error(result.error || 'Failed to save plan');
+                    const reason =
+                        (typeof result === 'object' && result && (result.error || result.message)) ||
+                        'Server did not confirm success.';
+                    throw new Error(reason);
                 }
             }
         } catch (error) {
             console.error('Error saving plan:', error);
-            alert('Error: ' + (error.response?.data?.error || error.message));
+            const status = error?.response?.status || error?.status;
+            const baseMsg = getErrorMessage(error);
+            const hint =
+                status === 404
+                    ? `\n\nThe backend returned 404. Verify that:\n• ${PLANS_BASE} is mounted in your Express app\n• You redeployed after adding the routes`
+                    : '';
+            alert('Error saving plan: ' + baseMsg + hint);
         } finally {
             setLoading(false);
         }
@@ -133,14 +207,24 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
         }
 
         try {
-            const result = await api.delete(`/pharmacy-plans/${planId}`);
-            if (result.success) {
+            const result = await api.delete(`${PLANS_BASE}/${planId}`);
+            if (result && result.success) {
                 alert('Plan deleted successfully!');
                 fetchSavedPlans();
+            } else {
+                const reason =
+                    (typeof result === 'object' && result && (result.error || result.message)) ||
+                    'Server did not confirm deletion.';
+                throw new Error(reason);
             }
         } catch (error) {
             console.error('Error deleting plan:', error);
-            alert('Error deleting plan: ' + (error.response?.data?.error || error.message || 'Failed'));
+            const status = error?.response?.status || error?.status;
+            const hint =
+                status === 404
+                    ? `\n\nThe backend returned 404. Verify that ${PLANS_BASE}/:planId exists.`
+                    : '';
+            alert('Error deleting plan: ' + getErrorMessage(error) + hint);
         }
     };
 
@@ -155,17 +239,21 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
 
     return (
         <div className="bg-white rounded-xl shadow-lg p-3 md:p-6 overflow-x-hidden max-w-full">
-            {/* Header */}
+            {/* ── Header ── */}
             <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 md:mb-6 gap-4">
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                     <div className="bg-green-100 p-2 md:p-3 rounded-full flex-shrink-0">
                         <FaClipboardList className="text-green-600 text-lg md:text-xl" />
                     </div>
                     <div className="min-w-0 flex-1">
-                        <h2 className="text-xl md:text-2xl font-bold text-gray-800 truncate">Pharmacy Assessment & Plan</h2>
+                        <h2 className="text-xl md:text-2xl font-bold text-gray-800 truncate">
+                            Pharmacy Assessment & Plan
+                        </h2>
                         <p className="text-xs md:text-base text-gray-600 flex items-center gap-2 truncate">
                             <span>Patient:</span>
-                            <span className="font-semibold bg-green-50 px-2 py-1 rounded text-xs md:text-sm">{patientCode}</span>
+                            <span className="font-semibold bg-green-50 px-2 py-1 rounded text-xs md:text-sm">
+                                {patientCode}
+                            </span>
                         </p>
                     </div>
                 </div>
@@ -178,38 +266,38 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
                 </button>
             </div>
 
-            {/* Quick Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 mb-4 md:mb-6">
-                <div className="bg-green-50 p-2 md:p-3 rounded-lg border border-green-100">
-                    <div className="text-xs md:text-sm text-green-700">Total Plans</div>
-                    <div className="text-lg md:text-xl font-bold text-green-800">{savedPlans.length}</div>
-                </div>
-                <div className="bg-blue-50 p-2 md:p-3 rounded-lg border border-blue-100">
-                    <div className="text-xs md:text-sm text-blue-700">With Follow-up</div>
-                    <div className="text-lg md:text-xl font-bold text-blue-800">
+            {/* ── Quick Stats (plain text) ── */}
+            <div className="mb-4 md:mb-6 text-sm md:text-base text-gray-700 flex flex-wrap gap-x-5 gap-y-1">
+                <span>
+                    Total Plans:{' '}
+                    <span className="font-semibold text-green-800">{savedPlans.length}</span>
+                </span>
+                <span>
+                    With Follow-up:{' '}
+                    <span className="font-semibold text-blue-800">
                         {savedPlans.filter(p => p.follow_up).length}
-                    </div>
-                </div>
-                <div className="bg-purple-50 p-2 md:p-3 rounded-lg border border-purple-100">
-                    <div className="text-xs md:text-sm text-purple-700">With Notes</div>
-                    <div className="text-lg md:text-xl font-bold text-purple-800">
+                    </span>
+                </span>
+                <span>
+                    With Notes:{' '}
+                    <span className="font-semibold text-purple-800">
                         {savedPlans.filter(p => p.plan_type).length}
-                    </div>
-                </div>
-                <div className="bg-teal-50 p-2 md:p-3 rounded-lg border border-teal-100">
-                    <div className="text-xs md:text-sm text-teal-700">Last Month</div>
-                    <div className="text-lg md:text-xl font-bold text-teal-800">
+                    </span>
+                </span>
+                <span>
+                    Last Month:{' '}
+                    <span className="font-semibold text-teal-800">
                         {savedPlans.filter(p => {
                             if (!p.created_at) return false;
                             const lastMonth = new Date();
                             lastMonth.setMonth(lastMonth.getMonth() - 1);
                             return new Date(p.created_at) > lastMonth;
                         }).length}
-                    </div>
-                </div>
+                    </span>
+                </span>
             </div>
 
-            {/* Toggle Form Button */}
+            {/* ── Toggle Form Button ── */}
             <div className="mb-4">
                 <button
                     onClick={() => setShowForm(!showForm)}
@@ -220,7 +308,7 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
                 </button>
             </div>
 
-            {/* Input Form - Collapsible */}
+            {/* ── Input Form ── */}
             {showForm && (
                 <div className="bg-gray-50 rounded-lg p-3 md:p-6 mb-4 md:mb-8 border border-gray-200">
                     <div className="flex justify-between items-center mb-6">
@@ -298,7 +386,12 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
                                 disabled={loading}
                                 className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg flex items-center gap-2 disabled:opacity-50"
                             >
-                                <FaSave /> {loading ? 'Saving...' : (editIndex !== null ? 'Update Plan' : 'Save Plan')}
+                                <FaSave />{' '}
+                                {loading
+                                    ? 'Saving...'
+                                    : editIndex !== null
+                                    ? 'Update Plan'
+                                    : 'Save Plan'}
                             </button>
 
                             {(editIndex !== null || showForm) && (
@@ -314,7 +407,7 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
                 </div>
             )}
 
-            {/* Saved Plans List */}
+            {/* ── Saved Plans List ── */}
             <div>
                 <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center gap-2">
                     <FaClipboardList />
@@ -337,7 +430,10 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
                 ) : (
                     <div className="space-y-4">
                         {savedPlans.map((item, index) => (
-                            <div key={item.id} className="border rounded-lg p-4 bg-gray-50 hover:bg-white transition hover:shadow-md">
+                            <div
+                                key={item.id}
+                                className="border rounded-lg p-4 bg-gray-50 hover:bg-white transition hover:shadow-md"
+                            >
                                 <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-4 gap-2">
                                     <div>
                                         <h4 className="font-semibold text-gray-800">
@@ -351,14 +447,14 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
                                         )}
                                     </div>
                                     <div className="flex gap-2">
-                                        <button 
-                                            onClick={() => handleEdit(item)} 
+                                        <button
+                                            onClick={() => handleEdit(item)}
                                             className="text-blue-500 hover:text-blue-700 px-2 py-1 hover:bg-blue-50 rounded transition"
                                         >
                                             <FaEdit className="inline mr-1" /> Edit
                                         </button>
-                                        <button 
-                                            onClick={() => handleDelete(item.id)} 
+                                        <button
+                                            onClick={() => handleDelete(item.id)}
                                             className="text-red-500 hover:text-red-700 px-2 py-1 hover:bg-red-50 rounded transition"
                                         >
                                             <FaTrash className="inline mr-1" /> Delete
@@ -398,7 +494,9 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
 
                                 <div className="mt-3 text-xs text-gray-400">
                                     Created: {new Date(item.created_at).toLocaleString()}
-                                    {item.updated_at !== item.created_at && ` | Updated: ${new Date(item.updated_at).toLocaleString()}`}
+                                    {item.updated_at &&
+                                        item.updated_at !== item.created_at &&
+                                        ` | Updated: ${new Date(item.updated_at).toLocaleString()}`}
                                 </div>
                             </div>
                         ))}
