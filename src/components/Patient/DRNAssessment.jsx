@@ -1005,7 +1005,7 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
                 <div>
                     <h2 className="text-2xl font-bold text-gray-800">Drug-related need assessment activity</h2>
                     <div className="text-sm text-gray-500 mt-1">
-                        Case No. {patientCode} | User ID: {userId?.substring(0, 8)}...
+                        Case No. {patientCode}
                     </div>
                 </div>
             </div>
