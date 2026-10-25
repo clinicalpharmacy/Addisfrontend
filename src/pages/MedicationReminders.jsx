@@ -3,7 +3,7 @@ import {
     FaPills, FaBell, FaBellSlash, FaCheck, FaClock, FaPlus, FaTrash, FaEdit,
     FaCalendarAlt, FaExclamationCircle, FaInfoCircle, FaCheckCircle, FaVial,
     FaTimes, FaPaperPlane, FaRedo, FaShieldAlt, FaCalendarCheck, FaUtensils,
-    FaMoon, FaSun, FaCloudSun
+    FaMoon, FaSun, FaCloudSun, FaLock
 } from 'react-icons/fa';
 import api from '../utils/api';
 import {
@@ -31,38 +31,62 @@ const INSTRUCTION_PRESETS = [
 ];
 
 /* ------------------------------------------------------------------
- * LOCAL-ONLY name storage (never sent to the server)
- * The DB stores only labels. Names live here in localStorage.
+ * DEVICE-ONLY storage — nothing here is ever sent to the server.
+ * Each label maps to { name, dosage, instructions }.
  * ------------------------------------------------------------------ */
-const MED_MAP_KEY = 'med_name_map_v1';
+const MED_MAP_KEY = 'med_meta_map_v2';
+const LEGACY_MED_MAP_KEY = 'med_name_map_v1';
 
-const getMedNameMap = () => {
+const getMedMap = () => {
     try { return JSON.parse(localStorage.getItem(MED_MAP_KEY) || '{}'); }
     catch { return {}; }
 };
-const setMedNameMap = (map) => {
+const setMedMap = (map) => {
     try { localStorage.setItem(MED_MAP_KEY, JSON.stringify(map)); } catch { /* quota */ }
 };
-const getMedName = (label) => (label ? getMedNameMap()[label] || null : null);
-const setMedName = (label, name) => {
-    if (!label || !name) return;
-    const m = getMedNameMap();
-    m[label] = name;
-    setMedNameMap(m);
-};
-const removeMedName = (label) => {
-    if (!label) return;
-    const m = getMedNameMap();
-    delete m[label];
-    setMedNameMap(m);
+
+// One-time migration from v1 (name-only) to v2 (name + dosage + instructions)
+const migrateLegacyMapOnce = () => {
+    try {
+        const raw = localStorage.getItem(LEGACY_MED_MAP_KEY);
+        if (!raw) return;
+        const oldMap = JSON.parse(raw);
+        const newMap = getMedMap();
+        Object.entries(oldMap || {}).forEach(([label, name]) => {
+            if (!newMap[label]) newMap[label] = { name, dosage: '', instructions: '' };
+        });
+        setMedMap(newMap);
+        localStorage.removeItem(LEGACY_MED_MAP_KEY);
+    } catch { /* ignore */ }
 };
 
-/* Label helpers: A..Z, then AA..AZ, BA.. etc. */
+const getMedMeta = (label) => {
+    if (!label) return null;
+    return getMedMap()[label] || null;
+};
+const setMedMeta = (label, meta) => {
+    if (!label) return;
+    const map = getMedMap();
+    map[label] = {
+        name: (meta.name || '').trim(),
+        dosage: (meta.dosage || '').trim(),
+        instructions: (meta.instructions || '').trim()
+    };
+    setMedMap(map);
+};
+const removeMedMeta = (label) => {
+    if (!label) return;
+    const map = getMedMap();
+    delete map[label];
+    setMedMap(map);
+};
+
+/* Label helpers: A..Z, AA..AZ, ... */
+const isLabel = (v) => /^[A-Z]{1,3}$/.test(String(v || '').toUpperCase());
+
 const labelToIndex = (label) => {
     let idx = 0;
-    for (const ch of String(label).toUpperCase()) {
-        idx = idx * 26 + (ch.charCodeAt(0) - 64);
-    }
+    for (const ch of String(label).toUpperCase()) idx = idx * 26 + (ch.charCodeAt(0) - 64);
     return idx - 1;
 };
 const indexToLabel = (idx) => {
@@ -78,9 +102,7 @@ const indexToLabel = (idx) => {
 const computeNextLabel = (existingLabels) => {
     let maxIdx = -1;
     for (const l of existingLabels || []) {
-        if (!l) continue;
-        // ignore legacy rows that contain a real name
-        if (!/^[A-Z]{1,3}$/.test(String(l).toUpperCase())) continue;
+        if (!isLabel(l)) continue;
         const i = labelToIndex(l);
         if (i > maxIdx) maxIdx = i;
     }
@@ -88,16 +110,30 @@ const computeNextLabel = (existingLabels) => {
 };
 
 /**
- * Resolve a raw value from DB:
- *  - If it's a short label (A, B, AA) -> look up local name, else "Medication A"
- *  - If it looks like a real name (legacy data) -> show as-is
+ * Resolve display data for a schedule row.
+ *  - Label row (A/B/C): read from localStorage. Missing meta => fallback text.
+ *  - Legacy row (real name still in DB): display raw DB values.
  */
-const resolveMedName = (raw) => {
-    if (!raw) return 'Medication';
-    if (/^[A-Z]{1,3}$/.test(String(raw).toUpperCase())) {
-        return getMedName(raw) || `Medication ${raw}`;
+const resolveDoseData = (schedule) => {
+    if (!schedule) return { name: 'Medication', dosage: '', instructions: '', isLocalOnly: false, missingLocal: false };
+    if (isLabel(schedule.label)) {
+        const meta = getMedMeta(schedule.label);
+        return {
+            name: meta?.name || `Medication ${schedule.label}`,
+            dosage: meta?.dosage || '',
+            instructions: meta?.instructions || '',
+            isLocalOnly: true,
+            missingLocal: !meta?.name
+        };
     }
-    return raw; // legacy name – display as-is
+    // Legacy row — display values as-is from DB
+    return {
+        name: schedule.label || 'Medication',
+        dosage: schedule.dosage || '',
+        instructions: schedule.instructions || '',
+        isLocalOnly: false,
+        missingLocal: false
+    };
 };
 
 export default function MedicationReminders() {
@@ -114,8 +150,8 @@ export default function MedicationReminders() {
     const [editingSchedule, setEditingSchedule] = useState(null);
     const [submitting, setSubmitting] = useState(false);
 
-    /* formData.medication_name is UI-ONLY (localStorage).
-       formData.label is what gets persisted to the DB. */
+    /* medication_name / dosage / instructions are LOCAL-ONLY UI fields.
+       label is the only identifier sent to the server. */
     const [formData, setFormData] = useState({
         label: '',
         medication_name: '',
@@ -127,6 +163,8 @@ export default function MedicationReminders() {
         start_date: new Date().toISOString().split('T')[0],
         end_date: ''
     });
+
+    useEffect(() => { migrateLegacyMapOnce(); }, []);
 
     const checkSubscriptionState = useCallback(async () => {
         setPermissionStatus(getNotificationPermission());
@@ -152,12 +190,10 @@ export default function MedicationReminders() {
     useEffect(() => {
         fetchData();
         checkSubscriptionState();
-        const handleSwMessage = (event) => {
-            if (event.data?.type === 'MEDICATION_TAKEN') fetchData();
-        };
+        const onSwMessage = (e) => { if (e.data?.type === 'MEDICATION_TAKEN') fetchData(); };
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.addEventListener('message', handleSwMessage);
-            return () => navigator.serviceWorker.removeEventListener('message', handleSwMessage);
+            navigator.serviceWorker.addEventListener('message', onSwMessage);
+            return () => navigator.serviceWorker.removeEventListener('message', onSwMessage);
         }
     }, [fetchData, checkSubscriptionState]);
 
@@ -173,10 +209,9 @@ export default function MedicationReminders() {
                 await subscribeToPush(api);
                 setIsSubscribed(true);
                 setPermissionStatus('granted');
-                setNotificationMessage({ type: 'success', text: '🔔 Device notifications activated! You will receive timely reminders.' });
+                setNotificationMessage({ type: 'success', text: '🔔 Notifications activated. Alerts will say "Medication A/B/C…" (no names leave your device).' });
             }
         } catch (err) {
-            console.error('Push toggle error:', err);
             const errorText = err.response?.data?.error || err.response?.data?.message || err.error || err.message || 'Failed to update notification settings.';
             setNotificationMessage({ type: 'error', text: errorText });
             setPermissionStatus(getNotificationPermission());
@@ -191,7 +226,7 @@ export default function MedicationReminders() {
             setNotificationMessage(null);
             const res = await api.post('/reminders/test-push');
             if (res.success) {
-                setNotificationMessage({ type: 'success', text: '✅ Device verified! A confirmation alert was sent to your notification tray.' });
+                setNotificationMessage({ type: 'success', text: '✅ Device verified! A generic confirmation alert was sent.' });
             }
         } catch (err) {
             setNotificationMessage({ type: 'error', text: err.response?.data?.message || err.message || 'Could not send test alert.' });
@@ -220,11 +255,14 @@ export default function MedicationReminders() {
             else if (times.length === 3) freq = 'three_daily';
             else if (times.length === 4) freq = 'four_daily';
 
+            const labelRow = isLabel(schedule.label);
+            const meta = labelRow ? getMedMeta(schedule.label) : null;
+
             setFormData({
-                label: schedule.label || '',
-                medication_name: getMedName(schedule.label) || (schedule.label && !/^[A-Z]{1,3}$/.test(String(schedule.label)) ? schedule.label : ''),
-                dosage: schedule.dosage,
-                instructions: schedule.instructions || '',
+                label: labelRow ? schedule.label : '',
+                medication_name: meta?.name || (!labelRow ? schedule.label || '' : ''),
+                dosage: meta?.dosage || (!labelRow ? schedule.dosage || '' : ''),
+                instructions: meta?.instructions || (!labelRow ? schedule.instructions || '' : ''),
                 frequency_type: freq,
                 reminder_times: times,
                 days_of_week: Array.isArray(schedule.days_of_week) ? schedule.days_of_week : [0, 1, 2, 3, 4, 5, 6],
@@ -248,32 +286,38 @@ export default function MedicationReminders() {
         setIsModalOpen(true);
     };
 
-    /* SAVE: name → localStorage, only label → backend */
+    /* Save: name/dosage/instructions -> localStorage; only label + times/days/dates -> backend */
     const handleSaveSchedule = async (e) => {
         e.preventDefault();
-        if (!formData.medication_name.trim() || !formData.dosage.trim()) {
-            alert('Please enter medication name (stays on this device only) and dosage.');
+        if (!formData.medication_name.trim()) {
+            alert('Please enter a medication name (kept on this device only).');
+            return;
+        }
+        if (!formData.dosage.trim()) {
+            alert('Please enter a dosage (kept on this device only).');
             return;
         }
 
         try {
             setSubmitting(true);
 
-            // Determine the label (new: compute; edit: reuse existing)
+            // Determine label: reuse existing (edit) or compute next (create / migrate legacy)
             let finalLabel = formData.label;
             if (!finalLabel) {
-                const existing = schedules.map(s => s.label).filter(Boolean);
-                finalLabel = computeNextLabel(existing);
+                const existingLabels = schedules.map(s => s.label);
+                finalLabel = computeNextLabel(existingLabels);
             }
 
-            // Save mapping name→label in localStorage ONLY
-            setMedName(finalLabel, formData.medication_name.trim());
+            // Save name + dosage + instructions in localStorage ONLY
+            setMedMeta(finalLabel, {
+                name: formData.medication_name,
+                dosage: formData.dosage,
+                instructions: formData.instructions
+            });
 
-            // Send only label to backend — NOT the name
+            // Send ONLY label + schedule metadata to backend
             const payload = {
                 label: finalLabel,
-                dosage: formData.dosage,
-                instructions: formData.instructions,
                 reminder_times: formData.reminder_times,
                 days_of_week: formData.days_of_week,
                 start_date: formData.start_date,
@@ -296,11 +340,11 @@ export default function MedicationReminders() {
     };
 
     const handleDeleteSchedule = async (id, label) => {
-        const name = resolveMedName(label);
-        if (!window.confirm(`Delete reminder for "${name}"?`)) return;
+        const data = resolveDoseData({ label, dosage: '', instructions: '' });
+        if (!window.confirm(`Delete reminder for "${data.name}"?`)) return;
         try {
             await api.delete(`/reminders/${id}`);
-            removeMedName(label); // also clear local mapping
+            removeMedMeta(label);
             fetchData();
         } catch (err) {
             alert(err.message || 'Failed to delete reminder');
@@ -355,7 +399,7 @@ export default function MedicationReminders() {
                         <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">Medication Reminders</h1>
                         <p className="text-sm font-semibold text-gray-500 flex items-center gap-1">
                             <FaShieldAlt className="text-emerald-500" />
-                            Privacy-first • Labels in DB, names only on this device
+                            DB stores only labels — name, dosage & instructions stay on this device
                         </p>
                     </div>
                 </div>
@@ -379,7 +423,9 @@ export default function MedicationReminders() {
                                 </span>
                             </div>
                             <p className="text-xs sm:text-sm text-gray-500 mt-1 max-w-xl">
-                                {isSubscribed ? 'This device will receive popup sound/vibration alerts. Notifications show the label (e.g. "Medication A").' : 'Allow browser notifications so you never miss a dose.'}
+                                {isSubscribed
+                                    ? 'Alerts show the label only (e.g. "Medication A"). Your medication name, dosage, and instructions never leave this device.'
+                                    : 'Allow browser notifications so you never miss a dose.'}
                             </p>
                         </div>
                     </div>
@@ -432,7 +478,7 @@ export default function MedicationReminders() {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {todayDoses.map((doseItem, idx) => {
-                            const displayName = resolveMedName(doseItem.schedule.label);
+                            const data = resolveDoseData(doseItem.schedule);
                             return (
                                 <div key={`${doseItem.schedule.id}-${doseItem.time}-${idx}`} className={`rounded-2xl p-5 border transition-all ${doseItem.isTaken ? 'bg-emerald-50/50 border-emerald-200' : 'bg-white border-gray-100 shadow-sm hover:shadow-md'}`}>
                                     <div className="flex items-start justify-between gap-3 mb-3">
@@ -448,16 +494,27 @@ export default function MedicationReminders() {
                                         )}
                                     </div>
 
-                                    <h3 className="font-bold text-gray-900 text-base leading-tight">{displayName}</h3>
-                                    <p className="text-xs font-semibold text-blue-600 mt-0.5">Dose: {doseItem.schedule.dosage}</p>
-                                    {doseItem.schedule.label && /^[A-Z]{1,3}$/.test(String(doseItem.schedule.label)) && (
-                                        <p className="text-[10px] font-mono text-gray-400 mt-0.5">Label: {doseItem.schedule.label}</p>
+                                    <h3 className="font-bold text-gray-900 text-base leading-tight">{data.name}</h3>
+                                    {data.dosage && <p className="text-xs font-semibold text-blue-600 mt-0.5">Dose: {data.dosage}</p>}
+                                    {isLabel(doseItem.schedule.label) && (
+                                        <div className="flex items-center gap-1 mt-0.5">
+                                            <span className="text-[10px] font-mono text-gray-400">Label: {doseItem.schedule.label}</span>
+                                            {data.isLocalOnly && (
+                                                <span className="inline-flex items-center gap-0.5 text-[10px] text-emerald-600 font-semibold"><FaLock className="text-[8px]" /> local</span>
+                                            )}
+                                        </div>
+                                    )}
+                                    {data.missingLocal && (
+                                        <div className="mt-1.5 text-[10px] text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded flex items-center gap-1">
+                                            <FaExclamationCircle className="shrink-0" />
+                                            Name not available on this device — tap Edit to re-enter.
+                                        </div>
                                     )}
 
-                                    {doseItem.schedule.instructions && (
+                                    {data.instructions && (
                                         <div className="mt-2 text-xs text-gray-600 bg-gray-50 p-2 rounded-lg flex items-center gap-1.5">
                                             <FaUtensils className="text-gray-400 text-[10px] shrink-0" />
-                                            <span className="truncate">{doseItem.schedule.instructions}</span>
+                                            <span className="truncate">{data.instructions}</span>
                                         </div>
                                     )}
 
@@ -489,7 +546,7 @@ export default function MedicationReminders() {
                         </h2>
                         <p className="text-xs font-medium text-gray-500">
                             <FaShieldAlt className="inline text-emerald-500 mr-1" />
-                            DB stores only labels. Names stay in this browser's localStorage.
+                            Only labels are stored on the server. Names, dosages & instructions live in this browser.
                         </p>
                     </div>
                     <span className="text-xs font-bold text-gray-500 bg-gray-100 px-3 py-1 rounded-full">{schedules.length} Medications</span>
@@ -508,7 +565,7 @@ export default function MedicationReminders() {
                 ) : (
                     <div className="divide-y divide-gray-100">
                         {schedules.map(schedule => {
-                            const displayName = resolveMedName(schedule.label);
+                            const data = resolveDoseData(schedule);
                             return (
                                 <div key={schedule.id} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                     <div className="flex items-start gap-3.5">
@@ -517,21 +574,35 @@ export default function MedicationReminders() {
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <h4 className="font-bold text-gray-900 text-base">{displayName}</h4>
-                                                {schedule.label && /^[A-Z]{1,3}$/.test(String(schedule.label)) && (
+                                                <h4 className="font-bold text-gray-900 text-base">{data.name}</h4>
+                                                {isLabel(schedule.label) && (
                                                     <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700">{schedule.label}</span>
                                                 )}
-                                                <span className="text-xs font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-700">{schedule.dosage}</span>
+                                                {data.dosage && (
+                                                    <span className="text-xs font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-700">{data.dosage}</span>
+                                                )}
+                                                {isLabel(schedule.label) && data.isLocalOnly && (
+                                                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 inline-flex items-center gap-0.5">
+                                                        <FaLock className="text-[8px]" /> local
+                                                    </span>
+                                                )}
                                                 {!schedule.is_active && (
                                                     <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800">Paused</span>
+                                                )}
+                                                {data.missingLocal && (
+                                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800">Name not on device</span>
                                                 )}
                                             </div>
                                             <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs text-gray-500">
                                                 <span className="font-semibold text-indigo-600 flex items-center gap-1">
                                                     <FaClock className="text-[10px]" />{(schedule.reminder_times || []).join(', ')}
                                                 </span>
-                                                <span>•</span>
-                                                <span>{schedule.instructions || 'No special instructions'}</span>
+                                                {data.instructions && (
+                                                    <>
+                                                        <span>•</span>
+                                                        <span>{data.instructions}</span>
+                                                    </>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -566,8 +637,8 @@ export default function MedicationReminders() {
                         <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-start gap-2">
                             <FaShieldAlt className="text-emerald-600 mt-0.5 shrink-0" />
                             <p className="text-[11px] text-emerald-800 font-medium leading-relaxed">
-                                <strong>Privacy notice:</strong> The medication name you type is saved <em>only in this browser</em> and is mapped to a label (A, B, C…). Only the label is stored on the server.
-                                {editingSchedule?.label && <> Current label: <span className="font-mono font-bold">{editingSchedule.label}</span></>}
+                                <strong>Privacy notice:</strong> Name, dosage, and instructions are saved <em>only in this browser</em> and mapped to a label (A, B, C…). Only the label + schedule times are sent to the server.
+                                {editingSchedule?.label && isLabel(editingSchedule.label) && <> Current label: <span className="font-mono font-bold">{editingSchedule.label}</span></>}
                             </p>
                         </div>
 
@@ -589,7 +660,8 @@ export default function MedicationReminders() {
 
                             <div>
                                 <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
-                                    Medication Name (የመድሃኒት ስም) * <span className="text-emerald-600 font-normal normal-case">— device only</span>
+                                    Medication Name (የመድሃኒት ስም) *
+                                    <span className="text-emerald-600 font-normal normal-case ml-1">— device only</span>
                                 </label>
                                 <input type="text" required placeholder="e.g. Metformin, Amlodipine"
                                     value={formData.medication_name}
@@ -598,7 +670,10 @@ export default function MedicationReminders() {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Dosage (መጠን) *</label>
+                                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                                    Dosage (መጠን) *
+                                    <span className="text-emerald-600 font-normal normal-case ml-1">— device only</span>
+                                </label>
                                 <input type="text" required placeholder="e.g. 500 mg, 1 tablet"
                                     value={formData.dosage}
                                     onChange={e => setFormData(prev => ({ ...prev, dosage: e.target.value }))}
@@ -655,7 +730,10 @@ export default function MedicationReminders() {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Special Instructions (አወሳሰድ መመሪያ)</label>
+                                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                                    Special Instructions (አወሳሰድ መመሪያ)
+                                    <span className="text-emerald-600 font-normal normal-case ml-1">— device only</span>
+                                </label>
                                 <input type="text" placeholder="e.g. Take after meal with water"
                                     value={formData.instructions}
                                     onChange={e => setFormData(prev => ({ ...prev, instructions: e.target.value }))}
