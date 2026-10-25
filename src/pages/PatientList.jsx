@@ -361,7 +361,7 @@ const PatientList = ({
                                                     </div>
                                                     <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium mt-1">
                                                         <span className="font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200 font-bold">
-                                                            Code: {patient.patient_code || patient.id}
+                                                            Case No. {patient.patient_code || patient.id}
                                                         </span>
                                                     </div>
                                                 </div>
