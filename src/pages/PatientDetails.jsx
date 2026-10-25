@@ -2790,325 +2790,161 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
         const ageDisplay = formatAgeDisplay(formData.age_in_days, formData.date_of_birth);
         const isPediatric = formData.patient_type && formData.patient_type !== 'adult';
         const patientCodeToDisplay = getCurrentPatientCode();
-
+    
+        const vitalsCount = ['blood_pressure', 'heart_rate', 'temperature', 'respiratory_rate', 'oxygen_saturation', 'weight', 'height']
+            .filter(v => formData[v] && formData[v].toString().trim() !== '').length;
+        const labsCount = customLabs.filter(l => l.value && l.value.toString().trim() !== '').length;
+        const allergiesCount = Array.isArray(formData.allergies) ? formData.allergies.length : 0;
+    
+        const hasVitals = ['blood_pressure', 'heart_rate', 'temperature', 'oxygen_saturation']
+            .some(v => formData[v] && formData[v].toString().trim() !== '');
+    
+        const labResults = customLabs.filter(l => l.value && l.value.toString().trim() !== '');
+    
         return (
-            <div className="space-y-6">
-                {/* Header Card */}
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6">
-                    <div className="flex flex-col md:flex-row md:items-center gap-6">
-                        <div className="flex-shrink-0">
-                            <div className={`w-24 h-24 rounded-full flex items-center justify-center shadow-lg ${isPediatric
-                                ? 'bg-gradient-to-br from-pink-500 to-purple-600'
-                                : 'bg-gradient-to-br from-blue-500 to-indigo-600'
-                                }`}>
-                                {isPediatric ? (
-                                    formData.patient_type === 'neonate' ? <FaBaby className="text-white text-4xl" /> :
-                                        formData.patient_type === 'infant' ? <FaBabyCarriage className="text-white text-4xl" /> :
-                                            <FaUserShield className="text-white text-3xl" />
-                                ) : (
-                                    <FaUser className="text-white text-4xl" />
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="flex-1">
-                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                                <div>
-                                    <h1 className="text-2xl font-bold text-gray-800">
-                                        {formatEncValue(formData.full_name || patient?.full_name, user?.account_type !== 'individual' || user?.role === 'admin' ? `Patient ${patientCodeToDisplay}` : 'MR Profile')}
-                                    </h1>
-                                    <div className="flex flex-wrap items-center gap-4 mt-2">
-                                        {(user?.account_type !== 'individual' || user?.role === 'admin') && (
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-gray-600">Hypothetical Case No.</span>
-                                                <span className="font-semibold text-indigo-600">{patientCodeToDisplay || 'N/A'}</span>
-                                            </div>
-                                        )}
-                                        {ageDisplay && (
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-gray-600">Age:</span>
-                                                <span className="font-semibold">{ageDisplay}</span>
-                                            </div>
-                                        )}
-                                        {formData.gender && (
-                                            <div className="flex items-center gap-2">
-                                                <FaVenusMars className="text-gray-400" />
-                                                <span className="font-semibold">{formatEncValue(formData.gender)}</span>
-                                            </div>
-                                        )}
-                                        {isPediatric && (
-                                            <div className="bg-pink-100 text-pink-800 px-3 py-1 rounded-full flex items-center gap-1">
-                                                {formData.patient_type === 'neonate' ? <FaBaby /> :
-                                                    formData.patient_type === 'infant' ? <FaBabyCarriage /> :
-                                                        <FaChild />}
-                                                {formData.patient_type.toUpperCase()}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="flex-shrink-0">
-                                    <span className={`px-4 py-2 rounded-full text-sm font-medium ${formData.is_active
-                                        ? 'bg-green-100 text-green-800 border border-green-200'
-                                        : 'bg-gray-100 text-gray-800 border border-gray-200'
-                                        }`}>
-                                        {formData.is_active ? 'Active Patient' : 'Inactive'}
-                                    </span>
-                                </div>
-                            </div>
-
-                            {(formData.contact_number || formData.address) && (
-                                <div className="mt-4 pt-4 border-t border-blue-200">
-                                    <div className="flex flex-wrap gap-4">
-                                        {formData.contact_number && (
-                                            <div className="flex items-center gap-2">
-                                                <FaPhone className="text-blue-500" />
-                                                <span className="text-gray-700">{formatEncValue(formData.contact_number || patient?.contact_number)}</span>
-                                            </div>
-                                        )}
-                                        {formData.address && (
-                                            <div className="flex items-center gap-2">
-                                                <FaHome className="text-blue-500" />
-                                                <span className="text-gray-700">{formatEncValue(formData.address || patient?.address)}</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
+            <div className="space-y-8 text-gray-800">
+                {/* Patient Header - Text Only */}
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900">
+                        {formatEncValue(
+                            formData.full_name || patient?.full_name,
+                            user?.account_type !== 'individual' || user?.role === 'admin'
+                                ? `Patient ${patientCodeToDisplay}`
+                                : 'MR Profile'
+                        )}
+                    </h1>
+                    <p className="text-gray-600 mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                        {(user?.account_type !== 'individual' || user?.role === 'admin') && patientCodeToDisplay && (
+                            <span><span className="text-gray-500">Case No.</span> <span className="font-semibold text-indigo-600">{patientCodeToDisplay}</span></span>
+                        )}
+                        {ageDisplay && <><span className="text-gray-400">•</span><span>{ageDisplay}</span></>}
+                        {formData.gender && <><span className="text-gray-400">•</span><span>{formatEncValue(formData.gender)}</span></>}
+                        {isPediatric && <><span className="text-gray-400">•</span><span className="text-pink-600 font-medium capitalize">{formData.patient_type}</span></>}
+                        <><span className="text-gray-400">•</span><span className={formData.is_active ? 'text-green-600 font-medium' : 'text-gray-500'}>{formData.is_active ? 'Active' : 'Inactive'}</span></>
+                    </p>
+                    {(formData.contact_number || formData.address) && (
+                        <p className="text-gray-600 text-sm mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                            {formData.contact_number && (
+                                <span className="inline-flex items-center gap-1">
+                                    <FaPhone className="text-gray-400 text-xs" />
+                                    {formatEncValue(formData.contact_number || patient?.contact_number)}
+                                </span>
                             )}
-                        </div>
-                    </div>
+                            {formData.address && (
+                                <span className="inline-flex items-center gap-1">
+                                    <FaHome className="text-gray-400 text-xs" />
+                                    {formatEncValue(formData.address || patient?.address)}
+                                </span>
+                            )}
+                        </p>
+                    )}
                 </div>
-
-                {/* Stats Cards */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-gray-600">Vitals & Anthropometry</p>
-                                <p className="text-2xl font-bold text-blue-600">
-                                    {(() => {
-                                        const vitals = ['blood_pressure', 'heart_rate', 'temperature', 'respiratory_rate', 'oxygen_saturation', 'weight', 'height'];
-                                        return vitals.filter(v => formData[v] && formData[v].toString().trim() !== '').length;
-                                    })()}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-gray-600">Lab Tests</p>
-                                <p className="text-2xl font-bold text-green-600">
-                                    {customLabs.filter(l => l.value && l.value.toString().trim() !== '').length}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-gray-600">Allergies</p>
-                                <p className="text-2xl font-bold text-red-600">
-                                    {formData.allergies ? formData.allergies.length : 0}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-gray-600">Status</p>
-                                <p className="text-2xl font-bold text-indigo-600">
-                                    {formData.is_active ? 'Active' : 'Inactive'}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+    
+                {/* Summary stats - inline text */}
+                <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm border-y border-gray-200 py-3">
+                    <span className="text-gray-600">Vitals recorded: <strong className="text-blue-700">{vitalsCount}</strong></span>
+                    <span className="text-gray-600">Lab tests: <strong className="text-green-700">{labsCount}</strong></span>
+                    <span className="text-gray-600">Allergies: <strong className="text-red-700">{allergiesCount}</strong></span>
                 </div>
-
-                {/* Pregnancy Status Card */}
+    
+                {/* Pregnancy - plain text */}
                 {formData.is_pregnant && (
-                    <div className="bg-gradient-to-r from-pink-50 to-rose-50 rounded-xl p-6 border border-pink-200">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div>
-                                    <h3 className="text-lg font-bold text-pink-800">Pregnancy Information</h3>
-                                    <div className="flex flex-wrap gap-4 mt-2">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-pink-700 font-medium">{formData.pregnancy_weeks} weeks</span>
-                                            <span className="text-gray-600">({formData.pregnancy_trimester})</span>
-                                        </div>
-                                        {formData.edd && (
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-gray-600">EDD:</span>
-                                                <span className="font-medium">{new Date(formData.edd).toLocaleDateString()}</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                            {formData.pregnancy_notes && (
-                                <div className="text-sm text-gray-600 max-w-md">
-                                    {formData.pregnancy_notes}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                )}
-
-                {/* Allergies Display */}
-                {Array.isArray(formData.allergies) && formData.allergies.length > 0 && (
-                    <div className="bg-white rounded-lg border border-red-200 p-6">
-                        <h3 className="text-lg font-semibold text-red-800 mb-4 flex items-center gap-2">
-                            Allergies
-                        </h3>
-                        <div className="flex flex-wrap gap-2">
-                            {formData.allergies.map((allergy, index) => (
-                                <div key={index} className="bg-red-100 text-red-800 px-4 py-2 rounded-lg flex items-center gap-2">
-                                    <FaExclamationTriangle />
-                                    <span className="font-medium">{allergy}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {/* --- CONSOLIDATED RECENT LABS WITH DATES --- */}
-                {(() => {
-                    const results = [];
-                    
-                    // Collect from customLabs with their dates
-                    customLabs.forEach(lab => {
-                        if (lab.value && lab.value.toString().trim() !== '') {
-                            results.push({ 
-                                name: lab.name, 
-                                value: lab.value, 
-                                unit: lab.unit || '',
-                                date: lab.date
-                            });
-                        }
-                    });
-
-                    if (results.length === 0) return null;
-
-                    return (
-                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200 p-6 shadow-sm overflow-hidden relative">
-                            <div className="absolute top-0 right-0 p-4 opacity-10">
-                                <FaVial className="text-6xl text-green-600" />
-                            </div>
-                            <h3 className="text-lg font-bold text-green-800 mb-4 flex items-center gap-2">
-                                <FaVial className="text-green-500" /> Key Laboratory Findings
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 relative z-10">
-                                {results.slice(0, 12).map((lab, idx) => (
-                                    <div key={idx} className="bg-white/80 backdrop-blur-sm p-3 rounded-lg border border-green-100 shadow-sm">
-                                        <div className="flex flex-col">
-                                            <p className="text-[10px] uppercase font-bold text-green-600 tracking-wider">{lab.name}</p>
-                                            <div className="flex items-baseline justify-between mt-1">
-                                                <p className="text-lg font-black text-gray-800">{lab.value}</p>
-                                                {lab.unit && <p className="text-[10px] text-gray-500 ml-1">{lab.unit}</p>}
-                                            </div>
-                                            {lab.date && (
-                                                <div className="flex items-center gap-1 mt-2 text-[10px] text-gray-500 border-t border-green-100 pt-1">
-                                                    <FaCalendarAlt className="text-green-400 text-[8px]" />
-                                                    <span>Tested: {new Date(lab.date).toLocaleDateString()}</span>
-                                                </div>
-                                            )}
-                                            {!lab.date && (
-                                                <div className="flex items-center gap-1 mt-2 text-[10px] text-red-500 border-t border-red-100 pt-1">
-                                                    <FaExclamationTriangle className="text-red-400 text-[8px]" />
-                                                    <span>No test date recorded</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                            {results.length > 12 && (
-                                <p className="text-xs text-green-600 mt-4 text-center font-medium">
-                                    + {results.length - 12} more results available in the <strong>Labs/ Dx Tests</strong> tab
-                                </p>
-                            )}
-                        </div>
-                    );
-                })()}
-
-                {/* Recent Vitals */}
-                {(() => {
-                    const hasVitals = ['blood_pressure', 'heart_rate', 'temperature', 'oxygen_saturation'].some(v => formData[v] && formData[v].toString().trim() !== '');
-                    if (!hasVitals) return null;
-
-                    return (
-                        <div className="bg-white rounded-lg border border-gray-200 p-6">
-                            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                                <FaHeartbeat className="text-red-500" /> Recent Vitals
-                            </h3>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                {formData.blood_pressure && (
-                                    <div className="bg-red-50 p-3 rounded-lg border border-red-100 flex items-center justify-between shadow-sm">
-                                        <div className="flex flex-col">
-                                            <p className="text-[9px] uppercase font-bold text-red-600 tracking-wider text-left">BP</p>
-                                            <p className="text-[8px] text-gray-400 font-medium">mmHg</p>
-                                        </div>
-                                        <p className="text-lg font-black text-gray-800 ml-2">{formData.blood_pressure}</p>
-                                    </div>
-                                )}
-                                {formData.heart_rate && (
-                                    <div className="bg-red-50 p-3 rounded-lg border border-red-100 flex items-center justify-between shadow-sm">
-                                        <div className="flex flex-col">
-                                            <p className="text-[9px] uppercase font-bold text-red-600 tracking-wider text-left">Heart Rate</p>
-                                            <p className="text-[8px] text-gray-400 font-medium">bpm</p>
-                                        </div>
-                                        <p className="text-lg font-black text-gray-800 ml-2">{formData.heart_rate}</p>
-                                    </div>
-                                )}
-                                {formData.temperature && (
-                                    <div className="bg-red-50 p-3 rounded-lg border border-red-100 flex items-center justify-between shadow-sm">
-                                        <div className="flex flex-col">
-                                            <p className="text-[9px] uppercase font-bold text-red-600 tracking-wider text-left">Temp</p>
-                                            <p className="text-[8px] text-gray-400 font-medium">°C</p>
-                                        </div>
-                                        <p className="text-lg font-black text-gray-800 ml-2">{formData.temperature}</p>
-                                    </div>
-                                )}
-                                {formData.oxygen_saturation && (
-                                    <div className="bg-red-50 p-3 rounded-lg border border-red-100 flex items-center justify-between shadow-sm">
-                                        <div className="flex flex-col">
-                                            <p className="text-[9px] uppercase font-bold text-red-600 tracking-wider text-left">SpO₂</p>
-                                            <p className="text-[8px] text-gray-400 font-medium">%</p>
-                                        </div>
-                                        <p className="text-lg font-black text-gray-800 ml-2">{formData.oxygen_saturation}</p>
-                                    </div>
-                                )}
-                            </div>
-                            {formData.last_measured && (
-                                <p className="text-xs text-gray-500 mt-4 text-right">
-                                    Last measured: {new Date(formData.last_measured).toLocaleDateString()}
-                                </p>
-                            )}
-                        </div>
-                    );
-                })()}
-
-                {/* Diagnosis */}
-                <div className="bg-white rounded-lg border border-gray-200 p-6">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                        <FaStethoscope className="text-indigo-500" /> Diagnosis
-                    </h3>
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                        {formData.diagnosis ? (
-                            <p className="text-gray-800">{formData.diagnosis}</p>
-                        ) : (
-                            <p className="text-gray-500 italic">No diagnosis recorded</p>
+                    <div>
+                        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Pregnancy</h3>
+                        <p className="text-gray-800">
+                            {formData.pregnancy_weeks ? `${formData.pregnancy_weeks} weeks` : 'Weeks not recorded'}
+                            {formData.pregnancy_trimester && <span className="text-gray-600"> ({formData.pregnancy_trimester})</span>}
+                            {formData.edd && <span className="text-gray-600"> • EDD: {new Date(formData.edd).toLocaleDateString()}</span>}
+                        </p>
+                        {formData.pregnancy_notes && (
+                            <p className="text-sm text-gray-600 mt-1">{formData.pregnancy_notes}</p>
                         )}
                     </div>
+                )}
+    
+                {/* Allergies - plain comma list */}
+                {allergiesCount > 0 && (
+                    <div>
+                        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-2">
+                            <FaExclamationTriangle className="text-red-400" /> Allergies
+                        </h3>
+                        <p className="text-red-700">{formData.allergies.join(', ')}</p>
+                    </div>
+                )}
+    
+                {/* Lab findings - text rows */}
+                {labResults.length > 0 && (
+                    <div>
+                        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+                            <FaVial className="text-green-400" /> Key Laboratory Findings
+                        </h3>
+                        <div className="space-y-1.5">
+                            {labResults.slice(0, 12).map((lab, idx) => (
+                                <div key={idx} className="flex flex-wrap items-baseline gap-x-2 text-sm">
+                                    <span className="text-gray-600 min-w-[140px]">{lab.name}:</span>
+                                    <span className="font-semibold text-gray-900">{lab.value}</span>
+                                    {lab.unit && <span className="text-gray-500 text-xs">{lab.unit}</span>}
+                                    {lab.date ? (
+                                        <span className="text-gray-400 text-xs ml-auto">
+                                            ({new Date(lab.date).toLocaleDateString()})
+                                        </span>
+                                    ) : (
+                                        <span className="text-red-400 text-xs ml-auto">(no test date)</span>
+                                    )}
+                                </div>
+                            ))}
+                            {labResults.length > 12 && (
+                                <p className="text-xs text-gray-500 pt-1">
+                                    + {labResults.length - 12} more results in the <strong>Labs</strong> tab.
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                )}
+    
+                {/* Recent vitals - inline text */}
+                {hasVitals && (
+                    <div>
+                        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+                            <FaHeartbeat className="text-red-400" /> Recent Vitals
+                        </h3>
+                        <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm">
+                            {formData.blood_pressure && (
+                                <span className="text-gray-600">BP: <strong className="text-gray-900">{formData.blood_pressure}</strong> <span className="text-gray-400 text-xs">mmHg</span></span>
+                            )}
+                            {formData.heart_rate && (
+                                <span className="text-gray-600">Heart Rate: <strong className="text-gray-900">{formData.heart_rate}</strong> <span className="text-gray-400 text-xs">bpm</span></span>
+                            )}
+                            {formData.temperature && (
+                                <span className="text-gray-600">Temp: <strong className="text-gray-900">{formData.temperature}</strong> <span className="text-gray-400 text-xs">°C</span></span>
+                            )}
+                            {formData.respiratory_rate && (
+                                <span className="text-gray-600">Resp. Rate: <strong className="text-gray-900">{formData.respiratory_rate}</strong> <span className="text-gray-400 text-xs">/min</span></span>
+                            )}
+                            {formData.oxygen_saturation && (
+                                <span className="text-gray-600">SpO₂: <strong className="text-gray-900">{formData.oxygen_saturation}</strong> <span className="text-gray-400 text-xs">%</span></span>
+                            )}
+                        </div>
+                        {formData.last_measured && (
+                            <p className="text-xs text-gray-500 mt-1">
+                                Last measured: {new Date(formData.last_measured).toLocaleDateString()}
+                            </p>
+                        )}
+                    </div>
+                )}
+    
+                {/* Diagnosis - plain text */}
+                <div>
+                    <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-2">
+                        <FaStethoscope className="text-indigo-400" /> Diagnosis
+                    </h3>
+                    <p className={formData.diagnosis ? 'text-gray-800' : 'text-gray-400 italic'}>
+                        {formData.diagnosis || 'No diagnosis recorded'}
+                    </p>
                 </div>
             </div>
         );
-    }, [formData, patient, getCurrentPatientCode, formatAgeDisplay, customLabs]);
+    }, [formData, patient, getCurrentPatientCode, formatAgeDisplay, customLabs, user]);
 
     const renderTabContent = useCallback(() => {
         switch (activeTab) {
