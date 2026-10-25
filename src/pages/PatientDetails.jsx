@@ -58,7 +58,7 @@ import {
 } from '../utils/encryptionUtils';
 
 
-// Create memoized LabInputField component
+// Create memoized LabInputField component — COMPACT VERSION
 const LabInputField = React.memo(({
     label,
     value,
@@ -78,63 +78,52 @@ const LabInputField = React.memo(({
     };
 
     return (
-        <div className="space-y-1">
-            <label className="block text-xs md:text-sm font-medium text-gray-700">
+        <div className="space-y-0.5">
+            <label className="block text-[11px] font-medium text-gray-700 truncate">
                 {label}
                 {normalRange && (
-                    <span className="text-xs text-gray-500 ml-1">({normalRange})</span>
+                    <span className="text-[10px] text-gray-500 ml-1">({normalRange})</span>
                 )}
             </label>
             {isEditing ? (
-                <div className="space-y-2">
+                <div className="space-y-1">
                     <div className="flex items-center">
                         <input
                             type={type}
                             step={type === "number" ? "0.01" : undefined}
                             value={value || ''}
                             onChange={handleInputChange}
-                            className="flex-1 border border-gray-300 rounded-l-lg p-2 md:p-3 text-sm"
+                            className="flex-1 min-w-0 border border-gray-300 rounded-l p-1 text-xs"
                             placeholder={placeholder}
                             readOnly={readOnly}
                         />
-                        <div className="w-12 md:w-16 bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg p-2 md:p-3 text-center text-xs md:text-sm text-gray-700">
+                        <div className="w-10 bg-gray-100 border border-l-0 border-gray-300 rounded-r p-1 text-center text-[10px] text-gray-700">
                             {unit}
                         </div>
                     </div>
-                    <div className="relative">
-                        <input
-                            type="date"
-                            value={labDate || ''}
-                            onChange={(e) => handleDateChange(e.target.value)}
-                            className={`w-full border rounded-lg p-2 text-sm ${!labDate && value ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
-                            required={value && value.trim() !== ''}
-                        />
-                        {!labDate && value && (
-                            <p className="text-xs text-red-500 mt-1">Test date required</p>
-                        )}
-                    </div>
+                    <input
+                        type="date"
+                        value={labDate || ''}
+                        onChange={(e) => handleDateChange(e.target.value)}
+                        className={`w-full border rounded p-1 text-[10px] ${!labDate && value ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
+                        required={value && value.trim() !== ''}
+                    />
                 </div>
             ) : (
                 <div>
                     <div className="flex items-center">
-                        <div className="flex-1 bg-blue-50 border border-blue-200 rounded-l-lg p-2 md:p-3 text-sm">
-                            <span className="font-medium text-gray-800">
+                        <div className="flex-1 min-w-0 bg-blue-50 border border-blue-200 rounded-l p-1 text-xs">
+                            <span className="font-medium text-gray-800 truncate">
                                 {value || '--'}
                             </span>
                         </div>
-                        <div className="w-12 md:w-16 bg-blue-100 border border-l-0 border-blue-200 rounded-r-lg p-2 md:p-3 text-center text-xs md:text-sm text-gray-700">
+                        <div className="w-10 bg-blue-100 border border-l-0 border-blue-200 rounded-r p-1 text-center text-[10px] text-gray-700">
                             {unit}
                         </div>
                     </div>
                     {labDate && (
-                        <div className="mt-1 text-xs text-gray-500 flex items-center gap-1">
-                            <FaCalendarAlt className="text-gray-400 text-[10px]" />
-                            Tested: {new Date(labDate).toLocaleDateString()}
-                        </div>
-                    )}
-                    {!labDate && value && (
-                        <div className="mt-1 text-xs text-red-500">
-                            No test date recorded
+                        <div className="mt-0.5 text-[10px] text-gray-500 truncate">
+                            {new Date(labDate).toLocaleDateString()}
                         </div>
                     )}
                 </div>
@@ -1543,70 +1532,54 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
         fetchPatientData();
     }, [fetchPatientData]);
 
-    // Memoize the render functions to prevent infinite re-renders
+    // ==========================================================
+    // VITALS SECTION — compact grid, no icons
+    // ==========================================================
     const renderVitalsSection = useCallback(() => {
         const isPediatric = formData.patient_type && formData.patient_type !== 'adult';
         const ageInDays = parseInt(formData.age_in_days) || 0;
 
         return (
-            <div className="space-y-6">
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                        <div className={`p-3 rounded-full ${isPediatric ? 'bg-pink-100' : 'bg-red-100'}`}>
-                            <FaHeartbeat className={`${isPediatric ? 'text-pink-600' : 'text-red-600'} text-xl`} />
-                        </div>
-                        <div>
-                            <h2 className="text-xl font-bold text-gray-800">
-                                Vital Signs {isPediatric && <span className="text-pink-600">(Pediatric)</span>}
-                            </h2>
-                            <p className="text-gray-600">
-                                {isPediatric
-                                    ? 'Pediatric vital signs with age-appropriate ranges'
-                                    : 'Record and monitor vital signs'}
-                            </p>
-                        </div>
+            <div className="space-y-4">
+                <div className="flex items-center justify-between mb-3">
+                    <div>
+                        <h2 className="text-lg font-bold text-gray-800">
+                            Vital Signs {isPediatric && <span className="text-pink-600">(Pediatric)</span>}
+                        </h2>
+                        <p className="text-gray-600 text-sm">
+                            {isPediatric
+                                ? 'Pediatric vital signs with age-appropriate ranges'
+                                : 'Record and monitor vital signs'}
+                        </p>
                     </div>
                     {isEditing && (
                         <button
                             onClick={handleSaveVitals}
-                            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm"
                         >
-                            <FaSave /> Save Vitals & Anthropometry
+                            <FaSave /> Save Vitals
                         </button>
                     )}
                 </div>
 
                 {isPediatric && (
-                    <div className="bg-gradient-to-r from-pink-50 to-purple-50 rounded-xl p-4 mb-6 border border-pink-200">
-                        <div className="flex items-center gap-3">
-                            {formData.patient_type === 'neonate' ? (
-                                <FaBaby className="text-pink-600 text-2xl" />
-                            ) : formData.patient_type === 'infant' ? (
-                                <FaBabyCarriage className="text-pink-600 text-2xl" />
-                            ) : (
-                                <FaChild className="text-pink-600 text-2xl" />
-                            )}
-                            <div>
-                                <h3 className="font-bold text-pink-800">
-                                    {formData.patient_type ? formData.patient_type.toUpperCase() : 'Pediatric'} Patient
-                                </h3>
-                                <p className="text-pink-700 text-sm">
-                                    Age: {formatAgeDisplay(formData.age_in_days, formData.date_of_birth)}
-                                </p>
-                            </div>
-                        </div>
+                    <div className="bg-gradient-to-r from-pink-50 to-purple-50 rounded-lg p-2 mb-3 border border-pink-200">
+                        <h3 className="font-bold text-pink-800 text-sm">
+                            {formData.patient_type ? formData.patient_type.toUpperCase() : 'Pediatric'} Patient
+                        </h3>
+                        <p className="text-pink-700 text-xs">
+                            Age: {formatAgeDisplay(formData.age_in_days, formData.date_of_birth)}
+                        </p>
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                     {/* Blood Pressure */}
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                         <div className="flex justify-between">
-                            <label className="block text-sm font-medium text-gray-700">
-                                Blood Pressure
-                            </label>
+                            <label className="block text-xs font-medium text-gray-700">Blood Pressure</label>
                             {isPediatric && (
-                                <span className="text-xs text-gray-500">
+                                <span className="text-[10px] text-gray-500">
                                     {getPediatricNormalRange('blood_pressure', formData.age_in_days)}
                                 </span>
                             )}
@@ -1616,29 +1589,27 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                                 type="text"
                                 value={formData.blood_pressure || ''}
                                 onChange={(e) => handleVitalsInputChange('blood_pressure', e.target.value)}
-                                className="w-full border border-gray-300 rounded-lg p-3"
-                                placeholder={isPediatric ? "e.g., 80/55" : "120/80"}
+                                className="w-full border border-gray-300 rounded-lg p-1.5 text-sm"
+                                placeholder={isPediatric ? "80/55" : "120/80"}
                             />
                         ) : (
-                            <div className="p-3 bg-red-50 rounded-lg border border-red-200">
+                            <div className="p-1.5 bg-red-50 rounded-lg border border-red-200">
                                 <div className="flex items-center justify-between">
-                                    <span className="font-medium text-gray-800">
+                                    <span className="font-medium text-gray-800 text-sm">
                                         {formData.blood_pressure || '--/--'}
                                     </span>
-                                    <span className="text-sm text-gray-500">mmHg</span>
+                                    <span className="text-[10px] text-gray-500">mmHg</span>
                                 </div>
                             </div>
                         )}
                     </div>
 
                     {/* Heart Rate */}
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                         <div className="flex justify-between">
-                            <label className="block text-sm font-medium text-gray-700">
-                                Heart Rate
-                            </label>
+                            <label className="block text-xs font-medium text-gray-700">Heart Rate</label>
                             {isPediatric && (
-                                <span className="text-xs text-gray-500">
+                                <span className="text-[10px] text-gray-500">
                                     {getPediatricNormalRange('heart_rate', formData.age_in_days)}
                                 </span>
                             )}
@@ -1648,55 +1619,51 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                                 type="number"
                                 value={formData.heart_rate || ''}
                                 onChange={(e) => handleVitalsInputChange('heart_rate', e.target.value)}
-                                className="w-full border border-gray-300 rounded-lg p-3"
-                                placeholder={isPediatric ? "e.g., 120" : "72"}
+                                className="w-full border border-gray-300 rounded-lg p-1.5 text-sm"
+                                placeholder={isPediatric ? "120" : "72"}
                             />
                         ) : (
-                            <div className="p-3 bg-red-50 rounded-lg border border-red-200">
+                            <div className="p-1.5 bg-red-50 rounded-lg border border-red-200">
                                 <div className="flex items-center justify-between">
-                                    <span className="font-medium text-gray-800">
+                                    <span className="font-medium text-gray-800 text-sm">
                                         {formData.heart_rate || '--'}
                                     </span>
-                                    <span className="text-sm text-gray-500">bpm</span>
+                                    <span className="text-[10px] text-gray-500">bpm</span>
                                 </div>
                             </div>
                         )}
                     </div>
 
                     {/* Temperature */}
-                    <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                            Temperature
-                        </label>
+                    <div className="space-y-1">
+                        <label className="block text-xs font-medium text-gray-700">Temperature</label>
                         {isEditing ? (
                             <input
                                 type="number"
                                 step="0.1"
                                 value={formData.temperature || ''}
                                 onChange={(e) => handleVitalsInputChange('temperature', e.target.value)}
-                                className="w-full border border-gray-300 rounded-lg p-3"
+                                className="w-full border border-gray-300 rounded-lg p-1.5 text-sm"
                                 placeholder="36.5"
                             />
                         ) : (
-                            <div className="p-3 bg-red-50 rounded-lg border border-red-200">
+                            <div className="p-1.5 bg-red-50 rounded-lg border border-red-200">
                                 <div className="flex items-center justify-between">
-                                    <span className="font-medium text-gray-800">
+                                    <span className="font-medium text-gray-800 text-sm">
                                         {formData.temperature || '--'}
                                     </span>
-                                    <span className="text-sm text-gray-500">°C</span>
+                                    <span className="text-[10px] text-gray-500">°C</span>
                                 </div>
                             </div>
                         )}
                     </div>
 
                     {/* Respiratory Rate */}
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                         <div className="flex justify-between">
-                            <label className="block text-sm font-medium text-gray-700">
-                                Respiratory Rate
-                            </label>
+                            <label className="block text-xs font-medium text-gray-700">Resp. Rate</label>
                             {isPediatric && (
-                                <span className="text-xs text-gray-500">
+                                <span className="text-[10px] text-gray-500">
                                     {getPediatricNormalRange('respiratory_rate', formData.age_in_days)}
                                 </span>
                             )}
@@ -1706,99 +1673,75 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                                 type="number"
                                 value={formData.respiratory_rate || ''}
                                 onChange={(e) => handleVitalsInputChange('respiratory_rate', e.target.value)}
-                                className="w-full border border-gray-300 rounded-lg p-3"
-                                placeholder={isPediatric ? "e.g., 40" : "16"}
+                                className="w-full border border-gray-300 rounded-lg p-1.5 text-sm"
+                                placeholder={isPediatric ? "40" : "16"}
                             />
                         ) : (
-                            <div className="p-3 bg-red-50 rounded-lg border border-red-200">
+                            <div className="p-1.5 bg-red-50 rounded-lg border border-red-200">
                                 <div className="flex items-center justify-between">
-                                    <span className="font-medium text-gray-800">
+                                    <span className="font-medium text-gray-800 text-sm">
                                         {formData.respiratory_rate || '--'}
                                     </span>
-                                    <span className="text-sm text-gray-500">breaths/min</span>
+                                    <span className="text-[10px] text-gray-500">/min</span>
                                 </div>
                             </div>
                         )}
                     </div>
 
-                    {/* SpO₂ */}
-                    <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                            Oxygen Saturation (SpO₂)
-                        </label>
+                    {/* SpO2 */}
+                    <div className="space-y-1">
+                        <label className="block text-xs font-medium text-gray-700">SpO₂</label>
                         {isEditing ? (
                             <input
                                 type="number"
                                 value={formData.oxygen_saturation || ''}
                                 onChange={(e) => handleVitalsInputChange('oxygen_saturation', e.target.value)}
-                                className="w-full border border-gray-300 rounded-lg p-3"
+                                className="w-full border border-gray-300 rounded-lg p-1.5 text-sm"
                                 placeholder="98"
                                 min="0"
                                 max="100"
                             />
                         ) : (
-                            <div className="p-3 bg-red-50 rounded-lg border border-red-200">
+                            <div className="p-1.5 bg-red-50 rounded-lg border border-red-200">
                                 <div className="flex items-center justify-between">
-                                    <span className="font-medium text-gray-800">
+                                    <span className="font-medium text-gray-800 text-sm">
                                         {formData.oxygen_saturation || '--'}
                                     </span>
-                                    <span className="text-sm text-gray-500">%</span>
+                                    <span className="text-[10px] text-gray-500">%</span>
                                 </div>
                             </div>
                         )}
                     </div>
 
                     {/* Weight */}
-                    <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                            Weight {formData.weight_percentile && (
-                                <span className="text-xs text-blue-600 ml-1">
-                                    ({formData.weight_percentile} percentile)
-                                </span>
-                            )}
-                        </label>
+                    <div className="space-y-1">
+                        <label className="block text-xs font-medium text-gray-700">Weight</label>
                         {isEditing ? (
-                            <div className="flex gap-2">
+                            <div className="flex gap-1">
                                 <input
                                     type="number"
                                     step="0.01"
                                     value={formData.weight || ''}
                                     onChange={(e) => handleVitalsInputChange('weight', e.target.value)}
-                                    className="flex-1 border border-gray-300 rounded-lg p-3"
-                                    placeholder={isPediatric ? "e.g., 3.5" : "70"}
+                                    className="flex-1 min-w-0 border border-gray-300 rounded-lg p-1.5 text-sm"
+                                    placeholder={isPediatric ? "3.5" : "70"}
                                 />
-                                <div className="w-20 bg-gray-100 border border-gray-300 rounded-lg p-3 text-center text-gray-700">
-                                    kg
-                                </div>
+                                <div className="w-10 bg-gray-100 border border-gray-300 rounded-lg p-1.5 text-center text-xs text-gray-700">kg</div>
                             </div>
                         ) : (
-                            <div className="p-3 bg-red-50 rounded-lg border border-red-200">
-                                <div className="flex items-center justify-between">
-                                    <span className="font-medium text-gray-800">
-                                        {formData.weight || '--'} kg
-                                    </span>
-                                    {formData.weight_percentile && (
-                                        <span className="text-sm text-blue-600 font-medium">
-                                            {formData.weight_percentile}
-                                        </span>
-                                    )}
-                                </div>
+                            <div className="p-1.5 bg-red-50 rounded-lg border border-red-200 text-sm">
+                                <span className="font-medium text-gray-800">{formData.weight || '--'} kg</span>
                             </div>
                         )}
                     </div>
 
-                    {/* Height/Length */}
-                    <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
+                    {/* Height / Length */}
+                    <div className="space-y-1">
+                        <label className="block text-xs font-medium text-gray-700">
                             {isPediatric && ageInDays < 730 ? 'Length' : 'Height'}
-                            {formData.height_percentile && (
-                                <span className="text-xs text-blue-600 ml-1">
-                                    ({formData.height_percentile} percentile)
-                                </span>
-                            )}
                         </label>
                         {isEditing ? (
-                            <div className="flex gap-2">
+                            <div className="flex gap-1">
                                 <input
                                     type="number"
                                     step="0.1"
@@ -1807,178 +1750,121 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                                         isPediatric && ageInDays < 730 ? 'length' : 'height',
                                         e.target.value
                                     )}
-                                    className="flex-1 border border-gray-300 rounded-lg p-3"
-                                    placeholder={isPediatric ? "e.g., 50" : "170"}
+                                    className="flex-1 min-w-0 border border-gray-300 rounded-lg p-1.5 text-sm"
+                                    placeholder={isPediatric ? "50" : "170"}
                                 />
-                                <div className="w-20 bg-gray-100 border border-gray-300 rounded-lg p-3 text-center text-gray-700">
-                                    cm
-                                </div>
+                                <div className="w-10 bg-gray-100 border border-gray-300 rounded-lg p-1.5 text-center text-xs text-gray-700">cm</div>
                             </div>
                         ) : (
-                            <div className="p-3 bg-red-50 rounded-lg border border-red-200">
-                                <div className="flex items-center justify-between">
-                                    <span className="font-medium text-gray-800">
-                                        {(isPediatric && ageInDays < 730 ? formData.length : formData.height) || '--'} cm
-                                    </span>
-                                    {formData.height_percentile && (
-                                        <span className="text-sm text-blue-600 font-medium">
-                                            {formData.height_percentile}
-                                        </span>
-                                    )}
-                                </div>
+                            <div className="p-1.5 bg-red-50 rounded-lg border border-red-200 text-sm">
+                                <span className="font-medium text-gray-800">
+                                    {(isPediatric && ageInDays < 730 ? formData.length : formData.height) || '--'} cm
+                                </span>
                             </div>
                         )}
                     </div>
 
                     {/* Head Circumference (Pediatric) */}
                     {isPediatric && (
-                        <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-700">
-                                Head Circumference
-                                {formData.head_circumference_percentile && (
-                                    <span className="text-xs text-blue-600 ml-1">
-                                        ({formData.head_circumference_percentile} percentile)
-                                    </span>
-                                )}
-                            </label>
+                        <div className="space-y-1">
+                            <label className="block text-xs font-medium text-gray-700">Head Circ.</label>
                             {isEditing ? (
-                                <div className="flex gap-2">
+                                <div className="flex gap-1">
                                     <input
                                         type="number"
                                         step="0.1"
                                         value={formData.head_circumference || ''}
                                         onChange={(e) => handleVitalsInputChange('head_circumference', e.target.value)}
-                                        className="flex-1 border border-gray-300 rounded-lg p-3"
-                                        placeholder="e.g., 35"
+                                        className="flex-1 min-w-0 border border-gray-300 rounded-lg p-1.5 text-sm"
+                                        placeholder="35"
                                     />
-                                    <div className="w-20 bg-gray-100 border border-gray-300 rounded-lg p-3 text-center text-gray-700">
-                                        cm
-                                    </div>
+                                    <div className="w-10 bg-gray-100 border border-gray-300 rounded-lg p-1.5 text-center text-xs text-gray-700">cm</div>
                                 </div>
                             ) : (
-                                <div className="p-3 bg-red-50 rounded-lg border border-red-200">
-                                    <div className="flex items-center justify-between">
-                                        <span className="font-medium text-gray-800">
-                                            {formData.head_circumference || '--'} cm
-                                        </span>
-                                        {formData.head_circumference_percentile && (
-                                            <span className="text-sm text-blue-600 font-medium">
-                                                {formData.head_circumference_percentile}
-                                            </span>
-                                        )}
-                                    </div>
+                                <div className="p-1.5 bg-red-50 rounded-lg border border-red-200 text-sm">
+                                    <span className="font-medium text-gray-800">{formData.head_circumference || '--'} cm</span>
                                 </div>
                             )}
                         </div>
                     )}
 
                     {/* BSA */}
-                    <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                            BSA (DuBois) {formData.bsa_percentile && (
-                                <span className="text-xs text-blue-600 ml-1">
-                                    ({formData.bsa_percentile} percentile)
-                                </span>
-                            )}
-                        </label>
+                    <div className="space-y-1">
+                        <label className="block text-xs font-medium text-gray-700">BSA</label>
                         {isEditing ? (
                             <input
                                 type="text"
                                 value={formData.bsa || ''}
                                 readOnly
-                                className="w-full border border-gray-300 rounded-lg p-3 bg-gray-100"
-                                placeholder="Calculated automatically"
+                                className="w-full border border-gray-300 rounded-lg p-1.5 text-sm bg-gray-100"
+                                placeholder="Auto"
                             />
                         ) : (
-                            <div className="p-3 bg-red-50 rounded-lg border border-red-200">
-                                <div className="flex items-center justify-between">
-                                    <span className="font-medium text-gray-800">
-                                        {formData.bsa || '--'}
-                                    </span>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-sm text-gray-500">m²</span>
-                                        {formData.bsa_percentile && (
-                                            <span className="text-sm text-blue-600 font-medium">
-                                                {formData.bsa_percentile}
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
+                            <div className="p-1.5 bg-red-50 rounded-lg border border-red-200 text-sm">
+                                <span className="font-medium text-gray-800">{formData.bsa || '--'}</span>
+                                <span className="text-[10px] text-gray-500 ml-1">m²</span>
                             </div>
                         )}
                     </div>
 
                     {/* Last Measured */}
-                    <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                            Last Measured
-                        </label>
+                    <div className="space-y-1">
+                        <label className="block text-xs font-medium text-gray-700">Last Measured</label>
                         {isEditing ? (
                             <input
                                 type="date"
                                 value={formData.last_measured || ''}
                                 onChange={(e) => handleInputChange('last_measured', e.target.value)}
-                                className="w-full border border-gray-300 rounded-lg p-3"
+                                className="w-full border border-gray-300 rounded-lg p-1.5 text-sm"
                             />
                         ) : (
-                            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                {formData.last_measured ? (
-                                    <div className="flex items-center gap-2">
-                                        <FaCalendarAlt className="text-gray-400" />
-                                        {new Date(formData.last_measured).toLocaleDateString()}
-                                    </div>
-                                ) : <span className="text-gray-500 italic">Not recorded</span>}
+                            <div className="p-1.5 bg-gray-50 rounded-lg border border-gray-200 text-sm">
+                                {formData.last_measured ? new Date(formData.last_measured).toLocaleDateString() : <span className="text-gray-500 italic">Not recorded</span>}
                             </div>
                         )}
                     </div>
                 </div>
 
-
-
-
-
                 {/* Vitals History Table */}
                 {!isNewPatient && vitalsHistory.length > 0 && (
-                    <div className="mt-12 bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-                        <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                            <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                                <FaHistory className="text-gray-400" /> Previous Vitals Records
-                            </h3>
+                    <div className="mt-8 bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                        <div className="bg-gray-50 px-4 py-2 border-b border-gray-200">
+                            <h3 className="text-sm font-bold text-gray-800">Previous Vitals Records</h3>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-50">
                                     <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">BP</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">HR</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Temp</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SpO₂</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Weight</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                        <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                        <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider">BP</th>
+                                        <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider">HR</th>
+                                        <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider">Temp</th>
+                                        <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider">SpO₂</th>
+                                        <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider">Weight</th>
+                                        <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
                                     {vitalsHistory.map((h, idx) => (
                                         <tr key={idx} className="hover:bg-gray-50">
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
                                                 {new Date(h.created_at || h.recorded_at).toLocaleDateString()}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{h.blood_pressure || '-'}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{h.heart_rate || '-'}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{h.temperature ? `${h.temperature}°C` : '-'}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{h.oxygen_saturation ? `${h.oxygen_saturation}%` : '-'}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{h.weight ? `${h.weight}kg` : '-'}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-500">{h.blood_pressure || '-'}</td>
+                                            <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-500">{h.heart_rate || '-'}</td>
+                                            <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-500">{h.temperature ? `${h.temperature}°C` : '-'}</td>
+                                            <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-500">{h.oxygen_saturation ? `${h.oxygen_saturation}%` : '-'}</td>
+                                            <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-500">{h.weight ? `${h.weight}kg` : '-'}</td>
+                                            <td className="px-3 py-2 whitespace-nowrap text-xs font-medium">
                                                 <button
                                                     onClick={() => {
                                                         setFormData(prev => ({ ...prev, ...h }));
                                                         alert('Historical vitals copied to form.');
                                                     }}
-                                                    className="text-blue-600 hover:text-blue-900 flex items-center gap-1"
+                                                    className="text-blue-600 hover:text-blue-900 text-xs"
                                                     title="Copy to current session"
                                                 >
-                                                    <FaSync size={12} /> <span className="text-xs">Copy</span>
+                                                    Copy
                                                 </button>
                                             </td>
                                         </tr>
@@ -1992,25 +1878,21 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
         );
     }, [formData, isEditing, handleSaveVitals, formatAgeDisplay, getPediatricNormalRange, handleVitalsInputChange, handleInputChange, vitalsHistory, isNewPatient]);
 
+    // ==========================================================
+    // LABS SECTION — compact grid, no icons
+    // ==========================================================
     const renderLabsSection = useCallback(() => {
-        const isPediatric = formData.patient_type && formData.patient_type !== 'adult';
-
         return (
-            <div className="space-y-6">
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                        <div className="bg-blue-100 p-3 rounded-full">
-                            <FaVial className="text-blue-600 text-xl" />
-                        </div>
-                        <div>
-                            <h2 className="text-xl font-bold text-gray-800">Laboratory Results</h2>
-                            <p className="text-gray-600">Complete laboratory test results</p>
-                        </div>
+            <div className="space-y-4">
+                <div className="flex items-center justify-between mb-3">
+                    <div>
+                        <h2 className="text-lg font-bold text-gray-800">Laboratory Results</h2>
+                        <p className="text-gray-600 text-sm">Complete laboratory test results</p>
                     </div>
                     {isEditing && (
                         <button
                             onClick={handleSaveLabs}
-                            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm"
                         >
                             <FaSave /> Save Labs
                         </button>
@@ -2027,12 +1909,12 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                         if (labsInCat.length === 0) return null;
 
                         return (
-                            <div key={cat} className="bg-white p-6 rounded-xl shadow-sm border border-indigo-100 mb-6">
-                                <h3 className="text-lg font-bold text-indigo-900 mb-4 flex items-center gap-2 border-b border-indigo-50 pb-2">
-                                    <FaVial className="text-indigo-400" /> {cat}
-                                    <span className="text-[10px] bg-indigo-50 text-indigo-500 px-2 py-0.5 rounded-full uppercase ml-2 tracking-wider">System Tests</span>
+                            <div key={cat} className="bg-white p-3 rounded-lg shadow-sm border border-indigo-100">
+                                <h3 className="text-sm font-bold text-indigo-900 mb-2 border-b border-indigo-50 pb-1">
+                                    {cat}
+                                    <span className="text-[9px] bg-indigo-50 text-indigo-500 px-1.5 py-0.5 rounded-full uppercase ml-2 tracking-wider">System</span>
                                 </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
                                     {labsInCat.map((lab) => {
                                         const labIndex = customLabs.findIndex(l => l.id === lab.id);
                                         return (
@@ -2044,7 +1926,7 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                                                     unit={lab.unit}
                                                     normalRange={lab.reference_range}
                                                     isEditing={isEditing}
-                                                    placeholder="Enter result..."
+                                                    placeholder="Result"
                                                     type="text"
                                                     handleChange={(_, val) => {
                                                         const updated = [...customLabs];
@@ -2058,7 +1940,7 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                                                     }}
                                                 />
                                                 {lab.description && (
-                                                    <div className="hidden group-hover:block absolute z-10 top-full left-0 mt-2 p-2 bg-gray-800 text-white text-[10px] rounded shadow-lg max-w-[200px]">
+                                                    <div className="hidden group-hover:block absolute z-10 top-full left-0 mt-1 p-1.5 bg-gray-800 text-white text-[10px] rounded shadow-lg max-w-[180px]">
                                                         {lab.description}
                                                     </div>
                                                 )}
@@ -2071,16 +1953,12 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                     });
                 })()}
 
-
-
-                <div className="space-y-8">
+                <div className="space-y-4">
                     {/* --- NON-GLOBAL CUSTOM LABS --- */}
                     {customLabs.filter(l => !l.isGlobal).length > 0 && (
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-6 mt-6">
-                            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2 border-b pb-2">
-                                <FaVial className="text-gray-500" /> Additional Tests
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
+                            <h3 className="text-sm font-bold text-gray-800 mb-2 border-b pb-1">Additional Tests</h3>
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
                                 {customLabs.filter(l => !l.isGlobal).map((lab) => {
                                     const labIndex = customLabs.findIndex(l => l.id === lab.id);
                                     return (
@@ -2092,7 +1970,7 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                                             unit={lab.unit}
                                             normalRange={lab.reference_range}
                                             isEditing={isEditing}
-                                            placeholder="Enter result..."
+                                            placeholder="Result"
                                             handleChange={(_, val) => {
                                                 const updated = [...customLabs];
                                                 if (labIndex !== -1) {
@@ -2117,52 +1995,49 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
 
                 {/* Labs History Table */}
                 {!isNewPatient && labsHistory.length > 0 && (
-                    <div className="mt-12 bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-                        <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                            <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                                <FaHistory className="text-gray-400" /> Laboratory History
-                            </h3>
+                    <div className="mt-8 bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                        <div className="bg-gray-50 px-4 py-2 border-b border-gray-200">
+                            <h3 className="text-sm font-bold text-gray-800">Laboratory History</h3>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-50">
                                     <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Key Markers</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                        <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                        <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider">Key Markers</th>
+                                        <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
                                     {labsHistory.map((h, idx) => {
                                         const labData = typeof h.labs === 'string' ? JSON.parse(h.labs) : h.labs;
                                         const markers = Object.entries(labData || {})
-                                            .slice(0, 5) // Show first 5 markers
+                                            .slice(0, 5)
                                             .map(([k, v]) => `${k}: ${v}`)
                                             .join(', ');
 
                                         return (
                                             <tr key={idx} className="hover:bg-gray-50">
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
                                                     {new Date(h.test_date || h.created_at).toLocaleDateString()}
                                                 </td>
-                                                <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
+                                                <td className="px-3 py-2 text-xs text-gray-500 max-w-xs truncate">
                                                     {markers || 'No detailed data'}
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                <td className="px-3 py-2 whitespace-nowrap text-xs font-medium">
                                                     <button
                                                         onClick={() => {
                                                             const unpacked = {};
                                                             Object.entries(labData || {}).forEach(([k, v]) => {
-                                                                // Normalize keys if needed
                                                                 unpacked[k] = v;
                                                             });
                                                             setFormData(prev => ({ ...prev, ...unpacked }));
                                                             alert('Historical lab values copied to form.');
                                                         }}
-                                                        className="text-blue-600 hover:text-blue-900"
+                                                        className="text-blue-600 hover:text-blue-900 text-xs"
                                                         title="Copy to current session"
                                                     >
-                                                        <FaSync />
+                                                        Copy
                                                     </button>
                                                 </td>
                                             </tr>
@@ -2177,6 +2052,9 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
         );
     }, [formData, isEditing, showPediatricLabs, handleSaveLabs, handleLabInputChange, handleInputChange, labsHistory, isNewPatient, customLabs, setCustomLabs]);
 
+    // ==========================================================
+    // DEMOGRAPHICS SECTION — compact grid, no icons
+    // ==========================================================
     const renderDemographicsSection = useCallback(() => {
         const ageDisplay = formatAgeDisplay(formData.age_in_days, formData.date_of_birth);
         const isPediatric = formData.patient_type && formData.patient_type !== 'adult';
@@ -2184,21 +2062,16 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
         const isIndividual = user?.account_type === 'individual' && user?.role !== 'admin';
 
         return (
-            <div className="space-y-6">
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                        <div className="bg-indigo-100 p-3 rounded-full">
-                            <FaUser className="text-indigo-600 text-xl" />
-                        </div>
-                        <div>
-                            <h2 className="text-xl font-bold text-gray-800">Demographics & Dx</h2>
-                            <p className="text-gray-600">Basic information</p>
-                        </div>
+            <div className="space-y-4">
+                <div className="flex items-center justify-between mb-3">
+                    <div>
+                        <h2 className="text-lg font-bold text-gray-800">Demographics & Dx</h2>
+                        <p className="text-gray-600 text-sm">Basic information</p>
                     </div>
                     {isEditing && (
                         <button
                             onClick={handleSaveDemographics}
-                            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm"
                         >
                             <FaSave /> Save Info
                         </button>
@@ -2206,88 +2079,73 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                 </div>
 
                 {ageDisplay && (
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg mb-4">
-                        <div className="flex items-center gap-3">
-                            {isPediatric ? (
-                                formData.patient_type === 'neonate' ? <FaBaby className="text-blue-600 text-2xl" /> :
-                                    formData.patient_type === 'infant' ? <FaBabyCarriage className="text-blue-600 text-2xl" /> :
-                                        <FaChild className="text-blue-600 text-2xl" />
-                            ) : (
-                                <FaUser className="text-blue-600 text-2xl" />
-                            )}
-                            <div>
-                                <h3 className="font-bold text-blue-800">Age Information</h3>
-                                <p className="text-blue-700">{ageDisplay}</p>
-                            </div>
-                        </div>
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-2 rounded-lg">
+                        <h3 className="font-bold text-blue-800 text-sm">Age Information</h3>
+                        <p className="text-blue-700 text-xs">{ageDisplay}</p>
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                     {/* Full Name */}
                     {!isIndividual && (
-                        <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-700">
-                                Full Name
-                            </label>
+                        <div className="space-y-1 col-span-2 md:col-span-2">
+                            <label className="block text-xs font-medium text-gray-700">Full Name</label>
                             {isEditing ? (
                                 <input
                                     type="text"
                                     value={formData.full_name || ''}
                                     onChange={(e) => handleInputChange('full_name', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-3"
-                                    placeholder="Enter patient's full name"
+                                    className="w-full border border-gray-300 rounded-lg p-1.5 text-sm"
+                                    placeholder="Patient name"
                                 />
                             ) : (
-                                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                <div className="p-1.5 bg-gray-50 rounded-lg border border-gray-200 text-sm">
                                     {formatEncValue(formData.full_name || patient?.full_name)}
                                 </div>
                             )}
                         </div>
                     )}
 
-                    {/* Age Input */}
-                    <div className="space-y-2">
+                    {/* Age */}
+                    <div className="space-y-1">
                         <div className="flex justify-between items-center">
-                            <label className="block text-sm font-medium text-gray-700">
-                                Age {ageMode === 'days' && isPediatric ? '(in days)' : '(in years)'}
+                            <label className="block text-xs font-medium text-gray-700">
+                                Age {ageMode === 'days' && isPediatric ? '(days)' : '(yrs)'}
                             </label>
                             {isEditing && formData.age_in_days && parseInt(formData.age_in_days) < 730 && (
                                 <button
                                     type="button"
                                     onClick={() => setAgeMode(ageMode === 'days' ? 'years' : 'days')}
-                                    className="text-xs text-blue-600 hover:text-blue-800"
+                                    className="text-[10px] text-blue-600 hover:text-blue-800"
                                 >
-                                    Show in {ageMode === 'days' ? 'years/months' : 'days'}
+                                    {ageMode === 'days' ? 'yrs' : 'days'}
                                 </button>
                             )}
                         </div>
                         {isEditing ? (
-                            <div className="flex gap-2">
-                                {ageMode === 'days' && isPediatric ? (
-                                    <input
-                                        type="number"
-                                        value={formData.age_in_days || ''}
-                                        onChange={(e) => handleInputChange('age_in_days', e.target.value)}
-                                        className="flex-1 border border-gray-300 rounded-lg p-3"
-                                        placeholder="Enter age in days"
-                                        min="0"
-                                        max="365"
-                                    />
-                                ) : (
-                                    <input
-                                        type="number"
-                                        value={formData.age || ''}
-                                        onChange={(e) => handleInputChange('age', e.target.value)}
-                                        className="flex-1 border border-gray-300 rounded-lg p-3"
-                                        placeholder="Enter age"
-                                        min="0"
-                                        max="120"
-                                    />
-                                )}
-                            </div>
+                            ageMode === 'days' && isPediatric ? (
+                                <input
+                                    type="number"
+                                    value={formData.age_in_days || ''}
+                                    onChange={(e) => handleInputChange('age_in_days', e.target.value)}
+                                    className="w-full border border-gray-300 rounded-lg p-1.5 text-sm"
+                                    placeholder="Days"
+                                    min="0"
+                                    max="365"
+                                />
+                            ) : (
+                                <input
+                                    type="number"
+                                    value={formData.age || ''}
+                                    onChange={(e) => handleInputChange('age', e.target.value)}
+                                    className="w-full border border-gray-300 rounded-lg p-1.5 text-sm"
+                                    placeholder="Age"
+                                    min="0"
+                                    max="120"
+                                />
+                            )
                         ) : (
-                            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <div className="p-1.5 bg-gray-50 rounded-lg border border-gray-200 text-sm">
                                 {ageDisplay || <span className="text-gray-500 italic">Not specified</span>}
                             </div>
                         )}
@@ -2295,146 +2153,152 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
 
                     {/* Date of Birth */}
                     {!isIndividual && (
-                        <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-700">
-                                Date of Birth
-                            </label>
+                        <div className="space-y-1">
+                            <label className="block text-xs font-medium text-gray-700">Date of Birth</label>
                             {isEditing ? (
                                 <input
                                     type="date"
                                     value={formData.date_of_birth || ''}
                                     onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-3"
+                                    className="w-full border border-gray-300 rounded-lg p-1.5 text-sm"
                                 />
                             ) : (
-                                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                <div className="p-1.5 bg-gray-50 rounded-lg border border-gray-200 text-sm">
                                     {formData.date_of_birth ? (
-                                        <div className="flex items-center gap-2">
-                                            <FaBirthdayCake className="text-gray-400" />
-                                            {isValidDate(formData.date_of_birth) ? new Date(formData.date_of_birth).toLocaleDateString() : formatEncValue(formData.date_of_birth)}
-                                        </div>
+                                        isValidDate(formData.date_of_birth)
+                                            ? new Date(formData.date_of_birth).toLocaleDateString()
+                                            : formatEncValue(formData.date_of_birth)
                                     ) : <span className="text-gray-500 italic">Not specified</span>}
                                 </div>
                             )}
                         </div>
                     )}
-                    {/* Gender - FIXED: Only Male and Female */}
-                    <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                            Gender
-                        </label>
+
+                    {/* Gender */}
+                    <div className="space-y-1">
+                        <label className="block text-xs font-medium text-gray-700">Gender</label>
                         {isEditing ? (
                             <select
                                 value={formData.gender || ''}
                                 onChange={(e) => handleInputChange('gender', e.target.value)}
-                                className="w-full border border-gray-300 rounded-lg p-3"
+                                className="w-full border border-gray-300 rounded-lg p-1.5 text-sm"
                             >
-                                <option value="">Select Gender</option>
+                                <option value="">Select</option>
                                 <option value="Male">Male</option>
                                 <option value="Female">Female</option>
                             </select>
                         ) : (
-                            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <div className="p-1.5 bg-gray-50 rounded-lg border border-gray-200 text-sm">
                                 {formatEncValue(formData.gender || patient?.gender)}
                             </div>
                         )}
                     </div>
 
-                    {/* Patient Type */}
-                    <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                            Age Category
-                        </label>
-                        <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    {/* Age Category */}
+                    <div className="space-y-1">
+                        <label className="block text-xs font-medium text-gray-700">Age Category</label>
+                        <div className="p-1.5 bg-gray-50 rounded-lg border border-gray-200 text-sm">
                             {formData.patient_type ? (
-                                <div className="flex items-center gap-2">
-                                    {formData.patient_type === 'neonate' && <FaBaby className="text-pink-500" />}
-                                    {formData.patient_type === 'infant' && <FaBabyCarriage className="text-purple-500" />}
-                                    {formData.patient_type === 'child' && <FaChild className="text-blue-500" />}
-                                    {formData.patient_type === 'adolescent' && <FaUser className="text-green-500" />}
-                                    {formData.patient_type === 'adult' && <FaUser className="text-indigo-500" />}
-                                    <span className="font-medium capitalize">
-                                        {formData.patient_type}
-                                        {formData.patient_type === 'neonate' && ' (0-28 days)'}
-                                        {formData.patient_type === 'infant' && ' (29 days - 1 year)'}
-                                        {formData.patient_type === 'child' && ' (1-12 years)'}
-                                        {formData.patient_type === 'adolescent' && ' (13-18 years)'}
-                                        {formData.patient_type === 'adult' && ' (>18 years)'}
-                                    </span>
-                                </div>
-                            ) : <span className="text-gray-500 italic">Not determined</span>}
+                                <span className="font-medium capitalize">{formData.patient_type}</span>
+                            ) : <span className="text-gray-500 italic">Not set</span>}
                         </div>
                     </div>
 
                     {/* Contact Number */}
                     {!isIndividual && (
-                        <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-700">
-                                Contact Number
-                            </label>
+                        <div className="space-y-1">
+                            <label className="block text-xs font-medium text-gray-700">Contact</label>
                             {isEditing ? (
                                 <input
                                     type="tel"
                                     value={formData.contact_number || ''}
                                     onChange={(e) => handleInputChange('contact_number', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-3"
-                                    placeholder="Phone number"
+                                    className="w-full border border-gray-300 rounded-lg p-1.5 text-sm"
+                                    placeholder="Phone"
                                 />
                             ) : (
-                                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                <div className="p-1.5 bg-gray-50 rounded-lg border border-gray-200 text-sm">
                                     {formatEncValue(formData.contact_number || patient?.contact_number)}
                                 </div>
                             )}
                         </div>
                     )}
-                    {/* Address */}
+
+                    {/* Status */}
+                    <div className="space-y-1">
+                        <label className="block text-xs font-medium text-gray-700">Status</label>
+                        <div className="flex items-center gap-2 p-1.5 bg-gray-50 rounded-lg border border-gray-200 text-sm">
+                            <div className={`w-2 h-2 rounded-full ${formData.is_active ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                            <span className="font-medium">{formData.is_active ? 'Active' : 'Inactive'}</span>
+                        </div>
+                    </div>
+
+                    {/* Appointment Date */}
                     {!isIndividual && (
-                        <div className="space-y-2 md:col-span-2">
-                            <label className="block text-sm font-medium text-gray-700">
-                                Address
-                            </label>
+                        <div className="space-y-1">
+                            <label className="block text-xs font-medium text-gray-700">Appointment</label>
                             {isEditing ? (
-                                <textarea
-                                    value={formData.address || ''}
-                                    onChange={(e) => handleInputChange('address', e.target.value)}
-                                    rows="2"
-                                    className="w-full border border-gray-300 rounded-lg p-3"
-                                    placeholder="Patient's address"
+                                <input
+                                    type="date"
+                                    value={formData.appointment_date || ''}
+                                    onChange={(e) => handleInputChange('appointment_date', e.target.value)}
+                                    className="w-full border border-gray-300 rounded-lg p-1.5 text-sm"
                                 />
                             ) : (
-                                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                <div className="p-1.5 bg-gray-50 rounded-lg border border-gray-200 text-sm">
+                                    {formData.appointment_date
+                                        ? new Date(formData.appointment_date).toLocaleDateString()
+                                        : <span className="text-gray-500 italic">Not scheduled</span>}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Address (2 cols) */}
+                    {!isIndividual && (
+                        <div className="space-y-1 col-span-2 md:col-span-2">
+                            <label className="block text-xs font-medium text-gray-700">Address</label>
+                            {isEditing ? (
+                                <input
+                                    type="text"
+                                    value={formData.address || ''}
+                                    onChange={(e) => handleInputChange('address', e.target.value)}
+                                    className="w-full border border-gray-300 rounded-lg p-1.5 text-sm"
+                                    placeholder="Address"
+                                />
+                            ) : (
+                                <div className="p-1.5 bg-gray-50 rounded-lg border border-gray-200 text-sm">
                                     {formatEncValue(formData.address || patient?.address)}
                                 </div>
                             )}
                         </div>
                     )}
+
                     {/* Allergies */}
-                    <div className="space-y-2 md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
-                            <FaAllergies /> Allergies
-                        </label>
+                    <div className="space-y-1 col-span-2 md:col-span-3 lg:col-span-4">
+                        <label className="block text-xs font-medium text-gray-700">Allergies</label>
                         {isEditing ? (
-                            <div className="space-y-3">
+                            <div className="space-y-2">
                                 <div className="flex gap-2">
                                     <input
                                         type="text"
                                         value={newAllergy}
                                         onChange={(e) => setNewAllergy(e.target.value)}
-                                        className="flex-1 border border-gray-300 rounded-lg p-3"
+                                        className="flex-1 border border-gray-300 rounded-lg p-1.5 text-sm"
                                         placeholder="Add an allergy (e.g., Penicillin)"
                                         onKeyPress={(e) => e.key === 'Enter' && handleAddAllergy()}
                                     />
                                     <button
                                         onClick={handleAddAllergy}
-                                        className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-lg flex items-center gap-2"
+                                        className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-1 text-sm"
                                     >
                                         <FaPlus /> Add
                                     </button>
                                 </div>
                                 {Array.isArray(formData.allergies) && formData.allergies.length > 0 && (
-                                    <div className="flex flex-wrap gap-2">
+                                    <div className="flex flex-wrap gap-1.5">
                                         {formData.allergies.map((allergy, index) => (
-                                            <div key={index} className="bg-red-100 text-red-800 px-3 py-2 rounded-lg flex items-center gap-2">
+                                            <div key={index} className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs flex items-center gap-1">
                                                 {allergy}
                                                 <button
                                                     type="button"
@@ -2449,11 +2313,11 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                                 )}
                             </div>
                         ) : (
-                            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <div className="p-1.5 bg-gray-50 rounded-lg border border-gray-200 text-sm">
                                 {Array.isArray(formData.allergies) && formData.allergies.length > 0 ? (
-                                    <div className="flex flex-wrap gap-2">
+                                    <div className="flex flex-wrap gap-1.5">
                                         {formData.allergies.map((allergy, index) => (
-                                            <span key={index} className="bg-red-100 text-red-800 px-3 py-1 rounded-lg">
+                                            <span key={index} className="bg-red-100 text-red-800 px-2 py-0.5 rounded text-xs">
                                                 {allergy}
                                             </span>
                                         ))}
@@ -2465,118 +2329,77 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                         )}
                     </div>
 
-                    {/* Diagnosis */}
-                    <div className="space-y-2 md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                            Diagnosis
-                        </label>
+                    {/* Diagnosis — full width, the ONLY long field */}
+                    <div className="space-y-1 col-span-2 md:col-span-3 lg:col-span-4">
+                        <label className="block text-xs font-medium text-gray-700">Diagnosis</label>
                         {isEditing ? (
                             <textarea
                                 value={formData.diagnosis || ''}
                                 onChange={(e) => handleInputChange('diagnosis', e.target.value)}
                                 rows="3"
-                                className="w-full border border-gray-300 rounded-lg p-3"
+                                className="w-full border border-gray-300 rounded-lg p-2 text-sm"
                                 placeholder="Enter diagnosis"
                             />
                         ) : (
-                            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <div className="p-2 bg-gray-50 rounded-lg border border-gray-200 text-sm">
                                 {formatEncValue(formData.diagnosis || patient?.diagnosis)}
                             </div>
                         )}
                     </div>
 
-                    {/* Appointment Date */}
-                    {!isIndividual && (
-                        <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-700">
-                                Next Appointment
-                            </label>
-                            {isEditing ? (
-                                <input
-                                    type="date"
-                                    value={formData.appointment_date || ''}
-                                    onChange={(e) => handleInputChange('appointment_date', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-3"
-                                />
-                            ) : (
-                                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                    {formData.appointment_date ? (
-                                        <div className="flex items-center gap-2">
-                                            <FaCalendarAlt className="text-gray-400" />
-                                            {new Date(formData.appointment_date).toLocaleDateString()}
-                                        </div>
-                                    ) : <span className="text-gray-500 italic">Not scheduled</span>}
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/* Status */}
-                    <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                            Status
-                        </label>
-                        <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                            <div className={`w-3 h-3 rounded-full ${formData.is_active ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                            <span className="font-medium">{formData.is_active ? 'Active' : 'Inactive'}</span>
-                        </div>
-                    </div>
-
-                    {/* Pregnancy Status (Females Only) - Moved from Vitals */}
+                    {/* Pregnancy Status (Females Only) */}
                     {(formData.gender && formData.gender.toLowerCase() === 'female') && (
-                        <div className="bg-white rounded-xl shadow-lg p-6 mt-6 border border-pink-100 md:col-span-2">
-                            <div className="flex justify-between items-center mb-6 border-b border-pink-100 pb-2">
-                                <h3 className="text-lg font-bold text-pink-700 flex items-center gap-2">
-                                    <FaBaby className="text-pink-500" /> Pregnancy Status
-                                </h3>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div className="bg-pink-50 p-3 rounded-lg border border-pink-100">
-                                    <label className="block text-xs font-bold text-pink-600 uppercase mb-2">Is Pregnant?</label>
+                        <div className="bg-white rounded-lg shadow-sm p-3 border border-pink-100 col-span-2 md:col-span-3 lg:col-span-4">
+                            <h3 className="text-sm font-bold text-pink-700 mb-2 border-b border-pink-100 pb-1">
+                                Pregnancy Status
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div className="bg-pink-50 p-2 rounded-lg border border-pink-100">
+                                    <label className="block text-[10px] font-bold text-pink-600 uppercase mb-1">Is Pregnant?</label>
                                     {isEditing ? (
-                                        <div className="flex bg-white rounded-lg p-1 border border-pink-200">
+                                        <div className="flex bg-white rounded-lg p-0.5 border border-pink-200">
                                             <button
                                                 type="button"
                                                 onClick={() => handleInputChange('is_pregnant', false)}
-                                                className={`flex-1 py-2 px-4 rounded-md text-sm font-bold transition-all ${!formData.is_pregnant ? 'bg-gray-100 text-gray-700 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                                                className={`flex-1 py-1 px-2 rounded text-xs font-bold transition-all ${!formData.is_pregnant ? 'bg-gray-100 text-gray-700 shadow-sm' : 'text-gray-400'}`}
                                             >
                                                 No
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={() => handleInputChange('is_pregnant', true)}
-                                                className={`flex-1 py-2 px-4 rounded-md text-sm font-bold transition-all ${formData.is_pregnant ? 'bg-pink-500 text-white shadow-md' : 'text-gray-400 hover:text-pink-400'}`}
+                                                className={`flex-1 py-1 px-2 rounded text-xs font-bold transition-all ${formData.is_pregnant ? 'bg-pink-500 text-white shadow-md' : 'text-gray-400'}`}
                                             >
                                                 Yes
                                             </button>
                                         </div>
                                     ) : (
-                                        <div className={`p-2 font-bold rounded-md text-center ${formData.is_pregnant ? 'bg-pink-500 text-white' : 'bg-gray-100 text-gray-700'}`}>
+                                        <div className={`p-1 text-xs font-bold rounded text-center ${formData.is_pregnant ? 'bg-pink-500 text-white' : 'bg-gray-100 text-gray-700'}`}>
                                             {formData.is_pregnant ? 'PREGNANT' : 'NOT PREGNANT'}
                                         </div>
                                     )}
                                 </div>
                                 {formData.is_pregnant && (
                                     <>
-                                        <div className="bg-pink-50 p-3 rounded-lg border border-pink-100">
-                                            <label className="block text-xs font-bold text-pink-600 uppercase mb-2">Weeks</label>
+                                        <div className="bg-pink-50 p-2 rounded-lg border border-pink-100">
+                                            <label className="block text-[10px] font-bold text-pink-600 uppercase mb-1">Weeks</label>
                                             {isEditing ? (
                                                 <input
                                                     type="number"
-                                                    placeholder="e.g. 12"
+                                                    placeholder="12"
                                                     value={formData.pregnancy_weeks || ''}
                                                     onChange={e => handleInputChange('pregnancy_weeks', e.target.value)}
-                                                    className="w-full px-3 py-2 border border-pink-200 rounded-md outline-none focus:ring-2 focus:ring-pink-500 transition bg-white font-bold text-pink-700"
+                                                    className="w-full px-2 py-1 border border-pink-200 rounded text-sm bg-white font-bold text-pink-700"
                                                 />
                                             ) : (
-                                                <div className="p-2 font-bold text-pink-800 bg-white rounded-md text-center border border-pink-100">
-                                                    {formData.pregnancy_weeks || '--'} Weeks
+                                                <div className="p-1 font-bold text-xs text-pink-800 bg-white rounded text-center border border-pink-100">
+                                                    {formData.pregnancy_weeks || '--'} W
                                                 </div>
                                             )}
                                         </div>
-                                        <div className="bg-pink-50 p-3 rounded-lg border border-pink-100">
-                                            <label className="block text-xs font-bold text-pink-600 uppercase mb-2">Trimester</label>
-                                            <div className="p-2 font-black text-pink-900 bg-pink-200 rounded-md text-center shadow-inner tracking-wider">
+                                        <div className="bg-pink-50 p-2 rounded-lg border border-pink-100">
+                                            <label className="block text-[10px] font-bold text-pink-600 uppercase mb-1">Trimester</label>
+                                            <div className="p-1 font-black text-xs text-pink-900 bg-pink-200 rounded text-center">
                                                 {formData.pregnancy_trimester || 'SELECT WEEKS'}
                                             </div>
                                         </div>
@@ -2586,44 +2409,42 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                         </div>
                     )}
 
-                    {/* Lactation Status (Females Only) - Moved from Vitals */}
+                    {/* Lactation Status (Females Only) */}
                     {(formData.gender && formData.gender.toLowerCase() === 'female') && (
-                        <div className="bg-white rounded-xl shadow-lg p-6 mt-6 border border-blue-100 md:col-span-2">
-                            <div className="flex justify-between items-center mb-6 border-b border-blue-100 pb-2">
-                                <h3 className="text-lg font-bold text-blue-700 flex items-center gap-2">
-                                    <FaBabyCarriage className="text-blue-500" /> Lactation Status
-                                </h3>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
-                                    <label className="block text-xs font-bold text-blue-600 uppercase mb-2">Is Lactating/Breastfeeding?</label>
+                        <div className="bg-white rounded-lg shadow-sm p-3 border border-blue-100 col-span-2 md:col-span-3 lg:col-span-4">
+                            <h3 className="text-sm font-bold text-blue-700 mb-2 border-b border-blue-100 pb-1">
+                                Lactation Status
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div className="bg-blue-50 p-2 rounded-lg border border-blue-100">
+                                    <label className="block text-[10px] font-bold text-blue-600 uppercase mb-1">Is Lactating?</label>
                                     {isEditing ? (
                                         <select
                                             value={formData.is_lactating ? 'true' : 'false'}
                                             onChange={(e) => handleInputChange('is_lactating', e.target.value === 'true')}
-                                            className="w-full px-3 py-2 border border-blue-200 rounded-md outline-none focus:ring-2 focus:ring-blue-500 transition bg-white font-bold text-blue-700 cursor-pointer"
+                                            className="w-full px-2 py-1 border border-blue-200 rounded text-sm bg-white font-bold text-blue-700"
                                         >
                                             <option value="false">No</option>
                                             <option value="true">Yes</option>
                                         </select>
                                     ) : (
-                                        <div className={`p-2 font-bold rounded-md text-center ${formData.is_lactating ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}>
+                                        <div className={`p-1 text-xs font-bold rounded text-center ${formData.is_lactating ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}>
                                             {formData.is_lactating ? 'LACTATING' : 'NOT LACTATING'}
                                         </div>
                                     )}
                                 </div>
-                                <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
-                                    <label className="block text-xs font-bold text-blue-600 uppercase mb-2">Lactation Notes</label>
+                                <div className="bg-blue-50 p-2 rounded-lg border border-blue-100">
+                                    <label className="block text-[10px] font-bold text-blue-600 uppercase mb-1">Lactation Notes</label>
                                     {isEditing ? (
                                         <input
                                             type="text"
-                                            placeholder="e.g. Exclusive breastfeeding"
+                                            placeholder="Exclusive breastfeeding"
                                             value={formData.lactation_notes || ''}
                                             onChange={e => handleInputChange('lactation_notes', e.target.value)}
-                                            className="w-full px-3 py-2 border border-blue-200 rounded-md outline-none focus:ring-2 focus:ring-blue-500 transition bg-white font-bold text-blue-700"
+                                            className="w-full px-2 py-1 border border-blue-200 rounded text-sm bg-white font-bold text-blue-700"
                                         />
                                     ) : (
-                                        <div className="p-2 font-bold text-blue-800 bg-white rounded-md border border-blue-100">
+                                        <div className="p-1 font-bold text-xs text-blue-800 bg-white rounded border border-blue-100">
                                             {formData.lactation_notes || '--'}
                                         </div>
                                     )}
@@ -2634,135 +2455,109 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
 
                     {/* Pediatric Information */}
                     {isPediatric && (
-                        <div className="md:col-span-2 space-y-4 p-4 bg-gradient-to-r from-pink-50 to-purple-50 rounded-lg border border-pink-200">
-                            <h3 className="font-bold text-purple-800 flex items-center gap-2">
-                                <FaBaby /> Pediatric Information
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700">
-                                        Birth Weight
-                                    </label>
+                        <div className="col-span-2 md:col-span-3 lg:col-span-4 space-y-2 p-3 bg-gradient-to-r from-pink-50 to-purple-50 rounded-lg border border-pink-200">
+                            <h3 className="font-bold text-purple-800 text-sm">Pediatric Information</h3>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <div className="space-y-1">
+                                    <label className="block text-xs font-medium text-gray-700">Birth Weight</label>
                                     {isEditing ? (
-                                        <div className="flex gap-2">
+                                        <div className="flex gap-1">
                                             <input
                                                 type="number"
                                                 step="0.01"
                                                 value={formData.birth_weight || ''}
                                                 onChange={(e) => handleInputChange('birth_weight', e.target.value)}
-                                                className="flex-1 border border-gray-300 rounded-lg p-2"
-                                                placeholder="e.g., 3.5"
+                                                className="flex-1 min-w-0 border border-gray-300 rounded-lg p-1.5 text-sm"
+                                                placeholder="3.5"
                                             />
-                                            <div className="w-16 bg-gray-100 border border-gray-300 rounded-lg p-2 text-center">
-                                                kg
-                                            </div>
+                                            <div className="w-10 bg-gray-100 border border-gray-300 rounded-lg p-1.5 text-center text-xs">kg</div>
                                         </div>
                                     ) : (
-                                        <div className="p-2 bg-white rounded border">
-                                            {formData.birth_weight || '--'} kg
-                                        </div>
+                                        <div className="p-1.5 bg-white rounded border text-sm">{formData.birth_weight || '--'} kg</div>
                                     )}
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700">
-                                        Birth Length
-                                    </label>
+                                <div className="space-y-1">
+                                    <label className="block text-xs font-medium text-gray-700">Birth Length</label>
                                     {isEditing ? (
-                                        <div className="flex gap-2">
+                                        <div className="flex gap-1">
                                             <input
                                                 type="number"
                                                 step="0.1"
                                                 value={formData.birth_length || ''}
                                                 onChange={(e) => handleInputChange('birth_length', e.target.value)}
-                                                className="flex-1 border border-gray-300 rounded-lg p-2"
-                                                placeholder="e.g., 50"
+                                                className="flex-1 min-w-0 border border-gray-300 rounded-lg p-1.5 text-sm"
+                                                placeholder="50"
                                             />
-                                            <div className="w-16 bg-gray-100 border border-gray-300 rounded-lg p-2 text-center">
-                                                cm
-                                            </div>
+                                            <div className="w-10 bg-gray-100 border border-gray-300 rounded-lg p-1.5 text-center text-xs">cm</div>
                                         </div>
                                     ) : (
-                                        <div className="p-2 bg-white rounded border">
-                                            {formData.birth_length || '--'} cm
-                                        </div>
+                                        <div className="p-1.5 bg-white rounded border text-sm">{formData.birth_length || '--'} cm</div>
                                     )}
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700">
-                                        Feeding Method
-                                    </label>
+                                <div className="space-y-1">
+                                    <label className="block text-xs font-medium text-gray-700">Feeding Method</label>
                                     {isEditing ? (
                                         <select
                                             value={formData.feeding_method || ''}
                                             onChange={(e) => handleInputChange('feeding_method', e.target.value)}
-                                            className="w-full border border-gray-300 rounded-lg p-2"
+                                            className="w-full border border-gray-300 rounded-lg p-1.5 text-sm"
                                         >
-                                            <option value="">Select method</option>
+                                            <option value="">Select</option>
                                             <option value="Breastfed">Breastfed</option>
                                             <option value="Formula">Formula</option>
                                             <option value="Mixed">Mixed</option>
                                             <option value="Solids">Solids</option>
                                         </select>
                                     ) : (
-                                        <div className="p-2 bg-white rounded border">
-                                            {formData.feeding_method || 'Not specified'}
-                                        </div>
+                                        <div className="p-1.5 bg-white rounded border text-sm">{formData.feeding_method || 'Not specified'}</div>
                                     )}
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700">
-                                        Vaccination Status
-                                    </label>
+                                <div className="space-y-1">
+                                    <label className="block text-xs font-medium text-gray-700">Vaccination</label>
                                     {isEditing ? (
                                         <select
                                             value={formData.vaccination_status || ''}
                                             onChange={(e) => handleInputChange('vaccination_status', e.target.value)}
-                                            className="w-full border border-gray-300 rounded-lg p-2"
+                                            className="w-full border border-gray-300 rounded-lg p-1.5 text-sm"
                                         >
-                                            <option value="">Select status</option>
+                                            <option value="">Select</option>
                                             <option value="Up to date">Up to date</option>
                                             <option value="Partially vaccinated">Partially vaccinated</option>
                                             <option value="Not vaccinated">Not vaccinated</option>
                                             <option value="Unknown">Unknown</option>
                                         </select>
                                     ) : (
-                                        <div className="p-2 bg-white rounded border">
-                                            {formData.vaccination_status || 'Not specified'}
-                                        </div>
+                                        <div className="p-1.5 bg-white rounded border text-sm">{formData.vaccination_status || 'Not specified'}</div>
                                     )}
                                 </div>
-                                <div className="md:col-span-2 space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700">
-                                        Developmental Milestones
-                                    </label>
+                                <div className="col-span-2 md:col-span-4 space-y-1">
+                                    <label className="block text-xs font-medium text-gray-700">Developmental Milestones</label>
                                     {isEditing ? (
                                         <textarea
                                             value={formData.developmental_milestones || ''}
                                             onChange={(e) => handleInputChange('developmental_milestones', e.target.value)}
                                             rows="2"
-                                            className="w-full border border-gray-300 rounded-lg p-2"
+                                            className="w-full border border-gray-300 rounded-lg p-2 text-sm"
                                             placeholder="Describe developmental milestones"
                                         />
                                     ) : (
-                                        <div className="p-2 bg-white rounded border min-h-[60px]">
+                                        <div className="p-2 bg-white rounded border text-sm min-h-[40px]">
                                             {formData.developmental_milestones || 'Not specified'}
                                         </div>
                                     )}
                                 </div>
-                                <div className="md:col-span-2 space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700">
-                                        Special Instructions
-                                    </label>
+                                <div className="col-span-2 md:col-span-4 space-y-1">
+                                    <label className="block text-xs font-medium text-gray-700">Special Instructions</label>
                                     {isEditing ? (
                                         <textarea
                                             value={formData.special_instructions || ''}
                                             onChange={(e) => handleInputChange('special_instructions', e.target.value)}
                                             rows="2"
-                                            className="w-full border border-gray-300 rounded-lg p-2"
+                                            className="w-full border border-gray-300 rounded-lg p-2 text-sm"
                                             placeholder="Any special care instructions"
                                         />
                                     ) : (
-                                        <div className="p-2 bg-white rounded border min-h-[60px]">
+                                        <div className="p-2 bg-white rounded border text-sm min-h-[40px]">
                                             {formData.special_instructions || 'None'}
                                         </div>
                                     )}
@@ -2773,10 +2568,10 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                 </div>
 
                 {isEditing && (
-                    <div className="mt-6 pt-6 border-t border-gray-200">
+                    <div className="mt-4 pt-4 border-t border-gray-200">
                         <button
                             onClick={handleSaveDemographics}
-                            className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg flex items-center gap-2"
+                            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
                         >
                             <FaSave /> Save Demographics & Dx
                         </button>
@@ -2786,6 +2581,9 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
         );
     }, [formData, patient, isEditing, ageMode, newAllergy, handleSaveDemographics, formatAgeDisplay, handleInputChange, handleAddAllergy, handleRemoveAllergy]);
 
+    // ==========================================================
+    // OVERVIEW SECTION — unchanged
+    // ==========================================================
     const renderOverviewSection = useCallback(() => {
         const ageDisplay = formatAgeDisplay(formData.age_in_days, formData.date_of_birth);
         const isPediatric = formData.patient_type && formData.patient_type !== 'adult';
@@ -2962,7 +2760,7 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                 return <CDSSDisplay
                     patientData={formData}
                     encryptionKey={activeKey}
-                    onBack={() => { }} // Empty function since we're already in patient details
+                    onBack={() => { }}
                 />;
             case 'drn':
                 return <DRNAssessment patientCode={getCurrentPatientCode()} />;
@@ -3190,7 +2988,6 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                         onClose={() => setIsSupportModalOpen(false)}
                         onSuccess={() => {
                             setSupportActivated(true);
-                            // Brief delay to let the modal's internal success message show before closing
                             setTimeout(() => setIsSupportModalOpen(false), 2000);
                         }}
                     />
