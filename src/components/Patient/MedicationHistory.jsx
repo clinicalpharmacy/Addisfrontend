@@ -76,7 +76,7 @@ const MedicationHistory = ({ patientCode }) => {
 
     const reconciliationSites = [
         'Admission', 'Discharge', 'Transfer In', 'Transfer Out',
-        'Clinic Visit', 'ER Visit', 'Clinical Pharmacy Tool', 'Consultation'
+        'Clinic Visit', 'ER Visit', 'Clinical Pharmacy Follow up', 'Consultation'
     ];
 
     // Dropdown Options
@@ -724,7 +724,7 @@ const MedicationHistory = ({ patientCode }) => {
                     <div className="min-w-0 flex-1">
                         <h2 className="text-xl md:text-2xl font-bold text-gray-800 truncate">Medication History</h2>
                         <p className="text-xs md:text-base text-gray-600 flex items-center gap-2 truncate">
-                            <span>Patient:</span>
+                            <span>Case No.</span>
                             <span className="font-semibold bg-blue-50 px-2 py-1 rounded text-xs md:text-sm">{patientCode}</span>
                         </p>
                     </div>
@@ -741,33 +741,19 @@ const MedicationHistory = ({ patientCode }) => {
                 </button>
             </div>
 
-            {/* Quick Stats - ONLY FOR COMPANY USERS */}
+            {/* Quick Stats - Inline text, no boxes */}
             {(isCompanyUser || isHealthcareClient) && (
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-3 mb-4 md:mb-6">
-                    <div className="bg-blue-50 p-2 md:p-3 rounded-lg border border-blue-100">
-                        <div className="text-xs md:text-sm text-blue-700">Total Meds</div>
-                        <div className="text-lg md:text-xl font-bold text-blue-800">{stats.total}</div>
-                    </div>
-                    <div className="bg-green-50 p-2 md:p-3 rounded-lg border border-green-100">
-                        <div className="text-xs md:text-sm text-green-700">Active</div>
-                        <div className="text-lg md:text-xl font-bold text-green-800">{stats.active}</div>
-                    </div>
-                    <div className="bg-purple-50 p-2 md:p-3 rounded-lg border border-purple-100">
-                        <div className="text-xs md:text-sm text-purple-700">Oral</div>
-                        <div className="text-lg md:text-xl font-bold text-purple-800">{stats.oral}</div>
-                    </div>
-                    {/* Classes stat - ONLY FOR COMPANY USERS */}
-                    {(isCompanyUser || isHealthcareClient) && (
-                        <div className="bg-indigo-50 p-2 md:p-3 rounded-lg border border-indigo-100">
-                            <div className="text-xs md:text-sm text-indigo-700">Classes</div>
-                            <div className="text-lg md:text-xl font-bold text-indigo-800">{stats.classes}</div>
-                        </div>
-                    )}
-                    <div className="bg-teal-50 p-2 md:p-3 rounded-lg border border-teal-100">
-                        <div className="text-xs md:text-sm text-teal-700">Recon</div>
-                        <div className="text-lg md:text-xl font-bold text-teal-800">{stats.reconciliations}</div>
-                    </div>
-                </div>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-4 md:mb-6 px-1 text-xs md:text-sm text-gray-600">
+                <span>Total Meds: <span className="font-bold text-blue-700">{stats.total}</span></span>
+                <span className="text-gray-300 hidden sm:inline">|</span>
+                <span>Active: <span className="font-bold text-green-700">{stats.active}</span></span>
+                <span className="text-gray-300 hidden sm:inline">|</span>
+                <span>Oral: <span className="font-bold text-purple-700">{stats.oral}</span></span>
+                <span className="text-gray-300 hidden sm:inline">|</span>
+                <span>Classes: <span className="font-bold text-indigo-700">{stats.classes}</span></span>
+                <span className="text-gray-300 hidden sm:inline">|</span>
+                <span>Recon: <span className="font-bold text-teal-700">{stats.reconciliations}</span></span>
+              </div>
             )}
 
             {/* Toggle Form Button */}
@@ -801,136 +787,136 @@ const MedicationHistory = ({ patientCode }) => {
                     </div>
                   </div>
                 
-                  {/* Required Fields */}
-                  <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <h4 className="font-medium text-blue-800 mb-3 flex items-center gap-2">
-                      <FaExclamationTriangle /> Required Information
-                    </h4>
+                {/* Required Fields */}
+                <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <h4 className="font-medium text-blue-800 mb-2 flex items-center gap-2 text-sm">
+                    <FaExclamationTriangle /> Required Information
+                  </h4>
                 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {/* Drug Name */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {/* Drug Name */}
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
+                        Drug Name *
+                      </label>
+                      <input
+                        type="text"
+                        name="drug_name"
+                        value={formData.drug_name}
+                        onChange={handleInputChange}
+                        className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500"
+                        placeholder="e.g., Metformin"
+                        required
+                      />
+                    </div>
+                
+                    {/* Start Date */}
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
+                        Start Date *
+                      </label>
+                      <input
+                        type="date"
+                        name="start_date"
+                        value={formData.start_date}
+                        onChange={handleInputChange}
+                        className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500"
+                        required
+                      />
+                    </div>
+                
+                    {/* Drug Class */}
+                    {(isCompanyUser || isHealthcareClient) && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Drug Name (Generic) *
-                        </label>
-                        <input
-                          type="text"
-                          name="drug_name"
-                          value={formData.drug_name}
-                          onChange={handleInputChange}
-                          className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
-                          placeholder="e.g., Metformin"
-                          required
-                        />
-                      </div>
-                
-                      {/* Start Date */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Start Date *
-                        </label>
-                        <input
-                          type="date"
-                          name="start_date"
-                          value={formData.start_date}
-                          onChange={handleInputChange}
-                          className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
-                          required
-                        />
-                      </div>
-                
-                      {/* Drug Class - COMPANY USERS & HEALTHCARE CLIENTS */}
-                      {(isCompanyUser || isHealthcareClient) && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Drug Class *
-                          </label>
-                          <select
-                            name="drug_class"
-                            value={formData.drug_class}
-                            onChange={handleInputChange}
-                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
-                            required
-                          >
-                            <option value="">Select drug class</option>
-                            {drugClasses.map(cls => (
-                              <option key={cls} value={cls}>{cls}</option>
-                            ))}
-                          </select>
-                        </div>
-                      )}
-                
-                      {/* Dose */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Dose *
-                        </label>
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            name="dose"
-                            value={formData.dose}
-                            onChange={handleInputChange}
-                            className="flex-1 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
-                            placeholder="e.g., 500"
-                            required
-                          />
-                          <select
-                            name="unit"
-                            value={formData.unit}
-                            onChange={handleInputChange}
-                            className="flex-1 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
-                          >
-                            {units.map(unit => (
-                              <option key={unit} value={unit}>{unit}</option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-                
-                      {/* Route */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Route of Administration *
+                        <label className="block text-xs font-medium text-gray-700 mb-0.5">
+                          Drug Class *
                         </label>
                         <select
-                          name="roa"
-                          value={formData.roa}
+                          name="drug_class"
+                          value={formData.drug_class}
                           onChange={handleInputChange}
-                          className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                          className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500"
                           required
                         >
-                          <option value="">Select route</option>
-                          {roaOptions.map(route => (
-                            <option key={route.value} value={route.value}>
-                              {route.icon} {route.label}
-                            </option>
+                          <option value="">Select drug class</option>
+                          {drugClasses.map(cls => (
+                            <option key={cls} value={cls}>{cls}</option>
                           ))}
                         </select>
                       </div>
+                    )}
                 
-                      {/* Frequency */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Frequency *
-                        </label>
-                        <select
-                          name="frequency"
-                          value={formData.frequency}
+                    {/* Dose */}
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
+                        Dose *
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          name="dose"
+                          value={formData.dose}
                           onChange={handleInputChange}
-                          className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 bg-white"
+                          className="flex-1 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500"
+                          placeholder="e.g., 500"
                           required
+                        />
+                        <select
+                          name="unit"
+                          value={formData.unit}
+                          onChange={handleInputChange}
+                          className="flex-1 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500"
                         >
-                          <option value="">Select Frequency Code (1-4)...</option>
-                          {frequencyOptions.map(freq => (
-                            <option key={freq.code || freq.value || freq} value={freq.label || freq.value || freq}>
-                              {freq.label || freq.value || freq}
-                            </option>
+                          {units.map(unit => (
+                            <option key={unit} value={unit}>{unit}</option>
                           ))}
                         </select>
                       </div>
                     </div>
+                
+                    {/* Route */}
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
+                        Route *
+                      </label>
+                      <select
+                        name="roa"
+                        value={formData.roa}
+                        onChange={handleInputChange}
+                        className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500"
+                        required
+                      >
+                        <option value="">Select route</option>
+                        {roaOptions.map(route => (
+                          <option key={route.value} value={route.value}>
+                            {route.icon} {route.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                
+                    {/* Frequency */}
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
+                        Frequency *
+                      </label>
+                      <select
+                        name="frequency"
+                        value={formData.frequency}
+                        onChange={handleInputChange}
+                        className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 bg-white"
+                        required
+                      >
+                        <option value="">Select Frequency (1-4)...</option>
+                        {frequencyOptions.map(freq => (
+                          <option key={freq.code || freq.value || freq} value={freq.label || freq.value || freq}>
+                            {freq.label || freq.value || freq}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
+                </div>
                 
                   {/* Indication, Cycle, Regimen - Company users & Healthcare clients */}
                   {(isCompanyUser || isHealthcareClient) && (
@@ -1421,10 +1407,10 @@ const MedicationHistory = ({ patientCode }) => {
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                        {/* Reconciliation Site */}
+                        {/* Reconciliation Setting */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Reconciliation Site *
+                                Reconciliation Setting *
                             </label>
                             <select
                                 name="site"
@@ -1432,7 +1418,7 @@ const MedicationHistory = ({ patientCode }) => {
                                 onChange={handleReconciliationChange}
                                 className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-teal-500"
                             >
-                                <option value="">Select reconciliation site</option>
+                                <option value="">Select reconciliation Setting</option>
                                 {reconciliationSites.map(site => (
                                     <option key={site} value={site}>{site}</option>
                                 ))}
