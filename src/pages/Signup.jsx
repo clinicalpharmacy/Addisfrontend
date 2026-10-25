@@ -1374,7 +1374,7 @@ const Signup = () => {
                                     </div>
                                     <h3 className="text-xl font-bold text-gray-800 mb-2">Health Care Client</h3>
                                     <p className="text-gray-600 text-sm">
-                                        For individuals seeking medication information, medication reminders and clinical alerts.
+                                        For individuals seeking medication information and quick checks for medication safety & interaction.
                                     </p>
                                     <div className="mt-4 text-sm text-green-600 font-medium">
                                         Continue to payment →
