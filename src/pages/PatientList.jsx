@@ -323,9 +323,9 @@ const PatientList = ({
             {/* Standard Data Table */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200">
                 <div className="overflow-x-auto rounded-xl">
-                    <table className="w-full border-collapse min-w-[560px]">
-                        <thead>
-                            <tr className="bg-blue-50 text-blue-900 text-xs font-bold border-b border-gray-200">
+                    <table className="w-full border-separate border-spacing-0 min-w-[560px]">
+                        <thead className="[&_th]:border-b [&_th]:border-gray-200">
+                            <tr className="bg-blue-50 text-blue-900 text-xs font-bold">
                                 <th className="px-4 sm:px-6 py-4 text-left w-12 sm:w-16">#</th>
                                 <th className="px-4 sm:px-6 py-4 text-left">Review Details</th>
                                 <th className="px-4 sm:px-6 py-4 text-left hidden md:table-cell">
@@ -340,7 +340,7 @@ const PatientList = ({
                                 </th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
+                        <tbody className="[&>tr>td]:border-t [&>tr>td]:border-gray-100 [&>tr:first-child>td]:border-t-0">
                             {currentPatients.length > 0 ? (
                                 currentPatients.map((patient, index) => (
                                     <tr
