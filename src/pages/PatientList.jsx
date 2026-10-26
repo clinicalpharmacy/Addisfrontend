@@ -348,14 +348,14 @@ const PatientList = ({
                                         className="group transition-colors"
                                     >
                                         {/* # — matches header bg-blue-50 */}
-                                        <td className="px-4 sm:px-6 py-5 bg-blue-50 group-hover:bg-blue-100/60 transition-colors">
+                                        <td className="px-4 sm:px-6 py-5 bg-white group-hover:bg-gray-50 transition-colors">
                                             <span className="font-mono text-sm font-black text-gray-400">
                                                 {indexOfFirstItem + index + 1}
                                             </span>
                                         </td>
 
                                         {/* Review Details — matches header bg-blue-50 */}
-                                        <td className="px-4 sm:px-6 py-5 bg-blue-50 group-hover:bg-blue-100/60 transition-colors">
+                                        <td className="px-4 sm:px-6 py-5 bg-white group-hover:bg-gray-50 transition-colors">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm shadow-sm group-hover:scale-110 transition-transform">
                                                     {(patient.full_name || '?')
@@ -379,14 +379,14 @@ const PatientList = ({
                                         </td>
 
                                         {/* Hypothetical Case Dx — matches header bg-blue-50 */}
-                                        <td className="px-4 sm:px-6 py-5 hidden md:table-cell bg-blue-50 group-hover:bg-blue-100/60 transition-colors">
+                                        <td className="px-4 sm:px-6 py-5 hidden md:table-cell bg-white group-hover:bg-gray-50 transition-colors">
                                             <span className="text-sm text-gray-700 font-medium block truncate max-w-[220px]">
                                                 {patient.diagnosis || '—'}
                                             </span>
                                         </td>
 
                                         {/* Logged On — matches header bg-blue-50 */}
-                                        <td className="px-4 sm:px-6 py-5 bg-blue-50 group-hover:bg-blue-100/60 transition-colors text-xs text-gray-500 font-bold whitespace-nowrap">
+                                        <td className="px-4 sm:px-6 py-5 bg-white group-hover:bg-gray-50 transition-colors text-xs text-gray-500 font-bold whitespace-nowrap">
                                             {patient.created_at
                                                 ? new Date(patient.created_at).toLocaleDateString()
                                                 : 'N/A'}
