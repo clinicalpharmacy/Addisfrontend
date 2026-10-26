@@ -239,6 +239,14 @@ const PatientList = ({
         }
     };
 
+    // Helper — first letters of first and last name for the avatar
+    const getInitials = (fullName) => {
+        if (!fullName || typeof fullName !== 'string') return '?';
+        const parts = fullName.trim().split(/\s+/);
+        if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+        return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+    };
+
     // Pagination logic
     const totalPages = Math.ceil(filteredPatients.length / itemsPerPage);
     const indexOfLastItem = currentPage * itemsPerPage;
@@ -325,14 +333,16 @@ const PatientList = ({
                 <div className="overflow-x-auto">
                     <table className="w-full border-collapse">
                         <thead>
-                            <tr className="bg-blue-50 text-blue-900 text-xs font-bold border-b border-gray-200">
-                                <th className="px-4 sm:px-6 py-4 text-left w-12 sm:w-16">#</th>
-                                <th className="px-4 sm:px-6 py-4 text-left">Review Details</th>
-                                <th className="px-4 sm:px-6 py-4 text-left hidden md:table-cell">
+                            <tr className="text-blue-900 text-xs font-bold border-b border-gray-200">
+                                <th className="px-3 sm:px-6 py-4 text-left w-10 sm:w-16 bg-blue-50">#</th>
+                                <th className="px-3 sm:px-6 py-4 text-left bg-blue-50">Review Details</th>
+                                <th className="px-3 sm:px-6 py-4 text-left bg-blue-50 whitespace-nowrap">
                                     Hypothetical Case Dx
                                 </th>
-                                <th className="px-4 sm:px-6 py-4 text-left cursor-pointer hover:bg-blue-100 whitespace-nowrap"
-                                    onClick={() => handleSort('created_at')}>
+                                <th
+                                    className="px-3 sm:px-6 py-4 text-left bg-blue-50 cursor-pointer hover:bg-blue-100 whitespace-nowrap"
+                                    onClick={() => handleSort('created_at')}
+                                >
                                     <div className="flex items-center gap-2">Logged On {getSortIcon('created_at')}</div>
                                 </th>
                                 <th className="px-3 sm:px-6 py-4 text-right sticky right-0 bg-blue-50 z-10 shadow-[-6px_0_8px_-6px_rgba(0,0,0,0.12)]">
@@ -348,24 +358,24 @@ const PatientList = ({
                                         className="group transition-colors"
                                     >
                                         {/* # — matches header bg-blue-50 */}
-                                        <td className="px-4 sm:px-6 py-5 bg-blue-50 group-hover:bg-blue-100/60 transition-colors">
-                                            <span className="font-mono text-sm font-black text-gray-400">
+                                        <td className="px-3 sm:px-6 py-5 bg-blue-50 group-hover:bg-blue-100/60 transition-colors">
+                                            <span className="font-mono text-sm font-black text-gray-500">
                                                 {indexOfFirstItem + index + 1}
                                             </span>
                                         </td>
 
                                         {/* Review Details — matches header bg-blue-50 */}
-                                        <td className="px-4 sm:px-6 py-5 bg-blue-50 group-hover:bg-blue-100/60 transition-colors">
+                                        <td className="px-3 sm:px-6 py-5 bg-blue-50 group-hover:bg-blue-100/60 transition-colors">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm shadow-sm group-hover:scale-110 transition-transform">
-                                                    {/* avatar initials — unchanged */}
+                                                <div className="w-9 h-9 shrink-0 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm shadow-sm group-hover:scale-110 transition-transform">
+                                                    {getInitials(patient.full_name)}
                                                 </div>
                                                 <div className="min-w-0">
-                                                    <div className="font-bold text-gray-800 text-sm leading-none mb-1 truncate max-w-[140px] sm:max-w-none">
-                                                        {/* name — unchanged */}
+                                                    <div className="font-bold text-gray-800 text-sm leading-tight mb-1 truncate max-w-[140px] sm:max-w-none">
+                                                        {patient.full_name || 'Unnamed Patient'}
                                                     </div>
                                                     <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium mt-1">
-                                                        <span className="font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200 font-bold inline-block align-middle truncate max-w-[110px]">
+                                                        <span className="font-mono bg-white text-blue-700 px-2 py-0.5 rounded border border-blue-200 font-bold inline-block align-middle truncate max-w-[110px]">
                                                             Case No. {patient.patient_code || patient.id}
                                                         </span>
                                                     </div>
@@ -373,21 +383,30 @@ const PatientList = ({
                                             </div>
                                         </td>
 
-                                        {/* Hypothetical Case Dx — matches header bg-blue-50 */}
-                                        <td className="px-4 sm:px-6 py-5 hidden md:table-cell bg-blue-50 group-hover:bg-blue-100/60 transition-colors">
-                                            {/* diagnosis — unchanged */}
+                                        {/* Hypothetical Case Dx — visible on ALL screens, dark text on white badge */}
+                                        <td className="px-3 sm:px-6 py-5 bg-blue-50 group-hover:bg-blue-100/60 transition-colors max-w-[140px] sm:max-w-[220px]">
+                                            {patient.diagnosis ? (
+                                                <span
+                                                    className="inline-block bg-white text-gray-800 border border-blue-200 px-2 py-1 rounded-md text-xs font-semibold truncate max-w-full"
+                                                    title={patient.diagnosis}
+                                                >
+                                                    {patient.diagnosis}
+                                                </span>
+                                            ) : (
+                                                <span className="text-gray-500 text-xs italic">No diagnosis</span>
+                                            )}
                                         </td>
 
                                         {/* Logged On — matches header bg-blue-50 */}
-                                        <td className="px-4 sm:px-6 py-5 bg-blue-50 group-hover:bg-blue-100/60 transition-colors text-xs text-gray-500 font-bold whitespace-nowrap">
+                                        <td className="px-3 sm:px-6 py-5 bg-blue-50 group-hover:bg-blue-100/60 transition-colors text-xs text-gray-700 font-bold whitespace-nowrap">
                                             {patient.created_at
                                                 ? new Date(patient.created_at).toLocaleDateString()
                                                 : 'N/A'}
                                         </td>
 
                                         {/* Controls — sticky, matches header bg-blue-50, hover darker */}
-                                        <td className="px-3 sm:px-6 py-5 text-right sticky right-0 bg-blue-50 group-hover:bg-blue-100 z-10 shadow-[-6px_0_8px_-6px_rgba(0,0,0,0.12)] transition-colors">
-                                            <div className="flex justify-end gap-1.5 sm:gap-2">
+                                        <td className="px-2 sm:px-6 py-5 text-right sticky right-0 bg-blue-50 group-hover:bg-blue-100 z-10 shadow-[-6px_0_8px_-6px_rgba(0,0,0,0.12)] transition-colors">
+                                            <div className="flex justify-end gap-1 sm:gap-2">
                                                 <button
                                                     onClick={() => handleViewClick(patient.id)}
                                                     className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-all"
