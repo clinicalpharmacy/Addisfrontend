@@ -393,7 +393,7 @@ const PatientList = ({
                                         </td>
 
                                         {/* Controls — sticky, matches header bg-blue-50, hover darker */}
-                                        <td className="px-3 sm:px-6 py-5 text-right bg-blue-50 group-hover:bg-blue-100 sticky right-0 z-20 shadow-[-6px_0_8px_-6px_rgba(0,0,0,0.12)] transition-colors md:static md:z-auto md:shadow-none">
+                                        <td className="px-3 sm:px-6 py-5 text-right bg-white-50 group-hover:bg-gray-100 sticky right-0 z-20 shadow-[-6px_0_8px_-6px_rgba(0,0,0,0.12)] transition-colors md:static md:z-auto md:shadow-none">
                                             <div className="flex justify-end gap-1.5 sm:gap-2">
                                                 <button
                                                     onClick={() => handleViewClick(patient.id)}
