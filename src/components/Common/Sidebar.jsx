@@ -329,8 +329,8 @@ const Sidebar = ({ onClose }) => {
                                 onClick={onClose}
                                 className={({ isActive }) =>
                                     `flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${isActive
-                                        ? 'bg-indigo-50 text-indigo-600 border-l-4 border-indigo-600 shadow-sm font-bold'
-                                        : 'text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 hover:shadow-sm'
+                                        ? 'bg-green-50 text-green-600 border-l-4 border-green-600 shadow-sm font-bold'
+                                        : 'text-gray-600 hover:bg-green-50 hover:text-green-600 hover:shadow-sm'
                                     }`
                                 }
                             >

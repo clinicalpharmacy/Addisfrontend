@@ -126,7 +126,7 @@ const AdminNews = () => {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-5">
                     <div>
                         <h2 className="text-xl font-black text-gray-900 flex items-center gap-2">
-                            <FaNewspaper className="text-indigo-600 text-lg" /> News Management
+                            <FaNewspaper className="text-green-600 text-lg" /> News Management
                         </h2>
                         <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
                             Manage articles shown on the public news page.
@@ -139,7 +139,7 @@ const AdminNews = () => {
                         }}
                         className={`w-full sm:w-auto px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-all shadow-sm font-black text-xs active:scale-95 ${isAdding
                             ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                            : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                            : 'bg-green-600 text-white hover:bg-green-700'
                         }`}
                     >
                         {isAdding ? <FaPlus className="rotate-45" /> : <FaPlus />}
@@ -151,7 +151,7 @@ const AdminNews = () => {
                     <div className="bg-gray-50/50 p-5 md:p-8 rounded-2xl border border-gray-100 shadow-inner mb-8 animate-slideDown">
                         <h3 className="text-sm font-black text-gray-900 mb-6 flex items-center gap-2 uppercase tracking-widest">
                             <div className="bg-white p-2 rounded-lg shadow-sm">
-                                <FaNewspaper className="text-indigo-600" />
+                                <FaNewspaper className="text-green-600" />
                             </div>
                             {editingArticle ? 'Edit Article' : 'Publish New Article'}
                         </h3>
@@ -165,7 +165,7 @@ const AdminNews = () => {
                                     type="text" required
                                     value={formData.title}
                                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold transition-all"
+                                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-green-500 outline-none bg-white font-bold transition-all"
                                     placeholder="e.g. New Malaria Vaccine Shows 90% Efficacy in Trial"
                                     maxLength={200}
                                 />
@@ -183,7 +183,7 @@ const AdminNews = () => {
                                     required
                                     value={formData.content}
                                     onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-medium min-h-[300px] leading-relaxed"
+                                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-green-500 outline-none bg-white font-medium min-h-[300px] leading-relaxed"
                                     placeholder="Write the full article content here..."
                                     rows="12"
                                 />
@@ -192,13 +192,13 @@ const AdminNews = () => {
                             {/* Reference */}
                             <div className="md:col-span-2">
                                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-1.5 ml-1 flex items-center gap-1.5">
-                                    <FaBookmark className="text-indigo-500" /> Reference *
+                                    <FaBookmark className="text-green-600" /> Reference *
                                 </label>
                                 <textarea
                                     required
                                     value={formData.reference}
                                     onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
-                                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-mono font-medium min-h-[80px] leading-relaxed"
+                                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-green-500 outline-none bg-white font-mono font-medium min-h-[80px] leading-relaxed"
                                     placeholder="e.g. World Health Organization. (2024). Malaria Vaccine Report. https://who.int/..."
                                     rows="3"
                                 />
@@ -210,13 +210,13 @@ const AdminNews = () => {
                             {/* Category */}
                             <div className="md:col-span-1">
                                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-1.5 ml-1 flex items-center gap-1.5">
-                                    <FaTag className="text-indigo-500" /> Category
+                                    <FaTag className="text-green-600" /> Category
                                 </label>
                                 <input
                                     type="text"
                                     value={formData.category}
                                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold transition-all"
+                                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-green-500 outline-none bg-white font-bold transition-all"
                                     placeholder="e.g. Research, Policy, Public Health"
                                 />
                             </div>
@@ -224,13 +224,13 @@ const AdminNews = () => {
                             {/* Image URL */}
                             <div className="md:col-span-1">
                                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-1.5 ml-1 flex items-center gap-1.5">
-                                    <FaImage className="text-indigo-500" /> Cover Image URL
+                                    <FaImage className="text-green-600" /> Cover Image URL
                                 </label>
                                 <input
                                     type="url"
                                     value={formData.image_url}
                                     onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-mono font-bold"
+                                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-green-500 outline-none bg-white font-mono font-bold"
                                     placeholder="https://..."
                                 />
                             </div>
@@ -242,7 +242,7 @@ const AdminNews = () => {
                                         type="checkbox"
                                         checked={formData.published}
                                         onChange={(e) => setFormData({ ...formData, published: e.target.checked })}
-                                        className="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
+                                        className="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
                                     />
                                     <span className="text-sm font-bold text-gray-700">
                                         Published (Visible to public)
@@ -252,7 +252,7 @@ const AdminNews = () => {
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="w-full sm:w-auto bg-indigo-600 text-white px-8 py-3 rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-50"
+                                    className="w-full sm:w-auto bg-green-600 text-white px-8 py-3 rounded-xl hover:bg-green-700 transition-all shadow-lg shadow-green-100 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-50"
                                 >
                                     {loading
                                         ? <div className="animate-spin w-4 h-4 border-2 border-white/20 border-t-white rounded-full"></div>
@@ -307,7 +307,7 @@ const AdminNews = () => {
                                                 </div>
                                                 <div className="flex flex-wrap items-center gap-2 text-[10px] text-gray-400 font-medium">
                                                     {article.category && (
-                                                        <span className="bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-black uppercase tracking-wide">
+                                                        <span className="bg-green-50 text-green-700 px-1.5 py-0.5 rounded font-black uppercase tracking-wide border border-green-100">
                                                             {article.category}
                                                         </span>
                                                     )}
@@ -339,7 +339,7 @@ const AdminNews = () => {
                                                     </Link>
                                                     <button
                                                         onClick={() => startEdit(article)}
-                                                        className="text-indigo-600 bg-indigo-50 hover:bg-indigo-100 p-2 rounded-lg transition-colors text-xs"
+                                                        className="text-green-700 bg-green-50 hover:bg-green-100 p-2 rounded-lg transition-colors text-xs"
                                                         title="Edit"
                                                     >
                                                         <FaEdit />
@@ -363,7 +363,7 @@ const AdminNews = () => {
                     {/* Mobile View Grid */}
                     <div className="lg:hidden grid grid-cols-1 gap-4">
                         {news.map(article => (
-                            <div key={article.id} className="bg-gray-50/50 border border-gray-100 rounded-2xl p-4 flex flex-col hover:bg-white hover:border-indigo-100 transition-all group shadow-sm">
+                            <div key={article.id} className="bg-gray-50/50 border border-gray-100 rounded-2xl p-4 flex flex-col hover:bg-white hover:border-green-200 transition-all group shadow-sm">
                                 <div className="flex justify-between items-start mb-3">
                                     <button
                                         onClick={() => togglePublish(article)}
@@ -386,7 +386,7 @@ const AdminNews = () => {
                                         </Link>
                                         <button
                                             onClick={() => startEdit(article)}
-                                            className="bg-white p-2 rounded-lg text-indigo-600 border border-gray-100 shadow-sm active:scale-90 transition-transform"
+                                            className="bg-white p-2 rounded-lg text-green-700 border border-gray-100 shadow-sm active:scale-90 transition-transform"
                                         >
                                             <FaEdit size={12} />
                                         </button>
@@ -404,7 +404,7 @@ const AdminNews = () => {
                                 </p>
                                 <div className="flex flex-wrap items-center gap-2 text-[10px] text-gray-400 font-medium">
                                     {article.category && (
-                                        <span className="bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-black uppercase tracking-wide">
+                                        <span className="bg-green-50 text-green-700 px-1.5 py-0.5 rounded font-black uppercase tracking-wide border border-green-100">
                                             {article.category}
                                         </span>
                                     )}
