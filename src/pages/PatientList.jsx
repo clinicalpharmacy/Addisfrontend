@@ -341,64 +341,85 @@ const PatientList = ({
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                            {currentPatients.length > 0 ? (
+                            <tbody className="divide-y divide-gray-100">
+                              {currentPatients.length > 0 ? (
                                 currentPatients.map((patient, index) => (
-                                    <tr key={patient.id} className="hover:bg-blue-50/20 transition-colors group">
-                                        <td className="px-4 sm:px-6 py-5">
-                                            <span className="font-mono text-sm font-black text-gray-400">
-                                                {indexOfFirstItem + index + 1}
+                                  <tr
+                                    key={patient.id}
+                                    className="group transition-colors"
+                                  >
+                                    {/* # — matches header bg-blue-50 */}
+                                    <td className="px-4 sm:px-6 py-5 bg-blue-50 group-hover:bg-blue-100/60 transition-colors">
+                                      <span className="font-mono text-sm font-black text-gray-400">
+                                        {indexOfFirstItem + index + 1}
+                                      </span>
+                                    </td>
+                            
+                                    {/* Review Details — matches header bg-blue-50 */}
+                                    <td className="px-4 sm:px-6 py-5 bg-blue-50 group-hover:bg-blue-100/60 transition-colors">
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm shadow-sm group-hover:scale-110 transition-transform">
+                                          {/* avatar initials — unchanged */}
+                                        </div>
+                                        <div className="min-w-0">
+                                          <div className="font-bold text-gray-800 text-sm leading-none mb-1 truncate max-w-[140px] sm:max-w-none">
+                                            {/* name — unchanged */}
+                                          </div>
+                                          <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium mt-1">
+                                            <span className="font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200 font-bold inline-block align-middle truncate max-w-[110px]">
+                                              Case No. {patient.patient_code || patient.id}
                                             </span>
-                                        </td>
-                                    
-                                        <td className="px-4 sm:px-6 py-5">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm shadow-sm group-hover:scale-110 transition-transform">
-                                                    {/* avatar initials — unchanged */}
-                                                </div>
-                                                {/* min-w-0 is REQUIRED so children can actually truncate inside a flex row */}
-                                                <div className="min-w-0">
-                                                    <div className="font-bold text-gray-800 text-sm leading-none mb-1 truncate max-w-[140px] sm:max-w-none">
-                                                        {/* name — unchanged */}
-                                                    </div>
-                                                    <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium mt-1">
-                                                        <span className="font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200 font-bold inline-block align-middle truncate max-w-[110px]">
-                                                            Case No. {patient.patient_code || patient.id}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                    
-                                        <td className="px-4 sm:px-6 py-5 hidden md:table-cell">
-                                            {/* diagnosis — unchanged */}
-                                        </td>
-                                    
-                                        <td className="px-4 sm:px-6 py-5 text-xs text-gray-500 font-bold whitespace-nowrap">
-                                            {patient.created_at ? new Date(patient.created_at).toLocaleDateString() : 'N/A'}
-                                        </td>
-                                    
-                                        {/* ⬇️ Sticky actions column — always visible on mobile */}
-                                        <td className="px-3 sm:px-6 py-5 text-right sticky right-0 bg-white group-hover:bg-blue-50 z-10 shadow-[-6px_0_8px_-6px_rgba(0,0,0,0.12)]">
-                                            <div className="flex justify-end gap-1.5 sm:gap-2">
-                                                <button onClick={() => handleViewClick(patient.id)}
-                                                    className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-all" title="View Case">
-                                                    <FaEye />
-                                                </button>
-                                                <button onClick={() => handleEditClick(patient)}
-                                                    className="p-2 text-amber-600 hover:bg-amber-100 rounded-lg transition-all" title="Edit Case">
-                                                    <FaEdit />
-                                                </button>
-                                                <button onClick={() => handleDelete(patient.id)}
-                                                    disabled={userRole === 'healthcare_client'}
-                                                    className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-all disabled:opacity-20" title="Remove Case">
-                                                    <FaTrash />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </td>
+                            
+                                    {/* Hypothetical Case Dx — matches header bg-blue-50 */}
+                                    <td className="px-4 sm:px-6 py-5 hidden md:table-cell bg-blue-50 group-hover:bg-blue-100/60 transition-colors">
+                                      {/* diagnosis — unchanged */}
+                                    </td>
+                            
+                                    {/* Logged On — matches header bg-blue-50 */}
+                                    <td className="px-4 sm:px-6 py-5 bg-blue-50 group-hover:bg-blue-100/60 transition-colors text-xs text-gray-500 font-bold whitespace-nowrap">
+                                      {patient.created_at
+                                        ? new Date(patient.created_at).toLocaleDateString()
+                                        : 'N/A'}
+                                    </td>
+                            
+                                    {/* Controls — sticky, matches header bg-blue-50, hover darker */}
+                                    <td className="px-3 sm:px-6 py-5 text-right sticky right-0 bg-blue-50 group-hover:bg-blue-100 z-10 shadow-[-6px_0_8px_-6px_rgba(0,0,0,0.12)] transition-colors">
+                                      <div className="flex justify-end gap-1.5 sm:gap-2">
+                                        <button
+                                          onClick={() => handleViewClick(patient.id)}
+                                          className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-all"
+                                          title="View Case"
+                                        >
+                                          <FaEye />
+                                        </button>
+                                        <button
+                                          onClick={() => handleEditClick(patient)}
+                                          className="p-2 text-amber-600 hover:bg-amber-100 rounded-lg transition-all"
+                                          title="Edit Case"
+                                        >
+                                          <FaEdit />
+                                        </button>
+                                        <button
+                                          onClick={() => handleDelete(patient.id)}
+                                          disabled={userRole === 'healthcare_client'}
+                                          className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-all disabled:opacity-20"
+                                          title="Remove Case"
+                                        >
+                                          <FaTrash />
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
                                 ))
-                            ) : (
-                                <tr>
+                              ) : (
+                                /* empty state — unchanged */
+                              )}
+                            </tbody>
+                            <tr>
                                     <td colSpan="5" className="px-8 py-24 text-center">
                                         <div className="flex flex-col items-center gap-6 max-w-lg mx-auto">
                                             <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100">
