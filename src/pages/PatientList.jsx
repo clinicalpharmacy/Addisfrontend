@@ -259,7 +259,7 @@ const PatientList = ({
     }
 
     return (
-        <div className={`page-container w-full max-w-full overflow-x-hidden space-y-4 ${embedded ? 'px-0' : 'px-3 sm:px-4 md:px-6 lg:px-8'}`}>
+        <div className={`page-container w-full max-w-full min-w-0 space-y-4 ${embedded ? 'px-0' : 'px-3 sm:px-4 md:px-6 lg:px-8'}`}>
             {/* Standard Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                 <div className="flex items-center gap-4">
@@ -321,9 +321,9 @@ const PatientList = ({
             </div>
 
             {/* Standard Data Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div className="overflow-x-auto rounded-xl">
+                    <table className="w-full border-collapse min-w-[560px]">
                         <thead>
                             <tr className="bg-blue-50 text-blue-900 text-xs font-bold border-b border-gray-200">
                                 <th className="px-4 sm:px-6 py-4 text-left w-12 sm:w-16">#</th>
@@ -358,7 +358,12 @@ const PatientList = ({
                                         <td className="px-4 sm:px-6 py-5 bg-blue-50 group-hover:bg-blue-100/60 transition-colors">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm shadow-sm group-hover:scale-110 transition-transform">
-                                                    {/* avatar initials — unchanged */}
+                                                    {(patient.full_name || '?')
+                                                        .split(' ')
+                                                        .filter(Boolean)
+                                                        .slice(0, 2)
+                                                        .map(w => w[0].toUpperCase())
+                                                        .join('')}
                                                 </div>
                                                 <div className="min-w-0">
                                                     <div className="font-bold text-gray-800 text-sm leading-none mb-1 truncate max-w-[140px] sm:max-w-none">
@@ -375,7 +380,9 @@ const PatientList = ({
 
                                         {/* Hypothetical Case Dx — matches header bg-blue-50 */}
                                         <td className="px-4 sm:px-6 py-5 hidden md:table-cell bg-blue-50 group-hover:bg-blue-100/60 transition-colors">
-                                            {/* diagnosis — unchanged */}
+                                            <span className="text-sm text-gray-700 font-medium block truncate max-w-[220px]">
+                                                {patient.diagnosis || '—'}
+                                            </span>
                                         </td>
 
                                         {/* Logged On — matches header bg-blue-50 */}
