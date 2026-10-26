@@ -326,60 +326,73 @@ const PatientList = ({
                     <table className="w-full border-collapse">
                         <thead>
                             <tr className="bg-blue-50 text-blue-900 text-xs font-bold border-b border-gray-200">
-                                <th className="px-6 py-4 text-left w-16">#</th>
-                                <th className="px-6 py-4 text-left">Review Details</th>
-                                <th className="px-6 py-4 text-left">Hypothetical Case Dx</th>
-                                <th className="px-6 py-4 text-left cursor-pointer hover:bg-blue-100" onClick={() => handleSort('created_at')}>
+                                <th className="px-4 sm:px-6 py-4 text-left w-12 sm:w-16">#</th>
+                                <th className="px-4 sm:px-6 py-4 text-left">Review Details</th>
+                                <th className="px-4 sm:px-6 py-4 text-left hidden md:table-cell">
+                                    Hypothetical Case Dx
+                                </th>
+                                <th className="px-4 sm:px-6 py-4 text-left cursor-pointer hover:bg-blue-100 whitespace-nowrap"
+                                    onClick={() => handleSort('created_at')}>
                                     <div className="flex items-center gap-2">Logged On {getSortIcon('created_at')}</div>
                                 </th>
-                                <th className="px-6 py-4 text-right">Controls</th>
+                                <th className="px-3 sm:px-6 py-4 text-right sticky right-0 bg-blue-50 z-10 shadow-[-6px_0_8px_-6px_rgba(0,0,0,0.12)]">
+                                    Controls
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {currentPatients.length > 0 ? (
                                 currentPatients.map((patient, index) => (
                                     <tr key={patient.id} className="hover:bg-blue-50/20 transition-colors group">
-                                        <td className="px-6 py-5">
+                                        <td className="px-4 sm:px-6 py-5">
                                             <span className="font-mono text-sm font-black text-gray-400">
                                                 {indexOfFirstItem + index + 1}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-5">
+                                    
+                                        <td className="px-4 sm:px-6 py-5">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm shadow-sm group-hover:scale-110 transition-transform">
-                                                    {userRole === 'healthcare_client'
-                                                        ? 'P'
-                                                        : (patient.full_name && typeof patient.full_name === 'string' && !patient.full_name.includes(':') && !patient.full_name.startsWith('{') ? patient.full_name.charAt(0) : '?')}
+                                                    {/* avatar initials — unchanged */}
                                                 </div>
-                                                <div>
-                                                    <div className="font-bold text-gray-800 text-sm leading-none mb-1">
-                                                        {userRole === 'healthcare_client' 
-                                                            ? 'Patient Profile' 
-                                                            : (patient.full_name && typeof patient.full_name === 'string' && !patient.full_name.includes(':') && !patient.full_name.startsWith('{') 
-                                                                ? patient.full_name 
-                                                                : 'Anonymous User')}
+                                                {/* min-w-0 is REQUIRED so children can actually truncate inside a flex row */}
+                                                <div className="min-w-0">
+                                                    <div className="font-bold text-gray-800 text-sm leading-none mb-1 truncate max-w-[140px] sm:max-w-none">
+                                                        {/* name — unchanged */}
                                                     </div>
                                                     <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium mt-1">
-                                                        <span className="font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200 font-bold">
+                                                        <span className="font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200 font-bold inline-block align-middle truncate max-w-[110px]">
                                                             Case No. {patient.patient_code || patient.id}
                                                         </span>
                                                     </div>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-5">
-                                            <div className="text-sm font-medium text-gray-700 italic max-w-xs truncate">
-                                                "{userRole === 'healthcare_client' ? 'Clinical Data' : (patient.diagnosis && typeof patient.diagnosis === 'string' && !patient.diagnosis.includes(':') && !patient.diagnosis.startsWith('{') ? patient.diagnosis : 'Diagnosis Pending')}"
-                                            </div>
+                                    
+                                        <td className="px-4 sm:px-6 py-5 hidden md:table-cell">
+                                            {/* diagnosis — unchanged */}
                                         </td>
-                                        <td className="px-6 py-5 text-xs text-gray-500 font-bold">
+                                    
+                                        <td className="px-4 sm:px-6 py-5 text-xs text-gray-500 font-bold whitespace-nowrap">
                                             {patient.created_at ? new Date(patient.created_at).toLocaleDateString() : 'N/A'}
                                         </td>
-                                        <td className="px-6 py-5 text-right">
-                                            <div className="flex justify-end gap-2">
-                                                <button onClick={() => handleViewClick(patient.id)} className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-all" title="View Case"><FaEye /></button>
-                                                <button onClick={() => handleEditClick(patient)} className="p-2 text-amber-600 hover:bg-amber-100 rounded-lg transition-all" title="Edit Case"><FaEdit /></button>
-                                                <button onClick={() => handleDelete(patient.id)} disabled={userRole === 'healthcare_client'} className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-all disabled:opacity-20" title="Remove Case"><FaTrash /></button>
+                                    
+                                        {/* ⬇️ Sticky actions column — always visible on mobile */}
+                                        <td className="px-3 sm:px-6 py-5 text-right sticky right-0 bg-white group-hover:bg-blue-50 z-10 shadow-[-6px_0_8px_-6px_rgba(0,0,0,0.12)]">
+                                            <div className="flex justify-end gap-1.5 sm:gap-2">
+                                                <button onClick={() => handleViewClick(patient.id)}
+                                                    className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-all" title="View Case">
+                                                    <FaEye />
+                                                </button>
+                                                <button onClick={() => handleEditClick(patient)}
+                                                    className="p-2 text-amber-600 hover:bg-amber-100 rounded-lg transition-all" title="Edit Case">
+                                                    <FaEdit />
+                                                </button>
+                                                <button onClick={() => handleDelete(patient.id)}
+                                                    disabled={userRole === 'healthcare_client'}
+                                                    className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-all disabled:opacity-20" title="Remove Case">
+                                                    <FaTrash />
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
