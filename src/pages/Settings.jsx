@@ -162,7 +162,6 @@ const Settings = () => {
                         >
                             <FaInfoCircle /> <span className="font-semibold">Promotions</span>
                         </button>
-                    )}
                 </div>
 
                 {/* Main Content Area */}
