@@ -314,7 +314,7 @@ const Settings = () => {
                                     </button>
                                 </form>
                             </div>
-                        ) : activeTab === 'promotions' && !isAdmin ? (
+                        ) : activeTab === 'promotions' ? (
                             <div className="p-8">
                                 <h2 className="text-xl font-bold text-gray-900 mb-6">
                                     Promotions & Referrals
