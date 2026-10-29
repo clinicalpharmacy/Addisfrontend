@@ -111,9 +111,6 @@ const Home = () => {
                 {/* 1. Medication Availability */}
                 <Link to="/medication-availability" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-yellow-100 rounded-lg">
-                            <FaPills className="text-yellow-600 text-lg" />
-                        </div>
                         <div>
                             <h2 className="text-sm font-bold text-gray-800">መድሃኒት ማፈላለጊያ</h2>
                             <p className="text-xs text-gray-500">Medication availability</p>
@@ -129,9 +126,6 @@ const Home = () => {
                 {/* 2. Medication Information */}
                 <Link to="/knowledge/medications" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-purple-100 rounded-lg">
-                            <FaPills className="text-purple-600 text-lg" />
-                        </div>
                         <div>
                             <h2 className="text-sm font-bold text-gray-800">የመድሃኒት መረጃ</h2>
                             <p className="text-xs text-gray-500">Medicines database</p>
@@ -147,9 +141,6 @@ const Home = () => {
                 {/* 3. Quick Check */}
                 <Link to="/quick-safety" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition border-2 border-transparent hover:border-blue-100">
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-indigo-100 rounded-lg">
-                            <FaShieldAlt className="text-indigo-600 text-lg" />
-                        </div>
                         <div>
                             <h2 className="text-sm font-bold text-gray-800">Quick Check</h2>
                             <p className="text-xs text-gray-500">Pregnancy, elderly, organs</p>
@@ -179,9 +170,6 @@ const Home = () => {
                         }
                     >
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-blue-100 rounded-lg">
-                                <FaUserInjured className="text-blue-600 text-lg" />
-                            </div>
                             <div>
                                 <h2 className="text-sm font-bold text-gray-800">Clinical Pharmacy Tool</h2>
                                 <p className="text-xs text-gray-500">Review medication use</p>
@@ -199,9 +187,6 @@ const Home = () => {
                 {(user?.role !== 'healthcare_client' || !isIndividual) && (
                     <Link to="/useful-links" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-green-100 rounded-lg">
-                                <FaBookmark className="text-green-600 text-lg" />
-                            </div>
                             <div>
                                 <h2 className="text-sm font-bold text-gray-800">Useful Links</h2>
                                 <p className="text-xs text-gray-500">External resources & references</p>
@@ -222,9 +207,6 @@ const Home = () => {
                 >
                     {!isAdmin && <div className="absolute top-2 right-2 bg-slate-200 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Under Development</div>}
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-green-100 rounded-lg group-hover:scale-110 transition-transform">
-                            <FaVial className="text-green-600 text-lg" />
-                        </div>
                         <div>
                             <h2 className="text-sm font-bold text-gray-800">የቤት ውስጥ ጤና ክብካቤ</h2>
                             <p className="text-xs text-gray-500">Home remedies</p>
@@ -244,9 +226,6 @@ const Home = () => {
                 {showPharmacyTools && (
                     <Link to="/knowledge/illnesses" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-orange-100 rounded-lg">
-                                <FaUserMd className="text-orange-600 text-lg" />
-                            </div>
                             <div>
                                 <h2 className="text-sm font-bold text-gray-800">Minor Illnesses</h2>
                                 <p className="text-xs text-gray-500">OTC Treatment guides</p>
@@ -268,9 +247,6 @@ const Home = () => {
                     >
                         {!isAdmin && <div className="absolute top-2 right-2 bg-slate-200 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Under Development</div>}
                         <div className="flex items-center gap-3 mb-2 mt-1">
-                            <div className="p-2 bg-orange-100 rounded-lg group-hover:scale-110 transition-transform">
-                                <FaUserMd className="text-orange-600 text-lg" />
-                            </div>
                             <div>
                                 <h2 className="text-sm font-bold text-gray-800">Compounding</h2>
                                 <p className="text-xs text-gray-500">Compounding SOPs</p>
@@ -288,9 +264,6 @@ const Home = () => {
                 {showEducation && (
                     <Link to="/knowledge/education" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-purple-100 rounded-lg">
-                                <FaUserMd className="text-purple-600 text-lg" />
-                            </div>
                             <div>
                                 <h2 className="text-sm font-bold text-gray-800">Education</h2>
                                 <p className="text-xs text-gray-500">Educational reviews</p>
