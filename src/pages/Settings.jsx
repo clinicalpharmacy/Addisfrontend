@@ -156,7 +156,6 @@ const Settings = () => {
                     >
                         <FaShieldAlt /> <span className="font-semibold">Security & Password</span>
                     </button>
-                    {!isAdmin && (
                         <button
                             onClick={() => setActiveTab('promotions')}
                             className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all duration-200 ${activeTab === 'promotions' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-600 hover:bg-gray-100'}`}
