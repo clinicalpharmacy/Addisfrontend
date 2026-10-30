@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
     FaUserMd, FaHeartbeat, FaShieldAlt, FaPills, FaClipboardList,
     FaArrowRight, FaCheckCircle, FaBookMedical, FaBookOpen,
     FaBars, FaBook, FaCapsules, FaNotesMedical, FaTimes,
     FaCalculator, FaWeightHanging, FaRulerVertical,
-    FaNewspaper, FaCalendarAlt, FaTag
+    FaNewspaper, FaCalendarAlt, FaTag,
+    FaCommentDots, FaPaperPlane, FaRobot, FaUserCircle, FaSpinner, FaClock
 } from 'react-icons/fa';
 import api from '../utils/api';
 import { format } from 'date-fns';
@@ -37,6 +38,307 @@ const CLIENT_TIPS = [
     'የሚወስዱትን ሁሉንም መድኃኒቶች ዝርዝር (ያለሐኪም ትዕዛዝ የሚሰጡትንም) ለሐኪምዎ ያሳውቁ።'
 ];
 
+// ---- Chat retention ----
+const CHAT_WEEK_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+// ---------------------------------------------------------------------------
+// ChatWidget — floating chat with the admin, available to guests & users.
+// Chats are only rendered; the BACKEND is responsible for hard-deleting rows
+// older than 7 days. We also rotate the local guest identity after a week.
+// ---------------------------------------------------------------------------
+const ChatWidget = () => {
+    const [isOpen, setIsOpen]               = useState(false);
+    const [messages, setMessages]           = useState([]);
+    const [input, setInput]                 = useState('');
+    const [sessionId, setSessionId]         = useState(null);
+    const [guestId, setGuestId]             = useState(null);
+    const [booting, setBooting]             = useState(false);
+    const [sending, setSending]             = useState(false);
+    const [unread, setUnread]               = useState(0);
+    const [chatError, setChatError]         = useState(null);
+
+    const messagesEndRef   = useRef(null);
+    const inputRef         = useRef(null);
+
+    // -------- Initialise guest identity (rotate after 7 days) --------
+    useEffect(() => {
+        const now = Date.now();
+        let id        = localStorage.getItem('chat_guest_id');
+        const created = parseInt(localStorage.getItem('chat_guest_created') || '0', 10);
+        const expired = !id || !created || now - created > CHAT_WEEK_MS;
+
+        if (expired) {
+            id = 'g_' + Math.random().toString(36).slice(2, 10) + now.toString(36).slice(-4);
+            localStorage.setItem('chat_guest_id', id);
+            localStorage.setItem('chat_guest_created', String(now));
+            localStorage.removeItem('chat_session_id');
+        }
+        setGuestId(id);
+    }, []);
+
+    // -------- Get-or-create session --------
+    useEffect(() => {
+        if (!guestId) return;
+        let cancelled = false;
+
+        const boot = async () => {
+            try {
+                setBooting(true);
+                setChatError(null);
+                const data = await api.post('/chat/sessions', { guest_id: guestId });
+                if (!cancelled && data?.success && data.session) {
+                    setSessionId(data.session.id);
+                    setMessages(data.session.messages || []);
+                    localStorage.setItem('chat_session_id', data.session.id);
+                }
+            } catch (err) {
+                if (!cancelled) setChatError('Chat is unavailable right now. Please try again later.');
+            } finally {
+                if (!cancelled) setBooting(false);
+            }
+        };
+
+        boot();
+        return () => { cancelled = true; };
+    }, [guestId]);
+
+    // -------- Poll messages (5 s when open, 30 s when closed) --------
+    useEffect(() => {
+        if (!sessionId) return;
+        let cancelled = false;
+        const intervalMs = isOpen ? 5000 : 30000;
+
+        const fetchMessages = async () => {
+            try {
+                const data = await api.get(`/chat/sessions/${sessionId}/messages`);
+                if (cancelled || !data?.success) return;
+
+                const fresh = data.messages || [];
+
+                setMessages((prev) => {
+                    if (!isOpen) {
+                        // increment unread when new admin messages arrive
+                        const prevAdmin = prev.filter((m) => m.sender === 'admin').length;
+                        const nextAdmin = fresh.filter((m) => m.sender === 'admin').length;
+                        if (nextAdmin > prevAdmin) setUnread((u) => u + (nextAdmin - prevAdmin));
+                    }
+                    return fresh;
+                });
+            } catch (err) {
+                // If the backend nuked the session (>7 days old), recreate it.
+                const status = err?.response?.status ?? err?.status;
+                if (!cancelled && status === 404) {
+                    try {
+                        const data = await api.post('/chat/sessions', { guest_id: guestId });
+                        if (data?.success && data.session) {
+                            setSessionId(data.session.id);
+                            setMessages(data.session.messages || []);
+                            localStorage.setItem('chat_session_id', data.session.id);
+                        }
+                    } catch (_) { /* silent */ }
+                }
+            }
+        };
+
+        fetchMessages();
+        const id = setInterval(fetchMessages, intervalMs);
+        return () => { cancelled = true; clearInterval(id); };
+    }, [isOpen, sessionId, guestId]);
+
+    // Clear unread when opened
+    useEffect(() => {
+        if (isOpen) setUnread(0);
+    }, [isOpen]);
+
+    // Auto-scroll to the newest message
+    useEffect(() => {
+        if (isOpen) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages, isOpen]);
+
+    // Focus the input when opening
+    useEffect(() => {
+        if (isOpen) setTimeout(() => inputRef.current?.focus(), 150);
+    }, [isOpen]);
+
+    // -------- Send a message --------
+    const handleSend = async (e) => {
+        e.preventDefault();
+        const text = input.trim();
+        if (!text || !sessionId || sending) return;
+
+        setSending(true);
+        setChatError(null);
+
+        const tempId = 'temp_' + Date.now();
+        const optimistic = {
+            id: tempId,
+            sender: 'user',
+            content: text,
+            created_at: new Date().toISOString(),
+            _pending: true
+        };
+        setMessages((prev) => [...prev, optimistic]);
+        setInput('');
+
+        try {
+            const data = await api.post(`/chat/sessions/${sessionId}/messages`, { content: text });
+            if (data?.success && data.message) {
+                setMessages((prev) =>
+                    prev.map((m) => (m.id === tempId ? { ...data.message } : m))
+                );
+            } else {
+                // fallback refresh
+                const refreshed = await api.get(`/chat/sessions/${sessionId}/messages`);
+                if (refreshed?.success) setMessages(refreshed.messages || []);
+            }
+        } catch (err) {
+            setMessages((prev) => prev.filter((m) => m.id !== tempId));
+            setInput(text);
+            setChatError('Message failed to send. Please try again.');
+        } finally {
+            setSending(false);
+        }
+    };
+
+    // -------- Render --------
+    return (
+        <>
+            {/* Floating launcher */}
+            <button
+                type="button"
+                onClick={() => setIsOpen((o) => !o)}
+                aria-label={isOpen ? 'Close chat' : 'Chat with us'}
+                className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-green-500 hover:bg-green-600 text-white shadow-xl flex items-center justify-center transition-all duration-300"
+            >
+                {isOpen ? <FaTimes className="text-xl" /> : <FaCommentDots className="text-xl" />}
+                {!isOpen && unread > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 bg-red-500 text-white text-[11px] font-bold rounded-full flex items-center justify-center border-2 border-white">
+                        {unread > 9 ? '9+' : unread}
+                    </span>
+                )}
+            </button>
+
+            {/* Chat panel */}
+            {isOpen && (
+                <div
+                    className="fixed z-50 bg-white rounded-3xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden
+                               bottom-24 right-4 left-4 sm:left-auto sm:right-6 sm:w-96
+                               h-[70vh] sm:h-[32rem] max-h-[calc(100vh-8rem)]"
+                >
+                    {/* Header */}
+                    <div className="bg-green-500 text-white px-5 py-4 flex items-center gap-3 shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                            <FaUserMd className="text-lg" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <h3 className="font-bold leading-tight">Addis Med Support</h3>
+                            <p className="text-[11px] text-green-50 flex items-center gap-1">
+                                <FaClock className="text-[9px]" /> Auto-deleted after 7 days
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setIsOpen(false)}
+                            className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
+                            aria-label="Close chat"
+                        >
+                            <FaTimes />
+                        </button>
+                    </div>
+
+                    {/* Messages */}
+                    <div className="flex-1 overflow-y-auto px-4 py-4 bg-slate-50 space-y-3">
+                        {booting && (
+                            <div className="flex items-center justify-center py-6 text-slate-400 text-sm gap-2">
+                                <FaSpinner className="animate-spin" /> Connecting…
+                            </div>
+                        )}
+
+                        {!booting && messages.length === 0 && (
+                            <div className="text-center py-8 px-4">
+                                <div className="w-14 h-14 mx-auto bg-green-50 border border-green-100 rounded-full flex items-center justify-center mb-3">
+                                    <FaRobot className="text-2xl text-green-500" />
+                                </div>
+                                <p className="text-sm font-semibold text-slate-800">Hello 👋</p>
+                                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                                    Ask us anything about medications, the platform, or our services.
+                                    An admin will reply as soon as possible.
+                                </p>
+                            </div>
+                        )}
+
+                        {messages.map((m) => {
+                            const mine = m.sender === 'user';
+                            return (
+                                <div
+                                    key={m.id}
+                                    className={`flex items-end gap-2 ${mine ? 'justify-end' : 'justify-start'}`}
+                                >
+                                    {!mine && (
+                                        <div className="w-7 h-7 rounded-full bg-green-100 border border-green-200 flex items-center justify-center shrink-0">
+                                            <FaUserMd className="text-green-600 text-xs" />
+                                        </div>
+                                    )}
+                                    <div
+                                        className={`max-w-[78%] px-3.5 py-2 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words
+                                            ${mine
+                                                ? 'bg-green-500 text-white rounded-br-sm'
+                                                : 'bg-white text-slate-800 border border-slate-200 rounded-bl-sm'}`}
+                                    >
+                                        {m.content}
+                                        <div className={`text-[10px] mt-1 ${mine ? 'text-green-50/80' : 'text-slate-400'}`}>
+                                            {m.created_at ? format(new Date(m.created_at), 'HH:mm') : ''}
+                                            {m._pending && ' · sending…'}
+                                        </div>
+                                    </div>
+                                    {mine && (
+                                        <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
+                                            <FaUserCircle className="text-slate-500 text-base" />
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                        <div ref={messagesEndRef} />
+                    </div>
+
+                    {/* Error */}
+                    {chatError && (
+                        <div className="px-4 py-2 bg-red-50 border-t border-red-100 text-xs text-red-600">
+                            {chatError}
+                        </div>
+                    )}
+
+                    {/* Input */}
+                    <form onSubmit={handleSend} className="p-3 border-t border-slate-200 bg-white shrink-0 flex items-center gap-2">
+                        <input
+                            ref={inputRef}
+                            type="text"
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            placeholder={sessionId ? 'Type a message…' : 'Connecting…'}
+                            disabled={!sessionId || sending}
+                            maxLength={2000}
+                            className="flex-1 px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none disabled:bg-slate-50"
+                        />
+                        <button
+                            type="submit"
+                            disabled={!input.trim() || !sessionId || sending}
+                            className="w-10 h-10 rounded-xl bg-green-500 hover:bg-green-600 disabled:bg-slate-300 text-white flex items-center justify-center transition-colors"
+                            aria-label="Send"
+                        >
+                            {sending ? <FaSpinner className="animate-spin text-sm" /> : <FaPaperPlane className="text-sm" />}
+                        </button>
+                    </form>
+                </div>
+            )}
+        </>
+    );
+};
+
+// ===========================================================================
+// LandingPage
+// ===========================================================================
 const LandingPage = () => {
     const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -82,7 +384,7 @@ const LandingPage = () => {
         return '/home';
     };
 
-    // ---- Fetch latest news (non-blocking; guests can still see the page) ----
+    // ---- Fetch latest news ----
     useEffect(() => {
         let cancelled = false;
         const loadNews = async () => {
@@ -93,7 +395,6 @@ const LandingPage = () => {
                     setLatestNews((data.news || []).slice(0, 3));
                 }
             } catch (err) {
-                // Silent: guests without a token will 401 here until /news is made public
                 console.warn('⚠️ Could not load landing news:', err?.message || err);
             } finally {
                 if (!cancelled) setNewsLoading(false);
@@ -367,7 +668,6 @@ const LandingPage = () => {
                             <a href="#about" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">About Us</a>
                             <a href="#contact" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">Contact</a>
                             <a href="#features" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">Features</a>
-                            {/* 👇 NEW: News link, between Features and Calculators */}
                             <a href="#news" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">News & Alerts</a>
                             <a href="#calculators" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">Calculators</a>
                             <a href="#clients" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">For Clients</a>
@@ -408,7 +708,6 @@ const LandingPage = () => {
                             <a href="#about" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">About Us</a>
                             <a href="#contact" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">Contact</a>
                             <a href="#features" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">Features</a>
-                            {/* 👇 NEW: News link in mobile menu */}
                             <a href="#news" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">News</a>
                             <a href="#calculators" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">Calculators</a>
                             <a href="#clients" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-sm font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">For Clients</a>
@@ -491,7 +790,7 @@ const LandingPage = () => {
                     </div>
                 </div>
 
-                {/* ===== NEWS SECTION — between Features and Calculators ===== */}
+                {/* ===== NEWS SECTION ===== */}
                 <div id="news" className="bg-slate-50 py-20 border-t border-slate-200">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-12">
@@ -1053,6 +1352,9 @@ const LandingPage = () => {
                     </div>
                 </div>
             </footer>
+
+            {/* ===== Chatbot ===== */}
+            <ChatWidget />
         </div>
     );
 };
