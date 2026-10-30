@@ -31,7 +31,8 @@ import {
     FaBold,
     FaItalic,
     FaHashtag,
-    FaBook
+    FaBook,
+    FaGoogle
 } from 'react-icons/fa';
 import { useOutletContext } from 'react-router-dom';
 import useScreenshotProtection from '../../hooks/useScreenshotProtection';
@@ -148,6 +149,20 @@ const MedicationInfo = () => {
 
     const handleSearchChange = (e) => {
         setSearchTerm(e.target.value);
+    };
+
+    // Opens Google in a new tab: "what is the generic name of <searchTerm>"
+    const checkGenericNameOnGoogle = () => {
+        const query = searchTerm.trim();
+        if (!query) {
+            setError('Please enter a medication name first');
+            setTimeout(() => setError(''), 3000);
+            return;
+        }
+        const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(
+            `what is the generic name of ${query}`
+        )}`;
+        window.open(googleSearchUrl, '_blank', 'noopener,noreferrer');
     };
 
     const toggleSection = (section) => {
@@ -699,6 +714,25 @@ const MedicationInfo = () => {
                             </button>
                         )}
                     </div>
+
+                    {/* ───────────── ADD THIS BLOCK ───────────── */}
+                    {searchTerm.trim().length >= 2 && (
+                        <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-2">
+                            <button
+                                onClick={checkGenericNameOnGoogle}
+                                className="inline-flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-3 py-2 rounded-lg text-xs sm:text-sm transition-colors"
+                                title={`Search Google: "what is the generic name of ${searchTerm.trim()}"`}
+                            >
+                                <FaGoogle className="text-blue-500" />
+                                <span>Can't find it? Check Generic Name on Google</span>
+                            </button>
+                            <span className="text-xs text-gray-500">
+                                Useful if you only know the brand name
+                            </span>
+                        </div>
+                    )}
+                    {/* ───────────── END BLOCK ───────────── */}
+
                 
                     <div className="mt-4 text-xs md:text-sm text-gray-500 flex flex-wrap gap-2 items-center">
                         {searchTerm.length >= 2 && (
@@ -1258,12 +1292,23 @@ const MedicationInfo = () => {
                             <p className="text-gray-500 max-w-md mx-auto mb-6">
                                 "{searchTerm}" - No medications match your search criteria. Try a different search term.
                             </p>
-                            <button
-                                onClick={() => setSearchTerm('')}
-                                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg"
-                            >
-                                Clear Search
-                            </button>
+                        
+                            {/* ───────────── REPLACE THIS CTA ───────────── */}
+                            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                                <button
+                                    onClick={() => setSearchTerm('')}
+                                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg"
+                                >
+                                    Clear Search
+                                </button>
+                                <button
+                                    onClick={checkGenericNameOnGoogle}
+                                    className="bg-white hover:bg-blue-50 text-blue-700 border border-blue-300 px-6 py-2 rounded-lg inline-flex items-center justify-center gap-2"
+                                >
+                                    <FaGoogle /> Check Generic Name on Google
+                                </button>
+                            </div>
+                            {/* ───────────── END REPLACEMENT ───────────── */}
                         </div>
                      )
                 )}
