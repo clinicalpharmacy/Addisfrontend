@@ -699,7 +699,7 @@ const MedicationInfo = () => {
                                 type="text"
                                 value={searchTerm}
                                 onChange={handleSearchChange}
-                                placeholder="የሚፈልጉትን መድሃኒት ስም ይጻፉ (Generic Name)"
+                                placeholder="የሚፈልጉትን መድሃኒት ስም ይጻፉ (ጄነሪክ ስም ይጻፉ)"
                                 className="w-full pl-10 pr-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm md:text-base"
                             />
                         </div>
@@ -724,7 +724,7 @@ const MedicationInfo = () => {
                                 title={`Search Google: "what is the generic name of ${searchTerm.trim()}"`}
                             >
                                 <FaGoogle className="text-blue-500" />
-                                <span>Can't find it? Check Generic Name on Google</span>
+                                <span>ሊያገኙ አልቻሉም? ጄነሪክ ስሙን በGoogle ይፈልጉ</span>
                             </button>
                             <span className="text-xs text-gray-500">
                                 Useful if you only know the brand name
