@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { 
     FaSearch, FaArrowLeft, FaShieldAlt, FaBaby, FaBabyCarriage, 
     FaUserEdit, FaProcedures, FaHeartbeat, FaPills, FaExclamationTriangle,
-    FaCheckCircle, FaExclamationCircle, FaSpinner, FaInfoCircle, FaSyringe
+    FaCheckCircle, FaExclamationCircle, FaSpinner, FaInfoCircle, FaSyringe,
+    FaGoogle
 } from 'react-icons/fa';
 import api from '../utils/api';
 
@@ -43,6 +44,19 @@ const QuickSafetyCheck = () => {
     
     // Check if user is healthcare_client
     const isHealthcareClient = user?.role === 'healthcare_client' || user?.account_type === 'healthcare_client';
+
+    // Opens Google in a new tab: "what is the generic name of <query>"
+    const searchGenericNameOnGoogle = (query) => {
+        if (!query || !query.trim()) {
+            setError('Please enter a medication name first');
+            setTimeout(() => setError(''), 3000);
+            return;
+        }
+        const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(
+            `what is the generic name of ${query.trim()}`
+        )}`;
+        window.open(googleSearchUrl, '_blank', 'noopener,noreferrer');
+    };
 
     // Filter out IV incompatibility for healthcare_client
     const filterIVIncompatibility = (safetyProfile) => {
@@ -325,14 +339,45 @@ const QuickSafetyCheck = () => {
                                 {loading ? <FaSpinner className="animate-spin" /> : 'Check'}
                             </button>
                         </form>
+
+                        {/* ───────────── GENERIC NAME GOOGLE SEARCH (while typing) ───────────── */}
+                        {drugName.trim().length >= 2 && (
+                            <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-2 justify-center animate-fadeIn">
+                                <button
+                                    type="button"
+                                    onClick={() => searchGenericNameOnGoogle(drugName)}
+                                    className="inline-flex items-center justify-center gap-2 bg-white/15 hover:bg-white/25 text-white border border-white/30 px-4 py-2 rounded-lg text-sm font-medium transition-colors backdrop-blur-sm"
+                                    title={`Search Google: "what is the generic name of ${drugName.trim()}"`}
+                                >
+                                    <FaGoogle />
+                                    <span>ሊያገኙ አልቻሉም? ጄነሪክ ስሙን በGoogle ይፈልጉ</span>
+                                </button>
+                                <span className="text-xs text-blue-100">
+                                    Useful if you only know the brand name
+                                </span>
+                            </div>
+                        )}
+                        {/* ───────────── END GENERIC NAME GOOGLE SEARCH ───────────── */}
                     </div>
                 </div>
 
                 {/* Error */}
                 {error && (
-                    <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl flex items-center gap-3 animate-fadeIn mb-8">
-                        <FaExclamationTriangle className="text-red-500 text-xl" />
-                        <span className="font-medium">{error}</span>
+                    <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl flex flex-col sm:flex-row items-start sm:items-center gap-3 animate-fadeIn mb-8">
+                        <div className="flex items-center gap-3 flex-1">
+                            <FaExclamationTriangle className="text-red-500 text-xl flex-shrink-0" />
+                            <span className="font-medium">{error}</span>
+                        </div>
+                        {medList.length > 0 && (
+                            <button
+                                onClick={() => searchGenericNameOnGoogle(medList[0])}
+                                className="inline-flex items-center gap-2 bg-white hover:bg-blue-50 text-blue-700 border border-blue-300 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors"
+                                title={`Search Google: "what is the generic name of ${medList[0]}"`}
+                            >
+                                <FaGoogle className="text-blue-500" />
+                                Check Generic Name
+                            </button>
+                        )}
                     </div>
                 )}
 
