@@ -350,7 +350,7 @@ const QuickSafetyCheck = () => {
                                     title={`Search Google: "what is the generic name of ${drugName.trim()}"`}
                                 >
                                     <FaGoogle />
-                                    <span>ሊያገኙ አልቻሉም? ጄነሪክ ስሙን በGoogle ይፈልጉ</span>
+                                    <span>ጄነሪክ ስሙን በGoogle ይፈልጉ</span>
                                 </button>
                                 <span className="text-xs text-blue-100">
                                     Useful if you only know the brand name
