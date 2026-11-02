@@ -769,7 +769,6 @@ const CDSSDisplay = ({ patientData, onBack, onDataChange }) => {
 
             {/* ── DailyMed FDA Dosage & Administration Repository Section ── */}
             {rawUserRole === 'admin' && patientData && (
-            {patientData && (
                 <div className="bg-white rounded-xl border border-blue-100 shadow-sm overflow-hidden">
                     <div className="px-6 py-4 border-b border-blue-200 bg-gradient-to-r from-blue-100/90 via-indigo-50 to-blue-50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
