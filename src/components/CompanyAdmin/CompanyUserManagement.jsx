@@ -1,36 +1,8 @@
 import React, { useState } from 'react';
 import {
-    FaSearch, FaUserPlus, FaUsers, FaPhone, FaCalendarAlt, FaUserFriends, FaIdCard
+    FaSearch, FaUserPlus, FaUsers, FaPhone, FaCalendarAlt, FaUserFriends
 } from 'react-icons/fa';
-import { formatDate } from '../../utils/adminUtils';
-
-// ── Role catalogue — mirrors Signup.jsx + healthcare client ─────────────
-const ROLE_GROUPS = [
-    {
-        label: 'Health Professionals',
-        options: [
-            { value: 'pharmacist',                label: 'Pharmacist' },
-            { value: 'physician',                 label: 'Physician' },
-            { value: 'nurse',                     label: 'Nurse' },
-            { value: 'other_health_professional', label: 'Other Health Professional' }
-        ]
-    },
-    {
-        label: 'Students',
-        options: [
-            { value: 'pharmacy_student',             label: 'Pharmacy Student' },
-            { value: 'other_health_science_student', label: 'Other Health Science Student' }
-        ]
-    },
-    {
-        label: 'Clients & Staff',
-        options: [
-            { value: 'healthcare_client', label: 'Healthcare Client' },
-            { value: 'staff',             label: 'Staff' },
-            { value: 'company_admin',     label: 'Company Admin' }
-        ]
-    }
-];
+import { formatDate } from '../../utils/adminUtils'; // Reuse general admin utils where possible
 
 export const CompanyUserManagement = ({
     users,
@@ -48,84 +20,34 @@ export const CompanyUserManagement = ({
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
 
-    // ── Helpers ──────────────────────────────────────────────────────────
-    const isHealthcareClient = (user) =>
-        user.individual_type === 'client' ||
-        user.is_healthcare_client === true ||
-        user.role === 'healthcare_client';
-
-    const getUserName = (user) => user.full_name || user.name || 'Unknown User';
-    const getClientId = (user) => user.user_id || user.userId || user.client_id || user.id;
-
-    // ── Role badge ───────────────────────────────────────────────────────
-    // Now takes the whole `user` object (not just `role`) so healthcare
-    // clients — which have role: null — can still be rendered correctly.
-    const getRoleBadge = (user) => {
-        if (isHealthcareClient(user)) {
-            return (
-                <span className="px-3 py-1 text-xs rounded-full font-medium bg-pink-100 text-pink-800">
-                    Healthcare Client
-                </span>
-            );
-        }
-
+    // Reuse badges logic locally or import from utils if standardized
+    const getRoleBadge = (role) => {
         const styles = {
-            pharmacist:                   'bg-blue-100 text-blue-800',
-            physician:                    'bg-green-100 text-green-800',
-            doctor:                       'bg-green-100 text-green-800',
-            nurse:                        'bg-purple-100 text-purple-800',
-            staff:                        'bg-gray-100 text-gray-800',
-            company_admin:                'bg-red-100 text-red-800',
-            pharmacy_student:             'bg-orange-100 text-orange-800',
-            other_health_science_student: 'bg-amber-100 text-amber-800',
-            other_health_professional:    'bg-teal-100 text-teal-800'
+            pharmacist: 'bg-blue-100 text-blue-800',
+            doctor: 'bg-green-100 text-green-800',
+            nurse: 'bg-purple-100 text-purple-800',
+            staff: 'bg-gray-100 text-gray-800',
+            company_admin: 'bg-red-100 text-red-800'
         };
-
-        const labels = {
-            physician:                    'Physician',
-            company_admin:                'Admin',
-            pharmacy_student:             'Pharmacy Student',
-            other_health_science_student: 'Health Science Student',
-            other_health_professional:    'Other Professional'
-        };
-
-        const role = user.role;
-        if (!role) {
-            return <span className="px-3 py-1 text-xs rounded-full font-medium bg-gray-100 text-gray-600">—</span>;
-        }
-        return (
-            <span className={`px-3 py-1 text-xs rounded-full font-medium ${styles[role] || styles.staff}`}>
-                {labels[role] || role}
-            </span>
-        );
+        return <span className={`px-3 py-1 text-xs rounded-full font-medium ${styles[role] || styles.staff}`}>{role}</span>;
     };
 
     const getStatusBadge = (user) => {
         if (user.is_blocked) return <span className="px-3 py-1 text-xs bg-red-100 text-red-800 rounded-full font-medium">Blocked</span>;
-        return user.approved
-            ? <span className="px-3 py-1 text-xs bg-green-100 text-green-800 rounded-full font-medium">Active</span>
-            : <span className="px-3 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full font-medium">Pending</span>;
+        return user.approved ?
+            <span className="px-3 py-1 text-xs bg-green-100 text-green-800 rounded-full font-medium">Active</span> :
+            <span className="px-3 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full font-medium">Pending</span>;
     };
 
-    // ── Filtering ────────────────────────────────────────────────────────
     const filteredUsers = users.filter(user => {
-        const s = searchTerm.toLowerCase();
         const matchesSearch = !searchTerm ||
-            user.email?.toLowerCase().includes(s) ||
-            user.full_name?.toLowerCase().includes(s) ||
-            user.name?.toLowerCase().includes(s) ||
-            getClientId(user)?.toLowerCase?.().includes(s);
-
-        const matchesRole =
-            filterRole === 'all' ||
-            (filterRole === 'healthcare_client' && isHealthcareClient(user)) ||
-            (filterRole !== 'healthcare_client' && !isHealthcareClient(user) && user.role === filterRole);
-
+            user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.full_name?.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesRole = filterRole === 'all' || user.role === filterRole;
         const matchesStatus = filterStatus === 'all' ||
             (filterStatus === 'active' && user.approved && !user.is_blocked) ||
             (filterStatus === 'pending' && !user.approved) ||
             (filterStatus === 'blocked' && user.is_blocked);
-
         return matchesSearch && matchesRole && matchesStatus;
     });
 
@@ -169,7 +91,7 @@ export const CompanyUserManagement = ({
                         <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                             type="text"
-                            placeholder="Search by name, email, or client ID..."
+                            placeholder="Search users..."
                             className="w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                             value={searchTerm}
                             onChange={e => {
@@ -179,25 +101,15 @@ export const CompanyUserManagement = ({
                         />
                     </div>
                     <div className="flex gap-2">
-                        <select
-                            className="border rounded-lg px-4 py-3 outline-none"
-                            value={filterRole}
-                            onChange={e => { setFilterRole(e.target.value); setCurrentPage(1); }}
-                        >
+                        <select className="border rounded-lg px-4 py-3 outline-none" value={filterRole} onChange={e => { setFilterRole(e.target.value); setCurrentPage(1); }}>
                             <option value="all">All Roles</option>
-                            {ROLE_GROUPS.map(group => (
-                                <optgroup key={group.label} label={group.label}>
-                                    {group.options.map(opt => (
-                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                    ))}
-                                </optgroup>
-                            ))}
+                            <option value="pharmacist">Pharmacist</option>
+                            <option value="doctor">Doctor</option>
+                            <option value="nurse">Nurse</option>
+                            <option value="staff">Staff</option>
+                            <option value="company_admin">Admin</option>
                         </select>
-                        <select
-                            className="border rounded-lg px-4 py-3 outline-none"
-                            value={filterStatus}
-                            onChange={e => { setFilterStatus(e.target.value); setCurrentPage(1); }}
-                        >
+                        <select className="border rounded-lg px-4 py-3 outline-none" value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setCurrentPage(1); }}>
                             <option value="all">All Status</option>
                             <option value="active">Active</option>
                             <option value="pending">Pending</option>
@@ -228,29 +140,18 @@ export const CompanyUserManagement = ({
                                         <tr key={user.id} className="hover:bg-gray-50 transition">
                                             <td className="border-b p-4">
                                                 <div>
-                                                    <p className="font-medium text-gray-800">{getUserName(user)}</p>
+                                                    <p className="font-medium text-gray-800">{user.full_name}</p>
                                                     <p className="text-sm text-gray-600">{user.email}</p>
-                                                    {user.phone && (
-                                                        <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
-                                                            <FaPhone className="text-xs" />{user.phone}
-                                                        </p>
-                                                    )}
-                                                    {isHealthcareClient(user) && (
-                                                        <p className="text-xs text-pink-600 font-mono flex items-center gap-1 mt-1">
-                                                            <FaIdCard className="text-xs" /> ID: {getClientId(user)}
-                                                        </p>
-                                                    )}
+                                                    {user.phone && <p className="text-xs text-gray-500 flex items-center gap-1 mt-1"><FaPhone className="text-xs" />{user.phone}</p>}
                                                 </div>
                                             </td>
-                                            <td className="border-b p-4">{getRoleBadge(user)}</td>
+                                            <td className="border-b p-4">{getRoleBadge(user.role)}</td>
                                             <td className="border-b p-4">{getStatusBadge(user)}</td>
-                                            <td className="border-b p-4 text-sm text-gray-600">
-                                                <span className="flex items-center gap-2">
-                                                    <FaCalendarAlt className="text-gray-400" /> {formatDate(user.created_at)}
-                                                </span>
+                                            <td className="border-b p-4 text-sm text-gray-600 flex items-center gap-2">
+                                                <FaCalendarAlt className="text-gray-400" /> {formatDate(user.created_at)}
                                             </td>
                                             <td className="border-b p-4">
-                                                <div className="flex gap-2 flex-wrap">
+                                                <div className="flex gap-2">
                                                     {!user.approved && !user.is_blocked && (
                                                         <button onClick={() => onApproveUser(user.id)} className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600">Approve</button>
                                                     )}
@@ -283,13 +184,8 @@ export const CompanyUserManagement = ({
                                 <div key={user.id} className="p-4 bg-white hover:bg-gray-50 transition-colors">
                                     <div className="flex justify-between items-start mb-3">
                                         <div>
-                                            <p className="font-bold text-gray-900">{getUserName(user)}</p>
+                                            <p className="font-bold text-gray-900">{user.full_name}</p>
                                             <p className="text-sm text-gray-600">{user.email}</p>
-                                            {isHealthcareClient(user) && (
-                                                <p className="text-xs text-pink-600 font-mono mt-1">
-                                                    ID: {getClientId(user)}
-                                                </p>
-                                            )}
                                         </div>
                                         <div>{getStatusBadge(user)}</div>
                                     </div>
@@ -297,7 +193,7 @@ export const CompanyUserManagement = ({
                                     <div className="space-y-2 text-sm mb-4">
                                         <div className="flex justify-between items-center">
                                             <span className="text-gray-500">Role:</span>
-                                            <span>{getRoleBadge(user)}</span>
+                                            <span>{getRoleBadge(user.role)}</span>
                                         </div>
                                         {user.phone && (
                                             <div className="flex justify-between items-center text-gray-500">
@@ -311,11 +207,11 @@ export const CompanyUserManagement = ({
                                         </div>
                                     </div>
 
-                                    <div className="flex gap-2 pt-2 border-t border-dashed flex-wrap">
+                                    <div className="flex gap-2 pt-2 border-t border-dashed">
                                         {!user.approved && !user.is_blocked && (
                                             <button
                                                 onClick={() => onApproveUser(user.id)}
-                                                className="flex-1 min-w-[80px] py-2 bg-green-50 text-green-700 rounded-lg text-sm font-medium hover:bg-green-100 border border-green-200"
+                                                className="flex-1 py-2 bg-green-50 text-green-700 rounded-lg text-sm font-medium hover:bg-green-100 border border-green-200"
                                             >
                                                 Approve
                                             </button>
@@ -324,7 +220,7 @@ export const CompanyUserManagement = ({
                                             <button
                                                 onClick={() => onToggleBlock(user.id, user.is_blocked)}
                                                 disabled={user.is_blocked && user.blocked_by === 'superadmin'}
-                                                className={`flex-1 min-w-[80px] py-2 rounded-lg text-sm font-medium border transition-all ${user.is_blocked
+                                                className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-all ${user.is_blocked
                                                     ? (user.blocked_by === 'superadmin' ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' : 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100')
                                                     : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
                                                     }`}
@@ -334,13 +230,13 @@ export const CompanyUserManagement = ({
                                         )}
                                         <button
                                             onClick={() => onEditUser(user)}
-                                            className="flex-1 min-w-[80px] py-2 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-100 border border-blue-200"
+                                            className="flex-1 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-100 border border-blue-200"
                                         >
                                             Edit
                                         </button>
                                         <button
                                             onClick={() => onDeleteUser(user.id, user.email)}
-                                            className="flex-1 min-w-[80px] py-2 bg-red-50 text-red-700 rounded-lg text-sm font-medium hover:bg-red-100 border border-red-200"
+                                            className="flex-1 py-2 bg-red-50 text-red-700 rounded-lg text-sm font-medium hover:bg-red-100 border border-red-200"
                                         >
                                             Delete
                                         </button>
@@ -403,6 +299,6 @@ export const CompanyUserManagement = ({
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 };
