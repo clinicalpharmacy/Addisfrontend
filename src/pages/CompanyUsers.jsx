@@ -1,257 +1,57 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    FaBuilding, FaTimes, FaExclamationTriangle, FaCheckCircle, FaSyncAlt
+    FaBars, FaBuilding, FaSync, FaTimes, FaExclamationTriangle, FaCheckCircle
 } from 'react-icons/fa';
 
 import { useCompanyAdminLogic } from '../hooks/useCompanyAdminLogic';
 import { CompanyUserManagement } from '../components/CompanyAdmin/CompanyUserManagement';
 
-// ── Role catalogue — mirrors Signup.jsx + healthcare client ─────────────
-const ROLE_GROUPS = [
-    {
-        label: 'Health Professionals',
-        options: [
-            { value: 'pharmacist',                label: 'Pharmacist' },
-            { value: 'physician',                 label: 'Physician' },
-            { value: 'nurse',                     label: 'Nurse' },
-            { value: 'other_health_professional', label: 'Other Health Professional' }
-        ]
-    },
-    {
-        label: 'Students',
-        options: [
-            { value: 'pharmacy_student',             label: 'Pharmacy Student' },
-            { value: 'other_health_science_student', label: 'Other Health Science Student' }
-        ]
-    },
-    {
-        label: 'Clients & Staff',
-        options: [
-            { value: 'healthcare_client', label: 'Healthcare Client' },
-            { value: 'staff',             label: 'Staff' },
-            { value: 'company_admin',     label: 'Company Admin' }
-        ]
-    }
-];
 
-const STUDENT_ROLES = ['pharmacy_student', 'other_health_science_student'];
-
-const generateHealthcareClientId = () => {
-    const prefix = 'HCC';
-    const timestamp = Date.now().toString(36).toUpperCase();
-    const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-    return `${prefix}-${timestamp}-${random}`;
-};
-
-// ─────────────────────────────────────────────────────────────────────────
-// User Modal — Add & Edit
-// ─────────────────────────────────────────────────────────────────────────
+// --- Simple User Modal Component ---
 const UserModalInternal = ({ show, isEdit, isSubmitting, data, onClose, onSubmit, onChange }) => {
     if (!show) return null;
-
-    const isHealthcareClient =
-        data.role === 'healthcare_client' || data.is_healthcare_client === true;
-    const isStudent = STUDENT_ROLES.includes(data.role);
-
-    // Show the right option in <select> even if role is null for a client
-    const currentRoleValue =
-        data.role || (isHealthcareClient ? 'healthcare_client' : 'pharmacist');
-
-    const set = (field, value) => onChange({ ...data, [field]: value });
-
-    const handleRoleChange = (newRole) => {
-        if (newRole === 'healthcare_client') {
-            const clientId = data.client_id || generateHealthcareClientId();
-            onChange({
-                ...data,
-                role: newRole,
-                client_id: clientId,
-                // auto-fill email from client ID if user hasn't typed one
-                email: data.email || `${clientId}@hcc.addis-med.com`,
-                name: data.full_name || '',
-                is_healthcare_client: true,
-                individual_type: 'client',
-                pricing_category: 'student_or_client'
-            });
-        } else if (STUDENT_ROLES.includes(newRole)) {
-            onChange({
-                ...data,
-                role: newRole,
-                client_id: '',
-                is_healthcare_client: false,
-                individual_type: 'professional',
-                pricing_category: 'student_or_client'
-            });
-        } else {
-            onChange({
-                ...data,
-                role: newRole,
-                client_id: '',
-                is_healthcare_client: false,
-                individual_type: 'professional',
-                pricing_category: 'professional'
-            });
-        }
-    };
-
-    // Keep `name` synced with `full_name` for healthcare clients
-    const handleFullNameChange = (v) => {
-        if (isHealthcareClient) {
-            onChange({ ...data, full_name: v, name: v });
-        } else {
-            onChange({ ...data, full_name: v });
-        }
-    };
-
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 animate-fade-in">
-            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
+            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
                 <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-xl font-bold text-gray-800">
-                        {isEdit ? 'Edit User' : 'Add New User'}
-                    </h3>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600"
-                    >
-                        <FaTimes />
-                    </button>
+                    <h3 className="text-xl font-bold text-gray-800">{isEdit ? 'Edit User' : 'Add New User'}</h3>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
                 </div>
-
                 <form onSubmit={onSubmit} className="space-y-4">
-                    {/* Role — now includes all 9 roles */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Role *
-                        </label>
-                        <select
-                            value={currentRoleValue}
-                            onChange={e => handleRoleChange(e.target.value)}
-                            className="w-full px-4 py-3 border rounded-lg bg-white"
-                        >
-                            {ROLE_GROUPS.map(group => (
-                                <optgroup key={group.label} label={group.label}>
-                                    {group.options.map(opt => (
-                                        <option key={opt.value} value={opt.value}>
-                                            {opt.label}
-                                        </option>
-                                    ))}
-                                </optgroup>
-                            ))}
-                        </select>
-                        {isStudent && (
-                            <p className="mt-2 text-xs text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1">
-                                🎓 Student pricing will apply automatically.
-                            </p>
-                        )}
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                        <input type="text" value={data.full_name || ''} onChange={e => onChange({ ...data, full_name: e.target.value })} className="w-full px-4 py-3 border rounded-lg" required />
                     </div>
-
-                    {/* Healthcare Client ID */}
-                    {isHealthcareClient && (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Healthcare Client ID *
-                            </label>
-                            <div className="flex gap-2">
-                                <input
-                                    type="text"
-                                    value={data.client_id || ''}
-                                    onChange={e => set('client_id', e.target.value)}
-                                    className="flex-1 px-4 py-3 border rounded-lg font-mono text-sm"
-                                    required
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => set('client_id', generateHealthcareClientId())}
-                                    className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700"
-                                    title="Regenerate ID"
-                                >
-                                    <FaSyncAlt />
-                                </button>
-                            </div>
-                            <p className="mt-1 text-xs text-gray-500">
-                                This ID will be used for the client's login.
-                            </p>
-                        </div>
-                    )}
-
-                    {/* Full Name */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Full Name *
-                        </label>
-                        <input
-                            type="text"
-                            value={data.full_name || ''}
-                            onChange={e => handleFullNameChange(e.target.value)}
-                            className="w-full px-4 py-3 border rounded-lg"
-                            required
-                        />
-                    </div>
-
                     {!isEdit && (
                         <>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Email {isHealthcareClient ? '(optional)' : '*'}
-                                </label>
-                                <input
-                                    type="email"
-                                    value={data.email || ''}
-                                    onChange={e => set('email', e.target.value)}
-                                    className="w-full px-4 py-3 border rounded-lg"
-                                    required={!isHealthcareClient}
-                                    placeholder={
-                                        isHealthcareClient
-                                            ? 'Auto-generated from client ID if blank'
-                                            : ''
-                                    }
-                                />
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                                <input type="email" value={data.email || ''} onChange={e => onChange({ ...data, email: e.target.value })} className="w-full px-4 py-3 border rounded-lg" required />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Password *
-                                </label>
-                                <input
-                                    type="password"
-                                    value={data.password || ''}
-                                    onChange={e => set('password', e.target.value)}
-                                    className="w-full px-4 py-3 border rounded-lg"
-                                    required
-                                    minLength="6"
-                                />
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Password *</label>
+                                <input type="password" value={data.password || ''} onChange={e => onChange({ ...data, password: e.target.value })} className="w-full px-4 py-3 border rounded-lg" required minLength="6" />
                             </div>
                         </>
                     )}
-
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Phone {isHealthcareClient ? '(optional)' : ''}
-                        </label>
-                        <input
-                            type="tel"
-                            value={data.phone || ''}
-                            onChange={e => set('phone', e.target.value)}
-                            className="w-full px-4 py-3 border rounded-lg"
-                        />
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+                        <input type="tel" value={data.phone || ''} onChange={e => onChange({ ...data, phone: e.target.value })} className="w-full px-4 py-3 border rounded-lg" />
                     </div>
-
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Role *</label>
+                        <select value={data.role || 'pharmacist'} onChange={e => onChange({ ...data, role: e.target.value })} className="w-full px-4 py-3 border rounded-lg">
+                            <option value="pharmacist">Pharmacist</option>
+                            <option value="doctor">Doctor</option>
+                            <option value="nurse">Nurse</option>
+                            <option value="staff">Staff</option>
+                        </select>
+                    </div>
                     <div className="flex gap-3 pt-4 border-t">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="flex-1 py-3 border rounded-lg hover:bg-gray-50"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                        >
-                            {isSubmitting ? 'Saving...' : isEdit ? 'Update' : 'Add'}
+                        <button type="button" onClick={onClose} className="flex-1 py-3 border rounded-lg hover:bg-gray-50">Cancel</button>
+                        <button type="submit" disabled={isSubmitting} className="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                            {isSubmitting ? 'Saving...' : (isEdit ? 'Update' : 'Add')}
                         </button>
                     </div>
                 </form>
@@ -260,15 +60,14 @@ const UserModalInternal = ({ show, isEdit, isSubmitting, data, onClose, onSubmit
     );
 };
 
-// ─────────────────────────────────────────────────────────────────────────
-// Page
-// ─────────────────────────────────────────────────────────────────────────
 const CompanyUsers = () => {
     const navigate = useNavigate();
     const [currentUser, setCurrentUser] = useState(null);
 
+    // Use Custom Hook
     const logic = useCompanyAdminLogic(currentUser);
 
+    // Auth Check
     useEffect(() => {
         const userStr = localStorage.getItem('user');
         if (!userStr) { navigate('/login'); return; }
@@ -346,7 +145,7 @@ const CompanyUsers = () => {
                 onRefresh={() => logic.loadDashboardData(currentUser?.company_id)}
             />
 
-            {/* Add User Modal */}
+            {/* Modals */}
             <UserModalInternal
                 show={logic.showAddUserModal}
                 isEdit={false}
@@ -357,7 +156,6 @@ const CompanyUsers = () => {
                 onChange={logic.setNewUserData}
             />
 
-            {/* Edit User Modal */}
             <UserModalInternal
                 show={!!logic.editingUser}
                 isEdit={true}
