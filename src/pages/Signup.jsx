@@ -2651,11 +2651,11 @@ const Signup = () => {
 
                             {/* Account Details Box */}
                             <div className="bg-white p-5 rounded-2xl border border-indigo-100 space-y-3.5 mb-5 shadow-xs">
-                                {/* Account Name - Addis Med */}
+                                {/* Account Name - Addis Med Trading Plc */}
                                 <div className="flex items-center justify-between pb-3 border-b border-gray-100">
                                     <div>
                                         <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Account Name</p>
-                                        <p className="text-base font-black text-gray-900">Addis Med</p>
+                                        <p className="text-base font-black text-gray-900">Addis Med Trading Plc</p>
                                     </div>
                                     <span className="px-2.5 py-1 bg-green-50 text-green-700 rounded-lg text-[10px] font-black uppercase tracking-wider border border-green-200">
                                         Verified Business
