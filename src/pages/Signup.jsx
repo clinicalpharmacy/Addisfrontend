@@ -2889,7 +2889,7 @@ const Signup = () => {
                                     <div>
                                         <h4 className="font-bold text-gray-800 mb-1">Approval Notification</h4>
                                         <p className="text-gray-600 text-sm md:text-base">
-                                            You will receive an email notification when your account is approved.
+                                            You will receive an email notification, if provided, when your account is approved.
                                         </p>
                                     </div>
                                 </div>
@@ -2900,7 +2900,7 @@ const Signup = () => {
                                     <div>
                                         <h4 className="font-bold text-gray-800 mb-1">Account Activation</h4>
                                         <p className="text-gray-600 text-sm md:text-base">
-                                            Once approved, you can login and start using PharmaCare CDSS.
+                                            Once approved, you can login and start using Addis Med.
                                         </p>
                                     </div>
                                 </div>
@@ -2924,10 +2924,6 @@ const Signup = () => {
                                         <li className="flex items-start gap-2">
                                             <span className="text-yellow-500">•</span>
                                             <span>If you don't receive an approval email within 48 hours, check your spam folder or contact support.</span>
-                                        </li>
-                                        <li className="flex items-start gap-2">
-                                            <span className="text-yellow-500">•</span>
-                                            <span>Your payment has been recorded via Chapa. Keep your transaction reference for any inquiries.</span>
                                         </li>
                                     </ul>
                                 </div>
