@@ -2878,7 +2878,7 @@ const Signup = () => {
                                     <div>
                                         <h4 className="font-bold text-gray-800 mb-1">Admin Review</h4>
                                         <p className="text-gray-600 text-sm md:text-base">
-                                            Our admin team will review your registration details within 24-48 hours.
+                                            Our admin team will review your registration details within 2 hours.
                                         </p>
                                     </div>
                                 </div>
