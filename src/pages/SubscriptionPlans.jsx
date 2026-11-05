@@ -1095,21 +1095,21 @@ const SubscriptionPlans = () => {
               <div>
                 <h3 className="text-base font-extrabold text-gray-900 mb-4 uppercase tracking-wider">Payment Method</h3>
                 <div className="space-y-4">
-                  {/* Chapa Payment */}
-                  <div className="border-2 border-green-500 bg-green-50/50 rounded-2xl p-5">
+                  {/* Direct Bank & Mobile Transfer */}
+                  <div className="border-2 border-indigo-500 bg-indigo-50/50 rounded-2xl p-5">
                     <div className="flex items-center">
-                      <div className="w-5 h-5 rounded-full border mr-3 flex items-center justify-center border-green-500 bg-green-500">
+                      <div className="w-5 h-5 rounded-full border mr-3 flex items-center justify-center border-indigo-500 bg-indigo-500">
                         <div className="w-2 h-2 rounded-full bg-white"></div>
                       </div>
-                      <FaCreditCard className="text-green-600 text-lg mr-2" />
-                      <span className="font-bold text-gray-900">Chapa Payment Gateway (Online)</span>
+                      <FaMoneyBillWave className="text-indigo-600 text-lg mr-2" />
+                      <span className="font-bold text-gray-900">Direct Transfer to Addis Med (CBE / Telebirr)</span>
                     </div>
                     <p className="text-xs text-gray-600 mt-2 ml-8 leading-relaxed">
-                      Pay securely with Telebirr, CBE Birr, Awash, or debit cards via Chapa.
+                      Transfer directly via Commercial Bank of Ethiopia (CBE) or Telebirr to <strong>Addis Med</strong>.
                     </p>
-                    <div className="mt-3 ml-8 p-3 bg-white/80 border border-green-200 rounded-xl text-xs font-semibold text-green-800 flex items-center gap-2">
-                      <FaUserShield className="text-green-600 text-sm shrink-0" />
-                      <span>Instant processing & secure encryption</span>
+                    <div className="mt-3 ml-8 p-3 bg-white/80 border border-indigo-200 rounded-xl text-xs font-semibold text-indigo-800 flex items-center gap-2">
+                      <FaUserShield className="text-indigo-600 text-sm shrink-0" />
+                      <span>Official verified account: Addis Med</span>
                     </div>
                   </div>
 
@@ -1124,7 +1124,7 @@ const SubscriptionPlans = () => {
                           {isSubActive
                             ? 'You currently have an active subscription. Selecting and paying for a new plan will switch or update your subscription tier.'
                             : isExistingUser
-                            ? 'Your subscription has ended. Upon completing payment on Chapa, your subscription will be renewed immediately without needing to sign up again.'
+                            ? 'Your subscription has ended. Upon submitting your transfer reference code, your subscription will be reviewed and activated by admin.'
                             : 'After payment, your subscription will be activated so you can start using all clinical pharmacy features immediately.'}
                         </p>
                       </div>
@@ -1168,7 +1168,7 @@ const SubscriptionPlans = () => {
                         </li>
                         <li className="flex items-center gap-2">
                           <FaCreditCard className="text-green-600" />
-                          <span>Payment Method: <strong>Chapa Gateway</strong></span>
+                          <span>Payment Method: <strong>Addis Med (CBE / Telebirr)</strong></span>
                         </li>
                         {isExistingUser && (
                           <li className="flex items-center gap-2">
