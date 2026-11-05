@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useMemo } from 'react';
 import api from '../utils/api';
 
 // Hook for Dashboard Overview Data
@@ -198,20 +198,28 @@ export const useAdminCompanies = () => {
 };
 
 
-// Hook for Subscriptions
+// Hook for Subscriptions and Manual Payments
 export const useAdminSubscriptions = () => {
     const [subscriptions, setSubscriptions] = useState([]);
+    const [payments, setPayments] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [processingId, setProcessingId] = useState(null);
     const [error, setError] = useState('');
 
     const loadSubscriptions = useCallback(async () => {
         try {
             setLoading(true);
-            const data = await api.get('/admin/subscriptions');
-            if (data.success) {
-                setSubscriptions(data.subscriptions || []);
+            const [subsRes, paymentsRes] = await Promise.all([
+                api.get('/admin/subscriptions'),
+                api.get('/admin/payments')
+            ]);
+            if (subsRes.success) {
+                setSubscriptions(subsRes.subscriptions || []);
             } else {
-                setError(data.error || 'Failed to load subscriptions');
+                setError(subsRes.error || 'Failed to load subscriptions');
+            }
+            if (paymentsRes.success) {
+                setPayments(paymentsRes.payments || []);
             }
         } catch (err) {
             setError('Network error while loading subscriptions');
@@ -220,5 +228,59 @@ export const useAdminSubscriptions = () => {
         }
     }, []);
 
-    return { subscriptions, loading, error, loadSubscriptions };
+    const approvePayment = useCallback(async (paymentId) => {
+        try {
+            setProcessingId(paymentId);
+            const res = await api.post(`/admin/payments/${paymentId}/approve`);
+            if (res.success) {
+                await loadSubscriptions();
+                return { success: true, message: res.message || 'Payment approved!' };
+            }
+            return { success: false, error: res.error || 'Failed to approve' };
+        } catch (e) {
+            return { success: false, error: e.message || 'Error approving payment' };
+        } finally {
+            setProcessingId(null);
+        }
+    }, [loadSubscriptions]);
+
+    const rejectPayment = useCallback(async (paymentId) => {
+        try {
+            setProcessingId(paymentId);
+            const res = await api.post(`/admin/payments/${paymentId}/reject`);
+            if (res.success) {
+                await loadSubscriptions();
+                return { success: true, message: 'Payment rejected.' };
+            }
+            return { success: false, error: res.error || 'Failed to reject' };
+        } catch (e) {
+            return { success: false, error: e.message || 'Error rejecting payment' };
+        } finally {
+            setProcessingId(null);
+        }
+    }, [loadSubscriptions]);
+
+    // Only show NEW manual bank payments (e.g. CBE), excluding old Chapa online gateway records
+    const pendingPayments = useMemo(() => {
+        return (payments || []).filter(p => {
+            if (p.status !== 'pending') return false;
+            const method = (p.payment_method || '').toLowerCase();
+            // Exclude old online gateway (chapa) records and admin overrides
+            if (method === 'chapa' || method === 'admin_override') return false;
+            // Include CBE or manual submissions
+            return method === 'cbe' || method === 'telebirr' || p.gateway_response?.payment_type === 'manual_cbe' || !method;
+        });
+    }, [payments]);
+
+    return {
+        subscriptions,
+        payments,
+        pendingPayments,
+        loading,
+        processingId,
+        error,
+        loadSubscriptions,
+        approvePayment,
+        rejectPayment
+    };
 };

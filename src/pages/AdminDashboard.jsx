@@ -79,8 +79,16 @@ const AdminDashboard = () => {
 
         const loadTabData = async () => {
             if (selectedTab === 'overview') {
-                await dashboardData.loadDashboardData();
-            } else if (selectedTab === 'approvals' || selectedTab === 'users') {
+                await Promise.all([
+                    dashboardData.loadDashboardData(),
+                    subscriptionsManager.loadSubscriptions()
+                ]);
+            } else if (selectedTab === 'approvals') {
+                await Promise.all([
+                    usersManager.loadUsers(),
+                    subscriptionsManager.loadSubscriptions()
+                ]);
+            } else if (selectedTab === 'users') {
                 await usersManager.loadUsers();
             } else if (selectedTab === 'companies') {
                 await companiesManager.loadCompanies();
@@ -117,10 +125,10 @@ const AdminDashboard = () => {
 
     const navigationTabs = [
         { id: 'overview', label: 'Overview', icon: FaChartLine, iconColor: 'text-blue-500' },
-        { id: 'approvals', label: 'Approvals', icon: FaUserCheck, count: dashboardData.stats.pending_approvals, color: 'bg-red-500', iconColor: 'text-orange-500' },
+        { id: 'approvals', label: 'Approvals', icon: FaUserCheck, count: (dashboardData.stats.pending_approvals || 0) + (subscriptionsManager.pendingPayments?.length || 0), color: 'bg-red-500', iconColor: 'text-orange-500' },
         { id: 'users', label: 'Users', icon: FaUsers, iconColor: 'text-indigo-500' },
         { id: 'companies', label: 'Companies', icon: FaBuilding, iconColor: 'text-purple-500' },
-        { id: 'subscriptions', label: 'Subscriptions', icon: FaCreditCard, iconColor: 'text-green-500' },
+        { id: 'subscriptions', label: 'Subscriptions', icon: FaCreditCard, iconColor: 'text-green-500', count: subscriptionsManager.pendingPayments?.length || 0, color: 'bg-amber-500' },
         { id: 'referrals', label: 'Referrals', icon: FaChartLine, iconColor: 'text-emerald-500' },
         { id: 'support_access', label: 'Support Access', icon: FaUserShield, iconColor: 'text-amber-500', count: dashboardData.stats.active_support_count, color: 'bg-blue-600' },
         { id: 'feedback', label: 'Feedback', icon: FaComments, iconColor: 'text-pink-500' },
@@ -232,7 +240,7 @@ const AdminDashboard = () => {
                         stats={dashboardData.stats}
                         usersCount={usersManager.users.length}
                         companiesCount={companiesManager.companies.length}
-                        pendingApprovalsCount={dashboardData.stats.pending_approvals}
+                        pendingApprovalsCount={(dashboardData.stats.pending_approvals || 0) + (subscriptionsManager.pendingPayments?.length || 0)}
                         recentActivities={dashboardData.recentActivities}
                         onTabChange={setSelectedTab}
                         getActivityIcon={getActivityIcon}
@@ -243,9 +251,11 @@ const AdminDashboard = () => {
                 {selectedTab === 'approvals' && (
                     <AdminApprovals
                         pendingUsers={usersManager.pendingUsers}
-                        loading={usersManager.loading}
-                        error={usersManager.error}
+                        pendingPayments={subscriptionsManager.pendingPayments}
+                        loading={usersManager.loading || subscriptionsManager.loading}
+                        error={usersManager.error || subscriptionsManager.error}
                         processingApproval={usersManager.processingId}
+                        processingPaymentId={subscriptionsManager.processingId}
                         handleApproveUser={async (id, email) => {
                             const success = await usersManager.approveUser(id, email);
                             if (success) {
@@ -258,6 +268,29 @@ const AdminDashboard = () => {
                             if (window.confirm(`Reject ${email}?`)) {
                                 await usersManager.rejectUser(id, email);
                                 dashboardData.loadDashboardData();
+                            }
+                        }}
+                        handleApprovePayment={async (paymentId) => {
+                            const res = await subscriptionsManager.approvePayment(paymentId);
+                            if (res.success) {
+                                setSuccessMessage(res.message || 'Payment approved and subscription activated!');
+                                setTimeout(() => setSuccessMessage(''), 3000);
+                                dashboardData.loadDashboardData();
+                                usersManager.loadUsers();
+                            } else {
+                                alert(res.error || 'Failed to approve payment');
+                            }
+                        }}
+                        handleRejectPayment={async (paymentId) => {
+                            if (window.confirm('Are you sure you want to reject this payment?')) {
+                                const res = await subscriptionsManager.rejectPayment(paymentId);
+                                if (res.success) {
+                                    setSuccessMessage('Payment rejected');
+                                    setTimeout(() => setSuccessMessage(''), 3000);
+                                    dashboardData.loadDashboardData();
+                                } else {
+                                    alert(res.error || 'Failed to reject payment');
+                                }
                             }
                         }}
                         onRefresh={handleRefresh}
@@ -298,11 +331,32 @@ const AdminDashboard = () => {
                 {selectedTab === 'subscriptions' && (
                     <AdminSubscriptions
                         subscriptions={subscriptionsManager.subscriptions}
+                        payments={subscriptionsManager.payments}
+                        pendingPayments={subscriptionsManager.pendingPayments}
+                        loading={subscriptionsManager.loading || usersManager.loading || companiesManager.loading}
+                        processingId={subscriptionsManager.processingId}
+                        onRefresh={handleRefresh}
+                        onApprovePayment={async (id) => {
+                            const res = await subscriptionsManager.approvePayment(id);
+                            if (res.success) {
+                                setSuccessMessage(res.message);
+                                setTimeout(() => setSuccessMessage(''), 3500);
+                            } else {
+                                setGeneralError(res.error);
+                                setTimeout(() => setGeneralError(''), 4000);
+                            }
+                        }}
+                        onRejectPayment={async (id) => {
+                            if (window.confirm('Are you sure you want to reject this payment reference?')) {
+                                const res = await subscriptionsManager.rejectPayment(id);
+                                if (res.success) {
+                                    setSuccessMessage(res.message);
+                                    setTimeout(() => setSuccessMessage(''), 3500);
+                                }
+                            }
+                        }}
                         users={usersManager.users}
                         companies={companiesManager.companies}
-                        loading={subscriptionsManager.loading || usersManager.loading || companiesManager.loading}
-                        onRefresh={handleRefresh}
-
                     />
                 )}
 

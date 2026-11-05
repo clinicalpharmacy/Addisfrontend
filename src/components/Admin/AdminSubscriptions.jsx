@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { FaBuilding, FaUser, FaCheckCircle, FaClock, FaSearch, FaRedo } from 'react-icons/fa';
+import { FaBuilding, FaUser, FaCheckCircle, FaClock, FaSearch, FaRedo, FaSpinner, FaCheck, FaTimes, FaMoneyBillWave } from 'react-icons/fa';
 
-export const AdminSubscriptions = ({ subscriptions, loading, onRefresh, users, companies }) => {
+export const AdminSubscriptions = ({ subscriptions, loading, onRefresh, users, companies, payments, pendingPayments, processingId, onApprovePayment, onRejectPayment }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all'); // all, active, expired
 
@@ -162,6 +162,91 @@ export const AdminSubscriptions = ({ subscriptions, loading, onRefresh, users, c
                     </div>
                 </div>
             </div>
+
+
+            {/* Pending Bank & Mobile Payments */}
+            {pendingPayments && pendingPayments.length > 0 && (
+                <div className="bg-white rounded-[24px] shadow-sm border border-orange-100 overflow-hidden">
+                    <div className="px-5 sm:px-6 py-4 bg-gradient-to-r from-orange-50 to-amber-50 border-b border-orange-100 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2.5 bg-orange-100 rounded-xl">
+                                <FaMoneyBillWave className="text-orange-600 text-base" />
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-black text-gray-900">Pending CBE Payments</h3>
+                                <p className="text-[9px] text-orange-500 font-bold uppercase tracking-widest">{pendingPayments.length} awaiting approval</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="divide-y divide-gray-50">
+                        {pendingPayments.map((payment) => (
+                            <div key={payment.id} className="px-5 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 hover:bg-gray-50/50 transition-colors">
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <h4 className="font-black text-gray-900 text-sm truncate">{payment.user_name || 'N/A'}</h4>
+                                        <span className="px-2 py-0.5 bg-orange-50 text-orange-600 rounded-lg text-[9px] font-black uppercase tracking-widest border border-orange-100 shrink-0">
+                                            {(payment.payment_method || 'CBE').toUpperCase()}
+                                        </span>
+                                    </div>
+                                    <p className="text-[11px] text-gray-500 font-medium truncate mb-1.5">{payment.user_email || 'N/A'}</p>
+                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                                            Plan: <span className="text-gray-700">{payment.plan_name || 'N/A'}</span>
+                                        </span>
+                                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                                            Amount: <span className="text-gray-700 font-black">{payment.amount} ETB</span>
+                                        </span>
+                                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                                            Ref: <span className="text-indigo-600 font-black">{payment.tx_ref || 'N/A'}</span>
+                                        </span>
+                                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                                            {payment.created_at ? new Date(payment.created_at).toLocaleDateString() : 'N/A'}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <button
+                                        onClick={() => onApprovePayment(payment.id)}
+                                        disabled={processingId === payment.id}
+                                        className="flex items-center gap-1.5 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-lg shadow-green-100 active:scale-95"
+                                    >
+                                        {processingId === payment.id ? (
+                                            <FaSpinner className="animate-spin text-[10px]" />
+                                        ) : (
+                                            <FaCheck className="text-[10px]" />
+                                        )}
+                                        Approve
+                                    </button>
+                                    <button
+                                        onClick={() => onRejectPayment(payment.id)}
+                                        disabled={processingId === payment.id}
+                                        className="flex items-center gap-1.5 px-4 py-2 bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-lg shadow-red-100 active:scale-95"
+                                    >
+                                        {processingId === payment.id ? (
+                                            <FaSpinner className="animate-spin text-[10px]" />
+                                        ) : (
+                                            <FaTimes className="text-[10px]" />
+                                        )}
+                                        Reject
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {pendingPayments && pendingPayments.length === 0 && (
+                <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 px-5 sm:px-6 py-4 flex items-center gap-3">
+                    <div className="p-2.5 bg-green-50 rounded-xl">
+                        <FaCheckCircle className="text-green-500 text-base" />
+                    </div>
+                    <div>
+                        <p className="text-sm font-black text-gray-700">No Pending Payments</p>
+                        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">All bank & mobile transfer payments have been processed</p>
+                    </div>
+                </div>
+            )}
 
             {/* Performance Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">

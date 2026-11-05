@@ -397,41 +397,21 @@ Support: support@addismed.com
                             </div>
                         ) : (
                             <ul className="space-y-2 text-sm text-green-700">
-                                <li className="flex flex-col gap-2 p-3 bg-green-50 rounded-xl border border-green-100">
-                                    <div className="flex items-start gap-2 text-green-800 font-bold">
-                                        <span className="text-green-600 mt-0.5"><FaEnvelope /></span>
-                                        <span>Check your email! We've sent a verification link.</span>
-                                    </div>
-                                    <div className="flex items-start gap-2 text-green-700 text-sm ml-7">
-                                        <span>(Please make sure to check your spam or junk folder if you don't see it in your inbox)</span>
-                                    </div>
-                                    <div className="ml-7">
-                                        <button
-                                            onClick={resendVerification}
-                                            disabled={resending}
-                                            className="text-xs text-green-600 hover:text-green-800 underline font-medium flex items-center gap-1"
-                                        >
-                                            {resending ? <FaSpinner className="animate-spin" /> : null}
-                                            Didn't receive it? Click here to resend
-                                        </button>
-                                        {resendStatus && (
-                                            <p className={`text-xs mt-1 font-medium ${resendStatus.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>
-                                                {resendStatus.message}
-                                            </p>
-                                        )}
-                                    </div>
+                                <li className="flex items-start gap-2 p-3 bg-green-50 rounded-xl border border-green-100">
+                                    <span className="text-green-600 mt-0.5 font-bold">1</span>
+                                    <span className="text-green-800 font-bold">Your CBE payment proof has been submitted successfully</span>
                                 </li>
                                 <li className="flex items-start gap-2">
                                     <span className="text-green-600 mt-0.5">✓</span>
-                                    <span>Click the link in the email to verify your identity</span>
+                                    <span>Our admin team will verify your bank transfer</span>
                                 </li>
                                 <li className="flex items-start gap-2">
                                     <span className="text-green-600 mt-0.5">✓</span>
-                                    <span>Your account will be activated immediately after verification</span>
+                                    <span>Account activation usually takes up to 24 hours</span>
                                 </li>
                                 <li className="flex items-start gap-2">
                                     <span className="text-green-600 mt-0.5">✓</span>
-                                    <span>Logged in? Your dashboard will update automatically.</span>
+                                    <span>Once approved, you can log in and access all features</span>
                                 </li>
                             </ul>
                         )}

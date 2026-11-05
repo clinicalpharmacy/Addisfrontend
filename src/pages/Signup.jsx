@@ -412,6 +412,9 @@ const Signup = () => {
     const [registeredUser, setRegisteredUser] = useState(null);
     const [chapaPaymentUrl, setChapaPaymentUrl] = useState('');
     const [chapaTxRef, setChapaTxRef] = useState('');
+    const [cbeTxRef, setCbeTxRef] = useState('');
+    const [manualPaymentMethod, setManualPaymentMethod] = useState('cbe'); // 'cbe' or 'telebirr'
+    const [copiedAccount, setCopiedAccount] = useState(false);
     const [selectedPlanDetails, setSelectedPlanDetails] = useState(null);
     const [accountTypeSelection, setAccountTypeSelection] = useState(null);
     const [healthcareClientId, setHealthcareClientId] = useState('');
@@ -800,6 +803,56 @@ const Signup = () => {
             setError(errorMessage);
         } finally {
             setLoading(false);
+        }
+    };
+
+        const handleCbePaymentSubmit = async (e) => {
+        if (e) e.preventDefault();
+        if (!cbeTxRef || !cbeTxRef.trim()) {
+            setPlanError('Please enter your CBE transaction reference number (e.g. from your CBE SMS receipt).');
+            return;
+        }
+        setPaymentLoading(true);
+        setPlanError('');
+
+        try {
+            const userDataStr = localStorage.getItem('registered_user');
+            const userData = userDataStr ? JSON.parse(userDataStr) : {};
+            const country = userData.country || formData.country || 'Ethiopia';
+            let planDetails = selectedPlanDetails || SUBSCRIPTION_PLANS.find(p => p.id === selectedPlan);
+            const storedCategory = userData.pricing_category || 'professional';
+            const dynamicPricing = getDynamicPricing(planDetails, country, storedCategory);
+
+            const payload = {
+                planId: selectedPlan,
+                userEmail: userData.email || formData.email || formData.admin_email,
+                userName: userData.name || formData.full_name || formData.admin_full_name,
+                userPhone: userData.phone || formData.phone || formData.admin_phone,
+                userId: userData.userId || null,
+                account_type: userData.account_type || formData.account_type,
+                referral_code: userData.referral_code || formData.referral_code || '',
+                amount: dynamicPricing.amount,
+                country: country,
+                registration_payload: userData.registration_payload || null,
+                transaction_ref: cbeTxRef.trim(),
+                payment_method: manualPaymentMethod || 'cbe',
+                is_healthcare_client: !!(userData.is_healthcare_client || (userData.email && userData.email.includes('@hcc.addis-med.com'))),
+                healthcare_client_id: userData.userId || healthcareClientId || (userData.email && userData.email.includes('@hcc.addis-med.com') ? userData.email.split('@')[0] : null),
+                client_password: userData.client_password || userData.password || formData.password || null
+            };
+
+            const res = await api.post('/payments/manual/submit', payload);
+            if (!res.success) {
+                throw new Error(res.error || 'Failed to submit payment reference');
+            }
+
+            setChapaTxRef(cbeTxRef.trim());
+            setPaymentSuccess(true);
+            setStep(5);
+        } catch (err) {
+            setPlanError(err.error || err.message || 'Payment submission failed. Please try again.');
+        } finally {
+            setPaymentLoading(false);
         }
     };
 
@@ -2546,15 +2599,124 @@ const Signup = () => {
                             </div>
                         )}
 
-                        <div className="mb-8 p-6 bg-green-50 border-2 border-green-200 rounded-2xl">
-                            <div className="flex items-center gap-4">
-                                <FaCreditCard className="text-green-500 text-xl flex-shrink-0" />
-                                <div className="flex-1">
-                                    <p className="text-green-700 font-bold text-lg">Secure Payment via Chapa</p>
-                                    <p className="text-green-600 mt-2">
-                                        Click the button below to proceed to Chapa's secure payment page to complete your subscription.
-                                    </p>
+                        {/* Manual Direct Payment Card (CBE & Telebirr) */}
+                        <div className="mb-6 p-6 bg-gradient-to-br from-indigo-50/80 via-blue-50/50 to-white border-2 border-indigo-200 rounded-2xl shadow-sm">
+                            <h4 className="text-base font-black text-gray-900 mb-1">Choose Payment Method</h4>
+                            <p className="text-xs text-gray-500 mb-4 font-medium">Pay directly via bank or mobile transfer to our official account</p>
+
+                            {/* Selector Tabs: CBE vs Telebirr */}
+                            <div className="grid grid-cols-2 gap-3 mb-5">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setManualPaymentMethod('cbe');
+                                        setCopiedAccount(false);
+                                    }}
+                                    className={`p-3.5 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-1.5 ${
+                                        manualPaymentMethod === 'cbe'
+                                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-md ring-2 ring-indigo-200'
+                                            : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-200 hover:bg-gray-50'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-lg">🏦</span>
+                                        <span className="font-black text-xs uppercase tracking-wider">CBE Bank</span>
+                                    </div>
+                                    <span className={`text-[10px] font-bold ${manualPaymentMethod === 'cbe' ? 'text-indigo-100' : 'text-gray-400'}`}>
+                                        Commercial Bank
+                                    </span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setManualPaymentMethod('telebirr');
+                                        setCopiedAccount(false);
+                                    }}
+                                    className={`p-3.5 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-1.5 ${
+                                        manualPaymentMethod === 'telebirr'
+                                            ? 'bg-amber-500 text-white border-amber-500 shadow-md ring-2 ring-amber-200'
+                                            : 'bg-white text-gray-700 border-gray-200 hover:border-amber-200 hover:bg-gray-50'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-lg">📱</span>
+                                        <span className="font-black text-xs uppercase tracking-wider">Telebirr</span>
+                                    </div>
+                                    <span className={`text-[10px] font-bold ${manualPaymentMethod === 'telebirr' ? 'text-amber-100' : 'text-gray-400'}`}>
+                                        Mobile Money
+                                    </span>
+                                </button>
+                            </div>
+
+                            {/* Account Details Box */}
+                            <div className="bg-white p-5 rounded-2xl border border-indigo-100 space-y-3.5 mb-5 shadow-xs">
+                                {/* Account Name - Addis Med */}
+                                <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+                                    <div>
+                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Account Name</p>
+                                        <p className="text-base font-black text-gray-900">Addis Med</p>
+                                    </div>
+                                    <span className="px-2.5 py-1 bg-green-50 text-green-700 rounded-lg text-[10px] font-black uppercase tracking-wider border border-green-200">
+                                        Verified Business
+                                    </span>
                                 </div>
+
+                                {/* Account / Phone Number with Copy button */}
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                    <div>
+                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                                            {manualPaymentMethod === 'cbe' ? 'CBE Account Number' : 'Telebirr Phone / Account'}
+                                        </p>
+                                        <p className="text-2xl font-black text-indigo-950 font-mono tracking-wider">
+                                            {manualPaymentMethod === 'cbe' ? '1000791259847' : '+251919519512'}
+                                        </p>
+                                        <p className="text-xs text-gray-500 font-medium">
+                                            {manualPaymentMethod === 'cbe' ? 'Commercial Bank of Ethiopia' : 'Telebirr (Ethio Telecom)'}
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const textToCopy = manualPaymentMethod === 'cbe' ? '1000791259847' : '+251919519512';
+                                            navigator.clipboard.writeText(textToCopy);
+                                            setCopiedAccount(true);
+                                            setTimeout(() => setCopiedAccount(false), 2500);
+                                        }}
+                                        className="self-start sm:self-center px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-xs font-black transition flex items-center gap-1.5 border border-indigo-200 active:scale-95"
+                                    >
+                                        {copiedAccount ? '✓ Copied!' : (manualPaymentMethod === 'cbe' ? 'Copy Account Number' : 'Copy Telebirr Number')}
+                                    </button>
+                                </div>
+
+                                {/* Total Amount */}
+                                <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                                    <span className="text-xs text-gray-600 font-bold">Total Amount to Transfer:</span>
+                                    <span className="text-xl font-black text-green-700">
+                                        {pricing.amount.toLocaleString()} {pricing.currency}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Reference Number Input */}
+                            <div className="space-y-2">
+                                <label className="block text-xs font-black text-gray-800 uppercase tracking-wider">
+                                    {manualPaymentMethod === 'cbe' ? 'CBE Transaction Reference Number' : 'Telebirr Transaction Number'} <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={cbeTxRef}
+                                    onChange={(e) => setCbeTxRef(e.target.value)}
+                                    placeholder={manualPaymentMethod === 'cbe' ? 'Enter reference code from CBE SMS (e.g. FT2409817234)' : 'Enter transaction ID from Telebirr SMS (e.g. 9JA2390812)'}
+                                    className="w-full px-4 py-3 bg-white border-2 border-indigo-200 focus:border-indigo-600 rounded-xl font-mono text-sm tracking-wide text-gray-900 outline-none transition shadow-sm"
+                                />
+                                <p className="text-[11px] text-gray-500 font-medium">
+                                    {manualPaymentMethod === 'cbe' ? (
+                                        <>💡 Transfer using CBE Mobile Banking / CBE Birr to <strong>Addis Med</strong> (Account: <strong>1000791259847</strong>), then paste your reference number above.</>
+                                    ) : (
+                                        <>💡 Send payment via Telebirr app to <strong>Addis Med</strong> (Phone: <strong>+251919519512</strong>), then paste your transaction number above.</>
+                                    )}
+                                </p>
                             </div>
                         </div>
 
@@ -2567,19 +2729,19 @@ const Signup = () => {
                             </button>
 
                             <button
-                                onClick={handleChapaPayment}
-                                disabled={paymentLoading}
-                                className="flex-1 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-medium py-3 md:py-4 px-4 md:px-6 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 md:gap-3 shadow-lg hover:shadow-xl disabled:opacity-50"
+                                onClick={handleCbePaymentSubmit}
+                                disabled={paymentLoading || !cbeTxRef.trim()}
+                                className="flex-1 bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-700 hover:from-indigo-700 hover:to-blue-700 text-white font-black py-3 md:py-4 px-4 md:px-6 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 md:gap-3 shadow-lg hover:shadow-xl disabled:opacity-50"
                             >
                                 {paymentLoading ? (
                                     <>
                                         <FaSpinner className="animate-spin mr-2" />
-                                        Initializing Payment...
+                                        Submitting Payment...
                                     </>
                                 ) : (
                                     <>
-                                        Pay {pricing.amount.toLocaleString()} {pricing.currency} via Chapa
-                                        <FaCreditCard />
+                                        Submit Payment Proof
+                                        <FaCheck className="ml-1" />
                                     </>
                                 )}
                             </button>
@@ -2691,7 +2853,7 @@ const Signup = () => {
                                     <p className="text-gray-500 text-sm mb-1">Payment Status</p>
                                     <div className="flex items-center gap-2">
                                         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                        <span className="font-bold text-green-600">Paid via Chapa</span>
+                                        <span className="font-bold text-amber-600">Pending Admin Approval (CBE)</span>
                                     </div>
                                 </div>
                             </div>
