@@ -438,7 +438,7 @@ const LandingPage = () => {
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
                         <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-slate-100 text-slate-700 rounded-full text-sm font-semibold mb-8 border border-slate-200 shadow-sm">
                             <FaHeartbeat className="text-slate-600" />
-                            Advancing Healthcare Practice & Education in Ethiopia
+                            Supporting Healthcare Practice & Education in Ethiopia
                         </div>
                         <h1 className="text-5xl md:text-6xl font-black text-slate-900 tracking-tighter leading-[1.1] mb-6 max-w-4xl mx-auto">
                             Your Partner in <span className="text-green-500">Digital Health</span>
