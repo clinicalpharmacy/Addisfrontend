@@ -2692,10 +2692,9 @@ const Signup = () => {
                                 {/* Total Amount */}
                                 <div className="flex items-center justify-between pt-3 border-t border-gray-100">
                                     <span className="text-xs text-gray-600 font-bold">Total Amount to Transfer:</span>
-                                    <span className="text-xl font-black text-green-700 whitespace-nowrap">
-                                        {pricing.amount.toLocaleString()}
-                                        {"\u00A0\u00A0\u00A0"}
-                                        {pricing.currency}
+                                    <span className="flex items-baseline gap-3 text-xl font-black text-green-700 whitespace-nowrap">
+                                        <span>{pricing.amount.toLocaleString()}</span>
+                                        <span>{pricing.currency}</span>
                                     </span>
                                 </div>
                             </div>
