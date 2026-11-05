@@ -2644,7 +2644,7 @@ const Signup = () => {
                                         <span className="font-black text-xs uppercase tracking-wider">Telebirr</span>
                                     </div>
                                     <span className={`text-[10px] font-bold ${manualPaymentMethod === 'telebirr' ? 'text-amber-100' : 'text-gray-400'}`}>
-                                        Mobile Money
+                                        Mobile Money is not available for now. Please use CBE or transfer to CBE from telebirr.
                                     </span>
                                 </button>
                             </div>
