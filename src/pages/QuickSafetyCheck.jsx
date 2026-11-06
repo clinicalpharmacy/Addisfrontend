@@ -275,7 +275,7 @@ const QuickSafetyCheck = () => {
                 <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-8 md:p-12 text-white shadow-xl text-center mb-8 relative overflow-hidden">
                     <div className="relative z-10">
                         <p className="text-blue-100 text-lg md:text-xl mb-8 max-w-2xl mx-auto opacity-90 font-bold">
-                            የአንድ ወይም ከዚያ በላይ መድኃኒቶችን ጄኔሪክ ስም በማስገባት የመድኃኒቱን የጥንቃቄ መረጃ ወይም ከሌሎች መድኃኒቶች፣ ዕፅዋት፣ ምግብ ወይም መጠጦች ጋር ያለውን መስተጋብር ይፈልጉ።
+                            የአንድ ወይም ከዚያ በላይ መድኃኒቶችን ጄነሪክ ስም በማስገባት የመድኃኒቱን የጥንቃቄ መረጃ ወይም ከሌሎች መድኃኒቶች፣ ዕፅዋት፣ ምግብ ወይም መጠጦች ጋር ያለውን መስተጋብር ይፈልጉ።
                         </p>
                         
                         <form onSubmit={handleSearch} className="max-w-3xl mx-auto relative group flex flex-col md:flex-row gap-3 items-start">
