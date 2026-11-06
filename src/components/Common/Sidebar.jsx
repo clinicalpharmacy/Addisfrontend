@@ -5,7 +5,6 @@ import {
     FaHome,
     FaUserInjured,
     FaPills,
-    FaBookMedical,
     FaCogs,
     FaVial,
     FaChartBar,
@@ -15,21 +14,14 @@ import {
     FaStethoscope,
     FaUserCircle,
     FaHospital,
-    FaPrescriptionBottleAlt,
-    FaSignOutAlt,
     FaTimes,
-    FaFileAlt,
     FaChartLine,
     FaBrain,
-    FaUserMd,
-    FaExclamationTriangle,
     FaLock,
     FaLink,
-    FaExternalLinkAlt,
     FaBookmark,
     FaCreditCard,
     FaComments,
-    FaCheckCircle,
     FaLeaf,
     FaMortarPestle,
     FaGraduationCap,
@@ -39,8 +31,6 @@ import {
     FaNewspaper,
     FaWeightHanging
 } from 'react-icons/fa';
-
-// Force rebuild - ensuring all icons are properly bundled
 
 const Sidebar = ({ onClose }) => {
     const navigate = useNavigate();
@@ -56,13 +46,19 @@ const Sidebar = ({ onClose }) => {
     const location = useLocation();
 
     useEffect(() => {
+        // Safely parse user from localStorage (may be missing / corrupted)
         const userData = localStorage.getItem('user');
         if (userData) {
-            const parsedUser = JSON.parse(userData);
-            setUser(parsedUser);
+            try {
+                setUser(JSON.parse(userData));
+            } catch (err) {
+                console.warn('Sidebar: invalid user JSON, clearing storage');
+                localStorage.removeItem('user');
+            }
         }
         fetchUsefulLinks();
-    }, [location]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [location.pathname]);
 
     const fetchUsefulLinks = async () => {
         try {
@@ -110,7 +106,6 @@ const Sidebar = ({ onClose }) => {
     };
 
     const daysRemaining = calculateDaysRemaining();
-    const isNearExpiry = daysRemaining !== null && daysRemaining > 0 && daysRemaining <= 7;
 
     const handleLogout = () => {
         if (window.confirm('Are you sure you want to logout?')) {
@@ -153,12 +148,15 @@ const Sidebar = ({ onClose }) => {
             user?.company_type === 'pharmacy_school' ||
             user?.company_type === 'pharmaceutical');
 
-    // Show Minor Illnesses + Compounding to admins, pharmacists & pharmacy companies
+    // Show Minor Illnesses + Compounding to admins, pharmacists, pharmacy students
+    // AND pharmacy companies (matches route-level `allowedRoles` on the backend routes)
     const showPharmacyTools =
-        isAdmin || isIndividualPharmacist || isCompanyPharmacy;
+        isAdmin ||
+        isIndividualPharmacist ||
+        isIndividualPharmacyStudent ||
+        isCompanyPharmacy;
 
-    // Show Education to admins, pharmacy students & pharmacy schools
-    // Show Education to admins, individual pharmacists, pharmacy students,
+    // Show Education to admins, pharmacists, pharmacy students,
     // and organizations of type pharmacy / pharmacy_school
     const showEducation =
         isAdmin ||
@@ -171,9 +169,7 @@ const Sidebar = ({ onClose }) => {
     const isDrugInfoActive = location.pathname === '/knowledge';
 
     // Check if each sub-item is active
-    const isRemediesActive = location.pathname === '/knowledge/remedies';
     const isIllnessesActive = location.pathname === '/knowledge/illnesses';
-    const isCompoundingActive = location.pathname === '/knowledge/compounding';
     const isEducationActive = location.pathname === '/knowledge/education';
 
     return (
@@ -222,7 +218,7 @@ const Sidebar = ({ onClose }) => {
                         </li>
 
                         {/* Medication Reminders - Healthcare Clients & Admin only */}
-                        {(isAdmin || user?.role === 'admin') && (
+                        {(isAdmin || user?.role === 'healthcare_client') && (
                             <li className="mb-2">
                                 <NavLink
                                     to="/reminders"
@@ -378,7 +374,7 @@ const Sidebar = ({ onClose }) => {
                             </NavLink>
                         </li>
 
-                        {/* Minor Illnesses - Admins, pharmacists & pharmacy companies */}
+                        {/* Minor Illnesses - Admins, pharmacists, pharmacy students & pharmacy companies */}
                         {showPharmacyTools && (
                             <li className="mb-2">
                                 <NavLink
@@ -398,7 +394,7 @@ const Sidebar = ({ onClose }) => {
                             </li>
                         )}
 
-                        {/* Compounding - Admins, pharmacists & pharmacy companies */}
+                        {/* Compounding - Admins, pharmacists, pharmacy students & pharmacy companies */}
                         {showPharmacyTools && (
                             <li className="mb-2">
                                 <NavLink
@@ -437,7 +433,7 @@ const Sidebar = ({ onClose }) => {
                             </li>
                         )}
 
-                        {/* Education - Admins, pharmacy students & pharmacy schools */}
+                        {/* Education - Admins, pharmacists, pharmacy students & pharmacy schools */}
                         {showEducation && (
                             <li className="mb-2">
                                 <NavLink
