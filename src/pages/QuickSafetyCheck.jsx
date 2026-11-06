@@ -318,17 +318,18 @@ const QuickSafetyCheck = () => {
                                 onChange={(e) => setSelectedCategory(e.target.value)}
                                 className="bg-white text-gray-800 px-4 py-4 rounded-xl text-base font-semibold shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/50 appearance-none cursor-pointer border-r-8 border-transparent"
                             >
-                                <option value="all">ሁሉም አማራጮች </option>
+                                <option value="" disabled hidden>የሚፈልጉትን ይምረጡ</option>
                                 <option value="pregnancy">በእርግዝና ጊዜ</option>
                                 <option value="lactation">ጡት ለሚያጠቡ</option>
                                 <option value="elderly">በዕድሜ ለገፉ (≥ 65 ዓመት ዕድሜ ላላቸው)</option>
                                 <option value="neonate">ጨቅላ ህጻን (ዕድሜያቸው ከ 1 ወር በታች)</option>
                                 <option value="kidney_failure">ስር የሰደደ የኩላሊት ህሙም</option>
-                                <option value="liver_failure">ሰር የሰደደ የጉበት ህሙም</option>
+                                <option value="liver_failure">ስር የሰደደ የጉበት ህሙም</option>
                                 <option value="drug_interactions">የመድኃኒት መስተጋብር</option>
                                 {shouldShowIVCategory() && (
                                     <option value="iv_incompatibility">IV Drug Incompatibility</option>
                                 )}
+                                <option value="all">ሁሉንም አማራጮች ለማየት</option>
                             </select>
 
                             <button 
