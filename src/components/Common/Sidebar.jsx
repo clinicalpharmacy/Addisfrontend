@@ -36,13 +36,8 @@ import {
     FaShieldAlt,
     FaBriefcase,
     FaBell,
-    FaNewspaper
-} from 'react-icons/fa';
-
-import {
-    // ...existing icons
-    FaWeightHanging,
-    // ...
+    FaNewspaper,
+    FaWeightHanging
 } from 'react-icons/fa';
 
 // Force rebuild - ensuring all icons are properly bundled
