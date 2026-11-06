@@ -231,7 +231,7 @@ const BMICalculator = () => {
             const targetWeight = targetBmi * hM * hM;
             const loss = w - targetWeight;
             if (loss > 0) {
-                message = `Lose at least ${loss.toFixed(1)} kg to reach the normal BMI-for-age range (z-score ≤ +1).`;
+                message = `ቢያንስ ${loss.toFixed(1)} kg ይቀንስ፣ ኖርማል BMI ለመድረስ።`;
             }
         } else if (z > 1) {
             category = 'Overweight';
@@ -241,7 +241,7 @@ const BMICalculator = () => {
             const targetWeight = targetBmi * hM * hM;
             const loss = w - targetWeight;
             if (loss > 0) {
-                message = `Lose at least ${loss.toFixed(1)} kg to reach the normal BMI-for-age range (z-score ≤ +1).`;
+                message = `ቢያንስ ${loss.toFixed(1)} kg ይቀንስ፣ ኖርማል BMI ለመድረስ።`;
             }
         } else if (z < -3) {
             category = 'Severe thinness';
@@ -251,7 +251,7 @@ const BMICalculator = () => {
             const targetWeight = targetBmi * hM * hM;
             const gain = targetWeight - w;
             if (gain > 0) {
-                message = `Gain at least ${gain.toFixed(1)} kg to reach the normal BMI-for-age range (z-score ≥ −2).`;
+                message = `ቢያንስ ${gain.toFixed(1)} kg ክብደት ይጨምር፣ ኖርማል BMI ለመድረስ።`;
             }
         } else if (z < -2) {
             category = 'Thinness';
@@ -261,7 +261,7 @@ const BMICalculator = () => {
             const targetWeight = targetBmi * hM * hM;
             const gain = targetWeight - w;
             if (gain > 0) {
-                message = `Gain at least ${gain.toFixed(1)} kg to reach the normal BMI-for-age range (z-score ≥ −2).`;
+                message = `ቢያንስ ${gain.toFixed(1)} kg ክብደት ይጨምር፣ ኖርማል BMI ለመድረስ።`;
             }
         } else {
             category = 'Normal range';
