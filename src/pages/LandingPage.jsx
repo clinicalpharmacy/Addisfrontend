@@ -619,9 +619,6 @@ const LandingPage = () => {
                                     onClick={() => setActiveCalculator(calc.id)}
                                     className="group text-left p-6 bg-white rounded-3xl border border-slate-200 hover:border-green-300 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-300 flex flex-col"
                                 >
-                                    <div className="w-14 h-14 bg-green-50 border border-green-100 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
-                                        {calc.icon}
-                                    </div>
                                     <h3 className="text-lg font-extrabold text-slate-900 mb-2 tracking-tight">{calc.title}</h3>
                                     <p className="text-sm text-slate-600 leading-relaxed flex-grow">{calc.desc}</p>
                                     <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-green-600 group-hover:gap-2.5 transition-all">
