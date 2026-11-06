@@ -318,7 +318,7 @@ const QuickSafetyCheck = () => {
                                 onChange={(e) => setSelectedCategory(e.target.value)}
                                 className="bg-white text-gray-800 px-4 py-4 rounded-xl text-base font-semibold shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/50 appearance-none cursor-pointer border-r-8 border-transparent"
                             >
-                                <option value="" disabled hidden>የሚፈልጉትን ይምረጡ</option>
+                                <option value="" disabled>የሚፈልጉትን ይምረጡ</option>
                                 <option value="pregnancy">በእርግዝና ጊዜ</option>
                                 <option value="lactation">ጡት ለሚያጠቡ</option>
                                 <option value="elderly">በዕድሜ ለገፉ (≥ 65 ዓመት ዕድሜ ላላቸው)</option>
