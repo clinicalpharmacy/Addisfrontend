@@ -39,6 +39,12 @@ import {
     FaNewspaper
 } from 'react-icons/fa';
 
+import {
+    // ...existing icons
+    FaWeightHanging,
+    // ...
+} from 'react-icons/fa';
+
 // Force rebuild - ensuring all icons are properly bundled
 
 const Sidebar = ({ onClose }) => {
@@ -298,6 +304,27 @@ const Sidebar = ({ onClose }) => {
                             </NavLink>
                         </li>
 
+                        {/* BMI Calculator - Healthcare Clients only */}
+                        {user?.role === 'healthcare_client' && (
+                            <li className="mb-2">
+                                <NavLink
+                                    to="/bmi-calculator"
+                                    onClick={onClose}
+                                    className={({ isActive }) =>
+                                        `flex items-center gap-2.5 p-2.5 rounded-lg transition-all duration-200 ${
+                                            isActive
+                                                ? 'bg-green-50 text-green-600 border-l-4 border-green-600 shadow-sm'
+                                                : 'text-gray-600 hover:bg-green-50 hover:text-green-600 hover:shadow-sm'
+                                        }`
+                                    }
+                                >
+                                    <div className="flex items-center gap-2.5 w-full">
+                                        <FaWeightHanging className="text-xl" />
+                                        <span className="font-bold text-base">የሰውነት ክብደት ጠቋሚ</span>
+                                    </div>
+                                </NavLink>
+                            </li>
+                        )}
 
 
                         {/* Useful Links */}
