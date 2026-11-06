@@ -52,6 +52,8 @@ import KnowledgeBaseLayout from "./components/KnowledgeBase/KnowledgeBaseLayout"
 import Education from "./components/KnowledgeBase/Education";
 import UnderDevelopment from "./pages/UnderDevelopment";
 
+import BMICalculator from './pages/BMICalculator';
+
 // CDSS Components (ADMIN ONLY)
 import ClinicalRulesAdmin from "./components/CDSS/ClinicalRulesAdmin";
 
@@ -1093,6 +1095,15 @@ function App() {
                         <QuickSafetyCheck />
                     </ProtectedRoute>
                 } />
+
+                <Route
+                    path="/bmi-calculator"
+                    element={
+                        <ProtectedRoute requireSubscription={false}>
+                            <BMICalculator />
+                        </ProtectedRoute>
+                    }
+                />
 
                 {/* Admin CDSS Routes - ONLY for admin users */}
                 <Route
