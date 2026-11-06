@@ -9,6 +9,15 @@ import {
     FaUser
 } from 'react-icons/fa';
 
+import { WHO_LMS } from './whoLMS'; // adjust path as needed
+
+const getLMS = (sex, ageMonths) => {
+  const table = WHO_LMS[sex]; // 'boys' or 'girls'
+  const key = String(Math.round(ageMonths));
+  return table[key] || table["228"]; // fallback for out‑of‑range
+};
+
+
 // ---------------------------------------------------------------------------
 // WHO 2007 LMS TABLE (5–19 years)
 // ---------------------------------------------------------------------------
