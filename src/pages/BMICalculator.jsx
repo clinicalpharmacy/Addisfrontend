@@ -40,7 +40,7 @@ const BMICalculator = () => {
             bgColor = 'bg-amber-50 border-amber-200';
             const targetWeight = 18.5 * hM * hM;
             const gain = targetWeight - w;
-            if (gain > 0) message = `Gain at least ${gain.toFixed(1)} kg to reach a BMI of 18.5.`;
+            if (gain > 0) message = `ቢያንስ ${gain.toFixed(1)} kg ክብደት ይጨምሩ፣ የሰውነት ክብደት መረጃ ጠቋሚው 18.5 እንዲደርስ`;
         } else if (bmi < 25) {
             category = 'Normal range';
             categoryColor = 'text-green-600';
@@ -54,7 +54,7 @@ const BMICalculator = () => {
         if (bmi >= 25) {
             const targetWeight = 25 * hM * hM;
             const loss = w - targetWeight;
-            if (loss > 0) message = `Lose at least ${loss.toFixed(1)} kg to reach a BMI below 25.`;
+            if (loss > 0) message = `ቢያንስ ${loss.toFixed(1)} kg ይቀንሱ፣ የሰውነት ክብደት መረጃ ጠቋሚው ከ25 በታች እንዲደርስ.`;
         }
 
         setInput((s) => ({
@@ -146,7 +146,7 @@ const BMICalculator = () => {
                                 {input.result.category}
                             </p>
                             {input.result.message && (
-                                <p className="text-sm font-medium text-gray-700 mt-3 max-w-md mx-auto">
+                                <p className="text-base font-bold text-gray-700 mt-3 max-w-md mx-auto">
                                     {input.result.message}
                                 </p>
                             )}
