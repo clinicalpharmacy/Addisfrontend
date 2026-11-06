@@ -493,11 +493,20 @@ const Signup = () => {
     }, [searchParams]);
 
     // Generate unique ID for healthcare client
+    // Format: HCC followed by 4 random digits and 1 random letter (5 chars total)
     const generateHealthcareClientId = () => {
-        const prefix = 'HCC';
-        const timestamp = Date.now().toString(36).toUpperCase();
-        const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-        return `${prefix}-${timestamp}-${random}`;
+        const digits = Array.from({ length: 4 }, () => Math.floor(Math.random() * 10).toString());
+        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const letter = letters[Math.floor(Math.random() * letters.length)];
+    
+        // Combine digits + letter, then shuffle so the letter isn't always last
+        const chars = [...digits, letter];
+        for (let i = chars.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [chars[i], chars[j]] = [chars[j], chars[i]];
+        }
+    
+        return `HCC${chars.join('')}`;
     };
 
     /**
