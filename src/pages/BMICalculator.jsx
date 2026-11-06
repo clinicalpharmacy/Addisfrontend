@@ -9,35 +9,28 @@ import {
     FaUser
 } from 'react-icons/fa';
 
-// ── Real WHO LMS data ───────────────────────────────────────────────────
-// Expected export from './whoLMS':
-//   export const WHO_LMS = {
-//     boys:  { "0": [L, M, S], "1": [L, M, S], …, "228": [L, M, S] },
-//     girls: { "0": [L, M, S], "1": [L, M, S], …, "228": [L, M, S] }
-//   };
-// The helper below accepts both [L, M, S] arrays and { L, M, S } objects.
-import { WHO_LMS } from './whoLMS';
+// ── Full WHO 2007 LMS table (0–228 months), imported ────────────────────
+// Each entry is stored as an array [L, M, S].
+import { WHO_LMS } from './whoLMS'; // adjust path as needed
 
-// Normalise an LMS entry to a numeric [L, M, S] array.
-const toLMSArray = (entry) => {
-    if (!entry) return null;
-    if (Array.isArray(entry)) return [Number(entry[0]), Number(entry[1]), Number(entry[2])];
-    if (typeof entry === 'object') return [Number(entry.L), Number(entry.M), Number(entry.S)];
-    return null;
-};
-
-// Look up LMS for a sex ('boys' | 'girls') and age in months.
+// Helper: retrieve LMS for a given sex and age in months.
+// Returns an array [L, M, S].
 const getLMS = (sex, ageMonths) => {
-    const table = WHO_LMS[sex];
-    if (!table) return null;
+    const table = WHO_LMS[sex]; // 'boys' or 'girls'
     const key = String(Math.round(ageMonths));
-    return toLMSArray(table[key] || table['228']);
+    return table[key] || table["228"]; // fallback for out‑of‑range
 };
 
-// Convert a z‑score back to a BMI using the LMS formula.
+// ---------------------------------------------------------------------------
+// Helper: convert a z‑score to a BMI using the LMS formula
+// BMI = M * (1 + L * S * z)^(1/L)
+// LMS is provided as an array [L, M, S].
+// ---------------------------------------------------------------------------
 const bmiFromZ = (z, lms) => {
     const [L, M, S] = lms;
-    if (Math.abs(L) < 1e-10) return M * Math.exp(S * z);
+    if (Math.abs(L) < 1e-10) {
+        return M * Math.exp(S * z);
+    }
     return M * Math.pow(1 + L * S * z, 1 / L);
 };
 
@@ -63,7 +56,7 @@ const BMICalculator = () => {
     };
 
     // =====================================================================
-    // ADULT BMI  (unchanged)
+    // ADULT BMI  (original logic – unchanged)
     // =====================================================================
     const calculateBMI = (e) => {
         e.preventDefault();
@@ -157,22 +150,13 @@ const BMICalculator = () => {
         const hM = h / 100;
         const bmi = w / (hM * hM);
 
+        // ── Look up LMS parameters ────────────────────────────────────────
+        // Returns [L, M, S].
         const sex = childInput.sex === 'male' ? 'boys' : 'girls';
         const lms = getLMS(sex, ageMonths);
-
-        if (!lms) {
-            setChildInput((s) => ({
-                ...s,
-                result: {
-                    error:
-                        'LMS reference data unavailable for the selected sex/age. Check that whoLMS exports the full table.'
-                }
-            }));
-            return;
-        }
-
-        // ── LMS z‑score ──────────────────────────────────────────────────
         const [L, M, S] = lms;
+
+        // ── LMS z‑score ────────────────────────────────────────────────────
         let z;
         if (Math.abs(L) < 1e-10) {
             z = Math.log(bmi / M) / S;
@@ -180,16 +164,20 @@ const BMICalculator = () => {
             z = (Math.pow(bmi / M, L) - 1) / (L * S);
         }
 
-        // ── WHO 2007 interpretation (5–19 y) ─────────────────────────────
-        // Normal range:  −2 SD ≤ z ≤ +1 SD
-        // Overweight:    z > +1 SD
-        // Obesity:       z > +2 SD
-        // Thinness:      z < −2 SD
-        // Severe thinness: z < −3 SD
-        // Weight-change target = nearest boundary of the normal range:
-        //   • Overweight / Obesity       → target z = +1
-        //   • Thinness / Severe thinness → target z = −2
-        // ────────────────────────────────────────────────────────────────
+        // ── WHO interpretation (5–19 y) ────────────────────────────────────
+        // Normal range: -2 SD ≤ z ≤ +1 SD
+        // Overweight:   z > +1 SD
+        // Obesity:      z > +2 SD
+        // Thinness:     z < -2 SD
+        // Severe thinness: z < -3 SD
+        //
+        // The weight-change target is the NEAREST boundary of the NORMAL
+        // range, so the value shown is the MINIMUM weight change needed to
+        // bring the child into the normal BMI-for-age category:
+        //   • Overweight / Obesity  → target z = +1 (upper limit of normal)
+        //   • Thinness / Severe thinness → target z = -2 (lower limit of normal)
+        // This mirrors the adult logic (target BMI 25 and 18.5 respectively).
+        // ──────────────────────────────────────────────────────────────────
         let category;
         let categoryColor;
         let bgColor;
@@ -202,8 +190,9 @@ const BMICalculator = () => {
             const targetBmi = bmiFromZ(1, lms);
             const targetWeight = targetBmi * hM * hM;
             const loss = w - targetWeight;
-            if (loss > 0)
+            if (loss > 0) {
                 message = `ቢያንስ ${loss.toFixed(1)} kg ይቀንስ፣ ኖርማል BMI ለመድረስ።`;
+            }
         } else if (z > 1) {
             category = 'Overweight';
             categoryColor = 'text-orange-600';
@@ -211,8 +200,9 @@ const BMICalculator = () => {
             const targetBmi = bmiFromZ(1, lms);
             const targetWeight = targetBmi * hM * hM;
             const loss = w - targetWeight;
-            if (loss > 0)
+            if (loss > 0) {
                 message = `ቢያንስ ${loss.toFixed(1)} kg ይቀንስ፣ ኖርማል BMI ለመድረስ።`;
+            }
         } else if (z < -3) {
             category = 'Severe thinness';
             categoryColor = 'text-amber-700';
@@ -220,8 +210,9 @@ const BMICalculator = () => {
             const targetBmi = bmiFromZ(-2, lms);
             const targetWeight = targetBmi * hM * hM;
             const gain = targetWeight - w;
-            if (gain > 0)
+            if (gain > 0) {
                 message = `ቢያንስ ${gain.toFixed(1)} kg ክብደት ይጨምር፣ ኖርማል BMI ለመድረስ።`;
+            }
         } else if (z < -2) {
             category = 'Thinness';
             categoryColor = 'text-amber-600';
@@ -229,8 +220,9 @@ const BMICalculator = () => {
             const targetBmi = bmiFromZ(-2, lms);
             const targetWeight = targetBmi * hM * hM;
             const gain = targetWeight - w;
-            if (gain > 0)
+            if (gain > 0) {
                 message = `ቢያንስ ${gain.toFixed(1)} kg ክብደት ይጨምር፣ ኖርማል BMI ለመድረስ።`;
+            }
         } else {
             category = 'Normal range';
             categoryColor = 'text-green-600';
@@ -323,7 +315,10 @@ const BMICalculator = () => {
                                 min="0"
                                 value={input.weight}
                                 onChange={(e) =>
-                                    setInput({ ...input, weight: e.target.value })
+                                    setInput({
+                                        ...input,
+                                        weight: e.target.value
+                                    })
                                 }
                                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
                                 placeholder="e.g. 70"
@@ -341,7 +336,10 @@ const BMICalculator = () => {
                                 min="0"
                                 value={input.height}
                                 onChange={(e) =>
-                                    setInput({ ...input, height: e.target.value })
+                                    setInput({
+                                        ...input,
+                                        height: e.target.value
+                                    })
                                 }
                                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
                                 placeholder="e.g. 170"
@@ -421,7 +419,10 @@ const BMICalculator = () => {
                                 min="0"
                                 value={childInput.weight}
                                 onChange={(e) =>
-                                    setChildInput({ ...childInput, weight: e.target.value })
+                                    setChildInput({
+                                        ...childInput,
+                                        weight: e.target.value
+                                    })
                                 }
                                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
                                 placeholder="e.g. 35"
@@ -439,7 +440,10 @@ const BMICalculator = () => {
                                 min="0"
                                 value={childInput.height}
                                 onChange={(e) =>
-                                    setChildInput({ ...childInput, height: e.target.value })
+                                    setChildInput({
+                                        ...childInput,
+                                        height: e.target.value
+                                    })
                                 }
                                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
                                 placeholder="e.g. 140"
@@ -448,7 +452,8 @@ const BMICalculator = () => {
 
                         <div>
                             <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                                <FaChild className="text-green-600" /> Age (years)
+                                <FaChild className="text-green-600" /> Age
+                                (years)
                             </label>
                             <input
                                 type="number"
@@ -457,7 +462,10 @@ const BMICalculator = () => {
                                 max="19"
                                 value={childInput.ageYears}
                                 onChange={(e) =>
-                                    setChildInput({ ...childInput, ageYears: e.target.value })
+                                    setChildInput({
+                                        ...childInput,
+                                        ageYears: e.target.value
+                                    })
                                 }
                                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
                                 placeholder="e.g. 10"
@@ -471,7 +479,10 @@ const BMICalculator = () => {
                             <select
                                 value={childInput.sex}
                                 onChange={(e) =>
-                                    setChildInput({ ...childInput, sex: e.target.value })
+                                    setChildInput({
+                                        ...childInput,
+                                        sex: e.target.value
+                                    })
                                 }
                                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white"
                             >
@@ -518,16 +529,21 @@ const BMICalculator = () => {
                                     </span>
                                 </p>
 
+                                {/* WHO attribution right below z-score */}
                                 <p className="text-sm text-gray-600 mt-1">
                                     {childInput.result.message}
                                 </p>
 
+                                {/* category */}
                                 <p
                                     className={`text-lg font-bold mt-2 ${childInput.result.categoryColor}`}
                                 >
                                     {childInput.result.category}
                                 </p>
 
+                                {/* weight gain / loss message — below z-score
+                                    and shown only for Thinness, Severe thinness,
+                                    Overweight, and Obesity */}
                                 {childInput.result.weightMessage && (
                                     <p className="text-base font-bold text-gray-700 mt-3 max-w-md mx-auto">
                                         {childInput.result.weightMessage}
@@ -550,17 +566,37 @@ const BMICalculator = () => {
                 {mode === 'adult' ? (
                     <div className="space-y-2">
                         {[
-                            { range: 'Below 18.5', label: 'Underweight', color: 'bg-amber-100 text-amber-800' },
-                            { range: '18.5 – 24.9', label: 'Normal', color: 'bg-green-100 text-green-800' },
-                            { range: '25.0 – 29.9', label: 'Overweight', color: 'bg-orange-100 text-orange-800' },
-                            { range: '30.0 and above', label: 'Obesity', color: 'bg-red-100 text-red-800' }
+                            {
+                                range: 'Below 18.5',
+                                label: 'Underweight',
+                                color: 'bg-amber-100 text-amber-800'
+                            },
+                            {
+                                range: '18.5 – 24.9',
+                                label: 'Normal',
+                                color: 'bg-green-100 text-green-800'
+                            },
+                            {
+                                range: '25.0 – 29.9',
+                                label: 'Overweight',
+                                color: 'bg-orange-100 text-orange-800'
+                            },
+                            {
+                                range: '30.0 and above',
+                                label: 'Obesity',
+                                color: 'bg-red-100 text-red-800'
+                            }
                         ].map((c) => (
                             <div
                                 key={c.label}
                                 className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0"
                             >
-                                <span className="text-sm text-gray-600">{c.range}</span>
-                                <span className={`text-xs font-bold px-3 py-1 rounded-full ${c.color}`}>
+                                <span className="text-sm text-gray-600">
+                                    {c.range}
+                                </span>
+                                <span
+                                    className={`text-xs font-bold px-3 py-1 rounded-full ${c.color}`}
+                                >
                                     {c.label}
                                 </span>
                             </div>
@@ -569,40 +605,67 @@ const BMICalculator = () => {
                 ) : (
                     <div className="space-y-2">
                         {[
-                            { sd: '> +2 SD', label: 'Obesity', color: 'bg-red-100 text-red-800' },
-                            { sd: '> +1 SD', label: 'Overweight', color: 'bg-orange-100 text-orange-800' },
-                            { sd: '−2 SD to +1 SD', label: 'Normal', color: 'bg-green-100 text-green-800' },
-                            { sd: '< −2 SD', label: 'Thinness', color: 'bg-amber-100 text-amber-800' },
-                            { sd: '< −3 SD', label: 'Severe thinness', color: 'bg-amber-200 text-amber-900' }
+                            {
+                                sd: '> +2 SD',
+                                label: 'Obesity',
+                                color: 'bg-red-100 text-red-800'
+                            },
+                            {
+                                sd: '> +1 SD',
+                                label: 'Overweight',
+                                color: 'bg-orange-100 text-orange-800'
+                            },
+                            {
+                                sd: '−2 SD to +1 SD',
+                                label: 'Normal',
+                                color: 'bg-green-100 text-green-800'
+                            },
+                            {
+                                sd: '< −2 SD',
+                                label: 'Thinness',
+                                color: 'bg-amber-100 text-amber-800'
+                            },
+                            {
+                                sd: '< −3 SD',
+                                label: 'Severe thinness',
+                                color: 'bg-amber-200 text-amber-900'
+                            }
                         ].map((c) => (
                             <div
                                 key={c.label}
                                 className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0"
                             >
-                                <span className="text-sm text-gray-600">{c.sd}</span>
-                                <span className={`text-xs font-bold px-3 py-1 rounded-full ${c.color}`}>
+                                <span className="text-sm text-gray-600">
+                                    {c.sd}
+                                </span>
+                                <span
+                                    className={`text-xs font-bold px-3 py-1 rounded-full ${c.color}`}
+                                >
                                     {c.label}
                                 </span>
                             </div>
                         ))}
                         <p className="text-xs text-gray-500 pt-3 leading-relaxed">
-                            The weight-change message shows the <strong>minimum</strong>{' '}
-                            change needed to enter the normal range: overweight/obesity
-                            targets the upper limit of normal (z-score = +1), while
-                            thinness/severe thinness targets the lower limit of normal
-                            (z-score = −2). This mirrors the adult BMI approach (target
-                            BMI 25 and 18.5 respectively).
+                            The weight-change message shows the{' '}
+                            <strong>minimum</strong> change needed to enter the
+                            normal range: overweight/obesity targets the upper
+                            limit of normal (z-score = +1), while
+                            thinness/severe thinness targets the lower limit
+                            of normal (z-score = −2). This mirrors the adult
+                            BMI approach (target BMI 25 and 18.5
+                            respectively).
                         </p>
                     </div>
                 )}
             </div>
 
             <p className="mt-6 text-xs text-gray-500 leading-relaxed text-center">
-                <strong>Disclaimer:</strong> BMI is a screening tool, not a diagnostic
-                measure. The child mode uses the WHO 2007 BMI-for-age reference and
-                requires accurate age and sex information. Weight-change messages are
-                estimates based on the LMS parameters; always consult a healthcare
-                professional for a complete assessment.
+                <strong>Disclaimer:</strong> BMI is a screening tool, not a
+                diagnostic measure. The child mode uses the WHO 2007
+                BMI-for-age reference and requires accurate age and sex
+                information. Weight-change messages are estimates based on
+                the LMS parameters; always consult a healthcare professional
+                for a complete assessment.
             </p>
         </div>
     );
