@@ -191,7 +191,7 @@ const BMICalculator = () => {
             const targetWeight = targetBmi * hM * hM;
             const loss = w - targetWeight;
             if (loss > 0) {
-                message = `ቢያንስ ${loss.toFixed(1)} kg ይቀንስ፣ ኖርማል BMI ለመድረስ።`;
+                message = `ቢያንስ ${loss.toFixed(1)} kg ይቀንስ፣ ኖርማል BMI ለመድረስ። የልጆች ዕድሜ፣ ክብደትና ቁመት ሲቀየር BMI ይቀየራል።`;
             }
         } else if (z > 1) {
             category = 'Overweight';
@@ -201,7 +201,7 @@ const BMICalculator = () => {
             const targetWeight = targetBmi * hM * hM;
             const loss = w - targetWeight;
             if (loss > 0) {
-                message = `ቢያንስ ${loss.toFixed(1)} kg ይቀንስ፣ ኖርማል BMI ለመድረስ።`;
+                message = `ቢያንስ ${loss.toFixed(1)} kg ይቀንስ፣ ኖርማል BMI ለመድረስ። የልጆች ዕድሜ፣ ክብደትና ቁመት ሲቀየር BMI ይቀየራል።`;
             }
         } else if (z < -3) {
             category = 'Severe thinness';
@@ -211,7 +211,7 @@ const BMICalculator = () => {
             const targetWeight = targetBmi * hM * hM;
             const gain = targetWeight - w;
             if (gain > 0) {
-                message = `ቢያንስ ${gain.toFixed(1)} kg ክብደት ይጨምር፣ ኖርማል BMI ለመድረስ።`;
+                message = `ቢያንስ ${gain.toFixed(1)} kg ክብደት ይጨምር፣ ኖርማል BMI ለመድረስ። የልጆች ዕድሜ፣ ክብደትና ቁመት ሲቀየር BMI ይቀየራል።`;
             }
         } else if (z < -2) {
             category = 'Thinness';
@@ -221,7 +221,7 @@ const BMICalculator = () => {
             const targetWeight = targetBmi * hM * hM;
             const gain = targetWeight - w;
             if (gain > 0) {
-                message = `ቢያንስ ${gain.toFixed(1)} kg ክብደት ይጨምር፣ ኖርማል BMI ለመድረስ።`;
+                message = `ቢያንስ ${gain.toFixed(1)} kg ክብደት ይጨምር፣ ኖርማል BMI ለመድረስ። የልጆች ዕድሜ፣ ክብደትና ቁመት ሲቀየር BMI ይቀየራል።`;
             }
         } else {
             category = 'Normal range';
