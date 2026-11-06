@@ -786,10 +786,10 @@ const Dashboard = () => {
                         <h3 className="text-lg font-bold text-gray-800 mb-4">Quick Actions</h3>
                         <div className="space-y-3">
                             <button
-                                onClick={() => navigate('/clinical-pharmacy-tool')}
+                                onClick={() => navigate('/quick-safety')}
                                 className="w-full text-left p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition"
                             >
-                                <p className="font-medium text-blue-800">Clinical Pharmacy Tool</p>
+                                <p className="font-medium text-blue-800">Quick Check</p>
                             </button>
                             <button
                                 onClick={() => navigate('/knowledge/medications')}
