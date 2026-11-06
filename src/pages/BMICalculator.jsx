@@ -136,12 +136,12 @@ const BMICalculator = () => {
         }
 
         const ageMonths = Math.round(ageY * 12);
-        if (ageMonths < 61 || ageMonths > 228) {
+        if (ageMonths < 60 || ageMonths > 228) {
             setChildInput((s) => ({
                 ...s,
                 result: {
                     error:
-                        'This child BMI-for-age calculator is for ages 5–19 years (61–228 months).'
+                        'This child BMI-for-age calculator is for ages 5–19 years (60–228 months).'
                 }
             }));
             return;
