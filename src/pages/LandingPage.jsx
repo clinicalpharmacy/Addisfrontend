@@ -10,6 +10,10 @@ import {
 import api from '../utils/api';
 import { format } from 'date-fns';
 
+// 👇 Import the full BMI calculator (adult + child, WHO 2007 LMS)
+//    Adjust the path to wherever BMICalculator.jsx lives in your project.
+import BMICalculator from '../components/BMICalculator';
+
 // ---- Unit tables for the Vial / Bottle calculator ----
 const AMOUNT_UNITS = {
     mg:    { base: 'mg',    factor: 1 },
@@ -24,6 +28,34 @@ const DOSE_UNITS = {
     g:     { base: 'mg',    factor: 1000 },
     units: { base: 'units', factor: 1 }
 };
+
+// ---- Calculator card definitions ----
+const CALCULATORS = [
+    {
+        id: 'bmi',
+        title: 'BMI Calculator',
+        desc: 'Body Mass Index — adult & child (WHO 2007)',
+        icon: <FaWeightHanging className="text-green-500 text-2xl" />
+    },
+    {
+        id: 'bsa',
+        title: 'BSA Calculator',
+        desc: 'Body Surface Area — Du Bois formula',
+        icon: <FaRulerVertical className="text-green-500 text-2xl" />
+    },
+    {
+        id: 'egfr',
+        title: 'eGFR Calculator',
+        desc: 'Kidney function — CKD-EPI 2021 (race-free)',
+        icon: <FaHeartbeat className="text-green-500 text-2xl" />
+    },
+    {
+        id: 'vial',
+        title: 'Vial / Bottle Calculator',
+        desc: 'Vials or bottles needed for a treatment course',
+        icon: <FaCapsules className="text-green-500 text-2xl" />
+    }
+];
 
 // ---- Client counselling messages (Amharic) ----
 const CLIENT_TIPS = [
@@ -46,8 +78,10 @@ const LandingPage = () => {
     const [newsLoading, setNewsLoading] = useState(true);
     const [imgErrors, setImgErrors] = useState({});
 
-    // ---- Calculator state ----
-    const [bmiInput, setBmiInput] = useState({ weight: '', height: '', result: null });
+    // ---- Calculator modal state ----
+    const [activeCalculator, setActiveCalculator] = useState(null); // null | 'bmi' | 'bsa' | 'egfr' | 'vial'
+
+    // ---- BSA / eGFR / Vial state (BMI state lives inside BMICalculator) ----
     const [bsaInput, setBsaInput] = useState({ weight: '', height: '', result: null });
     const [egfrInput, setEgfrInput] = useState({ age: '', sex: 'male', scr: '', result: null });
     const [vialInput, setVialInput] = useState({
@@ -82,7 +116,7 @@ const LandingPage = () => {
         return '/home';
     };
 
-    // ---- Fetch latest news (non-blocking; guests can still see the page) ----
+    // ---- Fetch latest news ----
     useEffect(() => {
         let cancelled = false;
         const loadNews = async () => {
@@ -93,7 +127,6 @@ const LandingPage = () => {
                     setLatestNews((data.news || []).slice(0, 3));
                 }
             } catch (err) {
-                // Silent: guests without a token will 401 here until /news is made public
                 console.warn('⚠️ Could not load landing news:', err?.message || err);
             } finally {
                 if (!cancelled) setNewsLoading(false);
@@ -102,6 +135,21 @@ const LandingPage = () => {
         loadNews();
         return () => { cancelled = true; };
     }, []);
+
+    // ---- Lock body scroll + close on Escape while a calculator modal is open ----
+    useEffect(() => {
+        if (!activeCalculator) return;
+        const onKey = (e) => {
+            if (e.key === 'Escape') setActiveCalculator(null);
+        };
+        document.addEventListener('keydown', onKey);
+        const prevOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.removeEventListener('keydown', onKey);
+            document.body.style.overflow = prevOverflow;
+        };
+    }, [activeCalculator]);
 
     // ---- Calculator helpers ----
     const num = (v) => {
@@ -114,40 +162,7 @@ const LandingPage = () => {
             ? n.toLocaleString(undefined, { maximumFractionDigits: dec, minimumFractionDigits: 0 })
             : '—';
 
-    const calculateBMI = (e) => {
-        e.preventDefault();
-        const w = num(bmiInput.weight);
-        const h = num(bmiInput.height);
-        if (!w || !h) {
-            setBmiInput((s) => ({ ...s, result: { error: 'Enter valid weight and height.' } }));
-            return;
-        }
-        const hM = h / 100;
-        const bmi = w / (hM * hM);
-
-        let category = 'Obesity';
-        let message = null;
-
-        if (bmi < 18.5) {
-            category = 'Underweight';
-            const targetWeight = 18.5 * hM * hM;
-            const gain = targetWeight - w;
-            if (gain > 0) message = `Gain at least ${gain.toFixed(1)} kg to reach a BMI of 18.5.`;
-        } else if (bmi < 25) {
-            category = 'Normal range';
-        } else if (bmi < 30) {
-            category = 'Overweight';
-        }
-
-        if (bmi >= 25) {
-            const targetWeight = 25 * hM * hM;
-            const loss = w - targetWeight;
-            if (loss > 0) message = `Lose at least ${loss.toFixed(1)} kg to reach a BMI below 25.`;
-        }
-
-        setBmiInput((s) => ({ ...s, result: { value: bmi.toFixed(1), unit: 'kg/m²', category, message } }));
-    };
-
+    // ---- BSA ----
     const calculateBSA = (e) => {
         e.preventDefault();
         const w = num(bsaInput.weight);
@@ -160,6 +175,7 @@ const LandingPage = () => {
         setBsaInput((s) => ({ ...s, result: { value: bsa.toFixed(2), unit: 'm²', category: 'Du Bois formula' } }));
     };
 
+    // ---- eGFR ----
     const calculateEGFR = (e) => {
         e.preventDefault();
         const age = num(egfrInput.age);
@@ -184,6 +200,7 @@ const LandingPage = () => {
         }));
     };
 
+    // ---- Vial / Bottle ----
     const calculateVials = (e) => {
         e.preventDefault();
 
@@ -304,11 +321,9 @@ const LandingPage = () => {
 
     if (vialResult && !vialResult.error) {
         vialBreakdown.push(['Strength used', vialResult.strengthEntered]);
-
         if (vialResult.isConc) {
             vialBreakdown.push(['Concentration', `${fmt(vialResult.concentration, 4)} ${vialResult.doseBaseUnit}/mL`]);
         }
-
         vialBreakdown.push([
             'Doses per day',
             `${fmt(vialResult.dosesPerDay, 2)} ${vialResult.dosesPerDay === 1 ? 'dose' : 'doses'}`
@@ -319,7 +334,6 @@ const LandingPage = () => {
             'Total medication required',
             `${fmt(vialResult.totalAmountNeeded, 2)} ${vialResult.doseBaseUnit}`
         ]);
-
         if (vialResult.isConc) {
             vialBreakdown.push(['Volume per dose', `${fmt(vialResult.volumePerDose, 3)} mL`]);
             vialBreakdown.push(['Total volume required', `${fmt(vialResult.totalVolumeNeeded, 2)} mL`]);
@@ -336,23 +350,23 @@ const LandingPage = () => {
                 vialBreakdown.push(['Vials per dose', fmt(vialResult.vialsPerDose, 0)]);
             }
         }
-
         if (vialResult.dosesPerVial != null && vialResult.vt === 'multi') {
             vialBreakdown.push(['Doses obtainable per vial', fmt(vialResult.dosesPerVial, 0)]);
         }
-
         vialBreakdown.push(['Vial type', vialResult.vt === 'multi' ? 'Multi-use' : 'Single-use']);
     }
 
-    // Helper for trimming article previews
     const truncate = (text, max = 160) => {
         if (!text) return '';
         return text.length > max ? text.slice(0, max).trim() + '…' : text;
     };
 
+    // Title shown in the modal header (for BSA/eGFR/Vial; BMI brings its own)
+    const activeCalcMeta = CALCULATORS.find((c) => c.id === activeCalculator);
+
     return (
         <div className="min-h-screen bg-white font-sans text-slate-900">
-            {/* Navbar */}
+            {/* Navbar (unchanged) */}
             <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-20">
@@ -367,7 +381,6 @@ const LandingPage = () => {
                             <a href="#about" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">About Us</a>
                             <a href="#contact" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">Contact</a>
                             <a href="#features" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">Features</a>
-                            {/* 👇 NEW: News link, between Features and Calculators */}
                             <a href="#news" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">News & Alerts</a>
                             <a href="#calculators" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">Calculators</a>
                             <a href="#clients" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">For Clients</a>
@@ -408,7 +421,6 @@ const LandingPage = () => {
                             <a href="#about" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">About Us</a>
                             <a href="#contact" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">Contact</a>
                             <a href="#features" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">Features</a>
-                            {/* 👇 NEW: News link in mobile menu */}
                             <a href="#news" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">News</a>
                             <a href="#calculators" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">Calculators</a>
                             <a href="#clients" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-sm font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">For Clients</a>
@@ -433,7 +445,7 @@ const LandingPage = () => {
             </nav>
 
             <main>
-                {/* Hero */}
+                {/* Hero (unchanged) */}
                 <div className="relative pt-16 pb-24 lg:pt-24 lg:pb-32 overflow-hidden bg-white">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
                         <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-slate-100 text-slate-700 rounded-full text-sm font-semibold mb-8 border border-slate-200 shadow-sm">
@@ -464,7 +476,7 @@ const LandingPage = () => {
                     </div>
                 </div>
 
-                {/* Features */}
+                {/* Features (unchanged) */}
                 <div id="features" className="bg-white py-20 border-t border-slate-200 pt-28 -mt-8">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="text-center mb-16">
@@ -491,7 +503,7 @@ const LandingPage = () => {
                     </div>
                 </div>
 
-                {/* ===== NEWS SECTION — between Features and Calculators ===== */}
+                {/* News (unchanged) */}
                 <div id="news" className="bg-slate-50 py-20 border-t border-slate-200">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-12">
@@ -593,384 +605,43 @@ const LandingPage = () => {
                     </div>
                 </div>
 
-                {/* Clinical Calculators */}
+                {/* ============ CLINICAL CALCULATORS — clickable cards ============ */}
                 <div id="calculators" className="bg-slate-50 py-20 border-t border-slate-200">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="text-center mb-14">
                             <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Calculators to support everyday practice</h2>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            {/* BMI */}
-                            <form onSubmit={calculateBMI} className="p-8 bg-white rounded-3xl border border-slate-200 hover:border-green-300 hover:shadow-xl transition-all duration-300 flex flex-col">
-                                <h3 className="text-xl font-extrabold text-slate-900 mb-1 tracking-tight">BMI Calculator</h3>
-                                <p className="text-sm text-slate-500 mb-5">የሰውነት ክብደት መረጃ ጠቋሚ</p>
-
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Weight (kg)</label>
-                                <input
-                                    type="number" step="0.1" min="0"
-                                    value={bmiInput.weight}
-                                    onChange={(e) => setBmiInput({ ...bmiInput, weight: e.target.value })}
-                                    className="w-full mb-4 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                                    placeholder="e.g. 70"
-                                />
-
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Height (cm)</label>
-                                <input
-                                    type="number" step="0.1" min="0"
-                                    value={bmiInput.height}
-                                    onChange={(e) => setBmiInput({ ...bmiInput, height: e.target.value })}
-                                    className="w-full mb-5 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                                    placeholder="e.g. 170"
-                                />
-
-                                <button type="submit" className="w-full py-3 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all">
-                                    Calculate BMI
-                                </button>
-
-                                <div className="mt-5 min-h-[110px] flex items-center justify-center">
-                                    {bmiInput.result && bmiInput.result.error && (
-                                        <p className="text-sm text-red-500 text-center">{bmiInput.result.error}</p>
-                                    )}
-                                    {bmiInput.result && bmiInput.result.value && (
-                                        <div className="text-center">
-                                            <p className="text-3xl font-black text-slate-900">
-                                                {bmiInput.result.value}
-                                                <span className="text-base font-semibold text-slate-500 ml-1">{bmiInput.result.unit}</span>
-                                            </p>
-                                            <p className="text-sm font-semibold text-green-600 mt-1">{bmiInput.result.category}</p>
-                                            {bmiInput.result.message && (
-                                                <p className="text-xs font-medium text-slate-600 mt-2 leading-relaxed">{bmiInput.result.message}</p>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-                            </form>
-
-                            {/* BSA */}
-                            <form onSubmit={calculateBSA} className="p-8 bg-white rounded-3xl border border-slate-200 hover:border-green-300 hover:shadow-xl transition-all duration-300 flex flex-col">
-                                <h3 className="text-xl font-extrabold text-slate-900 mb-1 tracking-tight">BSA Calculator</h3>
-                                <p className="text-sm text-slate-500 mb-5">Body Surface Area — Du Bois</p>
-
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Weight (kg)</label>
-                                <input
-                                    type="number" step="0.1" min="0"
-                                    value={bsaInput.weight}
-                                    onChange={(e) => setBsaInput({ ...bsaInput, weight: e.target.value })}
-                                    className="w-full mb-4 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                                    placeholder="e.g. 70"
-                                />
-
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Height (cm)</label>
-                                <input
-                                    type="number" step="0.1" min="0"
-                                    value={bsaInput.height}
-                                    onChange={(e) => setBsaInput({ ...bsaInput, height: e.target.value })}
-                                    className="w-full mb-5 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                                    placeholder="e.g. 170"
-                                />
-
-                                <button type="submit" className="w-full py-3 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all">
-                                    Calculate BSA
-                                </button>
-
-                                <div className="mt-5 min-h-[110px] flex items-center justify-center">
-                                    {bsaInput.result && bsaInput.result.error && (
-                                        <p className="text-sm text-red-500 text-center">{bsaInput.result.error}</p>
-                                    )}
-                                    {bsaInput.result && bsaInput.result.value && (
-                                        <div className="text-center">
-                                            <p className="text-3xl font-black text-slate-900">
-                                                {bsaInput.result.value}
-                                                <span className="text-base font-semibold text-slate-500 ml-1">{bsaInput.result.unit}</span>
-                                            </p>
-                                            <p className="text-sm font-semibold text-green-600 mt-1">{bsaInput.result.category}</p>
-                                        </div>
-                                    )}
-                                </div>
-                            </form>
-
-                            {/* eGFR */}
-                            <form onSubmit={calculateEGFR} className="p-8 bg-white rounded-3xl border border-slate-200 hover:border-green-300 hover:shadow-xl transition-all duration-300 flex flex-col">
-                                <h3 className="text-xl font-extrabold text-slate-900 mb-1 tracking-tight">eGFR Calculator</h3>
-                                <p className="text-sm text-slate-500 mb-5">CKD-EPI 2021 (race-free)</p>
-
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Age (years)</label>
-                                <input
-                                    type="number" step="1" min="1"
-                                    value={egfrInput.age}
-                                    onChange={(e) => setEgfrInput({ ...egfrInput, age: e.target.value })}
-                                    className="w-full mb-4 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                                    placeholder="e.g. 45"
-                                />
-
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Sex</label>
-                                <select
-                                    value={egfrInput.sex}
-                                    onChange={(e) => setEgfrInput({ ...egfrInput, sex: e.target.value })}
-                                    className="w-full mb-4 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white"
-                                >
-                                    <option value="male">Male</option>
-                                    <option value="female">Female</option>
-                                </select>
-
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Serum creatinine (mg/dL)</label>
-                                <input
-                                    type="number" step="0.01" min="0"
-                                    value={egfrInput.scr}
-                                    onChange={(e) => setEgfrInput({ ...egfrInput, scr: e.target.value })}
-                                    className="w-full mb-5 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                                    placeholder="e.g. 0.9"
-                                />
-
-                                <button type="submit" className="w-full py-3 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all">
-                                    Calculate eGFR
-                                </button>
-
-                                <div className="mt-5 min-h-[110px] flex items-center justify-center">
-                                    {egfrInput.result && egfrInput.result.error && (
-                                        <p className="text-sm text-red-500 text-center">{egfrInput.result.error}</p>
-                                    )}
-                                    {egfrInput.result && egfrInput.result.value && (
-                                        <div className="text-center">
-                                            <p className="text-3xl font-black text-slate-900">
-                                                {egfrInput.result.value}
-                                                <span className="text-sm font-semibold text-slate-500 ml-1">{egfrInput.result.unit}</span>
-                                            </p>
-                                            <p className="text-sm font-semibold text-green-600 mt-1">{egfrInput.result.category}</p>
-                                        </div>
-                                    )}
-                                </div>
-                            </form>
-                        </div>
-
-                        {/* ===== Vial / Bottle Calculator ===== */}
-                        <form
-                            onSubmit={calculateVials}
-                            className="mt-8 p-8 bg-white rounded-3xl border border-slate-200 hover:border-green-300 hover:shadow-xl transition-all duration-300"
-                        >
-                            <div className="flex items-start gap-4 mb-6">
-                                <div className="w-14 h-14 bg-green-50 border border-green-100 rounded-2xl flex items-center justify-center shrink-0">
-                                    <FaCapsules className="text-green-500 text-2xl" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-extrabold text-slate-900 tracking-tight">Vial / Bottle Calculator</h3>
-                                    <p className="text-sm text-slate-500">
-                                        Determine how many vials or bottles are needed based on strength, dose, frequency, and treatment duration.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Strength</label>
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="number" step="any" min="0"
-                                            value={vialInput.strengthValue}
-                                            onChange={(e) => setVialInput({ ...vialInput, strengthValue: e.target.value })}
-                                            className="flex-1 min-w-0 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                                            placeholder="e.g. 500"
-                                        />
-                                        <select
-                                            value={vialInput.strengthUnit}
-                                            onChange={(e) => setVialInput({ ...vialInput, strengthUnit: e.target.value })}
-                                            className="px-2 py-2.5 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white"
-                                        >
-                                            <option value="mg">mg</option>
-                                            <option value="mcg">mcg</option>
-                                            <option value="g">g</option>
-                                            <option value="units">units</option>
-                                        </select>
-                                    </div>
-                                    <div className="flex items-center gap-2 mt-2 text-sm">
-                                        <select
-                                            value={vialInput.strengthBasis}
-                                            onChange={(e) => setVialInput({ ...vialInput, strengthBasis: e.target.value })}
-                                            className="px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white text-slate-700"
-                                        >
-                                            <option value="perMl">per volume</option>
-                                            <option value="perVial">per vial</option>
-                                        </select>
-                                        {vialIsPerMl && (
-                                            <>
-                                                <input
-                                                    type="number" step="any" min="0"
-                                                    value={vialInput.strengthPerMl}
-                                                    onChange={(e) => setVialInput({ ...vialInput, strengthPerMl: e.target.value })}
-                                                    className="w-16 px-2 py-1.5 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                                                    placeholder="1"
-                                                />
-                                                <span className="text-slate-500 text-xs">mL</span>
-                                            </>
-                                        )}
-                                    </div>
-                                    <p className="mt-1 text-[11px] text-slate-400">
-                                        {vialIsPerMl
-                                            ? 'e.g. 500 mg per 5 mL → enter 500 mg, per volume 5 mL'
-                                            : 'e.g. 1 g per vial → enter 1 g, per vial'}
-                                    </p>
-                                </div>
-
-                                {vialIsPerMl && (
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">
-                                            Bottle / vial volume <span className="text-slate-400 font-normal">(mL)</span>
-                                        </label>
-                                        <input
-                                            type="number" step="any" min="0"
-                                            value={vialInput.vialVolume}
-                                            onChange={(e) => setVialInput({ ...vialInput, vialVolume: e.target.value })}
-                                            className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                                            placeholder="e.g. 100"
-                                        />
-                                    </div>
-                                )}
-
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Dose per administration</label>
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="number" step="any" min="0"
-                                            value={vialInput.doseValue}
-                                            onChange={(e) => setVialInput({ ...vialInput, doseValue: e.target.value })}
-                                            className="flex-1 min-w-0 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                                            placeholder="e.g. 250"
-                                        />
-                                        <select
-                                            value={vialInput.doseUnit}
-                                            onChange={(e) => setVialInput({ ...vialInput, doseUnit: e.target.value })}
-                                            className="px-2 py-2.5 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white"
-                                        >
-                                            <option value="mg">mg</option>
-                                            <option value="mcg">mcg</option>
-                                            <option value="g">g</option>
-                                            <option value="units">units</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Frequency</label>
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="number" step="any" min="0"
-                                            value={vialInput.freqValue}
-                                            onChange={(e) => setVialInput({ ...vialInput, freqValue: e.target.value })}
-                                            className="flex-1 min-w-0 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                                            placeholder="e.g. 3"
-                                        />
-                                        <select
-                                            value={vialInput.freqType}
-                                            onChange={(e) => setVialInput({ ...vialInput, freqType: e.target.value })}
-                                            className="px-2 py-2.5 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white"
-                                        >
-                                            <option value="perDay">times per day</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">
-                                        Treatment duration <span className="text-slate-400 font-normal">(days)</span>
-                                    </label>
-                                    <input
-                                        type="number" step="any" min="0"
-                                        value={vialInput.durationDays}
-                                        onChange={(e) => setVialInput({ ...vialInput, durationDays: e.target.value })}
-                                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                                        placeholder="e.g. 7"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="mt-4">
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Vial / bottle type</label>
-                                <div className="flex flex-wrap gap-3">
-                                    <label
-                                        className={`flex items-start gap-2 px-4 py-3 border rounded-xl cursor-pointer transition-all flex-1 min-w-[180px] ${
-                                            vialInput.vialType === 'multi'
-                                                ? 'border-green-500 bg-green-50'
-                                                : 'border-slate-200 bg-white hover:border-green-200'
-                                        }`}
-                                    >
-                                        <input
-                                            type="radio" name="vialType" value="multi"
-                                            checked={vialInput.vialType === 'multi'}
-                                            onChange={() => setVialInput({ ...vialInput, vialType: 'multi' })}
-                                            className="mt-1 accent-green-500"
-                                        />
-                                        <span className="text-sm">
-                                            <span className="font-semibold text-slate-800 block">Multi-use</span>
-                                            <span className="text-xs text-slate-500">Remainder can be used for later doses</span>
-                                        </span>
-                                    </label>
-                                    <label
-                                        className={`flex items-start gap-2 px-4 py-3 border rounded-xl cursor-pointer transition-all flex-1 min-w-[180px] ${
-                                            vialInput.vialType === 'single'
-                                                ? 'border-green-500 bg-green-50'
-                                                : 'border-slate-200 bg-white hover:border-green-200'
-                                        }`}
-                                    >
-                                        <input
-                                            type="radio" name="vialType" value="single"
-                                            checked={vialInput.vialType === 'single'}
-                                            onChange={() => setVialInput({ ...vialInput, vialType: 'single' })}
-                                            className="mt-1 accent-green-500"
-                                        />
-                                        <span className="text-sm">
-                                            <span className="font-semibold text-slate-800 block">Single-use</span>
-                                            <span className="text-xs text-slate-500">Discard remainder after each dose</span>
-                                        </span>
-                                    </label>
-                                </div>
-                            </div>
-
-                            <button type="submit" className="mt-5 w-full py-3 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all">
-                                Calculate Vials / Bottles
-                            </button>
-
-                            {vialResult && vialResult.error && (
-                                <p className="mt-4 text-sm text-red-500 font-medium">{vialResult.error}</p>
-                            )}
-
-                            {vialResult && !vialResult.error && (
-                                <div className="mt-6 border-t border-slate-100 pt-5">
-                                    <div className="text-center mb-4">
-                                        <p className="text-4xl font-black text-green-600">{fmt(vialResult.vialsNeeded, 0)}</p>
-                                        <p className="text-sm text-slate-500 mt-1">
-                                            {vialResult.vialsNeeded === 1 ? 'vial / bottle needed' : 'vials / bottles needed'}
-                                        </p>
-                                    </div>
-                                    <div className="space-y-2 max-w-2xl mx-auto">
-                                        {vialBreakdown.map(([key, val]) => (
-                                            <div
-                                                key={key}
-                                                className="flex justify-between gap-4 text-sm py-1 border-b border-dashed border-slate-100 last:border-0"
-                                            >
-                                                <span className="text-slate-500">{key}</span>
-                                                <span className="font-semibold text-slate-800 text-right">{val}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            <p className="mt-5 text-xs text-slate-500 leading-relaxed">
-                                <strong>Note:</strong> This calculator is for planning purposes only. Multi-use vial
-                                calculations assume the vial remains stable for the entire treatment period — check the
-                                beyond-use date (BUD) after opening. Frequencies that don't divide evenly into 24 hours
-                                are rounded up to whole administrations.
+                            <p className="mt-4 text-slate-600 max-w-2xl mx-auto">
+                                Click a card to open the calculator. Close anytime with the × button, the backdrop, or by pressing <kbd className="px-1.5 py-0.5 text-xs bg-slate-100 border border-slate-200 rounded">Esc</kbd>.
                             </p>
-                        </form>
+                        </div>
 
-                        <p className="mt-10 text-center text-xs text-slate-500 max-w-2xl mx-auto leading-relaxed">
-                            <strong>Disclaimer:</strong> These calculators are for educational and informational purposes only and are not a substitute for clinical judgement. eGFR is normalized to 1.73 m² and may not match drug-label dosing methods (e.g., Cockcroft-Gault). Always follow the specific product label or institutional protocol.
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {CALCULATORS.map((calc) => (
+                                <button
+                                    key={calc.id}
+                                    type="button"
+                                    onClick={() => setActiveCalculator(calc.id)}
+                                    className="group text-left p-6 bg-white rounded-3xl border border-slate-200 hover:border-green-300 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-300 flex flex-col"
+                                >
+                                    <div className="w-14 h-14 bg-green-50 border border-green-100 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
+                                        {calc.icon}
+                                    </div>
+                                    <h3 className="text-lg font-extrabold text-slate-900 mb-2 tracking-tight">{calc.title}</h3>
+                                    <p className="text-sm text-slate-600 leading-relaxed flex-grow">{calc.desc}</p>
+                                    <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-green-600 group-hover:gap-2.5 transition-all">
+                                        Open <FaArrowRight className="text-[10px]" />
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+
+                        <p className="mt-10 text-center text-xs text-slate-500 max-w-3xl mx-auto leading-relaxed">
+                            <strong>Disclaimer:</strong> These calculators are for educational and informational purposes only and are not a substitute for clinical judgement. BMI for children uses the WHO 2007 LMS reference (5–19 years). eGFR is normalized to 1.73 m² and may not match drug-label dosing methods (e.g., Cockcroft-Gault). Always follow the specific product label or institutional protocol.
                         </p>
                     </div>
                 </div>
 
-                {/* ===== For Clients ===== */}
+                {/* For Clients (unchanged) */}
                 <div id="clients" className="bg-white py-20 border-t border-slate-200">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="text-center mb-12">
@@ -996,7 +667,7 @@ const LandingPage = () => {
                     </div>
                 </div>
 
-                {/* Trust / AAU */}
+                {/* Trust / AAU (unchanged) */}
                 <div id="about" className="bg-[#1A2535] py-24 text-white">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="grid lg:grid-cols-2 gap-16 items-center">
@@ -1030,6 +701,7 @@ const LandingPage = () => {
                 </div>
             </main>
 
+            {/* Footer (unchanged) */}
             <footer id="contact" className="bg-slate-50 border-t border-slate-200 pt-16 pb-8">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                     <div className="flex items-center justify-center gap-2 mb-6">
@@ -1053,6 +725,356 @@ const LandingPage = () => {
                     </div>
                 </div>
             </footer>
+
+            {/* ============================================================ */}
+            {/* CALCULATOR MODAL                                             */}
+            {/* ============================================================ */}
+            {activeCalculator && (
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+                    onClick={() => setActiveCalculator(null)}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label={activeCalcMeta ? activeCalcMeta.title : 'Calculator'}
+                >
+                    <div
+                        className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto relative"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Close button — always visible at top-right */}
+                        <button
+                            type="button"
+                            onClick={() => setActiveCalculator(null)}
+                            className="absolute top-3 right-3 z-30 w-9 h-9 rounded-full bg-white hover:bg-slate-100 text-slate-600 flex items-center justify-center shadow-md border border-slate-200 transition"
+                            aria-label="Close calculator"
+                        >
+                            <FaTimes />
+                        </button>
+
+                        {/* BMI — imported component (brings its own header & padding) */}
+                        {activeCalculator === 'bmi' && <BMICalculator />}
+
+                        {/* BSA — inline form with header */}
+                        {activeCalculator === 'bsa' && (
+                            <div className="p-6 md:p-8 pt-14 sm:pt-16">
+                                <h2 className="text-2xl font-bold text-slate-900 mb-1">BSA Calculator</h2>
+                                <p className="text-slate-500 mb-6">Body Surface Area — Du Bois formula</p>
+
+                                <form onSubmit={calculateBSA}>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Weight (kg)</label>
+                                    <input
+                                        type="number" step="0.1" min="0"
+                                        value={bsaInput.weight}
+                                        onChange={(e) => setBsaInput({ ...bsaInput, weight: e.target.value })}
+                                        className="w-full mb-4 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                        placeholder="e.g. 70"
+                                    />
+
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Height (cm)</label>
+                                    <input
+                                        type="number" step="0.1" min="0"
+                                        value={bsaInput.height}
+                                        onChange={(e) => setBsaInput({ ...bsaInput, height: e.target.value })}
+                                        className="w-full mb-5 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                        placeholder="e.g. 170"
+                                    />
+
+                                    <button type="submit" className="w-full py-3 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all">
+                                        Calculate BSA
+                                    </button>
+
+                                    <div className="mt-6">
+                                        {bsaInput.result && bsaInput.result.error && (
+                                            <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+                                                {bsaInput.result.error}
+                                            </div>
+                                        )}
+                                        {bsaInput.result && bsaInput.result.value && (
+                                            <div className="p-6 bg-green-50 border border-green-200 rounded-2xl text-center">
+                                                <p className="text-sm uppercase tracking-wider text-slate-500 font-semibold mb-1">Body Surface Area</p>
+                                                <p className="text-5xl font-black text-slate-900">
+                                                    {bsaInput.result.value}
+                                                    <span className="text-xl font-semibold text-slate-500 ml-2">{bsaInput.result.unit}</span>
+                                                </p>
+                                                <p className="text-sm font-semibold text-green-600 mt-2">{bsaInput.result.category}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </form>
+                            </div>
+                        )}
+
+                        {/* eGFR — inline form with header */}
+                        {activeCalculator === 'egfr' && (
+                            <div className="p-6 md:p-8 pt-14 sm:pt-16">
+                                <h2 className="text-2xl font-bold text-slate-900 mb-1">eGFR Calculator</h2>
+                                <p className="text-slate-500 mb-6">CKD-EPI 2021 (race-free)</p>
+
+                                <form onSubmit={calculateEGFR}>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Age (years)</label>
+                                    <input
+                                        type="number" step="1" min="1"
+                                        value={egfrInput.age}
+                                        onChange={(e) => setEgfrInput({ ...egfrInput, age: e.target.value })}
+                                        className="w-full mb-4 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                        placeholder="e.g. 45"
+                                    />
+
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Sex</label>
+                                    <select
+                                        value={egfrInput.sex}
+                                        onChange={(e) => setEgfrInput({ ...egfrInput, sex: e.target.value })}
+                                        className="w-full mb-4 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white"
+                                    >
+                                        <option value="male">Male</option>
+                                        <option value="female">Female</option>
+                                    </select>
+
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Serum creatinine (mg/dL)</label>
+                                    <input
+                                        type="number" step="0.01" min="0"
+                                        value={egfrInput.scr}
+                                        onChange={(e) => setEgfrInput({ ...egfrInput, scr: e.target.value })}
+                                        className="w-full mb-5 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                        placeholder="e.g. 0.9"
+                                    />
+
+                                    <button type="submit" className="w-full py-3 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all">
+                                        Calculate eGFR
+                                    </button>
+
+                                    <div className="mt-6">
+                                        {egfrInput.result && egfrInput.result.error && (
+                                            <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+                                                {egfrInput.result.error}
+                                            </div>
+                                        )}
+                                        {egfrInput.result && egfrInput.result.value && (
+                                            <div className="p-6 bg-green-50 border border-green-200 rounded-2xl text-center">
+                                                <p className="text-sm uppercase tracking-wider text-slate-500 font-semibold mb-1">Estimated GFR</p>
+                                                <p className="text-5xl font-black text-slate-900">
+                                                    {egfrInput.result.value}
+                                                    <span className="text-lg font-semibold text-slate-500 ml-2">{egfrInput.result.unit}</span>
+                                                </p>
+                                                <p className="text-sm font-semibold text-green-600 mt-2">{egfrInput.result.category}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </form>
+                            </div>
+                        )}
+
+                        {/* Vial — inline form with header */}
+                        {activeCalculator === 'vial' && (
+                            <div className="p-6 md:p-8 pt-14 sm:pt-16">
+                                <h2 className="text-2xl font-bold text-slate-900 mb-1">Vial / Bottle Calculator</h2>
+                                <p className="text-slate-500 mb-6">
+                                    Determine how many vials or bottles are needed based on strength, dose, frequency, and treatment duration.
+                                </p>
+
+                                <form onSubmit={calculateVials}>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-1">Strength</label>
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="number" step="any" min="0"
+                                                    value={vialInput.strengthValue}
+                                                    onChange={(e) => setVialInput({ ...vialInput, strengthValue: e.target.value })}
+                                                    className="flex-1 min-w-0 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                                    placeholder="e.g. 500"
+                                                />
+                                                <select
+                                                    value={vialInput.strengthUnit}
+                                                    onChange={(e) => setVialInput({ ...vialInput, strengthUnit: e.target.value })}
+                                                    className="px-2 py-2.5 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white"
+                                                >
+                                                    <option value="mg">mg</option>
+                                                    <option value="mcg">mcg</option>
+                                                    <option value="g">g</option>
+                                                    <option value="units">units</option>
+                                                </select>
+                                            </div>
+                                            <div className="flex items-center gap-2 mt-2">
+                                                <select
+                                                    value={vialInput.strengthBasis}
+                                                    onChange={(e) => setVialInput({ ...vialInput, strengthBasis: e.target.value })}
+                                                    className="px-2 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white text-slate-700"
+                                                >
+                                                    <option value="perMl">per volume</option>
+                                                    <option value="perVial">per vial</option>
+                                                </select>
+                                                {vialIsPerMl && (
+                                                    <>
+                                                        <input
+                                                            type="number" step="any" min="0"
+                                                            value={vialInput.strengthPerMl}
+                                                            onChange={(e) => setVialInput({ ...vialInput, strengthPerMl: e.target.value })}
+                                                            className="w-16 px-2 py-1.5 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                                            placeholder="1"
+                                                        />
+                                                        <span className="text-slate-500 text-xs">mL</span>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {vialIsPerMl && (
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-700 mb-1">
+                                                    Bottle / vial volume <span className="text-slate-400 font-normal">(mL)</span>
+                                                </label>
+                                                <input
+                                                    type="number" step="any" min="0"
+                                                    value={vialInput.vialVolume}
+                                                    onChange={(e) => setVialInput({ ...vialInput, vialVolume: e.target.value })}
+                                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                                    placeholder="e.g. 100"
+                                                />
+                                            </div>
+                                        )}
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-1">Dose per administration</label>
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="number" step="any" min="0"
+                                                    value={vialInput.doseValue}
+                                                    onChange={(e) => setVialInput({ ...vialInput, doseValue: e.target.value })}
+                                                    className="flex-1 min-w-0 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                                    placeholder="e.g. 250"
+                                                />
+                                                <select
+                                                    value={vialInput.doseUnit}
+                                                    onChange={(e) => setVialInput({ ...vialInput, doseUnit: e.target.value })}
+                                                    className="px-2 py-2.5 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white"
+                                                >
+                                                    <option value="mg">mg</option>
+                                                    <option value="mcg">mcg</option>
+                                                    <option value="g">g</option>
+                                                    <option value="units">units</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-1">Frequency</label>
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="number" step="any" min="0"
+                                                    value={vialInput.freqValue}
+                                                    onChange={(e) => setVialInput({ ...vialInput, freqValue: e.target.value })}
+                                                    className="flex-1 min-w-0 px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                                    placeholder="e.g. 3"
+                                                />
+                                                <select
+                                                    value={vialInput.freqType}
+                                                    onChange={(e) => setVialInput({ ...vialInput, freqType: e.target.value })}
+                                                    className="px-2 py-2.5 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white"
+                                                >
+                                                    <option value="perDay">times per day</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-1">
+                                                Treatment duration <span className="text-slate-400 font-normal">(days)</span>
+                                            </label>
+                                            <input
+                                                type="number" step="any" min="0"
+                                                value={vialInput.durationDays}
+                                                onChange={(e) => setVialInput({ ...vialInput, durationDays: e.target.value })}
+                                                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                                placeholder="e.g. 7"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-4">
+                                        <label className="block text-sm font-medium text-slate-700 mb-2">Vial / bottle type</label>
+                                        <div className="flex flex-wrap gap-3">
+                                            <label
+                                                className={`flex items-start gap-2 px-4 py-3 border rounded-xl cursor-pointer transition-all flex-1 min-w-[180px] ${
+                                                    vialInput.vialType === 'multi'
+                                                        ? 'border-green-500 bg-green-50'
+                                                        : 'border-slate-200 bg-white hover:border-green-200'
+                                                }`}
+                                            >
+                                                <input
+                                                    type="radio" name="vialType" value="multi"
+                                                    checked={vialInput.vialType === 'multi'}
+                                                    onChange={() => setVialInput({ ...vialInput, vialType: 'multi' })}
+                                                    className="mt-1 accent-green-500"
+                                                />
+                                                <span className="text-sm">
+                                                    <span className="font-semibold text-slate-800 block">Multi-use</span>
+                                                    <span className="text-xs text-slate-500">Remainder can be used for later doses</span>
+                                                </span>
+                                            </label>
+                                            <label
+                                                className={`flex items-start gap-2 px-4 py-3 border rounded-xl cursor-pointer transition-all flex-1 min-w-[180px] ${
+                                                    vialInput.vialType === 'single'
+                                                        ? 'border-green-500 bg-green-50'
+                                                        : 'border-slate-200 bg-white hover:border-green-200'
+                                                }`}
+                                            >
+                                                <input
+                                                    type="radio" name="vialType" value="single"
+                                                    checked={vialInput.vialType === 'single'}
+                                                    onChange={() => setVialInput({ ...vialInput, vialType: 'single' })}
+                                                    className="mt-1 accent-green-500"
+                                                />
+                                                <span className="text-sm">
+                                                    <span className="font-semibold text-slate-800 block">Single-use</span>
+                                                    <span className="text-xs text-slate-500">Discard remainder after each dose</span>
+                                                </span>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" className="mt-5 w-full py-3 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all">
+                                        Calculate Vials / Bottles
+                                    </button>
+
+                                    {vialResult && vialResult.error && (
+                                        <p className="mt-4 text-sm text-red-500 font-medium">{vialResult.error}</p>
+                                    )}
+
+                                    {vialResult && !vialResult.error && (
+                                        <div className="mt-6 border-t border-slate-100 pt-5">
+                                            <div className="text-center mb-4">
+                                                <p className="text-5xl font-black text-green-600">{fmt(vialResult.vialsNeeded, 0)}</p>
+                                                <p className="text-sm text-slate-500 mt-1">
+                                                    {vialResult.vialsNeeded === 1 ? 'vial / bottle needed' : 'vials / bottles needed'}
+                                                </p>
+                                            </div>
+                                            <div className="space-y-2 max-w-2xl mx-auto">
+                                                {vialBreakdown.map(([key, val]) => (
+                                                    <div
+                                                        key={key}
+                                                        className="flex justify-between gap-4 text-sm py-1 border-b border-dashed border-slate-100 last:border-0"
+                                                    >
+                                                        <span className="text-slate-500">{key}</span>
+                                                        <span className="font-semibold text-slate-800 text-right">{val}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <p className="mt-5 text-xs text-slate-500 leading-relaxed">
+                                        <strong>Note:</strong> This calculator is for planning purposes only. Multi-use vial
+                                        calculations assume the vial remains stable for the entire treatment period — check the
+                                        beyond-use date (BUD) after opening. Frequencies that don't divide evenly into 24 hours
+                                        are rounded up to whole administrations.
+                                    </p>
+                                </form>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
