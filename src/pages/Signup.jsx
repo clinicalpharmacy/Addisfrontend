@@ -506,7 +506,7 @@ const Signup = () => {
             [chars[i], chars[j]] = [chars[j], chars[i]];
         }
     
-        return `HCC${chars.join('')}`;
+        return `HCC-${chars.join('')}`;
     };
 
     /**
