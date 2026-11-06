@@ -9,80 +9,26 @@ import {
     FaUser
 } from 'react-icons/fa';
 
-import { WHO_LMS } from './whoLMS'; // adjust path as needed
+// ── Real WHO 2007 LMS data (imported) ───────────────────────────────────
+// Expected format: { boys: { "0": [L, M, S], …, "228": [L, M, S] },
+//                    girls: { "0": [L, M, S], …, "228": [L, M, S] } }
+import { WHO_LMS } from './whoLMS';
 
+// Look up LMS for a given sex and age in months.
 const getLMS = (sex, ageMonths) => {
-  const table = WHO_LMS[sex]; // 'boys' or 'girls'
-  const key = String(Math.round(ageMonths));
-  return table[key] || table["228"]; // fallback for out‑of‑range
+    const table = WHO_LMS[sex]; // 'boys' or 'girls'
+    const key = String(Math.round(ageMonths));
+    return table[key] || table['228']; // fallback for out‑of‑range
 };
 
-
-// ---------------------------------------------------------------------------
-// WHO 2007 LMS TABLE (5–19 years)
-// ---------------------------------------------------------------------------
-// ⚠️ IMPORTANT: The values below are a placeholder for demonstration.
-// For clinical use you MUST replace this object with the full monthly LMS
-// values from the WHO 2007 expanded tables (bmi-boys-z-who-2007-exp.xlsx and
-// bmi-girls-z-who-2007-exp.xlsx). Those files contain one row per month
-// (61–228 months) with columns: Month, L, M, S.
-// ---------------------------------------------------------------------------
-const WHO_LMS = {
-    boys: {
-        60:  { L: -1.5, M: 15.3, S: 0.08 },
-        72:  { L: -1.55, M: 15.8, S: 0.085 },
-        84:  { L: -1.6, M: 16.3, S: 0.09 },
-        96:  { L: -1.65, M: 16.8, S: 0.095 },
-        108: { L: -1.7, M: 17.3, S: 0.10 },
-        120: { L: -1.75, M: 17.8, S: 0.105 },
-        132: { L: -1.8, M: 18.3, S: 0.11 },
-        144: { L: -1.85, M: 18.8, S: 0.115 },
-        156: { L: -1.9, M: 19.4, S: 0.12 },
-        168: { L: -1.92, M: 20.0, S: 0.125 },
-        180: { L: -1.95, M: 20.6, S: 0.13 },
-        192: { L: -1.97, M: 21.2, S: 0.135 },
-        204: { L: -1.98, M: 21.8, S: 0.14 },
-        216: { L: -1.99, M: 22.4, S: 0.145 },
-        228: { L: -2.0, M: 23.0, S: 0.15 }
-    },
-    girls: {
-        60:  { L: -1.4, M: 15.0, S: 0.09 },
-        72:  { L: -1.45, M: 15.5, S: 0.095 },
-        84:  { L: -1.5, M: 16.0, S: 0.10 },
-        96:  { L: -1.55, M: 16.5, S: 0.105 },
-        108: { L: -1.6, M: 17.0, S: 0.11 },
-        120: { L: -1.65, M: 17.5, S: 0.115 },
-        132: { L: -1.7, M: 18.0, S: 0.12 },
-        144: { L: -1.75, M: 18.6, S: 0.125 },
-        156: { L: -1.8, M: 19.2, S: 0.13 },
-        168: { L: -1.85, M: 19.8, S: 0.135 },
-        180: { L: -1.9, M: 20.4, S: 0.14 },
-        192: { L: -1.95, M: 21.0, S: 0.145 },
-        204: { L: -1.98, M: 21.6, S: 0.15 },
-        216: { L: -2.0, M: 22.2, S: 0.155 },
-        228: { L: -2.1, M: 22.8, S: 0.16 }
-    }
-};
-
-// Helper: find the closest LMS row for a given age in months.
-const getLMS = (sex, ageMonths) => {
-    const table = WHO_LMS[sex];
-    const ages = Object.keys(table).map(Number).sort((a, b) => a - b);
-    const closest = ages.reduce((prev, curr) =>
-        Math.abs(curr - ageMonths) < Math.abs(prev - ageMonths) ? curr : prev
-    );
-    return table[closest];
-};
-
-// ---------------------------------------------------------------------------
-// Helper: convert a z‑score to a BMI using the LMS formula
-// BMI = M * (1 + L * S * z)^(1/L)
-// ---------------------------------------------------------------------------
+// Convert a z‑score back to a BMI using the LMS formula.
+// Expects lms to be an array [L, M, S].
 const bmiFromZ = (z, lms) => {
-    if (Math.abs(lms.L) < 1e-10) {
-        return lms.M * Math.exp(lms.S * z);
+    const [L, M, S] = lms;
+    if (Math.abs(L) < 1e-10) {
+        return M * Math.exp(S * z);
     }
-    return lms.M * Math.pow(1 + lms.L * lms.S * z, 1 / lms.L);
+    return M * Math.pow(1 + L * S * z, 1 / L);
 };
 
 const BMICalculator = () => {
@@ -187,12 +133,12 @@ const BMICalculator = () => {
         }
 
         const ageMonths = Math.round(ageY * 12);
-        if (ageMonths < 61 || ageMonths > 228) {
+        if (ageMonths < 60 || ageMonths > 228) {
             setChildInput((s) => ({
                 ...s,
                 result: {
                     error:
-                        'This child BMI-for-age calculator is for ages 5–19 years (61–228 months).'
+                        'This child BMI-for-age calculator is for ages 5–19 years (60–228 months).'
                 }
             }));
             return;
@@ -201,32 +147,28 @@ const BMICalculator = () => {
         const hM = h / 100;
         const bmi = w / (hM * hM);
 
-        // ── Look up LMS parameters ────────────────────────────────────────
+        // ── Look up real WHO LMS parameters ──────────────────────────────
         const sex = childInput.sex === 'male' ? 'boys' : 'girls';
-        const lms = getLMS(sex, ageMonths);
+        const lms = getLMS(sex, ageMonths); // [L, M, S]
 
-        // ── LMS z‑score ────────────────────────────────────────────────────
+        // ── LMS z‑score ──────────────────────────────────────────────────
+        const [L, M, S] = lms;
         let z;
-        if (Math.abs(lms.L) < 1e-10) {
-            z = Math.log(bmi / lms.M) / lms.S;
+        if (Math.abs(L) < 1e-10) {
+            z = Math.log(bmi / M) / S;
         } else {
-            z = (Math.pow(bmi / lms.M, lms.L) - 1) / (lms.L * lms.S);
+            z = (Math.pow(bmi / M, L) - 1) / (L * S);
         }
 
-        // ── WHO interpretation (5–19 y) ────────────────────────────────────
+        // ── WHO interpretation (5–19 y) ──────────────────────────────────
         // Normal range: -2 SD ≤ z ≤ +1 SD
         // Overweight:   z > +1 SD
         // Obesity:      z > +2 SD
         // Thinness:     z < -2 SD
         // Severe thinness: z < -3 SD
-        //
         // The weight-change target is the NEAREST boundary of the NORMAL
-        // range, so the value shown is the MINIMUM weight change needed to
-        // bring the child into the normal BMI-for-age category:
-        //   • Overweight / Obesity  → target z = +1 (upper limit of normal)
-        //   • Thinness / Severe thinness → target z = -2 (lower limit of normal)
-        // This mirrors the adult logic (target BMI 25 and 18.5 respectively).
-        // ──────────────────────────────────────────────────────────────────
+        // range (z = +1 for overweight/obesity; z = -2 for thinness).
+        // ────────────────────────────────────────────────────────────────
         let category;
         let categoryColor;
         let bgColor;
