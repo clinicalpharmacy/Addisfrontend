@@ -336,7 +336,7 @@ const Sidebar = ({ onClose }) => {
                             >
                                 <div className="flex items-center gap-2.5 w-full">
                                     <FaNewspaper className="text-xl" />
-                                    <span className="font-medium text-base">News & Alerts</span>
+                                    <span className="font-medium text-base">ዜና እና ማንቂያ መልዕክቶች</span>
                                 </div>
                             </NavLink>
                         </li>
