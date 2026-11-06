@@ -280,7 +280,7 @@ const BMICalculator = () => {
                             : 'bg-white text-gray-700 border-gray-200 hover:border-green-300'
                     }`}
                 >
-                    <FaUser /> Adult (≥ 20 years)
+                    <FaUser /> የአዋቂዎች (ዕድሜ ≥ 20 ዓመት)
                 </button>
                 <button
                     type="button"
@@ -291,7 +291,7 @@ const BMICalculator = () => {
                             : 'bg-white text-gray-700 border-gray-200 hover:border-green-300'
                     }`}
                 >
-                    <FaChild /> Child / Adolescent (5–19 years)
+                    <FaChild /> የልጆች (ዕድሜ 5–19 ዓመት)
                 </button>
             </div>
 
