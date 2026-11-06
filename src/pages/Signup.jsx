@@ -1581,7 +1581,7 @@ const Signup = () => {
                             <div className="mb-8 p-6 bg-green-50 rounded-xl border-2 border-green-200">
                                 <div className="flex items-center gap-4 mb-4">
                                     <FaIdCard className="text-green-500 text-2xl" />
-                                    <h3 className="font-bold text-gray-800 text-lg">Your Unique Healthcare Client ID</h3>
+                                    <h3 className="font-bold text-gray-800 text-lg">Your Addis-Med ID</h3>
                                 </div>
                                 <div className="bg-white p-4 rounded-lg border-2 border-green-300 mb-4">
                                     <p className="text-2xl font-mono font-bold text-center text-green-600 break-all">
