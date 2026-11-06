@@ -35,25 +35,21 @@ const CALCULATORS = [
         id: 'bmi',
         title: 'BMI Calculator',
         desc: 'Body Mass Index — adult & child (WHO 2007)',
-        icon: <FaWeightHanging className="text-green-500 text-2xl" />
     },
     {
         id: 'bsa',
         title: 'BSA Calculator',
         desc: 'Body Surface Area — Du Bois formula',
-        icon: <FaRulerVertical className="text-green-500 text-2xl" />
     },
     {
         id: 'egfr',
         title: 'eGFR Calculator',
         desc: 'Kidney function — CKD-EPI 2021 (race-free)',
-        icon: <FaHeartbeat className="text-green-500 text-2xl" />
     },
     {
         id: 'vial',
         title: 'Vial / Bottle Calculator',
         desc: 'Vials or bottles needed for a treatment course',
-        icon: <FaCapsules className="text-green-500 text-2xl" />
     }
 ];
 
