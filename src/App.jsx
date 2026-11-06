@@ -1,5 +1,5 @@
+import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 // Layout Components
@@ -258,15 +258,26 @@ const AdminLayout = ({ children }) => {
 };
 
 // Protected Route Component - UPDATED: Added allowCompanyUsers prop
-const ProtectedRoute = ({ children, adminOnly = false, companyAdminOnly = false, allowedRoles = null, requireSubscription = false, allowAdmin = true, showLayout = true, allowCompanyUsers = false }) => {
+const ProtectedRoute = ({
+    children,
+    adminOnly = false,
+    companyAdminOnly = false,
+    allowedRoles = null,
+    requireSubscription = false,
+    allowAdmin = true,
+    showLayout = true,
+    allowCompanyUsers = false
+}) => {
     const [loading, setLoading] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [user, setUser] = useState(null);
+    const [needsSubscription, setNeedsSubscription] = useState(false);
     const location = useLocation();
 
     useEffect(() => {
         checkAuth();
-    }, [location]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // run once on mount — avoids refetch loop on every navigation
 
     const checkAuth = async () => {
         try {
@@ -291,13 +302,10 @@ const ProtectedRoute = ({ children, adminOnly = false, companyAdminOnly = false,
                     if (freshUser.subscription_end_date) {
                         localStorage.setItem('subscription_end_date', freshUser.subscription_end_date);
                     }
-                    setUser(freshUser);
-                    setIsAuthenticated(true);
                 } else {
                     console.warn('ProtectedRoute: /auth/me returned no user');
-                    // Fallback to local data if we have it and it's a temp network error
+                    // Fallback to local data if we have it
                     freshUser = JSON.parse(userData);
-                    setUser(freshUser);
                 }
             } catch (error) {
                 // If the interceptor cleared the token (e.g. 401 Unauthorized), don't fallback to cached data
@@ -309,8 +317,6 @@ const ProtectedRoute = ({ children, adminOnly = false, companyAdminOnly = false,
 
                 console.log('ProtectedRoute: Backend check failed, using cached data');
                 freshUser = JSON.parse(userData);
-                setUser(freshUser);
-                setIsAuthenticated(true);
             }
 
             if (!freshUser) {
@@ -319,22 +325,22 @@ const ProtectedRoute = ({ children, adminOnly = false, companyAdminOnly = false,
                 return;
             }
 
-            // Check if user is approved (except admin)
+            // Pending approval check (admins bypass)
             if (!freshUser.approved && freshUser.role !== 'admin') {
+                setUser(freshUser);
                 setLoading(false);
                 return;
             }
 
-            // ONLY check subscription if explicitly required
-            if (requireSubscription) {
-                const hasSubscription = hasValidSubscription(freshUser);
-                if (!hasSubscription) {
-                    localStorage.setItem('subscription_required_for', location.pathname);
-                    setLoading(false);
-                    return;
-                }
-            }
+            // Auth confirmed
+            setUser(freshUser);
+            setIsAuthenticated(true);
 
+            // Subscription check — handled after auth is confirmed
+            if (requireSubscription && !hasValidSubscription(freshUser)) {
+                localStorage.setItem('subscription_required_for', location.pathname);
+                setNeedsSubscription(true);
+            }
         } catch (error) {
             console.error('Auth check error in ProtectedRoute:', error);
             // Don't clear auth immediately on network errors, only on 401/403 which api.get handles
@@ -347,87 +353,78 @@ const ProtectedRoute = ({ children, adminOnly = false, companyAdminOnly = false,
         return <LoadingSpinner />;
     }
 
+    // Not authenticated → pending approval or login redirect
     if (!isAuthenticated) {
-        // If user exists but not approved, show error and redirect to login
         if (user && !user.approved && user.role !== 'admin') {
             return <Navigate to="/login" state={{
                 message: 'Your account is pending admin approval. Please wait for approval.'
             }} replace />;
         }
 
-        // FIXED: Check if subscription is required for this specific route
-        if (user && requireSubscription && !hasValidSubscription(user)) {
-            // Store current route to return after subscription
-            const subscriptionRequiredFor = localStorage.getItem('subscription_required_for') || location.pathname;
-
-            return <Navigate to="/subscription/plans" state={{
-                returnTo: subscriptionRequiredFor,
-                message: 'Subscription required to access this feature'
-            }} replace />;
-        }
-
-        // Otherwise, redirect to login
         return <Navigate to="/login" state={{
             redirectTo: location.pathname,
             message: 'Please login to access this page'
         }} replace />;
     }
 
+    // Authenticated but subscription required
+    if (needsSubscription) {
+        const subscriptionRequiredFor = localStorage.getItem('subscription_required_for') || location.pathname;
+        return <Navigate to="/subscription/plans" state={{
+            returnTo: subscriptionRequiredFor,
+            message: 'Subscription required to access this feature'
+        }} replace />;
+    }
+
     // Role check
     const isCompanyUser = user?.role === 'company_admin' || user?.account_type === 'company_user' || user?.organization_id;
-    // Bypass role check if company users are allowed and the user is one
     const shouldBypassRoleCheck = allowCompanyUsers && isCompanyUser;
 
     if (allowedRoles && !allowedRoles.includes(user?.role) && user?.role !== 'admin' && !shouldBypassRoleCheck) {
         return <Navigate to="/dashboard" state={{ message: 'Access denied. This section is only for specific roles.' }} replace />;
     }
 
-    // FIXED: Block admin if allowAdmin is false
+    // Block admin if allowAdmin is false
     if (user?.role === 'admin' && !allowAdmin) {
         return <Navigate to="/admin/dashboard" replace />;
     }
 
-    // FIXED: Check role-based access with clearer logic
-    if (adminOnly) {
-        // Only admin users can access
-        if (user?.role !== 'admin') {
-            // Redirect non-admin users based on their role
-            if (user?.role === 'company_admin') {
-                return user.company_id ? <Navigate to="/company/dashboard" replace /> : <Navigate to="/dashboard" replace />;
-            } else {
-                return <Navigate to="/dashboard" replace />;
-            }
+    // Admin-only guard
+    if (adminOnly && user?.role !== 'admin') {
+        if (user?.role === 'company_admin') {
+            return user.company_id
+                ? <Navigate to="/company/dashboard" replace />
+                : <Navigate to="/dashboard" replace />;
         }
+        return <Navigate to="/dashboard" replace />;
     }
 
+    // Company-admin-only guard
     if (companyAdminOnly) {
-        // Only company admin users with valid company_id can access
         if (user?.role !== 'company_admin' || !user?.company_id) {
-            // Redirect non-company-admin users based on their role
             if (user?.role === 'admin' || user?.role === 'superadmin') {
                 return <Navigate to="/admin/dashboard" replace />;
-            } else {
-                return <Navigate to="/dashboard" replace />;
             }
+            return <Navigate to="/dashboard" replace />;
         }
     }
 
-    // For admin dashboard, don't show the main layout
+    // Admin dashboard
     if (adminOnly && user?.role === 'admin') {
         return <AdminLayout>{children}</AdminLayout>;
     }
 
-    // For company admin dashboard
+    // Company admin dashboard
     if (companyAdminOnly && user?.role === 'company_admin') {
         return <MainLayout>{children}</MainLayout>;
     }
 
-    // For admin routes (including CDSS), use AdminLayout
+    // Any /admin/* route → AdminLayout
     if (user?.role === 'admin' && location.pathname.startsWith('/admin/')) {
         return <AdminLayout>{children}</AdminLayout>;
     }
 
-    // For regular users, show the main layout if specified
+    // Regular users → MainLayout if specified
     if (showLayout) {
         return <MainLayout>{children}</MainLayout>;
     }
