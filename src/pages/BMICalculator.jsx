@@ -11,7 +11,7 @@ import {
 
 // ── Full WHO 2007 LMS table (0–228 months), imported ────────────────────
 // Each entry is stored as an array [L, M, S].
-import { WHO_LMS } from './whoLMS'; // adjust path as needed
+import { WHO_LMS } from '../data/whoLMS'; // adjust path as needed
 
 // Helper: retrieve LMS for a given sex and age in months.
 // Returns an array [L, M, S].
