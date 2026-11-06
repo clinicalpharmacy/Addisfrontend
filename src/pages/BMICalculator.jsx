@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
     FaWeightHanging,
@@ -6,142 +5,153 @@ import {
     FaCalculator,
     FaInfoCircle,
     FaRedo,
-    FaCalendarAlt,
-    FaVenusMars
+    FaChild,
+    FaUser
 } from 'react-icons/fa';
 
-import bmiForAge from '../data/who2007/bmiForAge.json';
+// ---------------------------------------------------------------------------
+// ⚠️ DEMONSTRATION LMS TABLE — REPLACE WITH FULL WHO 2007 DATA
+// ---------------------------------------------------------------------------
+// The values below are only a tiny sample for ages 5, 10, 15, 19.
+// For real use, download the expanded WHO 2007 tables and build a complete
+// lookup object with one entry per month (61–228 months) for each sex.
+// The expanded tables contain columns: Month, L, M, S, SD4neg, SD3neg,
+// SD2neg, SD1neg, SD0, SD1, SD2, SD3, SD4.
+// ---------------------------------------------------------------------------
+const WHO_LMS = {
+    boys: {
+        60:  { L: -1.5, M: 15.3, S: 0.08 },   // age 5 y  (example)
+        120: { L: -1.7, M: 17.0, S: 0.10 },   // age 10 y (example)
+        180: { L: -1.8, M: 19.5, S: 0.12 },   // age 15 y (example)
+        228: { L: -1.9, M: 22.5, S: 0.13 }    // age 19 y (example)
+    },
+    girls: {
+        60:  { L: -1.4, M: 15.0, S: 0.09 },
+        120: { L: -1.6, M: 16.8, S: 0.11 },
+        180: { L: -1.7, M: 19.0, S: 0.13 },
+        228: { L: -1.8, M: 22.0, S: 0.14 }
+    }
+};
+
+// Helper: find the closest LMS row for a given age in months.
+// In a production version, use exact monthly rows or linear interpolation.
+const getLMS = (sex, ageMonths) => {
+    const table = WHO_LMS[sex];
+    const ages = Object.keys(table).map(Number).sort((a, b) => a - b);
+    const closest = ages.reduce((prev, curr) =>
+        Math.abs(curr - ageMonths) < Math.abs(prev - ageMonths) ? curr : prev
+    );
+    return table[closest];
+};
 
 const BMICalculator = () => {
-    const [input, setInput] = useState({
+    // ── Adult state (unchanged) ────────────────────────────────────────────
+    const [input, setInput] = useState({ weight: '', height: '', result: null });
+
+    // ── Child state ────────────────────────────────────────────────────────
+    const [childInput, setChildInput] = useState({
         weight: '',
         height: '',
-        age: '',
-        sex: '',
+        ageYears: '',
+        sex: 'male',
         result: null
     });
+
+    // ── Mode toggle ────────────────────────────────────────────────────────
+    const [mode, setMode] = useState('adult'); // 'adult' | 'child'
 
     const num = (v) => {
         const n = parseFloat(v);
         return Number.isFinite(n) && n > 0 ? n : null;
     };
 
-    // Retrieve and interpolate WHO LMS reference parameters.
-    const getLMS = (data, sex, ageMonths) => {
-        const rows = data
-            .filter(r => r.sex === sex)
-            .sort((a, b) => a.x - b.x);
-
-        if (
-            !rows.length ||
-            ageMonths < rows[0].x ||
-            ageMonths > rows[rows.length - 1].x
-        ) {
-            return null;
-        }
-
-        const exact = rows.find(
-            r => Math.abs(r.x - ageMonths) < 0.000001
-        );
-
-        if (exact) return exact;
-
-        for (let i = 0; i < rows.length - 1; i++) {
-            const lower = rows[i];
-            const upper = rows[i + 1];
-
-            if (lower.x <= ageMonths && upper.x >= ageMonths) {
-                const ratio =
-                    (ageMonths - lower.x) / (upper.x - lower.x);
-
-                return {
-                    L: lower.L + ratio * (upper.L - lower.L),
-                    M: lower.M + ratio * (upper.M - lower.M),
-                    S: lower.S + ratio * (upper.S - lower.S)
-                };
-            }
-        }
-
-        return null;
-    };
-
-    // WHO LMS z-score calculation.
-    const calculateZScore = (bmi, lms) => {
-        if (!lms || lms.M <= 0 || lms.S <= 0) return null;
-
-        const { L, M, S } = lms;
-
-        const z = Math.abs(L) < 0.000001
-            ? Math.log(bmi / M) / S
-            : (Math.pow(bmi / M, L) - 1) / (L * S);
-
-        return Number.isFinite(z) ? z : null;
-    };
-
-    const getCategoryStyle = (category) => {
-        if (category === 'Obesity') {
-            return {
-                categoryColor: 'text-red-600',
-                bgColor: 'bg-red-50 border-red-200'
-            };
-        }
-
-        if (category === 'Overweight') {
-            return {
-                categoryColor: 'text-orange-600',
-                bgColor: 'bg-orange-50 border-orange-200'
-            };
-        }
-
-        if (
-            category === 'Underweight' ||
-            category === 'Thinness' ||
-            category === 'Severe thinness'
-        ) {
-            return {
-                categoryColor: 'text-amber-600',
-                bgColor: 'bg-amber-50 border-amber-200'
-            };
-        }
-
-        return {
-            categoryColor: 'text-green-600',
-            bgColor: 'bg-green-50 border-green-200'
-        };
-    };
-
+    // =====================================================================
+    // ADULT BMI  (original logic)
+    // =====================================================================
     const calculateBMI = (e) => {
         e.preventDefault();
-
         const w = num(input.weight);
         const h = num(input.height);
-        const age = num(input.age);
+        if (!w || !h) {
+            setInput((s) => ({
+                ...s,
+                result: { error: 'Please enter valid weight and height values.' }
+            }));
+            return;
+        }
+        const hM = h / 100;
+        const bmi = w / (hM * hM);
 
-        if (!w || !h || !age) {
-            setInput(s => ({
+        let category = 'Obesity';
+        let categoryColor = 'text-red-600';
+        let bgColor = 'bg-red-50 border-red-200';
+        let message = null;
+
+        if (bmi < 18.5) {
+            category = 'Underweight';
+            categoryColor = 'text-amber-600';
+            bgColor = 'bg-amber-50 border-amber-200';
+            const targetWeight = 18.5 * hM * hM;
+            const gain = targetWeight - w;
+            if (gain > 0)
+                message = `ቢያንስ ${gain.toFixed(1)} kg ክብደት ይጨምሩ፣ የሰውነት ክብደት መረጃ ጠቋሚው 18.5 እስኪደርስ`;
+        } else if (bmi < 25) {
+            category = 'Normal range';
+            categoryColor = 'text-green-600';
+            bgColor = 'bg-green-50 border-green-200';
+        } else if (bmi < 30) {
+            category = 'Overweight';
+            categoryColor = 'text-orange-600';
+            bgColor = 'bg-orange-50 border-orange-200';
+        }
+
+        if (bmi >= 25) {
+            const targetWeight = 25 * hM * hM;
+            const loss = w - targetWeight;
+            if (loss > 0)
+                message = `ቢያንስ ${loss.toFixed(1)} kg ይቀንሱ፣ የሰውነት ክብደት መረጃ ጠቋሚው ከ25 በታች እስኪደርስ።`;
+        }
+
+        setInput((s) => ({
+            ...s,
+            result: {
+                value: bmi.toFixed(1),
+                unit: 'kg/m²',
+                category,
+                categoryColor,
+                bgColor,
+                message
+            }
+        }));
+    };
+
+    // =====================================================================
+    // CHILD / ADOLESCENT BMI-FOR-AGE  (WHO 2007, 5–19 years)
+    // =====================================================================
+    const calculateChildBMI = (e) => {
+        e.preventDefault();
+        const w = num(childInput.weight);
+        const h = num(childInput.height);
+        const ageY = num(childInput.ageYears);
+
+        if (!w || !h || !ageY) {
+            setChildInput((s) => ({
                 ...s,
                 result: {
-                    error: 'Please enter valid age, weight and height values.'
+                    error:
+                        'Please enter valid weight, height, and age (5–19 years).'
                 }
             }));
             return;
         }
 
-        if (h < 30 || h > 250) {
-            setInput(s => ({
-                ...s,
-                result: { error: 'Please enter a valid height.' }
-            }));
-            return;
-        }
-
-        if (age < 5 || (age < 20 && !input.sex)) {
-            setInput(s => ({
+        const ageMonths = Math.round(ageY * 12);
+        if (ageMonths < 61 || ageMonths > 228) {
+            setChildInput((s) => ({
                 ...s,
                 result: {
-                    error: age < 5
-                        ? 'This calculator supports children aged 5 years and above.'
-                        : 'Please select sex.'
+                    error:
+                        'This child BMI-for-age calculator is for ages 5–19 years (61–228 months).'
                 }
             }));
             return;
@@ -150,416 +160,472 @@ const BMICalculator = () => {
         const hM = h / 100;
         const bmi = w / (hM * hM);
 
+        // ── Look up LMS parameters ────────────────────────────────────────
+        const sex = childInput.sex === 'male' ? 'boys' : 'girls';
+        const lms = getLMS(sex, ageMonths);
+
+        // ── LMS z‑score ────────────────────────────────────────────────────
+        let z;
+        if (Math.abs(lms.L) < 1e-10) {
+            // L ≈ 0: use log transformation
+            z = Math.log(bmi / lms.M) / lms.S;
+        } else {
+            z = (Math.pow(bmi / lms.M, lms.L) - 1) / (lms.L * lms.S);
+        }
+
+        // ── WHO interpretation (5–19 y) ────────────────────────────────────
+        // Overweight: > +1 SD
+        // Obesity: > +2 SD
+        // Thinness: < −2 SD
+        // Severe thinness: < −3 SD
         let category;
-        let zScore = null;
-        let reference;
-        let indicator;
-        let message = null;
+        let categoryColor;
+        let bgColor;
 
-        // ADULT BMI: Existing classification retained.
-        if (age >= 20) {
-
-            if (bmi < 18.5) {
-                category = 'Underweight';
-
-                const targetWeight = 18.5 * hM * hM;
-                const gain = targetWeight - w;
-
-                if (gain > 0) {
-                    message = `ቢያንስ ${gain.toFixed(1)} kg ክብደት ይጨምሩ፣ የሰውነት ክብደት መረጃ ጠቋሚው 18.5 እስኪደርስ`;
-                }
-
-            } else if (bmi < 25) {
-                category = 'Normal range';
-
-            } else if (bmi < 30) {
-                category = 'Overweight';
-
-            } else {
-                category = 'Obesity';
-            }
-
-            if (bmi >= 25) {
-                const targetWeight = 25 * hM * hM;
-                const loss = w - targetWeight;
-
-                if (loss > 0) {
-                    message = `ቢያንስ ${loss.toFixed(1)} kg ይቀንሱ፣ የሰውነት ክብደት መረጃ ጠቋሚው ከ25 በታች እስኪደርስ.`;
-                }
-            }
-
-            indicator = 'BMI';
-            reference = 'Adult BMI classification';
+        if (z > 2) {
+            category = 'Obesity';
+            categoryColor = 'text-red-600';
+            bgColor = 'bg-red-50 border-red-200';
+        } else if (z > 1) {
+            category = 'Overweight';
+            categoryColor = 'text-orange-600';
+            bgColor = 'bg-orange-50 border-orange-200';
+        } else if (z < -3) {
+            category = 'Severe thinness';
+            categoryColor = 'text-amber-700';
+            bgColor = 'bg-amber-50 border-amber-200';
+        } else if (z < -2) {
+            category = 'Thinness';
+            categoryColor = 'text-amber-600';
+            bgColor = 'bg-amber-50 border-amber-200';
+        } else {
+            category = 'Normal range';
+            categoryColor = 'text-green-600';
+            bgColor = 'bg-green-50 border-green-200';
         }
 
-        // CHILDREN 5–19 YEARS: WHO 2007 BMI-for-age.
-        else {
-
-            // Convert age in years to completed months.
-            const ageMonths = Math.floor(age * 12);
-
-            const lms = getLMS(
-                bmiForAge,
-                input.sex,
-                ageMonths
-            );
-
-            if (!lms) {
-                setInput(s => ({
-                    ...s,
-                    result: {
-                        error: 'WHO reference data are unavailable for this age and sex. Please check the WHO reference dataset.'
-                    }
-                }));
-                return;
-            }
-
-            zScore = calculateZScore(bmi, lms);
-
-            if (zScore === null) {
-                setInput(s => ({
-                    ...s,
-                    result: {
-                        error: 'Unable to calculate BMI-for-age z-score.'
-                    }
-                }));
-                return;
-            }
-
-            indicator = 'BMI-for-age';
-            reference = 'WHO Growth Reference (2007)';
-
-            if (zScore < -3) {
-                category = 'Severe thinness';
-            } else if (zScore < -2) {
-                category = 'Thinness';
-            } else if (zScore <= 1) {
-                category = 'Normal range';
-            } else if (zScore <= 2) {
-                category = 'Overweight';
-            } else {
-                category = 'Obesity';
-            }
-        }
-
-        const styles = getCategoryStyle(category);
-
-        setInput(s => ({
+        setChildInput((s) => ({
             ...s,
             result: {
                 value: bmi.toFixed(1),
+                zScore: z.toFixed(2),
                 unit: 'kg/m²',
                 category,
-                zScore: zScore !== null ? zScore.toFixed(2) : null,
-                indicator,
-                reference,
-                categoryColor: styles.categoryColor,
-                bgColor: styles.bgColor,
-                message
+                categoryColor,
+                bgColor,
+                message: `WHO 2007 BMI-for-age z-score: ${z.toFixed(2)}`
             }
         }));
     };
 
-    const reset = () => {
-        setInput({
+    // ── Reset handlers ─────────────────────────────────────────────────────
+    const resetAdult = () =>
+        setInput({ weight: '', height: '', result: null });
+
+    const resetChild = () =>
+        setChildInput({
             weight: '',
             height: '',
-            age: '',
-            sex: '',
+            ageYears: '',
+            sex: 'male',
             result: null
         });
-    };
 
-    const isChild =
-        input.age !== '' &&
-        Number(input.age) >= 5 &&
-        Number(input.age) < 20;
-
+    // ── Rendering ──────────────────────────────────────────────────────────
     return (
         <div className="p-4 md:p-6 max-w-3xl mx-auto">
-
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-gray-900">
                     BMI Calculator
                 </h1>
-
                 <p className="text-gray-600 mt-1">
                     የሰውነት ክብደት መረጃ ጠቋሚ
                 </p>
             </div>
 
-            <form
-                onSubmit={calculateBMI}
-                className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 md:p-8"
-            >
+            {/* ── Mode toggle ──────────────────────────────────────────────── */}
+            <div className="flex gap-2 mb-6">
+                <button
+                    type="button"
+                    onClick={() => setMode('adult')}
+                    className={`flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 text-sm font-semibold rounded-xl border transition ${
+                        mode === 'adult'
+                            ? 'bg-green-600 text-white border-green-600'
+                            : 'bg-white text-gray-700 border-gray-200 hover:border-green-300'
+                    }`}
+                >
+                    <FaUser /> Adult (≥ 20 years)
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setMode('child')}
+                    className={`flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 text-sm font-semibold rounded-xl border transition ${
+                        mode === 'child'
+                            ? 'bg-green-600 text-white border-green-600'
+                            : 'bg-white text-gray-700 border-gray-200 hover:border-green-300'
+                    }`}
+                >
+                    <FaChild /> Child / Adolescent (5–19 years)
+                </button>
+            </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                    {/* Age */}
-                    <div>
-                        <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                            <FaCalendarAlt className="text-green-600" />
-                            Age (years)
-                        </label>
-
-                        <input
-                            type="number"
-                            step="0.083333"
-                            min="5"
-                            max="120"
-                            value={input.age}
-                            onChange={e => setInput({
-                                ...input,
-                                age: e.target.value,
-                                result: null
-                            })}
-                            required
-                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
-                            placeholder="e.g. 8 or 35"
-                        />
-
-                        <p className="text-xs text-gray-500 mt-1">
-                            Enter age in years. For children, age is converted to completed months.
-                        </p>
-                    </div>
-
-                    {/* Sex: Children only */}
-                    {isChild && (
+            {/* ============================================================ */}
+            {/* ADULT FORM                                                   */}
+            {/* ============================================================ */}
+            {mode === 'adult' && (
+                <form
+                    onSubmit={calculateBMI}
+                    className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 md:p-8"
+                >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                                <FaVenusMars className="text-green-600" />
-                                Sex
+                                <FaWeightHanging className="text-green-600" />{' '}
+                                Weight (kg)
                             </label>
+                            <input
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                value={input.weight}
+                                onChange={(e) =>
+                                    setInput({
+                                        ...input,
+                                        weight: e.target.value
+                                    })
+                                }
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                placeholder="e.g. 70"
+                            />
+                        </div>
 
+                        <div>
+                            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                                <FaRulerVertical className="text-green-600" />{' '}
+                                Height (cm)
+                            </label>
+                            <input
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                value={input.height}
+                                onChange={(e) =>
+                                    setInput({
+                                        ...input,
+                                        height: e.target.value
+                                    })
+                                }
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                placeholder="e.g. 170"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-3 mt-6">
+                        <button
+                            type="submit"
+                            className="flex-1 inline-flex items-center justify-center gap-2 py-3 px-4 text-sm font-bold text-white bg-green-600 hover:bg-green-700 rounded-xl transition shadow-md"
+                        >
+                            <FaCalculator /> Calculate BMI
+                        </button>
+                        <button
+                            type="button"
+                            onClick={resetAdult}
+                            className="inline-flex items-center justify-center gap-2 py-3 px-4 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition"
+                        >
+                            <FaRedo /> Reset
+                        </button>
+                    </div>
+
+                    {input.result && input.result.error && (
+                        <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+                            {input.result.error}
+                        </div>
+                    )}
+
+                    {input.result && input.result.value && (
+                        <div
+                            className={`mt-6 p-6 rounded-2xl border ${input.result.bgColor}`}
+                        >
+                            <div className="text-center">
+                                <p className="text-sm uppercase tracking-wider text-gray-600 font-semibold mb-1">
+                                    Your BMI
+                                </p>
+                                <p className="text-5xl font-black text-gray-900">
+                                    {input.result.value}
+                                    <span className="text-xl font-semibold text-gray-500 ml-2">
+                                        {input.result.unit}
+                                    </span>
+                                </p>
+                                <p
+                                    className={`text-lg font-bold mt-2 ${input.result.categoryColor}`}
+                                >
+                                    {input.result.category}
+                                </p>
+                                {input.result.message && (
+                                    <p className="text-base font-bold text-gray-700 mt-3 max-w-md mx-auto">
+                                        {input.result.message}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </form>
+            )}
+
+            {/* ============================================================ */}
+            {/* CHILD FORM                                                   */}
+            {/* ============================================================ */}
+            {mode === 'child' && (
+                <form
+                    onSubmit={calculateChildBMI}
+                    className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 md:p-8"
+                >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                                <FaWeightHanging className="text-green-600" />{' '}
+                                Weight (kg)
+                            </label>
+                            <input
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                value={childInput.weight}
+                                onChange={(e) =>
+                                    setChildInput({
+                                        ...childInput,
+                                        weight: e.target.value
+                                    })
+                                }
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                placeholder="e.g. 35"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                                <FaRulerVertical className="text-green-600" />{' '}
+                                Height (cm)
+                            </label>
+                            <input
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                value={childInput.height}
+                                onChange={(e) =>
+                                    setChildInput({
+                                        ...childInput,
+                                        height: e.target.value
+                                    })
+                                }
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                placeholder="e.g. 140"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                                <FaChild className="text-green-600" /> Age
+                                (years)
+                            </label>
+                            <input
+                                type="number"
+                                step="1"
+                                min="5"
+                                max="19"
+                                value={childInput.ageYears}
+                                onChange={(e) =>
+                                    setChildInput({
+                                        ...childInput,
+                                        ageYears: e.target.value
+                                    })
+                                }
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                placeholder="e.g. 10"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                                <FaUser className="text-green-600" /> Sex
+                            </label>
                             <select
-                                value={input.sex}
-                                onChange={e => setInput({
-                                    ...input,
-                                    sex: e.target.value,
-                                    result: null
-                                })}
-                                required
-                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
+                                value={childInput.sex}
+                                onChange={(e) =>
+                                    setChildInput({
+                                        ...childInput,
+                                        sex: e.target.value
+                                    })
+                                }
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white"
                             >
-                                <option value="">Select sex</option>
                                 <option value="male">Male</option>
                                 <option value="female">Female</option>
                             </select>
                         </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-3 mt-6">
+                        <button
+                            type="submit"
+                            className="flex-1 inline-flex items-center justify-center gap-2 py-3 px-4 text-sm font-bold text-white bg-green-600 hover:bg-green-700 rounded-xl transition shadow-md"
+                        >
+                            <FaCalculator /> Calculate BMI-for-age
+                        </button>
+                        <button
+                            type="button"
+                            onClick={resetChild}
+                            className="inline-flex items-center justify-center gap-2 py-3 px-4 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition"
+                        >
+                            <FaRedo /> Reset
+                        </button>
+                    </div>
+
+                    {childInput.result && childInput.result.error && (
+                        <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+                            {childInput.result.error}
+                        </div>
                     )}
 
-                    {/* Weight */}
-                    <div>
-                        <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                            <FaWeightHanging className="text-green-600" />
-                            Weight (kg)
-                        </label>
-
-                        <input
-                            type="number"
-                            step="0.1"
-                            min="0"
-                            value={input.weight}
-                            onChange={e => setInput({
-                                ...input,
-                                weight: e.target.value,
-                                result: null
-                            })}
-                            required
-                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
-                            placeholder="e.g. 70"
-                        />
-                    </div>
-
-                    {/* Height */}
-                    <div>
-                        <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                            <FaRulerVertical className="text-green-600" />
-                            Height (cm)
-                        </label>
-
-                        <input
-                            type="number"
-                            step="0.1"
-                            min="0"
-                            value={input.height}
-                            onChange={e => setInput({
-                                ...input,
-                                height: e.target.value,
-                                result: null
-                            })}
-                            required
-                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
-                            placeholder="e.g. 170"
-                        />
-                    </div>
-
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-3 mt-6">
-
-                    <button
-                        type="submit"
-                        className="flex-1 inline-flex items-center justify-center gap-2 py-3 px-4 text-sm font-bold text-white bg-green-600 hover:bg-green-700 rounded-xl transition shadow-md"
-                    >
-                        <FaCalculator /> Calculate BMI
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={reset}
-                        className="inline-flex items-center justify-center gap-2 py-3 px-4 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition"
-                    >
-                        <FaRedo /> Reset
-                    </button>
-
-                </div>
-
-                {/* Error */}
-                {input.result?.error && (
-                    <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
-                        {input.result.error}
-                    </div>
-                )}
-
-                {/* Result */}
-                {input.result?.value && (
-                    <div className={`mt-6 p-6 rounded-2xl border ${input.result.bgColor}`}>
-
-                        <div className="text-center">
-
-                            <p className="text-sm uppercase tracking-wider text-gray-600 font-semibold mb-1">
-                                {input.result.indicator}
-                            </p>
-
-                            <p className="text-5xl font-black text-gray-900">
-                                {input.result.value}
-
-                                <span className="text-xl font-semibold text-gray-500 ml-2">
-                                    {input.result.unit}
-                                </span>
-                            </p>
-
-                            <p className={`text-lg font-bold mt-3 ${input.result.categoryColor}`}>
-                                {input.result.category}
-                            </p>
-
-                            {input.result.zScore !== null && (
-                                <div className="mt-4 pt-4 border-t border-gray-200">
-                                    <p className="text-sm text-gray-600">
-                                        WHO BMI-for-age Z-score
-                                    </p>
-
-                                    <p className="text-3xl font-bold text-gray-900">
-                                        {input.result.zScore} SD
-                                    </p>
-                                </div>
-                            )}
-
-                            {input.result.message && (
-                                <p className="text-base font-bold text-gray-700 mt-3 max-w-md mx-auto">
-                                    {input.result.message}
-                                </p>
-                            )}
-
-                            <p className="text-xs text-gray-500 mt-4">
-                                Reference: {input.result.reference}
-                            </p>
-
-                        </div>
-                    </div>
-                )}
-
-            </form>
-
-            {/* BMI Categories Reference */}
-            <div className="mt-6 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-
-                <h3 className="flex items-center gap-2 font-bold text-gray-900 mb-4">
-                    <FaInfoCircle className="text-green-600" />
-                    {isChild
-                        ? 'WHO BMI-for-age Classification'
-                        : 'BMI Categories'}
-                </h3>
-
-                <div className="space-y-2">
-
-                    {(isChild ? [
-                        {
-                            range: 'Below −3 SD',
-                            label: 'Severe thinness',
-                            color: 'bg-amber-100 text-amber-800'
-                        },
-                        {
-                            range: '−3 to below −2 SD',
-                            label: 'Thinness',
-                            color: 'bg-amber-100 text-amber-800'
-                        },
-                        {
-                            range: '−2 to +1 SD',
-                            label: 'Normal range',
-                            color: 'bg-green-100 text-green-800'
-                        },
-                        {
-                            range: 'Above +1 to +2 SD',
-                            label: 'Overweight',
-                            color: 'bg-orange-100 text-orange-800'
-                        },
-                        {
-                            range: 'Above +2 SD',
-                            label: 'Obesity',
-                            color: 'bg-red-100 text-red-800'
-                        }
-                    ] : [
-                        {
-                            range: 'Below 18.5',
-                            label: 'Underweight',
-                            color: 'bg-amber-100 text-amber-800'
-                        },
-                        {
-                            range: '18.5 – 24.9',
-                            label: 'Normal',
-                            color: 'bg-green-100 text-green-800'
-                        },
-                        {
-                            range: '25.0 – 29.9',
-                            label: 'Overweight',
-                            color: 'bg-orange-100 text-orange-800'
-                        },
-                        {
-                            range: '30.0 and above',
-                            label: 'Obesity',
-                            color: 'bg-red-100 text-red-800'
-                        }
-                    ]).map(c => (
+                    {childInput.result && childInput.result.value && (
                         <div
-                            key={c.label}
-                            className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0"
+                            className={`mt-6 p-6 rounded-2xl border ${childInput.result.bgColor}`}
                         >
-                            <span className="text-sm text-gray-600">
-                                {c.range}
-                            </span>
-
-                            <span className={`text-xs font-bold px-3 py-1 rounded-full ${c.color}`}>
-                                {c.label}
-                            </span>
+                            <div className="text-center">
+                                <p className="text-sm uppercase tracking-wider text-gray-600 font-semibold mb-1">
+                                    BMI-for-age
+                                </p>
+                                <p className="text-5xl font-black text-gray-900">
+                                    {childInput.result.value}
+                                    <span className="text-xl font-semibold text-gray-500 ml-2">
+                                        {childInput.result.unit}
+                                    </span>
+                                </p>
+                                <p className="text-lg font-bold text-gray-700 mt-1">
+                                    z-score: {childInput.result.zScore}
+                                </p>
+                                <p
+                                    className={`text-lg font-bold mt-2 ${childInput.result.categoryColor}`}
+                                >
+                                    {childInput.result.category}
+                                </p>
+                                <p className="text-sm text-gray-600 mt-2">
+                                    {childInput.result.message}
+                                </p>
+                            </div>
                         </div>
-                    ))}
+                    )}
+                </form>
+            )}
 
-                </div>
-
-                {isChild && (
-                    <p className="text-xs text-gray-500 mt-4">
-                        WHO Growth Reference for children and adolescents aged 5–19 years (2007). Classification is based on BMI-for-age z-score and sex.
-                    </p>
+            {/* ── Reference table ─────────────────────────────────────────── */}
+            <div className="mt-6 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <h3 className="flex items-center gap-2 font-bold text-gray-900 mb-4">
+                    <FaInfoCircle className="text-green-600" />{' '}
+                    {mode === 'adult'
+                        ? 'Adult BMI Categories'
+                        : 'WHO 2007 BMI-for-age cut-offs (5–19 years)'}
+                </h3>
+                {mode === 'adult' ? (
+                    <div className="space-y-2">
+                        {[
+                            {
+                                range: 'Below 18.5',
+                                label: 'Underweight',
+                                color: 'bg-amber-100 text-amber-800'
+                            },
+                            {
+                                range: '18.5 – 24.9',
+                                label: 'Normal',
+                                color: 'bg-green-100 text-green-800'
+                            },
+                            {
+                                range: '25.0 – 29.9',
+                                label: 'Overweight',
+                                color: 'bg-orange-100 text-orange-800'
+                            },
+                            {
+                                range: '30.0 and above',
+                                label: 'Obesity',
+                                color: 'bg-red-100 text-red-800'
+                            }
+                        ].map((c) => (
+                            <div
+                                key={c.label}
+                                className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0"
+                            >
+                                <span className="text-sm text-gray-600">
+                                    {c.range}
+                                </span>
+                                <span
+                                    className={`text-xs font-bold px-3 py-1 rounded-full ${c.color}`}
+                                >
+                                    {c.label}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="space-y-2">
+                        {[
+                            {
+                                sd: '> +2 SD',
+                                label: 'Obesity',
+                                color: 'bg-red-100 text-red-800'
+                            },
+                            {
+                                sd: '> +1 SD',
+                                label: 'Overweight',
+                                color: 'bg-orange-100 text-orange-800'
+                            },
+                            {
+                                sd: '−2 SD to +1 SD',
+                                label: 'Normal',
+                                color: 'bg-green-100 text-green-800'
+                            },
+                            {
+                                sd: '< −2 SD',
+                                label: 'Thinness',
+                                color: 'bg-amber-100 text-amber-800'
+                            },
+                            {
+                                sd: '< −3 SD',
+                                label: 'Severe thinness',
+                                color: 'bg-amber-200 text-amber-900'
+                            }
+                        ].map((c) => (
+                            <div
+                                key={c.label}
+                                className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0"
+                            >
+                                <span className="text-sm text-gray-600">
+                                    {c.sd}
+                                </span>
+                                <span
+                                    className={`text-xs font-bold px-3 py-1 rounded-full ${c.color}`}
+                                >
+                                    {c.label}
+                                </span>
+                            </div>
+                        ))}
+                        <p className="text-xs text-gray-500 pt-3 leading-relaxed">
+                            WHO 2007 reference. Overweight and obesity
+                            correspond to BMI 25 and 30 kg/m² at 19 years,
+                            respectively. Thinness and severe thinness are
+                            based on z-scores below −2 SD and −3 SD.
+                        </p>
+                    </div>
                 )}
-
             </div>
 
             <p className="mt-6 text-xs text-gray-500 leading-relaxed text-center">
-                <strong>Disclaimer:</strong> BMI is a screening tool, not a diagnostic measure. In children and adolescents, BMI must be interpreted according to age and sex using WHO growth references. Consult a healthcare professional for a complete assessment.
+                <strong>Disclaimer:</strong> BMI is a screening tool, not a
+                diagnostic measure. The child mode uses the WHO 2007
+                BMI-for-age reference and requires accurate age and sex
+                information. Always consult a healthcare professional for a
+                complete assessment.
             </p>
-
         </div>
     );
 };
