@@ -1099,12 +1099,15 @@ function App() {
                 <Route
                     path="/bmi-calculator"
                     element={
-                        <ProtectedRoute requireSubscription={false}>
-                            <BMICalculator />
-                        </ProtectedRoute>
+                        <PublicRoute>
+                            <SimpleLayout>
+                                <BMICalculator />
+                            </SimpleLayout>
+                        </PublicRoute>
                     }
                 />
 
+                
                 {/* Admin CDSS Routes - ONLY for admin users */}
                 <Route
                     path="/admin/cdss/rules"
