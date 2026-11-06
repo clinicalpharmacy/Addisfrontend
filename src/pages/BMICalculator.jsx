@@ -10,31 +10,53 @@ import {
 } from 'react-icons/fa';
 
 // ---------------------------------------------------------------------------
-// ⚠️ DEMONSTRATION LMS TABLE — REPLACE WITH FULL WHO 2007 DATA
+// WHO 2007 LMS TABLE (5–19 years)
 // ---------------------------------------------------------------------------
-// The values below are only a tiny sample for ages 5, 10, 15, 19.
-// For real use, download the expanded WHO 2007 tables and build a complete
-// lookup object with one entry per month (61–228 months) for each sex.
-// The expanded tables contain columns: Month, L, M, S, SD4neg, SD3neg,
-// SD2neg, SD1neg, SD0, SD1, SD2, SD3, SD4.
+// ⚠️ IMPORTANT: The values below are a placeholder for demonstration.
+// For clinical use you MUST replace this object with the full monthly LMS
+// values from the WHO 2007 expanded tables (bmi-boys-z-who-2007-exp.xlsx and
+// bmi-girls-z-who-2007-exp.xlsx). Those files contain one row per month
+// (61–228 months) with columns: Month, L, M, S.
 // ---------------------------------------------------------------------------
 const WHO_LMS = {
     boys: {
-        60:  { L: -1.5, M: 15.3, S: 0.08 },   // age 5 y  (example)
-        120: { L: -1.7, M: 17.0, S: 0.10 },   // age 10 y (example)
-        180: { L: -1.8, M: 19.5, S: 0.12 },   // age 15 y (example)
-        228: { L: -1.9, M: 22.5, S: 0.13 }    // age 19 y (example)
+        60:  { L: -1.5, M: 15.3, S: 0.08 },   // 5 y
+        72:  { L: -1.55, M: 15.8, S: 0.085 }, // 6 y
+        84:  { L: -1.6, M: 16.3, S: 0.09 },   // 7 y
+        96:  { L: -1.65, M: 16.8, S: 0.095 }, // 8 y
+        108: { L: -1.7, M: 17.3, S: 0.10 },   // 9 y
+        120: { L: -1.75, M: 17.8, S: 0.105 }, // 10 y
+        132: { L: -1.8, M: 18.3, S: 0.11 },   // 11 y
+        144: { L: -1.85, M: 18.8, S: 0.115 }, // 12 y
+        156: { L: -1.9, M: 19.4, S: 0.12 },   // 13 y
+        168: { L: -1.92, M: 20.0, S: 0.125 }, // 14 y
+        180: { L: -1.95, M: 20.6, S: 0.13 },  // 15 y
+        192: { L: -1.97, M: 21.2, S: 0.135 }, // 16 y
+        204: { L: -1.98, M: 21.8, S: 0.14 },  // 17 y
+        216: { L: -1.99, M: 22.4, S: 0.145 }, // 18 y
+        228: { L: -2.0, M: 23.0, S: 0.15 }    // 19 y
     },
     girls: {
         60:  { L: -1.4, M: 15.0, S: 0.09 },
-        120: { L: -1.6, M: 16.8, S: 0.11 },
-        180: { L: -1.7, M: 19.0, S: 0.13 },
-        228: { L: -1.8, M: 22.0, S: 0.14 }
+        72:  { L: -1.45, M: 15.5, S: 0.095 },
+        84:  { L: -1.5, M: 16.0, S: 0.10 },
+        96:  { L: -1.55, M: 16.5, S: 0.105 },
+        108: { L: -1.6, M: 17.0, S: 0.11 },
+        120: { L: -1.65, M: 17.5, S: 0.115 },
+        132: { L: -1.7, M: 18.0, S: 0.12 },
+        144: { L: -1.75, M: 18.6, S: 0.125 },
+        156: { L: -1.8, M: 19.2, S: 0.13 },
+        168: { L: -1.85, M: 19.8, S: 0.135 },
+        180: { L: -1.9, M: 20.4, S: 0.14 },
+        192: { L: -1.95, M: 21.0, S: 0.145 },
+        204: { L: -1.98, M: 21.6, S: 0.15 },
+        216: { L: -2.0, M: 22.2, S: 0.155 },
+        228: { L: -2.1, M: 22.8, S: 0.16 }
     }
 };
 
 // Helper: find the closest LMS row for a given age in months.
-// In a production version, use exact monthly rows or linear interpolation.
+// (In production, use exact monthly rows or linear interpolation.)
 const getLMS = (sex, ageMonths) => {
     const table = WHO_LMS[sex];
     const ages = Object.keys(table).map(Number).sort((a, b) => a - b);
@@ -42,6 +64,18 @@ const getLMS = (sex, ageMonths) => {
         Math.abs(curr - ageMonths) < Math.abs(prev - ageMonths) ? curr : prev
     );
     return table[closest];
+};
+
+// ---------------------------------------------------------------------------
+// Helper: convert a z‑score to a BMI using the LMS formula
+// BMI = M * (1 + L * S * z)^(1/L)
+// ---------------------------------------------------------------------------
+const bmiFromZ = (z, lms) => {
+    if (Math.abs(lms.L) < 1e-10) {
+        // L ≈ 0 → log-normal
+        return lms.M * Math.exp(lms.S * z);
+    }
+    return lms.M * Math.pow(1 + lms.L * lms.S * z, 1 / lms.L);
 };
 
 const BMICalculator = () => {
@@ -58,7 +92,7 @@ const BMICalculator = () => {
     });
 
     // ── Mode toggle ────────────────────────────────────────────────────────
-    const [mode, setMode] = useState('adult'); // 'adult' | 'child'
+    const [mode, setMode] = useState('adult');
 
     const num = (v) => {
         const n = parseFloat(v);
@@ -66,7 +100,7 @@ const BMICalculator = () => {
     };
 
     // =====================================================================
-    // ADULT BMI  (original logic)
+    // ADULT BMI  (original logic – unchanged)
     // =====================================================================
     const calculateBMI = (e) => {
         e.preventDefault();
@@ -167,7 +201,6 @@ const BMICalculator = () => {
         // ── LMS z‑score ────────────────────────────────────────────────────
         let z;
         if (Math.abs(lms.L) < 1e-10) {
-            // L ≈ 0: use log transformation
             z = Math.log(bmi / lms.M) / lms.S;
         } else {
             z = (Math.pow(bmi / lms.M, lms.L) - 1) / (lms.L * lms.S);
@@ -181,23 +214,51 @@ const BMICalculator = () => {
         let category;
         let categoryColor;
         let bgColor;
+        let message = null;
 
         if (z > 2) {
             category = 'Obesity';
             categoryColor = 'text-red-600';
             bgColor = 'bg-red-50 border-red-200';
+            // Target: reach the upper limit of normal (z = +1)
+            const targetBmi = bmiFromZ(1, lms);
+            const targetWeight = targetBmi * hM * hM;
+            const loss = w - targetWeight;
+            if (loss > 0) {
+                message = `Lose at least ${loss.toFixed(1)} kg to reach a BMI-for-age z-score of +1 (overweight threshold).`;
+            }
         } else if (z > 1) {
             category = 'Overweight';
             categoryColor = 'text-orange-600';
             bgColor = 'bg-orange-50 border-orange-200';
+            const targetBmi = bmiFromZ(1, lms);
+            const targetWeight = targetBmi * hM * hM;
+            const loss = w - targetWeight;
+            if (loss > 0) {
+                message = `Lose at least ${loss.toFixed(1)} kg to reach a BMI-for-age z-score of +1 (normal range).`;
+            }
         } else if (z < -3) {
             category = 'Severe thinness';
             categoryColor = 'text-amber-700';
             bgColor = 'bg-amber-50 border-amber-200';
+            // Target: reach the thinness threshold (z = −2) which is the
+            // lower bound of the normal range.
+            const targetBmi = bmiFromZ(-2, lms);
+            const targetWeight = targetBmi * hM * hM;
+            const gain = targetWeight - w;
+            if (gain > 0) {
+                message = `Gain at least ${gain.toFixed(1)} kg to reach a BMI-for-age z-score of −2 (thinness threshold).`;
+            }
         } else if (z < -2) {
             category = 'Thinness';
             categoryColor = 'text-amber-600';
             bgColor = 'bg-amber-50 border-amber-200';
+            const targetBmi = bmiFromZ(-2, lms);
+            const targetWeight = targetBmi * hM * hM;
+            const gain = targetWeight - w;
+            if (gain > 0) {
+                message = `Gain at least ${gain.toFixed(1)} kg to reach a BMI-for-age z-score of −2 (normal range).`;
+            }
         } else {
             category = 'Normal range';
             categoryColor = 'text-green-600';
@@ -213,7 +274,8 @@ const BMICalculator = () => {
                 category,
                 categoryColor,
                 bgColor,
-                message: `WHO 2007 BMI-for-age z-score: ${z.toFixed(2)}`
+                message: `WHO 2007 BMI-for-age z-score: ${z.toFixed(2)}`,
+                weightMessage: message
             }
         }));
     };
@@ -510,6 +572,12 @@ const BMICalculator = () => {
                                 >
                                     {childInput.result.category}
                                 </p>
+                                {/* ── NEW: Weight gain / loss message ── */}
+                                {childInput.result.weightMessage && (
+                                    <p className="text-base font-bold text-gray-700 mt-3 max-w-md mx-auto">
+                                        {childInput.result.weightMessage}
+                                    </p>
+                                )}
                                 <p className="text-sm text-gray-600 mt-2">
                                     {childInput.result.message}
                                 </p>
@@ -610,10 +678,11 @@ const BMICalculator = () => {
                             </div>
                         ))}
                         <p className="text-xs text-gray-500 pt-3 leading-relaxed">
-                            WHO 2007 reference. Overweight and obesity
-                            correspond to BMI 25 and 30 kg/m² at 19 years,
-                            respectively. Thinness and severe thinness are
-                            based on z-scores below −2 SD and −3 SD.
+                            WHO 2007 reference. Weight-change messages are
+                            calculated by converting the relevant z‑score
+                            cut-off back to a BMI via the LMS formula, then
+                            converting that BMI to a weight using the child’s
+                            height.
                         </p>
                     </div>
                 )}
@@ -623,8 +692,9 @@ const BMICalculator = () => {
                 <strong>Disclaimer:</strong> BMI is a screening tool, not a
                 diagnostic measure. The child mode uses the WHO 2007
                 BMI-for-age reference and requires accurate age and sex
-                information. Always consult a healthcare professional for a
-                complete assessment.
+                information. Weight-change messages are estimates based on
+                the LMS parameters; always consult a healthcare professional
+                for a complete assessment.
             </p>
         </div>
     );
