@@ -20,21 +20,21 @@ import {
 // ---------------------------------------------------------------------------
 const WHO_LMS = {
     boys: {
-        60:  { L: -1.5, M: 15.3, S: 0.08 },   // 5 y
-        72:  { L: -1.55, M: 15.8, S: 0.085 }, // 6 y
-        84:  { L: -1.6, M: 16.3, S: 0.09 },   // 7 y
-        96:  { L: -1.65, M: 16.8, S: 0.095 }, // 8 y
-        108: { L: -1.7, M: 17.3, S: 0.10 },   // 9 y
-        120: { L: -1.75, M: 17.8, S: 0.105 }, // 10 y
-        132: { L: -1.8, M: 18.3, S: 0.11 },   // 11 y
-        144: { L: -1.85, M: 18.8, S: 0.115 }, // 12 y
-        156: { L: -1.9, M: 19.4, S: 0.12 },   // 13 y
-        168: { L: -1.92, M: 20.0, S: 0.125 }, // 14 y
-        180: { L: -1.95, M: 20.6, S: 0.13 },  // 15 y
-        192: { L: -1.97, M: 21.2, S: 0.135 }, // 16 y
-        204: { L: -1.98, M: 21.8, S: 0.14 },  // 17 y
-        216: { L: -1.99, M: 22.4, S: 0.145 }, // 18 y
-        228: { L: -2.0, M: 23.0, S: 0.15 }    // 19 y
+        60:  { L: -1.5, M: 15.3, S: 0.08 },
+        72:  { L: -1.55, M: 15.8, S: 0.085 },
+        84:  { L: -1.6, M: 16.3, S: 0.09 },
+        96:  { L: -1.65, M: 16.8, S: 0.095 },
+        108: { L: -1.7, M: 17.3, S: 0.10 },
+        120: { L: -1.75, M: 17.8, S: 0.105 },
+        132: { L: -1.8, M: 18.3, S: 0.11 },
+        144: { L: -1.85, M: 18.8, S: 0.115 },
+        156: { L: -1.9, M: 19.4, S: 0.12 },
+        168: { L: -1.92, M: 20.0, S: 0.125 },
+        180: { L: -1.95, M: 20.6, S: 0.13 },
+        192: { L: -1.97, M: 21.2, S: 0.135 },
+        204: { L: -1.98, M: 21.8, S: 0.14 },
+        216: { L: -1.99, M: 22.4, S: 0.145 },
+        228: { L: -2.0, M: 23.0, S: 0.15 }
     },
     girls: {
         60:  { L: -1.4, M: 15.0, S: 0.09 },
@@ -56,7 +56,6 @@ const WHO_LMS = {
 };
 
 // Helper: find the closest LMS row for a given age in months.
-// (In production, use exact monthly rows or linear interpolation.)
 const getLMS = (sex, ageMonths) => {
     const table = WHO_LMS[sex];
     const ages = Object.keys(table).map(Number).sort((a, b) => a - b);
@@ -72,14 +71,13 @@ const getLMS = (sex, ageMonths) => {
 // ---------------------------------------------------------------------------
 const bmiFromZ = (z, lms) => {
     if (Math.abs(lms.L) < 1e-10) {
-        // L ≈ 0 → log-normal
         return lms.M * Math.exp(lms.S * z);
     }
     return lms.M * Math.pow(1 + lms.L * lms.S * z, 1 / lms.L);
 };
 
 const BMICalculator = () => {
-    // ── Adult state (unchanged) ────────────────────────────────────────────
+    // ── Adult state ────────────────────────────────────────────────────────
     const [input, setInput] = useState({ weight: '', height: '', result: null });
 
     // ── Child state ────────────────────────────────────────────────────────
@@ -207,10 +205,19 @@ const BMICalculator = () => {
         }
 
         // ── WHO interpretation (5–19 y) ────────────────────────────────────
-        // Overweight: > +1 SD
-        // Obesity: > +2 SD
-        // Thinness: < −2 SD
-        // Severe thinness: < −3 SD
+        // Normal range: -2 SD ≤ z ≤ +1 SD
+        // Overweight:   z > +1 SD
+        // Obesity:      z > +2 SD
+        // Thinness:     z < -2 SD
+        // Severe thinness: z < -3 SD
+        //
+        // The weight-change target is the NEAREST boundary of the NORMAL
+        // range, so the value shown is the MINIMUM weight change needed to
+        // bring the child into the normal BMI-for-age category:
+        //   • Overweight / Obesity  → target z = +1 (upper limit of normal)
+        //   • Thinness / Severe thinness → target z = -2 (lower limit of normal)
+        // This mirrors the adult logic (target BMI 25 and 18.5 respectively).
+        // ──────────────────────────────────────────────────────────────────
         let category;
         let categoryColor;
         let bgColor;
@@ -220,12 +227,11 @@ const BMICalculator = () => {
             category = 'Obesity';
             categoryColor = 'text-red-600';
             bgColor = 'bg-red-50 border-red-200';
-            // Target: reach the upper limit of normal (z = +1)
             const targetBmi = bmiFromZ(1, lms);
             const targetWeight = targetBmi * hM * hM;
             const loss = w - targetWeight;
             if (loss > 0) {
-                message = `Lose at least ${loss.toFixed(1)} kg to reach a BMI-for-age z-score of +1 (overweight threshold).`;
+                message = `Lose at least ${loss.toFixed(1)} kg to reach the normal BMI-for-age range (z-score ≤ +1).`;
             }
         } else if (z > 1) {
             category = 'Overweight';
@@ -235,19 +241,17 @@ const BMICalculator = () => {
             const targetWeight = targetBmi * hM * hM;
             const loss = w - targetWeight;
             if (loss > 0) {
-                message = `Lose at least ${loss.toFixed(1)} kg to reach a BMI-for-age z-score of +1 (normal range).`;
+                message = `Lose at least ${loss.toFixed(1)} kg to reach the normal BMI-for-age range (z-score ≤ +1).`;
             }
         } else if (z < -3) {
             category = 'Severe thinness';
             categoryColor = 'text-amber-700';
             bgColor = 'bg-amber-50 border-amber-200';
-            // Target: reach the thinness threshold (z = −2) which is the
-            // lower bound of the normal range.
             const targetBmi = bmiFromZ(-2, lms);
             const targetWeight = targetBmi * hM * hM;
             const gain = targetWeight - w;
             if (gain > 0) {
-                message = `Gain at least ${gain.toFixed(1)} kg to reach a BMI-for-age z-score of −2 (thinness threshold).`;
+                message = `Gain at least ${gain.toFixed(1)} kg to reach the normal BMI-for-age range (z-score ≥ −2).`;
             }
         } else if (z < -2) {
             category = 'Thinness';
@@ -257,7 +261,7 @@ const BMICalculator = () => {
             const targetWeight = targetBmi * hM * hM;
             const gain = targetWeight - w;
             if (gain > 0) {
-                message = `Gain at least ${gain.toFixed(1)} kg to reach a BMI-for-age z-score of −2 (normal range).`;
+                message = `Gain at least ${gain.toFixed(1)} kg to reach the normal BMI-for-age range (z-score ≥ −2).`;
             }
         } else {
             category = 'Normal range';
@@ -564,23 +568,32 @@ const BMICalculator = () => {
                                         {childInput.result.unit}
                                     </span>
                                 </p>
+
+                                {/* z-score line */}
                                 <p className="text-lg font-bold text-gray-700 mt-1">
                                     z-score: {childInput.result.zScore}
                                 </p>
+
+                                {/* WHO attribution right below z-score */}
+                                <p className="text-sm text-gray-600 mt-1">
+                                    {childInput.result.message}
+                                </p>
+
+                                {/* category */}
                                 <p
                                     className={`text-lg font-bold mt-2 ${childInput.result.categoryColor}`}
                                 >
                                     {childInput.result.category}
                                 </p>
-                                {/* ── NEW: Weight gain / loss message ── */}
+
+                                {/* weight gain / loss message — below z-score
+                                    and shown only for Thinness, Severe thinness,
+                                    Overweight, and Obesity */}
                                 {childInput.result.weightMessage && (
                                     <p className="text-base font-bold text-gray-700 mt-3 max-w-md mx-auto">
                                         {childInput.result.weightMessage}
                                     </p>
                                 )}
-                                <p className="text-sm text-gray-600 mt-2">
-                                    {childInput.result.message}
-                                </p>
                             </div>
                         </div>
                     )}
@@ -678,11 +691,14 @@ const BMICalculator = () => {
                             </div>
                         ))}
                         <p className="text-xs text-gray-500 pt-3 leading-relaxed">
-                            WHO 2007 reference. Weight-change messages are
-                            calculated by converting the relevant z‑score
-                            cut-off back to a BMI via the LMS formula, then
-                            converting that BMI to a weight using the child’s
-                            height.
+                            The weight-change message shows the{' '}
+                            <strong>minimum</strong> change needed to enter the
+                            normal range: overweight/obesity targets the upper
+                            limit of normal (z-score = +1), while
+                            thinness/severe thinness targets the lower limit
+                            of normal (z-score = −2). This mirrors the adult
+                            BMI approach (target BMI 25 and 18.5
+                            respectively).
                         </p>
                     </div>
                 )}
