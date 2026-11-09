@@ -10,7 +10,6 @@ import {
     FaSync,
     FaPlus
 } from 'react-icons/fa';
-import { getEncryptionKey, encryptValue, decryptValue } from '../../utils/encryptionUtils';
 
 const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
     const [pharmacyAssessment, setPharmacyAssessment] = useState('');
@@ -21,14 +20,6 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
     const [planType, setPlanType] = useState('');
     const [followUpDate, setFollowUpDate] = useState('');
     const [showForm, setShowForm] = useState(false);
-
-    // 🔐 Safe display for possibly-encrypted fields
-    const formatEncValue = (val, fallback = '—') => {
-        if (val === null || val === undefined || val === '') return fallback;
-        const strVal = String(val);
-        if (strVal.includes(':') && strVal.length > 30) return '[Encrypted]';
-        return val;
-    };
 
     useEffect(() => {
         if (patientCode && !standalone) {
@@ -49,25 +40,7 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
             const result = await api.get(`/pharmacy-plans/patient/${patientCode}`);
 
             if (result.success && result.plans) {
-                let plans = result.plans;
-
-                // 🔐 ZERO-KNOWLEDGE: Decrypt sensitive fields (no-op if key absent)
-                const encKey = await getEncryptionKey();
-                if (encKey && plans.length > 0) {
-                    try {
-                        plans = await Promise.all(plans.map(async (p) => {
-                            const decrypted = { ...p };
-                            for (const field of ['goals', 'notes', 'plan_type']) {
-                                if (decrypted[field] && typeof decrypted[field] === 'string' && decrypted[field].includes(':')) {
-                                    try { decrypted[field] = await decryptValue(decrypted[field], encKey); } catch (e) {}
-                                }
-                            }
-                            return decrypted;
-                        }));
-                    } catch (e) { console.error('Plan decryption failed', e); }
-                }
-
-                setSavedPlans(plans);
+                setSavedPlans(result.plans);
             }
         } catch (error) {
             console.error('Error fetching pharmacy plans:', error);
@@ -86,9 +59,8 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
                 return;
             }
 
-            // ⚠️ KEY FIX: send `patient_id` (same field name used by MedicationHistory)
             const planData = {
-                patient_id: patientCode,
+                patient_code: patientCode,
                 plan_type: planType || null,
                 goals: pharmacyAssessment,
                 medications: '',
@@ -96,21 +68,6 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
                 follow_up: followUpDate || null,
                 notes: plan
             };
-
-            // 🔐 ZERO-KNOWLEDGE: Encrypt sensitive fields (kept empty to match schema constraints)
-            const encKey = await getEncryptionKey();
-            const sensitiveFields = []; // Add field names here once backend schema allows longer text
-            if (encKey && sensitiveFields.length > 0) {
-                try {
-                    for (const field of sensitiveFields) {
-                        if (planData[field] && typeof planData[field] === 'string') {
-                            planData[field] = await encryptValue(planData[field], encKey);
-                        }
-                    }
-                } catch (encErr) {
-                    console.error('Encryption failed during save:', encErr);
-                }
-            }
 
             if (standalone) {
                 // Local-only mode
@@ -136,21 +93,21 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
                 }
 
                 if (result.success) {
-                    alert(`✅ Plan ${editIndex !== null ? 'updated' : 'saved'} successfully!`);
+                    alert(`Plan ${editIndex !== null ? 'updated' : 'saved'} successfully!`);
                     setPharmacyAssessment('');
                     setPlan('');
                     setFollowUpDate('');
                     setPlanType('');
                     setEditIndex(null);
                     setShowForm(false);
-                    await fetchSavedPlans();
+                    fetchSavedPlans();
                 } else {
                     throw new Error(result.error || 'Failed to save plan');
                 }
             }
         } catch (error) {
             console.error('Error saving plan:', error);
-            alert('❌ Error: ' + (error.response?.data?.error || error.message));
+            alert('Error: ' + (error.response?.data?.error || error.message));
         } finally {
             setLoading(false);
         }
@@ -178,14 +135,12 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
         try {
             const result = await api.delete(`/pharmacy-plans/${planId}`);
             if (result.success) {
-                alert('✅ Plan deleted successfully!');
-                await fetchSavedPlans();
-            } else {
-                throw new Error(result.error || 'Failed to delete plan');
+                alert('Plan deleted successfully!');
+                fetchSavedPlans();
             }
         } catch (error) {
             console.error('Error deleting plan:', error);
-            alert('❌ Error deleting plan: ' + (error.response?.data?.error || error.message || 'Failed'));
+            alert('Error deleting plan: ' + (error.response?.data?.error || error.message || 'Failed'));
         }
     };
 
@@ -223,16 +178,33 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
                 </button>
             </div>
 
-            {/* Quick Stats */}
+            {/* Quick Stats - inline text */}
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-4 md:mb-6 text-sm text-gray-600">
-                <span>Total Plans: <span className="font-semibold text-green-700">{savedPlans.length}</span></span>
+                <span>
+                    Total Plans: <span className="font-semibold text-green-700">{savedPlans.length}</span>
+                </span>
                 <span className="hidden sm:inline text-gray-300">|</span>
-                <span>With Follow-up: <span className="font-semibold text-blue-700">{savedPlans.filter(p => p.follow_up).length}</span></span>
+                <span>
+                    With Follow-up: <span className="font-semibold text-blue-700">{savedPlans.filter(p => p.follow_up).length}</span>
+                </span>
                 <span className="hidden sm:inline text-gray-300">|</span>
-                <span>With Notes: <span className="font-semibold text-purple-700">{savedPlans.filter(p => p.plan_type).length}</span></span>
+                <span>
+                    With Notes: <span className="font-semibold text-purple-700">{savedPlans.filter(p => p.plan_type).length}</span>
+                </span>
+                <span className="hidden sm:inline text-gray-300">|</span>
+                <span>
+                    Last Month: <span className="font-semibold text-teal-700">
+                        {savedPlans.filter(p => {
+                            if (!p.created_at) return false;
+                            const lastMonth = new Date();
+                            lastMonth.setMonth(lastMonth.getMonth() - 1);
+                            return new Date(p.created_at) > lastMonth;
+                        }).length}
+                    </span>
+                </span>
             </div>
 
-            {/* Toggle Form */}
+            {/* Toggle Form Button */}
             <div className="mb-4">
                 <button
                     onClick={() => setShowForm(!showForm)}
@@ -243,7 +215,7 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
                 </button>
             </div>
 
-            {/* Form */}
+            {/* Input Form - Collapsible */}
             {showForm && (
                 <div className="bg-gray-50 rounded-lg p-3 md:p-6 mb-4 md:mb-8 border border-gray-200">
                     <div className="flex justify-between items-center mb-6">
@@ -254,8 +226,11 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
                     </div>
 
                     <div className="space-y-4">
+                        {/* Progress Note */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Progress Note</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Progress Note
+                            </label>
                             <textarea
                                 value={planType}
                                 onChange={(e) => setPlanType(e.target.value)}
@@ -265,8 +240,11 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
                             />
                         </div>
 
+                        {/* Follow-up Date */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Follow-up Date</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Follow-up Date
+                            </label>
                             <div className="flex items-center">
                                 <FaCalendarAlt className="text-gray-400 mr-2" />
                                 <input
@@ -278,8 +256,11 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
                             </div>
                         </div>
 
+                        {/* Pharmacy Assessment */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Pharmacy Assessment *</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Pharmacy Assessment *
+                            </label>
                             <textarea
                                 value={pharmacyAssessment}
                                 onChange={(e) => setPharmacyAssessment(e.target.value)}
@@ -290,8 +271,11 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
                             />
                         </div>
 
+                        {/* Pharmacy Plan */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Pharmacy Plan *</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Pharmacy Plan *
+                            </label>
                             <textarea
                                 value={plan}
                                 onChange={(e) => setPlan(e.target.value)}
@@ -302,6 +286,7 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
                             />
                         </div>
 
+                        {/* Action Buttons */}
                         <div className="flex gap-3">
                             <button
                                 onClick={savePlan}
@@ -310,6 +295,7 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
                             >
                                 <FaSave /> {loading ? 'Saving...' : (editIndex !== null ? 'Update Plan' : 'Save Plan')}
                             </button>
+
                             {(editIndex !== null || showForm) && (
                                 <button
                                     onClick={resetForm}
@@ -323,7 +309,7 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
                 </div>
             )}
 
-            {/* Saved Plans */}
+            {/* Saved Plans List */}
             <div>
                 <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center gap-2">
                     <FaClipboardList />
@@ -349,7 +335,9 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
                             <div key={item.id} className="border rounded-lg p-4 bg-gray-50 hover:bg-white transition hover:shadow-md">
                                 <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-4 gap-2">
                                     <div>
-                                        <h4 className="font-semibold text-gray-800">Plan #{index + 1}</h4>
+                                        <h4 className="font-semibold text-gray-800">
+                                            Plan #{index + 1}
+                                        </h4>
                                         {item.follow_up && (
                                             <p className="text-sm text-gray-500 mt-1 flex items-center gap-1">
                                                 <FaCalendarAlt className="text-xs" />
@@ -358,14 +346,14 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
                                         )}
                                     </div>
                                     <div className="flex gap-2">
-                                        <button
-                                            onClick={() => handleEdit(item)}
+                                        <button 
+                                            onClick={() => handleEdit(item)} 
                                             className="text-blue-500 hover:text-blue-700 px-2 py-1 hover:bg-blue-50 rounded transition"
                                         >
                                             <FaEdit className="inline mr-1" /> Edit
                                         </button>
-                                        <button
-                                            onClick={() => handleDelete(item.id)}
+                                        <button 
+                                            onClick={() => handleDelete(item.id)} 
                                             className="text-red-500 hover:text-red-700 px-2 py-1 hover:bg-red-50 rounded transition"
                                         >
                                             <FaTrash className="inline mr-1" /> Delete
@@ -375,24 +363,30 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
 
                                 {item.plan_type && (
                                     <div className="mb-3">
-                                        <h5 className="font-medium text-gray-700 mb-1 text-sm">Progress Note</h5>
+                                        <h5 className="font-medium text-gray-700 mb-1 text-sm">
+                                            Progress Note
+                                        </h5>
                                         <div className="bg-blue-50 border border-blue-200 rounded p-3 whitespace-pre-wrap text-sm">
-                                            {formatEncValue(item.plan_type)}
+                                            {item.plan_type}
                                         </div>
                                     </div>
                                 )}
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <h5 className="font-medium text-gray-700 mb-2">Pharmacy Assessment</h5>
+                                        <h5 className="font-medium text-gray-700 mb-2">
+                                            Pharmacy Assessment
+                                        </h5>
                                         <div className="bg-white border rounded p-3 whitespace-pre-wrap">
-                                            {formatEncValue(item.goals)}
+                                            {item.goals}
                                         </div>
                                     </div>
                                     <div>
-                                        <h5 className="font-medium text-gray-700 mb-2">Plan of Action</h5>
+                                        <h5 className="font-medium text-gray-700 mb-2">
+                                            Plan of Action
+                                        </h5>
                                         <div className="bg-white border rounded p-3 whitespace-pre-wrap">
-                                            {formatEncValue(item.notes)}
+                                            {item.notes}
                                         </div>
                                     </div>
                                 </div>
