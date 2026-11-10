@@ -2678,7 +2678,7 @@ const Signup = () => {
                                             {manualPaymentMethod === 'cbe' ? 'CBE Account Number' : 'Telebirr Phone / Account'}
                                         </p>
                                         <p className="text-2xl font-black text-indigo-950 font-mono tracking-wider">
-                                            {manualPaymentMethod === 'cbe' ? '1000791259847' : '+251919519512'}
+                                            {manualPaymentMethod === 'cbe' ? '1000791259847' : 'Use CBE'}
                                         </p>
                                         <p className="text-xs text-gray-500 font-medium">
                                             {manualPaymentMethod === 'cbe' ? 'Commercial Bank of Ethiopia' : 'Telebirr (Ethio Telecom)'}
@@ -2687,7 +2687,7 @@ const Signup = () => {
                                     <button
                                         type="button"
                                         onClick={() => {
-                                            const textToCopy = manualPaymentMethod === 'cbe' ? '1000791259847' : '+251919519512';
+                                            const textToCopy = manualPaymentMethod === 'cbe' ? '1000791259847' : 'Use CBE';
                                             navigator.clipboard.writeText(textToCopy);
                                             setCopiedAccount(true);
                                             setTimeout(() => setCopiedAccount(false), 2500);
