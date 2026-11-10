@@ -2723,7 +2723,7 @@ const Signup = () => {
                                     {manualPaymentMethod === 'cbe' ? (
                                         <>💡 Transfer using CBE Mobile Banking / CBE Birr to <strong>Addis Med</strong> (Account: <strong>1000791259847</strong>), then paste your reference number above.</>
                                     ) : (
-                                        <>💡 Send payment via Telebirr app to <strong>Addis Med</strong> (Phone: <strong>+251919519512</strong>), then paste your transaction number above.</>
+                                        <>💡 Send payment via Telebirr app to <strong>Addis Med</strong> (Phone: <strong>Use CBE</strong>), then paste your transaction number above.</>
                                     )}
                                 </p>
                             </div>
