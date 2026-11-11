@@ -33,6 +33,7 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
     const [activeRules, setActiveRules] = useState({});
     const [filterSeverity, setFilterSeverity] = useState('all');
     const [userId, setUserId] = useState(null);
+    const [userRole, setUserRole] = useState(null);
     const [patientId, setPatientId] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [authError, setAuthError] = useState(null);
@@ -166,49 +167,27 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
         return colors[dtpType] || 'bg-gray-100 text-gray-800 border-gray-200';
     };
 
-    // Get user ID from JWT token
-    const getUserIdFromToken = () => {
-        try {
-            const token = localStorage.getItem('token') || localStorage.getItem('pharmacare_token');
-            if (!token) return null;
-
-            const base64Url = token.split('.')[1];
-            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
-                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-            }).join(''));
-
-            const payload = JSON.parse(jsonPayload);
-            const userId = payload.userId || payload.user_id || payload.sub || payload.id;
-            return userId;
-        } catch (error) {
-            console.error('Error parsing JWT token:', error);
-            return null;
-        }
-    };
-
-    // Get user ID from session or localStorage
-    const getUserIdFromSession = () => {
+    // Get user info (id, role) from token, localStorage, or session
+    const getUserInfo = () => {
         try {
             const userData = localStorage.getItem('user');
             if (userData) {
                 try {
                     const user = JSON.parse(userData);
-                    if (user.id) return user.id;
-                    if (user.userId) return user.userId;
-                } catch (e) {
-                    console.error('Error parsing user data:', e);
-                }
+                    if (user.id || user.userId) {
+                        return { id: user.id || user.userId, role: user.role };
+                    }
+                } catch (e) {}
             }
 
             const sessionUser = sessionStorage.getItem('user');
             if (sessionUser) {
                 try {
                     const user = JSON.parse(sessionUser);
-                    if (user.id || user.userId) return user.id || user.userId;
-                } catch (e) {
-                    console.error('Error parsing session data:', e);
-                }
+                    if (user.id || user.userId) {
+                        return { id: user.id || user.userId, role: user.role };
+                    }
+                } catch (e) {}
             }
 
             const authData = localStorage.getItem('auth');
@@ -216,16 +195,28 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
                 try {
                     const auth = JSON.parse(authData);
                     if (auth.user && (auth.user.id || auth.user.userId)) {
-                        return auth.user.id || auth.user.userId;
+                        return { id: auth.user.id || auth.user.userId, role: auth.user.role };
                     }
-                } catch (e) {
-                    console.error('Error parsing auth data:', e);
-                }
+                } catch (e) {}
+            }
+
+            const token = localStorage.getItem('token') || localStorage.getItem('pharmacare_token');
+            if (token) {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+
+                const payload = JSON.parse(jsonPayload);
+                const userId = payload.userId || payload.user_id || payload.sub || payload.id;
+                const role = payload.role || payload.user_metadata?.role;
+                if (userId) return { id: userId, role: role };
             }
 
             return null;
         } catch (error) {
-            console.error('Error getting user ID:', error);
+            console.error('Error getting user info:', error);
             return null;
         }
     };
@@ -241,13 +232,17 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
             }
 
             try {
-                let currentUserId = getUserIdFromToken();
-                if (!currentUserId) currentUserId = getUserIdFromSession();
+                const currentUser = getUserInfo();
+                let currentUserId = currentUser?.id;
+                let currentRole = currentUser?.role;
 
                 if (!currentUserId && !standalone) {
                     try {
                         const { data: { user } } = await supabase.auth.getUser();
-                        if (user) currentUserId = user.id;
+                        if (user) {
+                            currentUserId = user.id;
+                            currentRole = user.user_metadata?.role || currentRole;
+                        }
                     } catch (authError) {
                         console.log('Supabase auth not available:', authError.message);
                     }
@@ -260,6 +255,7 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
 
                 if (isMounted) {
                     setUserId(currentUserId || 'standalone-user');
+                    setUserRole(currentRole || null);
                     setAuthError(null);
                     await loadPatientData();
                     await fetchClinicalRules();
@@ -440,21 +436,32 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
     };
 
     const fetchAssessments = async () => {
-        if (!patientId || !userId) return;
+        if (!patientId) return;
         if (standalone) return; // Skip fetching in standalone mode
 
         setIsLoading(true);
         try {
-            // FIXED: Use patient_id instead of patient_code
-            const { data, error } = await supabase
+            const isAdmin = userRole === 'admin' || userRole === 'superadmin';
+            let query = supabase
                 .from('drn_assessments')
                 .select('*')
-                .eq('patient_id', patientId)
-                .eq('user_id', userId)
-                .order('created_at', { ascending: false });
+                .eq('patient_id', patientId);
+
+            // Admins see all assessments saved for this patient.
+            // For non-admins, only filter by user_id if this patient does not belong to them.
+            if (!isAdmin && userId && patientData?.user_id && patientData.user_id !== userId) {
+                query = query.eq('user_id', userId);
+            }
+
+            const { data, error } = await query.order('created_at', { ascending: false });
 
             if (error) {
-                console.error('Error fetching assessments:', error);
+                console.warn('Direct Supabase fetch failed, attempting API fallback:', error);
+                const apiRes = await api.get(`/assessments/patient/${patientId}`);
+                if (apiRes && apiRes.success) {
+                    setAssessments(apiRes.assessments || []);
+                    return;
+                }
                 setAssessments([]);
                 return;
             }
@@ -462,6 +469,15 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
             setAssessments(data || []);
         } catch (error) {
             console.error('Error fetching assessments:', error);
+            try {
+                const apiRes = await api.get(`/assessments/patient/${patientId}`);
+                if (apiRes && apiRes.success) {
+                    setAssessments(apiRes.assessments || []);
+                    return;
+                }
+            } catch (e) {
+                console.error('Fallback API also failed:', e);
+            }
             setAssessments([]);
         } finally {
             setIsLoading(false);
@@ -846,12 +862,17 @@ const DRNAssessment = ({ patientCode, patientData: initialPatient, medicationHis
                 }
             } else {
                 if (editId !== null) {
-                    const { data, error } = await supabase
+                    const isAdmin = userRole === 'admin' || userRole === 'superadmin';
+                    let updateQuery = supabase
                         .from('drn_assessments')
                         .update(assessmentData)
-                        .eq('id', editId)
-                        .eq('user_id', userId)
-                        .select();
+                        .eq('id', editId);
+
+                    if (!isAdmin) {
+                        updateQuery = updateQuery.eq('user_id', userId);
+                    }
+
+                    const { data, error } = await updateQuery.select();
 
                     if (error) throw error;
                     result = data[0];

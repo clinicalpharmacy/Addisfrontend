@@ -106,11 +106,11 @@ export const useDRNLogic = (patientCode) => {
 
             // Assessments - try by patient_id first, fallback to patient_code
             let aData = null;
-            const { data: aById } = await supabase.from('drn_assessments').select('*').eq('patient_id', patientId).eq('user_id', uid).order('created_at', { ascending: false });
+            const { data: aById } = await supabase.from('drn_assessments').select('*').eq('patient_id', patientId).order('created_at', { ascending: false });
             if (aById && aById.length > 0) {
                 aData = aById;
             } else {
-                const { data: aByCode } = await supabase.from('drn_assessments').select('*').eq('patient_code', patCode).eq('user_id', uid).order('created_at', { ascending: false });
+                const { data: aByCode } = await supabase.from('drn_assessments').select('*').eq('patient_code', patCode).order('created_at', { ascending: false });
                 aData = aByCode;
             }
             setAssessments(aData || []);
