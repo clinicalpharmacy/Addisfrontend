@@ -6,9 +6,9 @@ import {
     isValidDate, calculateAgeInDays, calculateAge, determinePatientType,
     calculateBMI, calculateTrimester
 } from '../utils/patientUtils';
-import { 
-    getEncryptionKey, 
-    encryptPatient, 
+import {
+    getEncryptionKey,
+    encryptPatient,
     decryptPatient,
     loadPrivateKey,
     decryptWithPrivateKey
@@ -74,7 +74,7 @@ export const usePatientLogic = (patientCode) => {
 
     const loadPatientData = useCallback(async (data) => {
         setIsNewPatient(false);
-        
+
         // 🔐 DECRYPT patient data before loading into state
         const key = await getEncryptionKey();
         let decryptedData = data;
@@ -86,7 +86,7 @@ export const usePatientLogic = (patientCode) => {
                 isOwner = true;
             } catch (err) {
                 console.log("❌ Not the owner or master key fail, checking for SHARED access...");
-                
+
                 // 🛡️ CHECK FOR SHARED ACCESS (Invitations/Troubleshooting)
                 try {
                     const accessRes = await api.get(`/access/granted?patient_id=${data.id}`);
@@ -99,7 +99,7 @@ export const usePatientLogic = (patientCode) => {
                             const sharedKey = await crypto.subtle.importKey(
                                 "raw", sharedKeyRaw, { name: "AES-GCM" }, true, ["encrypt", "decrypt"]
                             );
-                            
+
                             // 2. Decrypt the patient with that shared key
                             decryptedData = await decryptPatient(data, sharedKey);
                             console.log("✅ Decrypted via SHARED invitation!");
@@ -110,7 +110,7 @@ export const usePatientLogic = (patientCode) => {
                 }
             }
         }
-        
+
         setPatient(decryptedData);
         fetchClinicalHistory(decryptedData.patient_code);
 
@@ -228,7 +228,7 @@ export const usePatientLogic = (patientCode) => {
     const handleSave = async () => {
         try {
             setLoading(true);
-            
+
             // Save unencrypted so clinical data is viewable across Admin and clinical staff
             const payload = formData;
 
