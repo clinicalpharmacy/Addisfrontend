@@ -5,7 +5,8 @@ import {
     FaArrowRight, FaCheckCircle, FaBookMedical, FaBookOpen,
     FaBars, FaBook, FaCapsules, FaNotesMedical, FaTimes,
     FaCalculator, FaWeightHanging, FaRulerVertical,
-    FaNewspaper, FaCalendarAlt, FaTag
+    FaNewspaper, FaCalendarAlt, FaTag,
+    FaPaperPlane, FaQuestionCircle, FaEnvelope, FaPhoneAlt, FaMapMarkerAlt, FaSpinner
 } from 'react-icons/fa';
 import api from '../utils/api';
 import { format } from 'date-fns';
@@ -110,6 +111,57 @@ const LandingPage = () => {
         if (user.role === 'admin' || user.role === 'superadmin') return '/admin/dashboard';
         if (user.role === 'company_admin' || (user.account_type === 'company' && user.company_id)) return '/company/dashboard';
         return '/home';
+    };
+
+    // ---- Question / Contact form state ----
+    const [questionForm, setQuestionForm] = useState({
+        name: user?.name || '',
+        email: user?.email || '',
+        subject: '',
+        category: 'question',
+        message: ''
+    });
+    const [questionStatus, setQuestionStatus] = useState({ loading: false, success: false, error: '' });
+
+    const handleQuestionSubmit = async (e) => {
+        e.preventDefault();
+        if (!questionForm.message.trim()) {
+            setQuestionStatus({ loading: false, success: false, error: 'Please enter your question or message.' });
+            return;
+        }
+
+        setQuestionStatus({ loading: true, success: false, error: '' });
+        try {
+            const payload = {
+                user_name: questionForm.name.trim() || 'Website Visitor',
+                user_email: questionForm.email.trim() || 'Not provided',
+                subject: questionForm.subject.trim() || 'Question from Addis Med Landing Page',
+                category: questionForm.category || 'question',
+                message: questionForm.message.trim()
+            };
+
+            const res = await api.post('/feedback', payload);
+            if (res?.success || res?.message) {
+                setQuestionStatus({ loading: false, success: true, error: '' });
+                setQuestionForm({
+                    name: user?.name || '',
+                    email: user?.email || '',
+                    subject: '',
+                    category: 'question',
+                    message: ''
+                });
+            } else {
+                setQuestionStatus({
+                    loading: false,
+                    success: false,
+                    error: res?.error || 'Failed to submit your question. Please try again.'
+                });
+            }
+        } catch (err) {
+            console.error('Error submitting question:', err);
+            const errMsg = err?.error || err?.details || err?.message || 'Failed to submit your question. Please try again.';
+            setQuestionStatus({ loading: false, success: false, error: errMsg });
+        }
     };
 
     // ---- Fetch latest news ----
@@ -692,10 +744,216 @@ const LandingPage = () => {
                         </div>
                     </div>
                 </div>
+                {/* Contact & Ask a Question Section */}
+                <div id="contact" className="bg-slate-50 py-20 border-t border-slate-200">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="text-center mb-12">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-bold mb-3 border border-green-100">
+                                <FaQuestionCircle className="text-green-500" />
+                                <span>Get in Touch • ጥያቄ ወይም አስተያየት</span>
+                            </div>
+                            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">Have a Question? Write to Us</h2>
+                            <p className="mt-4 text-slate-600 max-w-2xl mx-auto text-base">
+                                Whether you have an inquiry about medications, clinical tools, subscriptions, or partnership opportunities, send us your message and our team will respond promptly.
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+                            {/* Left Column: Direct Info Cards */}
+                            <div className="lg:col-span-5 space-y-6">
+                                <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm">
+                                    <h3 className="text-xl font-bold text-slate-900 mb-2">Direct Contact Information</h3>
+                                    <p className="text-sm text-slate-600 mb-6">
+                                        Reach out directly through our contact channels or visit us in Addis Ababa.
+                                    </p>
+
+                                    <div className="space-y-4">
+                                        <div className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                                            <div className="w-10 h-10 rounded-xl bg-green-50 text-green-600 flex items-center justify-center shrink-0 border border-green-100">
+                                                <FaMapMarkerAlt className="text-lg" />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Location</p>
+                                                <p className="text-sm font-bold text-slate-800">Addis Ababa, Ethiopia</p>
+                                                <p className="text-xs text-slate-500">Addis Ababa University Startups Center</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                                            <div className="w-10 h-10 rounded-xl bg-green-50 text-green-600 flex items-center justify-center shrink-0 border border-green-100">
+                                                <FaEnvelope className="text-lg" />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Email Us</p>
+                                                <a href="mailto:pharmcare2001@yahoo.com" className="text-sm font-bold text-green-600 hover:underline">
+                                                    pharmcare2001@yahoo.com
+                                                </a>
+                                                <p className="text-xs text-slate-500">We respond promptly</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                                            <div className="w-10 h-10 rounded-xl bg-green-50 text-green-600 flex items-center justify-center shrink-0 border border-green-100">
+                                                <FaPhoneAlt className="text-lg" />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Call or Telebirr</p>
+                                                <a href="tel:+251919519512" className="text-sm font-bold text-slate-800 hover:text-green-600">
+                                                    +251 919 519 512
+                                                </a>
+                                                <p className="text-xs text-slate-500">Direct phone & customer support</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-3xl border border-green-100">
+                                    <h4 className="font-bold text-green-950 text-sm mb-1 flex items-center gap-2">
+                                        <FaCheckCircle className="text-green-600" />
+                                        Prompt & Professional Response
+                                    </h4>
+                                    <p className="text-xs text-green-800/90 leading-relaxed">
+                                        All questions, messages, and suggestions submitted here are forwarded directly to the Addis Med clinical and support team.
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Right Column: Question Form Card */}
+                            <div className="lg:col-span-7">
+                                <div className="bg-white p-6 sm:p-10 rounded-3xl border border-slate-200 shadow-sm relative">
+                                    {questionStatus.success ? (
+                                        <div className="py-12 text-center">
+                                            <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                <FaCheckCircle className="text-3xl" />
+                                            </div>
+                                            <h3 className="text-2xl font-bold text-slate-900 mb-2">Thank You!</h3>
+                                            <p className="text-slate-600 max-w-md mx-auto mb-6 text-sm">
+                                                Your question has been received successfully. Our team will review your message and reply as soon as possible.
+                                            </p>
+                                            <button
+                                                type="button"
+                                                onClick={() => setQuestionStatus({ loading: false, success: false, error: '' })}
+                                                className="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-green-600 bg-green-50 hover:bg-green-100 rounded-xl transition-all cursor-pointer"
+                                            >
+                                                Ask Another Question
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <form onSubmit={handleQuestionSubmit} className="space-y-5">
+                                            <div>
+                                                <h3 className="text-xl font-bold text-slate-900">Write to Us</h3>
+                                                <p className="text-sm text-slate-500 mt-1">Please provide your details and message below.</p>
+                                            </div>
+
+                                            {questionStatus.error && (
+                                                <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm font-medium">
+                                                    {questionStatus.error}
+                                                </div>
+                                            )}
+
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                                                        Your Name
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={questionForm.name}
+                                                        onChange={(e) => setQuestionForm({ ...questionForm, name: e.target.value })}
+                                                        placeholder="Dr. / Ato / W/ro..."
+                                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:bg-white transition-all"
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                                                        Email or Phone
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={questionForm.email}
+                                                        onChange={(e) => setQuestionForm({ ...questionForm, email: e.target.value })}
+                                                        placeholder="email@example.com or +251..."
+                                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:bg-white transition-all"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                                                        Topic / Category
+                                                    </label>
+                                                    <select
+                                                        value={questionForm.category}
+                                                        onChange={(e) => setQuestionForm({ ...questionForm, category: e.target.value })}
+                                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:bg-white transition-all"
+                                                    >
+                                                        <option value="question">Question & Inquiry</option>
+                                                        <option value="clinical">Medication & Clinical Query</option>
+                                                        <option value="subscription">Subscription & Payment</option>
+                                                        <option value="support">Technical Support</option>
+                                                        <option value="suggestion">Feedback & Suggestion</option>
+                                                        <option value="partnership">Partnership & Research</option>
+                                                    </select>
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                                                        Subject
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={questionForm.subject}
+                                                        onChange={(e) => setQuestionForm({ ...questionForm, subject: e.target.value })}
+                                                        placeholder="Brief subject of your question..."
+                                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:bg-white transition-all"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                                                    Your Question / Message <span className="text-red-500">*</span>
+                                                </label>
+                                                <textarea
+                                                    required
+                                                    rows="4"
+                                                    value={questionForm.message}
+                                                    onChange={(e) => setQuestionForm({ ...questionForm, message: e.target.value })}
+                                                    placeholder="Type your question or message here in detail..."
+                                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:bg-white transition-all resize-y"
+                                                ></textarea>
+                                            </div>
+
+                                            <button
+                                                type="submit"
+                                                disabled={questionStatus.loading}
+                                                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 text-base font-semibold text-white bg-green-500 hover:bg-green-600 rounded-xl shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                                            >
+                                                {questionStatus.loading ? (
+                                                    <>
+                                                        <FaSpinner className="animate-spin" />
+                                                        <span>Sending question...</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <FaPaperPlane className="text-sm" />
+                                                        <span>Send Question</span>
+                                                    </>
+                                                )}
+                                            </button>
+                                        </form>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </main>
 
             {/* Footer (unchanged) */}
-            <footer id="contact" className="bg-slate-50 border-t border-slate-200 pt-16 pb-8">
+            <footer className="bg-slate-50 border-t border-slate-200 pt-16 pb-8">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                     <div className="flex items-center justify-center gap-2 mb-6">
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm overflow-hidden">
