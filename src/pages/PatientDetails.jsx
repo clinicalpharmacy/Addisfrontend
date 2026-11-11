@@ -37,7 +37,8 @@ import {
     FaRobot,
     FaHistory,
     FaUserShield,
-    FaWifi
+    FaWifi,
+    FaDownload
 } from 'react-icons/fa';
 
 // Import components
@@ -166,6 +167,7 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
     const [patientOwnerSalt, setPatientOwnerSalt] = useState(null);
     const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
     const [supportActivated, setSupportActivated] = useState(false);
+    const [isDownloadingReport, setIsDownloadingReport] = useState(false);
 
     // Effect to fetch initial data
     useEffect(() => {
@@ -1524,6 +1526,244 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
         fetchPatientData();
     }, [fetchPatientData]);
 
+    // Download comprehensive Medication Review Report as PDF
+    const handleDownloadMedicationReview = useCallback(async () => {
+        setIsDownloadingReport(true);
+        try {
+            const { default: jsPDF } = await import('jspdf');
+            const { default: autoTable } = await import('jspdf-autotable');
+
+            const currentCode = getCurrentPatientCode();
+            const pId = patient?.id || currentCode;
+
+            // 1. Fetch Medications
+            let meds = [];
+            try {
+                const { data: mData } = await supabase
+                    .from('medication_history')
+                    .select('*')
+                    .eq('patient_id', pId);
+                if (mData && mData.length > 0) {
+                    meds = mData;
+                } else {
+                    const { data: rData } = await supabase
+                        .from('medication_reconciliations')
+                        .select('*')
+                        .eq('patient_id', pId);
+                    meds = rData || [];
+                }
+            } catch (e) {
+                console.warn('Could not fetch medications for report:', e);
+            }
+
+            // 2. Fetch DRN assessments
+            let drnList = [];
+            try {
+                const { data: drnData } = await supabase
+                    .from('drn_assessments')
+                    .select('*')
+                    .eq('patient_id', pId)
+                    .order('created_at', { ascending: false });
+                drnList = drnData || [];
+            } catch (e) {
+                console.warn('Could not fetch DRN assessments for report:', e);
+            }
+
+            // 3. Fetch Pharmacy Plans
+            let plansList = [];
+            try {
+                const { data: pData } = await supabase
+                    .from('pharmacy_assistance_plans')
+                    .select('*')
+                    .or(`patient_code.eq.${pId},patient_code.eq.${currentCode}`)
+                    .order('created_at', { ascending: false });
+                plansList = pData || [];
+            } catch (e) {
+                console.warn('Could not fetch plans for report:', e);
+            }
+
+            const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+
+            // Header Banner
+            doc.setFillColor(37, 99, 235);
+            doc.rect(0, 0, 210, 36, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(20);
+            doc.setFont('helvetica', 'bold');
+            doc.text('MEDICATION REVIEW REPORT', 14, 18);
+            doc.setFontSize(9.5);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Addis Med Clinical System  •  Case No: ${currentCode}  •  Generated: ${new Date().toLocaleDateString()}`, 14, 28);
+
+            let currentY = 44;
+
+            // 1. Patient Clinical Demographics
+            doc.setTextColor(31, 41, 55);
+            doc.setFontSize(13);
+            doc.setFont('helvetica', 'bold');
+            doc.text('1. Patient Demographics & Baseline Vitals', 14, currentY);
+            doc.setDrawColor(209, 213, 219);
+            doc.line(14, currentY + 2, 196, currentY + 2);
+
+            const weightNum = parseFloat(formData.weight);
+            const heightNum = parseFloat(formData.height);
+            const bmi = (weightNum > 0 && heightNum > 0) ? (weightNum / Math.pow(heightNum / 100, 2)).toFixed(1) : '-';
+            const bsa = (weightNum > 0 && heightNum > 0) ? Math.sqrt((weightNum * heightNum) / 3600).toFixed(2) : '-';
+
+            const demoRows = [
+                ['Full Name / Label:', formatEncValue(formData.full_name || patient?.full_name, `Case ${currentCode}`), 'Gender:', formData.gender || '-'],
+                ['Age:', formatAgeDisplay(formData.age_in_days, formData.date_of_birth) || `${formData.age || '-'} years`, 'Patient Type:', formData.patient_type || 'Adult'],
+                ['Diagnosis:', formatEncValue(formData.diagnosis || patient?.diagnosis, '-'), 'Blood Pressure:', formData.blood_pressure || '-'],
+                ['Heart Rate:', formData.heart_rate ? `${formData.heart_rate} bpm` : '-', 'Weight / Height:', `${formData.weight || '-'} kg / ${formData.height || '-'} cm`],
+                ['BMI / BSA:', `${bmi} / ${bsa} m²`, 'Oxygen Saturation:', formData.oxygen_saturation ? `${formData.oxygen_saturation}%` : '-'],
+                ['Allergies:', Array.isArray(formData.allergies) ? formData.allergies.join(', ') || 'None recorded' : (formData.allergies || 'None'), 'Status:', formData.is_active ? 'Active' : 'Inactive']
+            ];
+
+            autoTable(doc, {
+                startY: currentY + 5,
+                body: demoRows,
+                theme: 'plain',
+                styles: { fontSize: 8.5, cellPadding: 2 },
+                columnStyles: {
+                    0: { fontStyle: 'bold', width: 38 },
+                    1: { width: 60 },
+                    2: { fontStyle: 'bold', width: 35 },
+                    3: { width: 55 }
+                }
+            });
+            currentY = doc.lastAutoTable.finalY + 8;
+
+            // 2. Current Medications
+            if (currentY > 235) { doc.addPage(); currentY = 20; }
+            doc.setTextColor(31, 41, 55);
+            doc.setFontSize(13);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`2. Medication List & History (${meds.length})`, 14, currentY);
+            doc.line(14, currentY + 2, 196, currentY + 2);
+
+            if (meds.length > 0) {
+                const medTableBody = meds.map((m, idx) => [
+                    idx + 1,
+                    m.drug_name || m.drug || '-',
+                    [m.dose, m.unit].filter(Boolean).join(' ') || m.dosage || '-',
+                    m.roa || m.route || '-',
+                    m.frequency || '-',
+                    m.indication || '-',
+                    m.start_date || '-',
+                    m.status || (m.is_active ? 'Active' : 'Discontinued')
+                ]);
+
+                autoTable(doc, {
+                    startY: currentY + 5,
+                    head: [['#', 'Drug Name', 'Dose', 'Route', 'Frequency', 'Indication', 'Start Date', 'Status']],
+                    body: medTableBody,
+                    theme: 'grid',
+                    headStyles: { fillColor: [59, 130, 246], fontSize: 8.5, fontStyle: 'bold' },
+                    styles: { fontSize: 8, cellPadding: 2.5 }
+                });
+                currentY = doc.lastAutoTable.finalY + 8;
+            } else {
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'italic');
+                doc.setTextColor(107, 114, 128);
+                doc.text('No medications recorded for this patient case.', 14, currentY + 7);
+                currentY += 14;
+            }
+
+            // 3. Drug-Related Needs (DRN) Assessment
+            if (currentY > 235) { doc.addPage(); currentY = 20; }
+            doc.setTextColor(31, 41, 55);
+            doc.setFontSize(13);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`3. Drug-Related Needs (DRN) Assessment (${drnList.length})`, 14, currentY);
+            doc.line(14, currentY + 2, 196, currentY + 2);
+
+            if (drnList.length > 0) {
+                const drnTableBody = drnList.map((d, idx) => [
+                    idx + 1,
+                    d.drn_assessment_activity_category || d.drn || '-',
+                    d.cause || '-',
+                    d.dtp_type || '-',
+                    d.specific_case || '-',
+                    d.medical_condition || '-',
+                    d.medication || '-'
+                ]);
+
+                autoTable(doc, {
+                    startY: currentY + 5,
+                    head: [['#', 'Category', 'Cause', 'DTP Type', 'Specific Case', 'Condition', 'Medication']],
+                    body: drnTableBody,
+                    theme: 'grid',
+                    headStyles: { fillColor: [139, 92, 246], fontSize: 8, fontStyle: 'bold' },
+                    styles: { fontSize: 7.5, cellPadding: 2 }
+                });
+                currentY = doc.lastAutoTable.finalY + 8;
+            } else {
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'italic');
+                doc.setTextColor(107, 114, 128);
+                doc.text('No drug-related need assessments recorded.', 14, currentY + 7);
+                currentY += 14;
+            }
+
+            // 4. Pharmacy Assessment & Plan
+            if (currentY > 235) { doc.addPage(); currentY = 20; }
+            doc.setTextColor(31, 41, 55);
+            doc.setFontSize(13);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`4. Pharmacy Assessment & Care Plan (${plansList.length})`, 14, currentY);
+            doc.line(14, currentY + 2, 196, currentY + 2);
+
+            if (plansList.length > 0) {
+                const planTableBody = plansList.map((p, idx) => [
+                    idx + 1,
+                    p.plan_type || 'General',
+                    p.goals || '-',
+                    p.notes || '-',
+                    p.follow_up ? new Date(p.follow_up).toLocaleDateString() : 'N/A'
+                ]);
+
+                autoTable(doc, {
+                    startY: currentY + 5,
+                    head: [['#', 'Type', 'Pharmacy Assessment / Goals', 'Plan of Action / Notes', 'Follow Up']],
+                    body: planTableBody,
+                    theme: 'grid',
+                    headStyles: { fillColor: [16, 185, 129], fontSize: 8, fontStyle: 'bold' },
+                    styles: { fontSize: 7.5, cellPadding: 2.5 }
+                });
+                currentY = doc.lastAutoTable.finalY + 8;
+            } else {
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'italic');
+                doc.setTextColor(107, 114, 128);
+                doc.text('No pharmacy assessment plans recorded.', 14, currentY + 7);
+                currentY += 14;
+            }
+
+            // Footer and page numbers
+            const totalPages = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= totalPages; i++) {
+                doc.setPage(i);
+                doc.setFontSize(7.5);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(156, 163, 175);
+                doc.text(
+                    'CONFIDENTIAL CLINICAL RECORD: Addis Med Medication Review. Not a substitute for primary clinician judgement.',
+                    14,
+                    290
+                );
+                doc.text(`Page ${i} of ${totalPages}`, 186, 290);
+            }
+
+            doc.save(`Medication_Review_Report_Case_${currentCode}_${new Date().toISOString().split('T')[0]}.pdf`);
+        } catch (err) {
+            console.error('Failed to generate medication review PDF:', err);
+            alert('Failed to generate PDF report: ' + (err.message || 'Unknown error'));
+        } finally {
+            setIsDownloadingReport(false);
+        }
+    }, [getCurrentPatientCode, patient, formData, formatEncValue, formatAgeDisplay]);
+
     // ==========================================================
     // VITALS SECTION — compact grid, no icons
     // ==========================================================
@@ -2839,6 +3079,20 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                             </div>
                         </div>
                         <div className="flex flex-wrap gap-2">
+
+                            {!isNewPatient && (
+                                <button
+                                    onClick={handleDownloadMedicationReview}
+                                    disabled={isDownloadingReport}
+                                    className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 text-sm shadow-sm transition-all active:scale-95"
+                                    title="Download Medication Review Report (PDF)"
+                                >
+                                    <FaDownload className={isDownloadingReport ? 'animate-bounce' : ''} />
+                                    <span className="hidden sm:inline">
+                                        {isDownloadingReport ? 'Generating...' : 'Download Report'}
+                                    </span>
+                                </button>
+                            )}
 
                             {(isNewPatient || user?.id === patient?.user_id || user?.userId === patient?.user_id) && (
                                 <button

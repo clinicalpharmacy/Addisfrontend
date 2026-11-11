@@ -5,7 +5,7 @@ import {
     FaFilter, FaSync, FaPrescription, FaUserMd, FaHospital,
     FaCalendarCheck, FaNotesMedical, FaCapsules, FaTint,
     FaExclamationTriangle, FaInfoCircle, FaCalculator,
-    FaFilePrescription, FaStethoscope, FaCheckCircle
+    FaFilePrescription, FaStethoscope, FaCheckCircle, FaDownload
 } from 'react-icons/fa';
 import { getEncryptionKey, encryptValue, decryptValue } from '../../utils/encryptionUtils';
 import { FREQUENCY_CODES, normalizeFrequency } from '../../constants/frequencyCodes';
@@ -697,6 +697,63 @@ const MedicationHistory = ({ patientCode }) => {
             reconciliations: reconciliations.length
         };
     };
+
+    const handleDownloadMedicationsPDF = async () => {
+        try {
+            const { default: jsPDF } = await import('jspdf');
+            const { default: autoTable } = await import('jspdf-autotable');
+
+            const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+
+            doc.setFillColor(37, 99, 235);
+            doc.rect(0, 0, 210, 32, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(18);
+            doc.setFont('helvetica', 'bold');
+            doc.text('PATIENT MEDICATION LIST', 14, 16);
+            doc.setFontSize(9.5);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Patient Case: ${patientCode}  •  Date: ${new Date().toLocaleDateString()}  •  Total Medications: ${medications.length}`, 14, 25);
+
+            const tableRows = (filteredMedications.length > 0 ? filteredMedications : medications).map((m, idx) => [
+                idx + 1,
+                m.drug_name || '-',
+                [m.dose, m.unit].filter(Boolean).join(' ') || m.dosage || '-',
+                m.roa || m.route || '-',
+                m.frequency || '-',
+                m.indication || '-',
+                m.start_date || '-',
+                m.status || (m.is_active ? 'Active' : 'Inactive')
+            ]);
+
+            autoTable(doc, {
+                startY: 38,
+                head: [['#', 'Drug Name', 'Dose', 'Route', 'Frequency', 'Indication', 'Start Date', 'Status']],
+                body: tableRows,
+                theme: 'grid',
+                headStyles: { fillColor: [59, 130, 246], fontSize: 8.5, fontStyle: 'bold' },
+                styles: { fontSize: 8, cellPadding: 2.5 }
+            });
+
+            const totalPages = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= totalPages; i++) {
+                doc.setPage(i);
+                doc.setFontSize(7.5);
+                doc.setTextColor(156, 163, 175);
+                doc.text(
+                    'Addis Med Medication Review • Clinical Pharmacy Records',
+                    14,
+                    290
+                );
+                doc.text(`Page ${i} of ${totalPages}`, 188, 290);
+            }
+
+            doc.save(`Medications_Patient_${patientCode}_${new Date().toISOString().split('T')[0]}.pdf`);
+        } catch (err) {
+            console.error('Failed to download medications PDF:', err);
+            alert('Failed to generate PDF: ' + (err.message || 'Error'));
+        }
+    };
     
     useEffect(() => {
         applyFilters(medications);
@@ -1252,6 +1309,15 @@ const MedicationHistory = ({ patientCode }) => {
                         >
                             <FaSync className="text-xs" />
                             <span>Refresh Duration</span>
+                        </button>
+
+                        <button
+                            onClick={handleDownloadMedicationsPDF}
+                            className="text-green-700 hover:text-green-900 flex items-center gap-1 px-2.5 py-1 border border-green-300 rounded-lg hover:bg-green-50 transition text-xs font-medium"
+                            title="Download medication list as PDF"
+                        >
+                            <FaDownload className="text-xs" />
+                            <span>Download Medications</span>
                         </button>
                     </div>
                 </div>
