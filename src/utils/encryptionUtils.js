@@ -298,23 +298,10 @@ const SENSITIVE_PATIENT_FIELDS = [
  * @returns {Promise<object>} — patient with encrypted fields
  */
 export async function encryptPatient(patient, cryptoKey) {
-    if (!cryptoKey || !patient) return patient;
-    const encrypted = { ...patient };
-    for (const field of SENSITIVE_PATIENT_FIELDS) {
-        const val = encrypted[field];
-        
-        // Encrypt any non-null value that is not an object/array
-        if (val !== null && val !== undefined && typeof val !== 'object') {
-            const strVal = String(val);
-            if (strVal.trim() !== '') {
-                encrypted[field] = await encryptValue(strVal, cryptoKey);
-            }
-        } else if (val && typeof val === 'object') {
-            // Also encrypt JSON objects like 'labs'
-            encrypted[field] = await encryptValue(JSON.stringify(val), cryptoKey);
-        }
-    }
-    return encrypted;
+    // 🔐 Disabled client-side patient encryption per system requirement:
+    // Demographics, Diagnosis, Vitals, Anthropometry, and Labs are saved unencrypted
+    // so they are directly viewable and consistent across Admin and clinical staff.
+    return patient;
 }
 
 /**

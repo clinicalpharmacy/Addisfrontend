@@ -646,15 +646,6 @@ const MedicationHistory = ({ patientCode }) => {
                 date: reconciliationData.date
             };
 
-            // 🔐 ZERO-KNOWLEDGE: Encrypt sensitive fields
-            const encKey = await getEncryptionKey();
-            if (encKey) {
-                try {
-                    reconPayload.site = await encryptValue(reconPayload.site, encKey);
-                    reconPayload.findings = await encryptValue(reconPayload.findings, encKey);
-                } catch (e) { console.error('Recon encryption failed', e); }
-            }
-
             const result = await api.post('/reconciliations', reconPayload);
 
             if (result.success) {

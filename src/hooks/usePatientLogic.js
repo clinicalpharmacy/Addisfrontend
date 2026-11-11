@@ -229,9 +229,8 @@ export const usePatientLogic = (patientCode) => {
         try {
             setLoading(true);
             
-            // 🔐 ENCRYPT patient data before sending to server
-            const key = await getEncryptionKey();
-            const payload = await encryptPatient(formData, key);
+            // Save unencrypted so clinical data is viewable across Admin and clinical staff
+            const payload = formData;
 
             // Re-nest labs
             // ... (rest of logic)

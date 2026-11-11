@@ -1360,16 +1360,8 @@ const PatientDetails = ({ patientCode: propPatientCode, onBack: propOnBack, onPa
                 }
             });
 
-            // 🔐 ENCRYPT sensitive fields before sending to server
-            let dataToSave = cleanedPatientData;
-            try {
-                const encKey = await getEncryptionKey();
-                if (encKey) {
-                    dataToSave = await encryptPatient(cleanedPatientData, encKey);
-                }
-            } catch (encErr) {
-                console.warn('⚠️ Encryption failed, saving unencrypted:', encErr.message);
-            }
+            // Save patient data in clear, unencrypted format so it is viewable across Admin and clinical staff
+            const dataToSave = cleanedPatientData;
 
             // API call
             let result;
