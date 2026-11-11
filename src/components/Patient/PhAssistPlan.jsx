@@ -54,7 +54,7 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
             setLoading(true);
 
             if (!pharmacyAssessment.trim() || !plan.trim()) {
-                alert('Please fill in both Pharmacy Assessment and Plan of Action');
+                alert('Please fill in both Pharmacy Assessment and Pharmacist's Plan');
                 setLoading(false);
                 return;
             }
@@ -387,7 +387,7 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
                                     </div>
                                     <div>
                                         <h5 className="font-medium text-gray-700 mb-2">
-                                            Plan of Action
+                                            Pharmacist's Plan
                                         </h5>
                                         <div className="bg-white border rounded p-3 whitespace-pre-wrap">
                                             {item.notes}
