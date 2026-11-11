@@ -107,8 +107,7 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
             }
         } catch (error) {
             console.error('Error saving plan:', error);
-            const errorMsg = error?.error || error?.message || (typeof error === 'string' ? error : 'Failed to save plan');
-            alert('Error: ' + errorMsg);
+            alert('Error: ' + (error.response?.data?.error || error.message));
         } finally {
             setLoading(false);
         }
@@ -138,13 +137,10 @@ const PhAssistPlan = ({ patientCode, standalone = false, onDataChange }) => {
             if (result.success) {
                 alert('Plan deleted successfully!');
                 fetchSavedPlans();
-            } else {
-                alert('Error: ' + (result.error || 'Failed to delete plan'));
             }
         } catch (error) {
             console.error('Error deleting plan:', error);
-            const errorMsg = error?.error || error?.message || (typeof error === 'string' ? error : 'Failed to delete plan');
-            alert('Error deleting plan: ' + errorMsg);
+            alert('Error deleting plan: ' + (error.response?.data?.error || error.message || 'Failed'));
         }
     };
 
