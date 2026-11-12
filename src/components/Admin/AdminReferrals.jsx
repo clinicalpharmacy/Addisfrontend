@@ -64,7 +64,9 @@ export const AdminReferrals = () => {
                         <div className="bg-green-100 p-2 rounded-xl"><FaMoneyBillWave className="text-green-600" /></div>
                         <p className="text-xs font-bold text-gray-500 uppercase">Total Paid</p>
                     </div>
-                    <p className="text-2xl font-black text-gray-900">{summary.total_commissions_paid || 0} ETB</p>
+                    <p className="text-2xl font-black text-gray-900">
+                        {Number(summary.total_commissions_paid || 0).toFixed(2)} ETB
+                    </p>
                 </div>
                 <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
                     <div className="flex items-center gap-3 mb-2">
