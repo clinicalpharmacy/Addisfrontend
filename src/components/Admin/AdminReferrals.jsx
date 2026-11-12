@@ -164,7 +164,7 @@ export const AdminReferrals = () => {
                                                 </td>
                                                 <td className="px-4 py-3 text-center">
                                                     <span className={`font-bold text-sm ${user.total_earned > 0 ? 'text-green-600' : 'text-gray-400'}`}>
-                                                        {user.total_earned} ETB
+                                                        {Number(user.total_earned || 0).toFixed(2)} ETB
                                                     </span>
                                                 </td>
                                                 <td className="px-4 py-3 text-center text-xs text-gray-500">
