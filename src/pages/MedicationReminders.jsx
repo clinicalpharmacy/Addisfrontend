@@ -13,6 +13,87 @@ import {
 
 
 /* ------------------------------------------------------------------
+ * Ethiopian 12-Hour Time Conversion Helpers
+ * Ethiopian day cycle:
+ *  06:00 - 11:59 (Grego 24h) = 12:00 - 05:59 ጠዋት (ከጠዋቱ)
+ *  12:00 - 17:59 (Grego 24h) = 06:00 - 11:59 ከሰዓት (ከሰዓት)
+ *  18:00 - 23:59 (Grego 24h) = 12:00 - 05:59 ምሽት (ከምሽቱ)
+ *  00:00 - 05:59 (Grego 24h) = 06:00 - 11:59 ሌሊት (ከሌሊቱ)
+ * ------------------------------------------------------------------ */
+
+export function toEthiopianTime(time24) {
+    if (!time24 || typeof time24 !== 'string') return '';
+    const parts = time24.split(':');
+    if (parts.length < 2) return time24;
+    const h = parseInt(parts[0], 10);
+    const m = parts[1].padStart(2, '0');
+    if (isNaN(h)) return time24;
+
+    // Ethiopian hour = (Gregorian hour + 6) % 12, with 0 becoming 12
+    const ethH = ((h + 6) % 12) || 12;
+
+    let period = '';
+    if (h >= 6 && h < 12) {
+        period = 'ከጠዋቱ';
+    } else if (h >= 12 && h < 18) {
+        period = 'ከሰዓት';
+    } else if (h >= 18 && h < 24) {
+        period = 'ከምሽቱ';
+    } else {
+        period = 'ከሌሊቱ';
+    }
+
+    return `${period} ${ethH}:${m} (${time24})`;
+}
+
+export function fromEthiopianTimeTo24(ethHour, minuteStr, period) {
+    let h = parseInt(ethHour, 10);
+    if (isNaN(h) || h < 1 || h > 12) h = 12;
+    const m = String(minuteStr || '00').padStart(2, '0');
+
+    // Convert Ethiopian hour back to Gregorian 24-hour:
+    // Period:
+    // 'morning' (ከጠዋቱ 12 to 5) -> Greg 06 to 11
+    // 'afternoon' (ከሰዓት 6 to 11) -> Greg 12 to 17
+    // 'evening' (ከምሽቱ 12 to 5) -> Greg 18 to 23
+    // 'night' (ከሌሊቱ 6 to 11) -> Greg 00 to 05
+    let gregHour = 0;
+    if (period === 'morning') {
+        gregHour = (h % 12) + 6; // eth 12 -> 6, eth 1 -> 7, eth 5 -> 11
+    } else if (period === 'afternoon') {
+        gregHour = (h % 12) + 6; // eth 6 -> 12, eth 7 -> 13, eth 11 -> 17, eth 12 -> 18? Wait:
+        // In afternoon, Eth hours are 6, 7, 8, 9, 10, 11 (and 12 is evening)
+        // eth 6 = 12:00, eth 7 = 13:00, etc.
+        gregHour = (h === 12 ? 6 : h) + 6;
+    } else if (period === 'evening') {
+        gregHour = (h % 12) + 18; // eth 12 -> 18, eth 1 -> 19, eth 5 -> 23
+    } else { // night
+        gregHour = (h === 12 ? 6 : h) - 6; // eth 6 -> 0, eth 7 -> 1, eth 11 -> 5
+        if (gregHour < 0) gregHour += 24;
+    }
+
+    return `${String(gregHour).padStart(2, '0')}:${m}`;
+}
+
+export function parse24ToEthiopianParts(time24) {
+    if (!time24 || typeof time24 !== 'string') {
+        return { ethHour: 2, minute: '00', period: 'morning' };
+    }
+    const [hStr, mStr] = time24.split(':');
+    const h = parseInt(hStr, 10) || 0;
+    const minute = (mStr || '00').padStart(2, '0');
+
+    const ethHour = ((h + 6) % 12) || 12;
+    let period = 'morning';
+    if (h >= 6 && h < 12) period = 'morning';
+    else if (h >= 12 && h < 18) period = 'afternoon';
+    else if (h >= 18 && h < 24) period = 'evening';
+    else period = 'night';
+
+    return { ethHour, minute, period };
+}
+
+/* ------------------------------------------------------------------
  * DEVICE-ONLY storage — nothing here is ever sent to the server.
  * Each label maps to { name, dosage, instructions }.
  * ------------------------------------------------------------------ */
@@ -363,12 +444,24 @@ export default function MedicationReminders() {
 
     const handleFrequencyChange = (type) => {
         let times = ['08:00'];
+        // Default schedules in Ethiopian context:
+        // once_daily: 08:00 (ጠዋት 2:00)
+        // twice_daily: 08:00 (ጠዋት 2:00) & 20:00 (ማታ 2:00)
+        // three_daily: 08:00 (ጠዋት 2:00), 14:00 (ከሰዓት 8:00), 20:00 (ማታ 2:00)
+        // four_daily: 06:00 (ጠዋት 12:00), 12:00 (ከሰዓት 6:00), 18:00 (ማታ 12:00), 00:00 (ሌሊት 6:00)
         if (type === 'once_daily') times = ['08:00'];
         else if (type === 'twice_daily') times = ['08:00', '20:00'];
         else if (type === 'three_daily') times = ['08:00', '14:00', '20:00'];
-        else if (type === 'four_daily') times = ['08:00', '12:00', '16:00', '20:00'];
+        else if (type === 'four_daily') times = ['06:00', '12:00', '18:00', '00:00'];
         else if (type === 'custom') times = formData.reminder_times.length > 0 ? formData.reminder_times : ['08:00'];
         setFormData(prev => ({ ...prev, frequency_type: type, reminder_times: times }));
+    };
+
+    const updateReminderTimeFromEthiopian = (index, ethHour, minute, period) => {
+        const time24 = fromEthiopianTimeTo24(ethHour, minute, period);
+        const updated = [...formData.reminder_times];
+        updated[index] = time24;
+        setFormData(prev => ({ ...prev, reminder_times: updated }));
     };
 
     const openModal = (schedule = null) => {
@@ -611,8 +704,9 @@ export default function MedicationReminders() {
                             return (
                                 <div key={`${doseItem.schedule.id}-${doseItem.time}-${idx}`} className={`rounded-2xl p-5 border transition-all ${doseItem.isTaken ? 'bg-emerald-50/50 border-emerald-200' : 'bg-white border-gray-100 shadow-sm hover:shadow-md'}`}>
                                     <div className="flex items-start justify-between gap-3 mb-3">
-                                        <div className="p-2 rounded-xl bg-blue-50 text-blue-600 font-black text-xs flex items-center gap-1">
-                                            <FaClock className="text-xs" /><span>{doseItem.time}</span>
+                                        <div className="p-2 rounded-xl bg-blue-50 text-blue-700 font-extrabold text-xs flex items-center gap-1.5 shadow-xs border border-blue-100">
+                                            <FaClock className="text-xs text-blue-600" />
+                                            <span>{toEthiopianTime(doseItem.time)}</span>
                                         </div>
                                         {doseItem.isTaken ? (
                                             <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
@@ -723,8 +817,9 @@ export default function MedicationReminders() {
                                                 )}
                                             </div>
                                             <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs text-gray-500">
-                                                <span className="font-semibold text-indigo-600 flex items-center gap-1">
-                                                    <FaClock className="text-[10px]" />{(schedule.reminder_times || []).join(', ')}
+                                                <span className="font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded flex items-center gap-1">
+                                                    <FaClock className="text-[10px]" />
+                                                    {(schedule.reminder_times || []).map(t => toEthiopianTime(t)).join('፣ ')}
                                                 </span>
                                                 {data.instructions && (
                                                     <>
@@ -811,33 +906,101 @@ export default function MedicationReminders() {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Reminder Times (የማስታወሻ ሰዓቶች)</label>
-                                <div className="flex flex-wrap gap-2">
-                                    {formData.reminder_times.map((t, idx) => (
-                                        <div key={idx} className="flex items-center gap-1 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-xl">
-                                            <input type="time" value={t}
-                                                onChange={e => {
-                                                    const updated = [...formData.reminder_times];
-                                                    updated[idx] = e.target.value;
-                                                    setFormData(prev => ({ ...prev, reminder_times: updated }));
-                                                }}
-                                                className="bg-transparent text-sm font-semibold focus:outline-hidden" />
-                                            {formData.reminder_times.length > 1 && (
-                                                <button type="button"
-                                                    onClick={() => {
-                                                        const updated = formData.reminder_times.filter((_, i) => i !== idx);
-                                                        setFormData(prev => ({ ...prev, reminder_times: updated }));
-                                                    }}
-                                                    className="text-gray-400 hover:text-rose-500">
-                                                    <FaTimes className="text-xs" />
-                                                </button>
-                                            )}
-                                        </div>
-                                    ))}
-                                    <button type="button"
+                                <div className="flex items-center justify-between mb-2">
+                                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                        Reminder Times (የማስታወሻ ሰዓት በኢትዮጵያ አቆጣጠር)
+                                    </label>
+                                    <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                                        የኢትዮጵያ ሰዓት አቆጣጠር (12-Hour)
+                                    </span>
+                                </div>
+
+                                <div className="space-y-3">
+                                    {formData.reminder_times.map((t, idx) => {
+                                        const { ethHour, minute, period } = parse24ToEthiopianParts(t);
+                                        return (
+                                            <div key={idx} className="p-3 bg-gray-50 border border-gray-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    {/* Period Selector */}
+                                                    <select
+                                                        value={period}
+                                                        onChange={e => updateReminderTimeFromEthiopian(idx, ethHour, minute, e.target.value)}
+                                                        className="px-2.5 py-1.5 text-xs font-bold bg-white border border-gray-300 rounded-xl text-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+                                                    >
+                                                        <option value="morning">ከጠዋቱ (ጠዋት)</option>
+                                                        <option value="afternoon">ከሰዓት (ከሰዓት በኋላ)</option>
+                                                        <option value="evening">ከምሽቱ (ማታ)</option>
+                                                        <option value="night">ከሌሊቱ (ሌሊት)</option>
+                                                    </select>
+
+                                                    {/* Ethiopian Hour Selector */}
+                                                    <div className="flex items-center gap-1">
+                                                        <select
+                                                            value={ethHour}
+                                                            onChange={e => updateReminderTimeFromEthiopian(idx, e.target.value, minute, period)}
+                                                            className="px-2.5 py-1.5 text-xs font-bold bg-white border border-gray-300 rounded-xl text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+                                                        >
+                                                            {[12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(h => (
+                                                                <option key={h} value={h}>{h} ሰዓት</option>
+                                                            ))}
+                                                        </select>
+                                                        <span className="font-bold text-gray-400">:</span>
+                                                        {/* Minute Selector */}
+                                                        <select
+                                                            value={minute}
+                                                            onChange={e => updateReminderTimeFromEthiopian(idx, ethHour, e.target.value, period)}
+                                                            className="px-2.5 py-1.5 text-xs font-bold bg-white border border-gray-300 rounded-xl text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+                                                        >
+                                                            {['00', '15', '30', '45'].map(m => (
+                                                                <option key={m} value={m}>{m === '00' ? 'ተኩል ያልሞላ (:00)' : m === '30' ? 'ተኩል (:30)' : `:${m}`}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+
+                                                    {/* Direct 24h Native Input for precision */}
+                                                    <div className="flex items-center gap-1.5 bg-white border border-gray-200 px-2 py-1 rounded-xl">
+                                                        <span className="text-[10px] text-gray-400 font-mono">24h:</span>
+                                                        <input
+                                                            type="time"
+                                                            value={t}
+                                                            onChange={e => {
+                                                                const updated = [...formData.reminder_times];
+                                                                updated[idx] = e.target.value;
+                                                                setFormData(prev => ({ ...prev, reminder_times: updated }));
+                                                            }}
+                                                            className="text-xs font-semibold text-gray-700 bg-transparent focus:outline-hidden"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center justify-between sm:justify-end gap-2">
+                                                    <span className="text-xs font-extrabold text-blue-700 bg-blue-100/60 px-2.5 py-1 rounded-lg">
+                                                        {toEthiopianTime(t)}
+                                                    </span>
+                                                    {formData.reminder_times.length > 1 && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const updated = formData.reminder_times.filter((_, i) => i !== idx);
+                                                                setFormData(prev => ({ ...prev, reminder_times: updated }));
+                                                            }}
+                                                            className="p-1.5 text-gray-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                                                            title="ሰርዝ (Remove)"
+                                                        >
+                                                            <FaTimes className="text-xs" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+
+                                    <button
+                                        type="button"
                                         onClick={() => setFormData(prev => ({ ...prev, reminder_times: [...prev.reminder_times, '12:00'] }))}
-                                        className="px-3 py-1.5 text-xs font-bold text-blue-600 bg-blue-50 border border-blue-100 rounded-xl hover:bg-blue-100">
-                                        + Add Time
+                                        className="px-3 py-2 text-xs font-bold text-blue-600 bg-blue-50 border border-blue-200 hover:bg-blue-100 rounded-xl flex items-center gap-1.5 transition-all"
+                                    >
+                                        <FaPlus className="text-[10px]" /> ተጨማሪ ሰዓት ጨምር (Add Another Time)
                                     </button>
                                 </div>
                             </div>
@@ -887,8 +1050,8 @@ export default function MedicationReminders() {
                                 "{dueReminderAlert.instructions}"
                             </p>
                         )}
-                        <p className="text-xs text-gray-400 mb-6">
-                            Scheduled for {dueReminderAlert.time}
+                        <p className="text-xs text-gray-500 font-bold mb-6 bg-blue-50 py-1.5 px-3 rounded-lg inline-block">
+                            የታዘዘበት ሰዓት፦ {toEthiopianTime(dueReminderAlert.time)}
                         </p>
                         <div className="flex gap-3">
                             <button
