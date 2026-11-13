@@ -90,20 +90,72 @@ const computeNextLabel = (existingLabels) => {
     return indexToLabel(maxIdx + 1);
 };
 
+const playReminderSound = () => {
+    try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        const now = ctx.currentTime;
+
+        // Friendly 2-tone medication chime: E5 -> A5
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(659.25, now);
+        gain1.gain.setValueAtTime(0.25, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.35);
+
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(880, now + 0.18);
+        gain2.gain.setValueAtTime(0.3, now + 0.18);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.start(now + 0.18);
+        osc2.stop(now + 0.7);
+    } catch (e) {
+        console.warn('AudioContext sound failed:', e);
+    }
+};
+
 const resolveDoseData = (schedule) => {
     if (!schedule) return { name: 'Medication', dosage: '', instructions: '', isLocalOnly: false, missingLocal: false };
-    if (isLabel(schedule.label)) {
-        const meta = getMedMeta(schedule.label);
+
+    const rawName = schedule.medication_name || schedule.name || schedule.label;
+
+    // If it's a full medication name, use it directly
+    if (rawName && !isLabel(rawName)) {
         return {
-            name: meta?.name || `Medication ${schedule.label}`,
-            dosage: meta?.dosage || '',
-            instructions: meta?.instructions || '',
-            isLocalOnly: true,
-            missingLocal: !meta?.name
+            name: rawName,
+            dosage: schedule.dosage || '',
+            instructions: schedule.instructions || '',
+            isLocalOnly: false,
+            missingLocal: false
         };
     }
+
+    // Check device local metadata for single-letter labels
+    if (isLabel(rawName)) {
+        const meta = getMedMeta(rawName);
+        if (meta?.name) {
+            return {
+                name: meta.name,
+                dosage: meta.dosage || schedule.dosage || '',
+                instructions: meta.instructions || schedule.instructions || '',
+                isLocalOnly: true,
+                missingLocal: false
+            };
+        }
+    }
+
     return {
-        name: schedule.label || 'Medication',
+        name: rawName || 'Medication',
         dosage: schedule.dosage || '',
         instructions: schedule.instructions || '',
         isLocalOnly: false,
@@ -120,13 +172,13 @@ export default function MedicationReminders() {
     const [subscribing, setSubscribing] = useState(false);
     const [testingPush, setTestingPush] = useState(false);
     const [notificationMessage, setNotificationMessage] = useState(null);
+    const [dueReminderAlert, setDueReminderAlert] = useState(null);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingSchedule, setEditingSchedule] = useState(null);
     const [submitting, setSubmitting] = useState(false);
 
-    /* medication_name / dosage / instructions are LOCAL-ONLY UI fields.
-       label is the only identifier sent to the server. */
+    /* form data */
     const [formData, setFormData] = useState({
         label: '',
         medication_name: '',
@@ -162,6 +214,7 @@ export default function MedicationReminders() {
         }
     }, []);
 
+    // 1. Initial data fetch and Service Worker sync
     useEffect(() => {
         fetchData();
         checkSubscriptionState();
@@ -171,6 +224,104 @@ export default function MedicationReminders() {
             return () => navigator.serviceWorker.removeEventListener('message', onSwMessage);
         }
     }, [fetchData, checkSubscriptionState]);
+
+    // 2. Active In-Browser Reminder Checker (runs every 15s)
+    useEffect(() => {
+        const alertedThisSession = new Set();
+
+        const checkActiveReminders = () => {
+            if (!schedules || schedules.length === 0) return;
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const currentTime = `${h}:${m}`;
+            const currentDay = now.getDay();
+            const todayStr = now.toISOString().split('T')[0];
+
+            for (const schedule of schedules) {
+                if (!schedule.is_active) continue;
+                if (schedule.start_date && schedule.start_date > todayStr) continue;
+                if (schedule.end_date && schedule.end_date < todayStr) continue;
+
+                const days = Array.isArray(schedule.days_of_week) ? schedule.days_of_week : [0, 1, 2, 3, 4, 5, 6];
+                if (!days.includes(currentDay)) continue;
+
+                const times = Array.isArray(schedule.reminder_times) ? schedule.reminder_times : [];
+                for (const t of times) {
+                    if (t === currentTime) {
+                        const alertKey = `${schedule.id}-${todayStr}-${t}`;
+                        if (alertedThisSession.has(alertKey)) continue;
+
+                        const isAlreadyTaken = todayLogs.some(
+                            l => l.schedule_id === schedule.id && l.scheduled_time === t && l.status === 'taken'
+                        );
+                        if (isAlreadyTaken) continue;
+
+                        alertedThisSession.add(alertKey);
+                        const medData = resolveDoseData(schedule);
+
+                        // Play sound
+                        playReminderSound();
+
+                        // Open in-app dialog
+                        setDueReminderAlert({
+                            schedule,
+                            time: t,
+                            medData
+                        });
+
+                        // Fire native Notification if permission granted
+                        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+                            try {
+                                const title = `💊 Time for ${medData.name}`;
+                                const body = `${medData.dosage ? 'Dose: ' + medData.dosage : ''}${medData.instructions ? ' • ' + medData.instructions : ''}`.trim() || 'It is time for your scheduled medication.';
+                                if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                                    navigator.serviceWorker.ready.then(reg => {
+                                        reg.showNotification(title, {
+                                            body,
+                                            icon: '/logo.png',
+                                            badge: '/favicon-48x48.png',
+                                            tag: `reminder-${schedule.id}-${t}`,
+                                            renotify: true,
+                                            requireInteraction: true,
+                                            data: { scheduleId: schedule.id, scheduledTime: t, url: '/reminders' }
+                                        });
+                                    });
+                                } else {
+                                    new Notification(title, {
+                                        body,
+                                        icon: '/logo.png',
+                                        tag: `reminder-${schedule.id}-${t}`
+                                    });
+                                }
+                            } catch (notifErr) {
+                                console.warn('Native notification failed:', notifErr);
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        const intervalId = setInterval(checkActiveReminders, 15000);
+        checkActiveReminders();
+
+        return () => clearInterval(intervalId);
+    }, [schedules, todayLogs]);
+
+    // 3. Background Cron Ticker (pings backend every 60s to dispatch Web Push across all user devices)
+    useEffect(() => {
+        const pingCron = async () => {
+            try {
+                await api.get('/reminders/cron');
+            } catch (e) {
+                // Ignore cron ping errors
+            }
+        };
+        pingCron();
+        const cronInterval = setInterval(pingCron, 60000);
+        return () => clearInterval(cronInterval);
+    }, []);
 
     const handleTogglePush = async () => {
         try {
@@ -184,7 +335,7 @@ export default function MedicationReminders() {
                 await subscribeToPush(api);
                 setIsSubscribed(true);
                 setPermissionStatus('granted');
-                setNotificationMessage({ type: 'success', text: '🔔 Notifications activated. Alerts will say "Medication A/B/C…" (no names leave your device).' });
+                setNotificationMessage({ type: 'success', text: '🔔 Notifications activated! You will receive scheduled dose alerts on this device.' });
             }
         } catch (err) {
             const errorText = err.response?.data?.error || err.response?.data?.message || err.error || err.message || 'Failed to update notification settings.';
@@ -232,12 +383,15 @@ export default function MedicationReminders() {
 
             const labelRow = isLabel(schedule.label);
             const meta = labelRow ? getMedMeta(schedule.label) : null;
+            const medName = schedule.medication_name || schedule.name || meta?.name || (labelRow ? '' : schedule.label) || '';
+            const medDosage = schedule.dosage || meta?.dosage || '';
+            const medInstructions = schedule.instructions || meta?.instructions || '';
 
             setFormData({
                 label: labelRow ? schedule.label : '',
-                medication_name: meta?.name || (!labelRow ? schedule.label || '' : ''),
-                dosage: meta?.dosage || (!labelRow ? schedule.dosage || '' : ''),
-                instructions: meta?.instructions || (!labelRow ? schedule.instructions || '' : ''),
+                medication_name: medName,
+                dosage: medDosage,
+                instructions: medInstructions,
                 frequency_type: freq,
                 reminder_times: times,
                 days_of_week: Array.isArray(schedule.days_of_week) ? schedule.days_of_week : [0, 1, 2, 3, 4, 5, 6],
@@ -264,11 +418,11 @@ export default function MedicationReminders() {
     const handleSaveSchedule = async (e) => {
         e.preventDefault();
         if (!formData.medication_name.trim()) {
-            alert('Please enter a medication name (kept on this device only).');
+            alert('Please enter a medication name.');
             return;
         }
         if (!formData.dosage.trim()) {
-            alert('Please enter a dosage (kept on this device only).');
+            alert('Please enter a dosage.');
             return;
         }
 
@@ -288,6 +442,10 @@ export default function MedicationReminders() {
             });
 
             const payload = {
+                medication_name: formData.medication_name.trim(),
+                name: formData.medication_name.trim(),
+                dosage: formData.dosage.trim(),
+                instructions: formData.instructions.trim(),
                 label: finalLabel,
                 reminder_times: formData.reminder_times,
                 days_of_week: formData.days_of_week,
@@ -605,11 +763,10 @@ export default function MedicationReminders() {
                             </div>
                         </div>
 
-                        <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-start gap-2">
-                            <FaShieldAlt className="text-emerald-600 mt-0.5 shrink-0" />
-                            <p className="text-[11px] text-emerald-800 font-medium leading-relaxed">
-                                <strong>Privacy notice:</strong> Medication name, dosage, and instructions are saved <em>only in this browser</em> and mapped to a label (A, B, C…). Only the label (A, B, C…) + schedule times are saved in our database.
-                                {editingSchedule?.label && isLabel(editingSchedule.label) && <> Current label: <span className="font-mono font-bold">{editingSchedule.label}</span></>}
+                        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-xl flex items-start gap-2">
+                            <FaShieldAlt className="text-blue-600 mt-0.5 shrink-0" />
+                            <p className="text-[11px] text-blue-900 font-medium leading-relaxed">
+                                <strong>Smart Sync & Privacy:</strong> Medication name, dosage, and instructions are securely synchronized with your account so you receive timely push alerts and reminders across all your devices.
                             </p>
                         </div>
 
@@ -617,22 +774,22 @@ export default function MedicationReminders() {
                             <div>
                                 <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
                                     Medication Name (የመድሃኒት ስም) *
-                                    <span className="text-emerald-600 font-normal normal-case ml-1">— device only</span>
                                 </label>
                                 <input type="text" required
                                     value={formData.medication_name}
                                     onChange={e => setFormData(prev => ({ ...prev, medication_name: e.target.value }))}
+                                    placeholder="e.g. Amoxicillin, Metformin, Omeprazole"
                                     className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-hidden" />
                             </div>
 
                             <div>
                                 <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
                                     Dosage (መጠን) *
-                                    <span className="text-emerald-600 font-normal normal-case ml-1">— device only</span>
                                 </label>
                                 <input type="text" required
                                     value={formData.dosage}
                                     onChange={e => setFormData(prev => ({ ...prev, dosage: e.target.value }))}
+                                    placeholder="e.g. 500mg, 1 tablet, 2 puffs"
                                     className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-hidden" />
                             </div>
 
@@ -688,11 +845,11 @@ export default function MedicationReminders() {
                             <div>
                                 <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
                                     Special Instructions (አወሳሰድ መመሪያ)
-                                    <span className="text-emerald-600 font-normal normal-case ml-1">— device only</span>
                                 </label>
                                 <input type="text"
                                     value={formData.instructions}
                                     onChange={e => setFormData(prev => ({ ...prev, instructions: e.target.value }))}
+                                    placeholder="e.g. Take with food, after meals, with a full glass of water"
                                     className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-hidden" />
                             </div>
 
@@ -705,6 +862,53 @@ export default function MedicationReminders() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Active Real-Time In-Browser Reminder Modal */}
+            {dueReminderAlert && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border-4 border-blue-500 text-center animate-bounce-short">
+                        <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-inner">
+                            <FaBell className="text-3xl animate-wiggle" />
+                        </div>
+                        <span className="inline-block px-3 py-1 bg-blue-50 text-blue-700 font-bold text-xs uppercase tracking-wider rounded-full mb-2">
+                            ⏰ ጊዜው ደርሷል (Medication Due)
+                        </span>
+                        <h3 className="text-2xl font-black text-gray-900 mb-1">
+                            {dueReminderAlert.medicationName}
+                        </h3>
+                        <p className="text-base font-semibold text-blue-600 mb-2">
+                            {dueReminderAlert.dosage}
+                        </p>
+                        {dueReminderAlert.instructions && (
+                            <p className="text-xs bg-gray-50 border border-gray-200 text-gray-600 rounded-xl p-3 mb-5 italic">
+                                "{dueReminderAlert.instructions}"
+                            </p>
+                        )}
+                        <p className="text-xs text-gray-400 mb-6">
+                            Scheduled for {dueReminderAlert.time}
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setDueReminderAlert(null)}
+                                className="flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm rounded-xl transition-all"
+                            >
+                                Dismiss (ዝጋ)
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    handleLogDose(dueReminderAlert.scheduleId, 'taken', dueReminderAlert.time);
+                                    setDueReminderAlert(null);
+                                }}
+                                className="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-emerald-200 transition-all flex items-center justify-center gap-2"
+                            >
+                                <FaCheck /> ወስጃለሁ (Taken)
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
