@@ -83,7 +83,7 @@ const MedicationHistory = ({ patientCode }) => {
     const roaOptions = [
         { value: 'po', label: 'PO' },
         { value: 'SL', label: 'SL' },
-        { value: 'IV', label: 'IV },
+        { value: 'IV', label: 'IV' },
         { value: 'IM', label: 'IM' },
         { value: 'SubQ', label: 'SC (SubQ)' },
         { value: 'Topical', label: 'Topical' },
