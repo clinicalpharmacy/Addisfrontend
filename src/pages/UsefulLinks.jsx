@@ -86,7 +86,7 @@ const UsefulLinks = () => {
                                     aria-expanded={expanded}
                                     className="w-full flex items-center justify-between py-2 text-left group hover:text-indigo-600 transition-colors"
                                 >
-                                    <span className="text-xs font-medium text-gray-400 uppercase tracking-wider group-hover:text-indigo-500">
+                                    <span className="text-xs font-bold text-gray-600 uppercase tracking-wider group-hover:text-indigo-500">
                                         {category}
                                         <span className="ml-2 text-gray-300 normal-case tracking-normal">
                                             ({categoryLinks.length})
