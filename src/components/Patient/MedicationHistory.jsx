@@ -905,7 +905,7 @@ const MedicationHistory = ({ patientCode }) => {
                                         name="dose"
                                         value={formData.dose}
                                         onChange={handleInputChange}
-                                        className="flex-1 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500"
+                                        className="w-24 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500"
                                         placeholder="e.g., 500"
                                         required
                                     />
@@ -913,7 +913,7 @@ const MedicationHistory = ({ patientCode }) => {
                                         name="unit"
                                         value={formData.unit}
                                         onChange={handleInputChange}
-                                        className="flex-1 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500"
+                                        className="w-24 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500"
                                     >
                                         {units.map(unit => (
                                             <option key={unit} value={unit}>{unit}</option>
@@ -931,7 +931,7 @@ const MedicationHistory = ({ patientCode }) => {
                                     name="roa"
                                     value={formData.roa}
                                     onChange={handleInputChange}
-                                    className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500"
+                                    className="w-32 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500"
                                     required
                                 >
                                     <option value="">Select route</option>
