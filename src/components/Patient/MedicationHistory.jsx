@@ -67,6 +67,7 @@ const MedicationHistory = ({ patientCode }) => {
     const [selectedClass, setSelectedClass] = useState('');
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [saving, setSaving] = useState(false); // ← NEW: save-in-progress flag
     const [reconLoading, setReconLoading] = useState(false);
     const [activeFilter, setActiveFilter] = useState('all');
     const [showAdvanced, setShowAdvanced] = useState(false);
@@ -411,7 +412,7 @@ const MedicationHistory = ({ patientCode }) => {
     const handleSave = async (addAnother = false) => {
         if (!validateForm()) return;
 
-        setLoading(true);
+        setSaving(true); // ← CHANGED: use `saving` instead of `loading`
         const duration = calculateDuration();
         const isActive = formData.status === 'Active';
         const totalDailyDose = calculateDailyDose();
@@ -519,7 +520,7 @@ const MedicationHistory = ({ patientCode }) => {
             const errorMsg = error.error || error.message || 'Failed to save medication';
             alert(`❌ Error: ${errorMsg}`);
         } finally {
-            setLoading(false);
+            setSaving(false); // ← CHANGED: use `saving` instead of `loading`
         }
     };
 
@@ -1181,53 +1182,26 @@ const MedicationHistory = ({ patientCode }) => {
                         {isEditing ? (
                             <button
                                 onClick={() => handleSave(false)}
-                                disabled={loading}
+                                disabled={saving}
                                 className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
                             >
-                                {loading ? (
-                                    <>
-                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                        Saving...
-                                    </>
-                                ) : (
-                                    <>
-                                        <FaSave /> Update Medication
-                                    </>
-                                )}
+                                <FaSave /> Update Medication
                             </button>
                         ) : (
                             <>
                                 <button
                                     onClick={() => handleSave(true)}
-                                    disabled={loading}
+                                    disabled={saving}
                                     className="bg-teal-500 hover:bg-teal-600 text-white px-6 py-3 rounded-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
                                 >
-                                    {loading ? (
-                                        <>
-                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                            Saving...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <FaPlus /> Save and Add Other
-                                        </>
-                                    )}
+                                    <FaPlus /> Save and Add Other
                                 </button>
                                 <button
                                     onClick={() => handleSave(false)}
-                                    disabled={loading}
+                                    disabled={saving}
                                     className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
                                 >
-                                    {loading ? (
-                                        <>
-                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                            Saving...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <FaSave /> Save Medication
-                                        </>
-                                    )}
+                                    <FaSave /> Save Medication
                                 </button>
                             </>
                         )}
