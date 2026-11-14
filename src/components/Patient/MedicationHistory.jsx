@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import api from '../../utils/api';
 import {
     FaPills, FaCalendar, FaClock, FaEdit, FaTrash, FaSave,
     FaFilter, FaSync, FaPrescription, FaUserMd, FaHospital,
     FaCalendarCheck, FaNotesMedical, FaCapsules, FaTint,
     FaExclamationTriangle, FaInfoCircle, FaCalculator,
-    FaFilePrescription, FaStethoscope, FaCheckCircle, FaDownload
+    FaFilePrescription, FaStethoscope, FaCheckCircle, FaDownload, FaPlus
 } from 'react-icons/fa';
 import { getEncryptionKey, encryptValue, decryptValue } from '../../utils/encryptionUtils';
 import { FREQUENCY_CODES, normalizeFrequency } from '../../constants/frequencyCodes';
@@ -73,6 +73,9 @@ const MedicationHistory = ({ patientCode }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [reconciliations, setReconciliations] = useState([]);
     const [showForm, setShowForm] = useState(false);
+
+    // 🔎 Ref used to re-focus the Drug Name field after "Save and Add Other"
+    const drugNameInputRef = useRef(null);
 
     const reconciliationSites = [
         'Admission', 'Discharge', 'Transfer In', 'Transfer Out',
@@ -405,7 +408,7 @@ const MedicationHistory = ({ patientCode }) => {
         return true;
     };
 
-    const handleSave = async () => {
+    const handleSave = async (addAnother = false) => {
         if (!validateForm()) return;
 
         setLoading(true);
@@ -494,8 +497,19 @@ const MedicationHistory = ({ patientCode }) => {
 
             if (result.success) {
                 await fetchMedications();
-                resetForm();
-                alert(`✅ Medication ${isEditing ? 'updated' : 'added'} successfully!`);
+
+                if (addAnother && !isEditing) {
+                    // Keep the form open, blank the fields, and focus the drug name box
+                    resetFormFields();
+                    setShowForm(true);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    setTimeout(() => drugNameInputRef.current?.focus(), 100);
+                    alert('✅ Medication added successfully! You can now add another medication.');
+                } else {
+                    // Close the form and show the medications list
+                    resetForm();
+                    alert(`✅ Medication ${isEditing ? 'updated' : 'added'} successfully!`);
+                }
             } else {
                 throw new Error(result.error || 'Failed');
             }
@@ -508,7 +522,8 @@ const MedicationHistory = ({ patientCode }) => {
         }
     };
 
-    const resetForm = () => {
+    // Resets only the form fields (does NOT close the form)
+    const resetFormFields = () => {
         setFormData({
             drug_name: '',
             start_date: '',
@@ -545,6 +560,11 @@ const MedicationHistory = ({ patientCode }) => {
         });
         setIsEditing(false);
         setShowAdvanced(false);
+    };
+
+    // Resets fields AND closes the form
+    const resetForm = () => {
+        resetFormFields();
         setShowForm(false);
     };
 
@@ -848,6 +868,7 @@ const MedicationHistory = ({ patientCode }) => {
                                     Drug Name *
                                 </label>
                                 <input
+                                    ref={drugNameInputRef}
                                     type="text"
                                     name="drug_name"
                                     value={formData.drug_name}
@@ -1155,23 +1176,60 @@ const MedicationHistory = ({ patientCode }) => {
                     )}
 
                     {/* Action Buttons */}
-                    <div className="flex gap-4 mt-6">
-                        <button
-                            onClick={handleSave}
-                            disabled={loading}
-                            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                        >
-                            {loading ? (
-                                <>
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                    Saving...
-                                </>
-                            ) : (
-                                <>
-                                    <FaSave /> {isEditing ? 'Update Medication' : 'Save Medication'}
-                                </>
-                            )}
-                        </button>
+                    <div className="flex flex-wrap gap-4 mt-6">
+                        {isEditing ? (
+                            <button
+                                onClick={() => handleSave(false)}
+                                disabled={loading}
+                                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                            >
+                                {loading ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                        Saving...
+                                    </>
+                                ) : (
+                                    <>
+                                        <FaSave /> Update Medication
+                                    </>
+                                )}
+                            </button>
+                        ) : (
+                            <>
+                                <button
+                                    onClick={() => handleSave(true)}
+                                    disabled={loading}
+                                    className="bg-teal-500 hover:bg-teal-600 text-white px-6 py-3 rounded-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                                >
+                                    {loading ? (
+                                        <>
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                            Saving...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <FaPlus /> Save and Add Other
+                                        </>
+                                    )}
+                                </button>
+                                <button
+                                    onClick={() => handleSave(false)}
+                                    disabled={loading}
+                                    className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                                >
+                                    {loading ? (
+                                        <>
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                            Saving...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <FaSave /> Save Medication
+                                        </>
+                                    )}
+                                </button>
+                            </>
+                        )}
 
                         {isEditing && (
                             <button
