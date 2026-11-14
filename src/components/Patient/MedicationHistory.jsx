@@ -580,8 +580,13 @@ const MedicationHistory = ({ patientCode }) => {
         });
         setIsEditing(true);
         setShowForm(true);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // Let the form render first, then focus the Drug Name field
+        setTimeout(() => {
+            drugNameInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            drugNameInputRef.current?.focus();
+        }, 100);
     };
+
 
     const handleDelete = async (medicationId) => {
         if (!window.confirm('Are you sure you want to delete this medication record?\nThis action cannot be undone.')) return;
