@@ -499,12 +499,13 @@ const MedicationHistory = ({ patientCode }) => {
                 await fetchMedications();
 
                 if (addAnother && !isEditing) {
-                    // Keep the form open, blank the fields, and focus the drug name box
+                    // Keep the form open, blank the fields, and bring the Drug Name box into view — no alert
                     resetFormFields();
                     setShowForm(true);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                    setTimeout(() => drugNameInputRef.current?.focus(), 100);
-                    alert('✅ Medication added successfully! You can now add another medication.');
+                    setTimeout(() => {
+                        drugNameInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        drugNameInputRef.current?.focus();
+                    }, 100);
                 } else {
                     // Close the form and show the medications list
                     resetForm();
