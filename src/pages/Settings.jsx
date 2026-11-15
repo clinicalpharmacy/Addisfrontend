@@ -347,7 +347,7 @@ const Settings = () => {
                                             Total Earned
                                         </p>
                                         <p className="text-3xl font-bold text-gray-900">
-                                            {commissionData.total_earned} ETB
+                                            {Number(commissionData.total_earned || 0).toFixed(2)} ETB
                                         </p>
                                     </div>
 
