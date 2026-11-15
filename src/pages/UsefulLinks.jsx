@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { FaSearch, FaBookmark, FaChevronDown, FaChevronRight } from 'react-icons/fa';
+import { FaBookmark, FaChevronDown, FaChevronRight } from 'react-icons/fa';
 import api from '../utils/api';
 
 const UsefulLinks = () => {
     const [links, setLinks] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [expandedCategories, setExpandedCategories] = useState({});
 
@@ -14,15 +13,22 @@ const UsefulLinks = () => {
 
     const fetchLinks = async () => {
         try {
-            setLoading(true);
-            const data = await api.get('/useful-links');
-            if (data.success) {
+            // Safety timeout so a hanging request can't freeze the UI
+            const data = await Promise.race([
+                api.get('/useful-links'),
+                new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Request timed out')), 10000)
+                ),
+            ]);
+
+            // Guard the response shape so a bad payload can't crash the render
+            if (data?.success && Array.isArray(data.links)) {
                 setLinks(data.links);
+            } else {
+                console.warn('Unexpected /useful-links response:', data);
             }
         } catch (error) {
             console.error('Error fetching links:', error);
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -63,9 +69,7 @@ const UsefulLinks = () => {
                 />
             </div>
 
-            {loading ? (
-                <div className="text-center py-12 text-gray-400">Loading...</div>
-            ) : links.length === 0 ? (
+            {links.length === 0 ? (
                 <div className="text-center py-12 text-gray-400">No links available</div>
             ) : filteredLinks.length === 0 ? (
                 <div className="text-center py-12 text-gray-400">No links match your search</div>
