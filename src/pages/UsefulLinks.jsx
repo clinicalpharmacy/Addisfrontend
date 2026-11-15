@@ -4,6 +4,7 @@ import api from '../utils/api';
 
 const UsefulLinks = () => {
     const [links, setLinks] = useState([]);
+    const [loaded, setLoaded] = useState(false); // has the first fetch settled?
     const [searchTerm, setSearchTerm] = useState('');
     const [expandedCategories, setExpandedCategories] = useState({});
 
@@ -29,6 +30,8 @@ const UsefulLinks = () => {
             }
         } catch (error) {
             console.error('Error fetching links:', error);
+        } finally {
+            setLoaded(true);
         }
     };
 
@@ -69,7 +72,9 @@ const UsefulLinks = () => {
                 />
             </div>
 
-            {links.length === 0 ? (
+            {/* Before first fetch settles: render nothing below the search bar.
+                After it settles: show empty state only if there really are no links. */}
+            {!loaded ? null : links.length === 0 ? (
                 <div className="text-center py-12 text-gray-400">No links available</div>
             ) : filteredLinks.length === 0 ? (
                 <div className="text-center py-12 text-gray-400">No links match your search</div>
