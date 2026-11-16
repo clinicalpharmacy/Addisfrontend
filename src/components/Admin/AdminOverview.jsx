@@ -139,6 +139,30 @@ export const AdminOverview = ({
                     </div>
                 </div>
 
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md">
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                            <p className="text-[10px] md:text-sm text-indigo-500 font-bold uppercase tracking-tight truncate">Organization Admins</p>
+                            <p className="text-xl md:text-3xl font-black text-indigo-600 leading-tight">{stats.company_admin_count || 0}</p>
+                        </div>
+                        <div className="p-2 md:p-3 bg-indigo-50 rounded-lg flex-shrink-0">
+                            <FaBriefcase className="text-indigo-600 text-sm md:text-xl" />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md">
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                            <p className="text-[10px] md:text-sm text-gray-500 font-bold uppercase tracking-tight truncate">Administrators</p>
+                            <p className="text-xl md:text-3xl font-black text-gray-700 leading-tight">{stats.admin_count || 0}</p>
+                        </div>
+                        <div className="p-2 md:p-3 bg-gray-100 rounded-lg flex-shrink-0">
+                            <FaUserShield className="text-gray-600 text-sm md:text-xl" />
+                        </div>
+                    </div>
+                </div>
+
                 <div className="bg-gradient-to-br from-gray-900 to-blue-900 rounded-xl shadow-lg border border-blue-800/10 p-4 md:p-6 transition-all hover:scale-[1.02] cursor-pointer" onClick={() => onTabChange('support_access')}>
                     <div className="flex items-center justify-between gap-2 text-white">
                         <div className="min-w-0">
