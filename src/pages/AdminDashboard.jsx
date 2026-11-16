@@ -42,6 +42,7 @@ const AdminDashboard = () => {
     const navigate = useNavigate();
     const [currentUser, setCurrentUser] = useState(null);
     const [selectedTab, setSelectedTab] = useState('overview');
+    const [initialUserFilterRole, setInitialUserFilterRole] = useState('all');
     const [successMessage, setSuccessMessage] = useState('');
     const [generalError, setGeneralError] = useState('');
     const [refreshing, setRefreshing] = useState(false);
@@ -243,6 +244,10 @@ const AdminDashboard = () => {
                         pendingApprovalsCount={(dashboardData.stats.pending_approvals || 0) + (subscriptionsManager.pendingPayments?.length || 0)}
                         recentActivities={dashboardData.recentActivities}
                         onTabChange={setSelectedTab}
+                        onFilterRoleChange={(role) => {
+                            setInitialUserFilterRole(role);
+                            setSelectedTab('users');
+                        }}
                         getActivityIcon={getActivityIcon}
                         formatDate={formatDate}
                     />
@@ -302,6 +307,7 @@ const AdminDashboard = () => {
                     <AdminUsers
                         users={usersManager.users}
                         loading={usersManager.loading}
+                        initialRole={initialUserFilterRole}
                         onRefresh={handleRefresh}
                         onToggleBlock={async (id) => {
                             const res = await usersManager.toggleBlockUser(id);

@@ -12,140 +12,193 @@ export const AdminOverview = ({
     recentActivities,
     pendingApprovalsCount,
     onTabChange,
+    onFilterRoleChange,
     getActivityIcon,
     formatDate
 }) => {
+    const handleRoleCardClick = (role) => {
+        if (onFilterRoleChange) {
+            onFilterRoleChange(role);
+        } else if (onTabChange) {
+            onTabChange('users');
+        }
+    };
+
     return (
         <div className="space-y-6 animate-fadeIn">
             {/* Stats Grid */}
             <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-5">
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md">
+                <div
+                    onClick={() => handleRoleCardClick('all')}
+                    className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md hover:scale-[1.02] cursor-pointer group"
+                    title="View all users"
+                >
                     <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
-                            <p className="text-[10px] md:text-sm text-gray-400 font-bold uppercase tracking-tight truncate">Total Users</p>
+                            <p className="text-[10px] md:text-sm text-gray-400 font-bold uppercase tracking-tight truncate group-hover:text-blue-600 transition-colors">Total Users</p>
                             <p className="text-xl md:text-3xl font-black text-gray-800 leading-tight">{stats.total_users || usersCount || 0}</p>
                         </div>
-                        <div className="p-2 md:p-3 bg-blue-50 rounded-lg flex-shrink-0">
+                        <div className="p-2 md:p-3 bg-blue-50 rounded-lg flex-shrink-0 group-hover:bg-blue-100 transition-colors">
                             <FaUsers className="text-blue-600 text-sm md:text-xl" />
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md">
+                <div
+                    onClick={() => handleRoleCardClick('physician')}
+                    className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md hover:scale-[1.02] cursor-pointer group"
+                    title="View Physicians"
+                >
                     <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
-                            <p className="text-[10px] md:text-sm text-green-500 font-bold uppercase tracking-tight truncate">Physicians</p>
+                            <p className="text-[10px] md:text-sm text-green-500 font-bold uppercase tracking-tight truncate group-hover:text-green-600 transition-colors">Physicians</p>
                             <p className="text-xl md:text-3xl font-black text-green-600 leading-tight">{stats.physician_count || 0}</p>
                         </div>
-                        <div className="p-2 md:p-3 bg-green-50 rounded-lg flex-shrink-0">
+                        <div className="p-2 md:p-3 bg-green-50 rounded-lg flex-shrink-0 group-hover:bg-green-100 transition-colors">
                             <FaUserMd className="text-green-600 text-sm md:text-xl" />
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md">
+                <div
+                    onClick={() => handleRoleCardClick('pharmacist')}
+                    className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md hover:scale-[1.02] cursor-pointer group"
+                    title="View Pharmacists"
+                >
                     <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
-                            <p className="text-[10px] md:text-sm text-indigo-500 font-bold uppercase tracking-tight truncate">Pharmacists</p>
+                            <p className="text-[10px] md:text-sm text-indigo-500 font-bold uppercase tracking-tight truncate group-hover:text-indigo-600 transition-colors">Pharmacists</p>
                             <p className="text-xl md:text-3xl font-black text-indigo-600 leading-tight">{stats.pharmacist_count || 0}</p>
                         </div>
-                        <div className="p-2 md:p-3 bg-indigo-50 rounded-lg flex-shrink-0">
+                        <div className="p-2 md:p-3 bg-indigo-50 rounded-lg flex-shrink-0 group-hover:bg-indigo-100 transition-colors">
                             <FaHospital className="text-indigo-600 text-sm md:text-xl" />
                         </div>
                     </div>
                 </div>
 
-                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md">
+                 <div
+                    onClick={() => handleRoleCardClick('nurse')}
+                    className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md hover:scale-[1.02] cursor-pointer group"
+                    title="View Nurses"
+                 >
                     <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
-                            <p className="text-[10px] md:text-sm text-indigo-500 font-bold uppercase tracking-tight truncate">Nurses</p>
+                            <p className="text-[10px] md:text-sm text-indigo-500 font-bold uppercase tracking-tight truncate group-hover:text-indigo-600 transition-colors">Nurses</p>
                             <p className="text-xl md:text-3xl font-black text-indigo-600 leading-tight">{stats.nurse_count || 0}</p>
                         </div>
-                        <div className="p-2 md:p-3 bg-indigo-50 rounded-lg flex-shrink-0">
+                        <div className="p-2 md:p-3 bg-indigo-50 rounded-lg flex-shrink-0 group-hover:bg-indigo-100 transition-colors">
                             <FaHospital className="text-indigo-600 text-sm md:text-xl" />
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md col-span-1 xs:col-span-2 md:col-span-1 xl:col-span-1">
+                <div
+                    onClick={() => onTabChange('companies')}
+                    className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md hover:scale-[1.02] cursor-pointer group col-span-1 xs:col-span-2 md:col-span-1 xl:col-span-1"
+                    title="View Companies"
+                >
                     <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
-                            <p className="text-[10px] md:text-sm text-purple-500 font-bold uppercase tracking-tight truncate">Companies</p>
+                            <p className="text-[10px] md:text-sm text-purple-500 font-bold uppercase tracking-tight truncate group-hover:text-purple-600 transition-colors">Companies</p>
                             <p className="text-xl md:text-3xl font-black text-purple-600 leading-tight">{companiesCount || 0}</p>
                         </div>
-                        <div className="p-2 md:p-3 bg-purple-50 rounded-lg flex-shrink-0">
+                        <div className="p-2 md:p-3 bg-purple-50 rounded-lg flex-shrink-0 group-hover:bg-purple-100 transition-colors">
                             <FaBuilding className="text-purple-600 text-sm md:text-xl" />
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md">
+                <div
+                    onClick={() => handleRoleCardClick('other_health_professional')}
+                    className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md hover:scale-[1.02] cursor-pointer group"
+                    title="View Other Health Professionals"
+                >
                     <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
-                            <p className="text-[10px] md:text-sm text-red-500 font-bold uppercase tracking-tight truncate">Other Health Professionals</p>
+                            <p className="text-[10px] md:text-sm text-red-500 font-bold uppercase tracking-tight truncate group-hover:text-red-600 transition-colors">Other Health Professionals</p>
                             <p className="text-xl md:text-3xl font-black text-red-600 leading-tight">{stats.other_health_professionals_count || 0}</p>
                         </div>
-                        <div className="p-2 md:p-3 bg-red-50 rounded-lg flex-shrink-0">
+                        <div className="p-2 md:p-3 bg-red-50 rounded-lg flex-shrink-0 group-hover:bg-red-100 transition-colors">
                             <FaVial className="text-red-600 text-sm md:text-xl" />
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md">
+                <div
+                    onClick={() => handleRoleCardClick('pharmacy_student')}
+                    className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md hover:scale-[1.02] cursor-pointer group"
+                    title="View Pharmacy Students"
+                >
                     <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
-                            <p className="text-[10px] md:text-sm text-blue-500 font-bold uppercase tracking-tight truncate">Pharmacy Students</p>
+                            <p className="text-[10px] md:text-sm text-blue-500 font-bold uppercase tracking-tight truncate group-hover:text-blue-600 transition-colors">Pharmacy Students</p>
                             <p className="text-xl md:text-3xl font-black text-blue-600 leading-tight">{stats.pharmacy_student_count || 0}</p>
                         </div>
-                        <div className="p-2 md:p-3 bg-blue-50 rounded-lg flex-shrink-0">
+                        <div className="p-2 md:p-3 bg-blue-50 rounded-lg flex-shrink-0 group-hover:bg-blue-100 transition-colors">
                             <FaUsers className="text-blue-500 text-sm md:text-xl" />
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md">
+                <div
+                    onClick={() => handleRoleCardClick('other_health_science_student')}
+                    className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md hover:scale-[1.02] cursor-pointer group"
+                    title="View Other Health Science Students"
+                >
                     <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
-                            <p className="text-[10px] md:text-sm text-blue-500 font-bold uppercase tracking-tight truncate">Other Health Science Students</p>
+                            <p className="text-[10px] md:text-sm text-blue-500 font-bold uppercase tracking-tight truncate group-hover:text-blue-600 transition-colors">Other Health Science Students</p>
                             <p className="text-xl md:text-3xl font-black text-blue-600 leading-tight">{stats.other_health_science_student_count || 0}</p>
                         </div>
-                        <div className="p-2 md:p-3 bg-blue-50 rounded-lg flex-shrink-0">
+                        <div className="p-2 md:p-3 bg-blue-50 rounded-lg flex-shrink-0 group-hover:bg-blue-100 transition-colors">
                             <FaUsers className="text-blue-500 text-sm md:text-xl" />
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md">
+                <div
+                    onClick={() => handleRoleCardClick('healthcare_client')}
+                    className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md hover:scale-[1.02] cursor-pointer group"
+                    title="View Healthcare Clients"
+                >
                     <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
-                            <p className="text-[10px] md:text-sm text-blue-500 font-bold uppercase tracking-tight truncate">Healthcare Clients</p>
+                            <p className="text-[10px] md:text-sm text-blue-500 font-bold uppercase tracking-tight truncate group-hover:text-blue-600 transition-colors">Healthcare Clients</p>
                             <p className="text-xl md:text-3xl font-black text-blue-600 leading-tight">{stats.healthcare_client_count || 0}</p>
                         </div>
-                        <div className="p-2 md:p-3 bg-blue-50 rounded-lg flex-shrink-0">
+                        <div className="p-2 md:p-3 bg-blue-50 rounded-lg flex-shrink-0 group-hover:bg-blue-100 transition-colors">
                             <FaUsers className="text-blue-500 text-sm md:text-xl" />
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md">
+                <div
+                    onClick={() => handleRoleCardClick('company_admin')}
+                    className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md hover:scale-[1.02] cursor-pointer group"
+                    title="View Organization Admins"
+                >
                     <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
-                            <p className="text-[10px] md:text-sm text-indigo-500 font-bold uppercase tracking-tight truncate">Organization Admins</p>
+                            <p className="text-[10px] md:text-sm text-indigo-500 font-bold uppercase tracking-tight truncate group-hover:text-indigo-600 transition-colors">Organization Admins</p>
                             <p className="text-xl md:text-3xl font-black text-indigo-600 leading-tight">{stats.company_admin_count || 0}</p>
                         </div>
-                        <div className="p-2 md:p-3 bg-indigo-50 rounded-lg flex-shrink-0">
+                        <div className="p-2 md:p-3 bg-indigo-50 rounded-lg flex-shrink-0 group-hover:bg-indigo-100 transition-colors">
                             <FaBriefcase className="text-indigo-600 text-sm md:text-xl" />
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md">
+                <div
+                    onClick={() => handleRoleCardClick('admin')}
+                    className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all hover:shadow-md hover:scale-[1.02] cursor-pointer group"
+                    title="View Administrators"
+                >
                     <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
-                            <p className="text-[10px] md:text-sm text-gray-500 font-bold uppercase tracking-tight truncate">Administrators</p>
+                            <p className="text-[10px] md:text-sm text-gray-500 font-bold uppercase tracking-tight truncate group-hover:text-gray-700 transition-colors">Administrators</p>
                             <p className="text-xl md:text-3xl font-black text-gray-700 leading-tight">{stats.admin_count || 0}</p>
                         </div>
-                        <div className="p-2 md:p-3 bg-gray-100 rounded-lg flex-shrink-0">
+                        <div className="p-2 md:p-3 bg-gray-100 rounded-lg flex-shrink-0 group-hover:bg-gray-200 transition-colors">
                             <FaUserShield className="text-gray-600 text-sm md:text-xl" />
                         </div>
                     </div>

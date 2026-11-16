@@ -6,6 +6,7 @@ import {
 export const AdminUsers = ({
     users,
     loading,
+    initialRole = 'all',
     onRefresh,
     formatDate,
     getStatusBadge,
@@ -13,8 +14,15 @@ export const AdminUsers = ({
     onToggleBlock
 }) => {
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterRole, setFilterRole] = useState('all');
+    const [filterRole, setFilterRole] = useState(initialRole);
     const [filterStatus, setFilterStatus] = useState('all');
+
+    // Update filterRole if initialRole prop changes
+    React.useEffect(() => {
+        if (initialRole) {
+            setFilterRole(initialRole);
+        }
+    }, [initialRole]);
 
     const filteredUsers = users.filter(user => {
         const matchesSearch = searchTerm === '' ||
