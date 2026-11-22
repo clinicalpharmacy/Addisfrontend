@@ -433,6 +433,7 @@ const LandingPage = () => {
                             <a href="#calculators" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">Calculators</a>
                             <a href="#clients" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">For Clients</a>
                             <Link to="/vacancies" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors flex items-center gap-1">Vacancies <FaArrowRight className="text-[10px]" /></Link>
+                            <a href="#contact" className="text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors">ጥያቄ ወይም አስተያየት</a>
                         </div>
 
                         <div className="hidden md:flex items-center gap-4">
@@ -473,6 +474,7 @@ const LandingPage = () => {
                             <a href="#calculators" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">Calculators</a>
                             <a href="#clients" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-sm font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">For Clients</a>
                             <Link to="/vacancies" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">Vacancies</Link>
+                            <a href="#contact" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-3 text-base font-medium text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg">ጥያቄ ወይም አስተያየት</a>
                             <div className="border-t border-slate-100 my-2 pt-2"></div>
                             {isLoggedIn ? (
                                 <button
