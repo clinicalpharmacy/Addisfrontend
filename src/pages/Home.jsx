@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, NavLink } from 'react-router-dom';  // Added NavLink import
+import { Link, NavLink } from 'react-router-dom';
 import {
     FaUserInjured,
     FaPills,
@@ -10,17 +10,24 @@ import {
     FaShieldAlt
 } from 'react-icons/fa';
 
+// Shared classes to prevent iOS/Safari tap-highlight flicker & shadow repaint.
+// - WebkitTapHighlightColor: transparent  -> kills the gray flash on tap
+// - transition-shadow (not transition)    -> only animate the shadow, not all props
+// - transform-gpu + backface-visibility   -> promotes card to its own GPU layer
+//                                            so Safari doesn't re-rasterize on tap
+const cardBase =
+    'bg-white rounded-xl shadow p-4 transition-shadow duration-200 transform-gpu backface-hidden ' +
+    '[-webkit-tap-highlight-color:transparent] hover:shadow-md';
+
 const Home = () => {
     const user = JSON.parse(localStorage.getItem('user'));
     const role = user?.role;
 
-    // Check user roles
     const isAdmin = user?.role === 'admin';
     const isCompanyAdmin = user?.role === 'company_admin';
     const isCompanyUser = !!user?.company_id || user?.account_type === 'company' || ['company_admin', 'company_user'].includes(user?.role);
     const isIndividual = !isAdmin && !isCompanyUser;
 
-    // Determine active subscription taking into account expiration date
     const isSubscribed = (() => {
         if (!user) return false;
         if (isAdmin) return true;
@@ -33,32 +40,25 @@ const Home = () => {
         return true;
     })();
 
-    // ── Determine access to Clinical / Pharmacy-specific tools ─────────────
-    // Individual pharmacists (role === 'pharmacist')
     const isIndividualPharmacist =
         isIndividual && role === 'pharmacist';
 
-    // Company users belonging to a pharmacy / drug store
     const isCompanyPharmacy =
         isCompanyUser &&
         (user?.facility_type === 'pharmacy' || user?.company_type === 'pharmacy');
 
-    // Individual pharmacy students
     const isIndividualPharmacyStudent =
         isIndividual && role === 'pharmacy_student';
 
-    // Company users belonging to a pharmacy school
     const isCompanyPharmacySchool =
         isCompanyUser &&
         (user?.facility_type === 'pharmacy_school' ||
             user?.company_type === 'pharmacy_school' ||
             user?.company_type === 'pharmaceutical');
 
-    // Show Minor Illnesses + Compounding to admins, pharmacists & pharmacy companies
     const showPharmacyTools =
         isAdmin || role === 'pharmacist' || isCompanyPharmacy;
 
-    // Show Education to admins, individual pharmacists, pharmacy students, Pharmacy & pharmacy schools
     const showEducation =
         isAdmin || role === 'pharmacist' || role === 'pharmacy_student' || isCompanyPharmacy || isCompanyPharmacySchool;
 
@@ -69,9 +69,7 @@ const Home = () => {
         return 'Good evening';
     };
 
-    // Placeholder for onClose - you need to define this
     const onClose = () => {
-        // Your close logic here
         console.log('Close menu');
     };
 
@@ -109,7 +107,7 @@ const Home = () => {
             {/* Quick Access Grid - Row 1 */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 {/* 1. Medication Availability */}
-                <Link to="/medication-availability" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
+                <Link to="/medication-availability" className={cardBase}>
                     <div className="flex items-center gap-3 mb-2">
                         <div>
                             <h2 className="text-sm font-bold text-gray-800">መድሃኒት ማፈላለጊያ</h2>
@@ -122,9 +120,9 @@ const Home = () => {
                         </span>
                     </div>
                 </Link>
-                
-                {/* 2. Medication Information */}
-                <Link to="/knowledge/medications" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
+
+                {/* 2. Medication Information — the card that was blinking on Apple */}
+                <Link to="/knowledge/medications" className={cardBase}>
                     <div className="flex items-center gap-3 mb-2">
                         <div>
                             <h2 className="text-sm font-bold text-gray-800">የመድሃኒት መረጃ</h2>
@@ -139,7 +137,10 @@ const Home = () => {
                 </Link>
 
                 {/* 3. Quick Check */}
-                <Link to="/quick-safety" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition border-2 border-transparent hover:border-blue-100">
+                <Link
+                    to="/quick-safety"
+                    className={`${cardBase} border-2 border-transparent hover:border-blue-100`}
+                >
                     <div className="flex items-center gap-3 mb-2">
                         <div>
                             <h2 className="text-sm font-bold text-gray-800">Quick Check</h2>
@@ -162,10 +163,10 @@ const Home = () => {
                         to={isSubscribed ? "/clinical-pharmacy-tool" : "/subscription/plans"}
                         onClick={onClose}
                         className={({ isActive }) =>
-                            `bg-white rounded-xl shadow p-4 hover:shadow-md transition ${
+                            `${cardBase} border-2 ${
                                 isActive && isSubscribed
-                                    ? 'border-2 border-blue-500'
-                                    : 'border-2 border-transparent hover:border-blue-100'
+                                    ? 'border-blue-500'
+                                    : 'border-transparent hover:border-blue-100'
                             } ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`
                         }
                     >
@@ -185,7 +186,7 @@ const Home = () => {
 
                 {/* 5. Useful Links */}
                 {(user?.role !== 'healthcare_client' || !isIndividual) && (
-                    <Link to="/useful-links" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
+                    <Link to="/useful-links" className={cardBase}>
                         <div className="flex items-center gap-3 mb-2">
                             <div>
                                 <h2 className="text-sm font-bold text-gray-800">Useful Links</h2>
@@ -201,9 +202,9 @@ const Home = () => {
                 )}
 
                 {/* 6. Home Remedies */}
-                <Link 
+                <Link
                     to="/knowledge/remedies"
-                    className="bg-white rounded-xl shadow p-4 hover:shadow-md transition relative group cursor-pointer"
+                    className={`${cardBase} relative group cursor-pointer`}
                 >
                     {!isAdmin && <div className="absolute top-2 right-2 bg-slate-200 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Under Development</div>}
                     <div className="flex items-center gap-3 mb-2">
@@ -224,7 +225,7 @@ const Home = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 {/* 7. Minor Illnesses */}
                 {showPharmacyTools && (
-                    <Link to="/knowledge/illnesses" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
+                    <Link to="/knowledge/illnesses" className={cardBase}>
                         <div className="flex items-center gap-3 mb-2">
                             <div>
                                 <h2 className="text-sm font-bold text-gray-800">Minor Illnesses</h2>
@@ -241,9 +242,9 @@ const Home = () => {
 
                 {/* 8. Compounding */}
                 {showPharmacyTools && (
-                    <Link 
+                    <Link
                         to="/knowledge/compounding"
-                        className="bg-white rounded-xl shadow p-4 hover:shadow-md transition relative group cursor-pointer"
+                        className={`${cardBase} relative group cursor-pointer`}
                     >
                         {!isAdmin && <div className="absolute top-2 right-2 bg-slate-200 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Under Development</div>}
                         <div className="flex items-center gap-3 mb-2 mt-1">
@@ -262,7 +263,7 @@ const Home = () => {
 
                 {/* 9. Education */}
                 {showEducation && (
-                    <Link to="/knowledge/education" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
+                    <Link to="/knowledge/education" className={cardBase}>
                         <div className="flex items-center gap-3 mb-2">
                             <div>
                                 <h2 className="text-sm font-bold text-gray-800">Education</h2>
