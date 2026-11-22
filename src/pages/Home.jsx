@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';  // Added NavLink import
 import {
     FaUserInjured,
     FaPills,
@@ -34,25 +34,31 @@ const Home = () => {
     })();
 
     // ── Determine access to Clinical / Pharmacy-specific tools ─────────────
+    // Individual pharmacists (role === 'pharmacist')
     const isIndividualPharmacist =
         isIndividual && role === 'pharmacist';
 
+    // Company users belonging to a pharmacy / drug store
     const isCompanyPharmacy =
         isCompanyUser &&
         (user?.facility_type === 'pharmacy' || user?.company_type === 'pharmacy');
 
+    // Individual pharmacy students
     const isIndividualPharmacyStudent =
         isIndividual && role === 'pharmacy_student';
 
+    // Company users belonging to a pharmacy school
     const isCompanyPharmacySchool =
         isCompanyUser &&
         (user?.facility_type === 'pharmacy_school' ||
             user?.company_type === 'pharmacy_school' ||
             user?.company_type === 'pharmaceutical');
 
+    // Show Minor Illnesses + Compounding to admins, pharmacists & pharmacy companies
     const showPharmacyTools =
         isAdmin || role === 'pharmacist' || isCompanyPharmacy;
 
+    // Show Education to admins, individual pharmacists, pharmacy students, Pharmacy & pharmacy schools
     const showEducation =
         isAdmin || role === 'pharmacist' || role === 'pharmacy_student' || isCompanyPharmacy || isCompanyPharmacySchool;
 
@@ -63,30 +69,16 @@ const Home = () => {
         return 'Good evening';
     };
 
+    // Placeholder for onClose - you need to define this
     const onClose = () => {
+        // Your close logic here
         console.log('Close menu');
     };
 
-    // ── Shared class strings ────────────────────────────────────────────────
-    // Card: promoted to its own GPU layer so the iOS content-protection
-    // overlay does not re-rasterize it. Opacity-only hover (no shadow/
-    // transform animation = no repaint = no blink).
-    const cardClass =
-        'bg-white rounded-xl shadow-md p-4 transition-opacity duration-150 hover:opacity-90 ' +
-        '[transform:translateZ(0)] [backface-visibility:hidden] ' +
-        '[-webkit-backface-visibility:hidden]';
-
-    const cardClassDisabled =
-        cardClass + ' opacity-60 cursor-not-allowed';
-
-    // Arrow: composite-only transition (opacity), no transform.
-    const arrowClass =
-        'text-sm flex items-center gap-1 transition-opacity duration-150 group-hover:opacity-80';
-
     return (
-        <div className="page-container w-full max-w-full overflow-x-clip px-2 sm:px-4 md:px-6">
+        <div className="page-container w-full max-w-full overflow-x-hidden px-2 sm:px-4 md:px-6">
             {/* Welcome Section */}
-            <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-4 sm:p-6 text-white shadow-lg w-full mb-6 [transform:translateZ(0)] [backface-visibility:hidden] [-webkit-backface-visibility:hidden]">
+            <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-4 sm:p-6 text-white shadow-lg w-full mb-6">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                         <h1 className="text-xl md:text-2xl font-bold">
@@ -117,7 +109,7 @@ const Home = () => {
             {/* Quick Access Grid - Row 1 */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 {/* 1. Medication Availability */}
-                <Link to="/medication-availability" className={cardClass}>
+                <Link to="/medication-availability" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
                     <div className="flex items-center gap-3 mb-2">
                         <div>
                             <h2 className="text-sm font-bold text-gray-800">መድሃኒት ማፈላለጊያ</h2>
@@ -125,14 +117,14 @@ const Home = () => {
                         </div>
                     </div>
                     <div className="flex justify-end">
-                        <span className={`${arrowClass} text-yellow-600`}>
+                        <span className="text-yellow-600 text-sm flex items-center gap-1">
                             Search <FaArrowRight className="text-xs" />
                         </span>
                     </div>
                 </Link>
-
+                
                 {/* 2. Medication Information */}
-                <Link to="/knowledge/medications" className={cardClass}>
+                <Link to="/knowledge/medications" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
                     <div className="flex items-center gap-3 mb-2">
                         <div>
                             <h2 className="text-sm font-bold text-gray-800">የመድሃኒት መረጃ</h2>
@@ -140,14 +132,14 @@ const Home = () => {
                         </div>
                     </div>
                     <div className="flex justify-end">
-                        <span className={`${arrowClass} text-purple-600`}>
+                        <span className="text-purple-600 text-sm flex items-center gap-1">
                             Search <FaArrowRight className="text-xs" />
                         </span>
                     </div>
                 </Link>
 
                 {/* 3. Quick Check */}
-                <Link to="/quick-safety" className={cardClass}>
+                <Link to="/quick-safety" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition border-2 border-transparent hover:border-blue-100">
                     <div className="flex items-center gap-3 mb-2">
                         <div>
                             <h2 className="text-sm font-bold text-gray-800">Quick Check</h2>
@@ -155,7 +147,7 @@ const Home = () => {
                         </div>
                     </div>
                     <div className="flex justify-end">
-                        <span className={`${arrowClass} text-indigo-600`}>
+                        <span className="text-indigo-600 text-sm flex items-center gap-1">
                             Check <FaArrowRight className="text-xs" />
                         </span>
                     </div>
@@ -170,11 +162,11 @@ const Home = () => {
                         to={isSubscribed ? "/clinical-pharmacy-tool" : "/subscription/plans"}
                         onClick={onClose}
                         className={({ isActive }) =>
-                            `${isSubscribed ? cardClass : cardClassDisabled} ${
+                            `bg-white rounded-xl shadow p-4 hover:shadow-md transition ${
                                 isActive && isSubscribed
                                     ? 'border-2 border-blue-500'
-                                    : 'border-2 border-transparent'
-                            }`
+                                    : 'border-2 border-transparent hover:border-blue-100'
+                            } ${!isSubscribed ? 'opacity-60 cursor-not-allowed' : ''}`
                         }
                     >
                         <div className="flex items-center gap-3 mb-2">
@@ -184,7 +176,7 @@ const Home = () => {
                             </div>
                         </div>
                         <div className="flex justify-end">
-                            <span className={`${arrowClass} text-blue-600`}>
+                            <span className="text-blue-600 text-sm flex items-center gap-1">
                                 Open <FaArrowRight className="text-xs" />
                             </span>
                         </div>
@@ -193,7 +185,7 @@ const Home = () => {
 
                 {/* 5. Useful Links */}
                 {(user?.role !== 'healthcare_client' || !isIndividual) && (
-                    <Link to="/useful-links" className={cardClass}>
+                    <Link to="/useful-links" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
                         <div className="flex items-center gap-3 mb-2">
                             <div>
                                 <h2 className="text-sm font-bold text-gray-800">Useful Links</h2>
@@ -201,7 +193,7 @@ const Home = () => {
                             </div>
                         </div>
                         <div className="flex justify-end">
-                            <span className={`${arrowClass} text-green-600`}>
+                            <span className="text-green-600 text-sm flex items-center gap-1">
                                 View <FaArrowRight className="text-xs" />
                             </span>
                         </div>
@@ -209,9 +201,9 @@ const Home = () => {
                 )}
 
                 {/* 6. Home Remedies */}
-                <Link
+                <Link 
                     to="/knowledge/remedies"
-                    className={`${cardClass} relative group cursor-pointer`}
+                    className="bg-white rounded-xl shadow p-4 hover:shadow-md transition relative group cursor-pointer"
                 >
                     {!isAdmin && <div className="absolute top-2 right-2 bg-slate-200 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Under Development</div>}
                     <div className="flex items-center gap-3 mb-2">
@@ -221,7 +213,7 @@ const Home = () => {
                         </div>
                     </div>
                     <div className="flex justify-end mt-2">
-                        <span className={`${arrowClass} text-green-600 font-medium`}>
+                        <span className="text-green-600 text-sm flex items-center gap-1 font-medium group-hover:translate-x-1 transition-transform">
                             {isAdmin ? "Browse" : "Coming Soon"} <FaArrowRight className="text-xs" />
                         </span>
                     </div>
@@ -232,7 +224,7 @@ const Home = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 {/* 7. Minor Illnesses */}
                 {showPharmacyTools && (
-                    <Link to="/knowledge/illnesses" className={cardClass}>
+                    <Link to="/knowledge/illnesses" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
                         <div className="flex items-center gap-3 mb-2">
                             <div>
                                 <h2 className="text-sm font-bold text-gray-800">Minor Illnesses</h2>
@@ -240,7 +232,7 @@ const Home = () => {
                             </div>
                         </div>
                         <div className="flex justify-end">
-                            <span className={`${arrowClass} text-orange-600`}>
+                            <span className="text-orange-600 text-sm flex items-center gap-1">
                                 View <FaArrowRight className="text-xs" />
                             </span>
                         </div>
@@ -249,9 +241,9 @@ const Home = () => {
 
                 {/* 8. Compounding */}
                 {showPharmacyTools && (
-                    <Link
+                    <Link 
                         to="/knowledge/compounding"
-                        className={`${cardClass} relative group cursor-pointer`}
+                        className="bg-white rounded-xl shadow p-4 hover:shadow-md transition relative group cursor-pointer"
                     >
                         {!isAdmin && <div className="absolute top-2 right-2 bg-slate-200 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Under Development</div>}
                         <div className="flex items-center gap-3 mb-2 mt-1">
@@ -261,7 +253,7 @@ const Home = () => {
                             </div>
                         </div>
                         <div className="flex justify-end mt-2">
-                            <span className={`${arrowClass} text-orange-600 font-medium`}>
+                            <span className="text-orange-600 text-sm flex items-center gap-1 font-medium group-hover:translate-x-1 transition-transform">
                                 {isAdmin ? "View" : "Coming Soon"} <FaArrowRight className="text-xs" />
                             </span>
                         </div>
@@ -270,7 +262,7 @@ const Home = () => {
 
                 {/* 9. Education */}
                 {showEducation && (
-                    <Link to="/knowledge/education" className={cardClass}>
+                    <Link to="/knowledge/education" className="bg-white rounded-xl shadow p-4 hover:shadow-md transition">
                         <div className="flex items-center gap-3 mb-2">
                             <div>
                                 <h2 className="text-sm font-bold text-gray-800">Education</h2>
@@ -278,7 +270,7 @@ const Home = () => {
                             </div>
                         </div>
                         <div className="flex justify-end">
-                            <span className={`${arrowClass} text-purple-600`}>
+                            <span className="text-purple-600 text-sm flex items-center gap-1">
                                 View <FaArrowRight className="text-xs" />
                             </span>
                         </div>
